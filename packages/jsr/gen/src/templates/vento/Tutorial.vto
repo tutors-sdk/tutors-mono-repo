@@ -1,0 +1,18 @@
+{{ import { mainNavigator } from "/components/navigators/MainNavigator.vto" }}
+{{ import { noteCard } from "/components/cards/NoteCard.vto" }}
+{{ import { loContext } from "/components/navigators/LoContext.vto" }}
+{{ import { talkCard } from "/components/cards/TalkCard.vto" }}
+
+{{ layout "layouts/main.vto" }}
+  {{ mainNavigator(lo) }}
+  <div class="mr-10 ml-10 flex justify-between">
+    <div class="w-full">
+      {{ noteCard(lo) }}
+      {{ if lo.pdfFile }}
+        {{ talkCard(lo) }}
+      {{ /if }}
+    </div>
+    {{ loContext(lo) }}
+  </div>
+
+{{ /layout }}
