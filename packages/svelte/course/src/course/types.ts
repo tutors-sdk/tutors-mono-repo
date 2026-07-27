@@ -1,0 +1,81 @@
+import type { Course, Lab, Lo, Note, Notebook, NotebookCell } from "@tutors/tutors-model-lib";
+
+/**
+ * Interface representing a live interactive lab session
+ * Manages lab content, navigation, and state
+ */
+export interface LabService {
+  course: Course;
+  lab: Lab;
+  url: string;
+  objectivesHtml: string;
+  currentChapterShortTitle: string;
+  currentChapterTitle: string;
+  navbarHtml: string;
+  horizontalNavbarHtml: string;
+  content: string;
+  chaptersHtml: Map<string, string>;
+  chaptersTitles: Map<string, string>;
+  steps: string[];
+  index: number;
+  autoNumber: boolean;
+  vertical: boolean;
+
+  convertMdToHtml(): void;
+  refreshStep(): void;
+  refreshNav(): void;
+  setCurrentChapter(step: string): void;
+  setFirstPageActive(): void;
+  setActivePage(step: string): void;
+  nextStep(): string;
+  prevStep(): string;
+}
+
+/**
+ * Interface representing a live interactive notebook session
+ * Manages notebook content, navigation, and state
+ */
+export interface NotebookService {
+  course: Course;
+  notebook: Notebook;
+  url: string;
+  cells: NotebookCell[];
+  cellCount: number;
+  activeCellIndex: number;
+  navbarHtml: string;
+  horizontalNavbarHtml: string;
+
+  setActiveCell(index: number): void;
+  nextCell(): number;
+  prevCell(): number;
+  isSolutionCell(cell: NotebookCell): boolean;
+  isExerciseCell(cell: NotebookCell): boolean;
+  getCellLabel(cell: NotebookCell, index: number): string;
+  getCellTypeIcon(cellType: string): string;
+  refreshNav(): void;
+}
+
+/**
+ * Service for managing course content and navigation
+ */
+export interface CourseService {
+  /** Cache of loaded courses */
+  courses: Map<string, Course>;
+  /** Cache of live lab instances */
+  labs: Map<string, LabService>;
+  /** Cache of processed notes */
+  notes: Map<string, Note>;
+  /** Cache of live notebook instances */
+  notebooks: Map<string, NotebookService>;
+  /** Current course URL */
+  courseUrl: any;
+
+  getOrLoadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course>;
+  readCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course>;
+  readTopic(courseId: string, topicId: string, fetchFunction: typeof fetch): Promise<Lo>;
+  readLab(courseId: string, labId: string, fetchFunction: typeof fetch): Promise<LabService>;
+  readNotebook(courseId: string, notebookId: string, fetchFunction: typeof fetch): Promise<NotebookService>;
+  readWall(courseId: string, type: string, fetchFunction: typeof fetch): Promise<Lo[]>;
+  readLo(courseId: string, loId: string, fetchFunction: typeof fetch): Promise<Lo>;
+  refreshAllLabs(codeTheme: string): void;
+}
