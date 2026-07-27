@@ -1,0 +1,26 @@
+<script lang="ts">
+  import { catalogueService } from "@tutors/community";
+  import Catalogue from "@tutors/ui/time/Catalogue.svelte";
+  import { onMount } from "svelte";
+  import type { PageData } from "./$types";
+
+  interface Props {
+    data: PageData;
+  }
+  let { data }: Props = $props();
+  let totalModules = $state(0);
+  let totalStudents = $state(0);
+  onMount(async () => {
+    totalModules = await data.courseRecords.length;
+    totalStudents = await catalogueService.getStudentCount();
+  });
+</script>
+
+<div class="w-full p-4">
+  <div class="flex justify-end gap-2">
+    <div class="bg-gray-100 p-1 text-right text-xs dark:bg-gray-800">
+      Totals: modules-{totalModules}:students-{totalStudents}
+    </div>
+  </div>
+  <Catalogue courseRecords={data.courseRecords} />
+</div>
