@@ -1,0 +1,29 @@
+{
+  "nodeModulesDir": "auto",
+  "workspace": [
+    "./packages/jsr/tutors",
+    "./packages/jsr/model",
+    "./packages/jsr/gen",
+    "./packages/jsr/time"
+  ],
+  "fmt": {
+    "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/"],
+    "useTabs": false,
+    "lineWidth": 180,
+    "indentWidth": 2,
+    "singleQuote": false
+  },
+  "tasks": {
+    "fmt": "deno fmt",
+    "fmt:check": "deno fmt --check",
+    "publish": "deno publish",
+    "publish-test": "deno publish --dry-run"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  }
+}
