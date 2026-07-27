@@ -1,0 +1,60 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import type { Lo } from "@tutors/tutors-model-lib";
+  import { themeService } from "@tutors/themes";
+  import { currentCourse } from "@tutors/runes";
+  import { getVideoConfig } from "@tutors/tutors-model-lib";
+  import { sanitizeHtml } from "../../utils/sanitize";
+
+  interface Props {
+    lo: Lo;
+    autoplay?: boolean;
+  }
+  let { lo = $bindable() }: Props = $props();
+
+  let showVime = $state(false);
+
+  onMount(() => {
+    setTimeout(() => {
+      showVime = true;
+    }, 500);
+  });
+
+  // Set icon for panel videos
+  if (lo && lo.type === "panelvideo") {
+    lo.icon = themeService.getIcon("video");
+  }
+
+  let videoConfig = $derived(getVideoConfig(lo));
+</script>
+
+{#if !currentCourse?.value?.areVideosHidden}
+  <div class="w-full p-8">
+    {#if videoConfig.service === "heanet" && showVime}
+      <div class="relative mx-auto aspect-video w-3/4" style="padding-top: 40%;">
+        <iframe title={lo.title} class="absolute inset-0 h-full w-full" src={videoConfig.url} allow="encrypted-media" allowfullscreen></iframe>
+      </div>
+    {:else if videoConfig.service === "vimp"}
+      <iframe
+        title={lo.title}
+        src={videoConfig.url}
+        class="iframeLoaded block mx-auto max-w-full"
+        width="720"
+        height="405"
+        aria-label="media embed code"
+        allowtransparency={true}
+        allowfullscreen
+      ></iframe>
+    {:else}
+      <!-- <div class="relative mx-auto aspect-video w-3/4" style="padding-top: 40%;"> -->
+      <div class="relative mr-2 w-full" style="aspect-ratio: 16/9;">
+        <iframe title={lo.title} class="absolute inset-0 h-full w-full" src={videoConfig.url} allow="encrypted-media" allowfullscreen></iframe>
+      </div>
+    {/if}
+    <br />
+    <p class="text-center text-lg italic">{lo.title}</p>
+    <div class="text-center text-sm italic">
+      {@html sanitizeHtml(lo.summary ?? "")}
+    </div>
+  </div>
+{/if}
