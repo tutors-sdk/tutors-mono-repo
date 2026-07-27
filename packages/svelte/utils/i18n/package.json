@@ -1,0 +1,22 @@
+{
+  "name": "@tutors/i18n",
+  "version": "0.0.1",
+  "description": "Internationalization service and translations for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./messages/*": "./src/messages/*"
+  },
+  "dependencies": {
+    "@tutors/runes": "workspace:*",
+    "@tutors/course": "workspace:*"
+  },
+  "devDependencies": {
+    "svelte": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}
