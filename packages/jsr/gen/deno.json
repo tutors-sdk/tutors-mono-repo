@@ -1,0 +1,19 @@
+{
+  "name": "@tutors/tutors-gen-lib",
+  "version": "5.0.5",
+  "exports": "./src/tutors.ts",
+  "license": "MIT",
+  "tasks": {
+    "test": "deno test test/ --allow-all",
+    "test:reference": "deno test test/reference.test.ts --allow-all",
+    "test:coverage": "deno test --coverage=coverage --allow-all && deno coverage coverage",
+    "test:coverage:html": "deno test --coverage=coverage --allow-all && deno coverage coverage --html"
+  },
+  "imports": {
+    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.0.4",
+    "front-matter": "npm:front-matter@^4.0.2",
+    "js-yaml": "npm:js-yaml@^4.1.1",
+    "archiver": "npm:archiver@^7.0.1",
+    "@vento/vento": "jsr:@vento/vento@^1.14.0"
+  }
+}
