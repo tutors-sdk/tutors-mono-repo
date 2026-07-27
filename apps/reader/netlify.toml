@@ -1,6 +1,7 @@
 [build]
-  publish = "build"
-  command = "pnpm install --frozen-lockfile --dir ../.. && pnpm build"
+  base = "/"
+  publish = "apps/reader/build"
+  command = "pnpm install --frozen-lockfile && pnpm --filter tutors-reader... build"
 
 [build.environment]
   NODE_VERSION = "22"
