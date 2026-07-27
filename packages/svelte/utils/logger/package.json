@@ -1,0 +1,13 @@
+{
+  "name": "@tutors/logger",
+  "version": "0.0.1",
+  "description": "Logging utilities for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "loglevel": "^1.9.2"
+  }
+}
