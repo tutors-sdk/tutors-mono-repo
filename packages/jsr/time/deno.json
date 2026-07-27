@@ -1,0 +1,9 @@
+{
+  "name": "@tutors/tutors-time-lib",
+  "version": "5.0.4",
+  "exports": "./src/index.ts",
+  "license": "MIT",
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.96.0"
+  }
+}
