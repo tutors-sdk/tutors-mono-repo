@@ -1,0 +1,8 @@
+packages:
+  - "packages/jsr/*"
+  - "packages/svelte/*"
+  - "packages/svelte/utils/*"
+  - "apps/*"
+allowBuilds:
+  esbuild: true
+  msw: true
