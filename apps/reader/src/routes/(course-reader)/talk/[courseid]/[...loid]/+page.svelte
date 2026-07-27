@@ -1,0 +1,14 @@
+<script lang="ts">
+  import type { PageData } from "./$types";
+  import Context from "@tutors/ui/learning-objects/structure/Context.svelte";
+  import TalkClient from "@tutors/ui/learning-objects/content/talk/TalkClient.svelte";
+
+  interface Props {
+    data: PageData;
+  }
+  let { data }: Props = $props();
+</script>
+
+<Context lo={data.lo}>
+  <TalkClient lo={data.lo} />
+</Context>
