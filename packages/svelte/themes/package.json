@@ -1,0 +1,23 @@
+{
+  "name": "@tutors/themes",
+  "version": "0.0.1",
+  "description": "Theme service, styles, and icon mappings for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles/*": "./src/styles/*",
+    "./icons/*": "./src/icons/*",
+    "./events/*": "./src/events/*"
+  },
+  "dependencies": {
+    "@tutors/logger": "workspace:*",
+    "@tutors/runes": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*",
+    "@tutors/course": "workspace:*"
+  },
+  "devDependencies": {
+    "svelte": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}
