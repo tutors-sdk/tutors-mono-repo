@@ -1,0 +1,17 @@
+{
+  "name": "@tutors/a11y",
+  "version": "0.0.1",
+  "description": "Accessibility utilities for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tutors/runes": "workspace:*",
+    "@tutors/course": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}
