@@ -1,0 +1,16 @@
+{
+  "name": "@tutors/runes",
+  "version": "0.0.1",
+  "description": "Svelte 5 runes wrapper and global reactive state for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.svelte.ts"
+  },
+  "dependencies": {
+    "@tutors/tutors-model-lib": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}
