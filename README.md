@@ -47,6 +47,10 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `apps/catalogue` - Course catalog application
 - `apps/live` - Live classroom application
 
+### Services
+
+- `services/party` - PartyKit server for real-time collaboration and live features
+
 ## Getting Started
 
 ### Prerequisites
