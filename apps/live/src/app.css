@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+@import "@skeletonlabs/skeleton-svelte";
+
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton/themes/cerberus";
+@import "@skeletonlabs/skeleton/themes/terminus";
+@import "@skeletonlabs/skeleton/themes/rose";
+@import "@tutors/themes/styles/tutors.css";
+@import "@tutors/themes/styles/classic.css";
+@import "@tutors/themes/styles/dyslexia.css";
+@import "@tutors/themes/styles/easter.css";
+@import "@tutors/themes/styles/prose-headings.css";
+@import "@tutors/ui/styles.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Force generation of responsive layout classes */
+@layer utilities {
+  .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  @media (min-width: 768px) {
+    .md\:flex-row { flex-direction: row; }
+    .md\:w-48 { width: 12rem; }
+  }
+  @media (min-width: 1024px) {
+    .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .lg\:flex { display: flex; }
+  }
+  @media (min-width: 1280px) {
+    .xl\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+}
