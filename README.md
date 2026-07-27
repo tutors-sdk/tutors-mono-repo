@@ -18,9 +18,13 @@ This repository uses pnpm workspaces to manage multiple packages and application
 
 ### Packages
 
-**Foundation Layer:**
+**Foundation Layer (JSR Published):**
 - `packages/jsr/model` - Core data models and types
 - `packages/jsr/time` - Time tracking utilities
+- `packages/jsr/gen` - Course generation utilities
+- `packages/jsr/tutors` - JSR reader package
+
+**Foundation Layer (Svelte):**
 - `packages/svelte/utils/logger` - Logging utility
 
 **Core Services:**
