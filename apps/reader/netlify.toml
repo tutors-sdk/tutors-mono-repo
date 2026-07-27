@@ -1,16 +1,9 @@
 [build]
   base = "/"
-  publish = "apps/reader/build"
   command = "pnpm install --frozen-lockfile && pnpm --filter tutors-reader... build"
 
 [build.environment]
   NODE_VERSION = "22"
-  NPM_FLAGS = "--prefix=/dev/null"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
 
 [[headers]]
   for = "/*"
