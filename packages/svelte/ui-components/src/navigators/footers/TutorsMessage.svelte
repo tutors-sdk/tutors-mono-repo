@@ -11,8 +11,8 @@
 </script>
 
 {#if contentHtml}
-  <div class="flex w-full justify-center">
-    <p class="prose prose-sm prose-slate dark:prose-invert min-w-full">
+  <div class="flex w-full items-center justify-center">
+    <p class="prose prose-sm prose-slate dark:prose-invert [&>*]:m-0 min-w-full">
       {@html sanitizeHtml(contentHtml ?? "")}
     </p>
   </div>
