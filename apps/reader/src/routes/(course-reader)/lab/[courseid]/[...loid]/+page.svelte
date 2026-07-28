@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { PageData } from "./$types";
-  import Lab from "@tutors/ui/learning-objects/content/lab/Lab.svelte";
-  import Context from "@tutors/ui/learning-objects/structure/Context.svelte";
-  import TalkClient from "@tutors/ui/learning-objects/content/talk/TalkClient.svelte";
+  import Lab from "@tutors/ui-components/learning-objects/content/lab/Lab.svelte";
+  import Context from "@tutors/ui-components/learning-objects/structure/Context.svelte";
+  import TalkClient from "@tutors/ui-components/learning-objects/content/talk/TalkClient.svelte";
   import { hideMainNavigator } from "@tutors/runes";
   import { onDestroy, onMount } from "svelte";
 

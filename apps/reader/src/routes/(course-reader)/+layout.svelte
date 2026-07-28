@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CourseShell from "@tutors/ui/TutorsShell.svelte";
+  import CourseShell from "@tutors/ui-components/TutorsShell.svelte";
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";

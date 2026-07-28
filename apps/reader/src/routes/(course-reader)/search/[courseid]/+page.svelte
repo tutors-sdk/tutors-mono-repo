@@ -8,9 +8,9 @@
   import type { PageData } from "./$types";
   import { currentLo } from "@tutors/runes";
   import { currentCodeTheme } from "@tutors/course/markdown";
-  import Icon from "@tutors/ui/components/Icon.svelte";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
-  import { sanitizeHtml } from "@tutors/ui/utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-components/utils/sanitize";
 
   interface Props {
     data: PageData;

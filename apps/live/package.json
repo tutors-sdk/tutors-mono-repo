@@ -13,7 +13,8 @@
   "dependencies": {
     "@tutors/community": "workspace:*",
     "@tutors/themes": "workspace:*",
-    "@tutors/ui": "workspace:*",
+    "@tutors/ui-primitives": "workspace:*",
+    "@tutors/ui-components": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@tutors/runes": "workspace:*",

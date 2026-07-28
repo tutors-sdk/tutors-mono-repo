@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Icon from "@tutors/ui/components/Icon.svelte";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
 </script>
 
