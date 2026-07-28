@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@skeletonlabs/skeleton-svelte";
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton/themes/cerberus";
+@import "./_dynamic-classes.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Override font-sans to use Inter first */
+@layer theme {
+  :root, :host {
+    --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+}
