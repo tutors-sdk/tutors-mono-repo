@@ -64,22 +64,29 @@ This repository uses pnpm workspaces to manage multiple packages and application
 # Install dependencies
 pnpm install
 
-# Run development server
-pnpm dev
+# Build the UI package (must be done before running any app)
+pnpm --filter @tutors/ui build
 
-# Build all packages
-pnpm build
+# Run the reader development server
+pnpm --filter tutors-reader dev
+
+# Build the reader for production
+pnpm --filter tutors-reader... build
 ```
+
+The `@tutors/ui` package must be built first as it produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications.
+
+The `...` suffix in `pnpm --filter tutors-reader...` builds tutors-reader and all its workspace dependencies in the correct order.
 
 ### Development
 
 ```bash
 # Run specific app
-pnpm --filter reader dev
+pnpm --filter tutors-reader dev
 pnpm --filter catalogue dev
 pnpm --filter live dev
 
-# Build specific package
+# Rebuild the UI package after changes
 pnpm --filter @tutors/ui build
 
 # Type checking
