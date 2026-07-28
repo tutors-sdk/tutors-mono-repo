@@ -4,6 +4,8 @@
 @import "@skeletonlabs/skeleton/themes/cerberus";
 @import "./lib/_dynamic-classes.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Override font-sans to use Inter first */
 @layer theme {
   :root, :host {
