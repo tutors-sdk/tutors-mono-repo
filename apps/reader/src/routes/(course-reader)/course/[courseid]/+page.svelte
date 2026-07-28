@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Composite from "@tutors/ui/learning-objects/structure/Composite.svelte";
+  import Composite from "@tutors/ui-components/learning-objects/structure/Composite.svelte";
   import type { PageData } from "./$types";
 
   interface Props {

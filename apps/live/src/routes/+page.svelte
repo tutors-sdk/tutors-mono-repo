@@ -1,8 +1,8 @@
 <script lang="ts">
   import { liveService } from "@tutors/community";
-  import Courses from "@tutors/ui/time/Courses.svelte";
-  import CoursesGroup from "@tutors/ui/time/CoursesGroup.svelte";
-  import Students from "@tutors/ui/time/Students.svelte";
+  import Courses from "@tutors/ui-components/time/Courses.svelte";
+  import CoursesGroup from "@tutors/ui-components/time/CoursesGroup.svelte";
+  import Students from "@tutors/ui-components/time/Students.svelte";
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
 
   liveService.startGlobalPresenceService();

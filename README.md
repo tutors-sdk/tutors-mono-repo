@@ -39,7 +39,8 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/svelte/connect` - Authentication and user management
 
 **UI Layer:**
-- `packages/svelte/ui` - Shared Svelte UI components
+- `packages/svelte/ui-primitives` - Primitive UI components (Icon, Menu, Sidebar, Image)
+- `packages/svelte/ui-components` - High-level UI components (navigators, learning objects, time views)
 
 ### Applications
 
@@ -64,8 +65,9 @@ This repository uses pnpm workspaces to manage multiple packages and application
 # Install dependencies
 pnpm install
 
-# Build the UI package (must be done before running any app)
-pnpm --filter @tutors/ui build
+# Build the UI packages (must be done before running any app)
+pnpm --filter @tutors/ui-primitives build
+pnpm --filter @tutors/ui-components build
 
 # Run the reader development server
 pnpm --filter tutors-reader dev
@@ -74,7 +76,7 @@ pnpm --filter tutors-reader dev
 pnpm --filter tutors-reader... build
 ```
 
-The `@tutors/ui` package must be built first as it produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications.
+The UI packages must be built first — `@tutors/ui-components` produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. Running `pnpm dev` from the root handles this automatically.
 
 The `...` suffix in `pnpm --filter tutors-reader...` builds tutors-reader and all its workspace dependencies in the correct order.
 
@@ -86,8 +88,9 @@ pnpm --filter tutors-reader dev
 pnpm --filter catalogue dev
 pnpm --filter live dev
 
-# Rebuild the UI package after changes
-pnpm --filter @tutors/ui build
+# Rebuild the UI packages after changes
+pnpm --filter @tutors/ui-primitives build
+pnpm --filter @tutors/ui-components build
 
 # Type checking
 pnpm check

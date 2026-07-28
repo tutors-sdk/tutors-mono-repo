@@ -1,0 +1,67 @@
+<script lang="ts">
+  import type { Lo } from "@tutors/tutors-model-lib";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import TutorsIcon from "@tutors/ui-primitives/components/TutorsIcon.svelte";
+  import { t } from "@tutors/i18n";
+
+  let { lo, parentCourse = null } = $props();
+
+  let breadCrumbs: Lo[] = $derived(lo?.breadCrumbs!);
+  let truncated = [true, true, true, true, true, true, true];
+
+  function truncate(input: string) {
+    if (input.length > 16) {
+      return input.substring(0, 15) + "...";
+    }
+    return input;
+  }
+
+  function title(input: string, truncated: boolean, i: number) {
+    if (truncated === true) {
+      return truncate(input);
+    }
+    return input;
+  }
+</script>
+
+<nav aria-label={t("a11y.breadcrumbs")}>
+<div class="mx-8 my-2 flex items-center overflow-hidden p-1">
+  <ol class="flex w-full items-center gap-2 min-w-0">
+    <li class="flex items-center">
+      <a class="inline-flex items-center hover:underline" href="/"> <TutorsIcon widthPlease="25px" /></a>
+    </li>
+    <li class="flex items-center opacity-50" aria-hidden="true">&rsaquo;</li>
+    {#if parentCourse}
+      <li class="flex items-center">
+        <a class="inline-flex items-center hover:underline" href="/{parentCourse}"> <Icon type="programHome" tip={`Go to Course Home`} /></a>
+      </li>
+      <li class="flex items-center opacity-50" aria-hidden="true">&rsaquo;</li>
+    {/if}
+
+    {#if breadCrumbs}
+      {#each breadCrumbs as lo, i}
+        {#if i >= 1}
+          <li class="mb-1 opacity-50" aria-hidden="true">&rsaquo;</li>
+        {/if}
+        <li class="flex items-center hover:underline min-w-0 flex-shrink-0">
+          <a href={lo.route} class="inline-flex items-center gap-1" style="color: light-dark(black, white);">
+            <Icon type={lo.type} tip={`Go to ${lo.title}`} />
+
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <span
+              class="hidden items-center pl-2 text-xs lg:inline-flex"
+              onmouseenter={() => {
+                truncated[i] = false;
+              }}
+              onmouseleave={() => {
+                truncated[i] = true;
+              }}
+              >{title(lo.title, truncated[i], i)}
+            </span>
+          </a>
+        </li>
+      {/each}
+    {/if}
+  </ol>
+</div>
+</nav>
