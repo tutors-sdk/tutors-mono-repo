@@ -43,7 +43,7 @@ const calendarEntryArb = fc.record({
   id: fc
     .tuple(fc.constant(2024), fc.integer({ min: 1, max: 12 }), fc.integer({ min: 1, max: 28 }))
     .map(([y, m, d]) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`),
-  studentid: fc.stringMatching(/^student-[0-9]{1,3}$/),
+  studentid: fc.integer({ min: 1, max: 999 }).map(n => `student-${n}`),
   courseid: fc.constant("course-1"),
   timeactive: fc.integer({ min: 0, max: 1440 }),
   pageloads: fc.integer({ min: 0, max: 500 })

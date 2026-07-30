@@ -14,7 +14,7 @@ Tutors uses a multi-tier testing strategy to ensure correctness at every level �
 | 4. Integration (mocked)      | Cross-package workflows with mocked Supabase/PartyKit                      | Vitest         |
 | 5. E2E (Playwright)          | Full user journeys against real dev server                                 | Playwright     |
 | 6. Contract (API surface)    | Snapshot-based public API breaking-change detector for JSR packages        | Vitest         |
-| 7. Fuzz (fast-check)         | Property-based testing of data models, tree construction, aggregation      | Vitest         |
+| 7. Fuzz (fast-check)         | Property-based testing of data models, tree construction, aggregation (excluded from default run — pending fast-check v4 fix) | Vitest         |
 
 Existing tests in the codebase (gen-lib Deno tests, course package Vitest tests) are preserved and incorporated into this framework. As new tests are written, this table will be updated with exact counts.
 
@@ -271,11 +271,11 @@ Snapshot the public API surface of each JSR-published package. Acts as a **break
 
 Each test uses `toMatchSnapshot()` for the full export list, so any addition, removal, or rename is caught.
 
-### Tier 7: Property-Based / Fuzz Tests (fast-check)
+### Tier 7: Property-Based / Fuzz Tests (fast-check) — *excluded from default run*
 
 **Location:** `tests/fuzz/`
-**Config:** `vitest.config.ts` (root level)
-**Run:** `pnpm test:fuzz`
+**Config:** `vitest.config.ts` (root level, excluded via `exclude` array)
+**Status:** Excluded from `pnpm vitest run` pending a fast-check v4 compatibility fix (`fc.stringMatching()` crashes the vitest worker process). Test files are retained for future re-enablement. Run manually with `pnpm vitest run tests/fuzz/ --pool threads` if needed.
 
 [fast-check](https://github.com/dubzzz/fast-check) property-based testing:
 
@@ -477,7 +477,7 @@ When an `rc/*` branch is created, the full RC validation pipeline runs automatic
 | 1 | Lint & Type Check | Zero ESLint errors, zero TypeScript errors |
 | 2a | Unit & BDD | All tests pass, coverage above thresholds |
 | 2b | Contract | API snapshots match (or intentionally updated) |
-| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures |
+| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (currently excluded — pending fast-check v4 fix) |
 | 2d | CLI (Deno) | All Deno tests pass |
 | 3a | Build Verification | All apps produce `.svelte-kit/` output |
 | 3b | Dependency Audit | Zero critical CVEs |

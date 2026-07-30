@@ -4,7 +4,7 @@ import { resolve } from "path";
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
-    exclude: ["tests/e2e/**", "tests/release/**"],
+    exclude: ["tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov", "html"],
@@ -21,7 +21,15 @@ export default defineConfig({
     alias: {
       "@tutors/tutors-model-lib": resolve(__dirname, "packages/jsr/model/src/tutors.ts"),
       "@tutors/tutors-gen-lib": resolve(__dirname, "packages/jsr/gen/src/tutors.ts"),
-      "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts")
+      "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
+      "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
+      "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
+      "front-matter": resolve(__dirname, "node_modules/.pnpm/front-matter@4.0.2/node_modules/front-matter/index.js"),
+      "js-yaml": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
+      "npm:js-yaml@^4": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
+      "npm:archiver@^7": resolve(__dirname, "node_modules/.pnpm/archiver@7.0.1/node_modules/archiver/index.js"),
+      "@vento/vento": resolve(__dirname, "tests/support/vento-stub.ts"),
+      "jsr:@vento/vento@1.14.0/plugins/auto_trim.ts": resolve(__dirname, "tests/support/vento-stub.ts")
     }
   }
 });

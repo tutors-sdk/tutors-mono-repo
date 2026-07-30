@@ -39,6 +39,11 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+tests/release/.release-work/
+
+# Mutation testing
+.stryker-tmp/
+reports/mutation/
 
 # Misc
 *.tsbuildinfo
