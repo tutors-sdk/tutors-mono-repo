@@ -2,7 +2,7 @@
   import Iconify from "@iconify/svelte";
   import type { LoEvent } from "@tutors/community";
   import { cardStyles, type CardConfig } from "@tutors/themes";
-  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import Icon from "./Icon.svelte";
   import { themeService } from "@tutors/themes";
 
   let {

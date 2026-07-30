@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { LoRecord } from "@tutors/community";
-  import StudentCard from "@tutors/ui-components/time/StudentCard.svelte";
+  import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
 
   interface Props {
     los: LoRecord[];

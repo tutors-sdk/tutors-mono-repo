@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Footer from "./navigators/footers/Footer.svelte";
+  import Footer from "./footers/Footer.svelte";
   import { onMount, type Snippet } from "svelte";
-  import MainNavigator from "./navigators/MainNavigator.svelte";
+  import MainNavigator from "./MainNavigator.svelte";
   import { animationDelay, hideMainNavigator } from "@tutors/runes";
   import { cubicIn, cubicOut } from "svelte/easing";
   import { fly, slide } from "svelte/transition";

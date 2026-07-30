@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentCourse } from "@tutors/runes";
-  import LoContextTree from "./LoContextTree.svelte";
+  import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
 </script>
 
 <div class=" max-h-[90vh] overflow-y-auto">

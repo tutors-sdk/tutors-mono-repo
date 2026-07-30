@@ -2,7 +2,7 @@
   import { convertMdToHtml } from "@tutors/tutors-model-lib";
   import { onMount } from "svelte";
   import { t } from "@tutors/i18n";
-  import { sanitizeHtml } from "../../utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   let contentHtml = "";
 
   onMount(async () => {

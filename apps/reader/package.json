@@ -29,6 +29,7 @@
     "@tutors/tutors-time-lib": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "@tutors/ui-components": "workspace:*",
+    "@tutors/ui-navigators": "workspace:*",
     "codemirror": "^6.0.2",
     "dompurify": "^3.4.12",
     "file-saver": "^2.0.5",

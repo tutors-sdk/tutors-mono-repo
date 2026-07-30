@@ -40,7 +40,8 @@ This repository uses pnpm workspaces to manage multiple packages and application
 
 **UI Layer:**
 - `packages/svelte/ui-primitives` - Primitive UI components (Icon, Menu, Sidebar, Image)
-- `packages/svelte/ui-components` - High-level UI components (navigators, learning objects, time views)
+- `packages/svelte/ui-navigators` - Navigator components (MainNavigator, SecondaryNavigator, Footer, TutorsShell)
+- `packages/svelte/ui-components` - High-level UI components (learning objects, time views)
 
 ### Applications
 
@@ -67,6 +68,7 @@ pnpm install
 
 # Build the UI packages (must be done before running any app)
 pnpm --filter @tutors/ui-primitives build
+pnpm --filter @tutors/ui-navigators build
 pnpm --filter @tutors/ui-components build
 
 # Run the reader development server
@@ -76,7 +78,7 @@ pnpm --filter tutors-reader dev
 pnpm --filter tutors-reader... build
 ```
 
-The UI packages must be built first — `@tutors/ui-components` produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. Running `pnpm dev` from the root handles this automatically.
+The UI packages must be built in order — `ui-primitives` first, then `ui-navigators`, then `ui-components` which produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. Running `pnpm dev` from the root handles this automatically.
 
 The `...` suffix in `pnpm --filter tutors-reader...` builds tutors-reader and all its workspace dependencies in the correct order.
 
@@ -90,6 +92,7 @@ pnpm --filter live dev
 
 # Rebuild the UI packages after changes
 pnpm --filter @tutors/ui-primitives build
+pnpm --filter @tutors/ui-navigators build
 pnpm --filter @tutors/ui-components build
 
 # Type checking
@@ -112,8 +115,12 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 1. **Foundation** → No internal dependencies
 2. **Core Services** → Depend on foundation
 3. **Feature Services** → Depend on core + foundation
-4. **UI Components** → Depend on all layers
-5. **Applications** → Consume packages as needed
+4. **UI Primitives** → Low-level components (Icon, Menu, Sidebar, Image)
+5. **UI Navigators** → Navigation chrome (MainNavigator, Footer, TutorsShell)
+6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
+7. **Applications** → Consume packages as needed
+
+The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 
 ## Contributing
 

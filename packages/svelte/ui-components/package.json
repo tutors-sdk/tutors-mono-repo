@@ -12,13 +12,10 @@
       "svelte": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./navigators/*": "./src/navigators/*",
     "./learning-objects/layout/*": "./src/learning-objects/layout/*",
     "./learning-objects/content/*": "./src/learning-objects/content/*",
     "./learning-objects/structure/*": "./src/learning-objects/structure/*",
     "./time/*": "./src/time/*",
-    "./utils/sanitize": "./src/utils/sanitize.ts",
-    "./TutorsShell.svelte": "./src/TutorsShell.svelte",
     "./styles.css": "./dist/style.css"
   },
   "scripts": {
@@ -27,6 +24,7 @@
   },
   "dependencies": {
     "@tutors/ui-primitives": "workspace:*",
+    "@tutors/ui-navigators": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/a11y": "workspace:*",
