@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Lo, Podcast } from "@tutors/tutors-model-lib";
-  import { sanitizeHtml } from "../../utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     lo: Podcast;

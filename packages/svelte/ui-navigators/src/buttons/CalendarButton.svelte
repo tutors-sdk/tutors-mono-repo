@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Calendar from "@tutors/ui-components/learning-objects/content/Calendar.svelte";
+  import Calendar from "../Calendar.svelte";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";

@@ -13,7 +13,7 @@
 <div
   role="navigation"
   aria-label={t("a11y.secondaryNavigation")}
-  class="z-5 mb-2 sticky top-0 flex h-12 border-b-[1px]"
+  class="sticky top-0 z-20 mb-2 flex h-12 border-b-[1px]"
   style="background-color: light-dark(var(--color-primary-50), {isClassic ? 'var(--color-tertiary-900)' : 'var(--color-primary-900)'}); border-color: light-dark(var(--color-primary-100), var(--color-primary-800));"
 >
   <Breadcrumbs {lo} {parentCourse} />

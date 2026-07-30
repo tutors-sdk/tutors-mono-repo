@@ -38,6 +38,9 @@ importers:
       '@tutors/ui-components':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-components
+      '@tutors/ui-navigators':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-primitives
@@ -99,6 +102,9 @@ importers:
       '@tutors/ui-components':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-components
+      '@tutors/ui-navigators':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-primitives
@@ -190,6 +196,9 @@ importers:
       '@tutors/ui-components':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-components
+      '@tutors/ui-navigators':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-primitives
@@ -456,6 +465,9 @@ importers:
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
+      '@tutors/ui-navigators':
+        specifier: workspace:*
+        version: link:../ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
         version: link:../ui-primitives
@@ -503,17 +515,84 @@ importers:
         specifier: ^6.0.0
         version: 6.4.3(jiti@2.7.0)(lightningcss@1.33.0)
 
-  packages/svelte/ui-primitives:
+  packages/svelte/ui-navigators:
     dependencies:
+      '@tutors/a11y':
+        specifier: workspace:*
+        version: link:../utils/a11y
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../community
+      '@tutors/connect':
+        specifier: workspace:*
+        version: link:../connect
+      '@tutors/course':
+        specifier: workspace:*
+        version: link:../course
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../utils/logger
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../runes
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
+      '@tutors/ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+    devDependencies:
+      '@iconify/svelte':
+        specifier: ^5.2.1
+        version: 5.2.2(svelte@5.56.8)
+      '@skeletonlabs/skeleton-svelte':
+        specifier: ^5.0.0
+        version: 5.0.0(svelte@5.56.8)
+      '@sveltejs/package':
+        specifier: ^2.0.0
+        version: 2.5.8(svelte@5.56.8)(typescript@5.9.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^5.0.0
+        version: 5.1.1(svelte@5.56.8)(vite@6.4.3(jiti@2.7.0)(lightningcss@1.33.0))
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(jiti@2.7.0)(lightningcss@1.33.0)
+
+  packages/svelte/ui-primitives:
+    dependencies:
+      '@tutors/a11y':
+        specifier: workspace:*
+        version: link:../utils/a11y
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../community
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../utils/i18n
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../runes
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../themes
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../jsr/model
+      dompurify:
+        specifier: ^3.4.12
+        version: 3.4.12
     devDependencies:
       '@iconify/svelte':
         specifier: ^5.2.1

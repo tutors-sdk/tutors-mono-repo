@@ -4,6 +4,9 @@
 @import "@skeletonlabs/skeleton/themes/cerberus";
 @import "./_dynamic-classes.css";
 
+@source "../../ui-navigators/src/**/*.svelte";
+@source "../../ui-primitives/src/**/*.svelte";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Override font-sans to use Inter first */

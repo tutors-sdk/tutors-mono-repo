@@ -15,6 +15,7 @@
     "@tutors/themes": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "@tutors/ui-components": "workspace:*",
+    "@tutors/ui-navigators": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@tutors/runes": "workspace:*",

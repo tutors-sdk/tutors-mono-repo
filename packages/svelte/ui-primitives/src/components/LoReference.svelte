@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Lo } from "@tutors/tutors-model-lib";
-  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import Icon from "./Icon.svelte";
   import { goto } from "$app/navigation";
-  import { sanitizeHtml } from "../../utils/sanitize";
+  import { sanitizeHtml } from "../utils/sanitize";
 
   let { lo }: { lo: Lo } = $props();
 

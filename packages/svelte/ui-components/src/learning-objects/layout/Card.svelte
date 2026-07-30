@@ -5,8 +5,8 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
-  import StudentCard from "../../time/StudentCard.svelte";
-  import { sanitizeHtml } from "../../utils/sanitize";
+  import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import "../../_safelist.svelte";
 
   let { cardDetails, cardLayout } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig }>();

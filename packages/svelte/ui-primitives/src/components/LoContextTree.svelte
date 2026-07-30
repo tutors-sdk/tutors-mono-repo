@@ -3,7 +3,7 @@
   import { TreeView, createTreeViewCollection, useTreeView } from "@skeletonlabs/skeleton-svelte";
   import { onMount } from "svelte";
   import LoReference from "./LoReference.svelte";
-  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import Icon from "./Icon.svelte";
 
   let { lo }: { lo: Lo } = $props();
 

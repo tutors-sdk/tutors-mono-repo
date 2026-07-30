@@ -1,32 +1,27 @@
 {
-  "name": "@tutors/ui-primitives",
+  "name": "@tutors/ui-navigators",
   "version": "0.0.1",
-  "description": "Primitive Svelte UI components for Tutors (Icon, Menu, Sidebar, Image)",
+  "description": "Navigator components for Tutors (MainNavigator, SecondaryNavigator, Footer, buttons, layout switchers)",
   "private": true,
   "type": "module",
-  "svelte": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "svelte": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./components/*": "./src/components/*",
-    "./utils/*": "./src/utils/*"
+    "./*": "./src/*"
   },
   "scripts": {
     "build": "svelte-package -i src -o dist",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@tutors/ui-primitives": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/i18n": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*",
-    "@tutors/runes": "workspace:*",
     "@tutors/a11y": "workspace:*",
+    "@tutors/runes": "workspace:*",
     "@tutors/community": "workspace:*",
-    "dompurify": "^3.4.12"
+    "@tutors/connect": "workspace:*",
+    "@tutors/course": "workspace:*",
+    "@tutors/logger": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",

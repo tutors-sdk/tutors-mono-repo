@@ -5,7 +5,7 @@
 
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
   import { scale } from "svelte/transition";
-  import { scaleTransition } from "@tutors/ui-components/navigators/animations";
+  import { scaleTransition } from "@tutors/ui-primitives/utils/animations";
   import { currentCourse } from "@tutors/runes";
   import { setShowHide } from "@tutors/tutors-model-lib";
 

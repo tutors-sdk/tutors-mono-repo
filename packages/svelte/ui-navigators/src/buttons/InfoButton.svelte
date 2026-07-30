@@ -3,7 +3,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import { t } from "@tutors/i18n";
-  import { sanitizeHtml } from "../../utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 </script>
 
 {#snippet menuSelector()}

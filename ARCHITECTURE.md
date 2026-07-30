@@ -178,6 +178,7 @@ tutors-mono-repo/
 │       ├── community/          # @tutors/community
 │       ├── connect/            # @tutors/connect
 │       ├── ui-primitives/      # @tutors/ui-primitives
+│       ├── ui-navigators/      # @tutors/ui-navigators
 │       ├── ui-components/      # @tutors/ui-components
 │       └── utils/              # Utility packages
 │           ├── logger/         # @tutors/logger
@@ -604,11 +605,18 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 ┌─────────────────────────────────────────────────────────┐
 │              Svelte Package Ecosystem                    │
 │                                                           │
-│  ┌──────────────┐  ┌──────────────┐                     │
-│  │ UI Components │  │ UI Primitives │                     │
-│  │  (High-level) │  │   (Generic)   │                     │
-│  └──────┬────────┘  └──────┬────────┘                     │
-│         │                  │                               │
+│  ┌──────────────┐                                        │
+│  │ UI Components │  (Domain views, pre-compiled CSS)      │
+│  └──────┬────────┘                                        │
+│         │                                                  │
+│  ┌──────┴─────────┐                                       │
+│  │ UI Navigators  │  (Shell, navbars, layout switchers)   │
+│  └──────┬─────────┘                                       │
+│         │                                                  │
+│  ┌──────┴─────────┐                                       │
+│  │ UI Primitives  │  (Icon, Menu, Sidebar, shared comps)  │
+│  └──────┬─────────┘                                       │
+│         │                                                  │
 │  ┌──────┴──┐  ┌───────────┐  ┌────────┐  ┌──────────┐  │
 │  │ Connect │  │ Community │  │ Themes │  │  i18n    │  │
 │  │ (Auth)  │  │ (Anal.)   │  │(Styles)│  │  a11y    │  │
@@ -639,8 +647,9 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 - `connect` - Authentication
 
 **UI (Layer 4)**:
-- `ui-primitives` - Primitive UI components (Icon, Menu, Sidebar, Image)
-- `ui-components` - High-level UI components (navigators, learning objects, time views, TutorsShell)
+- `ui-primitives` - Primitive UI components and shared components (Icon, Menu, Sidebar, Image, LoContextTree, StudentCard)
+- `ui-navigators` - Navigation components (MainNavigator, SecondaryNavigator, Footer, TutorsShell, buttons, layout switchers)
+- `ui-components` - Domain UI components (learning objects, time views) + pre-compiled CSS
 
 ### 1. Runes Package (`packages/svelte/runes`)
 
@@ -929,10 +938,11 @@ packages/svelte/connect/src/
 ### 6. UI Primitives Package (`packages/svelte/ui-primitives`)
 
 **Package Name**: `@tutors/ui-primitives`  
-**Purpose**: Low-level, reusable primitive UI components
+**Purpose**: Low-level, reusable primitive UI components and shared components
 
 #### Components
 
+**Primitive Components**:
 - **Icon** - Iconify-based icon rendering with theme-aware type mapping
 - **IconBar** - Horizontal icon strip
 - **Image** - Responsive image with fallback
@@ -940,29 +950,99 @@ packages/svelte/connect/src/
 - **Sidebar** - Collapsible navigation sidebar
 - **SetuIcon / TutorsIcon** - Branding icons
 
+**Shared Components**:
+- **LoContextTree** - Learning object context tree display
+- **LoReference** - Learning object reference display
+- **StudentCard** - Student information card
+
+**Utilities**:
+- **animations.ts** - Shared animation helpers
+- **sanitize.ts** - HTML sanitization utilities
+
 #### File Structure
 
 ```
 packages/svelte/ui-primitives/src/
 ├── index.ts
 ├── _safelist.svelte
-└── components/
-    ├── Icon.svelte
-    ├── IconBar.svelte
-    ├── Image.svelte
-    ├── Menu.svelte
-    ├── MenuItem.svelte
-    ├── Sidebar.svelte
-    ├── SetuIcon.svelte
-    └── TutorsIcon.svelte
+├── components/
+│   ├── Icon.svelte
+│   ├── IconBar.svelte
+│   ├── Image.svelte
+│   ├── Menu.svelte
+│   ├── MenuItem.svelte
+│   ├── Sidebar.svelte
+│   ├── SetuIcon.svelte
+│   ├── TutorsIcon.svelte
+│   ├── LoContextTree.svelte
+│   ├── LoReference.svelte
+│   └── StudentCard.svelte
+└── utils/
+    ├── animations.ts
+    └── sanitize.ts
 ```
 
-### 7. UI Components Package (`packages/svelte/ui-components`)
+### 7. UI Navigators Package (`packages/svelte/ui-navigators`)
+
+**Package Name**: `@tutors/ui-navigators`  
+**Purpose**: Navigation and shell components
+
+This package sits between `ui-primitives` and `ui-components` in the dependency chain. It provides the main application shell, navigation bars, and layout switching components. The one-directional dependency flow is: `ui-components` -> `ui-navigators` -> `ui-primitives`.
+
+#### Key Components
+
+- **TutorsShell** - Main app shell providing header, main content area, and footer layout
+- **MainNavigator** - Primary navigation bar
+- **SecondaryNavigator** - Secondary navigation bar
+- **LayoutMenu** - Layout switching menu
+- **Calendar** - Calendar view component
+- **CourseContext** - Course context display
+
+#### Subdirectories
+
+- `buttons/` - Navigation buttons (Breadcrumbs, SearchButton, TocButton)
+- `footers/` - Footer components (Footer, TutorsMessage)
+- `layout/` - Layout switchers (ThemeSwitcher, LanguageSwitcher)
+- `titles/` - Title components (CourseTitle, TutorsTitle)
+- `tutors-connect/` - Authentication UI (AnonProfile, ConnectedProfile)
+
+#### File Structure
+
+```
+packages/svelte/ui-navigators/src/
+├── index.ts
+├── TutorsShell.svelte
+├── MainNavigator.svelte
+├── SecondaryNavigator.svelte
+├── LayoutMenu.svelte
+├── Calendar.svelte
+├── CourseContext.svelte
+├── buttons/
+├── footers/
+├── layout/
+├── titles/
+└── tutors-connect/
+```
+
+#### Dependencies
+
+- `@tutors/ui-primitives` - Primitive UI components
+- `@tutors/themes` - Theming and display modes
+- `@tutors/i18n` - Internationalization
+- `@tutors/a11y` - Accessibility
+- `@tutors/runes` - Reactive state
+- `@tutors/community` - Analytics and presence
+- `@tutors/connect` - Authentication
+- `@tutors/course` - Course processing
+- `@tutors/logger` - Logging
+- `@tutors/tutors-model-lib` - Core data models
+
+### 8. UI Components Package (`packages/svelte/ui-components`)
 
 **Package Name**: `@tutors/ui-components`  
 **Purpose**: High-level, domain-specific UI components
 
-This package depends on `@tutors/ui-primitives` and produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. It must be built before running any app.
+This package depends on both `@tutors/ui-navigators` and `@tutors/ui-primitives` and produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. Its `styles.css` uses `@source` directives to scan `ui-navigators` and `ui-primitives` for Tailwind class detection. It must be built before running any app.
 
 #### Component Categories
 
@@ -971,37 +1051,28 @@ This package depends on `@tutors/ui-primitives` and produces a pre-compiled CSS 
 - `layout/` - Cards, Panels, Wall, Units
 - `structure/` - Context, LoContext, CourseContext
 
-**Navigators** (`navigators/`):
-- `buttons/` - Breadcrumbs, SearchButton, TocButton
-- `footers/` - Footer, TutorsMessage
-- `titles/` - CourseTitle, TutorsTitle
-- `tutors-connect/` - AnonProfile, ConnectedProfile
-- `layout/` - ThemeSwitcher, LanguageSwitcher
-
 **Time Components** (`time/`):
-- Catalogue, Students, Courses, StudentCard
+- Catalogue, Students, Courses
 
 **Utilities** (`utils/`):
-- HTML sanitization, grid helpers
+- Grid helpers
 
 #### File Structure
 
 ```
 packages/svelte/ui-components/src/
-├── TutorsShell.svelte      # Main app shell
-├── styles.css              # Tailwind/Skeleton entry point
+├── styles.css              # Tailwind/Skeleton entry point (with @source directives)
 ├── _dynamic-classes.css    # Safelist for @apply directives
 ├── _safelist.svelte        # Safelist for dynamic template classes
 ├── learning-objects/
 │   ├── content/
 │   ├── layout/
 │   └── structure/
-├── navigators/
 ├── time/
 └── utils/
 ```
 
-### 8. Utility Packages (`packages/svelte/utils/`)
+### 9. Utility Packages (`packages/svelte/utils/`)
 
 **Logger** (`logger/`):
 - `@tutors/logger` - Logging utility using loglevel
@@ -1401,10 +1472,27 @@ analyticsService.reportPageLoad(lo)
 Applications (reader, catalogue, live)
         │
         ├─► @tutors/ui-components
-        │   ├─► @tutors/ui-primitives
+        │   ├─► @tutors/ui-navigators
+        │   │   ├─► @tutors/ui-primitives
+        │   │   │   ├─► @tutors/themes
+        │   │   │   ├─► @tutors/i18n
+        │   │   │   └─► @tutors/tutors-model-lib
+        │   │   │
+        │   │   ├─► @tutors/connect
+        │   │   │   ├─► @tutors/community
+        │   │   │   ├─► @tutors/course
+        │   │   │   └─► @tutors/runes
+        │   │   │
         │   │   ├─► @tutors/themes
+        │   │   ├─► @tutors/community
         │   │   ├─► @tutors/i18n
+        │   │   ├─► @tutors/a11y
+        │   │   ├─► @tutors/runes
+        │   │   ├─► @tutors/course
+        │   │   ├─► @tutors/logger
         │   │   └─► @tutors/tutors-model-lib
+        │   │
+        │   ├─► @tutors/ui-primitives
         │   │
         │   ├─► @tutors/community
         │   │   ├─► @tutors/course
@@ -1414,11 +1502,6 @@ Applications (reader, catalogue, live)
         │   │   │   └─► @tutors/tutors-model-lib
         │   │   ├─► @tutors/runes
         │   │   └─► @tutors/logger
-        │   │
-        │   ├─► @tutors/connect
-        │   │   ├─► @tutors/community
-        │   │   ├─► @tutors/course
-        │   │   └─► @tutors/runes
         │   │
         │   ├─► @tutors/themes
         │   │   ├─► @tutors/course
@@ -1434,6 +1517,8 @@ Applications (reader, catalogue, live)
         │   │   └─► @tutors/course
         │   │
         │   └─► @tutors/tutors-model-lib
+        │
+        ├─► @tutors/ui-navigators
         │
         ├─► @tutors/ui-primitives
         │
@@ -1463,11 +1548,12 @@ Applications (reader, catalogue, live)
 - `@tutors/connect` → community, course, runes, model
 
 **Layer 5** (UI):
-- `@tutors/ui-primitives` → themes, i18n, model
-- `@tutors/ui-components` → ui-primitives + all packages
+- `@tutors/ui-primitives` → themes, i18n, model, runes, a11y, community
+- `@tutors/ui-navigators` → ui-primitives, themes, i18n, a11y, runes, community, connect, course, logger, model
+- `@tutors/ui-components` → ui-navigators, ui-primitives + all packages
 
 **Layer 6** (applications):
-- `reader`, `catalogue`, `live` → ui-primitives, ui-components + other packages
+- `reader`, `catalogue`, `live` → ui-primitives, ui-navigators, ui-components + other packages
 
 ---
 
@@ -1582,6 +1668,7 @@ pnpm --filter live dev
 
 ```bash
 pnpm --filter @tutors/ui-primitives build
+pnpm --filter @tutors/ui-navigators build
 pnpm --filter @tutors/ui-components build
 pnpm --filter @tutors/course check
 ```
