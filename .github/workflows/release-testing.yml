@@ -1,0 +1,146 @@
+name: Release Testing
+
+on:
+  push:
+    branches: ["rc/**"]
+  workflow_dispatch:
+    inputs:
+      baseline_version:
+        description: "Baseline CLI version to compare against (e.g., 5.0.5)"
+        required: false
+        default: "latest"
+
+concurrency:
+  group: release-testing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  artifact-regression:
+    name: "Gate 6a: Artifact Regression"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch reference course
+        run: deno run -A tests/release/scripts/fetch-reference-course.ts
+
+      - name: Generate baseline (production CLI)
+        run: >
+          deno run -A tests/release/scripts/generate-baseline.ts
+          --version=${{ github.event.inputs.baseline_version || 'latest' }}
+
+      - name: Generate candidate (development CLI)
+        run: deno run -A tests/release/scripts/generate-candidate.ts
+
+      - name: Compare artifacts
+        run: >
+          deno run -A tests/release/scripts/compare-artifacts.ts
+          --report=artifact-diff.json
+
+      - name: Upload diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-diff
+          path: artifact-diff.json
+
+  performance-benchmark:
+    name: "Gate 6b: Performance Benchmark"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch reference course
+        run: deno run -A tests/release/scripts/fetch-reference-course.ts
+
+      - name: Run benchmarks
+        run: deno run -A tests/release/scripts/performance-benchmark.ts --mode=all
+
+  smoke-tests:
+    name: "Gate 6c: Smoke Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run smoke tests against production
+        run: >
+          deno run -A tests/release/scripts/smoke-test-preview.ts
+          --url=https://tutors.dev/course/deploy-preview-2--reference-course
+
+  release-report:
+    name: "Release Readiness Report"
+    needs: [artifact-regression, performance-benchmark, smoke-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check gate results
+        run: |
+          echo "## Release Testing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact Regression | ${{ needs.artifact-regression.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Benchmark | ${{ needs.performance-benchmark.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Smoke Tests | ${{ needs.smoke-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.artifact-regression.result }}" == "failure" ]] || \
+             [[ "${{ needs.smoke-tests.result }}" == "failure" ]]; then
+            echo "RELEASE BLOCKED: Critical gates failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          if [[ "${{ needs.performance-benchmark.result }}" == "failure" ]]; then
+            echo "WARNING: Performance regression detected — review before release" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "All release gates passed" >> $GITHUB_STEP_SUMMARY
