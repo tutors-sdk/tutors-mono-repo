@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-core.schema.json",
+  "packageManager": "pnpm",
+  "plugins": [
+    "@stryker-mutator/vitest-runner"
+  ],
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.mutation.ts"
+  },
+  "mutate": [
+    "packages/jsr/model/src/services/search.ts",
+    "packages/jsr/model/src/utils/lo-utils.ts",
+    "packages/jsr/model/src/types/type-utils.ts",
+    "packages/jsr/time/src/services/base-calendar-model.ts",
+    "packages/jsr/time/src/utils/calendar-utils.ts"
+  ],
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "thresholds": {
+    "high": 85,
+    "low": 75,
+    "break": 65
+  },
+  "concurrency": 4,
+  "timeoutMS": 30000,
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": "always",
+  "mutator": {
+    "excludedMutations": [
+      "StringLiteral",
+      "ObjectLiteral"
+    ]
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    ".svelte-kit",
+    "reports",
+    ".stryker-tmp"
+  ],
+  "checkers": [],
+  "disableTypeChecks": "{packages/**/*.ts,tests/**/*.ts}"
+}

@@ -1,0 +1,46 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Public API Surface — @tutors/tutors-time-lib > should export service classes and types 1`] = `
+[
+  "getSupabase",
+  "initSupabase",
+  "BaseCalendarModel",
+  "BaseLabModel",
+  "CourseTime",
+  "filterByDateRange",
+  "getDistinctSortedDates",
+  "formatDateShort",
+  "formatTimeNearestMinute",
+  "formatTimeMinutesOnly",
+  "cellColorForMinutes",
+  "getMondayForDate",
+  "getDistinctSortedWeeks",
+  "extractLabIdentifier",
+  "extractStepName",
+  "getDistinctSortedDatesFromRecords",
+  "toggleLabViewMode",
+]
+`;
+
+exports[`Public API Surface — @tutors/tutors-time-lib > should maintain stable export names 1`] = `
+[
+  "BaseCalendarModel",
+  "BaseLabModel",
+  "CourseTime",
+  "TutorsTime",
+  "cellColorForMinutes",
+  "extractLabIdentifier",
+  "extractStepName",
+  "filterByDateRange",
+  "formatDateShort",
+  "formatTimeMinutesOnly",
+  "formatTimeNearestMinute",
+  "getDistinctSortedDates",
+  "getDistinctSortedDatesFromRecords",
+  "getDistinctSortedWeeks",
+  "getMondayForDate",
+  "getSupabase",
+  "initSupabase",
+  "toggleLabViewMode",
+]
+`;
