@@ -19,6 +19,6 @@
     "markdown-it-sub": "^2.0.0",
     "markdown-it-sup": "^2.0.0",
     "markdown-it-table-of-contents": "^1.1.0",
-    "shiki-transformer-copy-button": "^0.0.5"
+    "shiki-transformer-copy-button": "^0.0.6"
   }
 }
