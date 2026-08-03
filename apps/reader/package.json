@@ -34,7 +34,7 @@
     "dompurify": "^3.4.12",
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
-    "pdfjs-dist": "^6.1.200"
+    "pdfjs-dist": "^6.2.108"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.0",
