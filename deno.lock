@@ -38,7 +38,7 @@
     "npm:shiki-transformer-copy-button@^0.0.5": "0.0.5",
     "npm:shiki-transformer-copy-button@^0.0.6": "0.0.6",
     "npm:vitest@^4.1.10": "4.1.10_@vitest+coverage-v8@4.1.10__vitest@4.1.10_vite@8.2.0",
-    "npm:zod@^3.25.76": "3.25.76"
+    "npm:zod@^4.4.3": "4.4.3"
   },
   "jsr": {
     "@davidbonnet/astring@1.8.6": {
@@ -1668,7 +1668,7 @@
     "mutation-server-protocol@0.4.1": {
       "integrity": "sha512-SBGK0j8hLDne7bktgThKI8kGvGTx3rY3LAeQTmOKZ5bVnL/7TorLMvcVF7dIPJCu5RNUWhkkuF53kurygYVt3g==",
       "dependencies": [
-        "zod@4.4.3"
+        "zod"
       ]
     },
     "mutation-testing-elements@3.7.3": {
@@ -2185,9 +2185,6 @@
         "readable-stream@4.7.0"
       ]
     },
-    "zod@3.25.76": {
-      "integrity": "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="
-    },
     "zod@4.4.3": {
       "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="
     }
@@ -2202,7 +2199,7 @@
         "npm:esm-env@^1.2.2",
         "npm:fast-check@^4.9.0",
         "npm:vitest@^4.1.10",
-        "npm:zod@^3.25.76"
+        "npm:zod@^4.4.3"
       ]
     },
     "members": {
