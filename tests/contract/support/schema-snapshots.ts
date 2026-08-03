@@ -51,13 +51,13 @@ export function zodToJsonSchema(schema: z.ZodType): JsonSchema {
     return { type: "boolean" };
   }
   if (schema instanceof z.ZodLiteral) {
-    return { const: (schema as any)._def.value };
+    return { const: (schema as any).value };
   }
   if (schema instanceof z.ZodEnum) {
-    return { type: "string", enum: (schema as any)._def.values };
+    return { type: "string", enum: (schema as any).options };
   }
   if (schema instanceof z.ZodArray) {
-    return { type: "array", items: zodToJsonSchema((schema as any)._def.type) };
+    return { type: "array", items: zodToJsonSchema((schema as any)._def.element) };
   }
   if (schema instanceof z.ZodOptional) {
     return zodToJsonSchema((schema as any)._def.innerType);
@@ -81,31 +81,26 @@ export function zodToJsonSchema(schema: z.ZodType): JsonSchema {
 
 function stringToJsonSchema(schema: z.ZodString): JsonSchema {
   const result: JsonSchema = { type: "string" };
-  const checks = (schema as any)._def.checks ?? [];
-  for (const check of checks) {
-    if (check.kind === "min") result.minLength = check.value;
-    if (check.kind === "max") result.maxLength = check.value;
-    if (check.kind === "regex") result.pattern = check.regex.source;
-    if (check.kind === "email") result.format = "email";
-    if (check.kind === "url") result.format = "uri";
-    if (check.kind === "uuid") result.format = "uuid";
-  }
+  const s = schema as any;
+  if (s.minLength != null) result.minLength = s.minLength;
+  if (s.maxLength != null) result.maxLength = s.maxLength;
+  if (s.format === "email") result.format = "email";
+  if (s.format === "url") result.format = "uri";
+  if (s.format === "uuid") result.format = "uuid";
   return result;
 }
 
 function numberToJsonSchema(schema: z.ZodNumber): JsonSchema {
   const result: JsonSchema = { type: "number" };
-  const checks = (schema as any)._def.checks ?? [];
-  for (const check of checks) {
-    if (check.kind === "min") result.minimum = check.value;
-    if (check.kind === "max") result.maximum = check.value;
-    if (check.kind === "int") result.type = "integer";
-  }
+  const s = schema as any;
+  if (s.minValue != null && s.minValue !== -Infinity) result.minimum = s.minValue;
+  if (s.maxValue != null && s.maxValue !== Infinity) result.maximum = s.maxValue;
+  if (s.isInt) result.type = "integer";
   return result;
 }
 
 function objectToJsonSchema(schema: z.ZodObject<any>): JsonSchema {
-  const shape = (schema as any)._def.shape();
+  const shape = (schema as any)._def.shape;
   const properties: Record<string, JsonSchema> = {};
   const required: string[] = [];
 
@@ -217,7 +212,7 @@ function findDiffs(path: string, expected: any, actual: any): string[] {
 
 export function listSchemaFields(schema: z.ZodType, prefix: string = ""): string[] {
   if (schema instanceof z.ZodObject) {
-    const shape = (schema as any)._def.shape();
+    const shape = (schema as any)._def.shape;
     const fields: string[] = [];
     for (const [key, val] of Object.entries(shape)) {
       const path = prefix ? `${prefix}.${key}` : key;
@@ -228,7 +223,7 @@ export function listSchemaFields(schema: z.ZodType, prefix: string = ""): string
     return fields;
   }
   if (schema instanceof z.ZodArray) {
-    return listSchemaFields((schema as any)._def.type, `${prefix}[]`);
+    return listSchemaFields((schema as any)._def.element, `${prefix}[]`);
   }
   return [];
 }
