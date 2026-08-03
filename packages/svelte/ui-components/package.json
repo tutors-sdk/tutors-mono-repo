@@ -51,12 +51,12 @@
     "@skeletonlabs/skeleton": "^5.0.0",
     "@skeletonlabs/skeleton-svelte": "^5.0.0",
     "@sveltejs/package": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@tailwindcss/vite": "^4.3.3",
     "svelte": "^5.0.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.0.0",
-    "vite": "^6.0.0"
+    "vite": "^8.2.0"
   },
   "peerDependencies": {
     "@sveltejs/kit": "^2.0.0",
