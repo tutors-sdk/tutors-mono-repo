@@ -1,15 +1,9 @@
 [build]
-  publish = "build"
-  command = "cd ../.. && pnpm install && pnpm --filter tutors-live build"
+  base = "/"
+  command = "pnpm install --frozen-lockfile && pnpm --filter tutors-live... build"
 
 [build.environment]
   NODE_VERSION = "22"
-  NPM_FLAGS = "--prefix=/dev/null"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
 
 [[headers]]
   for = "/*"
