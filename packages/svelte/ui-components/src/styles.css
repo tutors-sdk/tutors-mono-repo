@@ -6,6 +6,7 @@
 
 @source "../../ui-navigators/src/**/*.svelte";
 @source "../../ui-primitives/src/**/*.svelte";
+@source "../../themes/src/**/*.ts";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

@@ -13,6 +13,8 @@
   <!-- Card dimension classes from cardStyles -->
   <div class="w-60 h-[23rem] w-[28rem] h-48 w-64 h-64"></div>
   <div class="w-36 h-[14rem] w-[20rem] h-32 w-48 h-48"></div>
+  <!-- Card image height classes from cardStyles -->
+  <div class="h-28 h-40 h-16 w-48 w-32 w-32 h-32 w-24 h-24"></div>
   <!-- Grid column classes for responsive layouts -->
   <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3"></div>
   <!-- Classes used in ui-primitives (Sidebar, Icon/Tooltip) that need to be in the compiled CSS -->
