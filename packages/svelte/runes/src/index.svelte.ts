@@ -21,8 +21,6 @@ let _currentLo: ReturnType<typeof rune<Lo | null>> | null = null;
 let _currentCourse: ReturnType<typeof rune<Course | null>> | null = null;
 let _tutorsId: ReturnType<typeof rune<TutorsId | null>> | null = null;
 let _courseProtocol: ReturnType<typeof rune<string>> | null = null;
-let _hideMainNavigator: ReturnType<typeof rune<boolean>> | null = null;
-
 export const currentLabStepIndex = {
   get value() { return (_currentLabStepIndex ??= rune(0)).value; },
   set value(v) { (_currentLabStepIndex ??= rune(0)).value = v; }
@@ -58,7 +56,3 @@ export const courseProtocol = {
   set value(v) { (_courseProtocol ??= rune("https://")).value = v; }
 };
 
-export const hideMainNavigator = {
-  get value() { return (_hideMainNavigator ??= rune(false)).value; },
-  set value(v) { (_hideMainNavigator ??= rune(false)).value = v; }
-};

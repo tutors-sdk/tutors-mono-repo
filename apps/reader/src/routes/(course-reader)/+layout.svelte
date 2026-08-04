@@ -3,11 +3,13 @@
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
-  import { currentCourse } from "@tutors/runes";
+  import { currentCourse, currentLo } from "@tutors/runes";
   import { afterNavigate } from "$app/navigation";
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
+
+  let hideNavigator = $derived(currentLo.value?.route !== "wall" && (currentLo.value?.type === "lab" || currentLo.value?.type === "note" || currentLo.value?.type === "tutorial"));
 
   tutorsConnectService.startTimer();
 
@@ -35,7 +37,7 @@
   <title>{currentCourse?.value?.title}</title>
 </svelte:head>
 
-<CourseShell>
+<CourseShell {hideNavigator}>
   <span id="content-panel" class="mt-[-60px] block pt-[60px]"></span>
 
   {@render children()}

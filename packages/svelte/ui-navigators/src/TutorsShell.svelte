@@ -2,14 +2,14 @@
   import Footer from "./footers/Footer.svelte";
   import { onMount, type Snippet } from "svelte";
   import MainNavigator from "./MainNavigator.svelte";
-  import { animationDelay, hideMainNavigator } from "@tutors/runes";
+  import { animationDelay } from "@tutors/runes";
   import { cubicIn, cubicOut } from "svelte/easing";
   import { fly, slide } from "svelte/transition";
   import { prefersReducedMotion } from "@tutors/a11y";
   import { t } from "@tutors/i18n";
 
-  type Props = { children: Snippet };
-  let { children }: Props = $props();
+  type Props = { children: Snippet; hideNavigator?: boolean };
+  let { children, hideNavigator = false }: Props = $props();
   let showFooter = $state(false);
 
   onMount(() => {
@@ -22,7 +22,7 @@
     {t("a11y.skipToContent")}
   </a>
   <header class="sticky top-0 z-10" style="background-color: light-dark(var(--color-surface-100), var(--color-surface-950));">
-    {#if !hideMainNavigator.value}
+    {#if !hideNavigator}
       <div
         class="w-full"
         in:fly={{ y: -48, duration: prefersReducedMotion.value ? 0 : animationDelay.value * 2, easing: cubicOut }}
@@ -37,7 +37,7 @@
     {@render children()}
   </main>
 
-  {#if showFooter && !hideMainNavigator.value}
+  {#if showFooter && !hideNavigator}
     <footer transition:slide={{ duration: prefersReducedMotion.value ? 0 : 800 }} class="mt-auto hidden [@media(min-height:800px)]:lg:block" aria-label={t("a11y.footer")}>
       <Footer />
     </footer>
