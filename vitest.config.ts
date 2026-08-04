@@ -27,7 +27,8 @@ export default defineConfig({
       "front-matter": resolve(__dirname, "node_modules/.pnpm/front-matter@4.0.2/node_modules/front-matter/index.js"),
       "js-yaml": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
       "npm:js-yaml@^4": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
-      "npm:archiver@^7": resolve(__dirname, "node_modules/.pnpm/archiver@7.0.1/node_modules/archiver/index.js"),
+      "npm:archiver@^7": resolve(__dirname, "tests/support/archiver-shim.ts"),
+      "@marp-team/marp-core": resolve(__dirname, "packages/svelte/course/node_modules/@marp-team/marp-core/lib/marp.js"),
       "@vento/vento": resolve(__dirname, "tests/support/vento-stub.ts"),
       "jsr:@vento/vento@1.14.0/plugins/auto_trim.ts": resolve(__dirname, "tests/support/vento-stub.ts")
     }

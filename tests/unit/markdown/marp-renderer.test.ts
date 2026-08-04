@@ -1,33 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-
-/**
- * Tests for the Marp renderer service.
- *
- * The source file (marp-renderer.ts) exports:
- *   - isMarpContent(lo)  -- detects whether a Lo has Marp frontmatter
- *   - buildMarpMarkdown(lo) -- constructs Marp-formatted markdown
- *   - renderMarpSlides(markdown) -- delegates to @marp-team/marp-core
- *
- * We mock @marp-team/marp-core to avoid the heavy Marp dependency and
- * focus on the branching logic in isMarpContent and buildMarpMarkdown.
- */
-
-// Mock @marp-team/marp-core before importing the module under test
-vi.mock("@marp-team/marp-core", () => {
-  return {
-    Marp: class MockMarp {
-      render(md: string) {
-        return { html: `<rendered>${md}</rendered>`, css: ".mock{}" };
-      }
-    }
-  };
-});
-
+import { describe, it, expect } from "vitest";
 import { isMarpContent, buildMarpMarkdown, renderMarpSlides } from "../../../packages/svelte/course/src/markdown/services/marp-renderer";
-
-// ---------------------------------------------------------------------------
-// Helper to build minimal Lo-like objects
-// ---------------------------------------------------------------------------
 
 function makeLo(overrides: Record<string, any> = {}): any {
   return {
@@ -48,15 +20,9 @@ function makeLo(overrides: Record<string, any> = {}): any {
   };
 }
 
-// ---------------------------------------------------------------------------
-// isMarpContent
-// ---------------------------------------------------------------------------
-
 describe("isMarpContent", () => {
   it("returns true when frontMatter.marp is boolean true", () => {
     const lo = makeLo({ frontMatter: { marp: true } });
-    // The source coerces to string and compares lowercase
-    // Boolean true -> String("true").toLowerCase() === "true"
     expect(isMarpContent(lo)).toBe(true);
   });
 
@@ -112,10 +78,6 @@ describe("isMarpContent", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// buildMarpMarkdown
-// ---------------------------------------------------------------------------
-
 describe("buildMarpMarkdown", () => {
   it("returns contentMd unchanged when it already starts with frontmatter", () => {
     const md = "---\nmarp: true\ntheme: gaia\n---\n# Slide";
@@ -126,7 +88,6 @@ describe("buildMarpMarkdown", () => {
   it("returns contentMd unchanged when it starts with leading whitespace then frontmatter", () => {
     const md = "  ---\nmarp: true\n---\n# Slide";
     const lo = makeLo({ contentMd: md });
-    // trimStart() is applied, so "  ---" starts with "---" after trim
     expect(buildMarpMarkdown(lo)).toBe(md);
   });
 
@@ -177,16 +138,10 @@ describe("buildMarpMarkdown", () => {
   it("generated frontmatter ends with separator before content", () => {
     const lo = makeLo({ frontMatter: {}, contentMd: "Content here" });
     const result = buildMarpMarkdown(lo);
-    // lines = ["---", "marp: true", "---", ""].join("\n") + contentMd
-    // Result: "---\nmarp: true\n---\n" + "Content here"
     expect(result).toContain("---\nContent here");
     expect(result.endsWith("Content here")).toBe(true);
   });
 });
-
-// ---------------------------------------------------------------------------
-// renderMarpSlides (mocked)
-// ---------------------------------------------------------------------------
 
 describe("renderMarpSlides", () => {
   it("returns html and css properties", () => {
@@ -195,11 +150,33 @@ describe("renderMarpSlides", () => {
     expect(result).toHaveProperty("css");
   });
 
-  it("delegates to Marp.render and produces HTML from markdown", () => {
+  it("wraps slide content in section tags", () => {
     const result = renderMarpSlides("# Test slide");
-    // Marp converts markdown heading to an <h1> tag
+    expect(result.html).toContain("<section");
+    expect(result.html).toContain("</section>");
+  });
+
+  it("renders markdown headings into HTML", () => {
+    const result = renderMarpSlides("# Test slide");
     expect(result.html).toContain("Test slide");
+    expect(result.html).toContain("<h1");
+  });
+
+  it("renders paragraph content", () => {
+    const result = renderMarpSlides("Some paragraph text");
+    expect(result.html).toContain("Some paragraph text");
+    expect(result.html).toContain("<section");
+  });
+
+  it("produces real CSS", () => {
+    const result = renderMarpSlides("# Slide 1");
     expect(typeof result.css).toBe("string");
-    expect(result.css.length).toBeGreaterThan(0);
+    expect(result.css.length).toBeGreaterThan(100);
+  });
+
+  it("renders multiple slides separated by ---", () => {
+    const result = renderMarpSlides("# Slide 1\n\n---\n\n# Slide 2");
+    expect(result.html).toContain("Slide 1");
+    expect(result.html).toContain("Slide 2");
   });
 });
