@@ -1,23 +1,14 @@
 <script lang="ts">
-  import { hideMainNavigator } from "@tutors/runes";
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
   import { copyCode } from "@tutors/course/markdown";
   import type { Lo } from "@tutors/tutors-model-lib";
-  import { onDestroy, onMount } from "svelte";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     lo: Lo;
   }
   let { lo }: Props = $props();
-
-  onMount(() => {
-    hideMainNavigator.value = true;
-  });
-  onDestroy(() => {
-    hideMainNavigator.value = false;
-  });
 </script>
 
 <article class="prose dark:prose-invert mr-4 max-w-none overflow-x-auto" use:mermaidify use:copyCode>
