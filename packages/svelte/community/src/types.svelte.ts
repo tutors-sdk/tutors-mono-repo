@@ -162,5 +162,5 @@ export interface CatalogueService {
   getCatalogueCount(): Promise<number>;
   getStudentCount(): Promise<number>;
   pruneCatalogue(fetchFunction: typeof fetch): Promise<void>;
-  deleteCourses(courseIds: string[]): Promise<void>;
+  //deleteCourses(courseIds: string[]): Promise<void>;
 }

@@ -21,7 +21,8 @@
   </a>
   <a
     class="darkbg-primary-700 dark:bg-teritary-400 btn w-2/3 rounded-sm bg-primary-800 text-white hover:scale-110 hover:bg-primary-600 md:w-48 dark:text-white"
-    href="/catalogue"
+    href="https://catalogue.tutors.dev"
+    target="_blank"
     rel="noreferrer"
   >
     <Icon type="live" /> {t("home.catalogue")}
