@@ -3,13 +3,14 @@
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
-  import { currentCourse, currentLo } from "@tutors/runes";
+  import { currentCourse } from "@tutors/runes";
   import { afterNavigate } from "$app/navigation";
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
 
-  let hideNavigator = $derived(currentLo.value?.route !== "wall" && (currentLo.value?.type === "lab" || currentLo.value?.type === "note" || currentLo.value?.type === "tutorial"));
+  const hiddenRoutes = ["/lab/", "/note/", "/tutorial/"];
+  let hideNavigator = $derived(hiddenRoutes.some((r) => page.route.id?.includes(r)));
 
   tutorsConnectService.startTimer();
 
