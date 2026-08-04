@@ -13,7 +13,7 @@
   </a>
   <a
     class="darkbg-primary-700 dark:bg-teritary-400 btn w-2/3 rounded-sm bg-primary-800 text-white hover:scale-110 hover:bg-primary-600 md:w-48 dark:text-white"
-    href="https://github.com/tutors-sdk/tutors"
+    href="https://github.com/tutors-sdk/tutors-mono-repo"
     target="_blank"
     rel="noreferrer"
   >
@@ -28,7 +28,8 @@
   </a>
   <a
     class="darkbg-primary-700 dark:bg-teritary-400 btn w-2/3 rounded-sm bg-primary-800 text-white hover:scale-110 hover:bg-primary-600 md:w-48 dark:text-white"
-    href="/live"
+    href="https://live.tutors.dev"
+    target="_blank"
     rel="noreferrer"
   >
     <Icon type="tutorsTime" /> {t("home.live")}

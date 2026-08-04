@@ -26,6 +26,6 @@
   <title>Tutors Live</title>
 </svelte:head>
 
-<TutorsShell>
+<TutorsShell showConnect={false}>
   {@render children()}
 </TutorsShell>
