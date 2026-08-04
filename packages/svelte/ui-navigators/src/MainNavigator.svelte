@@ -14,6 +14,8 @@
   import CourseSentimentButton from "@tutors/ui-navigators/buttons/CourseSentimentButton.svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
+
+  let { showConnect = true } = $props();
 </script>
 
 <nav aria-label={t("a11y.mainNavigation")}>
@@ -38,19 +40,23 @@
     </AppBar.Headline>
 
     <AppBar.Trail>
-      <CalendarButton />
-      {#if tutorsId.value?.login && tutorsId.value?.share === "true"}
-        <div class="flex items-center">
-          <CourseSentimentButton />
-        </div>
+      {#if showConnect}
+        <CalendarButton />
+        {#if tutorsId.value?.login && tutorsId.value?.share === "true"}
+          <div class="flex items-center">
+            <CourseSentimentButton />
+          </div>
+        {/if}
       {/if}
       <div class="items-center md:flex">
-        <div class="hidden md:flex">
-          <LlmsIndicator />
-        </div>
-        <div class="hidden md:flex">
-          <TutorsTimeIndicator />
-        </div>
+        {#if showConnect}
+          <div class="hidden md:flex">
+            <LlmsIndicator />
+          </div>
+          <div class="hidden md:flex">
+            <TutorsTimeIndicator />
+          </div>
+        {/if}
         <div class="flex items-center">
           {#if currentCourse?.value && !currentCourse?.value?.isPortfolio}
             <SearchButton />
@@ -60,15 +66,17 @@
       <div class="flex items-center">
         <LayoutMenu />
       </div>
-      <span class="mx-2 h-10 w-[1px]" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
-      {#if !currentCourse?.value?.isPrivate}
-        <div class="relative">
-          {#if !tutorsId.value?.login}
-            <AnonProfile redirect="/{currentCourse?.value?.courseId}" />
-          {:else}
-            <ConnectedProfile />
-          {/if}
-        </div>
+      {#if showConnect}
+        <span class="mx-2 h-10 w-[1px]" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
+        {#if !currentCourse?.value?.isPrivate}
+          <div class="relative">
+            {#if !tutorsId.value?.login}
+              <AnonProfile redirect="/{currentCourse?.value?.courseId}" />
+            {:else}
+              <ConnectedProfile />
+            {/if}
+          </div>
+        {/if}
       {/if}
       <span class="hidden md:block">
         {#if currentCourse?.value && !currentCourse?.value?.isPortfolio}

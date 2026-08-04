@@ -8,8 +8,8 @@
   import { prefersReducedMotion } from "@tutors/a11y";
   import { t } from "@tutors/i18n";
 
-  type Props = { children: Snippet; hideNavigator?: boolean };
-  let { children, hideNavigator = false }: Props = $props();
+  type Props = { children: Snippet; hideNavigator?: boolean; showConnect?: boolean };
+  let { children, hideNavigator = false, showConnect = true }: Props = $props();
   let showFooter = $state(false);
 
   onMount(() => {
@@ -28,7 +28,7 @@
         in:fly={{ y: -48, duration: prefersReducedMotion.value ? 0 : animationDelay.value * 2, easing: cubicOut }}
         out:fly={{ y: -48, duration: prefersReducedMotion.value ? 0 : animationDelay.value * 2, easing: cubicIn }}
       >
-        <MainNavigator />
+        <MainNavigator {showConnect} />
       </div>
     {/if}
   </header>

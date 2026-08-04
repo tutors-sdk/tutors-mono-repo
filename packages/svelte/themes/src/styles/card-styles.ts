@@ -40,7 +40,7 @@ export const cardStyles: CardStyleConfig = {
   },
   image: {
     expanded: {
-      portrait: "h-40",
+      portrait: "h-32",
       landscape: "w-48",
       circular: "w-32 h-32"
     },
