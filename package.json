@@ -6,7 +6,19 @@
   "scripts": {
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
-    "check": "npm run check --workspace=apps/reader"
+    "check": "npm run check --workspace=apps/reader",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:bdd": "vitest run --config vitest.config.ts tests/bdd/",
+    "test:contract": "vitest run tests/contract/",
+    "test:fuzz": "vitest run --config vitest.config.fuzz.ts",
+    "test:mutation": "npx stryker run",
+    "test:e2e": "playwright test",
+    "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
+    "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
+    "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
+    "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build"
   },
   "devDependencies": {
     "@stryker-mutator/core": "^9.6.1",

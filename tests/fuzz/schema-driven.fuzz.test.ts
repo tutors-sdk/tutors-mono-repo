@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 import { z } from "zod";
 import {
-  zodToArbitrary,
   calendarEntryArbitrary,
   loRecordArbitrary,
   learningRecordArb,
@@ -212,20 +211,26 @@ describe("Schema-Driven Fuzz: rejection testing", () => {
   });
 
   it("ConnectUser rejects non-URL avatar_url", () => {
+    // Zod 4 URL validation accepts many scheme-like strings (e.g. "A: ").
+    // Generate values that are known-invalid rather than filtering on "http".
+    const invalidUrlArb = fc.constantFrom(
+      "not-a-url",
+      "://missing-scheme",
+      "just text",
+      "",
+      "http://"
+    );
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 1, maxLength: 50 }).filter((s) => !s.startsWith("http")),
-        (badUrl) => {
-          const user = {
-            id: "u1",
-            github_id: "gh-1",
-            full_name: "Test",
-            avatar_url: badUrl,
-            created_at: "2024-01-15T10:00:00Z",
-          };
-          expect(ConnectUserSchema.safeParse(user).success).toBe(false);
-        }
-      ),
+      fc.property(invalidUrlArb, (badUrl) => {
+        const user = {
+          id: "u1",
+          github_id: "gh-1",
+          full_name: "Test",
+          avatar_url: badUrl,
+          created_at: "2024-01-15T10:00:00Z"
+        };
+        expect(ConnectUserSchema.safeParse(user).success).toBe(false);
+      }),
       { numRuns: FUZZ_RUNS }
     );
   });
