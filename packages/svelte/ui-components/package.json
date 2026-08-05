@@ -16,7 +16,7 @@
     "./learning-objects/content/*": "./src/learning-objects/content/*",
     "./learning-objects/structure/*": "./src/learning-objects/structure/*",
     "./time/*": "./src/time/*",
-    "./styles.css": "./dist/style.css"
+    "./styles.css": "./src/styles.css"
   },
   "scripts": {
     "build": "svelte-package -i src -o dist && vite build --config vite.config.ts",

@@ -1,6 +1,6 @@
 {
   "name": "tutors-catalogue",
-  "version": "1.0.0",
+  "version": "16.0.0",
   "description": "Tutors Catalogue - Browse all Tutors courses",
   "private": true,
   "type": "module",

@@ -28,9 +28,9 @@ export const cardStyles: CardStyleConfig = {
   },
   dimensions: {
     expanded: {
-      portrait: "w-60 h-[23rem]",
-      landscape: "w-[28rem] h-48",
-      circular: "w-64 h-64"
+      portrait: "w-56 h-[21rem]",
+      landscape: "w-[26rem] h-44",
+      circular: "w-60 h-60"
     },
     compacted: {
       portrait: "w-36 h-[14rem]",
