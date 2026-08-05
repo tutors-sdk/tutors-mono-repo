@@ -12,10 +12,10 @@
     <img src="https://{currentCourse?.value?.courseUrl}/{currentCourse?.value?.footer}" alt={t("footer.sponsorsAlt")} class="w-full" />
   </div>
 {:else}
-  <div class="bg-surface-100-800-token border-surface-200-700-token flex h-12 w-full items-center overflow-hidden border-t-[1px]">
+  <div class="bg-surface-100-800-token border-surface-200-700-token flex h-8 w-full items-center overflow-hidden border-t-[1px]">
     <div class="mx-auto flex w-full items-center">
           <div class="ml-4">
-            <TutorsIcon />
+            <TutorsIcon widthPlease="28px" />
           </div>
           <div class="w-48">
             <TutorsVersion />

@@ -54,7 +54,7 @@
   });
 
   const cardShellClass = $derived(
-    `card preset-filled-${themeService.getTypeColour(cardDetails.type)}-100-900 border-[1px] border-y-8 ` +
+    `card preset-filled-${themeService.getTypeColour(cardDetails.type)}-100-900 border-[1px] ` +
       `${styles.container} border-${themeService.getTypeColour(cardDetails.type)}-500 ` +
       `m-2 ${styles.dimensions} transition-all hover:scale-[1.10]`
   );
