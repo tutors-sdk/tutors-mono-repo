@@ -1,181 +1,127 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-
-/**
- * Tests for packages/jsr/gen/src/utils/netlify.ts
- *
- * Both writeFile and generateNetlifyToml wrap Node's fs module.
- * We mock "node:fs" to verify correct calls without touching the filesystem.
- */
-
-vi.mock("node:fs", () => ({
-  existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  writeFileSync: vi.fn(),
-}));
-
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { writeFile, generateNetlifyToml } from "../../../packages/jsr/gen/src/utils/netlify.ts";
 
+let testDir: string;
+
 beforeEach(() => {
-  vi.clearAllMocks();
+  testDir = fs.mkdtempSync(path.join(os.tmpdir(), "netlify-test-"));
 });
 
-// ---------------------------------------------------------------------------
-// writeFile
-// ---------------------------------------------------------------------------
+afterEach(() => {
+  fs.rmSync(testDir, { recursive: true, force: true });
+});
+
 describe("netlify: writeFile", () => {
   it("creates the folder when it does not exist", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
+    const folder = path.join(testDir, "new-folder");
 
-    writeFile("/site/output", "file.txt", "hello");
+    writeFile(folder, "file.txt", "hello");
 
-    expect(fs.mkdirSync).toHaveBeenCalledWith("/site/output");
+    expect(fs.existsSync(folder)).toBe(true);
   });
 
-  it("does not create the folder when it already exists", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+  it("does not fail when the folder already exists", () => {
+    const folder = path.join(testDir, "existing-folder");
+    fs.mkdirSync(folder);
 
-    writeFile("/site/output", "file.txt", "hello");
+    writeFile(folder, "file.txt", "hello");
 
-    expect(fs.mkdirSync).not.toHaveBeenCalled();
+    expect(fs.existsSync(folder)).toBe(true);
+    expect(fs.readFileSync(path.join(folder, "file.txt"), "utf-8")).toBe("hello");
   });
 
   it("writes the file with the correct joined path", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    const folder = path.join(testDir, "output");
+    fs.mkdirSync(folder);
 
-    writeFile("/site/output", "data.json", '{"key":"value"}');
+    writeFile(folder, "data.json", '{"key":"value"}');
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      "/site/output/data.json",
-      '{"key":"value"}',
-    );
+    const written = fs.readFileSync(path.join(folder, "data.json"), "utf-8");
+    expect(written).toBe('{"key":"value"}');
   });
 
   it("creates the folder then writes the file when folder is missing", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
+    const folder = path.join(testDir, "brand-new");
 
-    writeFile("/new/folder", "index.html", "<html></html>");
+    writeFile(folder, "index.html", "<html></html>");
 
-    expect(fs.mkdirSync).toHaveBeenCalledWith("/new/folder");
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      "/new/folder/index.html",
-      "<html></html>",
-    );
+    expect(fs.existsSync(folder)).toBe(true);
+    const written = fs.readFileSync(path.join(folder, "index.html"), "utf-8");
+    expect(written).toBe("<html></html>");
   });
 });
 
-// ---------------------------------------------------------------------------
-// generateNetlifyToml
-// ---------------------------------------------------------------------------
 describe("netlify: generateNetlifyToml", () => {
+  let siteDir: string;
+
+  beforeEach(() => {
+    siteDir = path.join(testDir, "my-site");
+  });
+
   it("writes a netlify.toml file to the site folder", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const tomlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("netlify.toml"),
-    );
-    expect(tomlCall).toBeDefined();
-    expect(tomlCall![0]).toBe("/deploy/my-site/netlify.toml");
+    expect(fs.existsSync(path.join(siteDir, "netlify.toml"))).toBe(true);
   });
 
   it("writes an index.html file to the site folder", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const htmlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("index.html"),
-    );
-    expect(htmlCall).toBeDefined();
-    expect(htmlCall![0]).toBe("/deploy/my-site/index.html");
+    expect(fs.existsSync(path.join(siteDir, "index.html"))).toBe(true);
   });
 
   it("netlify.toml contains a [[redirects]] block", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const tomlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("netlify.toml"),
-    );
-    const tomlContent = tomlCall![1] as string;
+    const tomlContent = fs.readFileSync(path.join(siteDir, "netlify.toml"), "utf-8");
     expect(tomlContent).toContain("[[redirects]]");
   });
 
   it("netlify.toml redirect routes from /* to /index.html with status 200", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const tomlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("netlify.toml"),
-    );
-    const tomlContent = tomlCall![1] as string;
+    const tomlContent = fs.readFileSync(path.join(siteDir, "netlify.toml"), "utf-8");
     expect(tomlContent).toContain('from = "/*"');
     expect(tomlContent).toContain('to = "/index.html"');
     expect(tomlContent).toContain("status = 200");
   });
 
   it("netlify.toml contains CORS Access-Control-Allow-Origin header set to *", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const tomlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("netlify.toml"),
-    );
-    const tomlContent = tomlCall![1] as string;
+    const tomlContent = fs.readFileSync(path.join(siteDir, "netlify.toml"), "utf-8");
     expect(tomlContent).toContain('Access-Control-Allow-Origin = "*"');
   });
 
   it("netlify.toml contains [[headers]] block scoped to /*", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const tomlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("netlify.toml"),
-    );
-    const tomlContent = tomlCall![1] as string;
+    const tomlContent = fs.readFileSync(path.join(siteDir, "netlify.toml"), "utf-8");
     expect(tomlContent).toContain("[[headers]]");
     expect(tomlContent).toContain('for = "/*"');
   });
 
   it("index.html contains a redirect script to tutors.dev/course/", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const htmlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("index.html"),
-    );
-    const htmlContent = htmlCall![1] as string;
+    const htmlContent = fs.readFileSync(path.join(siteDir, "index.html"), "utf-8");
     expect(htmlContent).toContain("https://tutors.dev/course/");
   });
 
   it("index.html uses window.location.host for the redirect", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const htmlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("index.html"),
-    );
-    const htmlContent = htmlCall![1] as string;
+    const htmlContent = fs.readFileSync(path.join(siteDir, "index.html"), "utf-8");
     expect(htmlContent).toContain("window.location.host");
   });
 
   it("index.html is a valid HTML document with DOCTYPE", () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true);
+    generateNetlifyToml(siteDir);
 
-    generateNetlifyToml("/deploy/my-site");
-
-    const htmlCall = vi.mocked(fs.writeFileSync).mock.calls.find(
-      (call) => (call[0] as string).endsWith("index.html"),
-    );
-    const htmlContent = htmlCall![1] as string;
+    const htmlContent = fs.readFileSync(path.join(siteDir, "index.html"), "utf-8");
     expect(htmlContent).toContain("<!DOCTYPE html>");
     expect(htmlContent).toContain("<html>");
     expect(htmlContent).toContain("</html>");

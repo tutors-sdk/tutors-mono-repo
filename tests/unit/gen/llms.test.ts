@@ -1,30 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
-
-/**
- * Tests for packages/jsr/gen/src/utils/llms.ts
- *
- * Covers the pure toSnakeCase utility and the generateLlms early-exit guard.
- */
-
-// Mock file-utils and model-lib before importing the module under test
-vi.mock("@tutors/tutors-model-lib", () => ({
-  filterByType: vi.fn().mockReturnValue([]),
-  flattenLos: vi.fn().mockReturnValue([]),
-  removeLeadingHashes: vi.fn((s: string) => s),
-}));
-
-vi.mock("../../../packages/jsr/gen/src/utils/file-utils.ts", () => ({
-  writeFile: vi.fn(),
-  compressToZip: vi.fn(),
-  removeFirstLine: vi.fn((s: string) => s),
-}));
+import { describe, it, expect, afterEach } from "vitest";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 import { toSnakeCase, generateLlms } from "../../../packages/jsr/gen/src/utils/llms.ts";
-import { writeFile, compressToZip } from "../../../packages/jsr/gen/src/utils/file-utils.ts";
 
-// ---------------------------------------------------------------------------
-// toSnakeCase (pure function)
-// ---------------------------------------------------------------------------
 describe("llms: toSnakeCase", () => {
   it("converts spaces to hyphens", () => {
     expect(toSnakeCase("hello world")).toBe("hello-world");
@@ -69,41 +49,92 @@ describe("llms: toSnakeCase", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// generateLlms (early-exit guard)
-// ---------------------------------------------------------------------------
-
 function makeCourse(overrides: Record<string, unknown> = {}): any {
   return {
     type: "course",
     title: "Test Course",
-    contentMd: "# Test\nSome content",
+    contentMd: "# Test Course\nSome content",
+    route: "/course/{{COURSEURL}}",
     los: [],
-    properties: { credits: "Lecturer Name", llm: 0, ...overrides.properties as Record<string, unknown> },
+    properties: { credits: "Lecturer Name", llm: 0, ...(overrides.properties as Record<string, unknown>) },
     ...overrides,
   };
 }
 
-describe("llms: generateLlms early-exit guard", () => {
-  it("returns early without writing files when llm is 0", () => {
-    vi.mocked(writeFile).mockClear();
-    vi.mocked(compressToZip).mockClear();
+describe("llms: generateLlms", () => {
+  let testDir: string;
 
-    const course = makeCourse({ properties: { credits: "Author", llm: 0 } });
-    generateLlms(course, "/output");
-
-    expect(writeFile).not.toHaveBeenCalled();
-    expect(compressToZip).not.toHaveBeenCalled();
+  afterEach(async () => {
+    // compressToZip is async and not awaited by generateLlms, so its
+    // createWriteStream file-open may still be in flight when the test ends.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    if (testDir && fs.existsSync(testDir)) {
+      fs.rmSync(testDir, { recursive: true, force: true });
+    }
   });
 
-  it("returns early without writing files when llm is undefined", () => {
-    vi.mocked(writeFile).mockClear();
-    vi.mocked(compressToZip).mockClear();
+  it("does not create llms directory when llm is 0", () => {
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), "llms-test-"));
+    const course = makeCourse({ properties: { credits: "Author", llm: 0 } });
+    generateLlms(course, testDir);
+    expect(fs.existsSync(path.join(testDir, "llms"))).toBe(false);
+  });
 
+  it("does not create llms directory when llm is undefined", () => {
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), "llms-test-"));
     const course = makeCourse({ properties: { credits: "Author" } });
-    generateLlms(course, "/output");
+    generateLlms(course, testDir);
+    expect(fs.existsSync(path.join(testDir, "llms"))).toBe(false);
+  });
 
-    expect(writeFile).not.toHaveBeenCalled();
-    expect(compressToZip).not.toHaveBeenCalled();
+  it("creates llms output with expected content when llm is 1", async () => {
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), "llms-test-"));
+
+    const course = makeCourse({
+      los: [
+        {
+          type: "topic",
+          title: "Topic One",
+          contentMd: "# Topic One\nTopic content",
+          route: "/topic/{{COURSEURL}}/topic-one",
+          hide: false,
+          los: [
+            {
+              type: "note",
+              title: "A Note",
+              contentMd: "# A Note\nNote body text",
+              route: "/note/{{COURSEURL}}/topic-one/a-note",
+            },
+          ],
+        },
+      ],
+      properties: { credits: "Test Author", llm: 1 },
+    });
+
+    generateLlms(course, testDir);
+
+    // compressToZip opens write streams asynchronously — wait for them to settle
+    await new Promise((r) => setTimeout(r, 100));
+
+    const llmFolder = path.join(testDir, "llms");
+    expect(fs.existsSync(llmFolder)).toBe(true);
+
+    const completeLlmsFile = path.join(llmFolder, "test-course-complete-llms.txt");
+    expect(fs.existsSync(completeLlmsFile)).toBe(true);
+
+    const content = fs.readFileSync(completeLlmsFile, "utf-8");
+    expect(content).toContain("Test Course");
+    expect(content).toContain("<SYSTEM>");
+    expect(content).toContain("Test Author");
+    expect(content).toContain("Topic One");
+    expect(content).toContain("Note body text");
+
+    const topicsFolder = path.join(llmFolder, "topics");
+    const topicFile = path.join(topicsFolder, "00-topic-one-llms.txt");
+    expect(fs.existsSync(topicFile)).toBe(true);
+
+    const topicContent = fs.readFileSync(topicFile, "utf-8");
+    expect(topicContent).toContain("Topic One");
+    expect(topicContent).toContain("<SYSTEM>");
   });
 });
