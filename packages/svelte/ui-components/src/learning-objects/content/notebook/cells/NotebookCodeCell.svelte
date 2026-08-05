@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { NotebookCell } from "@tutors/tutors-model-lib";
-  import { sanitizeHtml } from "../../../../utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     cell: NotebookCell;

@@ -6,7 +6,7 @@
   import { renderMarpSlides, buildMarpMarkdown } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { sanitizeHtml } from "../../../utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     lo: Talk;
