@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { NotebookCell } from "@tutors/tutors-model-lib";
+  import { sanitizeHtml } from "../../../../utils/sanitize";
 
   interface Props {
     cell: NotebookCell;
@@ -16,7 +17,7 @@
   </div>
   <div class="flex-1 min-w-0 overflow-x-auto">
     <div class="notebook-code-source prose dark:prose-invert prose-pre:overflow-x-auto max-w-none">
-      {@html cell.sourceHtml ?? ""}
+      {@html sanitizeHtml(cell.sourceHtml ?? "")}
     </div>
     {#if cell.outputsHtml}
       <div class="flex items-center border-t border-surface-200 dark:border-surface-700 px-3 py-1.5">
@@ -33,7 +34,7 @@
       </div>
       {#if revealed}
         <div class="notebook-outputs border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 p-3">
-          {@html cell.outputsHtml}
+          {@html sanitizeHtml(cell.outputsHtml ?? "")}
         </div>
       {/if}
     {/if}
