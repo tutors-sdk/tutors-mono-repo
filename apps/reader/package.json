@@ -33,7 +33,8 @@
     "dompurify": "^3.4.12",
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
-    "pdfjs-dist": "^6.1.200"
+    "pdfjs-dist": "^6.1.200",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^7.0.1",
