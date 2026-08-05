@@ -3,7 +3,7 @@
   import Cards from "../layout/Cards.svelte";
   import Video from "../content/Video.svelte";
   import { currentCourse } from "@tutors/runes";
-  import SecondaryNavigator from "@tutors/ui-components/navigators/SecondaryNavigator.svelte";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import Podcast from "../content/Podcast.svelte";
 
   interface Props {

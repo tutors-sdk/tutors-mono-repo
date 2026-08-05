@@ -13,7 +13,7 @@
   {#each courseRecords as courseRecord}
     <Card
       cardDetails={{
-        route: `/course/${courseRecord?.id}`,
+        route: `https://tutors.dev/course/${courseRecord?.id}`,
         title: courseRecord?.title,
         type: "course",
         summary: courseRecord?.credits,

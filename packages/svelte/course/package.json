@@ -9,12 +9,12 @@
     "./markdown": "./src/markdown/index.ts"
   },
   "dependencies": {
+    "@marp-team/marp-core": "^4.3.1",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "@marp-team/marp-core": "^4.3.1",
     "mermaid": "^11.16.0",
-    "shiki": "^4.2.0"
+    "shiki": "^4.4.1"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

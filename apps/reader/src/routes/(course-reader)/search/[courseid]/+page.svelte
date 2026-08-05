@@ -10,7 +10,7 @@
   import { currentCodeTheme } from "@tutors/course/markdown";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
-  import { sanitizeHtml } from "@tutors/ui-components/utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     data: PageData;

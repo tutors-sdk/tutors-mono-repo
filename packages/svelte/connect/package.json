@@ -15,7 +15,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "@auth/sveltekit": "1.11.2"
+    "@auth/sveltekit": "^1.11.3"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

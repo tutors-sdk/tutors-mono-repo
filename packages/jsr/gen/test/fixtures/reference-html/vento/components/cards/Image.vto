@@ -1,7 +1,0 @@
-{{ export function image(lo, path) }}
-  {{ if lo.icon }}
-    <span class="iconify" data-icon="{{ lo.icon.type }}" data-width="164" style="color:{{ lo.icon.color }};"></span>
-  {{ else }}
-      <img loading="lazy" class="object-scale-down w-full h-40" src="{{ path }}/{{ lo.id }}/{{ lo.imgFile }}" alt="{{ lo.title }}">
-  {{ /if }}
-{{ /export }}

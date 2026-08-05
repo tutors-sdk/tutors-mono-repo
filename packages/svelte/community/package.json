@@ -10,11 +10,11 @@
     "./utils/supabase-client": "./src/utils/supabase-client.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "@tutors/course": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
-    "@tutors/course": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "@supabase/supabase-js": "^2.108.0",
     "partysocket": "^1.1.19"
   },
   "peerDependencies": {

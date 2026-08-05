@@ -1,10 +1,18 @@
-@import "tailwindcss";
-@import "@skeletonlabs/skeleton-svelte";
-@import "@skeletonlabs/skeleton";
-@import "@skeletonlabs/skeleton/themes/cerberus";
-@import "./_dynamic-classes.css";
+@source "../../ui-navigators/src/**/*.svelte";
+@source "../../ui-primitives/src/**/*.svelte";
+@source "../../ui-components/src/**/*.svelte";
+@source "../../themes/src/**/*.ts";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* Skeleton v5 btn constrains inner SVGs to --btn-size; undo that so Iconify icons render at their explicit height */
+.btn > svg {
+  width: auto;
+  height: auto;
+}
+
+/* Reduce AppBar vertical padding to match predecessor Skeleton v4 nav height */
+[data-scope='app-bar'][data-part='root'] {
+  padding-block: 0.5rem;
+}
 
 /* Override font-sans to use Inter first */
 @layer theme {
