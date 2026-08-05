@@ -40,7 +40,7 @@ const { handle: authInitHandle } = SvelteKitAuth({
   },
 
   session: {
-    maxAge: 60 * 60 * 24 * 365, // 1 year
+    maxAge: 60 * 60 * 24 * 30, // 30 days
 
     strategy: "jwt"
   },
