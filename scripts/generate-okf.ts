@@ -268,78 +268,260 @@ function extractComponents(): ComponentInfo[] {
 }
 
 function extractTypes(): TypeInfo[] {
-  const types: TypeInfo[] = [];
-  const typeFiles = findFiles(path.join(ROOT, "packages/jsr/model/src/types"), /\.ts$/);
+  const seen = new Map<string, TypeInfo>();
 
-  for (const file of typeFiles) {
+  // Scan ALL packages for TypeScript files, excluding test and build artifacts
+  const tsFiles = findFiles(path.join(ROOT, "packages"), /\.(?:svelte\.)?ts$/).filter((f) => {
+    const n = f.replace(/\\/g, "/");
+    return !n.includes("/__tests__/") && !n.includes("/test/") && !n.includes(".test.") && !n.includes(".spec.");
+  });
+
+  for (const file of tsFiles) {
     const content = readFileSafe(file);
+    if (!content) continue;
 
-    // Extract exported interfaces
-    const interfaceRegex = /export\s+(?:interface|type)\s+(\w+)\s*(?:extends\s+[\w,\s<>]+)?\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
+    // Find all exported type declarations: interface, type, class, enum
+    const exportPattern = /export\s+(interface|type|class|enum)\s+(\w+)/g;
     let match;
-    while ((match = interfaceRegex.exec(content)) !== null) {
-      const name = match[1];
-      const body = match[2];
+    while ((match = exportPattern.exec(content)) !== null) {
+      const kind = match[1] as TypeInfo["kind"];
+      const name = match[2];
+      const startIdx = match.index + match[0].length;
+      const lookAhead = content.slice(startIdx, Math.min(startIdx + 500, content.length));
+      const bracePos = lookAhead.indexOf("{");
+      const semiPos = lookAhead.indexOf(";");
+
+      // Simple type alias: export type Foo = Bar | Baz;
+      if (kind === "type" && semiPos !== -1 && (bracePos === -1 || semiPos < bracePos)) {
+        const aliasMatch = lookAhead.slice(0, semiPos).match(/=\s*(.+)/s);
+        if (aliasMatch) {
+          const aliasValue = aliasMatch[1].trim();
+          const typeInfo: TypeInfo = {
+            name,
+            kind: "type",
+            file: path.relative(ROOT, file).replace(/\\/g, "/"),
+            fields: [{ name: "(alias)", type: aliasValue, optional: false }],
+            exported: true,
+          };
+          const existing = seen.get(name);
+          if (!existing || typeInfo.fields.length > existing.fields.length) {
+            seen.set(name, typeInfo);
+          }
+        }
+        continue;
+      }
+
+      if (bracePos === -1) continue;
+
+      // Use brace counting to extract the full body (handles nested braces)
+      const bodyStart = startIdx + bracePos;
+      let depth = 0;
+      let bodyEnd = -1;
+      for (let i = bodyStart; i < content.length; i++) {
+        if (content[i] === "{") depth++;
+        else if (content[i] === "}") {
+          depth--;
+          if (depth === 0) {
+            bodyEnd = i;
+            break;
+          }
+        }
+      }
+      if (bodyEnd === -1) continue;
+
+      const body = content.slice(bodyStart + 1, bodyEnd);
       const fields: TypeInfo["fields"] = [];
 
-      const fieldLines = body.split("\n").filter((l) => l.trim() && !l.trim().startsWith("//") && !l.trim().startsWith("*") && !l.trim().startsWith("["));
-      for (const line of fieldLines) {
-        const fieldMatch = line.match(/(\w+)(\?)?:\s*(.+?);?\s*$/);
+      // Track nesting depth to skip fields inside nested objects
+      let bodyDepth = 0;
+      for (const line of body.split("\n")) {
+        const trimmed = line.trim();
+        const lineDepth = bodyDepth;
+
+        // Update depth for next line
+        for (const ch of trimmed) {
+          if (ch === "{") bodyDepth++;
+          else if (ch === "}") bodyDepth--;
+        }
+
+        // Only extract fields at the top level
+        if (lineDepth > 0) continue;
+
+        if (
+          !trimmed ||
+          trimmed.startsWith("//") ||
+          trimmed.startsWith("*") ||
+          trimmed.startsWith("/**") ||
+          trimmed.startsWith("/*") ||
+          trimmed.startsWith("[") ||
+          trimmed.startsWith("}") ||
+          trimmed.startsWith("constructor")
+        )
+          continue;
+        // Skip method signatures (name followed by parenthesis)
+        if (/^\w+\s*[\(<]/.test(trimmed)) continue;
+
+        const fieldMatch = trimmed.match(/^(?:readonly\s+)?(\w+)(\?)?:\s*(.+?)\s*;?\s*$/);
         if (fieldMatch) {
-          fields.push({
-            name: fieldMatch[1],
-            type: fieldMatch[3].replace(/;$/, "").trim(),
-            optional: !!fieldMatch[2],
-          });
+          let fieldType = fieldMatch[3]
+            .replace(/\/\/.*$/, "")
+            .replace(/\s*=\s*\$state.*$/, "")
+            .replace(/;\s*$/, "")
+            .trim();
+          if (fieldType) {
+            fields.push({
+              name: fieldMatch[1],
+              type: fieldType.startsWith("{") ? "object" : fieldType,
+              optional: !!fieldMatch[2],
+            });
+          }
         }
       }
 
-      if (fields.length > 0) {
-        types.push({
-          name,
-          kind: content.includes(`interface ${name}`) ? "interface" : "type",
-          file: path.relative(ROOT, file).replace(/\\/g, "/"),
-          fields,
-          exported: true,
-        });
+      const typeInfo: TypeInfo = {
+        name,
+        kind,
+        file: path.relative(ROOT, file).replace(/\\/g, "/"),
+        fields,
+        exported: true,
+      };
+
+      // Deduplicate by name: keep the entry with more fields
+      const existing = seen.get(name);
+      if (!existing || typeInfo.fields.length > existing.fields.length) {
+        seen.set(name, typeInfo);
       }
     }
   }
 
-  return types;
+  return Array.from(seen.values());
 }
 
 function extractSchemas(): SchemaInfo[] {
   const schemas: SchemaInfo[] = [];
-  const schemaFile = path.join(ROOT, "tests/contract/support/schemas.ts");
-  const content = readFileSafe(schemaFile);
-  if (!content) return schemas;
+  const seen = new Set<string>();
 
-  // Extract z.object schemas
-  const schemaRegex = /export const (\w+)\s*=\s*z\.object\(\{([^}]*(?:\{[^}]*\}[^}]*)*)\}\)/g;
-  let match;
-  while ((match = schemaRegex.exec(content)) !== null) {
-    const name = match[1];
-    const body = match[2];
-    const fields: SchemaInfo["fields"] = [];
+  // Collect all TypeScript files to scan for schemas
+  const allTsFiles = [
+    path.join(ROOT, "tests/contract/support/schemas.ts"),
+    ...findFiles(path.join(ROOT, "packages"), /\.(?:svelte\.)?ts$/).filter((f) => {
+      const n = f.replace(/\\/g, "/");
+      return !n.includes("/__tests__/") && !n.includes("/test/") && !n.includes(".test.") && !n.includes(".spec.");
+    }),
+  ];
 
-    const fieldLines = body.split("\n").filter((l) => l.trim() && !l.trim().startsWith("//"));
-    for (const line of fieldLines) {
-      const fieldMatch = line.match(/(\w+):\s*z\.(\w+)\(\)(.*)$/);
-      if (fieldMatch) {
-        fields.push({
-          name: fieldMatch[1],
-          type: fieldMatch[2],
-          required: !fieldMatch[3].includes(".optional()") && !fieldMatch[3].includes(".nullable()"),
+  for (const file of allTsFiles) {
+    const content = readFileSafe(file);
+    if (!content) continue;
+
+    // 1. Extract Zod schemas (z.object definitions)
+    if (content.includes("z.object(")) {
+      const schemaRegex = /export const (\w+)\s*=\s*z\.object\(\{([^}]*(?:\{[^}]*\}[^}]*)*)\}\)/g;
+      let zodMatch;
+      while ((zodMatch = schemaRegex.exec(content)) !== null) {
+        const name = zodMatch[1];
+        if (seen.has(name)) continue;
+        seen.add(name);
+        const body = zodMatch[2];
+        const fields: SchemaInfo["fields"] = [];
+        for (const line of body.split("\n").filter((l) => l.trim() && !l.trim().startsWith("//"))) {
+          const fieldMatch = line.match(/(\w+):\s*z\.(\w+)\(\)(.*)$/);
+          if (fieldMatch) {
+            fields.push({
+              name: fieldMatch[1],
+              type: fieldMatch[2],
+              required: !fieldMatch[3].includes(".optional()") && !fieldMatch[3].includes(".nullable()"),
+            });
+          }
+        }
+        schemas.push({
+          name,
+          description: titleCase(name.replace(/Schema$/, "").replace(/([A-Z])/g, " $1").trim()),
+          fields,
         });
       }
     }
 
-    schemas.push({
-      name,
-      description: titleCase(name.replace(/Schema$/, "").replace(/([A-Z])/g, " $1").trim()),
-      fields,
-    });
+    // 2. Extract Supabase table models and data-record types as schema concepts
+    const schemaExportPattern = /export\s+(?:interface|type)\s+(\w+)/g;
+    let exportMatch;
+    while ((exportMatch = schemaExportPattern.exec(content)) !== null) {
+      const name = exportMatch[1];
+      if (seen.has(name)) continue;
+
+      // Extract the direct comment above this declaration (not a broad window)
+      const beforeExport = content.slice(Math.max(0, exportMatch.index - 200), exportMatch.index);
+      const lastCommentMatch = beforeExport.match(/(?:\/\*\*(?:[^*]|\*(?!\/))*\*\/|\/\/[^\n]*)\s*$/);
+      const directComment = lastCommentMatch ? lastCommentMatch[0].toLowerCase() : "";
+      const isDbComment = /supabase|table model|\brow\b|pivoted|prepared|\bdb\b/.test(directComment);
+      // Check name pattern for database model types (exclude Service/Model suffixes)
+      const isDbName = /(?:Row|Table|Entry)$/.test(name) || (/^TutorsConnect/.test(name) && !/Service$/.test(name));
+
+      if (!isDbComment && !isDbName) continue;
+      seen.add(name);
+
+      // Find body using brace counting
+      const startIdx = exportMatch.index + exportMatch[0].length;
+      const lookAhead = content.slice(startIdx, Math.min(startIdx + 500, content.length));
+      const bracePos = lookAhead.indexOf("{");
+      const semiPos = lookAhead.indexOf(";");
+
+      // Skip simple type aliases (no body)
+      if (semiPos !== -1 && (bracePos === -1 || semiPos < bracePos)) continue;
+      if (bracePos === -1) continue;
+
+      const bodyStart = startIdx + bracePos;
+      let depth = 0;
+      let bodyEnd = -1;
+      for (let i = bodyStart; i < content.length; i++) {
+        if (content[i] === "{") depth++;
+        else if (content[i] === "}") {
+          depth--;
+          if (depth === 0) { bodyEnd = i; break; }
+        }
+      }
+      if (bodyEnd === -1) continue;
+
+      const body = content.slice(bodyStart + 1, bodyEnd);
+      const fields: SchemaInfo["fields"] = [];
+      let bodyDepth = 0;
+
+      for (const line of body.split("\n")) {
+        const trimmed = line.trim();
+        const lineDepth = bodyDepth;
+        for (const ch of trimmed) {
+          if (ch === "{") bodyDepth++;
+          else if (ch === "}") bodyDepth--;
+        }
+        // Only extract top-level flat fields for schemas
+        if (lineDepth > 0) continue;
+        if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/**") ||
+            trimmed.startsWith("/*") || trimmed.startsWith("[") || trimmed.startsWith("}")) continue;
+        if (/^\w+\s*[\(<]/.test(trimmed)) continue;
+
+        const fieldMatch = trimmed.match(/^(?:readonly\s+)?(\w+)(\?)?:\s*(.+?)\s*;?\s*$/);
+        if (fieldMatch) {
+          const fieldType = fieldMatch[3].replace(/\/\/.*$/, "").replace(/;\s*$/, "").trim();
+          // Skip nested object fields for clean schema output
+          if (fieldType && !fieldType.startsWith("{")) {
+            fields.push({
+              name: fieldMatch[1],
+              type: fieldType,
+              required: !fieldMatch[2],
+            });
+          }
+        }
+      }
+
+      if (fields.length > 0) {
+        const desc = name.replace(/([A-Z])/g, " $1").trim();
+        schemas.push({
+          name,
+          description: titleCase(desc),
+          fields,
+        });
+      }
+    }
   }
 
   return schemas;
@@ -629,20 +811,25 @@ function generateRouteConcepts(routes: RouteInfo[], timestamp: string): void {
 }
 
 function generateTypeConcepts(types: TypeInfo[], timestamp: string): void {
-  const indexLines = ["# Core Types", "", "Type definitions from `@tutors/tutors-model-lib`.", ""];
+  const indexLines = ["# Core Types", "", "Type definitions from all Tutors monorepo packages.", ""];
   for (const t of types.sort((a, b) => a.name.localeCompare(b.name))) {
-    indexLines.push(`* [${t.name}](${kebab(t.name)}.md) — ${t.kind} (${t.fields.length} fields)`);
+    const isAlias = t.fields.length === 1 && t.fields[0].name === "(alias)";
+    const detail = isAlias ? `alias for \`${t.fields[0].type}\`` : `${t.kind} (${t.fields.length} fields)`;
+    indexLines.push(`* [${t.name}](${kebab(t.name)}.md) — ${detail}`);
   }
   indexLines.push("");
   writeOkf(path.join(OKF_OUTPUT, "types", "index.md"), indexLines.join("\n"));
 
   for (const t of types) {
+    const pkg = t.file.split("/").slice(0, 3).join("/");
+    const isAlias = t.fields.length === 1 && t.fields[0].name === "(alias)";
+
     const lines = [
       "---",
       "type: Tutors Type",
       `title: ${t.name}`,
-      `description: ${t.kind} from tutors-model-lib`,
-      `tags: [model, ${t.kind}]`,
+      `description: ${t.kind} from ${pkg}`,
+      `tags: [${t.kind}, ${pkg.includes("jsr") ? "jsr" : "svelte"}]`,
       "generated:",
       "  by: process:generate-okf",
       `  at: ${timestamp}`,
@@ -653,15 +840,15 @@ function generateTypeConcepts(types: TypeInfo[], timestamp: string): void {
       "",
       `**Kind**: ${t.kind}`,
       `**File**: \`${t.file}\``,
-      "",
-      "# Fields",
-      "",
-      "| Name | Type | Optional |",
-      "|------|------|----------|",
     ];
 
-    for (const field of t.fields) {
-      lines.push(`| ${field.name} | \`${field.type}\` | ${field.optional ? "yes" : "no"} |`);
+    if (isAlias) {
+      lines.push("", `**Alias for**: \`${t.fields[0].type}\``);
+    } else if (t.fields.length > 0) {
+      lines.push("", "# Fields", "", "| Name | Type | Optional |", "|------|------|----------|");
+      for (const field of t.fields) {
+        lines.push(`| ${field.name} | \`${field.type}\` | ${field.optional ? "yes" : "no"} |`);
+      }
     }
 
     lines.push("");
@@ -670,7 +857,7 @@ function generateTypeConcepts(types: TypeInfo[], timestamp: string): void {
 }
 
 function generateSchemaConcepts(schemas: SchemaInfo[], timestamp: string): void {
-  const indexLines = ["# Data Schemas", "", "Zod schemas defining Supabase tables, PartyKit protocol, and course JSON structure.", ""];
+  const indexLines = ["# Data Schemas", "", "Data schemas from Supabase table models and structured data types.", ""];
   for (const s of schemas.sort((a, b) => a.name.localeCompare(b.name))) {
     indexLines.push(`* [${s.description}](${kebab(s.name)}.md) — ${s.fields.length} fields`);
   }
@@ -682,8 +869,8 @@ function generateSchemaConcepts(schemas: SchemaInfo[], timestamp: string): void 
       "---",
       "type: Tutors Schema",
       `title: ${escapeYaml(s.description)}`,
-      `description: ${escapeYaml(`Zod schema for ${s.description}`)}`,
-      "tags: [schema, supabase]",
+      `description: ${escapeYaml(`Data schema: ${s.description}`)}`,
+      "tags: [schema, data-model]",
       "generated:",
       "  by: process:generate-okf",
       `  at: ${timestamp}`,
