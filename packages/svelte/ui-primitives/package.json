@@ -26,7 +26,7 @@
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "dompurify": "^3.4.12"
+    "isomorphic-dompurify": "^2.22.0"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",

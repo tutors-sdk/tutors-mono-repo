@@ -27,7 +27,7 @@ const config = {
         'style-src': ['self', 'unsafe-inline', 'https://cdn.jsdelivr.net'],
         'img-src': ['self', 'data:', 'https:', 'blob:'],
         'font-src': ['self', 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com'],
-        'connect-src': ['self', 'https://*.supabase.co', 'wss://*.partykit.dev', 'https://*.partykit.dev'],
+        'connect-src': ['self', 'https:', 'wss://*.partykit.dev'],
         'frame-src': ['https://www.youtube.com', 'https://media.heanet.ie', 'https://vimp.oth-regensburg.de'],
         'media-src': ['self', 'https:'],
         'object-src': ['none'],
