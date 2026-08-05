@@ -43,3 +43,6 @@ coverage/
 # Misc
 *.tsbuildinfo
 .cache/
+
+# Generated OKF knowledge bundle
+okf/

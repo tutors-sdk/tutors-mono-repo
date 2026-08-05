@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
-    "check": "npm run check --workspace=apps/reader"
+    "check": "npm run check --workspace=apps/reader",
+    "generate:okf": "tsx scripts/generate-okf.ts"
   },
   "devDependencies": {
     "clsx": "^2.1.1",
-    "esm-env": "^1.2.2"
+    "esm-env": "^1.2.2",
+    "tsx": "^4.19.0"
   },
   "engines": {
     "node": ">=18.0.0",
