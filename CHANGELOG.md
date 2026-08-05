@@ -4,7 +4,6 @@
 > [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors).
 > Version history prior to v16.0.0 originates from that repository.
 
-## [Unreleased]
 
 ## v16.0.0 (2026-08)
 
