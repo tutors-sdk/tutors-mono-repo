@@ -14,7 +14,13 @@
 @import "@tutors/themes/styles/prose-headings.css";
 @import "@tutors/ui-components/styles.css";
 
+@source "../../../packages/svelte/ui-navigators/src/**/*.svelte";
+@source "../../../packages/svelte/ui-primitives/src/**/*.svelte";
+@source "../../../packages/svelte/ui-components/src/**/*.svelte";
+@source "../../../packages/svelte/themes/src/**/*.ts";
+
 @custom-variant dark (&:where(.dark, .dark *));
+
 
 /* Force generation of responsive layout classes */
 @layer utilities {

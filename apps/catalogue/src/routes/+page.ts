@@ -9,6 +9,7 @@ export const load = async ({ fetch }) => {
     ...entry.course_record,
     visits: entry.visit_count
   }));
+ // await catalogueService.pruneCatalogue(fetch);
   return {
     courseRecords
   };

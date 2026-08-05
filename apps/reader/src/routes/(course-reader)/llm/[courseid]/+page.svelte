@@ -2,9 +2,9 @@
   import { goto } from "$app/navigation";
   import { currentCourse } from "@tutors/runes";
   import { convertMdToHtml } from "@tutors/tutors-model-lib";
-  import SecondaryNavigator from "@tutors/ui-components/navigators/SecondaryNavigator.svelte";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import type { PageData } from "./$types";
-  import { sanitizeHtml } from "@tutors/ui-components/utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     data: PageData;

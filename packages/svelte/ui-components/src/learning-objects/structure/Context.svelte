@@ -2,9 +2,9 @@
   import type { Lo } from "@tutors/tutors-model-lib";
   import { onMount, type Snippet } from "svelte";
   import LoContextPanel from "../layout/LoContextPanel.svelte";
-  import { slideFromRight } from "@tutors/ui-components/navigators/animations";
+  import { slideFromRight } from "@tutors/ui-primitives/utils/animations";
   import { fly } from "svelte/transition";
-  import SecondaryNavigator from "@tutors/ui-components/navigators/SecondaryNavigator.svelte";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
 
   type Props = {
     children: Snippet;

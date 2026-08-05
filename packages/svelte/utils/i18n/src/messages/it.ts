@@ -121,7 +121,7 @@ const it: Record<string, string> = {
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "Un [Toolkit di apprendimento web aperto](/course/tutors-reference-manual): Esplora il [Catalogo Tutors](/catalogue)",
+  "footer.message": "Un [Toolkit di apprendimento web aperto](/course/tutors-reference-manual): Esplora il [Catalogo Tutors](https://catalogue.tutors.dev)",
   "footer.sponsorsAlt": "sponsor",
   "footer.setuAlt": "South East Technological University",
 

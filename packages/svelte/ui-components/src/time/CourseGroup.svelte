@@ -1,7 +1,7 @@
 <script lang="ts">
   import { liveService, LoRecord } from "@tutors/community";
   import CourseGroupHeader from "./CourseGroupHeader.svelte";
-  import StudentCard from "./StudentCard.svelte";
+  import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
 
   let { courseId, courseTitle } = $props<{ courseId: string; courseTitle: string }>();
 

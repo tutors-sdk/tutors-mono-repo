@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css";
-  import TutorsShell from "@tutors/ui-components/TutorsShell.svelte";
+  import TutorsShell from "@tutors/ui-navigators/TutorsShell.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
   import { browser } from "$app/environment";
@@ -26,6 +26,6 @@
   <title>Tutors Catalogue</title>
 </svelte:head>
 
-<TutorsShell>
+<TutorsShell showConnect={false}>
   {@render children()}
 </TutorsShell>

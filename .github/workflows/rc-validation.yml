@@ -1,0 +1,337 @@
+name: RC Validation
+
+on:
+  push:
+    branches: ['rc/**']
+
+concurrency:
+  group: rc-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint-and-typecheck:
+    name: "Gate 1: Lint & Type Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm check
+
+  unit-and-bdd:
+    name: "Gate 2a: Unit & BDD Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests (all packages + apps)
+        run: pnpm test
+
+      - name: Run BDD tests
+        run: pnpm test:bdd
+
+      - name: Upload coverage
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: rc-unit-bdd
+          fail_ci_if_error: false
+
+  contract-tests:
+    name: "Gate 2b: Contract Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run contract tests
+        run: pnpm test:contract
+
+  fuzz-tests:
+    name: "Gate 2c: Fuzz Tests (Extended)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run fuzz tests (elevated run count)
+        run: pnpm test:fuzz
+        env:
+          FUZZ_RUNS: "1000"
+
+  cli-tests:
+    name: "Gate 2d: CLI Tests (Deno)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run gen-lib tests
+        run: cd packages/jsr/gen && deno test test/ --allow-all
+
+  build-verification:
+    name: "Gate 3a: Build Verification"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Verify build outputs exist
+        run: |
+          echo "Checking build outputs..."
+          for app in apps/reader apps/catalogue apps/live; do
+            if [ -d "$app/.svelte-kit" ]; then
+              echo "OK: $app built successfully"
+            else
+              echo "FAIL: $app missing .svelte-kit output"
+              exit 1
+            fi
+          done
+
+  dependency-audit:
+    name: "Gate 3b: Dependency Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit for high/critical vulnerabilities
+        run: pnpm audit --audit-level=high || true
+        continue-on-error: true
+
+      - name: Check for critical vulnerabilities (hard fail)
+        run: |
+          CRITICAL=$(pnpm audit --audit-level=critical --json 2>/dev/null | grep -c '"severity":"critical"' || echo "0")
+          if [ "$CRITICAL" -gt "0" ]; then
+            echo "FAIL: $CRITICAL critical vulnerabilities found"
+            pnpm audit --audit-level=critical
+            exit 1
+          fi
+          echo "OK: No critical vulnerabilities"
+
+  e2e-cross-browser:
+    name: "Gate 4: E2E (${{ matrix.browser }} / ${{ matrix.app }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        app: [reader]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Build all packages and apps
+        run: pnpm build
+
+      - name: Run E2E tests
+        run: pnpm --filter tutors-${{ matrix.app }} test:e2e -- --project=${{ matrix.browser }}
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.app }}-${{ matrix.browser }}
+          path: "apps/${{ matrix.app }}/playwright-report/"
+          retention-days: 30
+
+  artifact-regression:
+    name: "Gate 6: Artifact Regression"
+    needs: [build-verification]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch reference course
+        run: deno run -A tests/release/scripts/fetch-reference-course.ts
+
+      - name: Generate baseline (production CLI)
+        run: deno run -A tests/release/scripts/generate-baseline.ts
+
+      - name: Generate candidate (development CLI)
+        run: deno run -A tests/release/scripts/generate-candidate.ts
+
+      - name: Compare artifacts
+        run: deno run -A tests/release/scripts/compare-artifacts.ts --report=artifact-diff.json
+
+      - name: Upload diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-diff
+          path: artifact-diff.json
+
+  rc-report:
+    name: "RC Readiness Report"
+    needs:
+      - lint-and-typecheck
+      - unit-and-bdd
+      - contract-tests
+      - fuzz-tests
+      - cli-tests
+      - e2e-cross-browser
+      - build-verification
+      - dependency-audit
+      - artifact-regression
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate RC readiness report
+        run: |
+          echo "## RC Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 1 | Lint & Type Check | ${{ needs.lint-and-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2a | Unit & BDD Tests | ${{ needs.unit-and-bdd.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2b | Contract Tests | ${{ needs.contract-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2c | Fuzz Tests (Extended) | ${{ needs.fuzz-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2d | CLI Tests (Deno) | ${{ needs.cli-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 3a | Build Verification | ${{ needs.build-verification.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 3b | Dependency Audit | ${{ needs.dependency-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 4 | Cross-Browser E2E | ${{ needs.e2e-cross-browser.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 6 | Artifact Regression | ${{ needs.artifact-regression.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Determine overall result
+        run: |
+          RESULTS="${{ needs.lint-and-typecheck.result }} ${{ needs.unit-and-bdd.result }} ${{ needs.contract-tests.result }} ${{ needs.fuzz-tests.result }} ${{ needs.cli-tests.result }} ${{ needs.e2e-cross-browser.result }} ${{ needs.build-verification.result }} ${{ needs.dependency-audit.result }} ${{ needs.artifact-regression.result }}"
+          if echo "$RESULTS" | grep -q "failure"; then
+            echo "FAIL: One or more gates failed. RC is NOT ready for release."
+            echo "### Result: NOT READY" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "### Result: READY FOR RELEASE" >> $GITHUB_STEP_SUMMARY
+          echo "All gates passed. This RC can be merged to main."

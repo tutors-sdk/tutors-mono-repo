@@ -1,6 +1,6 @@
 <script lang="ts">
   import { liveService } from "@tutors/community";
-  import StudentCard from "./StudentCard.svelte";
+  import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
 </script>
 
 <div class="flex flex-wrap justify-center">

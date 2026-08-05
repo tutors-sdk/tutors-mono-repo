@@ -3,7 +3,7 @@
   import type { Lo } from "@tutors/tutors-model-lib";
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import LoContext from "../structure/LoContext.svelte";
-  import LoContextTree from "../structure/LoContextTree.svelte";
+  import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
 
   interface Props {
     loContext: Lo;

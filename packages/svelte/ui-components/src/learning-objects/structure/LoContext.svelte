@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Lo } from "@tutors/tutors-model-lib";
-  import LoReference from "./LoReference.svelte";
+  import LoReference from "@tutors/ui-primitives/components/LoReference.svelte";
   import Self from "./LoContext.svelte";
 
   let { lo, indent = 0 }: { lo: Lo; indent: number } = $props();

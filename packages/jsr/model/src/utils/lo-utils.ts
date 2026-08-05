@@ -93,11 +93,11 @@ export function injectCourseUrl(los: Lo[], id: string, url: string) {
 }
 
 export function removeUnknownLos(los: Lo[]) {
-  los.forEach((lo, index) => {
-    if (lo.type === "unknown") {
-      los.splice(index, 1);
+  for (let i = los.length - 1; i >= 0; i--) {
+    if (los[i].type === "unknown") {
+      los.splice(i, 1);
     }
-  });
+  }
 }
 
 export function allVideoLos(los: Lo[]): Lo[] {

@@ -1,0 +1,88 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Public API Surface — @tutors/tutors-model-lib > should export type guard functions 1`] = `
+[
+  "isCompositeLo",
+  "isValid",
+]
+`;
+
+exports[`Public API Surface — @tutors/tutors-model-lib > should export utility functions 1`] = `
+[
+  "Properties",
+  "createToc",
+  "createCompanions",
+  "createWalls",
+  "loadPropertyFlags",
+  "initCalendar",
+  "decorateCourseTree",
+  "decorateLoTree",
+  "searchHits",
+  "extractPath",
+  "initHighlighter",
+  "convertMdToHtml",
+  "convertLabToHtml",
+  "convertNoteToHtml",
+  "convertLoToHtml",
+  "filter",
+  "flattenLos",
+  "filterByType",
+  "fixRoutePaths",
+  "injectCourseUrl",
+  "removeUnknownLos",
+  "allVideoLos",
+  "removeLeadingHashes",
+  "getPanels",
+  "getUnits",
+  "sortLos",
+  "loadIcon",
+  "crumbs",
+  "setShowHide",
+  "getVideoConfig",
+]
+`;
+
+exports[`Public API Surface — @tutors/tutors-model-lib > should maintain stable export names 1`] = `
+[
+  "COURSE_SENTIMENT_IDS",
+  "Properties",
+  "allVideoLos",
+  "assetTypes",
+  "convertLabToHtml",
+  "convertLoToHtml",
+  "convertMdToHtml",
+  "convertNoteToHtml",
+  "createCompanions",
+  "createToc",
+  "createWalls",
+  "crumbs",
+  "decorateCourseTree",
+  "decorateLoTree",
+  "extractPath",
+  "filter",
+  "filterByType",
+  "fixRoutePaths",
+  "flattenLos",
+  "getPanels",
+  "getUnits",
+  "getVideoConfig",
+  "imageTypes",
+  "initCalendar",
+  "initHighlighter",
+  "injectCourseUrl",
+  "isCompositeLo",
+  "isValid",
+  "loCompositeTypes",
+  "loTypes",
+  "loadIcon",
+  "loadPropertyFlags",
+  "markdownIt",
+  "preOrder",
+  "removeLeadingHashes",
+  "removeUnknownLos",
+  "searchHits",
+  "setShowHide",
+  "simpleTypes",
+  "sortLos",
+]
+`;
