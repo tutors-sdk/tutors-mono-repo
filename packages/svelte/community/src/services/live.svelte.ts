@@ -86,6 +86,10 @@ export const liveService: LiveService = {
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
 
+    if (this.partyKitCourse?.close) {
+      this.partyKitCourse.close();
+    }
+
     // Create new WebSocket connection for course
     this.partyKitCourse = new PartySocket({
       host: partyKitServer,

@@ -62,6 +62,10 @@ export const presenceService: PresenceService = {
     this.studentEventMap.clear();
     this.listeningTo = courseId;
 
+    if (this.partyKitCourse?.close) {
+      this.partyKitCourse.close();
+    }
+
     // Create course-specific WebSocket connection
     this.partyKitCourse = new PartySocket({
       host: partyKitServer,

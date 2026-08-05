@@ -205,7 +205,7 @@ export function initCalendar(course: Course) {
         currentWeek: currentWeek,
       };
     }
-  } catch (_e) {
-    console.log("Error loading calendar");
+  } catch (e) {
+    console.error("Error loading calendar:", e);
   }
 }
