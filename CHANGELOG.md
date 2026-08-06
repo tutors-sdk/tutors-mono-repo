@@ -5,6 +5,29 @@
 > Version history prior to v16.0.0 originates from that repository.
 
 
+## v16.0.1 (2026-08)
+
+### Security
+
+- Replace unmaintained `@iktakahiro/markdown-it-katex` with `@mdit/plugin-katex` v1.0.2, resolving 3 CVEs (PR #28)
+- Override vulnerable `cookie` dependency to `>=0.7.0 <1.0.0`, fixing low-severity CVE GHSA-pxg6-pf52-xh8x (PR #27)
+
+### Features
+
+- OKF v0.2 knowledge bundle generator for LLM codebase analysis (PR #24)
+
+### Fixes
+
+- Restore fuzz tests with dedicated `vitest.config.fuzz.ts` using threads pool, compatible with Zod 4 internals (PR #30)
+- Fix analytics service error logging test assertions to match actual two-argument call signature
+- Cap cookie override below 1.0.0 to preserve `parse`/`serialize` named exports required by `@sveltejs/kit`
+- KaTeX CDN CSS updated from 0.16.8 to 0.18.1
+
+### Infrastructure
+
+- GitHub Actions CI workflows (PR #25)
+- JSR package versions aligned to 5.0.6
+
 ## v16.0.0 (2026-08)
 
 ### Breaking Changes
