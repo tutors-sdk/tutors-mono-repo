@@ -185,7 +185,7 @@ describe("analyticsService.reportPageLoad", () => {
 
     analyticsService.reportPageLoad(makeCourse(), makeLo(), makeStudent());
 
-    expect(log.error).toHaveBeenCalledWith("TutorStore Error: DB failure");
+    expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "DB failure" }));
   });
 });
 
@@ -241,7 +241,7 @@ describe("analyticsService.updatePageCount", () => {
       makeStudent()
     );
 
-    expect(log.error).toHaveBeenCalledWith("TutorStore Error: duration fail");
+    expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "duration fail" }));
   });
 });
 
@@ -267,6 +267,6 @@ describe("analyticsService.updateLogin", () => {
 
     await analyticsService.updateLogin("course-1", { user: makeStudent() });
 
-    expect(log.error).toHaveBeenCalledWith("TutorStore Error: upsert failed");
+    expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "upsert failed" }));
   });
 });
