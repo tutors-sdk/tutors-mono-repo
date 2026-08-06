@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { scaleTransition } from "@tutors/ui-components/navigators/animations";
+  import { scaleTransition } from "@tutors/ui-primitives/utils/animations";
   import Iconify from "@iconify/svelte";
   import { scale } from "svelte/transition";
   import { t } from "@tutors/i18n";

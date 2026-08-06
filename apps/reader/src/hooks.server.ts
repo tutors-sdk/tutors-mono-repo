@@ -4,6 +4,21 @@ import { SvelteKitAuth } from "@auth/sveltekit";
 import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
+import { validatePublicEnv, validatePrivateEnv } from "$lib/env";
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_ANON_MODE, PUBLIC_party_kit_main_room } from "$env/static/public";
+
+validatePublicEnv({
+  PUBLIC_SUPABASE_URL,
+  PUBLIC_SUPABASE_ANON_KEY,
+  PUBLIC_ANON_MODE: PUBLIC_ANON_MODE ?? "",
+  PUBLIC_party_kit_main_room
+});
+
+validatePrivateEnv({
+  PRIVATE_AUTH_GITHUB_ID,
+  PRIVATE_AUTH_GITHUB_SECRET,
+  PRIVATE_AUTH_SECRET
+});
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -40,7 +55,7 @@ const { handle: authInitHandle } = SvelteKitAuth({
   },
 
   session: {
-    maxAge: 60 * 60 * 24 * 365, // 1 year
+    maxAge: 60 * 60 * 24 * 30, // 30 days
 
     strategy: "jwt"
   },

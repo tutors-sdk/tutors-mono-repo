@@ -19,7 +19,21 @@ const config = {
     // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
     // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
     // See https://svelte.dev/docs/kit/adapters for more information about adapters.
-    adapter: adapter()
+    adapter: adapter(),
+    csp: {
+      directives: {
+        'default-src': ['self'],
+        'script-src': ['self'],
+        'style-src': ['self', 'unsafe-inline', 'https://cdn.jsdelivr.net'],
+        'img-src': ['self', 'data:', 'https:', 'blob:'],
+        'font-src': ['self', 'https://cdn.jsdelivr.net', 'https://fonts.gstatic.com'],
+        'connect-src': ['self', 'https:', 'wss://*.partykit.dev'],
+        'frame-src': ['https://www.youtube.com', 'https://media.heanet.ie', 'https://vimp.oth-regensburg.de'],
+        'media-src': ['self', 'https:'],
+        'object-src': ['none'],
+        'base-uri': ['self']
+      }
+    }
   }
 };
 

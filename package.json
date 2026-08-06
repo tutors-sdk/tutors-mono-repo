@@ -1,18 +1,40 @@
 {
   "name": "tutors-mono-repo",
-  "version": "1.0.0",
+  "version": "16.0.0",
   "private": true,
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
-    "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
+    "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
     "check": "npm run check --workspace=apps/reader",
-    "generate:okf": "tsx scripts/generate-okf.ts"
+    "generate:okf": "tsx scripts/generate-okf.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:bdd": "vitest run --config vitest.config.ts tests/bdd/",
+    "test:contract": "vitest run tests/contract/",
+    "test:fuzz": "vitest run --pool threads tests/fuzz/",
+    "test:mutation": "npx stryker run",
+    "test:e2e": "playwright test",
+    "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
+    "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
+    "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
+    "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
+    "@testing-library/svelte": "^5.2.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "clsx": "^2.1.1",
     "esm-env": "^1.2.2",
-    "tsx": "^4.19.0"
+    "fast-check": "^4.9.0",
+    "happy-dom": "^18.0.1",
+    "tsx": "^4.19.0",
+    "vitest": "^4.1.10",
+    "zod": "^4.4.3"
   },
   "engines": {
     "node": ">=18.0.0",
