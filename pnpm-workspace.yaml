@@ -7,4 +7,4 @@ allowBuilds:
   esbuild: true
   msw: true
 overrides:
-  cookie: ">=0.7.0"
+  cookie: ">=0.7.0 <1.0.0"
