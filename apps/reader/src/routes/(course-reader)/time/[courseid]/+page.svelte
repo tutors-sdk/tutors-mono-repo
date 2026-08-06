@@ -3,7 +3,7 @@
   import { currentCourse, tutorsId } from "@tutors/runes";
   import HeatMaps from "./HeatMaps.svelte";
   import Tables from "./Tables.svelte";
-  import SecondaryNavigator from "@tutors/ui-components/navigators/SecondaryNavigator.svelte";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import type { PageData } from "./$types";
   import log from "@tutors/logger";
 

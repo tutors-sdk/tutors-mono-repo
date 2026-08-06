@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CourseShell from "@tutors/ui-components/TutorsShell.svelte";
+  import CourseShell from "@tutors/ui-navigators/TutorsShell.svelte";
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
@@ -8,6 +8,9 @@
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
+
+  const hiddenRoutes = ["/lab/", "/note/", "/tutorial/"];
+  let hideNavigator = $derived(hiddenRoutes.some((r) => page.route.id?.includes(r)));
 
   tutorsConnectService.startTimer();
 
@@ -35,7 +38,7 @@
   <title>{currentCourse?.value?.title}</title>
 </svelte:head>
 
-<CourseShell>
+<CourseShell {hideNavigator}>
   <span id="content-panel" class="mt-[-60px] block pt-[60px]"></span>
 
   {@render children()}

@@ -12,25 +12,30 @@
       "svelte": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./components/*": "./src/components/*"
+    "./components/*": "./src/components/*",
+    "./utils/*": "./src/utils/*"
   },
   "scripts": {
     "build": "svelte-package -i src -o dist",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@tutors/themes": "workspace:*",
+    "@tutors/a11y": "workspace:*",
+    "@tutors/community": "workspace:*",
     "@tutors/i18n": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*"
+    "@tutors/runes": "workspace:*",
+    "@tutors/themes": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*",
+    "isomorphic-dompurify": "^2.22.0"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.0",
     "@sveltejs/package": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "svelte": "^5.0.0",
-    "typescript": "^5.0.0",
-    "vite": "^6.0.0"
+    "typescript": "^6.0.3",
+    "vite": "^8.2.0"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

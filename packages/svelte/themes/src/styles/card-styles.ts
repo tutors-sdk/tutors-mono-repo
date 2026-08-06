@@ -28,19 +28,19 @@ export const cardStyles: CardStyleConfig = {
   },
   dimensions: {
     expanded: {
-      portrait: "w-[216px] h-[20.7rem]",
-      landscape: "w-[25.2rem] h-[172px]",
-      circular: "w-[230px] h-[230px]"
+      portrait: "w-56 h-[21rem]",
+      landscape: "w-[26rem] h-44",
+      circular: "w-60 h-60"
     },
     compacted: {
-      portrait: "w-[130px] h-[12.6rem]",
-      landscape: "w-[18rem] h-[115px]",
-      circular: "w-[173px] h-[173px]"
+      portrait: "w-36 h-[14rem]",
+      landscape: "w-[20rem] h-32",
+      circular: "w-48 h-48"
     }
   },
   image: {
     expanded: {
-      portrait: "h-40",
+      portrait: "h-32",
       landscape: "w-48",
       circular: "w-32 h-32"
     },

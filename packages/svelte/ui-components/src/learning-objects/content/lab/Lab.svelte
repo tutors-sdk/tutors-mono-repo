@@ -4,7 +4,7 @@
   import { goto, afterNavigate } from "$app/navigation";
   import type { LiveLab } from "@tutors/course/course";
   import { currentCodeTheme } from "@tutors/course/markdown";
-  import { sanitizeHtml } from "../../../utils/sanitize";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { mermaidify } from "@tutors/course/markdown";
   import { copyCode } from "@tutors/course/markdown";
 
