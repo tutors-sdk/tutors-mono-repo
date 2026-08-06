@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-time-lib",
-  "version": "5.0.4",
+  "version": "5.0.6",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
