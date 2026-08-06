@@ -32,8 +32,8 @@ export const analyticsService: AnalyticsService = {
         this.loRoute = lo.route;
       }
       this.reportPageLoad(course, lo, student);
-    } catch (error: any) {
-      log.error(`TutorStore Error: ${error.message}`);
+    } catch (error: unknown) {
+      log.error("TutorStore Error:", error);
     }
   },
 
@@ -47,8 +47,8 @@ export const analyticsService: AnalyticsService = {
   reportPageLoad(course: Course, lo: Lo, student: TutorsId) {
     try {
       storeStudentCourseLearningObjectInSupabase(course, this.loRoute, lo, student);
-    } catch (error: any) {
-      log.error(`TutorStore Error: ${error.message}`);
+    } catch (error: unknown) {
+      log.error("TutorStore Error:", error);
     }
   },
 
@@ -65,8 +65,8 @@ export const analyticsService: AnalyticsService = {
         if (lo.route) updateLearningRecordsDuration(course.courseId, student.login, this.loRoute);
         updateCalendarDuration(formatDate(new Date()), student.login, course.courseId);
       }
-    } catch (error: any) {
-      log.error(`TutorStore Error: ${error.message}`);
+    } catch (error: unknown) {
+      log.error("TutorStore Error:", error);
     }
   },
 
@@ -76,11 +76,11 @@ export const analyticsService: AnalyticsService = {
    * @param courseId - Course being accessed
    * @param session - Authentication session data
    */
-  async updateLogin(courseId: string, session: any) {
+  async updateLogin(courseId: string, session: { user: Record<string, unknown> }) {
     try {
       await addOrUpdateStudent(session.user);
-    } catch (error: any) {
-      log.error(`TutorStore Error: ${error.message}`);
+    } catch (error: unknown) {
+      log.error("TutorStore Error:", error);
     }
   }
 };
