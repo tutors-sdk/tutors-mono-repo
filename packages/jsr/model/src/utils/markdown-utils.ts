@@ -1,5 +1,5 @@
 import MarkdownIt from "markdown-it";
-import latex from "@iktakahiro/markdown-it-katex";
+import { katex as latex } from "@mdit/plugin-katex";
 import anchor from "markdown-it-anchor";
 import toc from "markdown-it-table-of-contents";
 import { full as emoji } from "markdown-it-emoji";

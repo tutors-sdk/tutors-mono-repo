@@ -4,11 +4,11 @@
   "exports": "./src/tutors.ts",
   "license": "MIT",
   "imports": {
-    "@iktakahiro/markdown-it-katex": "npm:@iktakahiro/markdown-it-katex@^4.0.1",
+    "@mdit/plugin-katex": "npm:@mdit/plugin-katex@^1.0.2",
     "front-matter": "npm:front-matter@^4.0.2",
     "js-yaml": "npm:js-yaml@^4.1.1",
     "archiver": "npm:archiver@^7.0.1",
-    "markdown-it": "npm:markdown-it@^14.1.1",
+    "markdown-it": "npm:markdown-it@^14.2.0",
     "markdown-it-anchor": "npm:markdown-it-anchor@^9.2.0",
     "markdown-it-deflist": "npm:markdown-it-deflist@^3.0.0",
     "markdown-it-emoji": "npm:markdown-it-emoji@^3.0.0",
