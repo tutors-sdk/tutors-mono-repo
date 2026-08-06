@@ -277,7 +277,7 @@ Each test uses `toMatchSnapshot()` for the full export list, so any addition, re
 
 **Location:** `tests/fuzz/`
 **Config:** `vitest.config.ts` (root level, excluded via `exclude` array)
-**Status:** Excluded from `pnpm vitest run` pending a fast-check v4 compatibility fix (`fc.stringMatching()` crashes the vitest worker process). Test files are retained for future re-enablement. Run manually with `pnpm vitest run tests/fuzz/ --pool threads` if needed.
+**Status:** Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Kept out of default `vitest run` so property generation does not use Vitest fork workers ([#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)).
 
 [fast-check](https://github.com/dubzzz/fast-check) property-based testing:
 
@@ -479,7 +479,7 @@ When an `rc/*` branch is created, the full RC validation pipeline runs automatic
 | 1 | Lint & Type Check | Zero ESLint errors, zero TypeScript errors |
 | 2a | Unit & BDD | All tests pass, coverage above thresholds |
 | 2b | Contract | API snapshots match (or intentionally updated) |
-| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (currently excluded — pending fast-check v4 fix) |
+| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (`FUZZ_RUNS=1000 pnpm test:fuzz`) |
 | 2d | CLI (Deno) | All Deno tests pass |
 | 3a | Build Verification | All apps produce `.svelte-kit/` output |
 | 3b | Dependency Audit | Zero critical CVEs |

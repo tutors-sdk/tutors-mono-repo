@@ -47,7 +47,7 @@ A comprehensive, multi-tier testing framework built around BDD-first principles 
 
 ## Tier 5: Fuzz Tests (`tests/fuzz/`) — *excluded from default run*
 
-**Status**: Excluded from `pnpm vitest run` pending a fast-check v4 compatibility fix (`fc.stringMatching()` crashes the vitest worker process). The test files are retained locally for future re-enablement. Run manually with `pnpm vitest run tests/fuzz/ --pool threads` if needed.
+**Status**: Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Kept out of the default `vitest run` so fork-pool workers are not used for property generation (see [#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)).
 
 **Approach**: Property-based testing with `fast-check`. Generators produce random but valid inputs (calendar entries, LO trees) and assert invariants that must hold for all inputs — totals are non-negative, medians are within range, tree traversals visit every node.
 
@@ -85,9 +85,9 @@ See `guides/MUTATION-TESTING.md` for full details.
 
 ---
 
-## Tier 9: Schema-Driven Tests (`tests/fuzz/schema-driven.fuzz.test.ts`, `tests/contract/support/schema-*`) — *excluded from default run*
+## Tier 9: Schema-Driven Tests (`tests/fuzz/schema-driven.fuzz.test.ts`, `tests/contract/support/schema-*`)
 
-**Status**: Excluded alongside fuzz tests (same fast-check v4 worker crash). The schema support infrastructure (`schema-generators.ts`, `schema-snapshots.ts`, `schemas.ts`) is used by contract tests and remains active.
+**Status**: Active as part of `pnpm test:fuzz`. Schema support infrastructure (`schema-generators.ts`, `schema-snapshots.ts`, `schemas.ts`) is also used by contract tests.
 
 **Approach**: Bridges Zod schemas (from contract tests) to fast-check arbitraries for property-based testing. A `zodToArbitrary()` converter generates random-but-valid data from any Zod schema, enabling three capabilities: (1) round-trip validation — generated data always passes the originating schema, (2) schema snapshot regression — a `zodToJsonSchema()` converter creates JSON Schema snapshots that detect unintended drift, (3) boundary validation — `schema-validated-fixtures.ts` wraps BDD fixture factories with Zod `.parse()` calls so every fixture conforms to the canonical API shape.
 
