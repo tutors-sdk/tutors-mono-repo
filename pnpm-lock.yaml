@@ -294,6 +294,64 @@ importers:
         specifier: ^8.2.0
         version: 8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8)
 
+  apps/time:
+    dependencies:
+      '@iconify/svelte':
+        specifier: ^5.2.2
+        version: 5.2.2(svelte@5.56.8)
+      '@supabase/supabase-js':
+        specifier: ^2.111.0
+        version: 2.111.0
+      '@tutors/tutors-time-lib':
+        specifier: workspace:*
+        version: link:../../packages/jsr/time
+      ag-grid-community:
+        specifier: ^35.2.1
+        version: 35.3.1
+      jheat.js:
+        specifier: ^5.2.0
+        version: 5.2.0
+    devDependencies:
+      '@skeletonlabs/skeleton':
+        specifier: ^5.0.0
+        version: 5.0.0(tailwindcss@4.3.3)
+      '@skeletonlabs/skeleton-svelte':
+        specifier: ^5.0.0
+        version: 5.0.0(svelte@5.56.8)
+      '@sveltejs/adapter-auto':
+        specifier: ^7.0.1
+        version: 7.0.1(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@7.2.0(svelte@5.56.8)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8)))(svelte@5.56.8)(typescript@6.0.3)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8)))
+      '@sveltejs/kit':
+        specifier: ^2.70.2
+        version: 2.70.2(@sveltejs/vite-plugin-svelte@7.2.0(svelte@5.56.8)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8)))(svelte@5.56.8)(typescript@6.0.3)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8))
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^7.2.0
+        version: 7.2.0(svelte@5.56.8)(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8))
+      '@tailwindcss/forms':
+        specifier: ^0.5.11
+        version: 0.5.11(tailwindcss@4.3.3)
+      '@tailwindcss/typography':
+        specifier: ^0.5.20
+        version: 0.5.20(tailwindcss@4.3.3)
+      '@tailwindcss/vite':
+        specifier: ^4.3.3
+        version: 4.3.3(vite@8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8))
+      svelte:
+        specifier: ^5.56.8
+        version: 5.56.8
+      svelte-check:
+        specifier: ^4.7.4
+        version: 4.7.4(picomatch@4.0.5)(svelte@5.56.8)(typescript@6.0.3)
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.2.0
+        version: 8.2.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.8)
+
   packages/jsr/model:
     dependencies:
       '@mdit/plugin-katex':
@@ -2236,6 +2294,12 @@ packages:
     resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  ag-charts-types@13.3.1:
+    resolution: {integrity: sha512-m37eUe4g//swvGh8PWMlYQH3gknjSsPeW4sQwBhM3/auGAHmN0wvxEWlrdAn98pBPg4HoKbtOy+yf7gPCYsnvQ==}
+
+  ag-grid-community@35.3.1:
+    resolution: {integrity: sha512-Wmkd/xYTCbAApcZZO74nBggZCnd/oX753NY3MJ4zYARVpfBHRWWhIBJ2sFTFKbDWwHZOWsx3YT9+kkyeuyLKlw==}
 
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
@@ -5822,6 +5886,12 @@ snapshots:
       event-target-shim: 5.0.1
 
   acorn@8.17.0: {}
+
+  ag-charts-types@13.3.1: {}
+
+  ag-grid-community@35.3.1:
+    dependencies:
+      ag-charts-types: 13.3.1
 
   agent-base@7.1.4: {}
 

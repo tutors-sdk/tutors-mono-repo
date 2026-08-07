@@ -1,25 +1,21 @@
 {
-  "name": "tutors-catalogue",
+  "name": "tutors-time",
   "version": "16.0.3",
-  "description": "Tutors Catalogue - Browse all Tutors courses",
+  "description": "Tutors Time - Student activity and time tracking",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 5175",
+    "dev": "vite dev --port 5176",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@tutors/community": "workspace:*",
-    "@tutors/course": "workspace:*",
-    "@tutors/logger": "workspace:*",
-    "@tutors/runes": "workspace:*",
-    "@tutors/themes": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*",
-    "@tutors/ui-components": "workspace:*",
-    "@tutors/ui-navigators": "workspace:*",
-    "@tutors/ui-primitives": "workspace:*"
+    "@iconify/svelte": "^5.2.2",
+    "@supabase/supabase-js": "^2.111.0",
+    "@tutors/tutors-time-lib": "workspace:*",
+    "ag-grid-community": "^35.2.1",
+    "jheat.js": "^5.2.0"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.0",
@@ -27,8 +23,10 @@
     "@sveltejs/adapter-auto": "^7.0.1",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
-    "svelte": "^5.0.0",
+    "svelte": "^5.56.8",
     "svelte-check": "^4.7.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
