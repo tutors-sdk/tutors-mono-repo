@@ -1,6 +1,6 @@
 {
   "name": "tutors-mono-repo",
-  "version": "16.0.1",
+  "version": "16.0.2",
   "private": true,
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
