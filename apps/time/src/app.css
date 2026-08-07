@@ -1,0 +1,58 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+@import "@skeletonlabs/skeleton-svelte";
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton/themes/cerberus";
+@import "@skeletonlabs/skeleton/themes/terminus";
+@import "@skeletonlabs/skeleton/themes/rose";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* AG Grid Community */
+@import "ag-grid-community/styles/ag-grid.css";
+@import "ag-grid-community/styles/ag-theme-quartz.css";
+
+.grid-fill-container {
+  height: 100%;
+  width: 100%;
+}
+
+.visual-tab-viewport {
+  width: 100%;
+  height: calc(100vh - 12rem);
+  min-height: 320px;
+}
+
+.summary-tab-viewport {
+  width: 100%;
+  height: calc(100vh - 12rem);
+  min-height: 320px;
+}
+
+.heatmap-full-width .heat-js,
+.heatmap-full-width [data-heat-js] .heat-js {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.ag-theme-quartz .ag-header-cell-text {
+  font-size: 0.8rem;
+}
+
+.ag-theme-quartz .ag-cell.ag-right-aligned-cell {
+  font-size: 0.8rem;
+}
+
+.ag-theme-quartz .ag-header-vertical .ag-header-cell-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.ag-theme-quartz .ag-header-vertical .ag-header-cell-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  white-space: nowrap;
+  line-height: 1.2;
+}

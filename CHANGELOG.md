@@ -5,6 +5,18 @@
 > Version history prior to v16.0.0 originates from that repository.
 
 
+## v16.0.3 (2026-08)
+
+### Features
+
+- Migrate `tutors-time` app into the monorepo as `apps/time` — student activity and time tracking dashboard with AG Grid, calendar heatmaps, and Supabase integration
+- Update `tutors-time` to Skeleton v5 theme system (cerberus/terminus/rose)
+
+### Fixes
+
+- Fix AG Grid v35 theming conflict — add `theme: "legacy"` to all grid instances to resolve error #239 (Theming API vs CSS file themes coexistence)
+- Disable SSR for tutors-time to prevent Netlify serverless 500 errors from browser-only Supabase APIs
+
 ## v16.0.2 (2026-08)
 
 ### Fixes

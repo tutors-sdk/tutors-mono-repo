@@ -1,6 +1,6 @@
 {
   "name": "tutors-live",
-  "version": "16.0.2",
+  "version": "16.0.3",
   "description": "Tutors Live - Real-time student activity tracking",
   "private": true,
   "type": "module",
