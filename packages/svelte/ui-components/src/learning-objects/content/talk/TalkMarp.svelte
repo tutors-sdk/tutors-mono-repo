@@ -6,7 +6,6 @@
   import { renderMarpSlides, buildMarpMarkdown } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     lo: Talk;
@@ -124,7 +123,7 @@
     <div class="marp-viewport not-prose" bind:this={viewport} use:mermaidify={currentSlideHtml}>
       <div class="marp-slides">
         {#key slideIndex}
-          {@html sanitizeHtml(currentSlideHtml)}
+          {@html currentSlideHtml}
         {/key}
       </div>
     </div>
