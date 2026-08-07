@@ -5,6 +5,16 @@
 > Version history prior to v16.0.0 originates from that repository.
 
 
+## v16.0.2 (2026-08)
+
+### Fixes
+
+- Remove CSP config from reader that blocked Adobe Acrobat PDF viewer SDK and other external scripts
+- Remove DOMPurify sanitization from Marp slide rendering — Marp HTML is generated from trusted course markdown, and DOMPurify strips SVG/foreignObject elements required for rendering
+- Disable SSR for live app — browser-only APIs (PartyKit/WebSocket) caused 500 errors on Netlify serverless functions
+- Remove hooks.server.ts and hooks.client.ts from live and catalogue apps — added by PRs but not present in v16.0.0, caused deployment failures
+- Revert reader hooks.server.ts to v16.0.0 version — remove Zod env validation that throws on missing env vars
+
 ## v16.0.1 (2026-08)
 
 ### Security
