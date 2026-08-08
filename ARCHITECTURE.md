@@ -56,7 +56,7 @@ This monorepo contains **4 distinct subsystems**:
 
 1. **JSR Packages** - Deno-compatible libraries for course generation and data models
 2. **Svelte Packages** - UI components and services for web applications
-3. **Applications** - End-user facing applications (reader, catalogue, live)
+3. **Applications** - End-user facing applications (reader, catalogue, live, time)
 4. **Services** - Backend infrastructure (PartyKit for real-time features)
 
 ---
@@ -89,7 +89,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                   Applications Layer                     │
-│        (reader, catalogue, live)                         │
+│        (reader, catalogue, live, time)                   │
 │        Consumes: All Svelte packages                     │
 └──────────────────────┬──────────────────────────────────┘
                        │
@@ -188,7 +188,8 @@ tutors-mono-repo/
 ├── apps/
 │   ├── reader/                 # Main course reader application
 │   ├── catalogue/              # Course catalog/discovery
-│   └── live/                   # Live presence tracking
+│   ├── live/                   # Live presence tracking
+│   └── time/                   # Student activity & time tracking dashboard
 │
 ├── services/
 │   └── party/                  # PartyKit real-time server
@@ -1163,6 +1164,39 @@ PRIVATE_AUTH_SECRET=...
 - Current page views
 - Real-time updates via PartyKit
 
+### 4. Time App (`apps/time`)
+
+**Purpose**: Student activity and time tracking dashboard
+
+**URL**: [time.tutors.dev](https://time.tutors.dev)
+
+**Features**:
+- Calendar heatmaps showing daily/weekly student activity
+- AG Grid-based lab and calendar data views with sortable columns
+- Median engagement metrics across students
+- Per-student activity drilldown with avatar, sentiment, and online status
+- Moodle assignment sync via server-side API integration
+
+**Key Dependencies**:
+- `@tutors/tutors-time-lib` (workspace) — analytics models, Supabase queries, calendar/lab data structures
+- `ag-grid-community` — data grids for lab steps, calendar entries, and median views
+- `jheat.js` — calendar heatmap visualisation
+- `@supabase/supabase-js` — direct Supabase access for time data
+
+**Route Structure**:
+- `/` — Course ID entry dialog
+- `/[courseid]` — Redirects to medians view
+- `/[courseid]/medians` — Median engagement across all students
+- `/[courseid]/calendar` — Calendar views (by day, by week, raw)
+- `/[courseid]/lab` — Lab views (by step, by lab, learning records)
+- `/[courseid]/[studentid]` — Individual student calendar view
+- `/[courseid]/assignments` — Moodle assignment data
+
+**Notes**:
+- Runs with `ssr = false` — all rendering is client-side (Supabase client is browser-only)
+- Uses AG Grid in legacy theme mode (`theme: "legacy"`) for compatibility with v35 Theming API
+- Dev server runs on port 5176
+
 ---
 
 ## Services
@@ -1469,7 +1503,7 @@ analyticsService.reportPageLoad(lo)
 ### Package Dependencies
 
 ```
-Applications (reader, catalogue, live)
+Applications (reader, catalogue, live, time)
         │
         ├─► @tutors/ui-components
         │   ├─► @tutors/ui-navigators
@@ -1554,6 +1588,7 @@ Applications (reader, catalogue, live)
 
 **Layer 6** (applications):
 - `reader`, `catalogue`, `live` → ui-primitives, ui-navigators, ui-components + other packages
+- `time` → @tutors/tutors-time-lib, ag-grid-community, jheat.js, @supabase/supabase-js (standalone dashboard, does not consume Svelte UI packages)
 
 ---
 
@@ -1662,6 +1697,7 @@ pnpm build     # Build reader app
 pnpm --filter reader dev
 pnpm --filter catalogue dev
 pnpm --filter live dev
+pnpm --filter tutors-time dev
 ```
 
 **Per Package**:
@@ -1880,7 +1916,7 @@ pnpm format
 - **CSR**: Client-Side Rendering
 - **PartyKit**: Real-time WebSocket platform
 - **Tutors Connect**: Authentication system
-- **Tutors Time**: Analytics and time tracking
+- **Tutors Time**: Analytics and time tracking (app at `apps/time`, library at `packages/jsr/time`)
 
 ### Useful Links
 
