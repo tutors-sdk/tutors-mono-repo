@@ -48,6 +48,7 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `apps/reader` - Main course reader application
 - `apps/catalogue` - Course catalog application
 - `apps/live` - Live classroom application
+- `apps/time` - Student activity and time tracking dashboard
 
 ### Services
 
@@ -89,6 +90,7 @@ The `...` suffix in `pnpm --filter tutors-reader...` builds tutors-reader and al
 pnpm --filter tutors-reader dev
 pnpm --filter catalogue dev
 pnpm --filter live dev
+pnpm --filter tutors-time dev
 
 # Rebuild the UI packages after changes
 pnpm --filter @tutors/ui-primitives build
