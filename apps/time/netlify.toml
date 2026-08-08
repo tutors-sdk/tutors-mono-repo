@@ -1,7 +1,6 @@
 [build]
   base = "/"
   command = "pnpm install --frozen-lockfile && pnpm --filter tutors-time... build"
-  publish = "apps/time/build"
 
 [build.environment]
   NODE_VERSION = "22"
