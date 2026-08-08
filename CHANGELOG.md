@@ -4,51 +4,96 @@
 > [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors).
 > Version history prior to v16.0.0 originates from that repository.
 
+---
 
-## v16.0.3 (2026-08)
+## Reader (`tutors-reader`)
 
-### Features
+### v16.0.2 (2026-08)
 
-- Migrate `tutors-time` app into the monorepo as `apps/time` — student activity and time tracking dashboard with AG Grid, calendar heatmaps, and Supabase integration
-- Update `tutors-time` to Skeleton v5 theme system (cerberus/terminus/rose)
+#### Fixes
 
-### Fixes
+- Remove CSP config that blocked Adobe Acrobat PDF viewer SDK and other external scripts
+- Remove DOMPurify sanitization from Marp slide rendering — Marp HTML is from trusted course markdown, and DOMPurify strips SVG/foreignObject elements required for rendering
+- Revert hooks.server.ts to v16.0.0 version — remove Zod env validation that throws on missing env vars
 
-- Fix AG Grid v35 theming conflict — add `theme: "legacy"` to all grid instances to resolve error #239 (Theming API vs CSS file themes coexistence)
-- Disable SSR for tutors-time to prevent Netlify serverless 500 errors from browser-only Supabase APIs
+### v16.0.1 (2026-08)
 
-## v16.0.2 (2026-08)
-
-### Fixes
-
-- Remove CSP config from reader that blocked Adobe Acrobat PDF viewer SDK and other external scripts
-- Remove DOMPurify sanitization from Marp slide rendering — Marp HTML is generated from trusted course markdown, and DOMPurify strips SVG/foreignObject elements required for rendering
-- Disable SSR for live app — browser-only APIs (PartyKit/WebSocket) caused 500 errors on Netlify serverless functions
-- Remove hooks.server.ts and hooks.client.ts from live and catalogue apps — added by PRs but not present in v16.0.0, caused deployment failures
-- Revert reader hooks.server.ts to v16.0.0 version — remove Zod env validation that throws on missing env vars
-
-## v16.0.1 (2026-08)
-
-### Security
+#### Security
 
 - Replace unmaintained `@iktakahiro/markdown-it-katex` with `@mdit/plugin-katex` v1.0.2, resolving 3 CVEs (PR #28)
-- Override vulnerable `cookie` dependency to `>=0.7.0 <1.0.0`, fixing low-severity CVE GHSA-pxg6-pf52-xh8x (PR #27)
+- Override vulnerable `cookie` dependency to `>=0.7.0 <1.0.0` (PR #27)
 
-### Features
+#### Features
 
 - OKF v0.2 knowledge bundle generator for LLM codebase analysis (PR #24)
 
-### Fixes
+#### Fixes
 
-- Restore fuzz tests with dedicated `vitest.config.fuzz.ts` using threads pool, compatible with Zod 4 internals (PR #30)
-- Fix analytics service error logging test assertions to match actual two-argument call signature
-- Cap cookie override below 1.0.0 to preserve `parse`/`serialize` named exports required by `@sveltejs/kit`
 - KaTeX CDN CSS updated from 0.16.8 to 0.18.1
+
+### v16.0.0 (2026-08)
+
+- Initial monorepo release
+
+---
+
+## Live (`tutors-live`)
+
+### v16.0.2 (2026-08)
+
+#### Fixes
+
+- Disable SSR — browser-only APIs (PartyKit/WebSocket) caused 500 errors on Netlify serverless functions
+- Remove hooks.server.ts and hooks.client.ts — added by PRs but not present in v16.0.0, caused deployment failures
+
+### v16.0.0 (2026-08)
+
+- Initial monorepo release
+
+---
+
+## Catalogue (`tutors-catalogue`)
+
+### v16.0.2 (2026-08)
+
+#### Fixes
+
+- Remove hooks.server.ts and hooks.client.ts — caused deployment failures
+
+### v16.0.0 (2026-08)
+
+- Initial monorepo release
+
+---
+
+## Time (`tutors-time`)
+
+### v1.0.0 (2026-08)
+
+- Migrated from standalone `tutors-time` repository into monorepo at `apps/time`
+- Updated to Skeleton v5 theme system (cerberus/terminus/rose)
+- Fix AG Grid v35 theming conflict — add `theme: "legacy"` to all grid instances
+
+---
+
+## Shared Packages
+
+### v5.0.6 (2026-08)
+
+- Align all JSR package versions (`model`, `time`, `gen`, `tutors`) to 5.0.6
 
 ### Infrastructure
 
 - GitHub Actions CI workflows (PR #25)
-- JSR package versions aligned to 5.0.6
+- Restore fuzz tests with dedicated `vitest.config.fuzz.ts` using threads pool (PR #30)
+- Fix analytics service test assertions to match two-argument call signature
+- Cap cookie override below 1.0.0 to preserve `parse`/`serialize` named exports required by `@sveltejs/kit`
+
+---
+
+## Pre-Monorepo History
+
+> Entries below originate from [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors) prior to the v16.0.0 monorepo migration.
 
 ## v16.0.0 (2026-08)
 
