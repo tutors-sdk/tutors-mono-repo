@@ -13,6 +13,7 @@
     "npm:@supabase/supabase-js@^2.111.0": "2.112.0",
     "npm:@supabase/supabase-js@^2.96.0": "2.112.0",
     "npm:@testing-library/svelte@^5.2.0": "5.4.2_svelte@5.56.8__acorn@8.18.0_vitest@4.1.10__@vitest+coverage-v8@4.1.10___vitest@4.1.10___happy-dom@18.0.1___tsx@4.23.9__happy-dom@18.0.1__vite@8.2.0___tsx@4.23.9__tsx@4.23.9_@vitest+coverage-v8@4.1.10__vitest@4.1.10___@vitest+coverage-v8@4.1.10___happy-dom@18.0.1___vite@8.2.0____tsx@4.23.9___tsx@4.23.9__happy-dom@18.0.1__tsx@4.23.9_happy-dom@18.0.1_tsx@4.23.9",
+    "npm:@types/estree@1.0.6": "1.0.6",
     "npm:@vitest/coverage-v8@^4.1.10": "4.1.10_vitest@4.1.10__@vitest+coverage-v8@4.1.10__happy-dom@18.0.1__vite@8.2.0___tsx@4.23.9__tsx@4.23.9_happy-dom@18.0.1_tsx@4.23.9",
     "npm:archiver@7": "7.0.1",
     "npm:archiver@8": "8.0.0",
@@ -58,6 +59,7 @@
         "jsr:@davidbonnet/astring",
         "jsr:@std/html",
         "jsr:@std/path",
+        "npm:@types/estree",
         "npm:estree-walker",
         "npm:meriyah"
       ]
@@ -900,8 +902,8 @@
     "@types/deep-eql@4.0.2": {
       "integrity": "sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw=="
     },
-    "@types/estree@1.0.9": {
-      "integrity": "sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg=="
+    "@types/estree@1.0.6": {
+      "integrity": "sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw=="
     },
     "@types/hast@3.0.5": {
       "integrity": "sha512-rp/ezSWaD1m44dPKICGhiskI13nVr7qTloFwDa/IYkhhf5nzwP+zIQcIJh3WIFSBOy/H1PzB40jPjMDksN4F+g==",
@@ -2618,6 +2620,12 @@
         }
       },
       "packages/jsr/tutors": {
+        "dependencies": [
+          "jsr:@tutors/tutors-gen-lib@^5.0.6",
+          "jsr:@tutors/tutors-model-lib@^5.0.6"
+        ]
+      },
+      "packages/jsr/tutors-lite": {
         "dependencies": [
           "jsr:@tutors/tutors-gen-lib@^5.0.6",
           "jsr:@tutors/tutors-model-lib@^5.0.6"
