@@ -22,7 +22,8 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/jsr/model` - Core data models and types
 - `packages/jsr/time` - Time tracking utilities
 - `packages/jsr/gen` - Course generation utilities
-- `packages/jsr/tutors` - JSR reader package
+- `packages/jsr/tutors` - JSR reader package (JSON course generator)
+- `packages/jsr/tutors-lite` - Static HTML course generator
 
 **Foundation Layer (Svelte):**
 - `packages/svelte/utils/logger` - Logging utility
