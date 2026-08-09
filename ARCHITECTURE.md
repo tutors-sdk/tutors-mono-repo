@@ -169,7 +169,8 @@ tutors-mono-repo/
 │   │   ├── model/              # @tutors/tutors-model-lib
 │   │   ├── time/               # @tutors/tutors-time-lib
 │   │   ├── gen/                # @tutors/tutors-gen-lib
-│   │   └── tutors/             # @tutors/reader
+│   │   ├── tutors/             # @tutors/tutors (JSON course generator CLI)
+│   │   └── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
 │   │
 │   └── svelte/                 # Svelte-specific packages
 │       ├── runes/              # @tutors/runes
@@ -218,17 +219,17 @@ The JSR (JavaScript Registry) subsystem provides the **foundation layer** - core
 ### Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    JSR Subsystem                         │
-│                 (Deno-First, Node-Compatible)            │
-│                                                           │
-│  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐  │
-│  │  Model   │  │  Time  │  │   Gen    │  │  Tutors  │  │
-│  │  (Core)  │  │(Track) │  │(Gener.)  │  │  (CLI)   │  │
-│  └────┬─────┘  └───┬────┘  └────┬─────┘  └────┬─────┘  │
-└───────┼───────────┼─────────────┼─────────────┼─────────┘
-        │           │             │             │
-        └───────────┴─────────────┴─────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         JSR Subsystem                                │
+│                    (Deno-First, Node-Compatible)                     │
+│                                                                      │
+│  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │
+│  │  Model   │  │  Time  │  │   Gen    │  │  Tutors  │  │ Tutors │  │
+│  │  (Core)  │  │(Track) │  │(Gener.)  │  │  (JSON)  │  │  Lite  │  │
+│  └────┬─────┘  └───┬────┘  └────┬─────┘  └────┬─────┘  └───┬────┘  │
+└───────┼────────────┼────────────┼──────────────┼────────────┼────────┘
+        │            │            │              │            │
+        └────────────┴────────────┴──────────────┴────────────┘
         All published to jsr.io/@tutors/*
 ```
 
@@ -554,6 +555,44 @@ await emitter.emit(course);
 console.log(`Course generated: ${args.output}`);
 ```
 
+### 5. Tutors Lite Package (`packages/jsr/tutors-lite`)
+
+**Package Name**: `@tutors/tutors-lite`  
+**Purpose**: CLI entry point for static HTML course generation
+
+#### Key Responsibilities
+
+- **Static HTML Generation**: Produces a self-contained `html/` folder that can be opened locally or deployed to any static host
+- **Offline Capable**: Generated courses work without a backend — no authentication, analytics, or real-time features
+- **Template Rendering**: Uses Vento templates to produce responsive HTML pages for all learning object types
+
+#### Usage
+
+```bash
+# Generate static HTML course
+deno run -A jsr:@tutors/tutors-lite
+
+# Or locally
+deno run -A packages/jsr/tutors-lite/main.ts
+```
+
+#### How It Differs from `tutors`
+
+| | `tutors` (JSON) | `tutors-lite` (HTML) |
+|---|---|---|
+| Output | `json/tutors.json` | `html/` folder with `index.html` per page |
+| Requires reader app | Yes | No — self-contained static site |
+| Analytics/auth | Supported via Supabase | Not available |
+| Hosting | Needs tutors reader deployment | Any static host or local file:// |
+
+#### File Structure
+
+```
+packages/jsr/tutors-lite/
+├── deno.json              # JSR package configuration
+└── main.ts                # CLI entry point
+```
+
 ### JSR Publishing Workflow
 
 **Deno Configuration** (`deno.json`):
@@ -564,7 +603,8 @@ console.log(`Course generated: ${args.output}`);
     "./packages/jsr/model",
     "./packages/jsr/time",
     "./packages/jsr/gen",
-    "./packages/jsr/tutors"
+    "./packages/jsr/tutors",
+    "./packages/jsr/tutors-lite"
   ],
   "imports": {
     "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.0.0",
@@ -1287,8 +1327,9 @@ Author Creates Content
         │
         ▼
 ┌────────────────────────────────────────┐
-│  tutors-cli (JSR @tutors/reader)       │
+│  tutors CLI                             │
 │  $ deno run -A jsr:@tutors/reader      │
+│  $ deno run -A jsr:@tutors/tutors-lite │
 └──────────────┬─────────────────────────┘
                │
                ▼
