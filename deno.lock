@@ -2770,7 +2770,7 @@
       },
       "packages/jsr/tutors-lite": {
         "dependencies": [
-          "jsr:@tutors/tutors-gen-lib@^5.0.6",
+          "jsr:@tutors/tutors-gen-lib@^5.0.7",
           "jsr:@tutors/tutors-model-lib@^5.0.6"
         ]
       }
