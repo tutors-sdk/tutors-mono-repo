@@ -7,7 +7,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import process from "node:process";
 
-const versionStr = `tutors-lite: 5.0.7`;
+const versionStr = `tutors-lite: 5.0.8`;
 
 if (!fs.existsSync("course.md")) {
   console.log("Cannot locate course.md. Please change to course folder and try again.");
