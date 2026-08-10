@@ -100,6 +100,7 @@ export function convertLoToHtml(course: Course, lo: Lo, protocol: string = "http
     convertNoteToHtml(course, lo as Note);
   } else {
     if (lo.summary) lo.summary = convertMdToHtml(lo.summary);
+    if (lo.type === "talk" && lo.frontMatter?.marp) return;
     let md = lo.contentMd;
     if (md) {
       if (course.courseUrl) {
