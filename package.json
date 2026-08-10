@@ -2,6 +2,7 @@
   "name": "tutors-mono-repo",
   "version": "16.0.3",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
