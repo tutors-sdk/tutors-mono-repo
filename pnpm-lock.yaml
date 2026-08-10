@@ -483,6 +483,9 @@ importers:
 
   packages/svelte/themes:
     dependencies:
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../community
       '@tutors/course':
         specifier: workspace:*
         version: link:../course

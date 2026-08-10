@@ -1,3 +1,4 @@
+/// <reference path="../declarations.d.ts" />
 import type MarkdownIt from "markdown-it";
 
 const VIDEO_TOKEN = "::video[";
@@ -83,7 +84,7 @@ function renderPodcast(attrs: Record<string, string>): string {
 
 // Custom video player plugin
 export function videoPlayer(md: MarkdownIt) {
-  md.inline.ruler.before("text", "custom_video", (state, _silent) => {
+  md.inline.ruler.before("text", "custom_video", (state: any, _silent: any) => {
     if (!state.src.startsWith(VIDEO_TOKEN, state.pos)) return false;
     const closeIdx = state.src.indexOf(VIDEO_CLOSE, state.pos + VIDEO_TOKEN.length);
     if (closeIdx === -1) return false;
@@ -95,7 +96,7 @@ export function videoPlayer(md: MarkdownIt) {
     return true;
   });
 
-  md.renderer.rules.custom_video = (tokens, idx, options, env, self) => {
+  md.renderer.rules.custom_video = (tokens: any, idx: any, options: any, env: any, self: any) => {
     const attrs = parseAttributes(tokens[idx].content);
     return renderVideo(attrs);
   };
@@ -103,7 +104,7 @@ export function videoPlayer(md: MarkdownIt) {
 
 // Custom podcast player plugin
 export function podcastPlayer(md: MarkdownIt) {
-  md.inline.ruler.before("text", "custom_podcast", (state, _silent) => {
+  md.inline.ruler.before("text", "custom_podcast", (state: any, _silent: any) => {
     if (!state.src.startsWith(PODCAST_TOKEN, state.pos)) return false;
     const closeIdx = state.src.indexOf(PODCAST_CLOSE, state.pos + PODCAST_TOKEN.length);
     if (closeIdx === -1) return false;
@@ -115,7 +116,7 @@ export function podcastPlayer(md: MarkdownIt) {
     return true;
   });
 
-  md.renderer.rules.custom_podcast = (tokens, idx, options, env, self) => {
+  md.renderer.rules.custom_podcast = (tokens: any, idx: any, options: any, env: any, self: any) => {
     const attrs = parseAttributes(tokens[idx].content);
     return renderPodcast(attrs);
   };

@@ -13,7 +13,10 @@
       "default": "./dist/index.js"
     },
     "./components/*": "./src/components/*",
-    "./utils/*": "./src/utils/*"
+    "./utils/*": {
+      "types": "./src/utils/*.ts",
+      "default": "./src/utils/*.ts"
+    }
   },
   "scripts": {
     "build": "svelte-package -i src -o dist",

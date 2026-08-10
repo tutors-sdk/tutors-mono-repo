@@ -22,14 +22,14 @@
   let searchLos: Lo[] = [];
   let searchTerm = $state("");
   let searchResults: ResultType[] = $state([]);
-  let searchInputElement = $state();
+  let searchInputElement = $state<HTMLInputElement>();
 
   onMount(async () => {
     course = data.course;
     currentLo.value = data.course;
     const labs = filterByType(data.course.los, "lab");
     labs.forEach((lab) => {
-      lab?.los?.forEach((step) => {
+      (lab as any)?.los?.forEach((step: any) => {
         step.parentLo = lab;
       });
     });
@@ -37,7 +37,7 @@
     const notes = filterByType(data.course.los, "note");
     const panelNotes = filterByType(data.course.los, "panelnote");
     searchLos.push(...labs, ...steps, ...notes, ...panelNotes);
-    searchInputElement.focus();
+    searchInputElement?.focus();
   });
 
   function transformResults(results: ResultType[]) {
