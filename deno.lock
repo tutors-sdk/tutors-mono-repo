@@ -2708,7 +2708,7 @@
     "members": {
       "packages/jsr/gen": {
         "dependencies": [
-          "jsr:@tutors/tutors-model-lib@^5.0.6",
+          "jsr:@tutors/tutors-model-lib@^5.0.7",
           "jsr:@vento/vento@^1.14.0",
           "npm:@marp-team/marp-core@^4.3.1",
           "npm:archiver@^7.0.1",
@@ -2764,14 +2764,14 @@
       },
       "packages/jsr/tutors": {
         "dependencies": [
-          "jsr:@tutors/tutors-gen-lib@^5.0.7",
-          "jsr:@tutors/tutors-model-lib@^5.0.6"
+          "jsr:@tutors/tutors-gen-lib@^5.0.8",
+          "jsr:@tutors/tutors-model-lib@^5.0.7"
         ]
       },
       "packages/jsr/tutors-lite": {
         "dependencies": [
-          "jsr:@tutors/tutors-gen-lib@^5.0.7",
-          "jsr:@tutors/tutors-model-lib@^5.0.6"
+          "jsr:@tutors/tutors-gen-lib@^5.0.8",
+          "jsr:@tutors/tutors-model-lib@^5.0.7"
         ]
       }
     }
