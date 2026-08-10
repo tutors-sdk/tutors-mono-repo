@@ -45,9 +45,9 @@ A comprehensive, multi-tier testing framework built around BDD-first principles 
 
 ---
 
-## Tier 5: Fuzz Tests (`tests/fuzz/`) — *excluded from default run*
+## Tier 5: Fuzz Tests (`tests/fuzz/`)
 
-**Status**: Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Kept out of the default `vitest run` so fork-pool workers are not used for property generation (see [#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)).
+**Status**: Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Uses a dedicated vitest config with `pool: "threads"` because fast-check v4 property generation crashes vitest's default fork pool workers. Runs in CI on every push/PR.
 
 **Approach**: Property-based testing with `fast-check`. Generators produce random but valid inputs (calendar entries, LO trees) and assert invariants that must hold for all inputs — totals are non-negative, medians are within range, tree traversals visit every node.
 

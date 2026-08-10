@@ -273,11 +273,11 @@ Snapshot the public API surface of each JSR-published package. Acts as a **break
 
 Each test uses `toMatchSnapshot()` for the full export list, so any addition, removal, or rename is caught.
 
-### Tier 7: Property-Based / Fuzz Tests (fast-check) — *excluded from default run*
+### Tier 7: Property-Based / Fuzz Tests (fast-check)
 
 **Location:** `tests/fuzz/`
-**Config:** `vitest.config.ts` (root level, excluded via `exclude` array)
-**Status:** Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Kept out of default `vitest run` so property generation does not use Vitest fork workers ([#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)).
+**Config:** `vitest.config.fuzz.ts` (dedicated config with `pool: "threads"`)
+**Status:** Active via `pnpm test:fuzz`. Uses a separate vitest config with threads pool because fast-check v4 property generation crashes vitest's default fork pool workers. Runs in CI on every push/PR.
 
 [fast-check](https://github.com/dubzzz/fast-check) property-based testing:
 

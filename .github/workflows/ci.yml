@@ -55,3 +55,6 @@ jobs:
 
       - name: Run unit tests
         run: pnpm exec vitest run
+
+      - name: Run fuzz tests
+        run: pnpm test:fuzz

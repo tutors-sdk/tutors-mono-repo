@@ -85,8 +85,7 @@ Coverage is enforced per-package via Vitest config. CI hard-fails if any package
 
 | Trigger | Workflow | Tests Run |
 |---|---|---|
-| Every push/PR | `ci.yml` | Lint, typecheck, unit + BDD, E2E (Chromium), CLI |
-| PRs only | `ci.yml` | Contract + fuzz (in addition to above) |
+| Every push/PR | `ci.yml` | Lint, typecheck, unit + BDD, fuzz, E2E (Chromium), CLI |
 | Daily 3 AM UTC | `nightly.yml` | Full E2E (all browsers), contract validation |
 | Push to `rc/**` | `rc-validation.yml` | All gates (9 jobs) — full test matrix |
 | Push to `rc/**` | `release-testing.yml` | Artifact regression, performance, smoke tests |
