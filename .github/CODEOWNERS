@@ -1,0 +1,21 @@
+# Default owners for everything in the repo
+* @tutors-sdk/maintainers
+
+# Applications
+/apps/reader/ @tutors-sdk/maintainers
+/apps/catalogue/ @tutors-sdk/maintainers
+/apps/live/ @tutors-sdk/maintainers
+/apps/time/ @tutors-sdk/maintainers
+
+# Foundation packages
+/packages/jsr/ @tutors-sdk/maintainers
+
+# Svelte packages
+/packages/svelte/ @tutors-sdk/maintainers
+
+# Infrastructure and CI
+/.github/ @tutors-sdk/maintainers
+/netlify.toml @tutors-sdk/maintainers
+
+# Security-sensitive files
+SECURITY.md @tutors-sdk/maintainers
