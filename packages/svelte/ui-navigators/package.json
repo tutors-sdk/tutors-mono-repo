@@ -1,6 +1,7 @@
 {
   "name": "@tutors/ui-navigators",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Navigator components for Tutors (MainNavigator, SecondaryNavigator, Footer, buttons, layout switchers)",
   "private": true,
   "type": "module",

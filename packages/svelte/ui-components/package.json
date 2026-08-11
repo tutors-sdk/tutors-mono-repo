@@ -1,6 +1,7 @@
 {
   "name": "@tutors/ui-components",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "High-level Svelte UI components for Tutors (navigators, learning objects, time views)",
   "private": true,
   "type": "module",

@@ -1,6 +1,7 @@
 {
   "name": "@tutors/logger",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Logging utilities for Tutors",
   "private": true,
   "type": "module",

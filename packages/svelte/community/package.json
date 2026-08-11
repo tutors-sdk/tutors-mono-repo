@@ -1,6 +1,7 @@
 {
   "name": "@tutors/community",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Community features: analytics, presence, live tracking, and catalogue for Tutors",
   "private": true,
   "type": "module",

@@ -1,6 +1,7 @@
 {
   "name": "@tutors/a11y",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Accessibility utilities for Tutors",
   "private": true,
   "type": "module",

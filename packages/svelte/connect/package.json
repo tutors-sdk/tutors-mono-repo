@@ -1,6 +1,7 @@
 {
   "name": "@tutors/connect",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Authentication and user connection service for Tutors",
   "private": true,
   "type": "module",
