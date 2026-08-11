@@ -171,7 +171,7 @@ function buildWhiteboard(lo: Lo, lr: LearningResource) {
   const excalidrawFiles = getFilesWithType(lr, "excalidraw");
   if (excalidrawFiles.length > 0) {
     whiteboard.excalidrawFile = excalidrawFiles[0].substring(excalidrawFiles[0].lastIndexOf("/") + 1);
-    whiteboard.excalidraw = `https://{{COURSEURL}}/${getRoute(lr)}/${whiteboard.excalidrawFile}`;
+    whiteboard.excalidraw = `https://{{COURSEURL}}${excalidrawFiles[0].replace(lr.courseRoot, "")}`;
   }
 }
 
