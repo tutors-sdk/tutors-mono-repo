@@ -22,7 +22,8 @@ import {
   type Lo,
   type Talk,
   type Topic,
-  type Tutorial
+  type Tutorial,
+  type Whiteboard
 } from "@tutors/tutors-model-lib";
 
 export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "") {
@@ -136,6 +137,10 @@ function injectCourseUrl(los: Lo[], id: string, url: string) {
       const lab = lo as Lab;
       lab.pdf = lab.pdf?.replace("{{COURSEURL}}", url);
     }
+    if (lo.type === "whiteboard") {
+      const whiteboard = lo as Whiteboard;
+      whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
+    }
 
     localizePath(lo);
     fixRoutePaths(lo);
@@ -149,6 +154,9 @@ function localizePath(lo: Lo) {
     lo.img = lo.img?.replace("https://", "http://");
     if ((lo as any).pdf) {
       (lo as any).pdf = (lo as any).pdf?.replace("https://", "http://");
+    }
+    if ((lo as any).excalidraw) {
+      (lo as any).excalidraw = (lo as any).excalidraw?.replace("https://", "http://");
     }
   }
 }
