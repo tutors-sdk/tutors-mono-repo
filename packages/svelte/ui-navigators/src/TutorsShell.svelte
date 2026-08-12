@@ -7,6 +7,7 @@
   import { fly, slide } from "svelte/transition";
   import { prefersReducedMotion } from "@tutors/a11y";
   import { t } from "@tutors/i18n";
+  import TourOverlay from "@tutors/ui-primitives/components/TourOverlay.svelte";
 
   type Props = { children: Snippet; hideNavigator?: boolean; showConnect?: boolean };
   let { children, hideNavigator = false, showConnect = true }: Props = $props();
@@ -43,6 +44,7 @@
     </footer>
   {/if}
 </div>
+<TourOverlay />
 
 <style>
 </style>

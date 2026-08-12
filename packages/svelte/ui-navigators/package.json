@@ -21,6 +21,7 @@
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
+    "@tutors/tour": "workspace:*",
     "@tutors/ui-primitives": "workspace:*"
   },
   "devDependencies": {
