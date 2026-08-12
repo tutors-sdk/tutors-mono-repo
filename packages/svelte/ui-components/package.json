@@ -33,6 +33,7 @@
     "@codemirror/view": "^6.43.7",
     "@tutors/a11y": "workspace:*",
     "@tutors/community": "workspace:*",
+    "@tutors/rbac": "workspace:*",
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/i18n": "workspace:*",

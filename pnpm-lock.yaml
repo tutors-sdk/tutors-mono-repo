@@ -211,6 +211,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
+      '@tutors/rbac':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
@@ -438,6 +441,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/rbac':
+        specifier: workspace:*
+        version: link:../utils/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -550,6 +556,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/rbac':
+        specifier: workspace:*
+        version: link:../utils/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -629,6 +638,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/rbac':
+        specifier: workspace:*
+        version: link:../utils/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -746,6 +758,21 @@ importers:
 
   packages/svelte/utils/privacy:
     dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
+
+  packages/svelte/utils/rbac:
+    dependencies:
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../../community
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../logger
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
       svelte:
         specifier: ^5.0.0
         version: 5.56.8

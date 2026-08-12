@@ -7,7 +7,7 @@ import type { Lo, Course, Lab, Note, Notebook } from "@tutors/tutors-model-lib";
 import { LiveLab } from "./live-lab.ts";
 import { LiveNotebook } from "./live-notebook.ts";
 import { markdownService } from "../../markdown/index.ts";
-import { courseProtocol, currentCourse, currentLo, rune } from "@tutors/runes";
+import { courseProtocol, currentCourse, currentLo, rune, isLecturer } from "@tutors/runes";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
 import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
 import log from "@tutors/logger";
@@ -45,6 +45,16 @@ export const courseService: CourseService = {
         const data = await response.json();
         course = data as Course;
         decorateCourseTree(course, courseId, courseUrl);
+        if (import.meta.env.DEV && !course.properties?.auth) {
+          course.properties = course.properties || {};
+          course.properties.auth = 2;
+          course.properties.owner = "lgriffin";
+          course.properties.lecturers = "lgriffin";
+          course.authLevel = 2;
+          course.owner = "lgriffin";
+          course.lecturers = ["lgriffin"];
+          isLecturer.value = true;
+        }
         this.courses.set(courseId, course);
       } catch (error) {
         log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);

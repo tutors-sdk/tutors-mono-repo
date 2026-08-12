@@ -12,6 +12,7 @@
   import TutorsTitle from "@tutors/ui-navigators/titles/TutorsTitle.svelte";
   import CalendarButton from "@tutors/ui-navigators/buttons/CalendarButton.svelte";
   import CourseSentimentButton from "@tutors/ui-navigators/buttons/CourseSentimentButton.svelte";
+  import LecturerButton from "@tutors/ui-navigators/buttons/LecturerButton.svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
 
@@ -56,6 +57,7 @@
           <div class="hidden md:flex">
             <TutorsTimeIndicator />
           </div>
+          <LecturerButton />
         {/if}
         <div class="flex items-center">
           {#if currentCourse?.value && !currentCourse?.value?.isPortfolio}

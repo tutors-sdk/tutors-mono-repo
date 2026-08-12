@@ -15,6 +15,7 @@
   "dependencies": {
     "@tutors/a11y": "workspace:*",
     "@tutors/community": "workspace:*",
+    "@tutors/rbac": "workspace:*",
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/i18n": "workspace:*",

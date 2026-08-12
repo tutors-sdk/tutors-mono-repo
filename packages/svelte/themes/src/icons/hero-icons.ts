@@ -79,5 +79,9 @@ export const HeroIconLib: IconLib = {
   confused: { type: "twemoji:face-with-spiral-eyes", color: "secondary" },
   drained: { type: "twemoji:melting-face", color: "error" },
 
+  lock: { type: "heroicons-outline:lock-closed", color: "error" },
+  unlock: { type: "heroicons-outline:lock-open", color: "success" },
+  lecturer: { type: "heroicons-outline:academic-cap", color: "primary" },
+
   default: { type: "heroicons-outline:dots-vertical", color: "primary" }
 };
