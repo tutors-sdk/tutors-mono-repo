@@ -1,4 +1,4 @@
-/// <reference path="../declarations.d.ts" />
+// @ts-types="npm:@types/markdown-it"
 import type MarkdownIt from "markdown-it";
 
 const VIDEO_TOKEN = "::video[";
