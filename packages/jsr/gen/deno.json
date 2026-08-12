@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-gen-lib",
-  "version": "5.0.8",
+  "version": "5.1.0",
   "exports": "./src/tutors.ts",
   "license": "MIT",
   "tasks": {
@@ -10,7 +10,7 @@
     "test:coverage:html": "deno test --coverage=coverage --allow-all && deno coverage coverage --html"
   },
   "imports": {
-    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.0.7",
+    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.1.0",
     "front-matter": "npm:front-matter@^4.0.2",
     "js-yaml": "npm:js-yaml@^4.1.1",
     "archiver": "npm:archiver@^7.0.1",
