@@ -31,7 +31,7 @@
     "@tutors/ui-navigators": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "codemirror": "^6.0.2",
-    "dompurify": "^3.4.12",
+    "dompurify": "^3.4.13",
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
     "pdfjs-dist": "^6.2.108",
