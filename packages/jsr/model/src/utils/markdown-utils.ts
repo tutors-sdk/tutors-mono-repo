@@ -1,3 +1,4 @@
+/// <reference path="../declarations.d.ts" />
 import MarkdownIt from "markdown-it";
 import { katex as latex } from "@mdit/plugin-katex";
 import anchor from "markdown-it-anchor";

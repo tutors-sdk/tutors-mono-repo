@@ -76,7 +76,7 @@ export const analyticsService: AnalyticsService = {
    * @param courseId - Course being accessed
    * @param session - Authentication session data
    */
-  async updateLogin(courseId: string, session: { user: Record<string, unknown> }) {
+  async updateLogin(courseId: string, session: { user: TutorsId }) {
     try {
       await addOrUpdateStudent(session.user);
     } catch (error: unknown) {

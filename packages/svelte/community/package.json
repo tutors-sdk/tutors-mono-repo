@@ -5,7 +5,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
     "./services/*": "./src/services/*",
     "./utils/supabase-client": "./src/utils/supabase-client.ts"
   },
