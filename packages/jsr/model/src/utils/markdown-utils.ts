@@ -1,4 +1,4 @@
-// @ts-types="npm:@types/markdown-it"
+// @ts-types="npm:@types/markdown-it@^14.1.2"
 import MarkdownIt from "markdown-it";
 import { katex as latex } from "@mdit/plugin-katex";
 // @ts-ignore no types available

@@ -1,4 +1,4 @@
-// @ts-types="npm:@types/markdown-it"
+// @ts-types="npm:@types/markdown-it@^14.1.2"
 import type MarkdownIt from "markdown-it";
 
 const VIDEO_TOKEN = "::video[";
