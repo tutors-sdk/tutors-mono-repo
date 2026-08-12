@@ -1,6 +1,7 @@
 {
   "name": "tutors-time",
   "version": "16.0.3",
+  "license": "MIT",
   "description": "Tutors Time - Student activity and time tracking",
   "private": true,
   "type": "module",

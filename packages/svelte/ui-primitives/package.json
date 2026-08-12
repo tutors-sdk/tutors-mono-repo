@@ -1,6 +1,7 @@
 {
   "name": "@tutors/ui-primitives",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Primitive Svelte UI components for Tutors (Icon, Menu, Sidebar, Image)",
   "private": true,
   "type": "module",
