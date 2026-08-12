@@ -82,5 +82,9 @@ export const FluentIconLib: IconLib = {
   confused: { type: "twemoji:face-with-spiral-eyes", color: "secondary" },
   drained: { type: "twemoji:melting-face", color: "error" },
 
+  lock: { type: "fluent:lock-closed-24-filled", color: "error" },
+  unlock: { type: "fluent:lock-open-24-filled", color: "success" },
+  lecturer: { type: "fluent:person-board-24-filled", color: "primary" },
+
   default: { type: "fluent:re-order-dots-vertical-24-filled", color: "error" }
 };

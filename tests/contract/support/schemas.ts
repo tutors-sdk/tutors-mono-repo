@@ -139,6 +139,91 @@ export const CourseJsonSchema = z.object({
   los: z.array(z.union([TopicSchema, LoBaseSchema])),
 });
 
+// ---------------------------------------------------------------------------
+// Whiteboard collaboration schemas
+// ---------------------------------------------------------------------------
+
+export const WhiteboardUserSchema = z.object({
+  name: z.string(),
+  id: z.string(),
+  avatar: z.string(),
+  color: z.string().optional(),
+});
+
+export const WhiteboardPointerSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+export const WhiteboardElementSchema = z.object({
+  id: z.string(),
+  version: z.number(),
+  type: z.string(),
+}).passthrough();
+
+export const WhiteboardAppStateSchema = z.object({
+  viewBackgroundColor: z.string(),
+});
+
+export const WhiteboardSceneInitSchema = z.object({
+  type: z.literal("scene-init"),
+  elements: z.array(WhiteboardElementSchema),
+  appState: WhiteboardAppStateSchema,
+  files: z.record(z.unknown()).optional(),
+});
+
+export const WhiteboardSceneUpdateSchema = z.object({
+  type: z.literal("scene-update"),
+  elements: z.array(WhiteboardElementSchema),
+  source: z.string().optional(),
+});
+
+export const WhiteboardSceneSnapshotSchema = z.object({
+  type: z.literal("scene-snapshot"),
+  elements: z.array(WhiteboardElementSchema),
+  appState: WhiteboardAppStateSchema,
+  files: z.record(z.unknown()),
+});
+
+export const WhiteboardCursorUpdateSchema = z.object({
+  type: z.literal("cursor-update"),
+  user: WhiteboardUserSchema,
+  pointer: WhiteboardPointerSchema,
+  button: z.enum(["up", "down"]),
+  source: z.string().optional(),
+});
+
+export const WhiteboardUserJoinedSchema = z.object({
+  type: z.literal("user-joined"),
+  user: WhiteboardUserSchema,
+});
+
+export const WhiteboardUserLeftSchema = z.object({
+  type: z.literal("user-left"),
+  userId: z.string(),
+});
+
+export const WhiteboardRoomSchema = z.object({
+  roomId: z.string().regex(/^wb-/),
+  type: z.literal("whiteboard"),
+});
+
+export const WhiteboardInitEditorSchema = z.object({
+  type: z.literal("init-editor"),
+  partyHost: z.string(),
+  roomId: z.string(),
+  user: z.object({
+    name: z.string(),
+    id: z.string(),
+    avatar: z.string(),
+  }),
+  initialScene: z.unknown().nullable(),
+});
+
+// ---------------------------------------------------------------------------
+// Type exports
+// ---------------------------------------------------------------------------
+
 export type LearningRecord = z.infer<typeof LearningRecordSchema>;
 export type CalendarEntry = z.infer<typeof CalendarEntrySchema>;
 export type ConnectUser = z.infer<typeof ConnectUserSchema>;
@@ -147,3 +232,7 @@ export type ConnectCourse = z.infer<typeof ConnectCourseSchema>;
 export type ConnectLatest = z.infer<typeof ConnectLatestSchema>;
 export type LoRecord = z.infer<typeof LoRecordSchema>;
 export type CourseJson = z.infer<typeof CourseJsonSchema>;
+export type WhiteboardSceneInit = z.infer<typeof WhiteboardSceneInitSchema>;
+export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
+export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
+export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;

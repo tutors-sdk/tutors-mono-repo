@@ -17,7 +17,13 @@ import {
   LoRecordUserSchema,
   PartyKitRoomSchema,
   IncrementCalendarParamsSchema,
-  GetCountLearningRecordsParamsSchema
+  GetCountLearningRecordsParamsSchema,
+  WhiteboardSceneInitSchema,
+  WhiteboardSceneUpdateSchema,
+  WhiteboardSceneSnapshotSchema,
+  WhiteboardCursorUpdateSchema,
+  WhiteboardRoomSchema,
+  WhiteboardInitEditorSchema,
 } from "./schemas";
 
 // ---------------------------------------------------------------------------
@@ -218,6 +224,12 @@ export const incrementCalendarParamsArb = lazyArb(() => zodToArbitrary(Increment
 export const getCountLearningRecordsParamsArb = lazyArb(() =>
   zodToArbitrary(GetCountLearningRecordsParamsSchema)
 );
+export const whiteboardSceneInitArb = lazyArb(() => zodToArbitrary(WhiteboardSceneInitSchema));
+export const whiteboardSceneUpdateArb = lazyArb(() => zodToArbitrary(WhiteboardSceneUpdateSchema));
+export const whiteboardSceneSnapshotArb = lazyArb(() => zodToArbitrary(WhiteboardSceneSnapshotSchema));
+export const whiteboardCursorUpdateArb = lazyArb(() => zodToArbitrary(WhiteboardCursorUpdateSchema));
+export const whiteboardRoomArb = lazyArb(() => zodToArbitrary(WhiteboardRoomSchema));
+export const whiteboardInitEditorArb = lazyArb(() => zodToArbitrary(WhiteboardInitEditorSchema));
 
 // ---------------------------------------------------------------------------
 // Deterministic mock generators (seeded, reproducible)

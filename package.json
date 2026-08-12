@@ -6,7 +6,8 @@
   "packageManager": "pnpm@9.15.4",
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
-    "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
+    "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev & pnpm --filter tutors-party dev",
+    "dev:reader": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
     "check": "npm run check --workspace=apps/reader",
     "generate:okf": "tsx scripts/generate-okf.ts",

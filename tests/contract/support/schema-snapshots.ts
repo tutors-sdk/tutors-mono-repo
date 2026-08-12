@@ -17,6 +17,12 @@ import {
   CourseJsonSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
+  WhiteboardSceneInitSchema,
+  WhiteboardSceneUpdateSchema,
+  WhiteboardSceneSnapshotSchema,
+  WhiteboardCursorUpdateSchema,
+  WhiteboardRoomSchema,
+  WhiteboardInitEditorSchema,
 } from "./schemas";
 
 // ---------------------------------------------------------------------------
@@ -135,6 +141,12 @@ export const SCHEMA_SNAPSHOTS: Record<string, JsonSchema> = {
   CourseJson: zodToJsonSchema(CourseJsonSchema),
   IncrementCalendarParams: zodToJsonSchema(IncrementCalendarParamsSchema),
   GetCountLearningRecordsParams: zodToJsonSchema(GetCountLearningRecordsParamsSchema),
+  WhiteboardSceneInit: zodToJsonSchema(WhiteboardSceneInitSchema),
+  WhiteboardSceneUpdate: zodToJsonSchema(WhiteboardSceneUpdateSchema),
+  WhiteboardSceneSnapshot: zodToJsonSchema(WhiteboardSceneSnapshotSchema),
+  WhiteboardCursorUpdate: zodToJsonSchema(WhiteboardCursorUpdateSchema),
+  WhiteboardRoom: zodToJsonSchema(WhiteboardRoomSchema),
+  WhiteboardInitEditor: zodToJsonSchema(WhiteboardInitEditorSchema),
 };
 
 // ---------------------------------------------------------------------------
