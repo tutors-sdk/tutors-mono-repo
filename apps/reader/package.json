@@ -36,7 +36,7 @@
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
     "pdfjs-dist": "^6.2.108",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.0",
