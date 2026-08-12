@@ -191,6 +191,18 @@ describe("injectCourseUrl — mutation killing", () => {
     expect(lo.img).toBeUndefined();
   });
 
+  it("replaces {{COURSEURL}} in whiteboard excalidraw", () => {
+    const lo = makeLo({
+      type: "whiteboard",
+      route: "{{COURSEURL}}/whiteboard-1",
+      img: "{{COURSEURL}}/whiteboard.png",
+      video: "",
+      excalidraw: "{{COURSEURL}}/whiteboard-1/scene.excalidraw",
+    });
+    injectCourseUrl([lo], "course-id", "https://example.com");
+    expect(lo.excalidraw).toBe("https://example.com/whiteboard-1/scene.excalidraw");
+  });
+
   it("does not replace pdf for note type (no pdf branch)", () => {
     const lo = makeLo({
       type: "note",
