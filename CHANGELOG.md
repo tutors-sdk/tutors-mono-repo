@@ -8,6 +8,10 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.0.4 (2026-08)
+
+- Version bump aligned with JSR packages 5.1.0 release
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
