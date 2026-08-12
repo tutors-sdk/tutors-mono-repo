@@ -1,6 +1,7 @@
 {
   "name": "tutors-reader",
-  "version": "16.0.3",
+  "version": "16.0.4",
+  "license": "MIT",
   "description": "Tutors - Clean modern course reader",
   "private": true,
   "type": "module",

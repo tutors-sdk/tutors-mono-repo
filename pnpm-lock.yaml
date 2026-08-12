@@ -483,6 +483,9 @@ importers:
 
   packages/svelte/themes:
     dependencies:
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../community
       '@tutors/course':
         specifier: workspace:*
         version: link:../course
@@ -746,6 +749,12 @@ importers:
       loglevel:
         specifier: ^1.9.2
         version: 1.9.2
+
+  packages/svelte/utils/privacy:
+    dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
 
   packages/svelte/utils/tour:
     dependencies:

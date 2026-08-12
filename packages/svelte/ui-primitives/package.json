@@ -1,6 +1,7 @@
 {
   "name": "@tutors/ui-primitives",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Primitive Svelte UI components for Tutors (Icon, Menu, Sidebar, Image)",
   "private": true,
   "type": "module",
@@ -13,7 +14,10 @@
       "default": "./dist/index.js"
     },
     "./components/*": "./src/components/*",
-    "./utils/*": "./src/utils/*"
+    "./utils/*": {
+      "types": "./src/utils/*.ts",
+      "default": "./src/utils/*.ts"
+    }
   },
   "scripts": {
     "build": "svelte-package -i src -o dist",

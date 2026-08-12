@@ -28,7 +28,7 @@
       <footer class="card-footer">
         {#if showProgress}
           <div class="flex w-full place-items-center justify-center p-4">
-            <Progress value={null} meterAnimate="my-custom-animation" />
+            <Progress value={null} />
           </div>
         {:else}
           <div class="bg-surface-100-800 mx-auto mb-2 place-items-center overflow-hidden rounded-xl p-4">

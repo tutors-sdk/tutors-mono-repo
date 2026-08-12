@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-patch"
+    groups:
+      svelte:
+        patterns:
+          - "svelte*"
+          - "@sveltejs/*"
+        update-types:
+          - "minor"
+      skeleton:
+        patterns:
+          - "@skeletonlabs/*"
+        update-types:
+          - "minor"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "playwright*"
+          - "@playwright/*"
+        update-types:
+          - "minor"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"

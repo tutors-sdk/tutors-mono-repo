@@ -1,6 +1,7 @@
 {
   "name": "tutors-party",
   "version": "0.0.0",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "partykit dev",

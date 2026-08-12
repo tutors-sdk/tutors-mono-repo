@@ -1,6 +1,7 @@
 {
   "name": "tutors-live",
   "version": "16.0.3",
+  "license": "MIT",
   "description": "Tutors Live - Real-time student activity tracking",
   "private": true,
   "type": "module",
