@@ -302,6 +302,9 @@ importers:
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
+      '@tutors/ui-primitives':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-primitives
       ag-grid-community:
         specifier: ^35.2.1
         version: 35.3.1
