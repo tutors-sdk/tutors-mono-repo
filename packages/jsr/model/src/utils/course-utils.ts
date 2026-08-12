@@ -178,6 +178,19 @@ export function loadPropertyFlags(course: Course) {
       };
     }
   }
+  if (course.properties?.owner) {
+    course.owner = course.properties.owner as unknown as string;
+  }
+  if (course.properties?.lecturers) {
+    const raw = course.properties.lecturers as unknown as string;
+    course.lecturers = raw.split(",").map((s: string) => s.trim()).filter(Boolean);
+  } else {
+    course.lecturers = [];
+  }
+  if (course.owner && !course.lecturers.includes(course.owner)) {
+    course.lecturers.unshift(course.owner);
+  }
+
   course.los.forEach((lo) => {
     if (lo.hide) {
       setShowHide(lo, true);

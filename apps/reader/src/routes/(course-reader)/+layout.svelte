@@ -3,8 +3,8 @@
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
-  import { currentCourse } from "@tutors/runes";
-  import { afterNavigate } from "$app/navigation";
+  import { currentCourse, isLecturer, contentLocks } from "@tutors/runes";
+  import { afterNavigate, goto } from "$app/navigation";
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
@@ -25,7 +25,15 @@
     }
   });
 
-  afterNavigate(() => {
+  afterNavigate(({ to }) => {
+    if (currentCourse.value?.authLevel === 2 && !isLecturer.value && to?.url?.pathname) {
+      for (const [route, locked] of contentLocks.value) {
+        if (locked && to.url.pathname.includes(route)) {
+          goto(`/course/${currentCourse.value.courseId}`);
+          return;
+        }
+      }
+    }
     const elemPage = document.querySelector("#content-panel");
     if (elemPage && window.innerWidth >= 600) {
       elemPage.scrollIntoView({ behavior: "smooth", block: "start" });

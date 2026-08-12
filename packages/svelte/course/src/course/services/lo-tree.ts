@@ -1,4 +1,4 @@
-import { courseProtocol } from "@tutors/runes";
+import { courseProtocol, courseLecturers } from "@tutors/runes";
 import {
   allVideoLos,
   convertLoToHtml,
@@ -59,6 +59,10 @@ export function decorateCourseTree(course: Course, courseId: string = "", course
   createWalls(course);
   // createToc(course);
   initCalendar(course);
+
+  if (course.lecturers && course.lecturers.length > 0) {
+    courseLecturers.value = course.lecturers;
+  }
 }
 
 function decorateLoTree(course: Course, lo: Lo) {

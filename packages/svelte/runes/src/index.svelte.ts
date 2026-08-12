@@ -56,3 +56,28 @@ export const courseProtocol = {
   set value(v) { (_courseProtocol ??= rune("https://")).value = v; }
 };
 
+let _isLecturer: ReturnType<typeof rune<boolean>> | null = null;
+let _courseLecturers: ReturnType<typeof rune<string[]>> | null = null;
+let _contentLocks: ReturnType<typeof rune<Map<string, boolean>>> | null = null;
+let _enrolledUsers: ReturnType<typeof rune<string[]>> | null = null;
+
+export const isLecturer = {
+  get value() { return (_isLecturer ??= rune(false)).value; },
+  set value(v) { (_isLecturer ??= rune(false)).value = v; }
+};
+
+export const courseLecturers = {
+  get value() { return (_courseLecturers ??= rune<string[]>([])).value; },
+  set value(v) { (_courseLecturers ??= rune<string[]>([])).value = v; }
+};
+
+export const contentLocks = {
+  get value() { return (_contentLocks ??= rune<Map<string, boolean>>(new Map())).value; },
+  set value(v) { (_contentLocks ??= rune<Map<string, boolean>>(new Map())).value = v; }
+};
+
+export const enrolledUsers = {
+  get value() { return (_enrolledUsers ??= rune<string[]>([])).value; },
+  set value(v) { (_enrolledUsers ??= rune<string[]>([])).value = v; }
+};
+

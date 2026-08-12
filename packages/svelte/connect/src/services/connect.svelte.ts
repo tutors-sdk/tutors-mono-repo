@@ -13,7 +13,8 @@ import type { Course } from "@tutors/tutors-model-lib";
 import { analyticsService, presenceService } from "@tutors/community";
 import { PUBLIC_ANON_MODE } from "$env/static/public";
 
-import { currentCourse, currentLo, tutorsId } from "@tutors/runes";
+import { currentCourse, currentLo, tutorsId, isLecturer } from "@tutors/runes";
+import { rbacService } from "@tutors/rbac";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
@@ -141,6 +142,11 @@ export const tutorsConnectService: TutorsConnectService = {
     if (course.authLevel! > 0 && !tutorsId.value?.login) {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
+    }
+    if (course.authLevel === 2 && tutorsId.value?.login) {
+      rbacService.loadRole(tutorsId.value.login, course.courseId);
+      rbacService.loadContentLocks(course.courseId);
+      rbacService.checkLecturerStatus();
     }
   },
 
