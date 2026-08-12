@@ -10,7 +10,7 @@ export const publicEnvSchema = z.object({
 export const privateEnvSchema = z.object({
   PRIVATE_AUTH_GITHUB_ID: z.string().min(1, "PRIVATE_AUTH_GITHUB_ID must not be empty"),
   PRIVATE_AUTH_GITHUB_SECRET: z.string().min(1, "PRIVATE_AUTH_GITHUB_SECRET must not be empty"),
-  PRIVATE_AUTH_SECRET: z.string().min(8, "PRIVATE_AUTH_SECRET must be at least 8 characters")
+  PRIVATE_AUTH_SECRET: z.string().min(32, "PRIVATE_AUTH_SECRET must be at least 32 characters")
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
