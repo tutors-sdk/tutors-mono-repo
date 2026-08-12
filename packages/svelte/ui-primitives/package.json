@@ -29,7 +29,7 @@
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "isomorphic-dompurify": "^2.22.0"
+    "isomorphic-dompurify": "^3.22.0"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",
