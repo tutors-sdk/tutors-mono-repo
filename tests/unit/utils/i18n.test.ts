@@ -81,7 +81,7 @@ describe("i18n: t() returns key itself when missing from all locales", () => {
 });
 
 describe("i18n: all 5 locales have messages", () => {
-  const locales = ["en", "de", "fr", "es", "it"];
+  const locales = ["en", "de", "fr", "es", "it", "ga"];
 
   for (const locale of locales) {
     it(`locale '${locale}' has a translation for 'nav.search'`, () => {
