@@ -44,7 +44,7 @@
       <div class="mt-1 mb-1 ml-2">{t("tour.menuLabel")}</div>
       <div class="mx-2 mb-2">
         <button
-          class="preset-tonal w-full rounded-lg px-3 py-2 text-sm font-medium"
+          class="preset-tonal w-full rounded-lg px-3 py-2 text-sm font-medium flex items-center justify-center whitespace-nowrap"
           onclick={() => setTimeout(() => tourService.start(), 150)}
         >
           <Icon type="info" />
