@@ -1,0 +1,14 @@
+{
+  "name": "@tutors/privacy",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Privacy and GDPR utilities for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

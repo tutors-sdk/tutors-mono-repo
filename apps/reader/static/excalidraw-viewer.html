@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excalidraw Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    #container {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #container.dragging { cursor: grabbing; }
+    #canvas {
+      transform-origin: 0 0;
+      transition: none;
+    }
+    #canvas svg { display: block; }
+    #loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: system-ui, sans-serif; color: #666;
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+        "react-dom": "https://esm.sh/react-dom@18.3.1?external=react",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?external=react"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="loading">Loading whiteboard...</div>
+  <div id="container">
+    <div id="canvas"></div>
+  </div>
+  <script type="module">
+    import { exportToSvg } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom";
+
+    const container = document.getElementById("container");
+    const canvas = document.getElementById("canvas");
+    const loading = document.getElementById("loading");
+
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function applyTransform() {
+      canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    container.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const prevScale = scale;
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      scale = Math.min(Math.max(scale * delta, 0.1), 10);
+
+      translateX = mouseX - (mouseX - translateX) * (scale / prevScale);
+      translateY = mouseY - (mouseY - translateY) * (scale / prevScale);
+      applyTransform();
+    }, { passive: false });
+
+    container.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      container.classList.add("dragging");
+      container.setPointerCapture(e.pointerId);
+    });
+
+    container.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      translateX += e.clientX - lastX;
+      translateY += e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      applyTransform();
+    });
+
+    container.addEventListener("pointerup", () => {
+      isDragging = false;
+      container.classList.remove("dragging");
+    });
+
+    window.addEventListener("message", async (event) => {
+      if (event.data?.type === "load-scene") {
+        const scene = event.data.scene;
+        const svg = await exportToSvg({
+          elements: scene.elements || [],
+          appState: {
+            viewBackgroundColor: scene.appState?.viewBackgroundColor || "#ffffff",
+            exportWithDarkMode: false,
+          },
+          files: scene.files || {},
+        });
+        canvas.innerHTML = "";
+        canvas.appendChild(svg);
+        loading.style.display = "none";
+
+        const rect = container.getBoundingClientRect();
+        const svgRect = svg.getBoundingClientRect();
+        if (svgRect.width > 0 && svgRect.height > 0) {
+          scale = Math.min(rect.width / svgRect.width, rect.height / svgRect.height) * 0.9;
+          translateX = (rect.width - svgRect.width * scale) / 2;
+          translateY = (rect.height - svgRect.height * scale) / 2;
+          applyTransform();
+        }
+      }
+    });
+
+    window.parent.postMessage({ type: "viewer-ready" }, "*");
+  </script>
+</body>
+</html>

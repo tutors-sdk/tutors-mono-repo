@@ -21,7 +21,7 @@ import {
   readVideoIds,
   removeLeadingHashes,
 } from "../utils/lr-utils.ts";
-import { type Archive, type Composite, type Course, isCompositeLo, type Lab, type Lo, type Notebook, type NotebookCell, type NotebookOutput, Podcast, preOrder, Properties, type Talk, Tutorial } from "@tutors/tutors-model-lib";
+import { type Archive, type Composite, type Course, isCompositeLo, type Lab, type Lo, type Notebook, type NotebookCell, type NotebookOutput, Podcast, preOrder, Properties, type Talk, Tutorial, type Whiteboard } from "@tutors/tutors-model-lib";
 import { readWholeFile, readYamlFile } from "../utils/file-utils.ts";
 import type { LearningResource } from "../types/types.ts";
 
@@ -166,6 +166,15 @@ function buildNotebook(lo: Lo, lr: LearningResource) {
   }
 }
 
+function buildWhiteboard(lo: Lo, lr: LearningResource) {
+  const whiteboard = lo as Whiteboard;
+  const excalidrawFiles = getFilesWithType(lr, "excalidraw");
+  if (excalidrawFiles.length > 0) {
+    whiteboard.excalidrawFile = excalidrawFiles[0].substring(excalidrawFiles[0].lastIndexOf("/") + 1);
+    whiteboard.excalidraw = `https://{{COURSEURL}}${excalidrawFiles[0].replace(lr.courseRoot, "")}`;
+  }
+}
+
 function buildSimpleLo(lo: Lo, lr: LearningResource): Lo {
   switch (lo.type) {
     case "lab":
@@ -173,6 +182,9 @@ function buildSimpleLo(lo: Lo, lr: LearningResource): Lo {
       break;
     case "notebook":
       buildNotebook(lo, lr);
+      break;
+    case "whiteboard":
+      buildWhiteboard(lo, lr);
       break;
     case "talk":
       buildTalk(lo, lr);

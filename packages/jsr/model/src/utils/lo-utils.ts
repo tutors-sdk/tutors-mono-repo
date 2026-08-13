@@ -17,6 +17,7 @@ import {
   type Unit,
   type Units,
   type VideoIdentifier,
+  type Whiteboard,
 } from "../types/index.ts";
 
 export function flattenLos(los: Lo[]): Lo[] {
@@ -85,6 +86,10 @@ export function injectCourseUrl(los: Lo[], id: string, url: string) {
     if (lo.type == "lab") {
       const lab = lo as Lab;
       lab.pdf = lab.pdf?.replace("{{COURSEURL}}", url);
+    }
+    if (lo.type === "whiteboard") {
+      const whiteboard = lo as Whiteboard;
+      whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
     }
     // legacy version of generator included hash based routes;
     // remove these now:

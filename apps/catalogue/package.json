@@ -1,6 +1,7 @@
 {
   "name": "tutors-catalogue",
   "version": "16.0.3",
+  "license": "MIT",
   "description": "Tutors Catalogue - Browse all Tutors courses",
   "private": true,
   "type": "module",

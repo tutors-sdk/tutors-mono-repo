@@ -8,6 +8,11 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.0.4 (2026-08)
+
+- Whiteboard learning object type with Excalidraw viewer support
+- Version bump aligned with JSR packages 5.1.0 release
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
@@ -77,6 +82,14 @@
 ---
 
 ## Shared Packages
+
+### v5.1.0 (2026-08)
+
+- Marp slide rendering support in tutors-lite static HTML generator
+- Marp markdown-it guard in model-lib — skip markdown-it processing for Marp talks to prevent slide separator mangling
+- Notebook rendering guard in model-lib — skip generic markdown conversion for notebooks (cells converted separately)
+- Notebook static HTML rendering in tutors-lite (read-only cell display with syntax highlighting and output rendering)
+- Cascading version alignment: `model-lib` 5.1.0, `gen-lib` 5.1.0, `tutors` 5.1.0, `tutors-lite` deps updated to ^5.1.0
 
 ### v5.0.6 (2026-08)
 

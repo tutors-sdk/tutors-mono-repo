@@ -305,6 +305,9 @@ importers:
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
+      '@tutors/ui-primitives':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-primitives
       ag-grid-community:
         specifier: ^35.2.1
         version: 35.3.1
@@ -486,6 +489,9 @@ importers:
 
   packages/svelte/themes:
     dependencies:
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../community
       '@tutors/course':
         specifier: workspace:*
         version: link:../course
@@ -635,6 +641,9 @@ importers:
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -681,6 +690,9 @@ importers:
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -743,6 +755,24 @@ importers:
       loglevel:
         specifier: ^1.9.2
         version: 1.9.2
+
+  packages/svelte/utils/privacy:
+    dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
+
+  packages/svelte/utils/tour:
+    dependencies:
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
 
 packages:
 

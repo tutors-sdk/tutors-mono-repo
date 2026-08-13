@@ -24,3 +24,6 @@
 {/snippet}
 
 <Sidebar {menuSelector} {sidebarContent} ariaLabel={t("nav.info.tip")} />
+<div data-tour="info">
+  <Sidebar {menuSelector} {sidebarContent} />
+</div>

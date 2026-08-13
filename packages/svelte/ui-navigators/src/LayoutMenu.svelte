@@ -8,10 +8,12 @@
   import CodeThemeSwitcher from "./layout/CodeThemeSwitcher.svelte";
   import LayoutSwitcher from "./layout/LayoutSwitcher.svelte";
   import { t } from "@tutors/i18n";
+  import { currentCourse } from "@tutors/runes";
+  import { tourService } from "@tutors/tour";
 </script>
 
 {#snippet menuSelector()}
-  <div class="flex items-center rounded-lg p-4 hover:preset-tonal-secondary">
+  <div data-tour="layout" class="flex items-center rounded-lg p-4 hover:preset-tonal-secondary">
     <Icon type="lightMode" tip={t("nav.layout.tip")} />
     <span class="ml-2 hidden text-sm font-bold md:block">{t("nav.layout")}</span>
   </div>
@@ -37,6 +39,19 @@
     <hr />
     <div class="mt-1 mb-1 ml-2">{t("nav.layout.language")}</div>
     <LanguageSwitcher />
+    {#if currentCourse.value}
+      <hr />
+      <div class="mt-1 mb-1 ml-2">{t("tour.menuLabel")}</div>
+      <div class="mx-2 mb-2">
+        <button
+          class="preset-tonal w-full rounded-lg px-3 py-2 text-sm font-medium flex items-center justify-center whitespace-nowrap"
+          onclick={() => setTimeout(() => tourService.start(), 150)}
+        >
+          <Icon type="info" />
+          <span class="ml-1">{t("tour.startButton")}</span>
+        </button>
+      </div>
+    {/if}
   </div>
 {/snippet}
 

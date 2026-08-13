@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-model-lib",
-  "version": "5.0.7",
+  "version": "5.1.1",
   "exports": "./src/tutors.ts",
   "license": "MIT",
   "imports": {
@@ -8,6 +8,7 @@
     "front-matter": "npm:front-matter@^4.0.2",
     "js-yaml": "npm:js-yaml@^4.1.1",
     "archiver": "npm:archiver@^7.0.1",
+    "@types/markdown-it": "npm:@types/markdown-it@^14.1.2",
     "markdown-it": "npm:markdown-it@^14.2.0",
     "markdown-it-anchor": "npm:markdown-it-anchor@^9.2.0",
     "markdown-it-deflist": "npm:markdown-it-deflist@^3.0.0",

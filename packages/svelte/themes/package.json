@@ -1,6 +1,7 @@
 {
   "name": "@tutors/themes",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Theme service, styles, and icon mappings for Tutors",
   "private": true,
   "type": "module",
@@ -11,6 +12,7 @@
     "./events/*": "./src/events/*"
   },
   "dependencies": {
+    "@tutors/community": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",

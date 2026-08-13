@@ -1,6 +1,7 @@
 {
   "name": "tutors-mono-repo",
   "version": "16.0.3",
+  "license": "MIT",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "description": "Tutors monorepo - educational course reader platform",

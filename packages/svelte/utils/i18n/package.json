@@ -1,6 +1,7 @@
 {
   "name": "@tutors/i18n",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Internationalization service and translations for Tutors",
   "private": true,
   "type": "module",

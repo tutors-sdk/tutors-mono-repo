@@ -29,6 +29,7 @@ export const FluentIconLib: IconLib = {
   panelnote: { type: "fluent:notepad-16-regular", color: "warning" },
   tutorial: { type: "fluent:arrow-clockwise-dashes-settings-24-regular", color: "primary" },
   notebook: { type: "simple-icons:jupyter", color: "error" },
+  whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
   podcast: { type: "fluent:mic-20-filled", color: "primary" },
 
   // pdf reader icons
