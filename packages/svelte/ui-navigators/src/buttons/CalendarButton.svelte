@@ -8,8 +8,6 @@
 
 {#if currentCourse?.value?.courseCalendar?.currentWeek}
   {#snippet menuSelector()}
-    <div class="hidden w-full lg:flex">
-      <div class="hover:preset-tonal mx-auto inline-flex rounded-lg p-2">
     <div data-tour="calendar" class="hidden w-full lg:flex">
       <button class="hover:preset-tonal mx-auto inline-flex rounded-lg p-2">
         <span class="my-auto pr-4 pl-2">
@@ -20,7 +18,7 @@
           <span class="pt-1 text-sm">{t("nav.calendar.label")}</span><br />
           <span class="pb-1 text-lg font-bold">{currentCourse.value?.courseCalendar?.currentWeek.title}</span>
         </span>
-      </div>
+      </button>
     </div>
   {/snippet}
 

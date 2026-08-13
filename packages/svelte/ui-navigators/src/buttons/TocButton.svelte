@@ -21,7 +21,6 @@
   </article>
 {/snippet}
 
-<Sidebar position="right" {menuSelector} {sidebarContent} ariaLabel={t("nav.toc.tip")} />
 <div data-tour="toc">
-  <Sidebar position="right" {menuSelector} {sidebarContent} />
+  <Sidebar position="right" {menuSelector} {sidebarContent} ariaLabel={t("nav.toc.tip")} />
 </div>
