@@ -8,6 +8,7 @@
   import { prefersReducedMotion } from "@tutors/a11y";
   import { t } from "@tutors/i18n";
   import TourOverlay from "@tutors/ui-primitives/components/TourOverlay.svelte";
+  import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
 
   type Props = { children: Snippet; hideNavigator?: boolean; showConnect?: boolean };
   let { children, hideNavigator = false, showConnect = true }: Props = $props();
@@ -18,6 +19,7 @@
   });
 </script>
 
+<ToastProvider />
 <div class="flex h-screen flex-col">
   <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:p-4 focus:bg-primary-500 focus:text-white">
     {t("a11y.skipToContent")}
