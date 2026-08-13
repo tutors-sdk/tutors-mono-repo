@@ -29,6 +29,7 @@
     "@tutors/i18n": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
+    "@tutors/tour": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "isomorphic-dompurify": "^2.22.0"
   },

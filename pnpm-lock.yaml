@@ -638,6 +638,9 @@ importers:
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -684,6 +687,9 @@ importers:
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -749,6 +755,18 @@ importers:
 
   packages/svelte/utils/privacy:
     dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
+
+  packages/svelte/utils/tour:
+    dependencies:
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
       svelte:
         specifier: ^5.0.0
         version: 5.56.8
