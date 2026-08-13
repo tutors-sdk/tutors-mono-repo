@@ -7,7 +7,8 @@
     fr: "Français",
     de: "Deutsch",
     it: "Italiano",
-    es: "Español"
+    es: "Español",
+    ga: "Gailge",
   };
 
   const localeItems = SUPPORTED_LOCALES.map((loc) => ({ label: LOCALE_LABELS[loc], value: loc }));

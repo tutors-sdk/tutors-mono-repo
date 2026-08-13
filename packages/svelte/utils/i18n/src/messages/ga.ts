@@ -1,6 +1,6 @@
 const ga = {
   // Navigation
-  "nav.search": "Cuardach",
+  "nav.search": "Cuardaigh",
   "nav.search.exit": "Cuardach a Fhágáil",
   "nav.search.tip": "Cuardaigh an cúrsa seo",
   "nav.layout": "Leagan Amach",
