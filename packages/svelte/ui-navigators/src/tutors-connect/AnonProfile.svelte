@@ -27,6 +27,7 @@
   </ul>
 {/snippet}
 
+<Menu {menuSelector} {menuContent} ariaLabel={t("menu.anonName")} />
 <div data-tour="profile">
   <Menu {menuSelector} {menuContent} />
 </div>

@@ -54,6 +54,7 @@
   });
 </script>
 
+<button onclick={toggleSearch} aria-label={t("nav.search.tip")} aria-pressed={isSearching}>
 <button data-tour="search" onclick={toggleSearch}>
   <div class="hover:preset-tonal-secondary flex items-center gap-2 rounded-lg p-3 text-sm font-bold">
     <Icon type="search" tip={t("nav.search.tip")} />

@@ -66,6 +66,7 @@
   </ul>
 {/snippet}
 
+<Menu {menuSelector} {menuContent} ariaLabel={t("menu.profile")} />
 <div data-tour="profile">
   <Menu {menuSelector} {menuContent} />
 </div>
