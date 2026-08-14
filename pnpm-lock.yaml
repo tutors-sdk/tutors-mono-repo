@@ -738,11 +738,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/svelte/utils/logger:
-    dependencies:
-      loglevel:
-        specifier: ^1.9.2
-        version: 1.9.2
+  packages/svelte/utils/logger: {}
 
   packages/svelte/utils/privacy:
     dependencies:
@@ -3291,10 +3287,6 @@ packages:
 
   lodash.kebabcase@4.1.1:
     resolution: {integrity: sha512-N8XRTIMMqqDgSy4VLKPnJ/+hpGZN+PHQiJnSenYqPaVV/NCqEogTnAdZLQiGKhxX+JCs8waWq2t1XHWKOmlY8g==}
-
-  loglevel@1.9.2:
-    resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
-    engines: {node: '>= 0.6.0'}
 
   lru-cache@11.5.2:
     resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
@@ -6835,8 +6827,6 @@ snapshots:
   lodash.groupby@4.6.0: {}
 
   lodash.kebabcase@4.1.1: {}
-
-  loglevel@1.9.2: {}
 
   lru-cache@11.5.2: {}
 
