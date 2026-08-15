@@ -18,6 +18,12 @@ import {
   CourseJsonSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
+  WhiteboardSceneInitSchema,
+  WhiteboardSceneUpdateSchema,
+  WhiteboardSceneSnapshotSchema,
+  WhiteboardCursorUpdateSchema,
+  WhiteboardRoomSchema,
+  WhiteboardInitEditorSchema,
 } from "../contract/support/schemas";
 
 describe("Schema Snapshot Regression", () => {
@@ -33,6 +39,12 @@ describe("Schema Snapshot Regression", () => {
     { name: "CourseJson", schema: CourseJsonSchema },
     { name: "IncrementCalendarParams", schema: IncrementCalendarParamsSchema },
     { name: "GetCountLearningRecordsParams", schema: GetCountLearningRecordsParamsSchema },
+    { name: "WhiteboardSceneInit", schema: WhiteboardSceneInitSchema },
+    { name: "WhiteboardSceneUpdate", schema: WhiteboardSceneUpdateSchema },
+    { name: "WhiteboardSceneSnapshot", schema: WhiteboardSceneSnapshotSchema },
+    { name: "WhiteboardCursorUpdate", schema: WhiteboardCursorUpdateSchema },
+    { name: "WhiteboardRoom", schema: WhiteboardRoomSchema },
+    { name: "WhiteboardInitEditor", schema: WhiteboardInitEditorSchema },
   ];
 
   for (const { name, schema } of schemas) {

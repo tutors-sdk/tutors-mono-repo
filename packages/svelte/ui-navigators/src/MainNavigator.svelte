@@ -7,6 +7,7 @@
   import TutorsTimeIndicator from "@tutors/ui-navigators/buttons/TutorsTimeIndicator.svelte";
   import TocButton from "@tutors/ui-navigators/buttons/TocButton.svelte";
   import InfoButton from "@tutors/ui-navigators/buttons/InfoButton.svelte";
+  import WhiteboardButton from "@tutors/ui-navigators/buttons/WhiteboardButton.svelte";
   import AnonProfile from "@tutors/ui-navigators/tutors-connect/AnonProfile.svelte";
   import ConnectedProfile from "@tutors/ui-navigators/tutors-connect/ConnectedProfile.svelte";
   import TutorsTitle from "@tutors/ui-navigators/titles/TutorsTitle.svelte";
@@ -61,6 +62,9 @@
           {#if currentCourse?.value && !currentCourse?.value?.isPortfolio}
             <SearchButton />
           {/if}
+        </div>
+        <div class="hidden md:flex items-center">
+          <WhiteboardButton />
         </div>
       </div>
       <div class="flex items-center">

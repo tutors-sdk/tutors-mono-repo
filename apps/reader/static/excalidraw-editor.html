@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excalidraw Editor</title>
+  <link rel="stylesheet" href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/prod/index.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+    #loading {
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      font-family: system-ui, sans-serif; color: #666;
+      background: #fff;
+    }
+    #loading.hidden { display: none; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+        "react-dom": "https://esm.sh/react-dom@18.3.1?external=react",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?external=react"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="loading">Loading editor...</div>
+  <div id="root"></div>
+  <script type="module">
+    import React, { createElement, useEffect, useRef, useState, useCallback } from "react";
+    import { createRoot } from "react-dom/client";
+    import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom";
+    import PartySocket from "https://esm.sh/partysocket@1.0.1";
+
+    const loadingEl = document.getElementById("loading");
+
+    function ExcalidrawEditor({ config }) {
+      const excalidrawAPIRef = useRef(null);
+      const socketRef = useRef(null);
+      const collaboratorsRef = useRef(new Map());
+      const lastVersionsRef = useRef(new Map());
+      const isRemoteUpdateRef = useRef(false);
+      const debounceTimerRef = useRef(null);
+      const [collaborators, setCollaborators] = useState(new Map());
+
+      useEffect(() => {
+        const socket = new PartySocket({
+          host: config.partyHost,
+          room: config.roomId,
+          party: "whiteboard",
+        });
+        socketRef.current = socket;
+
+        socket.addEventListener("message", (event) => {
+          let data;
+          try {
+            data = JSON.parse(event.data);
+          } catch {
+            return;
+          }
+
+          const api = excalidrawAPIRef.current;
+          if (!api) return;
+
+          switch (data.type) {
+            case "scene-snapshot": {
+              isRemoteUpdateRef.current = true;
+              api.updateScene({
+                elements: data.elements || [],
+              });
+              isRemoteUpdateRef.current = false;
+
+              const versionMap = lastVersionsRef.current;
+              for (const el of data.elements || []) {
+                versionMap.set(el.id, el.version);
+              }
+              break;
+            }
+
+            case "scene-update": {
+              if (data.source === socket.id) break;
+              const currentElements = api.getSceneElements();
+              const elementMap = new Map(currentElements.map(el => [el.id, el]));
+
+              for (const el of data.elements) {
+                const existing = elementMap.get(el.id);
+                if (!existing || el.version >= existing.version) {
+                  elementMap.set(el.id, el);
+                }
+              }
+
+              isRemoteUpdateRef.current = true;
+              api.updateScene({
+                elements: Array.from(elementMap.values()),
+              });
+              isRemoteUpdateRef.current = false;
+
+              for (const el of data.elements) {
+                lastVersionsRef.current.set(el.id, el.version);
+              }
+              break;
+            }
+
+            case "cursor-update": {
+              const collabs = new Map(collaboratorsRef.current);
+              collabs.set(data.source, {
+                pointer: data.pointer,
+                button: data.button,
+                username: data.user?.name || "Anonymous",
+                color: { background: data.user?.color || "#ccc", stroke: data.user?.color || "#ccc" },
+              });
+              collaboratorsRef.current = collabs;
+              setCollaborators(new Map(collabs));
+              break;
+            }
+
+            case "user-left": {
+              const collabs = new Map(collaboratorsRef.current);
+              collabs.delete(data.userId);
+              collaboratorsRef.current = collabs;
+              setCollaborators(new Map(collabs));
+              break;
+            }
+          }
+        });
+
+        socket.addEventListener("open", () => {
+          if (config.initialScene) {
+            socket.send(JSON.stringify({
+              type: "scene-init",
+              elements: config.initialScene.elements || [],
+              appState: {
+                viewBackgroundColor:
+                  config.initialScene.appState?.viewBackgroundColor || "#ffffff",
+              },
+              files: config.initialScene.files || {},
+            }));
+          }
+        });
+
+        return () => {
+          socket.close();
+        };
+      }, [config]);
+
+      const handleChange = useCallback((elements) => {
+        if (isRemoteUpdateRef.current) return;
+
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+          const socket = socketRef.current;
+          if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+          const versionMap = lastVersionsRef.current;
+          const changed = elements.filter(el => {
+            const lastVersion = versionMap.get(el.id);
+            return lastVersion === undefined || el.version > lastVersion;
+          });
+
+          if (changed.length === 0) return;
+
+          for (const el of changed) {
+            versionMap.set(el.id, el.version);
+          }
+
+          socket.send(JSON.stringify({
+            type: "scene-update",
+            elements: changed,
+          }));
+        }, 100);
+      }, []);
+
+      const handlePointerUpdate = useCallback((payload) => {
+        const socket = socketRef.current;
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+        socket.send(JSON.stringify({
+          type: "cursor-update",
+          user: {
+            name: config.user.name,
+            id: config.user.id,
+            avatar: config.user.avatar,
+          },
+          pointer: payload.pointer,
+          button: payload.button,
+        }));
+      }, [config.user]);
+
+      return createElement(Excalidraw, {
+        excalidrawAPI: (api) => { excalidrawAPIRef.current = api; },
+        onChange: handleChange,
+        onPointerUpdate: handlePointerUpdate,
+        isCollaborating: true,
+        initialData: config.initialScene ? {
+          elements: config.initialScene.elements || [],
+          appState: {
+            viewBackgroundColor:
+              config.initialScene.appState?.viewBackgroundColor || "#ffffff",
+          },
+          files: config.initialScene.files || {},
+        } : undefined,
+      });
+    }
+
+    window.addEventListener("message", (event) => {
+      if (event.data?.type === "init-editor") {
+        loadingEl.classList.add("hidden");
+
+        const root = createRoot(document.getElementById("root"));
+        root.render(createElement(ExcalidrawEditor, { config: event.data }));
+      }
+    });
+
+    window.parent.postMessage({ type: "editor-ready" }, "*");
+  </script>
+</body>
+</html>
