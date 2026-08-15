@@ -1,16 +1,12 @@
-import log from "loglevel";
+import { TutorsLogger } from "./logger.ts";
+import type { LoggerOptions, Logger } from "./types.ts";
 
-const originalFactory = log.methodFactory;
+export type { LogLevel, LogEntry, LoggerOptions, Logger } from "./types.ts";
 
-log.methodFactory = function (methodName, logLevel, loggerName) {
-  const rawMethod = originalFactory(methodName, logLevel, loggerName);
-  return function (...args: unknown[]) {
-    const prefix = `[tutors:${methodName}]`;
-    rawMethod(prefix, ...args);
-  };
-};
+export function createLogger(options?: LoggerOptions): Logger {
+  return new TutorsLogger(options);
+}
 
-log.setDefaultLevel(import.meta.env.DEV ? "debug" : "warn");
-log.rebuild();
+const log: Logger = createLogger();
 
 export default log;
