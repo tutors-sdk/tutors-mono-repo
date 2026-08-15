@@ -31,8 +31,8 @@ describe("Developer: Internationalisation", () => {
     expect(i18n.t("nonexistent.key")).toBe("nonexistent.key");
   });
 
-  it("shall support all five locales", () => {
-    const locales = ["en", "de", "fr", "es", "it"];
+  it("shall support all six locales", () => {
+    const locales = ["en", "de", "fr", "es", "it", "ga"];
     for (const locale of locales) {
       i18n.setLocale(locale);
       const result = i18n.t("nav.search");

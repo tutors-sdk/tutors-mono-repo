@@ -22,9 +22,9 @@ Feature: Internationalisation and Localisation
     Then the system shall fall back to the English translation
 
   @ears-optional
-  Scenario: Support five locales
+  Scenario: Support six locales
     Where the i18n module is loaded
-    Then the system shall support English, French, German, Italian, and Spanish
+    Then the system shall support English, French, German, Italian, Spanish and Irish
 
   @ears-state-driven
   Scenario: Locale initialised from cookie
