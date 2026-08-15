@@ -1,20 +1,27 @@
-import type * as Party from "partykit/server";
+import { Server, type Connection, type ConnectionContext, routePartykitRequest } from "partyserver";
 
-export default class Server implements Party.Server {
-  constructor(readonly room: Party.Room) {}
-
-  onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
+export class MainServer extends Server {
+  onConnect(conn: Connection, ctx: ConnectionContext) {
     console.log(
-      `Tutors connection: id: ${conn.id} room: ${this.room.id} url: ${
+      `Tutors connection: id: ${conn.id} room: ${this.name} url: ${
         new URL(ctx.request.url).pathname
       }`
     );
   }
 
-  onMessage(message: string, sender: Party.Connection) {
-    console.log(`connection ${sender.id} sent message: ${message}`);
-    this.room.broadcast(message);
+  onMessage(conn: Connection, message: string | ArrayBuffer) {
+    console.log(`connection ${conn.id} sent message: ${message}`);
+    this.broadcast(message);
   }
 }
 
-Server satisfies Party.Worker;
+export { WhiteboardServer } from "./whiteboard-server";
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    return (
+      (await routePartykitRequest(request, env)) ||
+      new Response("Not Found", { status: 404 })
+    );
+  },
+} satisfies ExportedHandler<Env>;

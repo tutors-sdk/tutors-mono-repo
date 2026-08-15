@@ -1,25 +1,23 @@
-import type * as Party from "partykit/server";
+import { Server, type Connection, type ConnectionContext } from "partyserver";
 
 const CURSOR_COLORS = [
   "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
   "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F",
 ];
 
-export default class WhiteboardServer implements Party.Server {
-  constructor(readonly room: Party.Room) {}
-
+export class WhiteboardServer extends Server {
   private userColors = new Map<string, string>();
   private userInfo = new Map<string, { name: string; id: string; avatar: string }>();
   private colorIndex = 0;
 
-  async onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
+  async onConnect(conn: Connection, ctx: ConnectionContext) {
     const color = CURSOR_COLORS[this.colorIndex % CURSOR_COLORS.length];
     this.colorIndex++;
     this.userColors.set(conn.id, color);
 
-    const elements = await this.room.storage.get("elements");
-    const appState = await this.room.storage.get("appState");
-    const files = await this.room.storage.get("files");
+    const elements = await this.ctx.storage.get("elements");
+    const appState = await this.ctx.storage.get("appState");
+    const files = await this.ctx.storage.get("files");
 
     if (elements) {
       conn.send(JSON.stringify({
@@ -31,28 +29,28 @@ export default class WhiteboardServer implements Party.Server {
     }
   }
 
-  async onMessage(message: string, sender: Party.Connection) {
+  async onMessage(conn: Connection, message: string | ArrayBuffer) {
     let data: any;
     try {
-      data = JSON.parse(message);
+      data = JSON.parse(message as string);
     } catch {
       return;
     }
 
     switch (data.type) {
       case "scene-init": {
-        const existing = await this.room.storage.get("elements");
+        const existing = await this.ctx.storage.get("elements");
         if (!existing) {
-          await this.room.storage.put("elements", data.elements);
-          await this.room.storage.put("appState", data.appState);
+          await this.ctx.storage.put("elements", data.elements);
+          await this.ctx.storage.put("appState", data.appState);
           if (data.files) {
-            await this.room.storage.put("files", data.files);
+            await this.ctx.storage.put("files", data.files);
           }
         }
-        const elements = await this.room.storage.get("elements");
-        const appState = await this.room.storage.get("appState");
-        const files = await this.room.storage.get("files");
-        sender.send(JSON.stringify({
+        const elements = await this.ctx.storage.get("elements");
+        const appState = await this.ctx.storage.get("appState");
+        const files = await this.ctx.storage.get("files");
+        conn.send(JSON.stringify({
           type: "scene-snapshot",
           elements,
           appState: appState || { viewBackgroundColor: "#ffffff" },
@@ -62,7 +60,7 @@ export default class WhiteboardServer implements Party.Server {
       }
 
       case "scene-update": {
-        const stored = ((await this.room.storage.get("elements")) || []) as any[];
+        const stored = ((await this.ctx.storage.get("elements")) || []) as any[];
         const elementMap = new Map(stored.map((el: any) => [el.id, el]));
         for (const el of data.elements) {
           const existing = elementMap.get(el.id);
@@ -71,47 +69,47 @@ export default class WhiteboardServer implements Party.Server {
           }
         }
         const merged = Array.from(elementMap.values());
-        await this.room.storage.put("elements", merged);
+        await this.ctx.storage.put("elements", merged);
 
-        this.room.broadcast(
+        this.broadcast(
           JSON.stringify({
             type: "scene-update",
             elements: data.elements,
-            source: sender.id,
+            source: conn.id,
           }),
-          [sender.id]
+          [conn.id]
         );
         break;
       }
 
       case "cursor-update": {
         if (data.user) {
-          this.userInfo.set(sender.id, {
+          this.userInfo.set(conn.id, {
             name: data.user.name,
             id: data.user.id,
             avatar: data.user.avatar,
           });
         }
-        this.room.broadcast(
+        this.broadcast(
           JSON.stringify({
             ...data,
-            source: sender.id,
+            source: conn.id,
             user: {
               ...data.user,
-              color: this.userColors.get(sender.id),
+              color: this.userColors.get(conn.id),
             },
           }),
-          [sender.id]
+          [conn.id]
         );
         break;
       }
     }
   }
 
-  onClose(conn: Party.Connection) {
+  onClose(conn: Connection, code: number, reason: string, wasClean: boolean) {
     this.userColors.delete(conn.id);
     this.userInfo.delete(conn.id);
-    this.room.broadcast(
+    this.broadcast(
       JSON.stringify({
         type: "user-left",
         userId: conn.id,
@@ -119,5 +117,3 @@ export default class WhiteboardServer implements Party.Server {
     );
   }
 }
-
-WhiteboardServer satisfies Party.Worker;

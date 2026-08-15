@@ -4,14 +4,16 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "partykit dev",
-    "deploy": "partykit deploy"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
+    "partyserver": "^0.5.10",
     "partysocket": "1.0.1"
   },
   "devDependencies": {
-    "partykit": "0.0.104",
-    "typescript": "^6.0.3"
+    "@cloudflare/workers-types": "^5.20260814.1",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.0.0"
   }
 }
