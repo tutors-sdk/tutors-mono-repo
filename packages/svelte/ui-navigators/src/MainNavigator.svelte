@@ -71,7 +71,7 @@
         <LayoutMenu />
       </div>
       {#if showConnect}
-        <span class="mx-2 h-10 w-[1px]" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
+        <span class="mx-2 h-10 w-[1px]" role="separator" aria-hidden="true" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
         {#if !currentCourse?.value?.isPrivate}
           <div class="relative">
             {#if !tutorsId.value?.login}

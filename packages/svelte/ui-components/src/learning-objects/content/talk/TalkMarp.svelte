@@ -6,6 +6,7 @@
   import { renderMarpSlides, buildMarpMarkdown } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import { t } from "@tutors/i18n";
 
   interface Props {
     lo: Talk;
@@ -95,14 +96,14 @@
       {/if}
     </div>
     <div>
-      <button class="btn btn-sm" onclick={prevSlide}>
-        <Icon type="left" tip="Previous slide" />
+      <button class="btn btn-sm" onclick={prevSlide} aria-label={t("content.slideBack")}>
+        <Icon type="left" tip={t("content.slideBack")} />
       </button>
-      <button class="btn btn-sm" onclick={nextSlide}>
-        <Icon type="right" tip="Next slide" />
+      <button class="btn btn-sm" onclick={nextSlide} aria-label={t("content.slideForward")}>
+        <Icon type="right" tip={t("content.slideForward")} />
       </button>
-      <button class="btn btn-sm" onclick={toggleFullscreen}>
-        <Icon type="fullScreen" tip="Toggle fullscreen" />
+      <button class="btn btn-sm" onclick={toggleFullscreen} aria-label={t("content.slideFullScreen")}>
+        <Icon type="fullScreen" tip={t("content.slideFullScreen")} />
       </button>
     </div>
   </div>

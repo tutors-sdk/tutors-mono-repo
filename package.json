@@ -22,10 +22,12 @@
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
+    "test:a11y": "playwright test --config=playwright-a11y.config.ts",
     "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build",
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.52.0",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",

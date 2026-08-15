@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.13.0(playwright-core@1.62.1)
       '@playwright/test':
         specifier: ^1.52.0
         version: 1.62.1
@@ -302,6 +305,9 @@ importers:
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
+      '@tutors/ui-primitives':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-primitives
       ag-grid-community:
         specifier: ^35.2.1
         version: 35.3.1
@@ -635,6 +641,9 @@ importers:
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -681,6 +690,9 @@ importers:
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -750,24 +762,36 @@ importers:
         specifier: ^5.0.0
         version: 5.56.8
 
+  packages/svelte/utils/tour:
+    dependencies:
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
+
   services/party:
     dependencies:
       partyserver:
         specifier: ^0.5.10
-        version: 0.5.10(@cloudflare/workers-types@5.20260814.1)
+        version: 0.5.10(@cloudflare/workers-types@5.20260815.1)
       partysocket:
         specifier: 1.0.1
         version: 1.0.1
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260814.1
-        version: 5.20260814.1
+        version: 5.20260815.1
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       wrangler:
         specifier: ^4.0.0
-        version: 4.123.0(@cloudflare/workers-types@5.20260814.1)
+        version: 4.123.0(@cloudflare/workers-types@5.20260815.1)
 
 packages:
 
@@ -820,6 +844,11 @@ packages:
         optional: true
       nodemailer:
         optional: true
+
+  '@axe-core/playwright@4.13.0':
+    resolution: {integrity: sha512-6YLx+kxXu5GJceG4ozFg+33a2EMTdjYwWGloJ3sb9Kta5pp+ZNS53uxGVog5JetIY8s++P5UrtX+cri+u0VAVg==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -1035,8 +1064,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@cloudflare/workers-types@5.20260814.1':
-    resolution: {integrity: sha512-bF5RT5bmxEaHJR2PRrAmcdf09EPxpRXXzPHcOtjX//r84jZNpwslNwx291ofNdBVuqGV129CBJzxiMYsB37DHw==}
+  '@cloudflare/workers-types@5.20260815.1':
+    resolution: {integrity: sha512-btpW8rEgeJKcxDlBWKxzjLLUHxzUWqXZY8O+DmM6NcSHadUQN5I71z6Q/yAKCTJyGS7adBpXzlsZSFbosLnECQ==}
 
   '@codemirror/autocomplete@6.20.3':
     resolution: {integrity: sha512-tlosUqb+3BbxCxZdu4tKeRghPFC+QM7q4X5YhKV2eCmPG+1r2F3f4AaSz5sCrFqUtX4Jh20VFTKecl16MgiV9g==}
@@ -2360,7 +2389,6 @@ packages:
   '@xmldom/xmldom@0.9.10':
     resolution: {integrity: sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw==}
     engines: {node: '>=14.6'}
-    deprecated: this version has critical issues, please update to the latest version
 
   '@zag-js/accordion@1.42.0':
     resolution: {integrity: sha512-eTVh6Uz3CqdcJDr5mHWTT+oICSrZFfYCCxIpOKF00nADmb96nCDqOAYFMf8gM3J/4UDS/V27QzEH5GPmFWiHIw==}
@@ -2575,6 +2603,10 @@ packages:
 
   async@3.2.6:
     resolution: {integrity: sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==}
+
+  axe-core@4.13.0:
+    resolution: {integrity: sha512-UzGt8zg7Ny8djbYMhxl2zuEevVa7r2gJjYY5Lwr1xM7+XU2nd6CkIWFTVcCIbAP63vSz71NaVyyuSk9lHKcy0A==}
+    engines: {node: '>=4'}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -4469,6 +4501,11 @@ snapshots:
       set-cookie-parser: 2.7.2
       svelte: 5.56.8
 
+  '@axe-core/playwright@4.13.0(playwright-core@1.62.1)':
+    dependencies:
+      axe-core: 4.13.0
+      playwright-core: 1.62.1
+
   '@babel/code-frame@7.29.7':
     dependencies:
       '@babel/helper-validator-identifier': 7.29.7
@@ -4720,7 +4757,7 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260811.1':
     optional: true
 
-  '@cloudflare/workers-types@5.20260814.1': {}
+  '@cloudflare/workers-types@5.20260815.1': {}
 
   '@codemirror/autocomplete@6.20.3':
     dependencies:
@@ -6406,6 +6443,8 @@ snapshots:
 
   async@3.2.6: {}
 
+  axe-core@4.13.0: {}
+
   axobject-query@4.1.0: {}
 
   b4a@1.8.1: {}
@@ -7522,9 +7561,9 @@ snapshots:
     dependencies:
       entities: 8.0.0
 
-  partyserver@0.5.10(@cloudflare/workers-types@5.20260814.1):
+  partyserver@0.5.10(@cloudflare/workers-types@5.20260815.1):
     dependencies:
-      '@cloudflare/workers-types': 5.20260814.1
+      '@cloudflare/workers-types': 5.20260815.1
       nanoid: 5.1.16
 
   partysocket@1.0.1:
@@ -8150,7 +8189,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260811.1
       '@cloudflare/workerd-windows-64': 1.20260811.1
 
-  wrangler@4.123.0(@cloudflare/workers-types@5.20260814.1):
+  wrangler@4.123.0(@cloudflare/workers-types@5.20260815.1):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260811.1)
@@ -8161,7 +8200,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260811.1
     optionalDependencies:
-      '@cloudflare/workers-types': 5.20260814.1
+      '@cloudflare/workers-types': 5.20260815.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
