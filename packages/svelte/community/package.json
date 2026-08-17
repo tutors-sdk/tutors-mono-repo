@@ -19,7 +19,7 @@
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "partysocket": "^1.1.19"
+    "partysocket": "^1.3.0"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

@@ -424,7 +424,7 @@ importers:
         specifier: workspace:*
         version: link:../../jsr/model
       partysocket:
-        specifier: ^1.1.19
+        specifier: ^1.3.0
         version: 1.3.0
       svelte:
         specifier: ^5.0.0
@@ -776,8 +776,8 @@ importers:
         specifier: ^0.5.10
         version: 0.5.10(@cloudflare/workers-types@5.20260815.1)
       partysocket:
-        specifier: 1.0.1
-        version: 1.0.1
+        specifier: 1.3.0
+        version: 1.3.0
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260814.1
@@ -3123,10 +3123,6 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
-  event-target-shim@6.0.2:
-    resolution: {integrity: sha512-8q3LsZjRezbFZ2PN+uP+Q7pnHUMmAOziU2vA2OwoFaKIXxlxl38IylhSSgUorWu/rf4er67w0ikBqjBFk/pomA==}
-    engines: {node: '>=10.13.0'}
-
   events-universal@1.0.1:
     resolution: {integrity: sha512-LUd5euvbMLpwOF8m6ivPCbhQeSiYVNb8Vs0fQ8QjXo0JTkEHpz8pxdQf0gStltaPpw0Cca8b39KxvK9cfKRiAw==}
 
@@ -3784,9 +3780,6 @@ packages:
     resolution: {integrity: sha512-t2B3mhTL1IOxCsj8rZgn4TxTuub7oLhypjc1/fGPNsbgnn9OsHms6uR3QEd5bFJ/7xrFo771j3DdUlll8cxgBg==}
     peerDependencies:
       '@cloudflare/workers-types': ^4.20260424.1 || ^5.20260703.1
-
-  partysocket@1.0.1:
-    resolution: {integrity: sha512-sSnLf9X0Oaxw0wXp0liKho0QQqStDJB5I4ViaqmtI4nHm6cpb2kUealErPrcQpYUF6zgTHzLQhIO++2tcJc59A==}
 
   partysocket@1.3.0:
     resolution: {integrity: sha512-1zToNyolZFK/7nuAw/K2bZrNzFqaZyRoCEkS+9vG6WSC5ikrN6qWRe96q6ImU51uptz2r+dAwSkwhJVdQi4LiA==}
@@ -6962,8 +6955,6 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
-  event-target-shim@6.0.2: {}
-
   events-universal@1.0.1:
     dependencies:
       bare-events: 2.9.1
@@ -7600,10 +7591,6 @@ snapshots:
     dependencies:
       '@cloudflare/workers-types': 5.20260815.1
       nanoid: 5.1.16
-
-  partysocket@1.0.1:
-    dependencies:
-      event-target-shim: 6.0.2
 
   partysocket@1.3.0:
     dependencies:
