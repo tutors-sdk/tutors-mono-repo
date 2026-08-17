@@ -11,6 +11,9 @@ build/
 .netlify/
 .output/
 
+# Cloudflare
+.wrangler/
+
 # Environment variables
 .env
 .env.local
