@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@iconify/svelte": "^5.2.2",
-    "@supabase/supabase-js": "^2.111.0",
+    "@supabase/supabase-js": "^2.112.3",
     "@tutors/ui-primitives": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
     "ag-grid-community": "^35.2.1",
