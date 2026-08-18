@@ -16,7 +16,7 @@
         <span class="mx-2 h-10 w-[1px]" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
         <span class="px-2">
           <span class="pt-1 text-sm">{t("nav.calendar.label")}</span><br />
-          <span class="pb-1 text-lg font-bold">{currentCourse.value?.courseCalendar?.currentWeek.title}</span>
+          <span class="pb-1 text-lg font-bold">{currentCourse.value?.courseCalendar?.currentWeek?.title}</span>
         </span>
       </button>
     </div>

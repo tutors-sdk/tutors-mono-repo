@@ -1,6 +1,7 @@
 <script lang="ts">
   import * as pdfjs from "pdfjs-dist";
-  // @ts-ignore
+  import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+  // @ts-expect-error no type declarations for file-saver
   import FileSaver from "file-saver";
   import { onDestroy, tick, onMount } from "svelte";
   import { Progress } from "@skeletonlabs/skeleton-svelte";
@@ -21,14 +22,14 @@
 
   let pageNum = $state(1);
   let url = "";
-  let canvas: any = $state();
+  let canvas: HTMLCanvasElement | undefined = $state();
   let pageCount = 0;
-  let pdfDoc: any = $state(null);
+  let pdfDoc: PDFDocumentProxy | null = $state(null);
   let pageRendering = false;
   let pageNumPending = false;
   let rotation = 0;
   let totalPage = 0;
-  let pages: any = [];
+  let pages: HTMLCanvasElement[] = [];
   let loading = $state(true);
   let worker: PDFWorker | undefined;
 
@@ -43,7 +44,7 @@
     window.addEventListener("keydown", keypressInput);
   }
 
-  function keypressInput(e) {
+  function keypressInput(e: KeyboardEvent) {
     if (e.key === "ArrowRight") {
       e.preventDefault();
       onNextPage();
@@ -82,22 +83,24 @@
   async function renderPage(num: number) {
     pageRendering = true;
     try {
+      if (!pdfDoc) return;
       const page = await pdfDoc.getPage(num);
       const viewport = page.getViewport({ scale: 1.8, rotation: rotation });
       const canvasContext = canvas?.getContext("2d");
 
-      if (canvas && viewport) {
+      if (canvas && viewport && canvasContext) {
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         const renderContext = {
           canvasContext,
-          viewport
+          viewport,
+          canvas
         };
         const renderTask = page.render(renderContext);
         await renderTask.promise;
         pageRendering = false;
         if (!pageNumPending) {
-          if (pageNum < pdfDoc.totalPage) {
+          if (pageNum < totalPage) {
             pages[pageNum] = canvas;
             pageNum++;
             await renderPage(pageNum);
@@ -131,7 +134,7 @@
   }
 
   function onNextPage() {
-    if (pageNum >= pdfDoc.numPages) {
+    if (!pdfDoc || pageNum >= pdfDoc.numPages) {
       return;
     }
     pageNum++;

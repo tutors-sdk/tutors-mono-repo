@@ -68,7 +68,7 @@ export interface CourseService {
   /** Cache of live notebook instances */
   notebooks: Map<string, NotebookService>;
   /** Current course URL */
-  courseUrl: any;
+  courseUrl: { value: string };
 
   getOrLoadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course>;
   readCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course>;

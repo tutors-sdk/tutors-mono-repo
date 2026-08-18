@@ -10,7 +10,7 @@
       {#if currentLo?.value?.img}
         <Image lo={currentLo?.value} miniImage={true} />
       {:else}
-        <Image lo={currentCourse?.value} miniImage={true} />
+        {#if currentCourse?.value}<Image lo={currentCourse.value} miniImage={true} />{/if}
       {/if}
     </div>
     <div>

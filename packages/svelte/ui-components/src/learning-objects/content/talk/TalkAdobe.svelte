@@ -5,6 +5,14 @@
   import type { Talk } from "@tutors/tutors-model-lib";
   import { onMount } from "svelte";
 
+  interface AdobeDCViewInstance {
+    previewFile: (content: object, config: object) => void;
+  }
+
+  interface AdobeDCNamespace {
+    View: new (config: { clientId: string; divId: string }) => AdobeDCViewInstance;
+  }
+
   interface Props {
     lo: Talk;
     orientation?: "landscape" | "portrait";
@@ -30,7 +38,7 @@
     showZoomControl: true
   };
 
-  let adobeDCView: any = null;
+  let adobeDCView: AdobeDCViewInstance | null = null;
   let mounted = false;
   let viewerId = $derived(`adobe-pdf-viewer-${lo.pdf.split('/').pop()?.replace(/[^a-z0-9]/gi, '')}`);
 
@@ -44,9 +52,10 @@
   }
 
   function displayPDF() {
-    if (!window.AdobeDC) return;
+    const adobeDC = (window as unknown as Record<string, unknown>).AdobeDC as AdobeDCNamespace | undefined;
+    if (!adobeDC) return;
 
-    adobeDCView = new window.AdobeDC.View({
+    adobeDCView = new adobeDC.View({
       clientId: PUBLIC_PDF_KEY,
       divId: viewerId
     });
@@ -67,14 +76,14 @@
   // React to lo.pdf changes
   $effect(() => {
     const pdfUrl = lo.pdf;
-    if (mounted && window.AdobeDC && pdfUrl) {
+    if (mounted && (window as unknown as Record<string, unknown>).AdobeDC && pdfUrl) {
       displayPDF();
     }
   });
 
   onMount(() => {
     loadSDK();
-    if (window.AdobeDC) {
+    if ((window as unknown as Record<string, unknown>).AdobeDC) {
       displayPDF();
       mounted = true;
     } else {

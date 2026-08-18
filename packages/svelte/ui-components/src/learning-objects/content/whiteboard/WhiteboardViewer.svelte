@@ -15,7 +15,7 @@
   let isFullscreen = $state(false);
   let isEditing = $state(false);
   let isShared = $state(false);
-  let cachedScene: any = null;
+  let cachedScene: Record<string, unknown> | null = null;
 
   function getUserId(): string {
     return tutorsId.value?.login || `anon-${Math.random().toString(36).slice(2, 8)}`;
@@ -41,8 +41,8 @@
       if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       cachedScene = await response.json();
       setupMessageHandler();
-    } catch (e: any) {
-      error = e.message || "Failed to load whiteboard";
+    } catch (e: unknown) {
+      error = e instanceof Error ? e.message : "Failed to load whiteboard";
       loading = false;
     }
   }

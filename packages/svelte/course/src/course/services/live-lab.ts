@@ -46,9 +46,7 @@ export class LiveLab implements LabService {
   }
 
   convertMdToHtml() {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    this.chaptersHtml = new Map(this.lab.los.map((chapter) => [encodeURI(chapter.shortTitle), chapter.contentHtml]));
+    this.chaptersHtml = new Map(this.lab.los.map((chapter) => [encodeURI(chapter.shortTitle), chapter.contentHtml ?? ""]));
     this.chaptersTitles = new Map(this.lab.los.map((chapter) => [chapter.shortTitle, removeLeadingHashes(chapter.title)]));
     this.steps = Array.from(this.chaptersHtml.keys());
   }
@@ -72,9 +70,7 @@ export class LiveLab implements LabService {
     if (currentChapterIndex !== -1) {
       let number = "";
       const prevChapter = this.lab.los[currentChapterIndex - 1];
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const prevTitle = prevChapter ? truncate(this.chaptersTitles.get(prevChapter.shortTitle)) : "";
+      const prevTitle = prevChapter ? truncate(this.chaptersTitles.get(prevChapter.shortTitle) ?? "") : "";
       if (prevTitle) number = this.autoNumber ? prevChapter.shortTitle + ": " : "";
       this.horizontalNavbarHtml = prevChapter
         ? `<a class="btn btn-sm text-base capitalize" href="${this.url}/${encodeURI(prevChapter.shortTitle)}"> <span aria-hidden="true">&larr;</span>&nbsp; ${escapeHtml(number)}${escapeHtml(prevTitle ?? "")} </a>`
@@ -83,9 +79,7 @@ export class LiveLab implements LabService {
       number = "";
       const nextChapter = this.lab.los[currentChapterIndex + 1];
       if (nextChapter) number = this.autoNumber ? nextChapter.shortTitle + ": " : "";
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const nextTitle = nextChapter ? truncate(this.chaptersTitles.get(nextChapter.shortTitle)) : "";
+      const nextTitle = nextChapter ? truncate(this.chaptersTitles.get(nextChapter.shortTitle) ?? "") : "";
       this.horizontalNavbarHtml += nextChapter
         ? `<a class="ml-auto btn btn-sm capitalize text-base" style="margin-left: auto" href="${this.url}/${encodeURI(
             nextChapter.shortTitle

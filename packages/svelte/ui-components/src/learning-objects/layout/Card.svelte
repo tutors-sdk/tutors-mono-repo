@@ -1,7 +1,7 @@
 <script lang="ts">
   import Iconify from "@iconify/svelte";
   import { LoRecord } from "@tutors/community";
-  import { cardStyles, type CardConfig, type CardDetails } from "@tutors/themes";
+  import { cardStyles, type CardConfig, type CardDetails, type LayoutType, type CardStyleType } from "@tutors/themes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
@@ -36,8 +36,8 @@
   const target = $derived(cardDetails.type === "web" && cardDetails.route.startsWith("http") ? "_blank" : "");
   const route = $derived(cardDetails.type === "video" ? cardDetails.video! : cardDetails.route);
   const hideVideoIcon = $derived(currentCourse.value?.areVideosHidden);
-  const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
-  const style = $derived(cardLayout?.style ?? themeService.cardStyle.value);
+  const layout: LayoutType = $derived(cardLayout?.layout ?? themeService.layout.value);
+  const style: CardStyleType = $derived(cardLayout?.style ?? themeService.cardStyle.value);
   const isPortrait = $derived(style === "portrait");
   const isLandscape = $derived(style === "landscape");
   const isCircular = $derived(style === "circular");

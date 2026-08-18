@@ -4,7 +4,7 @@
  * Handles markdown conversion for labs, notes, and learning objects.
  */
 
-import type { Course, Lab, Note, Lo } from "@tutors/tutors-model-lib";
+import type { Course, Lab, Note, Lo, Notebook, NotebookOutput } from "@tutors/tutors-model-lib";
 import { convertMdToHtml, initHighlighter, filter, markdownIt } from "@tutors/tutors-model-lib";
 
 // Import Shiki themes
@@ -107,18 +107,19 @@ if (browser && localStorage.codeTheme) {
 initHighlighter(shiki);
 
 const defaultFence = markdownIt.renderer.rules.fence!;
-markdownIt.renderer.rules.fence = (tokens: any, idx: any, options: any, env: any, self: any) => {
+markdownIt.renderer.rules.fence = (...args) => {
+  const [tokens, idx] = args;
   const token = tokens[idx];
   if (token.info.trim() === "mermaid") {
     const escaped = token.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     return `<div class="mermaid">${escaped}</div>`;
   }
-  return defaultFence(tokens, idx, options, env, self);
+  return defaultFence(...args);
 };
 
 export const markdownService: MarkdownService = {
   /** Available syntax highlighting themes */
-  codeThemes: codeThemes,
+  codeThemes: codeThemes as unknown as { name: string; displayName: string }[],
 
   /**
    * Sets and persists the syntax highlighting theme
@@ -176,7 +177,7 @@ export const markdownService: MarkdownService = {
    * @param refreshOnly - If true, skips URL processing
    */
   convertNotebookToHtml(course: Course, lo: Lo, refreshOnly: boolean = false) {
-    const notebook = lo as any;
+    const notebook = lo as Notebook;
     if (!notebook.cells) return;
 
     const kernelLang = notebook.kernelLanguage || "python";
@@ -211,7 +212,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function renderNotebookOutput(output: any): string {
+function renderNotebookOutput(output: NotebookOutput): string {
   switch (output.outputType) {
     case "stream": {
       const cls = output.name === "stderr" ? "notebook-output-stream notebook-output-stream-stderr" : "notebook-output-stream";

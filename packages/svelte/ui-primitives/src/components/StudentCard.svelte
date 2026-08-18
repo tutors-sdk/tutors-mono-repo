@@ -1,7 +1,7 @@
 <script lang="ts">
   import Iconify from "@iconify/svelte";
   import type { LoEvent } from "@tutors/community";
-  import { cardStyles, type CardConfig } from "@tutors/themes";
+  import { cardStyles, type CardConfig, type LayoutType, type CardStyleType } from "@tutors/themes";
   import Icon from "./Icon.svelte";
   import { themeService } from "@tutors/themes";
 
@@ -18,8 +18,8 @@
   const student = $derived(lo.user!);
   const target = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? "_blank" : "");
   const route = $derived(lo.loRoute);
-  const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
-  const style = $derived(cardLayout?.style ?? themeService.cardStyle.value);
+  const layout: LayoutType = $derived(cardLayout?.layout ?? themeService.layout.value);
+  const style: CardStyleType = $derived(cardLayout?.style ?? themeService.cardStyle.value);
   const sentiment = $derived(student.sentiment ?? "neutral");
   const isLandscape = $derived(style === "landscape");
   const isCircular = $derived(style === "circular");

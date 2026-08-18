@@ -21,8 +21,9 @@ const CONSOLE_METHOD: Record<LogLevel, "debug" | "info" | "warn" | "error"> = {
 
 function isDev(): boolean {
   try {
-    return !!(import.meta as Record<string, unknown>).env &&
-      (import.meta as unknown as { env: { DEV?: boolean } }).env.DEV === true;
+    const meta = import.meta as unknown as Record<string, unknown>;
+    return !!meta.env &&
+      (meta as unknown as { env: { DEV?: boolean } }).env.DEV === true;
   } catch {
     return (
       typeof process !== "undefined" && process.env?.NODE_ENV !== "production"

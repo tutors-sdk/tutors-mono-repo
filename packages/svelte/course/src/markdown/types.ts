@@ -5,7 +5,7 @@ import type { Course, Lab, Lo, Note } from "@tutors/tutors-model-lib";
  */
 export interface MarkdownService {
   /** Available syntax highlighting themes */
-  codeThemes: any;
+  codeThemes: { name: string; displayName: string }[];
 
   setCodeTheme(theme: string): void;
   convertLabToHtml(course: Course, lab: Lab, refreshOnly?: boolean): void;

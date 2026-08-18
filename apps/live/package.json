@@ -9,7 +9,7 @@
     "dev": "vite dev --port 5174",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --tsgo-experimental-api"
   },
   "dependencies": {
     "@tutors/community": "workspace:*",
@@ -32,7 +32,8 @@
     "svelte": "^5.0.0",
     "svelte-check": "^4.7.4",
     "tailwindcss": "^4.3.3",
-    "typescript": "^6.0.3",
+    "typescript": "~6.0.3",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "vite": "^8.2.0"
   }
 }

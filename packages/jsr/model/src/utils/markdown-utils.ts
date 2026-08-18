@@ -1,21 +1,19 @@
-// @ts-types="npm:@types/markdown-it@^14.1.2"
 import MarkdownIt from "markdown-it";
 import { katex as latex } from "@mdit/plugin-katex";
-// @ts-ignore no types available
 import anchor from "markdown-it-anchor";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import toc from "markdown-it-table-of-contents";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import { full as emoji } from "markdown-it-emoji";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import sub from "markdown-it-sub";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import sup from "markdown-it-sup";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import mark from "markdown-it-mark";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import footnote from "markdown-it-footnote";
-// @ts-ignore no types available
+// @ts-expect-error no type declarations available
 import deflist from "markdown-it-deflist";
 import { addCopyButton } from "shiki-transformer-copy-button";
 import type { Course, Lab, Lo, Note } from "../types/index.ts";
@@ -28,9 +26,12 @@ const options = {
 
 let currentTheme = "ayu-dark";
 
-let customHighlighter: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CodeHighlighter = { codeToHtml: (...args: any[]) => string };
 
-export function initHighlighter(codeHighlighter: any) {
+let customHighlighter: CodeHighlighter | undefined;
+
+export function initHighlighter(codeHighlighter: CodeHighlighter) {
   customHighlighter = codeHighlighter;
 }
 
@@ -44,13 +45,13 @@ export const markdownIt: MarkdownIt = new MarkdownIt({
   quotes: "“”‘’",
   highlight: function (str: string, lang: string) {
     try {
-      return customHighlighter?.codeToHtml(str, { lang, theme: currentTheme, transformers: [addCopyButton(options)] });
-    } catch (e) {
+      return customHighlighter?.codeToHtml(str, { lang, theme: currentTheme, transformers: [addCopyButton(options)] }) ?? "";
+    } catch {
       return customHighlighter?.codeToHtml(str, {
         lang: "",
         theme: currentTheme,
         transformers: [addCopyButton(options)],
-      });
+      }) ?? "";
     }
   },
 });

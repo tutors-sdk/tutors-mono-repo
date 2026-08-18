@@ -23,19 +23,16 @@ validatePrivateEnv({
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
   providers: [
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     GithubProvider({
       clientId: PRIVATE_AUTH_GITHUB_ID,
       clientSecret: PRIVATE_AUTH_GITHUB_SECRET,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      profile(profile: any) {
+      profile(profile: Record<string, unknown>) {
         return {
-          id: profile.id.toString(),
-          name: profile.name,
-          login: profile.login,
-          email: profile.email,
-          image: profile.avatar_url
+          id: String(profile.id),
+          name: profile.name as string,
+          login: profile.login as string,
+          email: profile.email as string,
+          image: profile.avatar_url as string
         };
       }
     })

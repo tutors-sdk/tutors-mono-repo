@@ -58,7 +58,7 @@
   {/if}
 {/snippet}
 
-{#snippet tooltipTrigger(attrs)}
+{#snippet tooltipTrigger(attrs: Record<string, unknown>)}
   <span {...attrs}>
     {@render displayIcon()}
   </span>

@@ -9,18 +9,20 @@
 
   type Node = { id: string; name: string; lo?: Lo; children?: Node[] };
 
-  function mapLoToNode(item: any, parentPath: string, index: number): Node {
+  function mapLoToNode(item: Lo, parentPath: string, index: number): Node {
     const thisPath = `${parentPath}/${index}`;
-    const children = ((item?.toc as any[] | undefined) || []).filter((child) => !child?.hide).map((child, i) => mapLoToNode(child, thisPath, i));
+    const toc = "toc" in item ? (item as Lo & { toc: Lo[] }).toc : [];
+    const children = (toc || []).filter((child: Lo) => !child?.hide).map((child: Lo, i: number) => mapLoToNode(child, thisPath, i));
     return {
       id: item.id,
       name: item?.title || "",
-      lo: item as Lo,
+      lo: item,
       children
     };
   }
 
-  const rootChildren = ((lo as any)?.toc as any[] | undefined)?.filter((child) => !child?.hide).map((child, i) => mapLoToNode(child, "root", i)) || [];
+  const rootToc = "toc" in lo ? (lo as Lo & { toc: Lo[] }).toc : [];
+  const rootChildren = (rootToc || []).filter((child: Lo) => !child?.hide).map((child: Lo, i: number) => mapLoToNode(child, "root", i));
 
   const collection = createTreeViewCollection<Node>({
     nodeToValue: (node) => node.id,

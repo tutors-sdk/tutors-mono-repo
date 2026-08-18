@@ -1,12 +1,14 @@
 <script lang="ts">
-  import type { Lo } from "@tutors/tutors-model-lib";
+  import type { Lo, Composite } from "@tutors/tutors-model-lib";
   import LoReference from "@tutors/ui-primitives/components/LoReference.svelte";
   import Self from "./LoContext.svelte";
 
   let { lo, indent = 0 }: { lo: Lo; indent: number } = $props();
 
-  if (lo?.toc) {
-    lo.toc.forEach((child: Lo) => {
+  const compositeLo = lo as Composite;
+
+  if (compositeLo?.toc) {
+    compositeLo.toc.forEach((child: Lo) => {
       if (child.route.endsWith("/")) {
         child.route = child.route.slice(0, -1);
       }
@@ -17,9 +19,9 @@
   }
 </script>
 
-{#each (lo as any)?.toc as childLo}
-  <LoReference lo={childLo} indent={indent + 2} />
-  {#if childLo?.toc}
+{#each compositeLo?.toc ?? [] as childLo}
+  <LoReference lo={childLo} />
+  {#if (childLo as Composite)?.toc}
     <Self lo={childLo} indent={indent + 2} />
   {/if}
 {/each}

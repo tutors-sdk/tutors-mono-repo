@@ -25,9 +25,7 @@ export function flattenLos(los: Lo[]): Lo[] {
   los.forEach((lo) => {
     result.push(lo);
     if ("los" in lo) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      result = result.concat(flattenLos(lo.los));
+      result = result.concat(flattenLos((lo as Composite).los));
     }
   });
   return result;
@@ -151,20 +149,17 @@ export function sortLos(los: Array<Lo>): Lo[] {
   const orderedLos = los.filter((lo) => lo.frontMatter?.order);
   const unOrderedLos = los.filter((lo) => !lo.frontMatter?.order);
   orderedLos.sort(
-    (a: any, b: any) => a.frontMatter.order - b.frontMatter.order,
+    (a: Lo, b: Lo) => Number(a.frontMatter.order) - Number(b.frontMatter.order),
   );
   return orderedLos.concat(unOrderedLos);
 }
 
 export function loadIcon(lo: Lo): IconType | undefined {
   if (lo.frontMatter && lo.frontMatter.icon) {
+    const icon = lo.frontMatter.icon as unknown as Record<string, string>;
     return {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      type: lo.frontMatter.icon["type"],
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      color: lo.frontMatter.icon["color"],
+      type: icon["type"],
+      color: icon["color"],
     };
   }
   return undefined;

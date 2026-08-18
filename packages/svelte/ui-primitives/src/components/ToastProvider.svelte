@@ -21,7 +21,7 @@
               class="preset-filled-primary-500 rounded-lg px-3 py-1.5 text-xs font-medium"
               onclick={() => {
                 toaster.dismiss(toast.id);
-                goto(toast.meta.actionUrl);
+                goto(toast.meta!.actionUrl);
               }}
             >
               {toast.meta.actionLabel ?? "Go"}

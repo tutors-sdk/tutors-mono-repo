@@ -17,7 +17,7 @@
         <h2 id={unit.id} class="p-2 text-xl font-semibold">
           {unit.title}
         </h2>
-        <Image lo={unit.parentTopic ? unit.parentTopic : unit.parentLo} miniImage={true} />
+        <Image lo={unit.parentTopic ?? unit.parentLo ?? unit} miniImage={true} />
       </div>
       <Panels panels={unit.panels} />
       <div class="w-full">

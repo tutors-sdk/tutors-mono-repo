@@ -27,7 +27,7 @@ export class LoRecord {
   user?: LoUser = $state<LoUser | undefined>();
   type: string = $state("");
 
-  constructor(data: any) {
+  constructor(data: Partial<LoRecord>) {
     Object.assign(this, data);
   }
 }
@@ -144,14 +144,14 @@ export interface AnalyticsService {
   learningEvent(course: Course, params: Record<string, unknown>, lo: Lo, student: TutorsId): void;
   reportPageLoad(course: Course, lo: Lo, student: TutorsId): void;
   updatePageCount(course: Course, lo: Lo, student: TutorsId): void;
-  updateLogin(courseId: string, session: any): void;
+  updateLogin(courseId: string, session: Record<string, unknown>): void;
 }
 
 export interface CatalogueEntry {
   course_id: string;
   visited_at: Date;
   visit_count: number;
-  course_record: any;
+  course_record: Record<string, unknown>;
 }
 
 /**

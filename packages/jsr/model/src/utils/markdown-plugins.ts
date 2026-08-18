@@ -1,5 +1,7 @@
-// @ts-types="npm:@types/markdown-it@^14.1.2"
 import type MarkdownIt from "markdown-it";
+import type { Options } from "markdown-it";
+import type Token from "markdown-it/lib/token.mjs";
+import type StateInline from "markdown-it/lib/rules_inline/state_inline.mjs";
 
 const VIDEO_TOKEN = "::video[";
 const VIDEO_CLOSE = "]::";
@@ -9,25 +11,6 @@ const ATTR_REGEX = /(\w+)=["']([^"']+)["']/g;
 const MIME_MAP: Record<string, string> = {
   mp4: "video/mp4",
   mov: "video/mp4",
-};
-
-type InlineState = {
-  src: string;
-  pos: number;
-  push: (type: string, tag: string, nesting: number) => MarkdownToken;
-};
-
-// For custom rules that receive tokens from markdown-it's state.push()
-type MarkdownToken = {
-  content: string;
-  markup: string;
-  attrIndex: (name: string) => number;
-  attrs: [string, string][] | null;
-  attrPush?: (attr: [string, string]) => void;
-};
-
-type Renderer = {
-  renderToken: (tokens: MarkdownToken[], idx: number, options: Record<string, unknown>) => string;
 };
 
 function parseAttributes(raw: string): Record<string, string> {
@@ -84,7 +67,7 @@ function renderPodcast(attrs: Record<string, string>): string {
 
 // Custom video player plugin
 export function videoPlayer(md: MarkdownIt) {
-  md.inline.ruler.before("text", "custom_video", (state: any, _silent: any) => {
+  md.inline.ruler.before("text", "custom_video", (state: StateInline, _silent: boolean) => {
     if (!state.src.startsWith(VIDEO_TOKEN, state.pos)) return false;
     const closeIdx = state.src.indexOf(VIDEO_CLOSE, state.pos + VIDEO_TOKEN.length);
     if (closeIdx === -1) return false;
@@ -96,7 +79,7 @@ export function videoPlayer(md: MarkdownIt) {
     return true;
   });
 
-  md.renderer.rules.custom_video = (tokens: any, idx: any, options: any, env: any, self: any) => {
+  md.renderer.rules.custom_video = (tokens: Token[], idx: number) => {
     const attrs = parseAttributes(tokens[idx].content);
     return renderVideo(attrs);
   };
@@ -104,7 +87,7 @@ export function videoPlayer(md: MarkdownIt) {
 
 // Custom podcast player plugin
 export function podcastPlayer(md: MarkdownIt) {
-  md.inline.ruler.before("text", "custom_podcast", (state: any, _silent: any) => {
+  md.inline.ruler.before("text", "custom_podcast", (state: StateInline, _silent: boolean) => {
     if (!state.src.startsWith(PODCAST_TOKEN, state.pos)) return false;
     const closeIdx = state.src.indexOf(PODCAST_CLOSE, state.pos + PODCAST_TOKEN.length);
     if (closeIdx === -1) return false;
@@ -116,7 +99,7 @@ export function podcastPlayer(md: MarkdownIt) {
     return true;
   });
 
-  md.renderer.rules.custom_podcast = (tokens: any, idx: any, options: any, env: any, self: any) => {
+  md.renderer.rules.custom_podcast = (tokens: Token[], idx: number) => {
     const attrs = parseAttributes(tokens[idx].content);
     return renderPodcast(attrs);
   };
@@ -131,11 +114,11 @@ export function quote_close() : string {
 };
 
 export function link_open(
-  tokens: MarkdownToken[],
+  tokens: Token[],
   idx: number,
-  options: Record<string, unknown>,
+  options: Options,
   _env: unknown,
-  self: Renderer
+  self: { renderToken: (tokens: Token[], idx: number, options: Options) => string }
 ): string {
   const token = tokens[idx];
   const attrs = token?.attrs ?? [];

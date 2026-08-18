@@ -18,7 +18,7 @@
   <h3 class="px-4 py-2 text-center {headingText}">{loContext?.title}</h3>
   <div class="card-body overflow-y-auto">
     <figure class="flex h-44 justify-center p-2">
-      <Image lo={currentLo?.value} />
+      <Image lo={currentLo?.value ?? loContext} />
     </figure>
     <LoContextTree lo={loContext} />
   </div>

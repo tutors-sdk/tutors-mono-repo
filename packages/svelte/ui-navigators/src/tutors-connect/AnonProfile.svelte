@@ -14,7 +14,10 @@
 
 {#snippet menuSelector()}
   <div class="mt-2 flex items-center">
-    <Avatar classes="size-9" src="/tutors-profile.png" name={t("menu.anonName")} />
+    <Avatar>
+      <Avatar.Image class="size-9" src="/tutors-profile.png" alt={t("menu.anonName")} />
+      <Avatar.Fallback>{t("menu.anonName").charAt(0)}</Avatar.Fallback>
+    </Avatar>
   </div>
 {/snippet}
 

@@ -86,7 +86,7 @@ export function createCompanions(course: Course) {
   });
   if (course.properties?.companions) {
     for (const [key, value] of Object.entries(course.properties.companions)) {
-      const companion: any = value;
+      const companion = value as unknown as { link: string; title: string; icon: unknown };
       // themeService.addIcon(key, companion.icon);
       course.companions.bar.push({
         link: companion.link,

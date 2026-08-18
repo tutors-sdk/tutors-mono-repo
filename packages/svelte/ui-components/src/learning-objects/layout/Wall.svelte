@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Lo } from "@tutors/tutors-model-lib";
+  import type { Lo, Podcast as PodcastType } from "@tutors/tutors-model-lib";
   import Cards from "../layout/Cards.svelte";
   import Video from "../content/Video.svelte";
   import { currentCourse } from "@tutors/runes";
@@ -25,7 +25,7 @@
       <div class="grid grid-cols-1 gap-6 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {#each los as lo}
           <div class="flex justify-center">
-            <Podcast {lo} hideSummary={true} />
+            <Podcast lo={lo as PodcastType} hideSummary={true} />
           </div>
         {/each}
       </div>

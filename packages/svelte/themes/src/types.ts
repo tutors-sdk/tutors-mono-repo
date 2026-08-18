@@ -54,9 +54,9 @@ export interface ThemeService {
   /** Available themes with their icon libraries */
   themes: Theme[];
   /** current theme */
-  currentTheme: any;
+  currentTheme: { value: string };
   layout: { value: LayoutType };
-  lightMode: any;
+  lightMode: { value: string };
   cardStyle: { value: CardStyleType };
   /** Tracks if festive snow animation is active */
   isSnowing: boolean;

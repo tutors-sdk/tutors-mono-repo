@@ -45,7 +45,7 @@ export interface ProfileStore {
  */
 export interface TutorsConnectService {
   profile: ProfileStore;
-  intervalId: any;
+  intervalId: ReturnType<typeof setInterval> | null;
   anonMode: boolean;
 
   connect(redirectStr: string): void;
