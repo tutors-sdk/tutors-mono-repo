@@ -3,7 +3,7 @@
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
-  import { currentCourse, isLecturer, contentLocks } from "@tutors/runes";
+  import { currentCourse, isEducator, contentLocks } from "@tutors/runes";
   import { afterNavigate, goto } from "$app/navigation";
 
   type Props = { children: Snippet };
@@ -26,7 +26,7 @@
   });
 
   afterNavigate(({ to }) => {
-    if (currentCourse.value?.authLevel === 2 && !isLecturer.value && to?.url?.pathname) {
+    if (currentCourse.value?.hasEnrollment && !isEducator.value && to?.url?.pathname) {
       for (const [route, locked] of contentLocks.value) {
         if (locked && to.url.pathname.includes(route)) {
           goto(`/course/${currentCourse.value.courseId}`);

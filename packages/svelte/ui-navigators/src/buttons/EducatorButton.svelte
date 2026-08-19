@@ -1,12 +1,13 @@
 <script lang="ts">
-  import LecturerPanel from "../lecturer/LecturerPanel.svelte";
+  import EducatorPanel from "../lecturer/EducatorPanel.svelte";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { currentCourse } from "@tutors/runes";
   import { t } from "@tutors/i18n";
+
+  let { showPanel = false } = $props();
 </script>
 
-{#if currentCourse?.value?.authLevel === 2}
+{#if showPanel}
   {#snippet menuSelector()}
     <div class="hover:preset-tonal-secondary rounded-lg p-2">
       <Icon type="lecturer" tip={t("lecturer.panel.tip")} height="30" />
@@ -14,7 +15,7 @@
   {/snippet}
 
   {#snippet sidebarContent()}
-    <LecturerPanel />
+    <EducatorPanel />
   {/snippet}
 
   <Sidebar position="right" {menuSelector} {sidebarContent} />

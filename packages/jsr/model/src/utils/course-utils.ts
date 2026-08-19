@@ -164,17 +164,8 @@ export function loadPropertyFlags(course: Course) {
       };
     }
   }
-  if (course.properties?.owner) {
-    course.owner = course.properties.owner as unknown as string;
-  }
-  if (course.properties?.lecturers) {
-    const raw = course.properties.lecturers as unknown as string;
-    course.lecturers = raw.split(",").map((s: string) => s.trim()).filter(Boolean);
-  } else {
-    course.lecturers = [];
-  }
-  if (course.owner && !course.lecturers.includes(course.owner)) {
-    course.lecturers.unshift(course.owner);
+  if (course.enrollment?.educators) {
+    course.educators = course.enrollment.educators;
   }
 
   course.los.forEach((lo) => {

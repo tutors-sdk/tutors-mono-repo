@@ -7,7 +7,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { scale } from "svelte/transition";
   import { scaleTransition } from "@tutors/ui-primitives/utils/animations";
-  import { currentCourse, isLecturer, contentLocks } from "@tutors/runes";
+  import { currentCourse, isEducator, contentLocks } from "@tutors/runes";
   import { setShowHide } from "@tutors/tutors-model-lib";
   import { rbacService } from "@tutors/rbac";
 
@@ -54,16 +54,11 @@
     <div class="mx-auto flex flex-wrap justify-center">
       {#key refresh}
         {#each los as lo}
-          {#if !lo.hide}
+          {#if !lo.hide && !(contentLocks.value.get(lo.route) && !isEducator.value)}
             <div class="relative flex justify-center">
-              {#if contentLocks.value.get(lo.route) && !isLecturer.value}
-                <div class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-surface-500/30 backdrop-blur-[2px]">
-                  <Icon type="lock" height="48" />
-                </div>
-              {/if}
               <Card
                 cardDetails={{
-                  route: contentLocks.value.get(lo.route) && !isLecturer.value ? "#" : lo.route,
+                  route: lo.route,
                   title: lo.title,
                   type: lo.type,
                   summary: lo.summary,
@@ -72,7 +67,7 @@
                   video: lo.video
                 }}
               />
-              {#if isLecturer.value}
+              {#if isEducator.value}
                 <button
                   class="absolute top-2 right-2 z-20 rounded-lg bg-surface-200 p-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-surface-700"
                   onclick={() => rbacService.toggleContentLock(lo.route, !contentLocks.value.get(lo.route))}

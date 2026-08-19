@@ -13,7 +13,7 @@ import type { Course } from "@tutors/tutors-model-lib";
 import { analyticsService, presenceService } from "@tutors/community";
 import { PUBLIC_ANON_MODE } from "$env/static/public";
 
-import { currentCourse, currentLo, tutorsId, isLecturer } from "@tutors/runes";
+import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
@@ -143,10 +143,10 @@ export const tutorsConnectService: TutorsConnectService = {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
     }
-    if (course.authLevel === 2 && tutorsId.value?.login) {
-      rbacService.loadRole(tutorsId.value.login, course.courseId);
+    if (course.hasEnrollment && tutorsId.value?.login) {
+      rbacService.loadRole(tutorsId.value.login, course.courseId, course);
       rbacService.loadContentLocks(course.courseId);
-      rbacService.checkLecturerStatus();
+      rbacService.checkLecturerStatus(course);
     }
   },
 
@@ -220,12 +220,16 @@ export const tutorsConnectService: TutorsConnectService = {
   },
 
   checkWhiteList(): void {
-    const enrollment = currentCourse.value?.enrollment;
+    const course = currentCourse.value;
+    if (!course?.authLevel || course.authLevel < 1) return;
+    const enrollment = course.enrollment;
     if (enrollment?.whitelist && enrollment.whitelist.length > 0) {
       if (!tutorsId.value?.login) {
         goto(`/`);
       } else {
-        if (!enrollment.whitelist.includes(tutorsId.value.login)) {
+        const login = tutorsId.value.login;
+        const isEducator = enrollment.educators?.includes(login) ?? false;
+        if (!isEducator && !enrollment.whitelist.includes(login)) {
           goto(`/`);
         }
       }

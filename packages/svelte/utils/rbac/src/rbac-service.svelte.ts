@@ -1,17 +1,15 @@
 import { rune } from "@tutors/runes";
-import { contentLocks, isLecturer, courseLecturers, tutorsId, currentCourse, enrolledUsers } from "@tutors/runes";
+import { contentLocks, isEducator, tutorsId, currentCourse } from "@tutors/runes";
 import type { Role, Permission } from "./types.ts";
 import { roleHasPermission } from "./permissions.ts";
-import { getUserRole } from "./role-store.ts";
 import { getLocksForCourse, upsertLock } from "./lock-store.ts";
 
 function createRbacService() {
   const currentRole = rune<Role>("student");
   const currentUserId = rune("");
   const currentCourseId = rune("");
-  const loading = rune(false);
 
-  async function loadRole(userId: string, courseId: string): Promise<void> {
+  function loadRole(userId: string, courseId: string, course?: { enrollment?: { educators?: string[] } }): void {
     if (!userId || !courseId) {
       currentRole.value = "student";
       currentUserId.value = "";
@@ -19,19 +17,11 @@ function createRbacService() {
       return;
     }
 
-    if (userId === currentUserId.value && courseId === currentCourseId.value) {
-      return;
-    }
+    currentUserId.value = userId;
+    currentCourseId.value = courseId;
 
-    loading.value = true;
-    try {
-      const role = await getUserRole(userId, courseId);
-      currentRole.value = role;
-      currentUserId.value = userId;
-      currentCourseId.value = courseId;
-    } finally {
-      loading.value = false;
-    }
+    const educators = course?.enrollment?.educators ?? currentCourse.value?.enrollment?.educators ?? [];
+    currentRole.value = educators.includes(userId) ? "educator" : "student";
   }
 
   function resolvedCourseId(): string {
@@ -88,45 +78,14 @@ function createRbacService() {
     return contentLocks.value.get(loRoute) === true;
   }
 
-  function checkLecturerStatus(): void {
+  function checkLecturerStatus(course?: { enrollment?: { educators?: string[] } }): void {
     const login = tutorsId.value?.login;
-    if (!login || courseLecturers.value.length === 0) {
-      isLecturer.value = false;
+    const educators = course?.enrollment?.educators ?? currentCourse.value?.enrollment?.educators ?? [];
+    if (!login || educators.length === 0) {
+      isEducator.value = false;
       return;
     }
-    isLecturer.value = courseLecturers.value.includes(login);
-  }
-
-  function loadEnrolledUsers(courseId: string): void {
-    if (!courseId || typeof window === "undefined") return;
-    const stored = localStorage.getItem(`tutors-enrolled-${courseId}`);
-    if (stored) {
-      try {
-        enrolledUsers.value = JSON.parse(stored) as string[];
-      } catch { enrolledUsers.value = []; }
-    } else {
-      enrolledUsers.value = [];
-    }
-  }
-
-  function addEnrolledUser(username: string, courseId?: string): void {
-    const cid = courseId || resolvedCourseId();
-    if (!cid || !username) return;
-    const trimmed = username.trim().toLowerCase();
-    if (!trimmed || enrolledUsers.value.includes(trimmed)) return;
-    enrolledUsers.value = [...enrolledUsers.value, trimmed];
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`tutors-enrolled-${cid}`, JSON.stringify(enrolledUsers.value));
-    }
-  }
-
-  function removeEnrolledUser(username: string, courseId?: string): void {
-    const cid = courseId || resolvedCourseId();
-    if (!cid) return;
-    enrolledUsers.value = enrolledUsers.value.filter((u) => u !== username);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`tutors-enrolled-${cid}`, JSON.stringify(enrolledUsers.value));
-    }
+    isEducator.value = educators.includes(login);
   }
 
   function clear(): void {
@@ -134,25 +93,18 @@ function createRbacService() {
     currentUserId.value = "";
     currentCourseId.value = "";
     contentLocks.value = new Map();
-    isLecturer.value = false;
-    courseLecturers.value = [];
-    enrolledUsers.value = [];
+    isEducator.value = false;
   }
 
   return {
     currentRole,
-    loading,
 
     get role(): Role {
       return currentRole.value;
     },
 
     get isEducator(): boolean {
-      return currentRole.value === "educator" || currentRole.value === "admin";
-    },
-
-    get isAdmin(): boolean {
-      return currentRole.value === "admin";
+      return currentRole.value === "educator";
     },
 
     loadRole,
@@ -161,9 +113,6 @@ function createRbacService() {
     toggleContentLock,
     isLocked,
     checkLecturerStatus,
-    loadEnrolledUsers,
-    addEnrolledUser,
-    removeEnrolledUser,
     clear
   };
 }
