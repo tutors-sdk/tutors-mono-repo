@@ -52,7 +52,7 @@ export const FestiveIcons: IconLib = {
   lightMode: { type: "fluent:paint-brush-24-filled", color: "warning" },
   light: { type: "fluent:weather-sunny-32-filled", color: "warning" },
   dark: { type: "fluent:weather-moon-48-filled", color: "warning" },
-https://github.com/tutors-sdk/tutors-mono-repo/pull/95/conflict?name=packages%252Fsvelte%252Fthemes%252Fsrc%252Ficons%252Fhero-icons.ts&ancestor_oid=b36175c592b5e5f8f0f86d767a482b3831e67d76&base_oid=5e3ce90d6e66cffb6cd6a29c4077b12348d801c9&head_oid=25b618e5927c5a4cc7957e2fac94dcf776aac7ca  toc: { type: "fluent:line-horizontal-3-20-filled", color: "bg-base-content" },
+  toc: { type: "fluent:line-horizontal-3-20-filled", color: "bg-base-content" },
   compacted: { type: "fluent:re-order-dots-vertical-24-filled", color: "success" },
   expanded: { type: "fluent:re-order-dots-horizontal-24-filled", color: "success" },
   portrait: { type: "fluent:rectangle-portrait-location-target-20-regular", color: "primary" },

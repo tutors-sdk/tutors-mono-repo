@@ -785,6 +785,37 @@ importers:
         specifier: ^5.0.0
         version: 5.56.8
 
+  packages/svelte/utils/tour:
+    dependencies:
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.56.8
+
+  services/party:
+    dependencies:
+      partyserver:
+        specifier: ^0.5.10
+        version: 0.5.10(@cloudflare/workers-types@5.20260815.1)
+      partysocket:
+        specifier: 1.0.1
+        version: 1.0.1
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^5.20260814.1
+        version: 5.20260815.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.123.0(@cloudflare/workers-types@5.20260815.1)
+
 packages:
 
   '@acemir/cssom@0.9.31':

@@ -2,7 +2,7 @@
   import { Dialog, Portal } from "@skeletonlabs/skeleton-svelte";
   import Icon from "./Icon.svelte";
 
-  let { position = "left", width = "w-sm", menuSelector, sidebarContent } = $props();
+  let { position = "left", width = "w-sm", menuSelector, sidebarContent, ariaLabel = "" } = $props();
 
   let positionerJustify = $state(position === "right" ? "justify-end" : "justify-start");
   let contentTranslate = $state(
