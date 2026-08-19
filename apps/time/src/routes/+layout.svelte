@@ -6,6 +6,7 @@
   import StudentCard from "$lib/components/StudentCard.svelte";
   import SentimentIcon from "$lib/components/SentimentIcon.svelte";
   import type { Sentiment } from "$lib/components/SentimentIcon.svelte";
+  import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
 
   let { children, data } = $props();
 
@@ -48,6 +49,7 @@
   </AppBar.Toolbar>
 </AppBar>
 
+<ToastProvider />
 <main>
   {@render children()}
 </main>

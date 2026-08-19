@@ -1,100 +1,343 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
+import { createLogger } from "../../../packages/svelte/utils/logger/src/index.ts";
+import type { LogEntry } from "../../../packages/svelte/utils/logger/src/types.ts";
+import {
+  formatJson,
+  formatPretty,
+} from "../../../packages/svelte/utils/logger/src/formatter.ts";
 
-/**
- * Logger pattern tests.
- *
- * The logger is a simple utility. These tests validate that the expected
- * console methods exist, message formatting works, and conditional logging
- * respects a severity threshold.
- */
-
-type LogLevel = "debug" | "info" | "warn" | "error";
-
-const LOG_LEVELS: Record<LogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-};
-
-function formatLogMessage(level: LogLevel, message: string, context?: string): string {
-  const timestamp = new Date().toISOString();
-  const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
-  return context ? `${prefix} [${context}] ${message}` : `${prefix} ${message}`;
+function createTestLogger(overrides: Record<string, unknown> = {}) {
+  const entries: LogEntry[] = [];
+  const logger = createLogger({
+    level: "debug",
+    output: (entry: LogEntry) => entries.push(entry),
+    ...overrides,
+  });
+  return { logger, entries };
 }
 
-function shouldLog(messageLevel: LogLevel, threshold: LogLevel): boolean {
-  return LOG_LEVELS[messageLevel] >= LOG_LEVELS[threshold];
-}
-
-describe("logger: console methods exist", () => {
-  it("console.log is a function", () => {
-    expect(typeof console.log).toBe("function");
+describe("logger: basic output", () => {
+  it("emits a log entry with timestamp, level, and message", () => {
+    const { logger, entries } = createTestLogger();
+    logger.info("hello");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toHaveProperty("timestamp");
+    expect(entries[0].level).toBe("info");
+    expect(entries[0].message).toBe("hello");
   });
 
-  it("console.warn is a function", () => {
-    expect(typeof console.warn).toBe("function");
+  it("debug/info/warn/error each set the correct level field", () => {
+    const { logger, entries } = createTestLogger();
+    logger.debug("d");
+    logger.info("i");
+    logger.warn("w");
+    logger.error("e");
+    expect(entries.map((e) => e.level)).toEqual([
+      "debug",
+      "info",
+      "warn",
+      "error",
+    ]);
   });
 
-  it("console.error is a function", () => {
-    expect(typeof console.error).toBe("function");
-  });
-
-  it("console.debug is a function", () => {
-    expect(typeof console.debug).toBe("function");
-  });
-
-  it("console.info is a function", () => {
-    expect(typeof console.info).toBe("function");
+  it("includes ISO 8601 timestamp", () => {
+    const { logger, entries } = createTestLogger();
+    logger.info("test");
+    expect(entries[0].timestamp).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+    );
   });
 });
 
-describe("logger: log message formatting", () => {
-  it("formats a message with level and timestamp", () => {
-    const message = formatLogMessage("info", "Server started");
-    expect(message).toContain("[INFO]");
-    expect(message).toContain("Server started");
+describe("logger: argument normalization", () => {
+  it("handles (string) — single message", () => {
+    const { logger, entries } = createTestLogger();
+    logger.info("simple message");
+    expect(entries[0].message).toBe("simple message");
   });
 
-  it("includes context when provided", () => {
-    const message = formatLogMessage("error", "Connection failed", "database");
-    expect(message).toContain("[ERROR]");
-    expect(message).toContain("[database]");
-    expect(message).toContain("Connection failed");
+  it("handles (string, plainObject) — message + context", () => {
+    const { logger, entries } = createTestLogger();
+    logger.info("loaded", { courseId: "cs101", duration: 42 });
+    expect(entries[0].message).toBe("loaded");
+    expect(entries[0].courseId).toBe("cs101");
+    expect(entries[0].duration).toBe(42);
   });
 
-  it("omits context bracket when no context provided", () => {
-    const message = formatLogMessage("warn", "Deprecated API");
-    expect(message).not.toContain("[]");
-    expect(message).toContain("[WARN]");
+  it("handles (string, Error) — message + error serialization", () => {
+    const { logger, entries } = createTestLogger();
+    const err = new Error("boom");
+    logger.error("failed:", err);
+    expect(entries[0].message).toBe("failed:");
+    expect(entries[0].error).toBe("boom");
+    expect(entries[0].stack).toBeDefined();
+  });
+
+  it("handles (Error) — error as sole argument", () => {
+    const { logger, entries } = createTestLogger();
+    const err = new Error("something broke");
+    logger.error(err);
+    expect(entries[0].message).toBe("something broke");
+    expect(entries[0].error).toBe("something broke");
+  });
+
+  it("handles (string, primitive) — non-object second arg goes to details", () => {
+    const { logger, entries } = createTestLogger();
+    logger.warn("No type found for icon", "talk");
+    expect(entries[0].message).toBe("No type found for icon");
+    expect(entries[0].details).toBe("talk");
+  });
+
+  it("handles (string, supabaseError) — plain object with code/message", () => {
+    const { logger, entries } = createTestLogger();
+    logger.error("Error fetching row:", {
+      code: "PGRST116",
+      message: "DB error",
+    });
+    expect(entries[0].message).toBe("Error fetching row:");
+    expect(entries[0].code).toBe("PGRST116");
   });
 });
 
-describe("logger: conditional logging by threshold", () => {
-  it("logs when message level equals threshold", () => {
-    expect(shouldLog("warn", "warn")).toBe(true);
+describe("logger: level filtering", () => {
+  it("suppresses debug when level is warn", () => {
+    const { logger, entries } = createTestLogger({ level: "warn" });
+    logger.debug("should not appear");
+    expect(entries).toHaveLength(0);
   });
 
-  it("logs when message level exceeds threshold", () => {
-    expect(shouldLog("error", "warn")).toBe(true);
+  it("suppresses info when level is warn", () => {
+    const { logger, entries } = createTestLogger({ level: "warn" });
+    logger.info("should not appear");
+    expect(entries).toHaveLength(0);
   });
 
-  it("does not log when message level is below threshold", () => {
-    expect(shouldLog("debug", "warn")).toBe(false);
-    expect(shouldLog("info", "warn")).toBe(false);
+  it("emits warn when level is warn", () => {
+    const { logger, entries } = createTestLogger({ level: "warn" });
+    logger.warn("visible");
+    expect(entries).toHaveLength(1);
   });
 
-  it("debug threshold allows all levels", () => {
-    expect(shouldLog("debug", "debug")).toBe(true);
-    expect(shouldLog("info", "debug")).toBe(true);
-    expect(shouldLog("warn", "debug")).toBe(true);
-    expect(shouldLog("error", "debug")).toBe(true);
+  it("emits error when level is warn", () => {
+    const { logger, entries } = createTestLogger({ level: "warn" });
+    logger.error("visible");
+    expect(entries).toHaveLength(1);
   });
 
-  it("error threshold only allows error", () => {
-    expect(shouldLog("debug", "error")).toBe(false);
-    expect(shouldLog("info", "error")).toBe(false);
-    expect(shouldLog("warn", "error")).toBe(false);
-    expect(shouldLog("error", "error")).toBe(true);
+  it("debug level allows all messages", () => {
+    const { logger, entries } = createTestLogger({ level: "debug" });
+    logger.debug("d");
+    logger.info("i");
+    logger.warn("w");
+    logger.error("e");
+    expect(entries).toHaveLength(4);
+  });
+
+  it("error level only allows error", () => {
+    const { logger, entries } = createTestLogger({ level: "error" });
+    logger.debug("d");
+    logger.info("i");
+    logger.warn("w");
+    logger.error("e");
+    expect(entries).toHaveLength(1);
+    expect(entries[0].level).toBe("error");
+  });
+});
+
+describe("logger: context enrichment", () => {
+  it("includes static context from construction in every entry", () => {
+    const { logger, entries } = createTestLogger({
+      context: { app: "reader", module: "courses" },
+    });
+    logger.info("test");
+    expect(entries[0].app).toBe("reader");
+    expect(entries[0].module).toBe("courses");
+  });
+
+  it("merges call-site context with static context", () => {
+    const { logger, entries } = createTestLogger({
+      context: { app: "reader" },
+    });
+    logger.info("loaded", { courseId: "cs101" });
+    expect(entries[0].app).toBe("reader");
+    expect(entries[0].courseId).toBe("cs101");
+  });
+
+  it("call-site context overrides static context on conflict", () => {
+    const { logger, entries } = createTestLogger({
+      context: { app: "reader" },
+    });
+    logger.info("override", { app: "catalogue" });
+    expect(entries[0].app).toBe("catalogue");
+  });
+});
+
+describe("logger: child loggers", () => {
+  it("child inherits parent context", () => {
+    const { logger, entries } = createTestLogger({
+      context: { app: "reader" },
+    });
+    const child = logger.child({ module: "auth" });
+    child.info("test");
+    expect(entries[0].app).toBe("reader");
+    expect(entries[0].module).toBe("auth");
+  });
+
+  it("child adds its own context", () => {
+    const { logger, entries } = createTestLogger();
+    const child = logger.child({ requestId: "abc-123" });
+    child.info("test");
+    expect(entries[0].requestId).toBe("abc-123");
+  });
+
+  it("child does not mutate parent context", () => {
+    const { logger, entries } = createTestLogger({
+      context: { app: "reader" },
+    });
+    logger.child({ module: "auth" });
+    logger.info("parent");
+    expect(entries[0]).not.toHaveProperty("module");
+  });
+
+  it("grandchild inherits through the chain", () => {
+    const { logger, entries } = createTestLogger({
+      context: { app: "reader" },
+    });
+    const child = logger.child({ module: "auth" });
+    const grandchild = child.child({ userId: "u42" });
+    grandchild.info("deep");
+    expect(entries[0].app).toBe("reader");
+    expect(entries[0].module).toBe("auth");
+    expect(entries[0].userId).toBe("u42");
+  });
+
+  it("child with correlationId produces entries with that ID", () => {
+    const { logger, entries } = createTestLogger();
+    const correlated = logger.child({ correlationId: "req-abc" });
+    correlated.info("start");
+    correlated.info("end");
+    expect(entries[0].correlationId).toBe("req-abc");
+    expect(entries[1].correlationId).toBe("req-abc");
+  });
+});
+
+describe("logger: createLogger factory", () => {
+  it("creates independent logger instances", () => {
+    const entries1: LogEntry[] = [];
+    const entries2: LogEntry[] = [];
+    const log1 = createLogger({
+      level: "debug",
+      output: (e) => entries1.push(e),
+    });
+    const log2 = createLogger({
+      level: "debug",
+      output: (e) => entries2.push(e),
+    });
+    log1.info("one");
+    log2.info("two");
+    expect(entries1).toHaveLength(1);
+    expect(entries2).toHaveLength(1);
+    expect(entries1[0].message).toBe("one");
+    expect(entries2[0].message).toBe("two");
+  });
+
+  it("accepts app and module context", () => {
+    const entries: LogEntry[] = [];
+    const log = createLogger({
+      level: "debug",
+      context: { app: "tutors-reader", module: "course-loader" },
+      output: (e) => entries.push(e),
+    });
+    log.info("Course loaded", { courseId: "cs101" });
+    expect(entries[0].app).toBe("tutors-reader");
+    expect(entries[0].module).toBe("course-loader");
+    expect(entries[0].courseId).toBe("cs101");
+  });
+});
+
+describe("logger: backwards compatibility", () => {
+  it("default export has error, warn, info, debug methods", async () => {
+    const mod = await import(
+      "../../../packages/svelte/utils/logger/src/index.ts"
+    );
+    const log = mod.default;
+    expect(typeof log.error).toBe("function");
+    expect(typeof log.warn).toBe("function");
+    expect(typeof log.info).toBe("function");
+    expect(typeof log.debug).toBe("function");
+  });
+
+  it("default export has child method", async () => {
+    const mod = await import(
+      "../../../packages/svelte/utils/logger/src/index.ts"
+    );
+    expect(typeof mod.default.child).toBe("function");
+  });
+
+  it("default export is callable with existing patterns", () => {
+    const { logger, entries } = createTestLogger();
+    logger.error("Error fetching row:", { code: "ERR", message: "fail" });
+    logger.error(new Error("oops"));
+    logger.debug(`Total courses: ${42}`);
+    logger.warn("No type found for icon", "talk");
+    expect(entries).toHaveLength(4);
+  });
+});
+
+describe("formatter: formatJson", () => {
+  it("produces valid JSON", () => {
+    const entry: LogEntry = {
+      timestamp: "2026-01-01T00:00:00.000Z",
+      level: "info",
+      message: "test",
+    };
+    const result = formatJson(entry);
+    expect(() => JSON.parse(result)).not.toThrow();
+  });
+
+  it("includes all entry fields", () => {
+    const entry: LogEntry = {
+      timestamp: "2026-01-01T00:00:00.000Z",
+      level: "error",
+      message: "fail",
+      app: "reader",
+    };
+    const parsed = JSON.parse(formatJson(entry));
+    expect(parsed.timestamp).toBe("2026-01-01T00:00:00.000Z");
+    expect(parsed.level).toBe("error");
+    expect(parsed.message).toBe("fail");
+    expect(parsed.app).toBe("reader");
+  });
+});
+
+describe("formatter: formatPretty", () => {
+  it("includes [tutors:level] prefix", () => {
+    const entry: LogEntry = {
+      timestamp: "2026-01-01T00:00:00.000Z",
+      level: "error",
+      message: "test",
+    };
+    expect(formatPretty(entry)).toContain("[tutors:error]");
+  });
+
+  it("omits context block when context is empty", () => {
+    const entry: LogEntry = {
+      timestamp: "2026-01-01T00:00:00.000Z",
+      level: "info",
+      message: "clean",
+    };
+    const result = formatPretty(entry);
+    expect(result).toBe("[2026-01-01T00:00:00.000Z] [tutors:info] clean");
+  });
+
+  it("includes context as JSON when present", () => {
+    const entry: LogEntry = {
+      timestamp: "2026-01-01T00:00:00.000Z",
+      level: "info",
+      message: "loaded",
+      courseId: "cs101",
+    };
+    const result = formatPretty(entry);
+    expect(result).toContain('{"courseId":"cs101"}');
   });
 });

@@ -29,6 +29,7 @@
     "@tutors/i18n": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
+    "@tutors/tour": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "isomorphic-dompurify": "^2.22.0"
   },
@@ -36,7 +37,7 @@
     "@iconify/svelte": "^5.2.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.0",
     "@sveltejs/package": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "svelte": "^5.0.0",
     "typescript": "^6.0.3",
     "vite": "^8.2.0"

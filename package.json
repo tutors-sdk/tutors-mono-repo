@@ -6,7 +6,8 @@
   "packageManager": "pnpm@9.15.4",
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
-    "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
+    "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev & pnpm --filter tutors-party dev",
+    "dev:reader": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
     "check": "npm run check --workspace=apps/reader",
     "generate:okf": "tsx scripts/generate-okf.ts",
@@ -21,10 +22,12 @@
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
+    "test:a11y": "playwright test --config=playwright-a11y.config.ts",
     "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build",
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.52.0",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
@@ -33,7 +36,7 @@
     "clsx": "^2.1.1",
     "esm-env": "^1.2.2",
     "fast-check": "^4.9.0",
-    "happy-dom": "^18.0.1",
+    "happy-dom": "^20.11.2",
     "tsx": "^4.19.0",
     "vitest": "^4.1.10",
     "zod": "^4.4.3"

@@ -12,6 +12,9 @@ build/
 .output/
 .wrangler/
 
+# Cloudflare
+.wrangler/
+
 # Environment variables
 .env
 .env.local

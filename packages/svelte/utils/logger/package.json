@@ -7,8 +7,5 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
-  },
-  "dependencies": {
-    "loglevel": "^1.9.2"
   }
 }
