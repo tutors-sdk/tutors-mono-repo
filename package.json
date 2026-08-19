@@ -24,7 +24,9 @@
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
     "test:a11y": "playwright test --config=playwright-a11y.config.ts",
     "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "api-report": "tsx scripts/api-surface.ts",
+    "api-report:check": "tsx scripts/api-surface.ts --check"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
