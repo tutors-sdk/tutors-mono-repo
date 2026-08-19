@@ -58,6 +58,7 @@ export const courseProtocol = {
 
 let _isEducator: ReturnType<typeof rune<boolean>> | null = null;
 let _contentLocks: ReturnType<typeof rune<Map<string, boolean>>> | null = null;
+let _locksLoaded: ReturnType<typeof rune<boolean>> | null = null;
 
 export const isEducator = {
   get value() { return (_isEducator ??= rune(false)).value; },
@@ -67,5 +68,10 @@ export const isEducator = {
 export const contentLocks = {
   get value() { return (_contentLocks ??= rune<Map<string, boolean>>(new Map())).value; },
   set value(v) { (_contentLocks ??= rune<Map<string, boolean>>(new Map())).value = v; }
+};
+
+export const locksLoaded = {
+  get value() { return (_locksLoaded ??= rune(false)).value; },
+  set value(v) { (_locksLoaded ??= rune(false)).value = v; }
 };
 

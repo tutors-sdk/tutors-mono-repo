@@ -12,7 +12,6 @@
   import TutorsTitle from "@tutors/ui-navigators/titles/TutorsTitle.svelte";
   import CalendarButton from "@tutors/ui-navigators/buttons/CalendarButton.svelte";
   import CourseSentimentButton from "@tutors/ui-navigators/buttons/CourseSentimentButton.svelte";
-  import EducatorButton from "@tutors/ui-navigators/buttons/EducatorButton.svelte";
   import { currentCourse, tutorsId, isEducator } from "@tutors/runes";
   import { t } from "@tutors/i18n";
 
@@ -25,7 +24,7 @@
     <AppBar.Lead>
       {#if currentCourse?.value}
         <span class="hidden md:block">
-          <InfoButton />
+          <InfoButton showEducatorPanel={isEducator.value} />
         </span>
       {:else}
         <span class="ml-12">
@@ -57,7 +56,6 @@
           <div class="hidden md:flex">
             <TutorsTimeIndicator />
           </div>
-          <EducatorButton showPanel={isEducator.value} />
         {/if}
         <div class="flex items-center">
           {#if currentCourse?.value && !currentCourse?.value?.isPortfolio}

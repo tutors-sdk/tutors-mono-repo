@@ -1,5 +1,5 @@
 import { rune } from "@tutors/runes";
-import { contentLocks, isEducator, tutorsId, currentCourse } from "@tutors/runes";
+import { contentLocks, isEducator, locksLoaded, tutorsId, currentCourse } from "@tutors/runes";
 import type { Role, Permission } from "./types.ts";
 import { roleHasPermission } from "./permissions.ts";
 import { getLocksForCourse, upsertLock } from "./lock-store.ts";
@@ -38,6 +38,7 @@ function createRbacService() {
 
   async function loadContentLocks(courseId: string): Promise<void> {
     if (!courseId) return;
+    locksLoaded.value = false;
 
     const locks = await getLocksForCourse(courseId);
     const lockMap = new Map<string, boolean>();
@@ -55,6 +56,7 @@ function createRbacService() {
     }
 
     contentLocks.value = lockMap;
+    locksLoaded.value = true;
   }
 
   async function toggleContentLock(loRoute: string, locked: boolean): Promise<boolean> {
