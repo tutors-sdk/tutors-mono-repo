@@ -81,7 +81,7 @@ export const HeroIconLib: IconLib = {
 
   lock: { type: "heroicons-outline:lock-closed", color: "error" },
   unlock: { type: "heroicons-outline:lock-open", color: "success" },
-  lecturer: { type: "heroicons-outline:academic-cap", color: "primary" },
+  educator: { type: "fluent:person-key-20-filled", color: "error" },
 
   default: { type: "heroicons-outline:dots-vertical", color: "primary" }
 };

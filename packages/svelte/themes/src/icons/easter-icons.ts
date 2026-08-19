@@ -81,7 +81,7 @@ export const EasterIcons: IconLib = {
 
   lock: { type: "fluent:lock-closed-24-filled", color: "error" },
   unlock: { type: "fluent:lock-open-24-filled", color: "success" },
-  lecturer: { type: "fluent:person-board-24-filled", color: "primary" },
+  educator: { type: "fluent:person-key-20-filled", color: "error" },
 
   default: { type: "fluent:re-order-dots-vertical-24-filled", color: "error" }
 };

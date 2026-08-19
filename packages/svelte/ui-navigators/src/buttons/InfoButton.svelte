@@ -5,7 +5,7 @@
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import { t } from "@tutors/i18n";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
-  import { Tabs } from "@skeletonlabs/skeleton-svelte";
+  import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
 
   let { showEducatorPanel = false } = $props();
 
@@ -22,7 +22,7 @@
 
 {#snippet menuSelector()}
   <div class="hover:preset-tonal-secondary rounded-lg p-2">
-    <Icon type="info" tip={t("nav.info.tip")} height="25" />
+    <Icon type={showEducatorPanel ? "educator" : "info"} tip={t("nav.info.tip")} height="25" />
   </div>
 {/snippet}
 
@@ -57,18 +57,16 @@
                   <Icon type={lo.type} height="20" />
                   <span class="truncate text-sm">{lo.title}</span>
                 </span>
-                <button
-                  class="btn btn-sm flex-shrink-0 {contentLocks.value.get(lo.route) ? 'preset-filled-error-500' : 'preset-filled-success-500'}"
-                  onclick={() => rbacService.toggleContentLock(lo.route, !contentLocks.value.get(lo.route))}
+                <Switch
+                  name="lock-{lo.route}"
+                  checked={contentLocks.value.get(lo.route) ?? false}
+                  onCheckedChange={(details) => rbacService.toggleContentLock(lo.route, details.checked)}
                 >
-                  {#if contentLocks.value.get(lo.route)}
-                    <Icon type="lock" height="16" />
-                    <span class="text-xs">{t("lecturer.locks.locked")}</span>
-                  {:else}
-                    <Icon type="unlock" height="16" />
-                    <span class="text-xs">{t("lecturer.locks.unlocked")}</span>
-                  {/if}
-                </button>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <Switch.HiddenInput />
+                </Switch>
               </div>
             {/each}
           {/if}
@@ -160,4 +158,4 @@
   {/if}
 {/snippet}
 
-<Sidebar {menuSelector} {sidebarContent} />
+<Sidebar {menuSelector} {sidebarContent} width={showEducatorPanel ? "w-2xl" : "w-sm"} />
