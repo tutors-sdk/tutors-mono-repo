@@ -3,7 +3,7 @@
   "version": "16.0.3",
   "license": "MIT",
   "private": true,
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@11.22.0",
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev & pnpm --filter tutors-party dev",
@@ -29,18 +29,18 @@
     "api-report:check": "tsx scripts/api-surface.ts --check"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
-    "@playwright/test": "^1.52.0",
-    "@stryker-mutator/core": "^9.6.1",
-    "@stryker-mutator/vitest-runner": "^9.6.1",
-    "@testing-library/svelte": "^5.2.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@testing-library/svelte": "^5.4.2",
+    "@vitest/coverage-v8": "^4.1.11",
     "clsx": "^2.1.1",
     "esm-env": "^1.2.2",
     "fast-check": "^4.9.0",
-    "happy-dom": "^20.11.2",
-    "tsx": "^4.19.0",
-    "vitest": "^4.1.10",
+    "happy-dom": "^20.11.6",
+    "tsx": "^4.23.12",
+    "vitest": "^4.1.11",
     "zod": "^4.4.3"
   },
   "engines": {

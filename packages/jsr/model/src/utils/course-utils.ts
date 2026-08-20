@@ -140,20 +140,6 @@ export function loadPropertyFlags(course: Course) {
   course.footer = course.properties?.footer as unknown as string;
   course.areLabStepsAutoNumbered = (course.properties?.labStepsAutoNumber as unknown as boolean) === true;
   course.authLevel = course.properties?.auth as unknown as number;
-  const ownerRaw = course.properties?.owner as unknown as string;
-  if (ownerRaw) {
-    course.owner = ownerRaw.trim();
-  }
-  const lecturersRaw = course.properties?.lecturers as unknown as string;
-  if (lecturersRaw) {
-    const parsed = lecturersRaw.split(",").map((s: string) => s.trim()).filter(Boolean);
-    if (course.owner && !parsed.includes(course.owner)) {
-      parsed.unshift(course.owner);
-    }
-    course.lecturers = parsed;
-  } else if (course.owner) {
-    course.lecturers = [course.owner];
-  }
   course.defaultPdfReader = "adobe";
   if (course.properties?.defaultPdfReader) {
     course.defaultPdfReader = course.properties.defaultPdfReader;
@@ -178,9 +164,7 @@ export function loadPropertyFlags(course: Course) {
       };
     }
   }
-  if (course.enrollment?.educators) {
-    course.educators = course.enrollment.educators;
-  }
+
 
   course.los.forEach((lo) => {
     if (lo.hide) {

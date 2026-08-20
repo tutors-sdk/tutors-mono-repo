@@ -133,11 +133,11 @@
       <Tabs.Content value="access">
         <div class="space-y-2 p-2 text-sm">
           <div><strong>{t("lecturer.access.authLevel")}:</strong> {course?.authLevel ?? 0}</div>
-          {#if course?.educators && course.educators.length > 0}
+          {#if enrollment?.educators && enrollment.educators.length > 0}
             <div>
               <strong>Educators:</strong>
               <ul class="list-inside list-disc">
-                {#each course.educators as educator}
+                {#each enrollment.educators as educator}
                   <li>{educator}</li>
                 {/each}
               </ul>
