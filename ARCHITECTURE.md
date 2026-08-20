@@ -57,7 +57,7 @@ This monorepo contains **4 distinct subsystems**:
 1. **JSR Packages** - Deno-compatible libraries for course generation and data models
 2. **Svelte Packages** - UI components and services for web applications
 3. **Applications** - End-user facing applications (reader, catalogue, live, time)
-4. **Services** - Backend infrastructure (PartyKit for real-time features)
+4. **Services** - Backend infrastructure (Supabase Realtime for presence)
 
 ---
 
@@ -148,7 +148,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 
 **Backend Services**:
 - **Supabase**: Database, authentication, analytics
-- **PartyKit**: Real-time WebSocket communication
+- **Supabase Realtime**: Real-time broadcast communication (presence, live activity)
 - **Auth.js**: GitHub OAuth integration
 
 **JSR Ecosystem** (Deno-first):
@@ -191,9 +191,6 @@ tutors-mono-repo/
 │   ├── catalogue/              # Course catalog/discovery
 │   ├── live/                   # Live presence tracking
 │   └── time/                   # Student activity & time tracking dashboard
-│
-├── services/
-│   └── party/                  # PartyKit real-time server
 │
 ├── deno.json                   # Deno workspace configuration
 ├── pnpm-workspace.yaml         # pnpm workspace configuration
@@ -925,7 +922,7 @@ packages/svelte/themes/src/
 
 **Presence Service**:
 - Course-specific student presence
-- Real-time status updates via PartyKit
+- Real-time status updates via Supabase Realtime
 
 **Live Service**:
 - Platform-wide live activity monitoring
@@ -1180,7 +1177,6 @@ PUBLIC_ANON_MODE=TRUE
 # Or full mode with services
 PUBLIC_SUPABASE_URL=...
 PUBLIC_SUPABASE_ANON_KEY=...
-PUBLIC_party_kit_main_room=...
 PRIVATE_AUTH_GITHUB_ID=...
 PRIVATE_AUTH_GITHUB_SECRET=...
 PRIVATE_AUTH_SECRET=...
@@ -1202,7 +1198,7 @@ PRIVATE_AUTH_SECRET=...
 **Features**:
 - Live student count per course
 - Current page views
-- Real-time updates via PartyKit
+- Real-time updates via Supabase Realtime
 
 ### 4. Time App (`apps/time`)
 
@@ -1241,74 +1237,62 @@ PRIVATE_AUTH_SECRET=...
 
 ## Services
 
-### PartyKit Service (`services/party`)
+### Supabase Realtime (Broadcast Channels)
 
-**Purpose**: Real-time WebSocket server for live presence
+**Purpose**: Real-time presence and live activity tracking
+
+Real-time features use **Supabase Realtime Broadcast channels**, which are part of the existing Supabase project — no separate server or deployment is required.
 
 #### Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   PartyKit Server                        │
+│              Supabase Realtime Broadcast                  │
 │                                                           │
-│  ┌──────────────┐          ┌──────────────┐            │
-│  │   Server     │◄────────►│   Clients    │            │
-│  │  (WebSocket) │          │  (Browsers)  │            │
-│  └──────────────┘          └──────────────┘            │
-│         │                          │                     │
-│         └──────────┬───────────────┘                     │
-│                    │                                     │
-│         Room-based broadcasting                          │
-│         (one room per course)                            │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Supabase Project                     │   │
+│  │  ┌────────────────┐    ┌────────────────┐        │   │
+│  │  │ Global Channel │    │ Course Channel │  × N   │   │
+│  │  │ (all-course-   │    │ ({courseId})    │        │   │
+│  │  │  access)       │    │                │        │   │
+│  │  └───────┬────────┘    └───────┬────────┘        │   │
+│  │          └──────────┬──────────┘                  │   │
+│  │                     │                              │   │
+│  │          Channel-based broadcasting               │   │
+│  │          (one channel per course)                 │   │
+│  └──────────────────────────────────────────────────┘   │
+│                        ▲                                 │
+│                        │                                 │
+│               ┌────────┴────────┐                       │
+│               │    Clients      │                       │
+│               │   (Browsers)    │                       │
+│               └─────────────────┘                       │
 └─────────────────────────────────────────────────────────┘
-```
-
-#### Server Implementation
-
-**src/server.ts**:
-
-```typescript
-import type * as Party from "partykit/server";
-
-export default class TutorsServer implements Party.Server {
-  constructor(readonly room: Party.Room) {}
-
-  onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
-    // New client connected
-    console.log(`Client ${conn.id} joined room ${this.room.id}`);
-  }
-
-  onMessage(message: string, sender: Party.Connection) {
-    // Broadcast to all clients in the room
-    this.room.broadcast(message, [sender.id]);
-  }
-
-  onClose(conn: Party.Connection) {
-    console.log(`Client ${conn.id} left room ${this.room.id}`);
-  }
-}
 ```
 
 #### Client Usage
 
 ```typescript
-import PartySocket from "partysocket";
+import { supabase } from "../utils/supabase-client";
 
-const socket = new PartySocket({
-  host: PUBLIC_party_kit_main_room,
-  room: courseId
+// Subscribe to a channel (equivalent to joining a room)
+const channel = supabase
+  .channel(courseId, { config: { broadcast: { self: true } } })
+  .on("broadcast", { event: "lo-event" }, (payload) => {
+    const data = payload.payload;
+    // Handle presence update
+  })
+  .subscribe();
+
+// Send a broadcast message
+channel.send({
+  type: "broadcast",
+  event: "lo-event",
+  payload: { type: "presence", user: userId, page: currentPage }
 });
 
-socket.addEventListener("message", (event) => {
-  const data = JSON.parse(event.data);
-  // Handle presence update
-});
-
-socket.send(JSON.stringify({
-  type: "presence",
-  user: userId,
-  page: currentPage
-}));
+// Cleanup
+supabase.removeChannel(channel);
 ```
 
 ---
@@ -1485,7 +1469,7 @@ Additional context...
          ▼
 5. analyticsService.reportPageLoad()
    - Send event to Supabase
-   - Broadcast presence to PartyKit
+   - Broadcast presence via Supabase Realtime
 ```
 
 ### Lab Viewing Sequence
@@ -1531,8 +1515,8 @@ analyticsService.reportPageLoad(lo)
       │   - Insert learning_event row
       │   - Update user_session
       │
-      └─► PartyKit (real-time broadcast)
-          - Send presence message to room
+      └─► Supabase Realtime (broadcast channel)
+          - Send presence message to channel
           - Other clients receive update
           - Live view shows current students
 ```
@@ -1674,7 +1658,7 @@ UI Updates
 - Course catalogue
 - Analytics data
 
-**PartyKit (WebSocket)**:
+**Supabase Realtime (Broadcast)**:
 - Real-time presence
 - Live student count
 - Current page views
@@ -1717,7 +1701,6 @@ PUBLIC_ANON_MODE=TRUE
 # apps/reader/.env
 PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=xxx
-PUBLIC_party_kit_main_room=https://tutors.partykit.dev
 PRIVATE_AUTH_GITHUB_ID=xxx
 PRIVATE_AUTH_GITHUB_SECRET=xxx
 PRIVATE_AUTH_SECRET=xxx
@@ -1843,27 +1826,10 @@ Set in Netlify/Vercel dashboard:
 ```
 PUBLIC_SUPABASE_URL
 PUBLIC_SUPABASE_ANON_KEY
-PUBLIC_party_kit_main_room
 PRIVATE_AUTH_GITHUB_ID
 PRIVATE_AUTH_GITHUB_SECRET
 PRIVATE_AUTH_SECRET
 PUBLIC_PDF_KEY
-```
-
-### PartyKit Service Deployment
-
-```bash
-cd services/party
-npx partykit deploy
-```
-
-Configuration (`partykit.json`):
-
-```json
-{
-  "name": "tutors",
-  "main": "src/server.ts"
-}
 ```
 
 ### Course Deployment
@@ -1955,7 +1921,7 @@ pnpm format
 - **Rune**: Svelte 5 reactive primitive ($state, $derived, $effect)
 - **SSR**: Server-Side Rendering
 - **CSR**: Client-Side Rendering
-- **PartyKit**: Real-time WebSocket platform
+- **Supabase Realtime**: Real-time broadcast channel platform (part of Supabase)
 - **Tutors Connect**: Authentication system
 - **Tutors Time**: Analytics and time tracking (app at `apps/time`, library at `packages/jsr/time`)
 
@@ -1964,7 +1930,7 @@ pnpm format
 - **Live Platform**: [https://tutors.dev](https://tutors.dev)
 - **Reference Manual**: [https://tutors-reference-manual.netlify.app](https://tutors-reference-manual.netlify.app)
 - **JSR Registry**: [https://jsr.io/@tutors](https://jsr.io/@tutors)
-- **PartyKit**: [https://partykit.io](https://partykit.io)
+- **Supabase Realtime**: [https://supabase.com/docs/guides/realtime](https://supabase.com/docs/guides/realtime)
 
 ### Version History
 

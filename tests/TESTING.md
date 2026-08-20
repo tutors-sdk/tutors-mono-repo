@@ -39,9 +39,9 @@ A comprehensive, multi-tier testing framework built around BDD-first principles 
 
 ## Tier 4: Contract Tests (`tests/contract/`)
 
-**Approach**: Zod schemas define the expected shape of every external API surface — Supabase table rows (6 tables), RPC responses (2 RPCs), PartyKit WebSocket messages (LoRecord protocol), and generated course JSON structure. Tests validate that mock data conforming to these schemas is accepted, and that malformed data is rejected.
+**Approach**: Zod schemas define the expected shape of every external API surface — Supabase table rows (6 tables), RPC responses (2 RPCs), Supabase Realtime broadcast messages (LoRecord protocol), and generated course JSON structure. Tests validate that mock data conforming to these schemas is accepted, and that malformed data is rejected.
 
-**Importance**: Tutors depends on three external services (Supabase, PartyKit, GitHub OAuth) plus its own course JSON format. When any of these change shape — a Supabase column renamed, a PartyKit message field added, a course JSON property dropped — the app breaks silently at runtime. Contract tests make these API boundaries explicit and testable. A failing contract test tells you exactly which service changed and which field is affected, before the bug reaches users. This is especially critical for the `learning_records` and `calendar` tables, which drive all analytics features.
+**Importance**: Tutors depends on two external services (Supabase, GitHub OAuth) plus its own course JSON format. When any of these change shape — a Supabase column renamed, a broadcast message field added, a course JSON property dropped — the app breaks silently at runtime. Contract tests make these API boundaries explicit and testable. A failing contract test tells you exactly which service changed and which field is affected, before the bug reaches users. This is especially critical for the `learning_records` and `calendar` tables, which drive all analytics features.
 
 ---
 

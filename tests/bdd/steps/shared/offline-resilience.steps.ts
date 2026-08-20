@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { MockPartySocket } from "../../support/mocks";
+import { MockRealtimeChannel } from "../../support/mocks";
 
 describe("Shared: Offline Resilience", () => {
-  it("shall re-establish WebSocket connection after temporary disconnect", () => {
-    const socket1 = new MockPartySocket();
-    socket1.simulateClose();
-    expect(socket1.readyState).toBe(WebSocket.CLOSED);
+  it("shall re-establish Realtime channel after unsubscribe", () => {
+    const channel1 = new MockRealtimeChannel();
+    channel1.subscribe();
+    channel1.unsubscribe();
+    expect(channel1.isSubscribed()).toBe(false);
 
-    const socket2 = new MockPartySocket();
-    expect(socket2.readyState).toBe(WebSocket.OPEN);
+    const channel2 = new MockRealtimeChannel();
+    channel2.subscribe();
+    expect(channel2.isSubscribed()).toBe(true);
   });
 
   it("shall retain previously loaded data on API failure", () => {

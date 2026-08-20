@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TestWorld } from "../../support/world";
-import { MockPartySocket } from "../../support/mocks";
+import { MockRealtimeChannel } from "../../support/mocks";
 
 describe("Live: Presence Tracking", () => {
   let world: TestWorld;
@@ -49,17 +49,14 @@ describe("Live: Presence Tracking", () => {
 
     expect(world.onlineStudents.size).toBe(1);
 
-    const socket = new MockPartySocket();
-    let disconnected = false;
-    socket.addEventListener("close", () => {
-      disconnected = true;
-      world.onlineStudents.delete("Alice");
-      const courseStudents = world.coursesOnline.get("web-dev-101")!;
-      courseStudents.splice(courseStudents.indexOf(event), 1);
-    });
-    socket.simulateClose();
+    const channel = new MockRealtimeChannel();
+    channel.subscribe();
+    world.onlineStudents.delete("Alice");
+    const courseStudents = world.coursesOnline.get("web-dev-101")!;
+    courseStudents.splice(courseStudents.indexOf(event), 1);
+    channel.unsubscribe();
 
-    expect(disconnected).toBe(true);
+    expect(channel.isSubscribed()).toBe(false);
     expect(world.onlineStudents.size).toBe(0);
     expect(world.coursesOnline.get("web-dev-101")).toHaveLength(0);
   });

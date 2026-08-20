@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TestWorld } from "../../support/world";
-import { createMockFetch, MockPartySocket } from "../../support/mocks";
+import { createMockFetch, MockRealtimeChannel } from "../../support/mocks";
 
 describe("Shared: Error Handling", () => {
   let world: TestWorld;
@@ -42,16 +42,12 @@ describe("Shared: Error Handling", () => {
     expect(error.data).toBeNull();
   });
 
-  it("shall handle WebSocket disconnection", () => {
-    const socket = new MockPartySocket();
-    let reconnectAttempted = false;
+  it("shall handle Realtime channel disconnection", () => {
+    const channel = new MockRealtimeChannel();
+    channel.subscribe();
+    expect(channel.isSubscribed()).toBe(true);
 
-    socket.addEventListener("close", () => {
-      reconnectAttempted = true;
-    });
-
-    socket.simulateClose();
-    expect(reconnectAttempted).toBe(true);
-    expect(socket.readyState).toBe(WebSocket.CLOSED);
+    channel.unsubscribe();
+    expect(channel.isSubscribed()).toBe(false);
   });
 });
