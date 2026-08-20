@@ -274,7 +274,6 @@ export type Course = Composite & {
   defaultPdfReader: string;
   footer: string;
   ignorePin: string;
-  educators?: string[];
   companions: IconNavBar;
   wallBar: IconNavBar;
 };

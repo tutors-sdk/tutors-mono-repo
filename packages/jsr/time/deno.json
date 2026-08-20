@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-time-lib",
-  "version": "5.0.6",
+  "version": "5.1.2",
   "exports": "./src/index.ts",
   "license": "MIT",
   "imports": {
