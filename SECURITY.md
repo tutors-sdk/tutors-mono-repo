@@ -63,7 +63,7 @@ The Tutors platform employs the following security measures:
 
 ### Out of Scope
 
-- Third-party service infrastructure (Supabase, Netlify, PartyKit)
+- Third-party service infrastructure (Supabase, Netlify)
 - Vulnerabilities in upstream dependencies that are not exploitable in the context of Tutors (please report these to the upstream project)
 - Social engineering attacks
 - Denial-of-service attacks against hosted instances

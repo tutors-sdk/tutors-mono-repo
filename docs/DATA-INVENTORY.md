@@ -93,8 +93,8 @@ This document catalogues all personally identifiable information (PII) stored by
 
 ## Ephemeral Data (Not Persisted)
 
-### PartyKit Presence
-Real-time presence data (which users are online and what they are viewing) is transmitted via WebSocket through PartyKit. This data is ephemeral and is not written to any database. It exists only for the duration of a user's active session.
+### Supabase Realtime Presence
+Real-time presence data (which users are online and what they are viewing) is transmitted via WebSocket through Supabase Realtime. This data is ephemeral and is not written to any database. It exists only for the duration of a user's active session.
 
 **PII involved:** User identity (name, avatar) and current page location
 **Consent required:** Yes (live collaboration features)
@@ -109,7 +109,7 @@ User → GitHub OAuth → connect_users (identity)
 User browses course → learning_records (per-LO activity)
                     → calendar (daily aggregates)
                     → connect_latest (most recent visit)
-                    → PartyKit (ephemeral presence)
+                    → Supabase Realtime (ephemeral presence)
 ```
 
 ## Deletion Cascade

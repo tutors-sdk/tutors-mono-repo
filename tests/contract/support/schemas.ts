@@ -210,7 +210,8 @@ export const WhiteboardRoomSchema = z.object({
 
 export const WhiteboardInitEditorSchema = z.object({
   type: z.literal("init-editor"),
-  partyHost: z.string(),
+  supabaseUrl: z.string().url(),
+  supabaseAnonKey: z.string().min(1),
   roomId: z.string(),
   user: z.object({
     name: z.string(),
