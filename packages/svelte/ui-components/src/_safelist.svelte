@@ -20,5 +20,7 @@
   <!-- Classes used in ui-primitives (Sidebar, Icon/Tooltip) that need to be in the compiled CSS -->
   <div class="bg-surface-100-900 btn-icon preset-tonal card z-9999 z-999 z-50"></div>
   <!-- Sidebar transition classes (dynamically constructed from position prop) -->
-  <div class="justify-start justify-end translate-x-full -translate-x-full data-[state=open]:translate-x-0 starting:data-[state=open]:translate-x-full starting:data-[state=open]:-translate-x-full data-[state=open]:opacity-100 starting:data-[state=open]:opacity-0 opacity-0 transition transition-discrete overflow-y-scroll w-sm shadow-xl"></div>
+  <div class="justify-start justify-end translate-x-full -translate-x-full data-[state=open]:translate-x-0 starting:data-[state=open]:translate-x-full starting:data-[state=open]:-translate-x-full data-[state=open]:opacity-100 starting:data-[state=open]:opacity-0 opacity-0 transition transition-discrete overflow-y-scroll w-sm w-2xl shadow-xl"></div>
+  <!-- Skeleton table utility classes -->
+  <table class="table table-zebra table-wrap"></table>
 </div>

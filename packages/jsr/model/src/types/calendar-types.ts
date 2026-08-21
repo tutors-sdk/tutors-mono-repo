@@ -1,6 +1,16 @@
 /**
- * Calendar & enrollent related types
+ * Calendar & enrollment related types
  */
+
+/**
+ * Assessment associated with a calendar week
+ */
+export type Assessment = {
+  name: string;
+  due: string;
+  percentage: number;
+  submission: string;
+};
 
 /**
  * Represents a week in the course calendar
@@ -10,6 +20,8 @@ export type WeekType = {
   type: string;
   date: string;
   dateObj: Date;
+  weekNumber?: number;
+  assessment?: Assessment;
 };
 
 /**
@@ -17,6 +29,7 @@ export type WeekType = {
  */
 export type Calendar = {
   title: string;
+  year?: number;
   weeks: WeekType[];
   currentWeek?: WeekType;
 };
