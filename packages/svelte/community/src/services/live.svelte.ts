@@ -20,7 +20,7 @@ export const liveService: LiveService = {
   channelCourse: null,
   listeningAll: false,
 
-  studentListener(payload: { payload: unknown }) {
+  studentListener(payload: { type: string; event: string; [key: string]: any }) {
     const data = payload.payload as any;
     if (!data?.user?.id) return;
 
@@ -34,7 +34,7 @@ export const liveService: LiveService = {
     }
   },
 
-  courseListener(payload: { payload: unknown }) {
+  courseListener(payload: { type: string; event: string; [key: string]: any }) {
     const data = payload.payload as any;
     if (!data?.courseId) return;
 
@@ -48,7 +48,7 @@ export const liveService: LiveService = {
     }
   },
 
-  broadcastListener(payload: { payload: unknown }) {
+  broadcastListener(payload: { type: string; event: string; [key: string]: any }) {
     this.courseListener(payload);
     this.studentListener(payload);
   },

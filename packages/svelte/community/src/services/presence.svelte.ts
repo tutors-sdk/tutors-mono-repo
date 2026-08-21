@@ -16,7 +16,7 @@ export const presenceService: PresenceService = {
   studentsOnline: rune<LoRecord[]>([]),
   studentEventMap: new Map<string, LoRecord>(),
 
-  studentListener(payload: { payload: unknown }) {
+  studentListener(payload: { type: string; event: string; [key: string]: any }) {
     const nextCourseEvent = payload.payload as LoRecord;
     if (!nextCourseEvent?.courseId) return;
 
