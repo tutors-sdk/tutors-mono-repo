@@ -275,7 +275,8 @@ describe("Whiteboard room schema", () => {
 describe("Whiteboard init-editor postMessage", () => {
   const validInit = {
     type: "init-editor" as const,
-    partyHost: "tutors-party.partykit.dev",
+    supabaseUrl: "https://test-project.supabase.co",
+    supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test-anon-key",
     roomId: "wb-cs101-whiteboard-01",
     user: {
       name: "Alice Smith",
@@ -302,8 +303,14 @@ describe("Whiteboard init-editor postMessage", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("missing partyHost fails", () => {
-    const { partyHost, ...record } = validInit;
+  it("missing supabaseUrl fails", () => {
+    const { supabaseUrl, ...record } = validInit;
+    const result = validateAgainstSchema(record, WhiteboardInitEditorSchema);
+    expect(result.valid).toBe(false);
+  });
+
+  it("missing supabaseAnonKey fails", () => {
+    const { supabaseAnonKey, ...record } = validInit;
     const result = validateAgainstSchema(record, WhiteboardInitEditorSchema);
     expect(result.valid).toBe(false);
   });

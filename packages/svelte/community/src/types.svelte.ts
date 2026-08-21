@@ -121,7 +121,7 @@ export interface LiveService {
    * Handle incoming WebSocket messages
    * @param event - WebSocket message to process
    */
-  partyKitListener(event: MessageEvent): void;
+  broadcastListener(event: MessageEvent): void;
 
   /**
    * Begin monitoring platform-wide activity

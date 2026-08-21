@@ -182,8 +182,6 @@ tutors-mono-repo/
 │       ├── ui-navigators/   # Navigation components
 │       ├── ui-components/   # Domain UI components
 │       └── utils/           # Shared utilities (logger, a11y, i18n)
-├── services/
-│   └── party/               # PartyKit real-time service
 └── tests/                   # Test suites
     ├── unit/                # Unit tests
     ├── bdd/                 # BDD feature tests

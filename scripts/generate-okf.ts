@@ -585,7 +585,7 @@ function generateBundleIndex(packages: PackageInfo[], routeCount: number, compon
     "",
     `This bundle catalogs the Tutors monorepo: **${appCount} apps**, **${pkgCount} packages**, **${componentCount} components**, **${typeCount} types**, **${schemaCount} data schemas**, **${serviceCount} services**, and **${routeCount} routes**.`,
     "",
-    "Tutors is an open-source learning platform built with SvelteKit, Svelte 5, Skeleton UI, Supabase, and PartyKit.",
+    "Tutors is an open-source learning platform built with SvelteKit, Svelte 5, Skeleton UI, and Supabase.",
     "",
     "## Sections",
     "",
