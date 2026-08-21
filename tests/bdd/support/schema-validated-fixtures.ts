@@ -15,7 +15,7 @@ import {
   ConnectCourseSchema,
   ConnectLatestSchema,
   LoRecordSchema,
-  PartyKitRoomSchema,
+  RealtimeChannelSchema,
   type LearningRecord,
   type CalendarEntry,
   type ConnectUser,

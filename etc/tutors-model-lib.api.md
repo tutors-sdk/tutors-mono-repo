@@ -25,13 +25,13 @@ export type Calendar = { title: string; weeks: WeekType[]; currentWeek?: WeekTyp
 export type Composite = Lo & { toc: Lo[]; los: Lo[]; panels: Panels; units: Units; };
 
 // (from src/types/learning-objects.ts)
-export type Course = Composite & { type: "course"; courseId: string; courseUrl: string; topicIndex: Map<string, Topic>; loIndex: Map<string, Lo>; walls?: Lo[][]; wallMap?: Map<string, Lo[]>; properties: Properties; calendar?: Properties; enrollment?: Enrollment; courseCalendar?: Calendar; authLevel: number; isPortfolio: boolean; isPrivate: boolean; llm: number; pdfOrientation: string; areVideosHidden: boolean; areLabStepsAutoNumbered: boolean; hasEnrollment: boolean; hasCalendar: boolean; defaultPdfReader: string; footer: string; ignorePin: string; owner?: string; lecturers?: string[]; companions: IconNavBar; wallBar: IconNavBar; };
+export type Course = Composite & { type: "course"; courseId: string; courseUrl: string; topicIndex: Map<string, Topic>; loIndex: Map<string, Lo>; walls?: Lo[][]; wallMap?: Map<string, Lo[]>; properties: Properties; calendar?: Properties; enrollment?: Enrollment; courseCalendar?: Calendar; authLevel: number; isPortfolio: boolean; isPrivate: boolean; llm: number; pdfOrientation: string; areVideosHidden: boolean; areLabStepsAutoNumbered: boolean; hasEnrollment: boolean; hasCalendar: boolean; defaultPdfReader: string; footer: string; ignorePin: string; companions: IconNavBar; wallBar: IconNavBar; };
 
 // (from src/types/tutors-id-types.ts)
 export type CourseSentimentId = (typeof COURSE_SENTIMENT_IDS)[number];
 
 // (from src/types/calendar-types.ts)
-export type Enrollment = { whitelist: string[]; students: Student[]; };
+export type Enrollment = { educators?: string[]; whitelist: string[]; students: Student[]; };
 
 // (from src/types/learning-objects.ts)
 export type Github = Lo & { type: "github"; };

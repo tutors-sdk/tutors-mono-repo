@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TestWorld } from "../../support/world";
-import { MockPartySocket } from "../../support/mocks";
+import { MockRealtimeChannel } from "../../support/mocks";
 
 describe("Student: Live Presence", () => {
   let world: TestWorld;
@@ -22,15 +22,16 @@ describe("Student: Live Presence", () => {
   });
 
   it("shall update count in real-time when student joins", () => {
-    const socket = new MockPartySocket();
+    const channel = new MockRealtimeChannel();
     const received: unknown[] = [];
 
-    socket.addEventListener("message", (event: MessageEvent) => {
-      received.push(JSON.parse(event.data));
+    channel.on("broadcast", { event: "lo-event" }, (payload) => {
+      received.push(payload.payload);
     });
+    channel.subscribe();
 
     const newStudent = world.fixtures.createPresenceEvent({ courseId: "course-1" });
-    socket.simulateMessage(newStudent);
+    channel.simulateBroadcast("lo-event", newStudent);
 
     expect(received).toHaveLength(1);
   });
@@ -47,21 +48,17 @@ describe("Student: Live Presence", () => {
     expect(world.onlineStudents.size).toBe(1);
   });
 
-  it("shall handle WebSocket connection failure without crashing", () => {
-    const socket = new MockPartySocket();
-    let closeCalled = false;
+  it("shall handle channel unsubscribe without crashing", () => {
+    const channel = new MockRealtimeChannel();
+    channel.subscribe();
+    expect(channel.isSubscribed()).toBe(true);
 
-    socket.addEventListener("close", () => {
-      closeCalled = true;
-    });
-
-    socket.simulateClose();
-    expect(closeCalled).toBe(true);
-    expect(socket.readyState).toBe(WebSocket.CLOSED);
+    channel.unsubscribe();
+    expect(channel.isSubscribed()).toBe(false);
   });
 
   it("shall broadcast sentiment to course participants", () => {
-    const socket = new MockPartySocket();
+    const channel = new MockRealtimeChannel();
     const sentimentMessage = {
       courseId: "course-1",
       user: { fullName: "Student 1", id: "s1", sentiment: "happy" },
@@ -69,11 +66,12 @@ describe("Student: Live Presence", () => {
     };
 
     const received: unknown[] = [];
-    socket.addEventListener("message", (event: MessageEvent) => {
-      received.push(JSON.parse(event.data));
+    channel.on("broadcast", { event: "lo-event" }, (payload) => {
+      received.push(payload.payload);
     });
+    channel.subscribe();
 
-    socket.simulateMessage(sentimentMessage);
+    channel.simulateBroadcast("lo-event", sentimentMessage);
     expect(received).toHaveLength(1);
     expect((received[0] as any).user.sentiment).toBe("happy");
   });

@@ -145,7 +145,7 @@ Every condition below is a **hard-fail** — the RC cannot merge to main until r
 | `vitest.workspace.ts` | Workspace definition (all packages + apps) |
 | `tests/bdd/support/world.ts` | `TestWorld` — shared BDD test context |
 | `tests/bdd/support/fixtures.ts` | `TestDataFactory` — factory methods for mock data |
-| `tests/bdd/support/mocks.ts` | `MockSupabaseClient`, `MockPartySocket`, `createMockFetch` |
+| `tests/bdd/support/mocks.ts` | `MockSupabaseClient`, `MockRealtimeChannel`, `createMockFetch` |
 | `tests/release/comparators/json-comparator.ts` | Semantic JSON diff for artifact regression |
 
 ## Deep Dive

@@ -1,6 +1,6 @@
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import type { Course, IconType, Lo } from "@tutors/tutors-model-lib";
-import PartySocket from "partysocket";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 /**
  * Minimal user information for learning object interactions
  */
@@ -40,7 +40,7 @@ export type TutorsConnectLatestRow = {
   received_at: string;
 };
 
-/** Learning-object presence / activity record (live, time, PartyKit payloads). */
+/** Learning-object presence / activity record (live, time, Realtime broadcast payloads). */
 export type LoEvent = LoRecord;
 
 /**
@@ -50,10 +50,10 @@ export type LoEvent = LoRecord;
 export interface PresenceService {
   /** Currently online students in the active course */
   studentsOnline: { value: LoRecord[] };
-  /** Connection for all course events across the platform */
-  partyKitAll: PartySocket;
-  /** Connection for events specific to the current course */
-  partyKitCourse: PartySocket;
+  /** Supabase Realtime channel for all course events across the platform */
+  channelAll: RealtimeChannel | null;
+  /** Supabase Realtime channel for events specific to the current course */
+  channelCourse: RealtimeChannel | null;
   /** Lookup table for quick access to student events */
   studentEventMap: Map<string, LoRecord>;
   /** ID of the course currently being monitored */
@@ -100,8 +100,8 @@ export interface LiveService {
   studentEventMap: Map<string, LoRecord>;
   /** Quick lookup for course activity by ID */
   courseEventMap: Map<string, LoRecord>;
-  /** Connection for course-specific events */
-  partyKitCourse: PartySocket;
+  /** Supabase Realtime channel for course-specific events */
+  channelCourse: RealtimeChannel | null;
   /** Flag indicating if global monitoring is active */
   listeningAll: boolean;
 

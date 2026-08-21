@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { LoRecordSchema, PartyKitRoomSchema } from "../support/schemas";
+import { LoRecordSchema, RealtimeChannelSchema } from "../support/schemas";
 import { validateAgainstSchema, assertSchemaMatch } from "../support/validators";
 
 const validLoRecord = {
@@ -17,7 +17,7 @@ const validLoRecord = {
   isPrivate: false,
 };
 
-describe("PartyKit LoRecord message protocol", () => {
+describe("LoRecord broadcast message protocol", () => {
   it("valid LoRecord message passes", () => {
     const result = validateAgainstSchema(validLoRecord, LoRecordSchema);
     expect(result.valid).toBe(true);
@@ -100,50 +100,50 @@ describe("PartyKit LoRecord message protocol", () => {
   });
 });
 
-describe("PartyKit room schema", () => {
-  it("global room is valid", () => {
-    const room = { roomId: "tutors-all-course-access", type: "global" as const };
-    const result = validateAgainstSchema(room, PartyKitRoomSchema);
+describe("Supabase Realtime channel schema", () => {
+  it("global channel is valid", () => {
+    const channel = { channelName: "tutors-all-course-access", type: "global" as const };
+    const result = validateAgainstSchema(channel, RealtimeChannelSchema);
     expect(result.valid).toBe(true);
   });
 
-  it("course room is valid", () => {
-    const room = { roomId: "cs101-2025", type: "course" as const };
-    const result = validateAgainstSchema(room, PartyKitRoomSchema);
+  it("course channel is valid", () => {
+    const channel = { channelName: "cs101-2025", type: "course" as const };
+    const result = validateAgainstSchema(channel, RealtimeChannelSchema);
     expect(result.valid).toBe(true);
   });
 
   it("invalid type fails", () => {
-    const room = { roomId: "some-room", type: "private" };
-    const result = validateAgainstSchema(room, PartyKitRoomSchema);
+    const channel = { channelName: "some-channel", type: "private" };
+    const result = validateAgainstSchema(channel, RealtimeChannelSchema);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("type"))).toBe(true);
   });
 
-  it("missing roomId fails", () => {
-    const room = { type: "global" };
-    const result = validateAgainstSchema(room, PartyKitRoomSchema);
+  it("missing channelName fails", () => {
+    const channel = { type: "global" };
+    const result = validateAgainstSchema(channel, RealtimeChannelSchema);
     expect(result.valid).toBe(false);
   });
 
   it("missing type fails", () => {
-    const room = { roomId: "tutors-all-course-access" };
-    const result = validateAgainstSchema(room, PartyKitRoomSchema);
+    const channel = { channelName: "tutors-all-course-access" };
+    const result = validateAgainstSchema(channel, RealtimeChannelSchema);
     expect(result.valid).toBe(false);
   });
 
-  it("room naming: 'tutors-all-course-access' for global room", () => {
-    const room = { roomId: "tutors-all-course-access", type: "global" as const };
-    const parsed = assertSchemaMatch(room, PartyKitRoomSchema, "global room");
-    expect(parsed.roomId).toBe("tutors-all-course-access");
+  it("channel naming: 'tutors-all-course-access' for global channel", () => {
+    const channel = { channelName: "tutors-all-course-access", type: "global" as const };
+    const parsed = assertSchemaMatch(channel, RealtimeChannelSchema, "global channel");
+    expect(parsed.channelName).toBe("tutors-all-course-access");
     expect(parsed.type).toBe("global");
   });
 
-  it("room naming: course-specific room uses courseId", () => {
+  it("channel naming: course-specific channel uses courseId", () => {
     const courseId = "cs101-2025";
-    const room = { roomId: courseId, type: "course" as const };
-    const parsed = assertSchemaMatch(room, PartyKitRoomSchema, "course room");
-    expect(parsed.roomId).toBe(courseId);
+    const channel = { channelName: courseId, type: "course" as const };
+    const parsed = assertSchemaMatch(channel, RealtimeChannelSchema, "course channel");
+    expect(parsed.channelName).toBe(courseId);
     expect(parsed.type).toBe("course");
   });
 });

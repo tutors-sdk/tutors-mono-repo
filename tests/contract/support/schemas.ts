@@ -90,8 +90,8 @@ export const LoRecordSchema = z.object({
   icon: z.record(z.string()).optional(),
 });
 
-export const PartyKitRoomSchema = z.object({
-  roomId: z.string(),
+export const RealtimeChannelSchema = z.object({
+  channelName: z.string(),
   type: z.enum(["global", "course"]),
 });
 

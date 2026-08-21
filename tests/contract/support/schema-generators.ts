@@ -15,7 +15,7 @@ import {
   ConnectLatestSchema,
   LoRecordSchema,
   LoRecordUserSchema,
-  PartyKitRoomSchema,
+  RealtimeChannelSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
   WhiteboardSceneInitSchema,
@@ -219,7 +219,7 @@ export const connectCourseArb = lazyArb(() => zodToArbitrary(ConnectCourseSchema
 export const connectLatestArb = lazyArb(() => zodToArbitrary(ConnectLatestSchema));
 export const loRecordUserArb = lazyArb(() => zodToArbitrary(LoRecordUserSchema));
 export const loRecordArb = lazyArb(() => zodToArbitrary(LoRecordSchema));
-export const partyKitRoomArb = lazyArb(() => zodToArbitrary(PartyKitRoomSchema));
+export const realtimeChannelArb = lazyArb(() => zodToArbitrary(RealtimeChannelSchema));
 export const incrementCalendarParamsArb = lazyArb(() => zodToArbitrary(IncrementCalendarParamsSchema));
 export const getCountLearningRecordsParamsArb = lazyArb(() =>
   zodToArbitrary(GetCountLearningRecordsParamsSchema)

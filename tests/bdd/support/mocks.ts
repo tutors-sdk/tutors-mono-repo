@@ -243,47 +243,38 @@ class MockQueryBuilder {
   }
 }
 
-type MessageHandler = (event: MessageEvent) => void;
-type CloseHandler = (event: CloseEvent) => void;
+type BroadcastHandler = (payload: { payload: unknown }) => void;
 
-export class MockPartySocket {
-  readyState: number = WebSocket.OPEN;
-  private messageHandlers: MessageHandler[] = [];
-  private closeHandlers: CloseHandler[] = [];
+export class MockRealtimeChannel {
+  private broadcastHandlers: Map<string, BroadcastHandler[]> = new Map();
+  private subscribed: boolean = false;
 
-  addEventListener(type: string, handler: MessageHandler | CloseHandler): void {
-    if (type === "message") {
-      this.messageHandlers.push(handler as MessageHandler);
-    } else if (type === "close") {
-      this.closeHandlers.push(handler as CloseHandler);
-    }
+  on(type: "broadcast", filter: { event: string }, handler: BroadcastHandler): this {
+    const handlers = this.broadcastHandlers.get(filter.event) || [];
+    handlers.push(handler);
+    this.broadcastHandlers.set(filter.event, handlers);
+    return this;
   }
 
-  removeEventListener(type: string, handler: MessageHandler | CloseHandler): void {
-    if (type === "message") {
-      this.messageHandlers = this.messageHandlers.filter(h => h !== handler);
-    } else if (type === "close") {
-      this.closeHandlers = this.closeHandlers.filter(h => h !== handler);
-    }
+  subscribe(callback?: (status: string) => void): this {
+    this.subscribed = true;
+    if (callback) callback("SUBSCRIBED");
+    return this;
   }
 
-  simulateMessage(data: unknown): void {
-    const event = new MessageEvent("message", { data: JSON.stringify(data) });
-    this.messageHandlers.forEach(h => h(event));
+  send(_message: { type: string; event: string; payload: unknown }): void {}
+
+  simulateBroadcast(event: string, data: unknown): void {
+    const handlers = this.broadcastHandlers.get(event) || [];
+    handlers.forEach(h => h({ payload: data }));
   }
 
-  simulateClose(): void {
-    this.readyState = WebSocket.CLOSED;
-    const CloseEventCtor = typeof CloseEvent !== "undefined"
-      ? CloseEvent
-      : (class extends Event { code = 1000; reason = ""; wasClean = true; }) as typeof CloseEvent;
-    const event = new CloseEventCtor("close");
-    this.closeHandlers.forEach(h => h(event));
+  unsubscribe(): void {
+    this.subscribed = false;
   }
 
-  send(_data: string | ArrayBuffer): void {}
-  close(): void {
-    this.simulateClose();
+  isSubscribed(): boolean {
+    return this.subscribed;
   }
 }
 

@@ -1,103 +1,83 @@
 import { describe, it, expect, vi } from "vitest";
-import { MockPartySocket } from "../../bdd/support/mocks";
+import { MockRealtimeChannel } from "../../bdd/support/mocks";
 
-/**
- * Presence service tests via MockPartySocket.
- *
- * The community package uses PartySocket for real-time presence. These tests
- * validate the mock's event delivery, removal, and lifecycle behaviour.
- */
+describe("presence-service: simulateBroadcast delivers to handlers", () => {
+  it("delivers a broadcast to a registered handler", () => {
+    const channel = new MockRealtimeChannel();
+    const received: unknown[] = [];
 
-describe("presence-service: simulateMessage delivers to handlers", () => {
-  it("delivers a message to a registered handler", () => {
-    const socket = new MockPartySocket();
-    const received: string[] = [];
-
-    socket.addEventListener("message", (event: MessageEvent) => {
-      received.push(event.data);
+    channel.on("broadcast", { event: "lo-event" }, (payload) => {
+      received.push(payload.payload);
     });
+    channel.subscribe();
 
-    socket.simulateMessage({ user: "alice", action: "join" });
+    channel.simulateBroadcast("lo-event", { user: "alice", action: "join" });
     expect(received).toHaveLength(1);
-    expect(JSON.parse(received[0])).toEqual({ user: "alice", action: "join" });
+    expect(received[0]).toEqual({ user: "alice", action: "join" });
   });
 
   it("delivers to multiple registered handlers", () => {
-    const socket = new MockPartySocket();
+    const channel = new MockRealtimeChannel();
     const callCount = { a: 0, b: 0 };
 
-    socket.addEventListener("message", () => { callCount.a++; });
-    socket.addEventListener("message", () => { callCount.b++; });
+    channel.on("broadcast", { event: "lo-event" }, () => { callCount.a++; });
+    channel.on("broadcast", { event: "lo-event" }, () => { callCount.b++; });
+    channel.subscribe();
 
-    socket.simulateMessage({ ping: true });
+    channel.simulateBroadcast("lo-event", { ping: true });
     expect(callCount.a).toBe(1);
     expect(callCount.b).toBe(1);
   });
 });
 
-describe("presence-service: simulateClose", () => {
-  it("sets readyState to CLOSED", () => {
-    const socket = new MockPartySocket();
-    expect(socket.readyState).toBe(WebSocket.OPEN);
-
-    socket.simulateClose();
-    expect(socket.readyState).toBe(WebSocket.CLOSED);
+describe("presence-service: subscribe and unsubscribe", () => {
+  it("starts unsubscribed", () => {
+    const channel = new MockRealtimeChannel();
+    expect(channel.isSubscribed()).toBe(false);
   });
 
-  it("fires close handlers", () => {
-    const socket = new MockPartySocket();
-    const closeHandler = vi.fn();
-
-    socket.addEventListener("close", closeHandler);
-    socket.simulateClose();
-    expect(closeHandler).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("presence-service: removeEventListener", () => {
-  it("stops delivery after removing a message handler", () => {
-    const socket = new MockPartySocket();
-    const handler = vi.fn();
-
-    socket.addEventListener("message", handler);
-    socket.simulateMessage({ data: "first" });
-    expect(handler).toHaveBeenCalledTimes(1);
-
-    socket.removeEventListener("message", handler);
-    socket.simulateMessage({ data: "second" });
-    expect(handler).toHaveBeenCalledTimes(1);
+  it("subscribe sets subscribed state", () => {
+    const channel = new MockRealtimeChannel();
+    channel.subscribe();
+    expect(channel.isSubscribed()).toBe(true);
   });
 
-  it("stops delivery after removing a close handler", () => {
-    const socket = new MockPartySocket();
-    const handler = vi.fn();
+  it("subscribe fires callback with SUBSCRIBED", () => {
+    const channel = new MockRealtimeChannel();
+    const callback = vi.fn();
 
-    socket.addEventListener("close", handler);
-    socket.removeEventListener("close", handler);
-    socket.simulateClose();
-    expect(handler).not.toHaveBeenCalled();
+    channel.subscribe(callback);
+    expect(callback).toHaveBeenCalledWith("SUBSCRIBED");
+  });
+
+  it("unsubscribe clears subscribed state", () => {
+    const channel = new MockRealtimeChannel();
+    channel.subscribe();
+    channel.unsubscribe();
+    expect(channel.isSubscribed()).toBe(false);
   });
 });
 
-describe("presence-service: send and close", () => {
-  it("send() accepts string data without error", () => {
-    const socket = new MockPartySocket();
-    expect(() => socket.send("hello")).not.toThrow();
+describe("presence-service: event filtering", () => {
+  it("only delivers to handlers matching the event name", () => {
+    const channel = new MockRealtimeChannel();
+    const loEvents: unknown[] = [];
+    const otherEvents: unknown[] = [];
+
+    channel.on("broadcast", { event: "lo-event" }, (p) => { loEvents.push(p.payload); });
+    channel.on("broadcast", { event: "other" }, (p) => { otherEvents.push(p.payload); });
+    channel.subscribe();
+
+    channel.simulateBroadcast("lo-event", { data: "first" });
+    expect(loEvents).toHaveLength(1);
+    expect(otherEvents).toHaveLength(0);
   });
+});
 
-  it("send() accepts ArrayBuffer data without error", () => {
-    const socket = new MockPartySocket();
-    const buffer = new ArrayBuffer(8);
-    expect(() => socket.send(buffer)).not.toThrow();
-  });
-
-  it("close() triggers close handlers and sets CLOSED state", () => {
-    const socket = new MockPartySocket();
-    const closeHandler = vi.fn();
-    socket.addEventListener("close", closeHandler);
-
-    socket.close();
-    expect(socket.readyState).toBe(WebSocket.CLOSED);
-    expect(closeHandler).toHaveBeenCalledTimes(1);
+describe("presence-service: send", () => {
+  it("send() accepts broadcast message without error", () => {
+    const channel = new MockRealtimeChannel();
+    channel.subscribe();
+    expect(() => channel.send({ type: "broadcast", event: "lo-event", payload: { test: true } })).not.toThrow();
   });
 });

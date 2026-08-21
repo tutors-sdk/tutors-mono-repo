@@ -343,7 +343,7 @@ function extractExportsFromFile(
 
   const cleaned = stripComments(source);
   const symbols: ExportedSymbol[] = [];
-  const relativeFile = path.relative(pkgDir, filePath);
+  const relativeFile = path.relative(pkgDir, filePath).replace(/\\/g, "/");
 
   // --- Handle `export * from "./..."` (re-exports) ---
   const reExportPattern = /export\s+\*\s+from\s+["']([^"']+)["']/g;
