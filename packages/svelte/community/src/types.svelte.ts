@@ -61,9 +61,9 @@ export interface PresenceService {
 
   /**
    * Process incoming student activity messages
-   * @param event - WebSocket message with student activity data
+   * @param payload - Supabase broadcast payload with student activity data
    */
-  studentListener(event: MessageEvent): void;
+  studentListener(payload: { type: string; event: string; [key: string]: any }): void;
 
   /**
    * Notify other users about learning object interaction
@@ -107,21 +107,21 @@ export interface LiveService {
 
   /**
    * Process individual student activity
-   * @param event - WebSocket message containing student update
+   * @param payload - Supabase broadcast payload containing student update
    */
-  studentListener(event: MessageEvent): void;
+  studentListener(payload: { type: string; event: string; [key: string]: any }): void;
 
   /**
    * Process course-level activity
-   * @param event - WebSocket message containing course update
+   * @param payload - Supabase broadcast payload containing course update
    */
-  courseListener(event: MessageEvent): void;
+  courseListener(payload: { type: string; event: string; [key: string]: any }): void;
 
   /**
-   * Handle incoming WebSocket messages
-   * @param event - WebSocket message to process
+   * Handle incoming broadcast messages for both course and student events
+   * @param payload - Supabase broadcast payload to process
    */
-  broadcastListener(event: MessageEvent): void;
+  broadcastListener(payload: { type: string; event: string; [key: string]: any }): void;
 
   /**
    * Begin monitoring platform-wide activity

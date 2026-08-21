@@ -1,5 +1,5 @@
 // import { themeService } from "$lib/services/themes/services/themes.svelte";
-import type { Composite, Course, IconNav, Lo, LoType, Topic } from "../types/index.ts";
+import type { Composite, Course, IconNav, Lo, LoType, Topic, WeekType } from "../types/index.ts";
 import { filterByType, setShowHide } from "../utils/lo-utils.ts";
 
 export function createToc(course: Course) {
@@ -174,39 +174,53 @@ export function loadPropertyFlags(course: Course) {
 }
 
 export function initCalendar(course: Course) {
-  const calendar: { title: string; weeks: Array<{ date: string; title: string; type: string; dateObj: Date }> } = {
-    title: "unknown",
-    weeks: [],
-  };
   try {
-    if (course.calendar) {
-      const calendarObj = course.calendar;
-      calendar.title = calendarObj.title;
-      if (Array.isArray(calendarObj.weeks)) {
-        calendar.weeks = calendarObj.weeks.map((weekObj: Record<string, { title: string; type: string }>) => {
+    if (!course.calendar) return;
+    const calendarObj = course.calendar;
+    const weeks: WeekType[] = [];
+
+    if (Array.isArray(calendarObj.weeks)) {
+      for (const weekObj of calendarObj.weeks) {
+        if (weekObj.date) {
+          // New format: { date, week, topic, assessment }
+          const isBreak = weekObj.week == null;
+          const assessment = weekObj.assessment && typeof weekObj.assessment === "object"
+            ? { name: weekObj.assessment.name, due: weekObj.assessment.due, percentage: weekObj.assessment.percentage, submission: weekObj.assessment.submission }
+            : undefined;
+          weeks.push({
+            date: weekObj.date,
+            title: weekObj.topic,
+            type: isBreak ? "break" : "topic",
+            dateObj: new Date(weekObj.date),
+            weekNumber: weekObj.week ?? undefined,
+            assessment,
+          });
+        } else {
+          // Old format: { "2026-09-07": { title, type } }
           const date = Object.keys(weekObj)[0];
           const weekData = weekObj[date];
-          return {
+          weeks.push({
             date,
             title: weekData.title,
             type: weekData.type,
             dateObj: new Date(date),
-          };
-        });
+          });
+        }
       }
-
-      const today = Date.now();
-      const currentWeek = calendar.weeks.find(
-        (week, i) =>
-          today > Date.parse(week.date) &&
-          today <= Date.parse(calendar.weeks[i + 1]?.date),
-      );
-      course.courseCalendar = {
-        title: calendarObj.title,
-        weeks: calendar.weeks,
-        currentWeek: currentWeek,
-      };
     }
+
+    const today = Date.now();
+    const currentWeek = weeks.find(
+      (week, i) =>
+        today > Date.parse(week.date) &&
+        today <= Date.parse(weeks[i + 1]?.date),
+    );
+    course.courseCalendar = {
+      title: calendarObj.title,
+      year: calendarObj.year,
+      weeks,
+      currentWeek,
+    };
   } catch (e) {
     console.error("Error loading calendar:", e);
   }

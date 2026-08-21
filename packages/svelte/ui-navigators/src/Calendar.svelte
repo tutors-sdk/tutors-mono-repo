@@ -7,32 +7,65 @@
     calendar: Calendar;
   }
   let { calendar }: Props = $props();
+  const hasAssessments = $derived(calendar.weeks.some((w) => w.assessment));
+  const hasWeekNumbers = $derived(calendar.weeks.some((w) => w.weekNumber != null));
 </script>
 
-<h4 class="mb-4 text-center font-semibold">{calendar.title}</h4>
-<table class="w-full table-auto" aria-label={calendar.title}>
-  <thead>
-    <tr>
-      <th class="mb-1 text-center" scope="col">{t("content.weekNo")}</th>
-      <th class="mb-1 text-center" scope="col">{t("content.type")}</th>
-      <th class="mb-1 text-center" scope="col">{t("content.dateStarts")}</th>
-    </tr>
-  </thead>
-  <tbody class="text-center">
-    {#each calendar.weeks as week}
-      {#if calendar?.currentWeek?.title == week.title}
-        <tr class="my-2" aria-current="date" style="background-color: light-dark(var(--color-success-300), var(--color-success-700));">
-          <td>{week.title}</td>
-          <td>{week.type}</td>
-          <td>{monthNames[week.dateObj.getMonth()]} {week.dateObj.getDate()}</td>
-        </tr>
-      {:else}
-        <tr class="hover my-2">
-          <td>{week.title}</td>
-          <td>{week.type}</td>
-          <td>{monthNames[week.dateObj.getMonth()]} {week.dateObj.getDate()}</td>
-        </tr>
-      {/if}
-    {/each}
-  </tbody>
-</table>
+<h4 class="mb-4 text-center font-semibold">
+  {calendar.title}{#if calendar.year} {calendar.year}{/if}
+</h4>
+<div class="table-wrap">
+  <table class="table table-zebra" aria-label={calendar.title}>
+    <thead>
+      <tr>
+        {#if hasWeekNumbers}
+          <th class="text-center" scope="col">{t("content.weekNo")}</th>
+        {/if}
+        <th class="text-center" scope="col">{t("content.type")}</th>
+        <th class="text-center" scope="col">{t("content.dateStarts")}</th>
+        {#if hasAssessments}
+          <th class="text-center" scope="col">Assessment</th>
+        {/if}
+      </tr>
+    </thead>
+    <tbody class="text-center [&>tr]:hover:preset-tonal-brand">
+      {#each calendar.weeks as week}
+        {#if calendar?.currentWeek?.title == week.title}
+          <tr aria-current="date" style="background-color: light-dark(var(--color-success-300), var(--color-success-700));">
+            {#if hasWeekNumbers}
+              <td>{week.weekNumber ?? "-"}</td>
+            {/if}
+            <td>{week.title}</td>
+            <td>{monthNames[week.dateObj.getMonth()]} {week.dateObj.getDate()}</td>
+            {#if hasAssessments}
+              <td>
+                {#if week.assessment}
+                  <div class="text-sm font-semibold">{week.assessment.name}</div>
+                  <div class="text-xs">Due: {week.assessment.due} ({week.assessment.percentage}%)</div>
+                  <div class="text-xs">{week.assessment.submission}</div>
+                {/if}
+              </td>
+            {/if}
+          </tr>
+        {:else}
+          <tr>
+            {#if hasWeekNumbers}
+              <td>{week.weekNumber ?? "-"}</td>
+            {/if}
+            <td>{week.title}</td>
+            <td>{monthNames[week.dateObj.getMonth()]} {week.dateObj.getDate()}</td>
+            {#if hasAssessments}
+              <td>
+                {#if week.assessment}
+                  <div class="text-sm font-semibold">{week.assessment.name}</div>
+                  <div class="text-xs">Due: {week.assessment.due} ({week.assessment.percentage}%)</div>
+                  <div class="text-xs">{week.assessment.submission}</div>
+                {/if}
+              </td>
+            {/if}
+          </tr>
+        {/if}
+      {/each}
+    </tbody>
+  </table>
+</div>
