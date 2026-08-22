@@ -1,7 +1,8 @@
+import type { HandleClientError } from "@sveltejs/kit";
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
+import log, { addTransport } from "@tutors/logger";
+import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
-// Set fallback before any other imports. If getSupabase() is called before initSupabase
-// (e.g. load runs before hooks), the lib can use this to recover.
 (globalThis as any).__TUTORS_TIME_SUPABASE_INIT__ = {
   url: PUBLIC_SUPABASE_URL,
   key: PUBLIC_SUPABASE_ANON_KEY
@@ -9,5 +10,20 @@ import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/publi
 
 import { initSupabase } from "@tutors/tutors-time-lib";
 
-// Run before any load functions. Hooks modules load at app startup.
 initSupabase(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+
+addTransport(createSupabaseErrorTransport("tutors-time"));
+
+window.addEventListener("unhandledrejection", (event) => {
+  log.error("Unhandled promise rejection", {
+    reason: event.reason instanceof Error ? event.reason.message : String(event.reason),
+    stack: event.reason instanceof Error ? event.reason.stack : undefined
+  });
+});
+
+export const handleError: HandleClientError = ({ error }) => {
+  log.error("Client error:", error instanceof Error ? error : { details: error });
+  return {
+    message: "An unexpected error occurred"
+  };
+};

@@ -4,6 +4,7 @@ import { SvelteKitAuth } from "@auth/sveltekit";
 import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
+import log from "@tutors/logger";
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -66,7 +67,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
 
 export const handleError: HandleServerError = ({ error }) => {
-  console.error("Server error:", error);
+  log.error("Server error:", error instanceof Error ? error : { details: error });
   return {
     message: "An unexpected error occurred"
   };

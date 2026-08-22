@@ -2,7 +2,7 @@ import type { HandleClientError } from "@sveltejs/kit";
 import log, { addTransport } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
-addTransport(createSupabaseErrorTransport("tutors-catalogue"));
+addTransport(createSupabaseErrorTransport("tutors-live"));
 
 window.addEventListener("unhandledrejection", (event) => {
   log.error("Unhandled promise rejection", {
