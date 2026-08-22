@@ -1,5 +1,16 @@
-import type { LogLevel, LogEntry, Logger, LoggerOptions } from "./types.ts";
+import type { LogLevel, LogEntry, Logger, LoggerOptions, Transport } from "./types.ts";
 import { formatJson, formatPretty } from "./formatter.ts";
+
+const globalTransports: Transport[] = [];
+
+export function addTransport(fn: Transport): void {
+  globalTransports.push(fn);
+}
+
+export function removeTransport(fn: Transport): void {
+  const idx = globalTransports.indexOf(fn);
+  if (idx !== -1) globalTransports.splice(idx, 1);
+}
 
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   debug: 0,
@@ -111,6 +122,9 @@ export class TutorsLogger implements Logger {
       message,
     };
     this.outputFn(entry);
+    for (const transport of globalTransports) {
+      try { transport(entry); } catch { /* transport failures must never crash the app */ }
+    }
   }
 
   debug(...args: unknown[]): void {

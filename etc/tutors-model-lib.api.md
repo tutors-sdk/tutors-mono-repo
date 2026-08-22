@@ -19,7 +19,10 @@ export interface LearningRecord;
 export type Archive = Lo & { type: "archive"; archiveFile?: string; };
 
 // (from src/types/calendar-types.ts)
-export type Calendar = { title: string; weeks: WeekType[]; currentWeek?: WeekType; };
+export type Assessment = { name: string; due: string; percentage: number; submission: string; };
+
+// (from src/types/calendar-types.ts)
+export type Calendar = { title: string; year?: number; weeks: WeekType[]; currentWeek?: WeekType; };
 
 // (from src/types/learning-objects.ts)
 export type Composite = Lo & { toc: Lo[]; los: Lo[]; panels: Panels; units: Units; };
@@ -124,7 +127,7 @@ export type VideoIdentifiers = { videoid: string; videoIds: VideoIdentifier[]; }
 export type Web = Lo & { type: "web"; };
 
 // (from src/types/calendar-types.ts)
-export type WeekType = { title: string; type: string; date: string; dateObj: Date; };
+export type WeekType = { title: string; type: string; date: string; dateObj: Date; weekNumber?: number; assessment?: Assessment; };
 
 // (from src/types/learning-objects.ts)
 export type Whiteboard = Lo & { type: "whiteboard"; excalidraw: string; excalidrawFile: string; };
@@ -268,5 +271,5 @@ export const simpleTypes: string[];
 | const | 8 |
 | function | 31 |
 | interface | 1 |
-| type | 38 |
-| **Total** | **79** |
+| type | 39 |
+| **Total** | **80** |

@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { PUBLIC_party_kit_main_room } from "$env/static/public";
+  import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from "$env/static/public";
 
   let showEditor = $state(false);
   let loading = $state(false);
@@ -37,7 +37,8 @@
           window.removeEventListener("message", handler);
           editorIframe?.contentWindow?.postMessage({
             type: "init-editor",
-            partyHost: PUBLIC_party_kit_main_room,
+            supabaseUrl: PUBLIC_SUPABASE_URL,
+            supabaseAnonKey: PUBLIC_SUPABASE_ANON_KEY,
             roomId: getWhiteboardRoomId(),
             user: {
               name: tutorsId.value?.name || "Anonymous",

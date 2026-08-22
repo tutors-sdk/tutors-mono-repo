@@ -323,6 +323,12 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.111.0
         version: 2.111.0
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../../packages/svelte/community
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/logger
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { createLogger } from "../../../packages/svelte/utils/logger/src/index.ts";
+import { describe, it, expect, afterEach } from "vitest";
+import { createLogger, addTransport, removeTransport } from "../../../packages/svelte/utils/logger/src/index.ts";
 import type { LogEntry } from "../../../packages/svelte/utils/logger/src/types.ts";
 import {
   formatJson,
@@ -281,6 +281,61 @@ describe("logger: backwards compatibility", () => {
     logger.debug(`Total courses: ${42}`);
     logger.warn("No type found for icon", "talk");
     expect(entries).toHaveLength(4);
+  });
+});
+
+describe("logger: global transports", () => {
+  const transportEntries: LogEntry[] = [];
+  const transport = (entry: LogEntry) => transportEntries.push(entry);
+
+  afterEach(() => {
+    removeTransport(transport);
+    transportEntries.length = 0;
+  });
+
+  it("addTransport receives entries from all logger instances", () => {
+    addTransport(transport);
+    const { logger } = createTestLogger();
+    logger.error("boom");
+    expect(transportEntries).toHaveLength(1);
+    expect(transportEntries[0].message).toBe("boom");
+  });
+
+  it("transport receives entries from child loggers", () => {
+    addTransport(transport);
+    const { logger } = createTestLogger({ context: { app: "reader" } });
+    const child = logger.child({ module: "auth" });
+    child.warn("session expired");
+    expect(transportEntries).toHaveLength(1);
+    expect(transportEntries[0].app).toBe("reader");
+    expect(transportEntries[0].module).toBe("auth");
+  });
+
+  it("removeTransport stops delivery", () => {
+    addTransport(transport);
+    const { logger } = createTestLogger();
+    logger.error("first");
+    removeTransport(transport);
+    logger.error("second");
+    expect(transportEntries).toHaveLength(1);
+  });
+
+  it("transport errors do not crash the logger", () => {
+    const badTransport = () => { throw new Error("transport failure"); };
+    addTransport(badTransport);
+    const { logger, entries } = createTestLogger();
+    expect(() => logger.error("still works")).not.toThrow();
+    expect(entries).toHaveLength(1);
+    removeTransport(badTransport);
+  });
+
+  it("respects level filtering before reaching transports", () => {
+    addTransport(transport);
+    const { logger } = createTestLogger({ level: "error" });
+    logger.debug("suppressed");
+    logger.error("visible");
+    expect(transportEntries).toHaveLength(1);
+    expect(transportEntries[0].level).toBe("error");
   });
 });
 

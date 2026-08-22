@@ -3,8 +3,7 @@ import { z } from "zod";
 export const publicEnvSchema = z.object({
   PUBLIC_SUPABASE_URL: z.string().url("PUBLIC_SUPABASE_URL must be a valid URL"),
   PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, "PUBLIC_SUPABASE_ANON_KEY must not be empty"),
-  PUBLIC_ANON_MODE: z.string().optional(),
-  PUBLIC_party_kit_main_room: z.string().min(1, "PUBLIC_party_kit_main_room must not be empty")
+  PUBLIC_ANON_MODE: z.string().optional()
 });
 
 export const privateEnvSchema = z.object({

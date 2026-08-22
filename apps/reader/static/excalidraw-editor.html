@@ -34,13 +34,27 @@
     import React, { createElement, useEffect, useRef, useState, useCallback } from "react";
     import { createRoot } from "react-dom/client";
     import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom";
-    import PartySocket from "https://esm.sh/partysocket@1.0.1";
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const CURSOR_COLORS = [
+      "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
+      "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F",
+    ];
+
+    function hashCode(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash);
+    }
 
     const loadingEl = document.getElementById("loading");
+    const BROADCAST_CONFIG = { config: { broadcast: { self: false }, presence: { key: "" } } };
 
     function ExcalidrawEditor({ config }) {
       const excalidrawAPIRef = useRef(null);
-      const socketRef = useRef(null);
+      const channelRef = useRef(null);
       const collaboratorsRef = useRef(new Map());
       const lastVersionsRef = useRef(new Map());
       const isRemoteUpdateRef = useRef(false);
@@ -48,102 +62,88 @@
       const [collaborators, setCollaborators] = useState(new Map());
 
       useEffect(() => {
-        const socket = new PartySocket({
-          host: config.partyHost,
-          room: config.roomId,
-          party: "whiteboard",
-        });
-        socketRef.current = socket;
+        const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+        const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
+        const channelName = `wb:${config.roomId}`;
 
-        socket.addEventListener("message", (event) => {
-          let data;
-          try {
-            data = JSON.parse(event.data);
-          } catch {
-            return;
-          }
+        const channel = supabase.channel(channelName, BROADCAST_CONFIG);
+        channelRef.current = channel;
 
-          const api = excalidrawAPIRef.current;
-          if (!api) return;
+        channel
+          .on("broadcast", { event: "scene-update" }, ({ payload }) => {
+            const api = excalidrawAPIRef.current;
+            if (!api || !payload) return;
 
-          switch (data.type) {
-            case "scene-snapshot": {
-              isRemoteUpdateRef.current = true;
-              api.updateScene({
-                elements: data.elements || [],
-              });
-              isRemoteUpdateRef.current = false;
+            const currentElements = api.getSceneElements();
+            const elementMap = new Map(currentElements.map(el => [el.id, el]));
 
-              const versionMap = lastVersionsRef.current;
-              for (const el of data.elements || []) {
-                versionMap.set(el.id, el.version);
+            for (const el of payload.elements) {
+              const existing = elementMap.get(el.id);
+              if (!existing || el.version >= existing.version) {
+                elementMap.set(el.id, el);
               }
-              break;
             }
 
-            case "scene-update": {
-              if (data.source === socket.id) break;
-              const currentElements = api.getSceneElements();
-              const elementMap = new Map(currentElements.map(el => [el.id, el]));
+            isRemoteUpdateRef.current = true;
+            api.updateScene({ elements: Array.from(elementMap.values()) });
+            isRemoteUpdateRef.current = false;
 
-              for (const el of data.elements) {
-                const existing = elementMap.get(el.id);
-                if (!existing || el.version >= existing.version) {
-                  elementMap.set(el.id, el);
+            for (const el of payload.elements) {
+              lastVersionsRef.current.set(el.id, el.version);
+            }
+          })
+          .on("broadcast", { event: "cursor-update" }, ({ payload }) => {
+            if (!payload) return;
+            const collabs = new Map(collaboratorsRef.current);
+            collabs.set(payload.userId, {
+              pointer: payload.pointer,
+              button: payload.button,
+              username: payload.userName || "Anonymous",
+              color: { background: payload.color || "#ccc", stroke: payload.color || "#ccc" },
+            });
+            collaboratorsRef.current = collabs;
+            setCollaborators(new Map(collabs));
+          })
+          .on("presence", { event: "sync" }, () => {
+            const state = channel.presenceState();
+            const activeUserIds = new Set();
+            for (const [, presences] of Object.entries(state)) {
+              for (const p of presences) {
+                activeUserIds.add(p.userId);
+              }
+            }
+            const collabs = new Map(collaboratorsRef.current);
+            for (const userId of collabs.keys()) {
+              if (!activeUserIds.has(userId)) {
+                collabs.delete(userId);
+              }
+            }
+            collaboratorsRef.current = collabs;
+            setCollaborators(new Map(collabs));
+          })
+          .subscribe(async (status) => {
+            if (status === "SUBSCRIBED") {
+              await channel.track({
+                userId: config.user.id,
+                userName: config.user.name,
+                avatar: config.user.avatar,
+                color: myColor,
+              });
+
+              if (config.initialScene) {
+                const api = excalidrawAPIRef.current;
+                if (api) {
+                  const versionMap = lastVersionsRef.current;
+                  for (const el of config.initialScene.elements || []) {
+                    versionMap.set(el.id, el.version);
+                  }
                 }
               }
-
-              isRemoteUpdateRef.current = true;
-              api.updateScene({
-                elements: Array.from(elementMap.values()),
-              });
-              isRemoteUpdateRef.current = false;
-
-              for (const el of data.elements) {
-                lastVersionsRef.current.set(el.id, el.version);
-              }
-              break;
             }
-
-            case "cursor-update": {
-              const collabs = new Map(collaboratorsRef.current);
-              collabs.set(data.source, {
-                pointer: data.pointer,
-                button: data.button,
-                username: data.user?.name || "Anonymous",
-                color: { background: data.user?.color || "#ccc", stroke: data.user?.color || "#ccc" },
-              });
-              collaboratorsRef.current = collabs;
-              setCollaborators(new Map(collabs));
-              break;
-            }
-
-            case "user-left": {
-              const collabs = new Map(collaboratorsRef.current);
-              collabs.delete(data.userId);
-              collaboratorsRef.current = collabs;
-              setCollaborators(new Map(collabs));
-              break;
-            }
-          }
-        });
-
-        socket.addEventListener("open", () => {
-          if (config.initialScene) {
-            socket.send(JSON.stringify({
-              type: "scene-init",
-              elements: config.initialScene.elements || [],
-              appState: {
-                viewBackgroundColor:
-                  config.initialScene.appState?.viewBackgroundColor || "#ffffff",
-              },
-              files: config.initialScene.files || {},
-            }));
-          }
-        });
+          });
 
         return () => {
-          socket.close();
+          channel.unsubscribe();
         };
       }, [config]);
 
@@ -155,8 +155,8 @@
         }
 
         debounceTimerRef.current = setTimeout(() => {
-          const socket = socketRef.current;
-          if (!socket || socket.readyState !== WebSocket.OPEN) return;
+          const channel = channelRef.current;
+          if (!channel) return;
 
           const versionMap = lastVersionsRef.current;
           const changed = elements.filter(el => {
@@ -170,27 +170,35 @@
             versionMap.set(el.id, el.version);
           }
 
-          socket.send(JSON.stringify({
-            type: "scene-update",
-            elements: changed,
-          }));
+          channel.send({
+            type: "broadcast",
+            event: "scene-update",
+            payload: { elements: changed },
+          });
+
+          window.parent.postMessage({
+            type: "scene-changed",
+            elements: elements,
+          }, "*");
         }, 100);
       }, []);
 
       const handlePointerUpdate = useCallback((payload) => {
-        const socket = socketRef.current;
-        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+        const channel = channelRef.current;
+        if (!channel) return;
 
-        socket.send(JSON.stringify({
-          type: "cursor-update",
-          user: {
-            name: config.user.name,
-            id: config.user.id,
-            avatar: config.user.avatar,
+        const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
+        channel.send({
+          type: "broadcast",
+          event: "cursor-update",
+          payload: {
+            userId: config.user.id,
+            userName: config.user.name,
+            color: myColor,
+            pointer: payload.pointer,
+            button: payload.button,
           },
-          pointer: payload.pointer,
-          button: payload.button,
-        }));
+        });
       }, [config.user]);
 
       return createElement(Excalidraw, {

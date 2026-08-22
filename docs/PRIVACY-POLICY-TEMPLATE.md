@@ -55,7 +55,7 @@ Your data is processed by the following third-party services:
 | [Supabase](https://supabase.com) | Database and authentication | All stored data |
 | [GitHub](https://github.com) | OAuth authentication | GitHub ID only |
 | [Netlify](https://netlify.com) | Application hosting | Server logs (IP addresses) |
-| [PartyKit](https://partykit.io) | Real-time presence | Presence data (ephemeral) |
+| [Supabase Realtime](https://supabase.com/docs/guides/realtime) | Real-time presence | Presence data (ephemeral) |
 
 ## 5. Your Rights (GDPR)
 
