@@ -8,6 +8,27 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.1 (2026-08)
+
+#### Features
+
+- New calendar format with week numbers, assessments, and year field (backward compatible with legacy format)
+- Whiteboard property flag (`whiteboard: 1`) to control course whiteboard visibility
+- RBAC system: educator role via `educators` array in `enrollment.yaml`
+- Educator panel with tabbed sidebar (Info, Locks, Enrollment, Access)
+- Content locking: educators can lock/unlock individual topics to control student visibility
+
+#### Fixes
+
+- Educator role no longer persists when navigating to a course without enrollment
+- Content locks now target individual topics within units (previously locked at unit level, causing all units to share a single lock state)
+- Unit containers hidden when all their topics are locked (no empty unit shells for students)
+- Supabase Realtime broadcast callback types aligned with API
+
+### v16.1.0 (2026-08)
+
+- Version bump (superseded by 16.1.1)
+
 ### v16.0.4 (2026-08)
 
 - Whiteboard learning object type with Excalidraw viewer support
