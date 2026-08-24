@@ -6,12 +6,26 @@
   import { t } from "@tutors/i18n";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
+  import type { Lo, Composite } from "@tutors/tutors-model-lib";
 
   let { showEducatorPanel = false } = $props();
 
   const course = $derived(currentCourse.value);
-  const topLevelLos = $derived(course?.los ?? []);
   const enrollment = $derived(course?.enrollment);
+
+  type LockGroup = { title?: string; los: Lo[] };
+
+  const lockGroups = $derived.by((): LockGroup[] => {
+    const los = course?.los ?? [];
+    const hasUnits = los.some((lo) => lo.type === "unit" || lo.type === "side");
+    if (!hasUnits) return [{ los }];
+    return los
+      .filter((lo) => lo.type === "unit" || lo.type === "side")
+      .map((unit) => ({
+        title: unit.title,
+        los: (unit as Composite).los ?? []
+      }));
+  });
 
   $effect(() => {
     if (showEducatorPanel && course?.courseId) {
@@ -48,26 +62,31 @@
 
       <Tabs.Content value="locks">
         <div class="space-y-1 p-2">
-          {#if topLevelLos.length === 0}
+          {#if lockGroups.length === 0 || lockGroups.every((g) => g.los.length === 0)}
             <p class="text-sm text-surface-500">{t("lecturer.locks.empty")}</p>
           {:else}
-            {#each topLevelLos as lo}
-              <div class="flex items-center justify-between rounded-lg p-2 hover:preset-tonal">
-                <span class="flex items-center gap-2 overflow-hidden">
-                  <Icon type={lo.type} height="20" />
-                  <span class="truncate text-sm">{lo.title}</span>
-                </span>
-                <Switch
-                  name="lock-{lo.route}"
-                  checked={contentLocks.value.get(lo.route) ?? false}
-                  onCheckedChange={(details) => rbacService.toggleContentLock(lo.route, details.checked)}
-                >
-                  <Switch.Control>
-                    <Switch.Thumb />
-                  </Switch.Control>
-                  <Switch.HiddenInput />
-                </Switch>
-              </div>
+            {#each lockGroups as group}
+              {#if group.title}
+                <h4 class="mt-2 mb-1 text-xs font-semibold uppercase text-surface-500">{group.title}</h4>
+              {/if}
+              {#each group.los as lo}
+                <div class="flex items-center justify-between rounded-lg p-2 hover:preset-tonal">
+                  <span class="flex items-center gap-2 overflow-hidden">
+                    <Icon type={lo.type} height="20" />
+                    <span class="truncate text-sm">{lo.title}</span>
+                  </span>
+                  <Switch
+                    name="lock-{lo.route}"
+                    checked={contentLocks.value.get(lo.route) ?? false}
+                    onCheckedChange={(details) => rbacService.toggleContentLock(lo.route, details.checked)}
+                  >
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    <Switch.HiddenInput />
+                  </Switch>
+                </div>
+              {/each}
             {/each}
           {/if}
         </div>
