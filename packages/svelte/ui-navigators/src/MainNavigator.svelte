@@ -63,9 +63,11 @@
             <SearchButton />
           {/if}
         </div>
-        <div class="hidden md:flex items-center">
-          <WhiteboardButton />
-        </div>
+        {#if currentCourse?.value?.hasWhiteboard}
+          <div class="hidden md:flex items-center">
+            <WhiteboardButton />
+          </div>
+        {/if}
       </div>
       <div class="flex items-center">
         <LayoutMenu />
