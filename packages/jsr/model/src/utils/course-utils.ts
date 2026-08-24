@@ -154,6 +154,7 @@ export function loadPropertyFlags(course: Course) {
   if (course.calendar) {
     course.hasCalendar = true;
   }
+  course.hasWhiteboard = (course.properties?.whiteboard as unknown as number) === 1;
   course.ignorePin = course.properties?.ignorepin?.toString();
   if (course.properties?.icon && typeof course.properties.icon === "object") {
     const icon = course.properties.icon as { type?: string; color?: string };
