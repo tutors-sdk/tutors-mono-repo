@@ -57,8 +57,8 @@ export const dataInventory: DataInventoryEntry[] = [
     consentRequired: true
   },
   {
-    table: "partykit_presence",
-    description: "Real-time presence data (who is online, what they are viewing)",
+    table: "realtime_presence",
+    description: "Supabase Realtime presence data (who is online, what they are viewing)",
     piiFields: ["user identity", "current location"],
     legalBasis: "Consent (live collaboration features)",
     retentionNote: "Ephemeral — not persisted beyond the session",

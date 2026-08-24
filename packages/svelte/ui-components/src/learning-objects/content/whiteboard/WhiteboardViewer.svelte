@@ -1,8 +1,9 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { PUBLIC_party_kit_main_room } from "$env/static/public";
+  import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_ANON_MODE } from "$env/static/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
+  import { supabase } from "@tutors/community/utils/supabase-client";
 
   interface Props {
     lo: Whiteboard;
@@ -16,6 +17,7 @@
   let isEditing = $state(false);
   let isShared = $state(false);
   let cachedScene: any = null;
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   function getUserId(): string {
     return tutorsId.value?.login || `anon-${Math.random().toString(36).slice(2, 8)}`;
@@ -28,6 +30,41 @@
       return `wb-${courseId}-${route}`;
     }
     return `wb-${courseId}-${route}-${getUserId()}`;
+  }
+
+  async function loadSceneFromDb(roomId: string): Promise<any | null> {
+    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return null;
+    try {
+      const { data } = await supabase
+        .from("whiteboard_scenes")
+        .select("elements, app_state, files")
+        .eq("room_id", roomId)
+        .single();
+      if (data) {
+        return { elements: data.elements, appState: data.app_state, files: data.files };
+      }
+    } catch {
+      // fall through to static file
+    }
+    return null;
+  }
+
+  function saveSceneToDb(roomId: string, elements: any[]) {
+    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        await supabase.from("whiteboard_scenes").upsert({
+          room_id: roomId,
+          elements,
+          app_state: { viewBackgroundColor: "#ffffff" },
+          files: {},
+          updated_at: new Date().toISOString(),
+        });
+      } catch {
+        // best-effort persistence
+      }
+    }, 2000);
   }
 
   async function loadScene() {
@@ -48,25 +85,30 @@
   }
 
   function setupMessageHandler() {
-    const handler = (event: MessageEvent) => {
+    const handler = async (event: MessageEvent) => {
       if (event.data?.type === "viewer-ready" && !isEditing) {
         window.removeEventListener("message", handler);
         iframe?.contentWindow?.postMessage({ type: "load-scene", scene: cachedScene }, "*");
         loading = false;
       } else if (event.data?.type === "editor-ready" && isEditing) {
         window.removeEventListener("message", handler);
+        const roomId = getWhiteboardRoomId();
+        const savedScene = await loadSceneFromDb(roomId);
         iframe?.contentWindow?.postMessage({
           type: "init-editor",
-          partyHost: PUBLIC_party_kit_main_room,
-          roomId: getWhiteboardRoomId(),
+          supabaseUrl: PUBLIC_SUPABASE_URL,
+          supabaseAnonKey: PUBLIC_SUPABASE_ANON_KEY,
+          roomId,
           user: {
             name: tutorsId.value?.name || "Anonymous",
             id: getUserId(),
             avatar: tutorsId.value?.image || "",
           },
-          initialScene: cachedScene,
+          initialScene: savedScene || cachedScene,
         }, "*");
         loading = false;
+      } else if (event.data?.type === "scene-changed" && isEditing) {
+        saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
       }
     };
     window.addEventListener("message", handler);
