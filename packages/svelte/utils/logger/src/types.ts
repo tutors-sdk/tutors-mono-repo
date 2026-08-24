@@ -13,6 +13,8 @@ export interface LoggerOptions {
   output?: (entry: LogEntry) => void;
 }
 
+export type Transport = (entry: LogEntry) => void;
+
 export interface Logger {
   debug(message: string, context?: Record<string, unknown>): void;
   debug(...args: unknown[]): void;
