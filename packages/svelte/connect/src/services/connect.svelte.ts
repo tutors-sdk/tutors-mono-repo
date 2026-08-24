@@ -147,6 +147,8 @@ export const tutorsConnectService: TutorsConnectService = {
       rbacService.loadRole(tutorsId.value.login, course.courseId, course);
       rbacService.loadContentLocks(course.courseId);
       rbacService.checkLecturerStatus(course);
+    } else {
+      rbacService.clear();
     }
   },
 
