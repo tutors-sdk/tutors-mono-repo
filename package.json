@@ -1,6 +1,6 @@
 {
   "name": "tutors-mono-repo",
-  "version": "16.1.1",
+  "version": "16.1.2",
   "license": "MIT",
   "private": true,
   "packageManager": "pnpm@11.22.0",

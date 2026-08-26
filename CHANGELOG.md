@@ -8,6 +8,12 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.2 (2026-08)
+
+#### Fixes
+
+- Units containing only panel talks (or other panel LOs) now display correctly — `hasVisibleLos` previously ignored panel content excluded from `standardLos` (PR #107)
+
 ### v16.1.1 (2026-08)
 
 #### Features
