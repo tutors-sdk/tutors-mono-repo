@@ -10,10 +10,26 @@
   }
   let { units }: Props = $props();
 
+  function isVisibleLo(lo: Lo): boolean {
+    return !lo.hide && !contentLocks.value.get(lo.route);
+  }
+
   function hasVisibleLos(unit: Composite): boolean {
     if (isEducator.value) return true;
-    const los: Lo[] = unit.units?.standardLos ?? [];
-    return los.some((lo) => !lo.hide && !contentLocks.value.get(lo.route));
+
+    const standardLos: Lo[] = unit.units?.standardLos ?? [];
+    if (standardLos.some(isVisibleLo)) return true;
+
+    // Panel LOs are excluded from standardLos — check them or panel-only units stay hidden
+    const panels = unit.panels;
+    if (!panels) return false;
+    const panelLos: Lo[] = [
+      ...(panels.panelTalks ?? []),
+      ...(panels.panelVideos ?? []),
+      ...(panels.panelNotes ?? []),
+      ...(panels.panelPodcasts ?? [])
+    ];
+    return panelLos.some(isVisibleLo);
   }
 </script>
 
