@@ -3,7 +3,6 @@ packages:
   - "packages/svelte/*"
   - "packages/svelte/utils/*"
   - "apps/*"
-  - "services/party"
 allowBuilds:
   esbuild: true
   msw: true

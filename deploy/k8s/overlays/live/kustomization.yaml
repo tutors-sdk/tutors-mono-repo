@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namePrefix: live-
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: tutors-live
+      app.kubernetes.io/component: live
+    includeSelectors: true
+
+images:
+  - name: tutors-app
+    newName: registry.example.com/tutors/live
+    newTag: latest
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: tutors-app-config
+    patch: |
+      - op: replace
+        path: /data/origin
+        value: "https://live.tutors.dev"

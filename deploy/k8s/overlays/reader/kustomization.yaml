@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namePrefix: reader-
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: tutors-reader
+      app.kubernetes.io/component: reader
+    includeSelectors: true
+
+images:
+  - name: tutors-app
+    newName: registry.example.com/tutors/reader
+    newTag: latest
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: PUBLIC_ANON_MODE
+          value: "false"
+
+  - target:
+      kind: ConfigMap
+      name: tutors-app-config
+    patch: |
+      - op: replace
+        path: /data/origin
+        value: "https://reader.tutors.dev"
+
+  - target:
+      kind: Deployment
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom/-
+        value:
+          secretRef:
+            name: reader-tutors-app-oauth
