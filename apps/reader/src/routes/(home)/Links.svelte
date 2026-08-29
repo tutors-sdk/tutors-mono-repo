@@ -35,4 +35,11 @@
   >
     <Icon type="tutorsTime" /> {t("home.live")}
   </a>
+  <a
+    class="darkbg-primary-700 dark:bg-teritary-400 btn w-2/3 rounded-sm bg-primary-800 text-white hover:scale-110 hover:bg-primary-600 md:w-48 dark:text-white"
+    href="/create"
+    rel="noreferrer"
+  >
+    <Icon type="course" /> {t("home.create")}
+  </a>
 </div>

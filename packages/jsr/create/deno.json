@@ -1,0 +1,10 @@
+{
+  "name": "@tutors/tutors-create",
+  "version": "0.1.0",
+  "exports": "./src/scaffolder.ts",
+  "license": "MIT",
+  "tasks": {
+    "run": "deno run --allow-write --allow-read main.ts",
+    "test": "deno test test/ --allow-all"
+  }
+}
