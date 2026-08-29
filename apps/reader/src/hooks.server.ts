@@ -4,6 +4,11 @@ import { SvelteKitAuth } from "@auth/sveltekit";
 import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
+import log, { setServiceName } from "@tutors/logger";
+
+setServiceName("tutors-reader");
+
+log.info("Service starting", { service: "tutors-reader" });
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -49,6 +54,30 @@ const { handle: authInitHandle } = SvelteKitAuth({
   trustHost: true
 });
 
+const requestLogger: Handle = async ({ event, resolve }) => {
+  if (event.url.pathname.startsWith("/healthz")) {
+    return resolve(event);
+  }
+
+  const requestId = event.request.headers.get("x-request-id") || crypto.randomUUID();
+  const start = performance.now();
+
+  const response = await resolve(event);
+
+  const duration = performance.now() - start;
+
+  log.info("request completed", {
+    requestId,
+    method: event.request.method,
+    path: event.url.pathname,
+    status: response.status,
+    duration_ms: Math.round(duration)
+  });
+
+  response.headers.set("x-request-id", requestId);
+  return response;
+};
+
 const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.locale = initLocaleFromCookie(event.request.headers.get("cookie") ?? "");
   return resolve(event);
@@ -63,10 +92,10 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
+export const handle = sequence(requestLogger, localeHandle, securityHeaders, authInitHandle);
 
 export const handleError: HandleServerError = ({ error }) => {
-  console.error("Server error:", error);
+  log.error("Unhandled server error", error instanceof Error ? error : new Error(String(error)));
   return {
     message: "An unexpected error occurred"
   };
