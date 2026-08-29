@@ -1,0 +1,32 @@
+node_modules
+**/node_modules
+.git
+.gitignore
+
+# Build output (rebuilt inside container)
+**/build
+**/.svelte-kit
+**/dist
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and tooling
+.vscode
+.idea
+*.swp
+*.swo
+.claude
+
+# Test artifacts
+coverage
+test-results
+playwright-report
+.stryker-tmp
+
+# Documentation
+*.md
+!pnpm-workspace.yaml
+LICENSE

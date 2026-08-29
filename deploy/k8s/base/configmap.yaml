@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tutors-app-config
+  labels:
+    app.kubernetes.io/part-of: tutors
+data:
+  origin: "https://tutors.dev"
+  PUBLIC_SUPABASE_URL: ""
+  PUBLIC_SUPABASE_ANON_KEY: ""
