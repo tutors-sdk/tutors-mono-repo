@@ -5,45 +5,47 @@ export function courseMd(spec: CourseSpec): string {
 
 ${spec.lecturerName ? `By ${spec.lecturerName}. ` : ""}A short summary of your course goes here (this line appears on course cards).
 
-<!-- EDIT: Replace this with your full course description.
-     This content appears on the course landing page.
-     You can use full Markdown: headings, lists, links, images, code blocks. -->
-
 Welcome to ${spec.courseName}! Describe what students will learn,
 any prerequisites, and how the course is structured.
 `;
 }
 
 export function propertiesYaml(spec: CourseSpec): string {
-  return `# Course properties - all fields are optional
-# Uncomment and edit the properties you need
-
-footer: "${spec.lecturerName || "Department Name"}"
-# labStepsAutoNumber: true
-# icon:
-#   type: "code"
-#   color: "primary"
+  return `
+icon:
+  type: "flat-color-icons:graduation-cap"
+  color: "ffffff"
 `;
 }
 
 export function topicMd(topicNumber: number, topicName: string): string {
-  return `# ${topicName}
+  return `---
+icon:
+  type: flat-color-icons:opened-folder
+---
+
+# ${topicName}
 
 Summary of this topic (this line appears on the topic card).
-
-<!-- EDIT: Replace the title and summary above.
-     Then replace this block with a description of what this topic covers. -->
 
 This topic introduces the key concepts for week ${topicNumber} of the course.
 `;
 }
 
-export function labSetupMd(labName: string): string {
-  return `# ${labName}
+export function unitMd(unitNumber: number): string {
+  return `Unit ${unitNumber}
 
-<!-- EDIT: This is the setup step for your lab.
-     The title above becomes the lab name in navigation.
-     Describe what students need before starting. -->
+Summary of this unit (this line appears with the unit heading).
+`;
+}
+
+export function labSetupMd(labName: string): string {
+  return `---
+icon:
+  type: flat-color-icons:engineering
+---
+
+# ${labName}
 
 ## Prerequisites
 
@@ -58,32 +60,73 @@ Describe the initial setup steps here.
 export function labStepMd(stepNumber: number, totalSteps: number): string {
   return `# Step ${stepNumber}
 
-<!-- EDIT: Rename this file to change the navigation label.
-     The number controls the order. The name between dots appears in navigation. -->
-
-Write your lab instructions for step ${stepNumber} of ${totalSteps - 1} here.
+Write your lab instructions for step ${stepNumber} of ${totalSteps} here.
 `;
 }
 
 export function talkMd(topicNumber: number): string {
-  return `# Talk ${topicNumber}
+  return `---
+icon:
+  type: flat-color-icons:video-projector
+---
+
+# Talk ${topicNumber}
 
 Summary of this talk (appears on the talk card).
-
-<!-- EDIT: Replace the title and summary above.
-     To add slides, place a .pdf file in this folder. -->
 
 This talk covers the key concepts introduced in topic ${topicNumber}.
 `;
 }
 
+export function talkMarp(topicNumber: number): string {
+  return `---
+marp: true
+theme: default
+paginate: true
+---
+
+# Talk ${topicNumber}
+
+### Presentation Title
+
+---
+
+## What We'll Cover
+
+- The goals for this topic
+- Key concepts and vocabulary
+- How the ideas fit together
+- Where to go next
+
+---
+
+## Key Concept
+
+> Replace this with the central idea of your talk.
+
+- Explain the concept in plain language
+- Give a concrete example
+- Connect it to what students already know
+
+---
+
+## Summary
+
+- Recap the main points
+- Point students to the accompanying note and lab
+- Preview what comes next
+`;
+}
+
 export function noteMd(topicNumber: number): string {
-  return `# Note ${topicNumber}
+  return `---
+icon:
+  type: flat-color-icons:document
+---
+
+# Note ${topicNumber}
 
 Summary of this note (appears on the note card).
-
-<!-- EDIT: Replace the title and summary above.
-     Notes are ideal for reference material or supplementary content. -->
 
 Add your reference material or supplementary notes here.
 `;
@@ -97,6 +140,7 @@ Next steps:
   1. cd ${spec.courseId}
   2. Edit course.md - update your course description
   3. Edit each topic-*/topic-*.md - rename and describe your topics
-  4. Run: deno run jsr:@tutors/tutors
+  4. Run: deno run -A jsr:@tutors/tutors
+  5. Drag and drop the generated json folder to https://app.netlify.com/drop
 `;
 }

@@ -2,22 +2,25 @@ export interface CourseSpec {
   courseName: string;
   lecturerName: string;
   courseId: string;
-  topicCount: number;
-  labsPerTopic: number;
-  labStepCount: number;
-  includeTalks: boolean;
+  unitCount: number;
+  includeSide: boolean;
+  topicsPerUnit: number;
   includeNotes: boolean;
+  includeLabs: boolean;
 }
+
+/** Fixed number of steps generated for each lab (in addition to the Setup step). */
+export const LAB_STEP_COUNT = 5;
 
 export const defaultSpec: CourseSpec = {
   courseName: "My New Course",
   lecturerName: "",
   courseId: "my-new-course",
-  topicCount: 2,
-  labsPerTopic: 1,
-  labStepCount: 3,
-  includeTalks: false,
-  includeNotes: false,
+  unitCount: 2,
+  includeSide: true,
+  topicsPerUnit: 3,
+  includeNotes: true,
+  includeLabs: true,
 };
 
 export function slugify(name: string): string {

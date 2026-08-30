@@ -34,21 +34,21 @@ export function runCli(): void {
   const courseName = promptRequired("  Course name:");
   const lecturerName = prompt("  Your name (optional):") || "";
   const courseId = slugify(courseName) || defaultSpec.courseId;
-  const topicCount = promptNumber("  Number of topics", 1, 12, defaultSpec.topicCount);
-  const labsPerTopic = promptNumber("  Labs per topic", 0, 4, defaultSpec.labsPerTopic);
-  const labStepCount = labsPerTopic > 0 ? promptNumber("  Steps per lab", 2, 8, defaultSpec.labStepCount) : defaultSpec.labStepCount;
-  const includeTalks = promptYesNo("  Include talks?", defaultSpec.includeTalks);
-  const includeNotes = promptYesNo("  Include notes?", defaultSpec.includeNotes);
+  const unitCount = promptNumber("  Number of units on the home page", 1, 12, defaultSpec.unitCount);
+  const includeSide = promptYesNo("  Include a Side unit?", defaultSpec.includeSide);
+  const topicsPerUnit = promptNumber("  Number of topics per unit", 1, 12, defaultSpec.topicsPerUnit);
+  const includeNotes = promptYesNo("  Include a note in each topic?", defaultSpec.includeNotes);
+  const includeLabs = promptYesNo("  Include a lab in each topic?", defaultSpec.includeLabs);
 
   const spec: CourseSpec = {
     courseName,
     lecturerName: lecturerName.trim(),
     courseId,
-    topicCount,
-    labsPerTopic,
-    labStepCount,
-    includeTalks,
+    unitCount,
+    includeSide,
+    topicsPerUnit,
     includeNotes,
+    includeLabs,
   };
 
   console.log(`\n  Creating course in ./${courseId}/ ...\n`);
