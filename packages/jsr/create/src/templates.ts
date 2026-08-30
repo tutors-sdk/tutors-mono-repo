@@ -132,15 +132,26 @@ Add your reference material or supplementary notes here.
 `;
 }
 
+/** The shared next-steps, used by both the CLI message and the reader wizard. */
+export function nextSteps(spec: CourseSpec): string[] {
+  return [
+    `cd ${spec.courseId}`,
+    "Edit course.md - update your course description",
+    "Edit each topic-*/topic-*.md - rename and describe your topics",
+    "Install deno on your machine (if not already installed): https://docs.deno.com/runtime/getting_started/installation/",
+    "Run this command to generate the site: deno run -A jsr:@tutors/tutors",
+    "Drag and drop the generated json folder to https://app.netlify.com/drop",
+  ];
+}
+
 export function nextStepsMessage(spec: CourseSpec): string {
+  const steps = nextSteps(spec)
+    .map((step, i) => `  ${i + 1}. ${step}`)
+    .join("\n");
   return `
 Course created in ./${spec.courseId}/
 
 Next steps:
-  1. cd ${spec.courseId}
-  2. Edit course.md - update your course description
-  3. Edit each topic-*/topic-*.md - rename and describe your topics
-  4. Run: deno run -A jsr:@tutors/tutors
-  5. Drag and drop the generated json folder to https://app.netlify.com/drop
+${steps}
 `;
 }
