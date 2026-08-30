@@ -53,6 +53,7 @@ const en = {
   "home.source": "Source",
   "home.catalogue": "Catalogue",
   "home.live": "Live",
+  "home.create": "Create",
   "home.connectedAs": "Connected as:",
   "home.favourites": "Favourites",
   "home.recentlyAccessed": "Recently accessed",

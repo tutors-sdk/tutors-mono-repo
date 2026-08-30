@@ -53,6 +53,7 @@ const de: Record<string, string> = {
   "home.source": "Quellcode",
   "home.catalogue": "Katalog",
   "home.live": "Live",
+  "home.create": "Erstellen",
   "home.connectedAs": "Verbunden als:",
   "home.favourites": "Favoriten",
   "home.recentlyAccessed": "Zuletzt besucht",

@@ -5,7 +5,8 @@
     "./packages/jsr/tutors-lite",
     "./packages/jsr/model",
     "./packages/jsr/gen",
-    "./packages/jsr/time"
+    "./packages/jsr/time",
+    "./packages/jsr/create"
   ],
   "fmt": {
     "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/", "./packages/jsr/tutors-lite/"],
