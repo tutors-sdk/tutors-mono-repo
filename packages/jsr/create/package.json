@@ -1,13 +1,10 @@
 {
   "name": "@tutors/tutors-create",
   "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
   "exports": {
     ".": "./src/scaffolder.ts",
     "./generate": "./src/generate.ts"
-  },
-  "license": "MIT",
-  "tasks": {
-    "run": "deno run --allow-write --allow-read main.ts",
-    "test": "deno test test/ --allow-all"
   }
 }
