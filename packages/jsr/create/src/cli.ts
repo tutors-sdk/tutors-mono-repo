@@ -30,7 +30,7 @@ function promptYesNo(message: string, fallback: boolean): boolean {
 }
 
 export function runCli(): void {
-  console.log(`\n  Welcome to Tutors Course Creator! (tutors-create: ${denoConfig.version})\n`);
+  console.log(`\n  Welcome to Tutors Course Creator (${denoConfig.version})\n`);
 
   const courseName = promptRequired("  Course name:");
   const lecturerName = prompt("  Your name (optional):") || "";
