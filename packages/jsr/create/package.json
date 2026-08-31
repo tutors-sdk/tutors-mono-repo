@@ -4,7 +4,8 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/scaffolder.ts",
+    ".": "./main.ts",
+    "./scaffolder": "./src/scaffolder.ts",
     "./generate": "./src/generate.ts"
   }
 }

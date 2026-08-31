@@ -2,7 +2,8 @@
   "name": "@tutors/tutors-create",
   "version": "5.2.0",
   "exports": {
-    ".": "./src/scaffolder.ts",
+    ".": "./main.ts",
+    "./scaffolder": "./src/scaffolder.ts",
     "./generate": "./src/generate.ts"
   },
   "license": "MIT",
