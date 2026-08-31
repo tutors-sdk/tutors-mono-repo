@@ -44,7 +44,7 @@
     "globals": "^17.11.0",
     "happy-dom": "^20.11.6",
     "tsx": "^4.23.12",
-    "typescript-eslint": "^8.67.0",
+    "typescript-eslint": "^8.68.0",
     "vitest": "^4.1.11",
     "zod": "^4.4.3"
   },
