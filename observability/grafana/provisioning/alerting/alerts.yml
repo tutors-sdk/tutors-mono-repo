@@ -1,0 +1,105 @@
+# Grafana alerting rules provisioned at startup.
+# These fire against the Prometheus data source once it is connected.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: tutors-infra
+    folder: Tutors
+    interval: 1m
+    rules:
+      - uid: high-error-rate
+        title: High error rate
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate above 5% for 5 minutes"
+          description: "{{ $value }}% of requests are returning 5xx errors"
+
+      - uid: high-latency-p99
+        title: High p99 latency
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 latency above 5 seconds for 5 minutes"
+          description: "p99 request duration is {{ $value }}s"
+
+      - uid: healthz-failing
+        title: Health check failing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: up == 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service health check failing"
+          description: "A Tutors service has been unreachable for 2 minutes"

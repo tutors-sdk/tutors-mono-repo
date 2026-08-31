@@ -1,0 +1,14 @@
+{
+  "name": "@tutors/metrics",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Prometheus metrics for Tutors apps",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "prom-client": "^15.1.3"
+  }
+}
