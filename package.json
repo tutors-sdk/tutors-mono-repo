@@ -37,7 +37,7 @@
     "@testing-library/svelte": "^5.4.2",
     "@vitest/coverage-v8": "^4.1.11",
     "clsx": "^2.1.1",
-    "eslint": "^10.8.1",
+    "eslint": "^10.9.1",
     "eslint-plugin-svelte": "^3.23.0",
     "esm-env": "^1.2.2",
     "fast-check": "^4.9.0",
