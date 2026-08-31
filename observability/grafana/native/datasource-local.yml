@@ -1,0 +1,27 @@
+# Literal (no env vars) Postgres data source for a NATIVELY-installed Grafana
+# pointed at a local `supabase start` instance. Symlink this into Grafana's
+# provisioning dir (see README "Quick start — native Grafana"):
+#
+#   sudo ln -s "$PWD/native/datasource-local.yml" \
+#     /etc/grafana/provisioning/datasources/tutors.yml
+#
+# Native Grafana reaches the host directly, so localhost is correct here.
+# For staging, add a data source through the Grafana UI (keep creds out of git).
+apiVersion: 1
+
+datasources:
+  - name: Tutors Local (Supabase)
+    uid: tutors-local
+    type: postgres
+    access: proxy
+    url: localhost:54322
+    user: postgres
+    isDefault: true
+    jsonData:
+      database: postgres
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: postgres
+    editable: true

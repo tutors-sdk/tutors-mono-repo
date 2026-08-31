@@ -1,0 +1,51 @@
+# Provisioned Postgres data sources for Tutors.
+# Grafana expands ${ENV_VARS} from the container environment (set in docker-compose.yml / .env).
+#
+# SECURITY: point these at a dedicated read-only role, NOT the Supabase service_role or a
+# superuser. A direct Postgres connection bypasses Supabase RLS, so the role you use here
+# defines the entire blast radius. See sql/grafana_reader.sql.
+apiVersion: 1
+
+datasources:
+  # ---------------------------------------------------------------------------
+  # Local Supabase (`supabase start`) — Postgres exposed on the host at :54322.
+  # Default local Supabase superuser creds (postgres/postgres) are used so this
+  # works out of the box; for a hardened local setup, run sql/grafana_reader.sql
+  # and switch user/password to grafana_reader.
+  # ---------------------------------------------------------------------------
+  - name: Tutors Local (Supabase)
+    uid: tutors-local
+    type: postgres
+    access: proxy
+    url: ${LOCAL_DB_HOST}:${LOCAL_DB_PORT}
+    user: ${LOCAL_DB_USER}
+    isDefault: true
+    jsonData:
+      database: ${LOCAL_DB_NAME}
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: ${LOCAL_DB_PASSWORD}
+    editable: true
+
+  # ---------------------------------------------------------------------------
+  # Staging Supabase — remote. Use the Supabase connection pooler host and a
+  # read-only grafana_reader role. Fill in values in .env; if STAGING_DB_HOST is
+  # empty this data source simply won't connect (harmless).
+  # ---------------------------------------------------------------------------
+  - name: Tutors Staging (Supabase)
+    uid: tutors-staging
+    type: postgres
+    access: proxy
+    url: ${STAGING_DB_HOST}:${STAGING_DB_PORT}
+    user: ${STAGING_DB_USER}
+    isDefault: false
+    jsonData:
+      database: ${STAGING_DB_NAME}
+      sslmode: ${STAGING_DB_SSLMODE}
+      postgresVersion: 1500
+      timescaledb: false
+    secureJsonData:
+      password: ${STAGING_DB_PASSWORD}
+    editable: true
