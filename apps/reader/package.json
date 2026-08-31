@@ -35,11 +35,11 @@
     "@tutors/ui-primitives": "workspace:*",
     "codemirror": "^6.0.2",
     "dompurify": "^3.4.14",
-    "fflate": "^0.8.2",
+    "fflate": "^0.8.3",
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
-    "pdfjs-dist": "^6.2.108",
-    "zod": "^4.4.3"
+    "pdfjs-dist": "^6.3.289",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.1",
@@ -50,7 +50,7 @@
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
-    "svelte": "^5.56.9",
+    "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",

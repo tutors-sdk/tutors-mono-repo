@@ -3,7 +3,7 @@
   "version": "16.1.2",
   "license": "MIT",
   "private": true,
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@11.24.0",
   "description": "Tutors monorepo - educational course reader platform",
   "scripts": {
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
@@ -42,11 +42,11 @@
     "esm-env": "^1.2.2",
     "fast-check": "^4.9.0",
     "globals": "^17.11.0",
-    "happy-dom": "^20.11.6",
-    "tsx": "^4.23.12",
-    "typescript-eslint": "^8.67.0",
+    "happy-dom": "^20.12.0",
+    "tsx": "^4.23.13",
+    "typescript-eslint": "^8.68.0",
     "vitest": "^4.1.11",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "engines": {
     "node": ">=18.0.0",
