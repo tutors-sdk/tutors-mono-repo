@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-lite",
-  "version": "5.1.2",
+  "version": "5.2.0",
   "exports": "./main.ts",
   "license": "MIT",
   "tasks": {
@@ -8,7 +8,7 @@
     "dev": "deno run --watch main.ts"
   },
   "imports": {
-    "@tutors/tutors-gen-lib": "jsr:@tutors/tutors-gen-lib@^5.1.2",
-    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.1.2"
+    "@tutors/tutors-gen-lib": "jsr:@tutors/tutors-gen-lib@^5.2.0",
+    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.2.0"
   }
 }
