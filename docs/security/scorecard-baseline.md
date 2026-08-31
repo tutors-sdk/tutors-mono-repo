@@ -68,7 +68,7 @@ using a standard user token.
    avoid direct pushes / self-merges.
 4. **Vulnerabilities (5):** triage the 5 advisories above (`pnpm audit`,
    bump/override transitive deps).
-5. **CII-Best-Practices (0):** optionally pursue the OpenSSF best-practices badge.
+5. **CII-Best-Practices (0 → in progress):** register at https://www.bestpractices.dev/ and complete the self-assessment (see #132).
 6. **Branch-Protection token:** set a fine-grained read-only `SCORECARD_TOKEN`
    secret (administration:read + metadata:read) so CI reads protection settings
    accurately instead of scoring 0 by default.
