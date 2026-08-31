@@ -5,8 +5,9 @@ import {
 } from "@tutors/tutors-gen-lib";
 import * as fs from "node:fs";
 import process from "node:process";
+import denoConfig from "./deno.json" with { type: "json" };
 
-const versionStr = `tutors: 5.1.1`;
+const versionStr = `tutors: ${denoConfig.version}`;
 
 if (!fs.existsSync("course.md")) {
   console.log("Cannot locate course.md. Please change to course folder and try again.");
