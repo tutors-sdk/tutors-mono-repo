@@ -1,6 +1,7 @@
 import type { CourseSpec } from "./types.ts";
 import { slugify, defaultSpec } from "./types.ts";
 import { writeCourseToFilesystem, nextStepsMessage } from "./scaffolder.ts";
+import denoConfig from "../deno.json" with { type: "json" };
 
 function promptRequired(message: string): string {
   const value = prompt(message);
@@ -29,7 +30,7 @@ function promptYesNo(message: string, fallback: boolean): boolean {
 }
 
 export function runCli(): void {
-  console.log("\n  Welcome to Tutors Course Creator!\n");
+  console.log(`\n  Welcome to Tutors Course Creator (${denoConfig.version})\n`);
 
   const courseName = promptRequired("  Course name:");
   const lecturerName = prompt("  Your name (optional):") || "";
