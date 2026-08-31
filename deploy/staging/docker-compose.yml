@@ -1,0 +1,79 @@
+# Tutors staging environment — pulls pre-built images from Quay.io
+# Usage:
+#   1. cp .env.example .env  (fill in Supabase + OAuth creds)
+#   2. docker compose up -d
+#   3. Apps: reader:3000, catalogue:3001, live:3002, time:3003, grafana:3004
+
+services:
+  reader:
+    image: quay.io/tutors-sdk/tutors-reader:${IMAGE_TAG:-latest}
+    ports: ["3000:3000"]
+    env_file: .env
+    environment:
+      PORT: 3000
+      ORIGIN: ${READER_ORIGIN:-http://localhost:3000}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  catalogue:
+    image: quay.io/tutors-sdk/tutors-catalogue:${IMAGE_TAG:-latest}
+    ports: ["3001:3000"]
+    env_file: .env
+    environment:
+      PORT: 3000
+      ORIGIN: ${CATALOGUE_ORIGIN:-http://localhost:3001}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  live:
+    image: quay.io/tutors-sdk/tutors-live:${IMAGE_TAG:-latest}
+    ports: ["3002:3000"]
+    env_file: .env
+    environment:
+      PORT: 3000
+      ORIGIN: ${LIVE_ORIGIN:-http://localhost:3002}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  time:
+    image: quay.io/tutors-sdk/tutors-time:${IMAGE_TAG:-latest}
+    ports: ["3003:3000"]
+    env_file: .env
+    environment:
+      PORT: 3000
+      ORIGIN: ${TIME_ORIGIN:-http://localhost:3003}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    ports: ["3004:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
