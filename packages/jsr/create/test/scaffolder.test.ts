@@ -129,7 +129,7 @@ Deno.test("generateCourseFiles - learning objects carry an icon in frontmatter",
   assert(iconBearing.length > 0);
   for (const file of iconBearing) {
     assert(file.content.includes("icon:"), `${file.relativePath} should declare an icon`);
-    assert(file.content.includes("flat-color-icons:"), `${file.relativePath} should use an Iconify icon`);
+    assert(file.content.includes("fluent-color:"), `${file.relativePath} should use an Iconify icon`);
   }
 });
 
@@ -158,6 +158,8 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
   const expected = [
     "course.md",
     "properties.yaml",
+    "netlify.toml",
+    "side/side.md",
     "side/talk-01/talk-01.md",
     "side/talk-01/talk.marp",
     "side/note-01/note-01.md",

@@ -37,13 +37,8 @@
   // so they can never diverge.
   const files = $derived(generateCourseFiles(spec));
 
-  // The reader downloads a zip, so it leads with two zip-specific steps before
-  // the shared next-steps (edit -> run deno -> deploy).
-  const downloadSteps = $derived([
-    `Open a shell / terminal in the folder you downloaded the ${courseId}.zip file into`,
-    `Unzip ${courseId}.zip`,
-    ...nextSteps(spec)
-  ]);
+  // Identical to the CLI's next-steps: both render the shared nextSteps(spec).
+  const downloadSteps = $derived(nextSteps(spec));
 
   function next() {
     if (currentStep < steps.length - 1) currentStep++;
