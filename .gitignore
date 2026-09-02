@@ -53,3 +53,6 @@ reports/mutation/
 
 # Generated OKF knowledge bundle
 okf/
+
+# Local-only observability guides (contain production setup steps)
+observability/grafana/PRODUCTION-SETUP.md
