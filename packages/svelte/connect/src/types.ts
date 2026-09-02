@@ -9,6 +9,8 @@ export type { TutorsIdType as TutorsId };
 export type { CourseSentimentIdType as CourseSentimentId };
 export { SENTIMENT_IDS as COURSE_SENTIMENT_IDS };
 
+export const trackableLoTypes = ["lab", "talk", "note", "paneltalk", "panelnote", "panelvideo", "book", "tutorial", "notebook", "quiz"] as const;
+
 /**
  * Record of a user's interaction with a course
  */

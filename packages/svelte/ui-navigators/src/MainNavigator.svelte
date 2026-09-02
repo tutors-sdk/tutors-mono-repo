@@ -2,6 +2,7 @@
   import { AppBar } from "@skeletonlabs/skeleton-svelte";
   import CourseTitle from "@tutors/ui-navigators/titles/CourseTitle.svelte";
   import SearchButton from "@tutors/ui-navigators/buttons/SearchButton.svelte";
+  import QuizButton from "@tutors/ui-navigators/buttons/QuizButton.svelte";
   import LayoutMenu from "@tutors/ui-navigators/LayoutMenu.svelte";
   import LlmsIndicator from "@tutors/ui-navigators/buttons/LlmsIndicator.svelte";
   import TutorsTimeIndicator from "@tutors/ui-navigators/buttons/TutorsTimeIndicator.svelte";
@@ -60,6 +61,7 @@
         {/if}
         <div class="flex items-center">
           {#if currentCourse?.value && !currentCourse?.value?.isPortfolio}
+            <QuizButton />
             <SearchButton />
           {/if}
         </div>

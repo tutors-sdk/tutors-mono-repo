@@ -20,6 +20,15 @@ export const presenceService: PresenceService = {
     const nextCourseEvent = payload.payload as LoRecord;
     if (!nextCourseEvent?.courseId) return;
 
+    try {
+      if ((nextCourseEvent as any).type === "quiz:live-started") {
+        this.onQuizStarted?.(nextCourseEvent);
+        return;
+      }
+    } catch {
+      return;
+    }
+
     if (nextCourseEvent.courseId === this.listeningTo) {
       const studentEvent = this.studentEventMap.get(nextCourseEvent.user!.id);
       if (!studentEvent) {

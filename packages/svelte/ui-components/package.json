@@ -16,6 +16,7 @@
     "./learning-objects/layout/*": "./src/learning-objects/layout/*",
     "./learning-objects/content/*": "./src/learning-objects/content/*",
     "./learning-objects/structure/*": "./src/learning-objects/structure/*",
+    "./quiz/*": "./src/quiz/*",
     "./time/*": "./src/time/*",
     "./styles.css": "./src/styles.css"
   },
@@ -38,6 +39,7 @@
     "@tutors/course": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
+    "@tutors/quiz": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
