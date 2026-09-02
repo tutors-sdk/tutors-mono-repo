@@ -8,6 +8,17 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.3 (2026-09)
+
+#### Features
+
+- Create wizard: new **Include calendar** and **Include enrollment** options, seeding `calendar.yaml` (12-week worked example with a reading-week break and assignments at weeks 6 and 12) and a fully-commented `enrollment.yaml`; enriched `properties.yaml` with commented, documented examples for every supported property (PR #147)
+- Home footer: replaced the Catalogue link with an "Explore What's New in Tutors" link
+
+#### Fixes
+
+- Custom companion icons defined in `properties.yaml` are now registered in the theme icon library so they render correctly (previously all other custom-companion aspects worked except the icon) (PR #147)
+
 ### v16.1.2 (2026-08)
 
 #### Fixes
@@ -109,6 +120,27 @@
 ---
 
 ## Shared Packages
+
+### v5.2.3 (2026-09)
+
+- `tutors-create`: **Include calendar** and **Include enrollment** scaffold options (CLI prompts + reader wizard checkboxes); calendar off by default
+- `tutors-create`: generated `calendar.yaml` provides a 12-week worked example with a reading-week break and assignments at weeks 6 and 12, plus a documentation link
+- `tutors-create`: generated `enrollment.yaml` is fully commented, notes that the IDs are GitHub IDs and that `auth: 1` must be set in `properties.yaml`, and links the RBAC reference
+- `tutors-create`: generated `properties.yaml` seeds `credits` with the course author and includes commented, documented examples for every supported property (including a custom `companions` map)
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.2.3
+
+### v5.2.2 (2026-08)
+
+- `tutors-create`: enriched scaffold — `netlify.toml`, `side.md`, and colour companion icons (PR #146)
+
+### v5.2.1 (2026-08)
+
+- `tutors-create`: runnable via `deno run` and prints its version in the CLI banner (PR #138)
+
+### v5.2.0 (2026-08)
+
+- New `tutors-create` course scaffolder: CLI and reader wizard sharing a common generator; full course template (units, side, talks, Marp, icons) with editable zip download (PR #114, #118, #119)
+- Align all JSR package versions to 5.2.0 (PR #136)
 
 ### v5.1.0 (2026-08)
 
