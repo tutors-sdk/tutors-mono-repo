@@ -48,6 +48,7 @@
   {/if}
 </div>
 <TourOverlay />
+<BroadcastListener />
 
 <style>
 </style>

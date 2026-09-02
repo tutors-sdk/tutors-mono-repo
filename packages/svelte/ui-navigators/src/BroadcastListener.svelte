@@ -8,11 +8,10 @@
     const sender =
       broadcast.senderName && broadcast.senderName !== "Anon" ? broadcast.senderName : null;
     const title = sender ? `${sender}: ${t("broadcast.receivedToast")}` : t("broadcast.receivedToast");
-    const description = [broadcast.title, broadcast.description].filter(Boolean).join(" — ");
     toaster.create({
       type: "info",
       title,
-      description,
+      description: broadcast.description,
       duration: BROADCAST_TOAST_DURATION,
       meta: {
         actionUrl: broadcast.actionUrl,

@@ -4,7 +4,6 @@
   import { t } from "@tutors/i18n";
 
   const course = $derived(currentCourse.value);
-  let title = $state("");
   let description = $state("");
   let actionUrl = $state("");
   let actionLabel = $state("");
@@ -21,7 +20,6 @@
   );
 
   function reset() {
-    title = "";
     description = "";
     actionUrl = "";
     actionLabel = "";
@@ -40,7 +38,7 @@
     const sent = presenceService.sendCourseBroadcast(
       courseId,
       {
-        title: title.trim(),
+        title: t("broadcast.receivedToast"),
         description: description.trim(),
         actionUrl: actionUrl.trim() || undefined,
         actionLabel: actionLabel.trim() || undefined
@@ -68,20 +66,6 @@
 
 <form class="space-y-3 p-2" onsubmit={onSubmit}>
   <p class="text-sm text-surface-500">{t("broadcast.subtitle")}</p>
-
-  <div>
-    <label class="label mb-1 font-semibold" for="broadcast-title">{t("broadcast.fieldTitle")}</label>
-    <input
-      id="broadcast-title"
-      class="input w-full rounded-sm"
-      type="text"
-      placeholder={t("broadcast.fieldTitlePlaceholder")}
-      maxlength={80}
-      bind:value={title}
-      required
-    />
-    <p class="mt-1 text-sm text-surface-500">{t("broadcast.fieldTitleHint")}</p>
-  </div>
 
   <div>
     <label class="label mb-1 font-semibold" for="broadcast-desc">{t("broadcast.fieldDescription")}</label>
