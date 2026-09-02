@@ -95,6 +95,22 @@ export const RealtimeChannelSchema = z.object({
   type: z.enum(["global", "course"]),
 });
 
+/**
+ * Lecturer → student real-time toast broadcast (issue #78).
+ * Mirrors CourseBroadcast in packages/svelte/community/src/services/broadcast.ts.
+ */
+export const CourseBroadcastSchema = z.object({
+  type: z.literal("course:broadcast"),
+  id: z.string().min(1),
+  courseId: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  actionUrl: z.string().optional(),
+  actionLabel: z.string().optional(),
+  senderName: z.string().min(1),
+  sentAt: z.number(),
+});
+
 const LoBaseSchema = z.object({
   type: z.string(),
   id: z.string(),
@@ -237,3 +253,4 @@ export type WhiteboardSceneInit = z.infer<typeof WhiteboardSceneInitSchema>;
 export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
 export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
 export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;
+export type CourseBroadcast = z.infer<typeof CourseBroadcastSchema>;

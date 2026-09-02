@@ -1,6 +1,7 @@
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import type { Course, IconType, Lo } from "@tutors/tutors-model-lib";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import type { CourseBroadcastMessage } from "./services/broadcast.ts";
 /**
  * Minimal user information for learning object interactions
  */
@@ -43,6 +44,9 @@ export type TutorsConnectLatestRow = {
 /** Learning-object presence / activity record (live, time, Realtime broadcast payloads). */
 export type LoEvent = LoRecord;
 
+/** Re-exported for convenient single-path imports. */
+export type { CourseBroadcast, CourseBroadcastMessage } from "./services/broadcast.ts";
+
 /**
  * Service for managing real-time user presence and interactions
  * Tracks student activity and broadcasts learning object interactions
@@ -83,6 +87,22 @@ export interface PresenceService {
    * @param courseId - Identifier of course to monitor
    */
   startPresenceListener(courseId: string): void;
+
+  /**
+   * Send a toast broadcast to all connected students in a course.
+   * Relayed to other browsers via the Supabase course channel and to
+   * other tabs on this browser via the BroadcastChannel API.
+   * Rate-limited to one broadcast per 60 seconds per client.
+   * @param courseId - Target course
+   * @param message - Toast body (title, description, optional action)
+   * @param senderName - Display name of the educator
+   * @returns true if the broadcast was sent, false if rate-limited
+   */
+  sendCourseBroadcast(
+    courseId: string,
+    message: CourseBroadcastMessage,
+    senderName: string
+  ): boolean;
 }
 
 /**
