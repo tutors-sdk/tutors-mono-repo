@@ -135,7 +135,7 @@ Tutors is an open source application - the data collection component [is here](h
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "An [Open Learning Web Toolkit](/course/tutors-reference-manual): Explore the [Tutors Catalogue](https://catalogue.tutors.dev)",
+  "footer.message": "An [Open Learning Web Toolkit](/course/tutors-reference-manual): Explore [What's New in Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "sponsors",
   "footer.setuAlt": "South East Technological University",
 
