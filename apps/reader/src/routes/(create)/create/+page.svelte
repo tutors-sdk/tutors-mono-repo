@@ -17,7 +17,7 @@
   let topicsPerUnit = $state(3);
   let includeNotes = $state(true);
   let includeLabs = $state(true);
-  let includeCalendar = $state(true);
+  let includeCalendar = $state(false);
   let includeEnrollment = $state(false);
   let downloaded = $state(false);
 

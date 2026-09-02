@@ -23,7 +23,7 @@ export const defaultSpec: CourseSpec = {
   topicsPerUnit: 3,
   includeNotes: true,
   includeLabs: true,
-  includeCalendar: true,
+  includeCalendar: false,
   includeEnrollment: false,
 };
 
