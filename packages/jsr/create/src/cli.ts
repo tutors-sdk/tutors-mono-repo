@@ -40,6 +40,8 @@ export function runCli(): void {
   const topicsPerUnit = promptNumber("  Number of topics per unit", 1, 12, defaultSpec.topicsPerUnit);
   const includeNotes = promptYesNo("  Include a note in each topic?", defaultSpec.includeNotes);
   const includeLabs = promptYesNo("  Include a lab in each topic?", defaultSpec.includeLabs);
+  const includeCalendar = promptYesNo("  Include a calendar?", defaultSpec.includeCalendar);
+  const includeEnrollment = promptYesNo("  Include an enrollment list?", defaultSpec.includeEnrollment);
 
   const spec: CourseSpec = {
     courseName,
@@ -50,6 +52,8 @@ export function runCli(): void {
     topicsPerUnit,
     includeNotes,
     includeLabs,
+    includeCalendar,
+    includeEnrollment,
   };
 
   console.log(`\n  Creating course in ./${courseId}/ ...\n`);

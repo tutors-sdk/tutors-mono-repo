@@ -11,6 +11,8 @@ const minimalSpec: CourseSpec = {
   topicsPerUnit: 1,
   includeNotes: false,
   includeLabs: false,
+  includeCalendar: false,
+  includeEnrollment: false,
 };
 
 Deno.test("generateCourseFiles - minimal spec produces course.md and properties.yaml", () => {
@@ -133,6 +135,36 @@ Deno.test("generateCourseFiles - learning objects carry an icon in frontmatter",
   }
 });
 
+Deno.test("generateCourseFiles - calendar.yaml only when enabled, seeded with weeks", () => {
+  const off = generateCourseFiles({ ...minimalSpec, includeCalendar: false });
+  assertEquals(off.filter((f) => f.relativePath === "calendar.yaml").length, 0);
+
+  const on = generateCourseFiles({ ...minimalSpec, includeCalendar: true });
+  const cal = on.find((f) => f.relativePath === "calendar.yaml")!;
+  assert(cal);
+  assert(cal.content.includes("weeks:"));
+  // A worked 12-week example...
+  assertEquals((cal.content.match(/week: \d+/g) ?? []).length, 12);
+  // ...with a reading-week break after week 6...
+  assert(cal.content.includes("Reading Week"));
+  // ...and an assignment at week 6 and week 12.
+  assertEquals((cal.content.match(/assessment:/g) ?? []).length, 2);
+});
+
+Deno.test("generateCourseFiles - enrollment.yaml only when enabled and fully commented", () => {
+  const off = generateCourseFiles({ ...minimalSpec, includeEnrollment: false });
+  assertEquals(off.filter((f) => f.relativePath === "enrollment.yaml").length, 0);
+
+  const on = generateCourseFiles({ ...minimalSpec, includeEnrollment: true });
+  const enr = on.find((f) => f.relativePath === "enrollment.yaml")!;
+  assert(enr);
+  // Every non-blank line is a comment, so the file is inert until edited.
+  const nonComment = enr.content
+    .split("\n")
+    .filter((line) => line.trim().length > 0 && !line.trim().startsWith("#"));
+  assertEquals(nonComment, []);
+});
+
 Deno.test("generateCourseFiles - full spec generates expected structure", () => {
   const spec: CourseSpec = {
     courseName: "Full Course",
@@ -143,6 +175,8 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     topicsPerUnit: 2,
     includeNotes: true,
     includeLabs: true,
+    includeCalendar: true,
+    includeEnrollment: true,
   };
   const files = generateCourseFiles(spec);
   const paths = files.map((f) => f.relativePath).sort();
@@ -159,6 +193,8 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     "course.md",
     "properties.yaml",
     "netlify.toml",
+    "calendar.yaml",
+    "enrollment.yaml",
     "side/side.md",
     "side/talk-01/talk-01.md",
     "side/talk-01/talk.marp",

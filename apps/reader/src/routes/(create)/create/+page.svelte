@@ -17,6 +17,8 @@
   let topicsPerUnit = $state(3);
   let includeNotes = $state(true);
   let includeLabs = $state(true);
+  let includeCalendar = $state(true);
+  let includeEnrollment = $state(false);
   let downloaded = $state(false);
 
   const steps = ["Course Info", "Structure", "Preview", "Download"];
@@ -30,7 +32,9 @@
     includeSide,
     topicsPerUnit,
     includeNotes,
-    includeLabs
+    includeLabs,
+    includeCalendar,
+    includeEnrollment
   });
 
   // Preview and download are both derived from the shared scaffolder output,
@@ -74,6 +78,8 @@
           bind:includeSide
           bind:includeNotes
           bind:includeLabs
+          bind:includeCalendar
+          bind:includeEnrollment
           onnext={next}
           onback={back}
         />

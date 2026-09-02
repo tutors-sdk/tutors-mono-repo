@@ -5,6 +5,8 @@
     includeSide: boolean;
     includeNotes: boolean;
     includeLabs: boolean;
+    includeCalendar: boolean;
+    includeEnrollment: boolean;
     onnext: () => void;
     onback: () => void;
   };
@@ -14,6 +16,8 @@
     includeSide = $bindable(),
     includeNotes = $bindable(),
     includeLabs = $bindable(),
+    includeCalendar = $bindable(),
+    includeEnrollment = $bindable(),
     onnext,
     onback
   }: Props = $props();
@@ -60,9 +64,19 @@
       <input type="checkbox" class="checkbox" bind:checked={includeLabs} />
       <span class="font-semibold">Include a lab in each topic</span>
     </label>
+    <label class="flex items-center gap-2">
+      <input type="checkbox" class="checkbox" bind:checked={includeCalendar} />
+      <span class="font-semibold">Include a calendar</span>
+    </label>
+    <label class="flex items-center gap-2">
+      <input type="checkbox" class="checkbox" bind:checked={includeEnrollment} />
+      <span class="font-semibold">Include an enrollment list</span>
+    </label>
   </div>
   <p class="text-sm text-surface-500">
     The Side unit holds a talk and a note displayed in the sidebar. Labs are hands-on exercises with numbered steps.
+    The calendar is a week-by-week schedule seeded from today; the enrollment list (disabled by default) makes the
+    course private.
   </p>
   <div class="flex justify-between">
     <button class="btn rounded-sm bg-surface-300 dark:bg-surface-600" type="button" onclick={onback}>&larr; Back</button>
