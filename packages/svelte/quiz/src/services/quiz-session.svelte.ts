@@ -1,5 +1,5 @@
 import PartySocket from "partysocket";
-import { PUBLIC_party_kit_main_room } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import { rune } from "@tutors/runes";
 import type {
   QuizMessage,
@@ -9,7 +9,7 @@ import type {
   QuizJoinMessage
 } from "../types.ts";
 
-const partyKitServer = PUBLIC_party_kit_main_room;
+const partyKitServer = env.PUBLIC_party_kit_main_room ?? "XXX";
 
 export interface QuizParticipant {
   id: string;
