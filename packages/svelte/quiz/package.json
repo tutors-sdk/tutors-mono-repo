@@ -1,0 +1,23 @@
+{
+  "name": "@tutors/quiz",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Quiz services: CRUD, live sessions, markdown parser, and analytics for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./services/*": "./src/services/*",
+    "./utils": "./src/utils.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
+    "@tutors/community": "workspace:*",
+    "@tutors/runes": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*",
+    "partysocket": "^1.3.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

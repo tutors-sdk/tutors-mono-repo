@@ -5,9 +5,8 @@ export enum ConsentCategory {
 }
 
 export interface ConsentPreferences {
-  [ConsentCategory.Essential]: true;
-  [ConsentCategory.Analytics]: boolean;
-  [ConsentCategory.Presence]: boolean;
+  analytics: boolean;
+  presence: boolean;
 }
 
 export interface ConsentState {
@@ -15,4 +14,9 @@ export interface ConsentState {
   preferences: ConsentPreferences;
   timestamp: string;
   version: number;
+}
+
+export interface SupabaseConsentField {
+  consent_analytics: boolean;
+  consent_presence: boolean;
 }
