@@ -62,6 +62,9 @@ jobs:
         run: pnpm --filter tutors-live check
         continue-on-error: true
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Run unit tests
         run: pnpm exec vitest run --coverage
 

@@ -1,5 +1,9 @@
 # Tutors Mono Repo
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tutors-sdk/tutors-mono-repo/badge)](https://scorecard.dev/viewer/?uri=github.com/tutors-sdk/tutors-mono-repo)
+<!-- OpenSSF Best Practices badge: register at https://www.bestpractices.dev/en/projects/new and replace PROJECT_ID below -->
+<!-- [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/PROJECT_ID/badge)](https://www.bestpractices.dev/projects/PROJECT_ID) -->
+
 A modern monorepo for the Tutors educational platform - an open-source course reader and learning management system built with Svelte 5, SvelteKit, and TypeScript.
 
 ## Features
