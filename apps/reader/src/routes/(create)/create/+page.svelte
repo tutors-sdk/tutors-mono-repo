@@ -60,6 +60,19 @@
     downloadCourseZip(files, courseId);
     downloaded = true;
   }
+
+  function handleImport(imported: import("@tutors/tutors-create/generate").CourseSpec) {
+    courseName = imported.courseName;
+    lecturerName = imported.lecturerName;
+    courseId = imported.courseId || slugify(imported.courseName) || "my-new-course";
+    unitCount = imported.unitCount;
+    topicsPerUnit = imported.topicsPerUnit;
+    includeSide = imported.includeSide;
+    includeNotes = imported.includeNotes;
+    includeLabs = imported.includeLabs;
+    includeCalendar = imported.includeCalendar ?? false;
+    includeEnrollment = imported.includeEnrollment ?? false;
+  }
 </script>
 
 <div class="container mx-auto max-w-3xl p-4">
@@ -70,7 +83,7 @@
 
     <div class="mt-6">
       {#if currentStep === 0}
-        <CourseInfoStep bind:courseName bind:lecturerName onnext={submitInfo} onexit={() => goto("/")} />
+        <CourseInfoStep bind:courseName bind:lecturerName onnext={submitInfo} onexit={() => goto("/")} onimport={handleImport} />
       {:else if currentStep === 1}
         <StructureStep
           bind:unitCount
