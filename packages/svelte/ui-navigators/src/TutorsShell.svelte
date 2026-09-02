@@ -9,6 +9,7 @@
   import { t } from "@tutors/i18n";
   import TourOverlay from "@tutors/ui-primitives/components/TourOverlay.svelte";
   import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
+  import BroadcastListener from "./BroadcastListener.svelte";
 
   type Props = { children: Snippet; hideNavigator?: boolean; showConnect?: boolean };
   let { children, hideNavigator = false, showConnect = true }: Props = $props();
@@ -47,6 +48,7 @@
   {/if}
 </div>
 <TourOverlay />
+<BroadcastListener />
 
 <style>
 </style>

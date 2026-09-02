@@ -7,6 +7,7 @@
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
   import type { Lo, Composite } from "@tutors/tutors-model-lib";
+  import BroadcastPanel from "../panels/BroadcastPanel.svelte";
 
   let { showEducatorPanel = false } = $props();
 
@@ -144,9 +145,7 @@
       </Tabs.Content>
 
       <Tabs.Content value="control">
-        <div class="space-y-2 p-2">
-          <p class="text-sm text-surface-500">{t("lecturer.control.placeholder")}</p>
-        </div>
+        <BroadcastPanel />
       </Tabs.Content>
 
       <Tabs.Content value="access">
