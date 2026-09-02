@@ -15,8 +15,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*",
-    "@tutors/course": "workspace:*"
+    "@tutors/tutors-model-lib": "workspace:*"
   },
   "devDependencies": {
     "svelte": "^5.0.0",

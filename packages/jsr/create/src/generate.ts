@@ -4,7 +4,7 @@ import { padNumber, LAB_STEP_COUNT } from "./types.ts";
 export type { CourseSpec } from "./types.ts";
 export { slugify, defaultSpec } from "./types.ts";
 export { nextSteps } from "./templates.ts";
-import { courseMd, propertiesYaml, netlifyToml, sideMd, unitMd, topicMd, topicIcons, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
+import { courseMd, propertiesYaml, netlifyToml, calendarYaml, enrollmentYaml, sideMd, unitMd, topicMd, topicIcons, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
 
 export interface GeneratedFile {
   relativePath: string;
@@ -39,6 +39,15 @@ export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
   files.push({ relativePath: "course.md", content: courseMd(spec) });
   files.push({ relativePath: "properties.yaml", content: propertiesYaml(spec) });
   files.push({ relativePath: "netlify.toml", content: netlifyToml() });
+
+  // Optional course-root descriptors: a schedule seeded from today's date and
+  // a (disabled) private-course enrollment list.
+  if (spec.includeCalendar) {
+    files.push({ relativePath: "calendar.yaml", content: calendarYaml(spec) });
+  }
+  if (spec.includeEnrollment) {
+    files.push({ relativePath: "enrollment.yaml", content: enrollmentYaml(spec) });
+  }
 
   // Side unit: a single talk and note displayed in the sidebar.
   if (spec.includeSide) {

@@ -500,6 +500,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../themes
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -527,9 +530,6 @@ importers:
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
-      '@tutors/course':
-        specifier: workspace:*
-        version: link:../course
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
@@ -3732,6 +3732,7 @@ packages:
   isomorphic-dompurify@3.23.0:
     resolution: {integrity: sha512-RuYFgdNApoTlR3QxVUyWdS/1ATpLEWEVg3H2tMImbfr6HkYPnuW1sdEtW4PRGlFhp04VbQQjcjXnucHYpXT44A==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
+    deprecated: Raised the minimum Node.js version (breaking) without a major bump. Use 4.x for the same code with correct semver, or pin 3.19.0 for Node < 22.22.2.
 
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}

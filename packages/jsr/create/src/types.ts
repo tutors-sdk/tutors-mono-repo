@@ -7,6 +7,8 @@ export interface CourseSpec {
   topicsPerUnit: number;
   includeNotes: boolean;
   includeLabs: boolean;
+  includeCalendar: boolean;
+  includeEnrollment: boolean;
 }
 
 /** Fixed number of steps generated for each lab (in addition to the Setup step). */
@@ -21,6 +23,8 @@ export const defaultSpec: CourseSpec = {
   topicsPerUnit: 3,
   includeNotes: true,
   includeLabs: true,
+  includeCalendar: true,
+  includeEnrollment: false,
 };
 
 export function slugify(name: string): string {
