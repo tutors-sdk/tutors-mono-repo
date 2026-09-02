@@ -16,3 +16,8 @@ export interface ConsentState {
   timestamp: string;
   version: number;
 }
+
+export interface SupabaseConsentField {
+  consent_analytics: boolean;
+  consent_presence: boolean;
+}

@@ -12,6 +12,7 @@ import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
 import log from "@tutors/logger";
+import { checkConsent, ConsentCategory } from "@tutors/privacy";
 
 export let supabase: SupabaseClient;
 
@@ -81,6 +82,7 @@ export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = ne
  */
 export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
   if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return;
+  if (!checkConsent(ConsentCategory.Analytics)) return;
 
   const rec = loRecord as { courseId?: string; user?: { id?: string } };
   const courseId = rec.courseId?.trim();
@@ -162,11 +164,12 @@ async function getNumOfLearningRecordsIncrements(fieldName: string, courseId: st
  * @param lo - Learning object data
  */
 async function manageStudentCourseLo(courseId: string, studentId: string, loId: string, lo: Lo) {
+  if (!checkConsent(ConsentCategory.Analytics)) return;
+
   const durationPromise = getNumOfLearningRecordsIncrements("duration", courseId, studentId, loId);
   const countPromise = getNumOfLearningRecordsIncrements("count", courseId, studentId, loId);
   const [duration, count] = await Promise.all([durationPromise, countPromise]);
-  const { error } = await supabase.from("learning_records").upsert(
-    {
+  const { error } = await supabase.from("learning_records").upsert({
       course_id: courseId,
       student_id: studentId,
       lo_id: loId,
@@ -210,6 +213,7 @@ export function formatDate(date: Date): string {
  */
 export const updateCalendarDuration = async (id: string, studentId: string, courseId: string) => {
   if (!id || !studentId || !courseId) return;
+  if (!checkConsent(ConsentCategory.Analytics)) return;
   await supabase.rpc("increment_calendar", {
     field_name: "timeactive",
     row_id: id,
@@ -358,11 +362,13 @@ export async function addOrUpdateStudent(student: TutorsId) {
       row.online_status = "offline";
     }
 
-    const { error } = await supabase.from("tutors-connect-users").upsert(row);
+    if (checkConsent(ConsentCategory.Presence)) {
+      const { error } = await supabase.from("tutors-connect-users").upsert(row);
 
-    if (error) {
-      log.error("Upsert failed:", error);
-      throw error;
+      if (error) {
+        log.error("Upsert failed:", error);
+        throw error;
+      }
     }
   } catch (error) {
     log.error("An error occurred in addOrUpdateUserProfile:", error);
@@ -401,6 +407,7 @@ export async function getTutorsConnectUserSentiment(githubId: string): Promise<s
  */
 export async function updateTutorsConnectUserSentiment(githubId: string, sentiment: string) {
   if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
+  if (!checkConsent(ConsentCategory.Presence)) return;
 
   const { error } = await supabase
     .from("tutors-connect-users")
@@ -441,6 +448,7 @@ export async function getTutorsConnectUserOnlineStatus(githubId: string): Promis
  */
 export async function updateTutorsConnectUserOnlineStatus(githubId: string, onlineStatus: "online" | "offline") {
   if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
+  if (!checkConsent(ConsentCategory.Presence)) return;
 
   const { error } = await supabase
     .from("tutors-connect-users")

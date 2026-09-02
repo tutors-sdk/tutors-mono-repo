@@ -23,3 +23,4 @@ export {
 
 export { createSupabaseErrorTransport } from "./utils/error-transport.ts";
 export { checkSupabase, getRecentErrorCounts } from "./utils/health-check.ts";
+export { checkConsent } from "./utils/consent.svelte.ts";
