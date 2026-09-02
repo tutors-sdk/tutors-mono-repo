@@ -41,8 +41,8 @@ describe("simpleTypes", () => {
     });
   });
 
-  it("has exactly 14 entries", () => {
-    expect(simpleTypes.length).toBe(14);
+  it("has exactly 15 entries", () => {
+    expect(simpleTypes.length).toBe(15);
   });
 
   it("does not contain composite types", () => {

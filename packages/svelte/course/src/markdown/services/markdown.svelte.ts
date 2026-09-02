@@ -114,7 +114,7 @@ markdownIt.renderer.rules.fence = (tokens: any, idx: any, options: any, env: any
     return `<div class="mermaid">${escaped}</div>`;
   }
   if (token.info.trim() === "quiz") {
-    const escaped = token.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const escaped = token.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     return `<div class="quiz-definition" data-quiz-source="${escaped}"></div>`;
   }
   return defaultFence(tokens, idx, options, env, self);
