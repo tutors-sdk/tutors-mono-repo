@@ -5,6 +5,7 @@ import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log from "@tutors/logger";
+import { metricsHandle } from "@tutors/metrics";
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -64,7 +65,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
+export const handle = sequence(metricsHandle, localeHandle, securityHeaders, authInitHandle);
 
 export const handleError: HandleServerError = ({ error }) => {
   log.error("Server error:", error instanceof Error ? error : { details: error });

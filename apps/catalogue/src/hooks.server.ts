@@ -1,5 +1,7 @@
 import type { Handle, HandleServerError } from "@sveltejs/kit";
+import { sequence } from "@sveltejs/kit/hooks";
 import log from "@tutors/logger";
+import { metricsHandle } from "@tutors/metrics";
 
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
@@ -10,7 +12,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = securityHeaders;
+export const handle = sequence(metricsHandle, securityHeaders);
 
 export const handleError: HandleServerError = ({ error }) => {
   log.error("Server error:", error instanceof Error ? error : { details: error });
