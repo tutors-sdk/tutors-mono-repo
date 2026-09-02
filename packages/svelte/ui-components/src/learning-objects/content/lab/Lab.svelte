@@ -7,6 +7,7 @@
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { mermaidify } from "@tutors/course/markdown";
   import { copyCode } from "@tutors/course/markdown";
+  import { quizify } from "@tutors/quiz";
 
   interface Props {
     lab: LiveLab;
@@ -71,7 +72,7 @@
       </div>
     </div>
     <div class="min-h-screen flex-1">
-      <article class="prose dark:prose-invert prose-pre:overflow-x-auto 2xl:prose-pre:max-w-[120ch] max-w-[65ch] sm:mx-1 md:mx-4 2xl:max-w-[120ch]" use:mermaidify={lab.content} use:copyCode>
+      <article class="prose dark:prose-invert prose-pre:overflow-x-auto 2xl:prose-pre:max-w-[120ch] max-w-[65ch] sm:mx-1 md:mx-4 2xl:max-w-[120ch]" use:mermaidify={lab.content} use:copyCode use:quizify>
         {#key currentCodeTheme.value}
           <span id="lab-panel" class="mt-[-60px] block pt-[60px]">
             {@html sanitizeHtml(lab.content ?? "")}

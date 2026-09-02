@@ -24,6 +24,7 @@
     "@tutors/course": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
+    "@tutors/quiz": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",

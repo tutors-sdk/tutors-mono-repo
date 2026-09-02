@@ -1,5 +1,6 @@
 <script lang="ts">
   import CourseShell from "@tutors/ui-navigators/TutorsShell.svelte";
+  import QuizNotificationListener from "$lib/components/QuizNotificationListener.svelte";
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
@@ -51,3 +52,5 @@
 
   {@render children()}
 </CourseShell>
+
+<QuizNotificationListener />
