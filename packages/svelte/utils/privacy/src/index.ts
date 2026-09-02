@@ -13,3 +13,4 @@ export {
   upsertLearningRecordsWithConsent,
   upsertTutorsConnectLatestWithConsent
 } from "./supabase-gate.ts";
+export { default as ConsentBanner } from "./ConsentBanner.svelte";

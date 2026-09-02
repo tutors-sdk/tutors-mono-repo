@@ -1,5 +1,5 @@
 -- Quiz tables for tutors quiz feature
--- See packages/svelte/quiz/sql/004_quiz_tables.sql for the canonical source
+-- Keep in sync with packages/svelte/quiz/sql/004_quiz_tables.sql
 
 CREATE TABLE IF NOT EXISTS tutors_quizzes (
   id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -19,9 +19,12 @@ CREATE INDEX IF NOT EXISTS idx_quizzes_course_id
 ALTER TABLE tutors_quizzes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "quizzes_select" ON tutors_quizzes FOR SELECT USING (true);
-CREATE POLICY "quizzes_insert" ON tutors_quizzes FOR INSERT WITH CHECK (true);
-CREATE POLICY "quizzes_update" ON tutors_quizzes FOR UPDATE USING (true);
-CREATE POLICY "quizzes_delete" ON tutors_quizzes FOR DELETE USING (true);
+CREATE POLICY "quizzes_insert" ON tutors_quizzes FOR INSERT
+  WITH CHECK (created_by = current_setting('request.jwt.claims', true)::json->>'sub');
+CREATE POLICY "quizzes_update" ON tutors_quizzes FOR UPDATE
+  USING (created_by = current_setting('request.jwt.claims', true)::json->>'sub');
+CREATE POLICY "quizzes_delete" ON tutors_quizzes FOR DELETE
+  USING (created_by = current_setting('request.jwt.claims', true)::json->>'sub');
 
 CREATE TABLE IF NOT EXISTS tutors_quiz_sessions (
   id                uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -43,9 +46,12 @@ CREATE INDEX IF NOT EXISTS idx_quiz_sessions_quiz_id
 ALTER TABLE tutors_quiz_sessions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "quiz_sessions_select" ON tutors_quiz_sessions FOR SELECT USING (true);
-CREATE POLICY "quiz_sessions_insert" ON tutors_quiz_sessions FOR INSERT WITH CHECK (true);
-CREATE POLICY "quiz_sessions_update" ON tutors_quiz_sessions FOR UPDATE USING (true);
-CREATE POLICY "quiz_sessions_delete" ON tutors_quiz_sessions FOR DELETE USING (true);
+CREATE POLICY "quiz_sessions_insert" ON tutors_quiz_sessions FOR INSERT
+  WITH CHECK (lecturer_id = current_setting('request.jwt.claims', true)::json->>'sub');
+CREATE POLICY "quiz_sessions_update" ON tutors_quiz_sessions FOR UPDATE
+  USING (lecturer_id = current_setting('request.jwt.claims', true)::json->>'sub');
+CREATE POLICY "quiz_sessions_delete" ON tutors_quiz_sessions FOR DELETE
+  USING (lecturer_id = current_setting('request.jwt.claims', true)::json->>'sub');
 
 CREATE TABLE IF NOT EXISTS tutors_quiz_responses (
   id              uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -61,6 +67,10 @@ CREATE TABLE IF NOT EXISTS tutors_quiz_responses (
   UNIQUE (quiz_id, session_id, question_id, student_id)
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_responses_async_unique
+  ON tutors_quiz_responses (quiz_id, question_id, student_id)
+  WHERE session_id IS NULL;
+
 CREATE INDEX IF NOT EXISTS idx_quiz_responses_quiz_id
   ON tutors_quiz_responses (quiz_id);
 
@@ -70,6 +80,9 @@ CREATE INDEX IF NOT EXISTS idx_quiz_responses_session_id
 ALTER TABLE tutors_quiz_responses ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "quiz_responses_select" ON tutors_quiz_responses FOR SELECT USING (true);
-CREATE POLICY "quiz_responses_insert" ON tutors_quiz_responses FOR INSERT WITH CHECK (true);
-CREATE POLICY "quiz_responses_update" ON tutors_quiz_responses FOR UPDATE USING (true);
-CREATE POLICY "quiz_responses_delete" ON tutors_quiz_responses FOR DELETE USING (true);
+CREATE POLICY "quiz_responses_insert" ON tutors_quiz_responses FOR INSERT
+  WITH CHECK (student_id = current_setting('request.jwt.claims', true)::json->>'sub');
+CREATE POLICY "quiz_responses_update" ON tutors_quiz_responses FOR UPDATE
+  USING (student_id = current_setting('request.jwt.claims', true)::json->>'sub');
+CREATE POLICY "quiz_responses_delete" ON tutors_quiz_responses FOR DELETE
+  USING (student_id = current_setting('request.jwt.claims', true)::json->>'sub');

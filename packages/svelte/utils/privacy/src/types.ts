@@ -5,9 +5,8 @@ export enum ConsentCategory {
 }
 
 export interface ConsentPreferences {
-  [ConsentCategory.Essential]: true;
-  [ConsentCategory.Analytics]: boolean;
-  [ConsentCategory.Presence]: boolean;
+  analytics: boolean;
+  presence: boolean;
 }
 
 export interface ConsentState {

@@ -305,9 +305,7 @@ export async function submitResponse(response: Omit<QuizResponse, "id" | "submit
   const { error } = await supabase
     .from("tutors_quiz_responses")
     .upsert(row, {
-      onConflict: response.sessionId
-        ? "quiz_id,session_id,question_id,student_id"
-        : "quiz_id,question_id,student_id"
+      onConflict: "quiz_id,session_id,question_id,student_id"
     });
 
   if (error) {

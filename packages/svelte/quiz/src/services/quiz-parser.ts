@@ -68,7 +68,8 @@ function parseQuestionSection(section: string, index: number): QuizQuestion | nu
 }
 
 function extractField(section: string, key: string): string | null {
-  const regex = new RegExp(`^${key}:\\s*(.+)$`, "mi");
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`^${escapedKey}:\\s*(.+)$`, "mi");
   const match = section.match(regex);
   return match ? match[1].trim().replace(/^["']|["']$/g, "") : null;
 }

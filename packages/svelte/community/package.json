@@ -19,6 +19,7 @@
     "@supabase/supabase-js": "^2.112.4",
     "@tutors/course": "workspace:*",
     "@tutors/logger": "workspace:*",
+    "@tutors/privacy": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*"
   },

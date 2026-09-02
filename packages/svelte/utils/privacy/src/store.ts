@@ -1,18 +1,10 @@
 import { writable, type Writable } from "svelte/store";
+import type { ConsentState } from "./types.ts";
 
 const CONSENT_STORE_KEY = "tutors_consent";
 
-interface StoredConsent {
-  granted: boolean;
-  preferences: {
-    analytics: boolean;
-    presence: boolean;
-  };
-  timestamp: string;
-  version: number;
-}
-
-function loadConsent(): StoredConsent | null {
+function loadConsent(): ConsentState | null {
+  if (typeof window === "undefined") return null;
   try {
     const stored = localStorage.getItem(CONSENT_STORE_KEY);
     if (!stored) return null;
@@ -24,7 +16,8 @@ function loadConsent(): StoredConsent | null {
   }
 }
 
-function saveConsent(state: StoredConsent): void {
+function saveConsent(state: ConsentState): void {
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(CONSENT_STORE_KEY, JSON.stringify(state));
   } catch (error) {
@@ -32,7 +25,7 @@ function saveConsent(state: StoredConsent): void {
   }
 }
 
-const initialConsent: StoredConsent = loadConsent() ?? {
+const initialConsent: ConsentState = loadConsent() ?? {
   granted: false,
   preferences: {
     analytics: false,
@@ -42,7 +35,7 @@ const initialConsent: StoredConsent = loadConsent() ?? {
   version: 1
 };
 
-export const consentState: Writable<StoredConsent> = writable(initialConsent);
+export const consentState: Writable<ConsentState> = writable(initialConsent);
 
 consentState.subscribe((state) => {
   saveConsent(state);
@@ -73,33 +66,25 @@ export function revokeConsent(): void {
 }
 
 export function setConsentCategory(category: "analytics" | "presence", enabled: boolean): void {
-  consentState.update((state) => ({
-    ...state,
-    granted: enabled,
-    preferences: {
-      ...state.preferences,
-      [category]: enabled
-    },
-    timestamp: new Date().toISOString()
-  }));
+  consentState.update((state) => {
+    const preferences = { ...state.preferences, [category]: enabled };
+    return {
+      ...state,
+      granted: preferences.analytics || preferences.presence,
+      preferences,
+      timestamp: new Date().toISOString()
+    };
+  });
 }
 
 export function getConsent(): boolean {
-  let stored = loadConsent();
-  if (!stored) {
-    stored = {
-      granted: false,
-      preferences: { analytics: false, presence: false },
-      timestamp: new Date().toISOString(),
-      version: 1
-    };
-    saveConsent(stored);
-  }
+  const stored = loadConsent();
+  if (!stored) return false;
   return stored.granted;
 }
 
 export function getConsent_preferences(): { analytics: boolean; presence: boolean } {
-  let stored = loadConsent();
+  const stored = loadConsent();
   if (!stored) {
     return { analytics: false, presence: false };
   }
@@ -107,5 +92,13 @@ export function getConsent_preferences(): { analytics: boolean; presence: boolea
 }
 
 export function resetConsent(): void {
-  localStorage.removeItem(CONSENT_STORE_KEY);
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(CONSENT_STORE_KEY);
+  }
+  consentState.set({
+    granted: false,
+    preferences: { analytics: false, presence: false },
+    timestamp: new Date().toISOString(),
+    version: 1
+  });
 }

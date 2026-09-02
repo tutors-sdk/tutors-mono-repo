@@ -1,6 +1,7 @@
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_ANON_MODE } from "$env/static/public";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { checkConsent, ConsentCategory, getConsentFields } from "@tutors/privacy";
+import { checkConsent, getConsentFields } from "./consent-check.ts";
+import { ConsentCategory } from "./types.ts";
 import log from "@tutors/logger";
 
 let supabase: SupabaseClient | null = null;
@@ -51,13 +52,13 @@ export async function upsertUserWithConsent(row: {
   full_name: string;
   email?: string;
 }): Promise<void> {
-  if (!isPresenceConsentGranted()) {
-    log.debug("Skipping presence update - consent not granted");
+  if (!supabase || !isPresenceConsentGranted()) {
+    log.debug("Skipping presence update - consent not granted or Supabase unavailable");
     return;
   }
 
   const consentFields = getConsentFields();
-  const { error } = await supabase?.from("tutors-connect-users").upsert({
+  const { error } = await supabase.from("tutors-connect-users").upsert({
     ...row,
     consent_analytics: consentFields.consent_analytics,
     consent_presence: consentFields.consent_presence
@@ -76,13 +77,13 @@ export async function upsertCalendarWithConsent(row: {
   pageloads: number;
   courseid: string;
 }): Promise<void> {
-  if (!isAnalyticsConsentGranted()) {
-    log.debug("Skipping calendar update - consent not granted");
+  if (!supabase || !isAnalyticsConsentGranted()) {
+    log.debug("Skipping calendar update - consent not granted or Supabase unavailable");
     return;
   }
 
   const consentFields = getConsentFields();
-  const { error } = await supabase?.from("calendar").upsert({
+  const { error } = await supabase.from("calendar").upsert({
     ...row,
     consent_analytics: consentFields.consent_analytics,
     consent_presence: consentFields.consent_presence
@@ -103,13 +104,13 @@ export async function upsertLearningRecordsWithConsent(row: {
   count: number;
   type: string;
 }): Promise<void> {
-  if (!isAnalyticsConsentGranted()) {
-    log.debug("Skipping learning records update - consent not granted");
+  if (!supabase || !isAnalyticsConsentGranted()) {
+    log.debug("Skipping learning records update - consent not granted or Supabase unavailable");
     return;
   }
 
   const consentFields = getConsentFields();
-  const { error } = await supabase?.from("learning_records").upsert({
+  const { error } = await supabase.from("learning_records").upsert({
     ...row,
     consent_analytics: consentFields.consent_analytics,
     consent_presence: consentFields.consent_presence
@@ -127,13 +128,13 @@ export async function upsertTutorsConnectLatestWithConsent(row: {
   payload: unknown;
   received_at: string;
 }): Promise<void> {
-  if (!isAnalyticsConsentGranted()) {
-    log.debug("Skipping tutors-connect-latest update - consent not granted");
+  if (!supabase || !isAnalyticsConsentGranted()) {
+    log.debug("Skipping tutors-connect-latest update - consent not granted or Supabase unavailable");
     return;
   }
 
   const consentFields = getConsentFields();
-  const { error } = await supabase?.from("tutors-connect-latest").upsert({
+  const { error } = await supabase.from("tutors-connect-latest").upsert({
     ...row,
     consent_analytics: consentFields.consent_analytics,
     consent_presence: consentFields.consent_presence

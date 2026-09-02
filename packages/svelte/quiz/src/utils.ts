@@ -3,9 +3,6 @@ import type { Course } from "@tutors/tutors-model-lib";
 import { isEducator, tutorsId } from "@tutors/runes";
 
 export function isQuizEducator(): boolean {
-  if (typeof window !== "undefined" && window.localStorage.getItem("tutors-test-role") === "student") {
-    return false;
-  }
   if (PUBLIC_ANON_MODE === "TRUE") return true;
   return isEducator.value;
 }

@@ -232,6 +232,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
+      '@tutors/privacy':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/privacy
       '@tutors/quiz':
         specifier: workspace:*
         version: link:../../packages/svelte/quiz
@@ -455,6 +458,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/privacy':
+        specifier: workspace:*
+        version: link:../utils/privacy
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -825,6 +831,12 @@ importers:
 
   packages/svelte/utils/privacy:
     dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.112.4
+        version: 2.112.4
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../logger
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.68.0)

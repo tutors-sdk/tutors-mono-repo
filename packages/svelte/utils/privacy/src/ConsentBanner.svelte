@@ -1,16 +1,19 @@
 <script lang="ts">
-  import { consentState, grantConsent, revokeConsent, setConsentCategory } from "@tutors/privacy";
-  import { get } from "svelte/store";
+  import { consentState, grantConsent, revokeConsent, setConsentCategory } from "./store.ts";
 
   let showBanner = $state(false);
-  let preferences = $state(get(consentState).preferences);
+  let analytics = $state(false);
+  let presence = $state(false);
+  let granted = $state(false);
 
   $effect(() => {
     const unsubscribe = consentState.subscribe((state) => {
       if (!state.granted && !showBanner) {
         showBanner = true;
       }
-      preferences = state.preferences;
+      analytics = state.preferences.analytics;
+      presence = state.preferences.presence;
+      granted = state.granted;
     });
     return unsubscribe;
   });
@@ -25,93 +28,104 @@
     showBanner = false;
   }
 
-  function handleToggleAnalytics(enabled: boolean) {
-    setConsentCategory("analytics", enabled);
-    preferences = get(consentState).preferences;
+  function handleToggleAnalytics(e: Event) {
+    const target = e.target as HTMLInputElement;
+    setConsentCategory("analytics", target.checked);
   }
 
-  function handleTogglePresence(enabled: boolean) {
-    setConsentCategory("presence", enabled);
-    preferences = get(consentState).preferences;
+  function handleTogglePresence(e: Event) {
+    const target = e.target as HTMLInputElement;
+    setConsentCategory("presence", target.checked);
   }
 </script>
 
 {#if showBanner}
-  <div class="tutors-consent-banner">
-    <div class="tutors-consent-banner-content">
-      <h3>Privacy & Consent</h3>
+  <div class="consent-overlay" role="dialog" aria-label="Privacy consent">
+    <div class="consent-card">
+      <h3>Privacy and Data Collection</h3>
       <p>
-        We use Supabase to store your learning analytics and presence data.
-        You can control what data we track.
+        Tutors uses Supabase to store learning analytics and presence data.
+        You can control what personal data is collected. Essential processing
+        (authentication, course content) does not require consent.
       </p>
-      
-      <div class="tutors-consent-toggle">
+
+      <div class="consent-toggle">
         <label>
           <input
             type="checkbox"
-            checked={preferences.analytics}
-            on:change={(e) => handleToggleAnalytics(e.target.checked)}
+            checked={analytics}
+            onchange={handleToggleAnalytics}
           />
-          Analytics (learning activity tracking)
-        </label>
-      </div>
-      
-      <div class="tutors-consent-toggle">
-        <label>
-          <input
-            type="checkbox"
-            checked={preferences.presence}
-            on:change={(e) => handleTogglePresence(e.target.checked)}
-          />
-          Presence (online status & real-time collaboration)
+          Analytics (learning activity, time tracking, calendar data)
         </label>
       </div>
 
-      {#if !get(consentState).granted}
-        <button on:click={handleGrant}>Accept & Enable Tracking</button>
-      {/if}
-      {#if get(consentState).granted}
-        <button class="revoke" on:click={handleRevoke}>Revoke Consent</button>
-      {/if}
+      <div class="consent-toggle">
+        <label>
+          <input
+            type="checkbox"
+            checked={presence}
+            onchange={handleTogglePresence}
+          />
+          Presence (online status, real-time collaboration)
+        </label>
+      </div>
+
+      <div class="consent-actions">
+        {#if !granted}
+          <button class="btn-accept" onclick={handleGrant}>Accept Selected</button>
+        {/if}
+        {#if granted}
+          <button class="btn-revoke" onclick={handleRevoke}>Withdraw Consent</button>
+        {/if}
+        <button class="btn-dismiss" onclick={() => showBanner = false}>Dismiss</button>
+      </div>
     </div>
   </div>
 {/if}
 
 <style>
-  .tutors-consent-banner {
+  .consent-overlay {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #1a1a2e;
-    border-top: 2px solid #e94560;
-    color: #fff;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
     z-index: 10000;
-    font-family: system-ui, -apple-system, sans-serif;
-  }
-
-  .tutors-consent-banner-content {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 20px;
   }
 
-  .tutors-consent-banner-content h3 {
-    margin: 0 0 10px 0;
+  .consent-card {
+    background: rgb(var(--color-surface-900));
+    border: 1px solid rgb(var(--color-surface-700));
+    color: rgb(var(--color-surface-50));
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+
+  .consent-card h3 {
+    margin: 0 0 12px 0;
     font-size: 1.2rem;
   }
 
-  .tutors-consent-banner-content p {
-    margin: 0 0 15px 0;
-    opacity: 0.8;
+  .consent-card p {
+    margin: 0 0 16px 0;
+    opacity: 0.85;
     line-height: 1.5;
+    font-size: 0.9rem;
   }
 
-  .tutors-consent-toggle {
+  .consent-toggle {
     margin: 10px 0;
   }
 
-  .tutors-consent-toggle label {
+  .consent-toggle label {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -119,33 +133,63 @@
     user-select: none;
   }
 
-  .tutors-consent-toggle input {
+  .consent-toggle input {
     width: 18px;
     height: 18px;
     cursor: pointer;
+    accent-color: rgb(var(--color-primary-500));
   }
 
-  button {
-    background: #e94560;
-    color: white;
+  .consent-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-accept {
+    background: rgb(var(--color-primary-500));
+    color: rgb(var(--color-surface-50));
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     transition: background 0.2s;
   }
 
-  button:hover {
-    background: #d63d54;
+  .btn-accept:hover {
+    background: rgb(var(--color-primary-600));
   }
 
-  button.revoke {
-    background: #6c757d;
+  .btn-revoke {
+    background: rgb(var(--color-surface-600));
+    color: rgb(var(--color-surface-50));
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.2s;
   }
 
-  button.revoke:hover {
-    background: #5a6268;
+  .btn-revoke:hover {
+    background: rgb(var(--color-surface-500));
+  }
+
+  .btn-dismiss {
+    background: transparent;
+    color: rgb(var(--color-surface-300));
+    border: 1px solid rgb(var(--color-surface-600));
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+  }
+
+  .btn-dismiss:hover {
+    background: rgb(var(--color-surface-800));
   }
 </style>

@@ -8,6 +8,7 @@
   import { goto } from "$app/navigation";
   import { Toast } from "@skeletonlabs/skeleton-svelte";
   import { toaster } from "$lib/stores/toaster";
+  import { ConsentBanner } from "@tutors/privacy";
 
   interface Props {
     data: LayoutData;
@@ -34,6 +35,8 @@
 </script>
 
 {@render children()}
+
+<ConsentBanner />
 
 <Toast.Group {toaster}>
   {#snippet children(toast)}

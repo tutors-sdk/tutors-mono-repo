@@ -6,6 +6,7 @@ import { rune, tutorsId } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
+import { checkConsent, ConsentCategory } from "@tutors/privacy";
 
 const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
 
@@ -67,6 +68,7 @@ export const presenceService: PresenceService = {
 
   sendLoEvent(course: Course, lo: Lo, student: TutorsId) {
     if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (!checkConsent(ConsentCategory.Presence)) return;
 
     const loRecord: LoRecord = {
       courseId: course.courseId,

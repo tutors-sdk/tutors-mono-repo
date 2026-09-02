@@ -136,7 +136,13 @@ export const quizSessionState = {
   },
 
   handleMessage(event: MessageEvent) {
-    const msg: QuizMessage = JSON.parse(event.data);
+    let msg: QuizMessage;
+    try {
+      msg = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+    if (!msg || typeof msg.type !== "string") return;
 
     switch (msg.type) {
       case "quiz:join": {
