@@ -2,6 +2,7 @@
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
   import { copyCode } from "@tutors/course/markdown";
+  import { quizify } from "@tutors/quiz";
   import type { Lo } from "@tutors/tutors-model-lib";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
@@ -11,7 +12,7 @@
   let { lo }: Props = $props();
 </script>
 
-<article class="prose dark:prose-invert mr-4 max-w-none overflow-x-auto" use:mermaidify use:copyCode>
+<article class="prose dark:prose-invert mr-4 max-w-none overflow-x-auto" use:mermaidify use:copyCode use:quizify>
   {#key currentCodeTheme.value}
     {@html sanitizeHtml(lo.contentHtml ?? "")}
   {/key}

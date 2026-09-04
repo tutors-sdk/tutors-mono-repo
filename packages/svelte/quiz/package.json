@@ -1,0 +1,15 @@
+{
+  "name": "@tutors/quiz",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Quiz services for Tutors: markdown authoring, live sessions, and analytics",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./services/*": "./src/services/*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

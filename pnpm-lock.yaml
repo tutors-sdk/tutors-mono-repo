@@ -516,6 +516,12 @@ importers:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.68.0)
 
+  packages/svelte/quiz:
+    dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.0(@typescript-eslint/types@8.68.0)
+
   packages/svelte/runes:
     dependencies:
       '@tutors/tutors-model-lib':
@@ -591,6 +597,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/quiz':
+        specifier: workspace:*
+        version: link:../quiz
       '@tutors/rbac':
         specifier: workspace:*
         version: link:../utils/rbac
