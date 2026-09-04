@@ -2,6 +2,7 @@
   import CourseIdDialog from "$lib/components/CourseIdDialog.svelte";
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import { goto } from "$app/navigation";
+  import log from "@tutors/logger";
 
   let dialogOpen = $state(true);
   let dialogLoading = $state(false);
@@ -19,7 +20,6 @@
     dialogLoading = true;
     try {
       await TutorsTime.loadCourseTime(courseId, startDate, endDate);
-      console.log("Load Dialog@");
 
       
       if (moodleCourseId) {

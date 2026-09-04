@@ -4,6 +4,7 @@
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
   import { supabase } from "@tutors/community/utils/supabase-client";
+  import log from "@tutors/logger";
 
   interface Props {
     lo: Whiteboard;
@@ -79,6 +80,7 @@
       cachedScene = await response.json();
       setupMessageHandler();
     } catch (e: any) {
+      log.error("WhiteboardViewer failed to load scene:", e);
       error = e.message || "Failed to load whiteboard";
       loading = false;
     }
