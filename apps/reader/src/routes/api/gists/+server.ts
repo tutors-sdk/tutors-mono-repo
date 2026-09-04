@@ -1,6 +1,6 @@
 import { error, json } from "@sveltejs/kit";
 import { z } from "zod";
-import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { RequestHandler } from "./$types";
 import { PUBLIC_SUPABASE_URL, PUBLIC_ANON_MODE } from "$env/static/public";
 import { PRIVATE_SUPABASE_SERVICE_KEY } from "$env/dynamic/private";
@@ -33,35 +33,6 @@ function newServiceClient() {
   return createClient(PUBLIC_SUPABASE_URL, PRIVATE_SUPABASE_SERVICE_KEY, {
     auth: { persistSession: false }
   });
-}
-
-/**
- * The student → lecturer toast is fired over the course's Supabase Realtime
- * broadcast topic (the time app's `GistListener` subscribes to the same
- * topic). We keep a module-level cache of channels so the underlying
- * WebSocket is opened once, not per request — the same pattern the
- * `broadcast.ts` service uses for the lecturer → student toasts. The service
- * role may open a channel on any topic, so the service client is used.
- *
- * Best-effort: fire-and-forget; if it fails the student's row still appears
- * in the dashboard on the next load.
- */
-const realtime = new Map<string, RealtimeChannel | null>();
-
-function broadcastGistCreated(supabase: SupabaseClient, courseId: string, payload: Record<string, unknown>) {
-  if (!courseId || supabase === undefined) return;
-  try {
-    let channel = realtime.get(courseId) ?? null;
-    if (!channel) {
-      channel = supabase
-        .channel(courseId, { config: { broadcast: { self: true } } })
-        .subscribe();
-      realtime.set(courseId, channel);
-    }
-    channel?.send({ type: "broadcast", event: "gist-created", payload });
-  } catch (e) {
-    log.warn("gist-created broadcast failed:", e);
-  }
 }
 
 function filenameToGistKey(filename: string): string {
@@ -217,19 +188,11 @@ export const POST: RequestHandler = async (event) => {
 
   log.info(`Student ${user.login} shared gist ${gist.id} with course ${courseId}`);
 
-  // Notify the lecturer dashboard (time app) on the course broadcast topic.
-  broadcastGistCreated(supabase, courseId, {
-    type: "gist-created",
-    gistId: gist.id,
-    gistUrl: gist.html_url,
-    course_id: courseId,
-    student_id: user.login,
-    student_name: user.name ?? "",
-    title: title ?? "",
-    lo_route: loRoute ?? "",
-    lo_title: loTitle ?? "",
-    expires_at: expiresAt
-  });
+  // Realtime notification is fired by the reader client (ShareSnippet.svelte)
+  // via @tutors/community's sendGistCreated — reusing the same per-course
+  // broadcast channel that presence/broadcast already keep open. Keeping it
+  // on the client mirrors the existing issue #78 (lecturer → student) pattern
+  // and avoids spinning up a transient Supabase channel per request here.
 
   return json({
     gistId: gist.id,

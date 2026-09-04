@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getSupabase } from "@tutors/tutors-time-lib";
+  import { onGistCreated } from "@tutors/community";
   import { onDestroy, onMount } from "svelte";
 
   interface Props {
@@ -28,6 +29,7 @@
   let error = $state<string | null>(null);
 
   const supabase = getSupabase();
+  let stopLive: (() => void) | null = null;
 
   async function load() {
     const id = courseId.trim();
@@ -74,31 +76,27 @@
     }
   }
 
-  // Live updates: prepend on gist-created so the dashboard reflects new
-  // shares without a manual refresh.
-  let channel: ReturnType<typeof supabase.channel> | null = null;
-
-  function onGistCreated(msg: { payload?: unknown }) {
-    const p = msg.payload as
-      | { gistId?: string; gistUrl?: string; student_id?: string; student_name?: string; title?: string; lo_route?: string; lo_title?: string; expires_at?: string; course_id?: string }
-      | undefined;
-    if (!p?.gistId || p.course_id !== courseId.trim()) return;
-    const already = rows.some((r) => r.gist_id === p.gistId);
-    if (already) return;
+  // Live updates: prepend on gist-created so the dashboard reflects new shares
+  // without a manual refresh. Uses the shared @tutors/community helper so this
+  // tab gets exactly-once delivery and shares the same per-course channel as
+  // GistListener.
+  function onGistCreatedLive(event: import("@tutors/community").GistCreatedEvent) {
+    if (event.courseId !== courseId.trim() || !event.gistId) return;
+    if (rows.some((r) => r.gist_id === event.gistId)) return;
     const now = new Date().toISOString();
     rows = [
       {
-        id: `live-${p.gistId}`,
+        id: `live-${event.gistId}`,
         created_at: now,
-        expires_at: p.expires_at ?? "",
-        course_id: p.course_id ?? courseId.trim(),
-        student_id: p.student_id ?? "",
-        student_name: p.student_name ?? null,
-        gist_id: p.gistId,
-        gist_url: p.gistUrl ?? "",
-        title: p.title ?? null,
-        lo_route: p.lo_route ?? null,
-        lo_title: p.lo_title ?? null
+        expires_at: event.expires_at ?? "",
+        course_id: event.courseId,
+        student_id: event.student_id ?? "",
+        student_name: event.student_name ?? null,
+        gist_id: event.gistId,
+        gist_url: event.gistUrl ?? "",
+        title: event.title ?? null,
+        lo_route: event.lo_route ?? null,
+        lo_title: event.lo_title ?? null
       },
       ...rows
     ];
@@ -108,18 +106,16 @@
     void load();
     const id = courseId.trim();
     if (id) {
-      channel = supabase
-        .channel(id, { config: { broadcast: { self: true } } })
-        .on("broadcast", { event: "gist-created" }, onGistCreated)
-        .subscribe();
+      stopLive = onGistCreated(id, onGistCreatedLive);
     }
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      stopLive?.();
+      stopLive = null;
     };
   });
 
   onDestroy(() => {
-    if (channel) supabase.removeChannel(channel);
+    stopLive?.();
   });
 
   function formatDateTime(iso: string): string {

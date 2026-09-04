@@ -54,8 +54,9 @@ Student (reader)                         Server (reader)                       L
 
 ### Lecturer Notification (Phase 4)
 
-- `apps/time/src/lib/components/GistListener.svelte` subscribes to the course channel for `gist-created` and shows a toast with a **"View gist"** action (reusing the existing Skeleton toast scaffolding).
-- It is mounted in `apps/time/src/routes/[courseid]/+layout.svelte`, so it only runs **after the PIN gate** — i.e. only the lecturers who know the course PIN are toasted, not every student.
+- `packages/svelte/community/src/services/gist-broadcast.ts` is a dedicated student → lecturer realtime module (mirrors the #78 `broadcast.ts`). It keeps a single persistent per-course Supabase Realtime channel + same-browser `BroadcastChannel` relay and guarantees **exactly-once delivery per tab**. It is wired to the anon client by `presence.svelte.ts` via `setGistSupabase` (anon mode leaves it inert).
+- **Sender** (reader): after `POST /api/gists` succeeds, `ShareSnippet.svelte` calls `sendGistCreated(course, …)` with the (non-secret) gist metadata. No secret crosses the wire.
+- **Receiver** (time app): `apps/time/src/lib/components/GistListener.svelte` subscribes with `onGistCreated(course, handler)` and shows a toast with a **"View gist"** action. It is mounted in `apps/time/src/routes/[courseid]/+layout.svelte`, i.e. **after the PIN gate** — so only lecturers who know the course PIN are toasted, not every student.
 
 ### Lecturer Dashboard (Phase 5)
 

@@ -3,6 +3,7 @@
   import { browser } from "$app/environment";
   import { t } from "@tutors/i18n";
   import { currentCourse, currentLo, tutorsId } from "@tutors/runes";
+  import { sendGistCreated } from "@tutors/community";
   import { toaster } from "@tutors/ui-primitives/utils/toaster";
   import { PUBLIC_ANON_MODE } from "$env/static/public";
 
@@ -55,7 +56,12 @@
           loTitle: lo?.title ?? ""
         })
       });
-      const data = (await res.json().catch(() => ({}))) as { gistUrl?: string; message?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        gistId?: string;
+        gistUrl?: string;
+        expiresAt?: string;
+        message?: string;
+      };
 
       if (!res.ok) {
         errorMessage = data.message ?? t("gist.error");
@@ -69,6 +75,21 @@
       }
 
       open = false;
+      // Notify the course's lecturer dashboard (time app) on the shared
+      // course channel. The payload is non-secret; the student's GitHub token
+      // stays on the server (it only created the gist).
+      if (data.gistId && data.gistUrl) {
+        sendGistCreated(courseId, {
+          gistId: data.gistId,
+          gistUrl: data.gistUrl,
+          student_id: tutorsId.value?.login ?? "",
+          student_name: tutorsId.value?.name ?? "",
+          title: title.trim(),
+          lo_route: lo?.route ?? "",
+          lo_title: lo?.title ?? "",
+          expires_at: data.expiresAt ?? ""
+        });
+      }
       toaster.create({
         type: "success",
         title: t("gist.success"),

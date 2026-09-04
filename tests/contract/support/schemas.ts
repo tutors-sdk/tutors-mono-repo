@@ -142,15 +142,18 @@ export const CourseGistSecretSchema = z.object({
 /** The `gist-created` broadcast payload on the course channel. */
 export const GistCreatedEventSchema = z.object({
   type: z.literal("gist-created"),
+  /** Stable id — guarantees exactly-once delivery per tab. */
+  id: z.string().min(1),
+  courseId: z.string().min(1),
   gistId: z.string().min(1),
   gistUrl: z.string().url(),
-  course_id: z.string().min(1),
   student_id: z.string().min(1),
   student_name: z.string().optional(),
   title: z.string().optional(),
   lo_route: z.string().optional(),
   lo_title: z.string().optional(),
   expires_at: z.string().optional(),
+  sentAt: z.number(),
 });
 
 const LoBaseSchema = z.object({
