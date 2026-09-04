@@ -51,6 +51,11 @@
       label: "Assignments",
       href: `/${courseId}/assignments`,
       icon: "streamline-ultimate-color:task-list-pen"
+    },
+    {
+      label: "Shared Snippets",
+      href: `/${courseId}/gists`,
+      icon: "streamline-ultimate-color:code-snippet"
     }
   ]);
 </script>

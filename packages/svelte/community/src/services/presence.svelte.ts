@@ -11,10 +11,13 @@ import {
   setBroadcastSupabase,
   type CourseBroadcastMessage
 } from "./broadcast.ts";
+import { setGistSupabase } from "./gist-broadcast.ts";
 
-// Wire the real supabase into the pure broadcast module (anon mode leaves it null).
+// Wire the real supabase into the pure broadcast modules (anon mode leaves them
+// null).
 if (PUBLIC_ANON_MODE !== "TRUE" && supabase) {
   setBroadcastSupabase(supabase);
+  setGistSupabase(supabase);
 }
 
 const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };

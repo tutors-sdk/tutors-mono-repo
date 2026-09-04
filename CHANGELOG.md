@@ -8,6 +8,27 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- **Ephemeral snippet sharing (GitHub Gists)** — signed-in students can share a snippet from the reader; a secret gist is created, recorded as a 48-hour-ephemeral course gist, and the course lecturer is notified in real time (issue #155)
+  - New "Share snippet" flow: sign in with GitHub, paste a snippet, and it is saved as a secret gist owned by the student's own account
+  - New `/api/gists` server endpoint (rate-limited, size-bounded, secret gists only) that creates the gist, stores metadata, and fires a `gist-created` broadcast on the course channel
+  - GitHub OAuth now requests the `gist` scope in addition to `read:user user:email`. **Existing users are re-prompted for consent on next sign-in.** The `gist` scope lets Tutors create *your* gist — nothing more.
+  - The GitHub access token is captured on the session JWT and is **never sent to the browser**; it is used only server-side and stored in a separate table (`course_gist_secrets`) that is fully closed to anonymous clients.
+
+#### Security
+
+- New `PRIVATE_SUPABASE_SERVICE_KEY` env var for authenticated server writes (reader endpoint + cleanup job). The service-role key is never exposed to the client.
+- New `course_gists` + `course_gist_secrets` tables with Row Level Security; public metadata is read-only for anonymous clients and auto-hidden once `expires_at` passes; the token table is closed to anonymous clients outright.
+
+#### Maintenance
+
+- New `gist-cleanup.yml` GitHub Actions workflow (cron, 2×/day) purges expired gists on GitHub (best-effort, using the stored student token) and removes the metadata rows.
+- New `scripts/purge-course-gists.ts` maintenance script (supports `DRY_RUN=1`).
+- Contract tests for the `course_gists` row schema and the `gist-created` realtime protocol.
+
 ### v16.1.3 (2026-09)
 
 #### Features
@@ -110,6 +131,13 @@
 ---
 
 ## Time (`tutors-time`)
+
+### v16.2.0 (2026-09)
+
+#### Features
+
+- **Shared snippets dashboard** — new "Shared Snippets" view (PIN-gated, like the other dashboard views) listing the active gists a course's students have shared, with student avatar, learning object, creation time, and a live "time remaining" column (issue #155)
+- Live updates: new snippets appear in real time via the course `gist-created` broadcast; the lecturer also receives a toast with a "View gist" action (activating the previously-unused toast scaffolding)
 
 ### v1.0.0 (2026-08)
 

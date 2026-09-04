@@ -1,0 +1,55 @@
+name: Gist Cleanup
+
+# Purges expired course gists (issue #155 — 48h ephemeral snippet sharing).
+# For every row where expires_at <= now() the job:
+#   1. Best-effort-deletes the GitHub gist using the student's stored token.
+#   2. Removes the metadata row (which cascades to the stored token).
+# Rows whose token has been rotated are still purged so they stop surfacing.
+
+on:
+  schedule:
+    # Runs twice a day at 00:15 and 12:15 UTC — well within the 48h cap so
+    # no valid gist is lost even if a run fails and the next retries.
+    - cron: "15 0,12 * * *"
+  # Manual trigger for testing or to catch up after a long outage.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  purge:
+    name: Purge expired gists
+    runs-on: ubuntu-latest
+    # Only run scheduled runs on `main` (prevents forked-repo schedule abuse);
+    # manual dispatch is allowed from any branch.
+    if: github.repository == 'tutors-sdk/tutors-mono-repo' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prod=false
+
+      - name: Run purge
+        env:
+          SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm tsx scripts/purge-course-gists.ts
+
+      - name: Upload summary
+        if: always()
+        run: |
+          echo "## Gist cleanup summary" >> $GITHUB_STEP_SUMMARY
+          echo "See the log above for per-row details." >> $GITHUB_STEP_SUMMARY

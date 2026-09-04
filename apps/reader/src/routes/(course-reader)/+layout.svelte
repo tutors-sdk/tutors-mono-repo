@@ -1,5 +1,6 @@
 <script lang="ts">
   import CourseShell from "@tutors/ui-navigators/TutorsShell.svelte";
+  import ShareSnippet from "./ShareSnippet.svelte";
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
@@ -46,8 +47,9 @@
   <title>{currentCourse?.value?.title}</title>
 </svelte:head>
 
-<CourseShell {hideNavigator}>
-  <span id="content-panel" class="mt-[-60px] block pt-[60px]"></span>
+  <CourseShell {hideNavigator}>
+    <span id="content-panel" class="mt-[-60px] block pt-[60px]"></span>
 
-  {@render children()}
-</CourseShell>
+    {@render children()}
+  </CourseShell>
+  <ShareSnippet />

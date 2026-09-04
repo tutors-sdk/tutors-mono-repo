@@ -111,6 +111,48 @@ export const CourseBroadcastSchema = z.object({
   sentAt: z.number(),
 });
 
+// ---------------------------------------------------------------------------
+// Ephemeral gist sharing (issue #155)
+// ---------------------------------------------------------------------------
+
+/** A row in the `course_gists` table (public metadata, read-only for anon). */
+export const CourseGistSchema = z.object({
+  id: z.string().uuid(),
+  created_at: z.string(),
+  expires_at: z.string(),
+  course_id: z.string().min(1),
+  // GitHub login of the creator.
+  student_id: z.string().min(1),
+  student_name: z.string().nullish(),
+  // GitHub gist id (a UUID).
+  gist_id: z.string().min(1),
+  // https://gist.github.com/…
+  gist_url: z.string().url(),
+  title: z.string().nullish(),
+  lo_route: z.string().nullish(),
+  lo_title: z.string().nullish(),
+});
+
+/** A row in the `course_gist_secrets` table (anon-closed). */
+export const CourseGistSecretSchema = z.object({
+  gist_id: z.string().uuid(),
+  github_token: z.string().min(1),
+});
+
+/** The `gist-created` broadcast payload on the course channel. */
+export const GistCreatedEventSchema = z.object({
+  type: z.literal("gist-created"),
+  gistId: z.string().min(1),
+  gistUrl: z.string().url(),
+  course_id: z.string().min(1),
+  student_id: z.string().min(1),
+  student_name: z.string().optional(),
+  title: z.string().optional(),
+  lo_route: z.string().optional(),
+  lo_title: z.string().optional(),
+  expires_at: z.string().optional(),
+});
+
 const LoBaseSchema = z.object({
   type: z.string(),
   id: z.string(),
@@ -254,3 +296,6 @@ export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
 export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
 export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;
 export type CourseBroadcast = z.infer<typeof CourseBroadcastSchema>;
+export type CourseGist = z.infer<typeof CourseGistSchema>;
+export type CourseGistSecret = z.infer<typeof CourseGistSecretSchema>;
+export type GistCreatedEvent = z.infer<typeof GistCreatedEventSchema>;

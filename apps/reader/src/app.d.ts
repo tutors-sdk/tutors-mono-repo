@@ -22,6 +22,11 @@ declare module "@auth/core/types" {
 declare module "@auth/core/jwt" {
   interface JWT {
     login?: string;
+    /**
+     * The user's GitHub OAuth access token (issue #155). Server-only; never
+     * returned to the client via `locals.auth()` / the `session` callback.
+     */
+    access_token?: string;
   }
 }
 

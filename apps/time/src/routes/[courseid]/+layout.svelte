@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import Navigation from "$lib/components/Navigation.svelte";
+  import GistListener from "$lib/components/GistListener.svelte";
 
   let { children } = $props();
 
@@ -10,6 +11,7 @@
 <div class="flex h-[calc(100vh-4rem)] min-h-0">
   <Navigation {courseId} />
   <div class="flex-1 min-w-0 min-h-0 flex flex-col overflow-auto p-2">
+    <GistListener {courseId} />
     {@render children()}
   </div>
 </div>
