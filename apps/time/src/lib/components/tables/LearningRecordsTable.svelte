@@ -2,6 +2,7 @@
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
+  import log from "@tutors/logger";
 
   let { courseId }: { courseId: string } = $props();
 
@@ -21,6 +22,7 @@
       course = courseTime;
       error = course?.learningRecordsError ?? null;
     } catch (e) {
+      log.error("LearningRecordsTable failed to load:", e);
       error = e instanceof Error ? e.message : "Failed to load learning records";
     } finally {
       loading = false;

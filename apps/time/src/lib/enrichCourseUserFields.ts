@@ -1,4 +1,5 @@
 import { getSupabase } from "@tutors/tutors-time-lib";
+import log from "@tutors/logger";
 import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
 
@@ -53,7 +54,7 @@ export async function enrichCourseUserFields(course: TutorsTimeCourse | null): P
     .in("github_id", [...ids]);
 
   if (error) {
-    console.warn("enrichCourseUserFields:", error.message);
+    log.warn("enrichCourseUserFields:", error.message);
     return;
   }
 
