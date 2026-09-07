@@ -1,4 +1,5 @@
 import type { Lo } from "@tutors/tutors-model-lib";
+import { getPanoptoUrls } from "@tutors/tutors-model-lib";
 
 function stripProtocol(url: string): string {
   if (!url || !url.includes('//')) return url;
@@ -94,6 +95,11 @@ export function generateRefLink(lo: Lo, path: string): string {
 }
 
 export function generateVideoLink(lo: Lo): string {
+  const lastVideo = lo?.videoids?.videoIds?.[lo.videoids.videoIds.length - 1];
+  if (lastVideo?.service === "panopto") {
+    return getPanoptoUrls(lastVideo.id).viewerUrl;
+  }
+
   const id = lo?.videoids?.videoid;
   if (!id) return "";
 
@@ -112,6 +118,14 @@ export function generateVideoLink(lo: Lo): string {
     url += `&t=${tMatch[1]}`;
   }
   return url;
+}
+
+export function panoptoEmbedUrl(id: string): string {
+  return getPanoptoUrls(id).embedUrl;
+}
+
+export function panoptoViewerUrl(id: string): string {
+  return getPanoptoUrls(id).viewerUrl;
 }
 
 

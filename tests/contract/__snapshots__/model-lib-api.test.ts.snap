@@ -38,6 +38,7 @@ exports[`Public API Surface — @tutors/tutors-model-lib > should export utility
   "loadIcon",
   "crumbs",
   "setShowHide",
+  "getPanoptoUrls",
   "getVideoConfig",
 ]
 `;
@@ -64,6 +65,7 @@ exports[`Public API Surface — @tutors/tutors-model-lib > should maintain stabl
   "fixRoutePaths",
   "flattenLos",
   "getPanels",
+  "getPanoptoUrls",
   "getUnits",
   "getVideoConfig",
   "imageTypes",

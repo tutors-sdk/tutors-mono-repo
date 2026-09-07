@@ -20,6 +20,15 @@
           allowtransparency="true"
           allowfullscreen></iframe>
       </div>
+    {{ else if lo.videoids.videoIds.length > 0 && lo.videoids.videoIds[lo.videoids.videoIds.length - 1].service === 'panopto' }}
+      <div class="relative mx-auto aspect-video w-4/5" style="padding-top: 40%;">
+        <iframe
+          title="{{ lo.title }}"
+          class="absolute inset-0 w-full h-full"
+          src="{{ lo.videoids.videoIds[lo.videoids.videoIds.length - 1].id |> panoptoEmbedUrl }}"
+          allow="autoplay"
+          allowfullscreen></iframe>
+      </div>
     {{ else }}
       <div class="relative mx-auto aspect-video w-4/5" style="padding-top: 40%;">
         <iframe 
