@@ -112,10 +112,16 @@ export const CourseBroadcastSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Ephemeral gist sharing (issue #155)
+// Ephemeral snippet sharing (issue #155)
 // ---------------------------------------------------------------------------
 
-/** A row in the `course_gists` table (public metadata, read-only for anon). */
+/**
+ * A row in the `course_gists` table.
+ *
+ * The snippet body lives in this row (`content`), not on GitHub. The table is
+ * CLOSED to the anon role — only the reader's write route and the time app's
+ * authorised educator route touch it, both with the service key.
+ */
 export const CourseGistSchema = z.object({
   id: z.string().uuid(),
   created_at: z.string(),
@@ -124,37 +130,30 @@ export const CourseGistSchema = z.object({
   // GitHub login of the creator.
   student_id: z.string().min(1),
   student_name: z.string().nullish(),
-  // GitHub gist id (a UUID).
-  gist_id: z.string().min(1),
-  // https://gist.github.com/…
-  gist_url: z.string().url(),
+  filename: z.string().nullish(),
+  content: z.string().min(1),
   title: z.string().nullish(),
   lo_route: z.string().nullish(),
   lo_title: z.string().nullish(),
 });
 
-/** A row in the `course_gist_secrets` table (anon-closed). */
-export const CourseGistSecretSchema = z.object({
-  gist_id: z.string().uuid(),
-  github_token: z.string().min(1),
-});
-
-/** The `gist-created` broadcast payload on the course channel. */
-export const GistCreatedEventSchema = z.object({
-  type: z.literal("gist-created"),
-  /** Stable id — guarantees exactly-once delivery per tab. */
-  id: z.string().min(1),
-  courseId: z.string().min(1),
-  gistId: z.string().min(1),
-  gistUrl: z.string().url(),
-  student_id: z.string().min(1),
-  student_name: z.string().optional(),
-  title: z.string().optional(),
-  lo_route: z.string().optional(),
-  lo_title: z.string().optional(),
-  expires_at: z.string().optional(),
-  sentAt: z.number(),
-});
+/**
+ * The `gist-created` broadcast payload on the course channel.
+ *
+ * `.strict()` is load-bearing, not tidiness: this payload rides the public
+ * anon key, so any student who joins the course topic can read it. The schema
+ * rejects unknown keys so that re-adding an identifying field (student login,
+ * snippet title, body…) fails the contract test rather than silently leaking.
+ */
+export const GistCreatedEventSchema = z
+  .object({
+    type: z.literal("gist-created"),
+    /** Stable id — guarantees exactly-once delivery per tab. */
+    id: z.string().min(1),
+    courseId: z.string().min(1),
+    sentAt: z.number(),
+  })
+  .strict();
 
 const LoBaseSchema = z.object({
   type: z.string(),
@@ -300,5 +299,4 @@ export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSche
 export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;
 export type CourseBroadcast = z.infer<typeof CourseBroadcastSchema>;
 export type CourseGist = z.infer<typeof CourseGistSchema>;
-export type CourseGistSecret = z.infer<typeof CourseGistSecretSchema>;
 export type GistCreatedEvent = z.infer<typeof GistCreatedEventSchema>;

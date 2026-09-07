@@ -14,9 +14,11 @@ const { handle: authInitHandle } = SvelteKitAuth({
     GithubProvider({
       clientId: PRIVATE_AUTH_GITHUB_ID,
       clientSecret: PRIVATE_AUTH_GITHUB_SECRET,
-      // request the `gist` scope in addition to the default (issue #155).
-      // Existing sessions will re-prompt for consent on next sign-in.
-      authorization: { params: { scope: "read:user user:email gist" } },
+      // Identity only. Snippet sharing (issue #155) stores snippets in
+      // Supabase rather than as GitHub gists precisely so that Tutors never
+      // has to ask a whole cohort for the `gist` scope — which grants
+      // read/write over every gist the student owns, not just ours.
+      authorization: { params: { scope: "read:user user:email" } },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       profile(profile: any) {
         return {
@@ -33,20 +35,11 @@ const { handle: authInitHandle } = SvelteKitAuth({
   callbacks: {
     async session({ session, token }) {
       session.user.login = token.login;
-      // The GitHub access token is intentionally NOT exposed to the client
-      // session. It is only ever read server-side (apps/reader/src/lib/auth.ts).
       return session;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.login = user.login;
-      }
-      // Persist the GitHub OAuth access token on the session JWT so server
-      // endpoints can reuse it for gist creation (issue #155). The token is
-      // encrypted at rest via the Auth.js secret and is never sent to the
-      // browser.
-      if (account?.access_token) {
-        token.access_token = account.access_token;
       }
       return token;
     }

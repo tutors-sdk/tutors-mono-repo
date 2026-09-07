@@ -1,24 +1,32 @@
--- Ephemeral snippet sharing (issue #155) — GitHub-backed, 48h TTL.
+-- Ephemeral snippet sharing (issue #155) — Supabase-backed, 48h TTL.
 --
--- Two tables:
---   * course_gists       : public metadata the lecturer dashboard reads, and
---                          the student's own confirmation reads. Readable by
---                          anon-key browser clients (the time app), never
---                          writable by them — writes go through the reader's
---                          server endpoint and the GH Actions cleanup job.
---   * course_gist_secrets: the GitHub access token used by the cleanup job to
---                          DELETE the gist on GitHub once the 48h cap is
---                          reached. Never readable by anon-key clients.
+-- Snippet bodies live in Postgres. Nothing is stored on GitHub, so Tutors
+-- never asks a student for the `gist` OAuth scope and never holds a GitHub
+-- access token on their behalf.
 --
--- Design notes:
---   * expires_at IS the server-computed `created_at + 48h`. Reads always
---     filter `expires_at > now()` (see anon_select_course_gists), so an
---     expired row is invisible before the cleanup job physically deletes it.
---   * The cleanup job (GH Actions cron) physically deletes the rows AND the
---     corresponding gists on GitHub (best-effort: if the user has revoked
---     their token, the row is still removed so it stops surfacing).
---   * course_gist_secrets uses CASCADE delete so removing the public row
---     also drops the stored token.
+-- Access model
+-- ------------
+-- This table is CLOSED to the anon role. There is deliberately no anon policy
+-- of any kind: the anon key ships in every client bundle, so an anon SELECT
+-- policy would make every student's code readable by anyone who opens
+-- devtools. Both reads and writes go through server routes holding the
+-- service-role key, which check that the caller is an educator of the course
+-- (enrollment.yaml `educators`, fetched from the course's tutors.json).
+--
+-- Realtime carries only a content-free "something was shared in course X"
+-- ping; the dashboard then re-fetches through the authorised route. Supabase
+-- broadcast on the anon key is readable by anyone, so no snippet data — not
+-- even a student name or title — is ever put on the wire.
+--
+-- Expiry
+-- ------
+-- expires_at is server-computed as created_at + 48h and is never client
+-- supplied. Reads filter `expires_at > now()` so an expired snippet is
+-- invisible before the cleanup job physically removes it.
+
+-- The GitHub-backed design stored an OAuth token per snippet. That table is
+-- gone; drop it if a previous revision of this migration was ever applied.
+DROP TABLE IF EXISTS course_gist_secrets;
 
 CREATE TABLE IF NOT EXISTS course_gists (
   id           UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -30,11 +38,9 @@ CREATE TABLE IF NOT EXISTS course_gists (
   -- is used by the lecturer dashboard to enrich names / avatars.
   student_id   TEXT NOT NULL,
   student_name TEXT,
-  -- GitHub gist id (uuid). Used by the cleanup job for DELETE /gists/{id}.
-  gist_id      TEXT NOT NULL,
-  -- Human-friendly URL (https://gist.github.com/…) shown in the toast action
-  -- button and in the dashboard table.
-  gist_url     TEXT NOT NULL,
+  -- The snippet itself.
+  filename     TEXT,
+  content      TEXT NOT NULL,
   -- Optional label supplied by the student at creation time.
   title        TEXT,
   -- Learning object (LO) the snippet was shared from, for dashboards.
@@ -42,48 +48,47 @@ CREATE TABLE IF NOT EXISTS course_gists (
   lo_title     TEXT
 );
 
-CREATE INDEX idx_course_gists_course ON course_gists (course_id, created_at DESC);
-CREATE INDEX idx_course_gists_expiry ON course_gists (expires_at);
+-- `IF NOT EXISTS` above is a no-op against a table left over from the
+-- GitHub-backed revision, which had `gist_id`/`gist_url NOT NULL` and no
+-- body columns — every insert would then fail on a missing `gist_id`.
+-- Reshape it explicitly. All of these are no-ops on a fresh table.
+ALTER TABLE course_gists ADD COLUMN IF NOT EXISTS filename TEXT;
+ALTER TABLE course_gists ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE course_gists DROP COLUMN IF EXISTS gist_id;
+ALTER TABLE course_gists DROP COLUMN IF EXISTS gist_url;
+UPDATE course_gists SET content = '' WHERE content IS NULL;
+ALTER TABLE course_gists ALTER COLUMN content SET NOT NULL;
 
--- Separate secret table so browser clients that can SELECT course_gists
--- never see the GitHub access token.
-CREATE TABLE IF NOT EXISTS course_gist_secrets (
-  gist_id      UUID NOT NULL REFERENCES course_gists(id) ON DELETE CASCADE,
-  github_token TEXT NOT NULL,
-  PRIMARY KEY (gist_id)
-);
+CREATE INDEX IF NOT EXISTS idx_course_gists_course ON course_gists (course_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_course_gists_expiry ON course_gists (expires_at);
 
 -- -----------------------------------------------------------------------------
 -- Row Level Security
 -- -----------------------------------------------------------------------------
-
--- Course gists are read-only for anon (dashboard + reader confirmation both
--- read). INSERT / UPDATE / DELETE are intentionally NOT allowed for anon, so
--- the reader endpoint and the GH Actions cleanup job must write with a
--- service-role credential (which bypasses RLS).
+-- RLS is enabled with NO policies, which denies every anon and authenticated
+-- request. Only the service-role key (which bypasses RLS) can touch this
+-- table, and it is only ever used from server routes that have already
+-- authorised the caller. Do not add an anon policy here.
 ALTER TABLE course_gists ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "anon_select_course_gists" ON course_gists
-  FOR SELECT TO anon
-  USING (expires_at > now());
-
--- Secrets are fully closed to anon. Only a service-role (or superuser) row
--- can insert / select / delete. Browser clients do not need to see this
--- table at all.
-ALTER TABLE course_gist_secrets ENABLE ROW LEVEL SECURITY;
-
--- Explicit index on the FK (Postgres does not auto-add one for a UNIQUE PK
--- that is the target of the FK in this case).
-CREATE INDEX IF NOT EXISTS idx_course_gist_secrets_gist ON course_gist_secrets (gist_id);
+-- Drop the policy from the previous GitHub-backed revision if present. It
+-- allowed `FOR SELECT TO anon USING (expires_at > now())`, which exposed every
+-- course's snippet metadata to any holder of the public anon key.
+DROP POLICY IF EXISTS "anon_select_course_gists" ON course_gists;
 
 -- -----------------------------------------------------------------------------
 -- Expiration helper (used by the GH Actions cleanup job)
 -- -----------------------------------------------------------------------------
--- Returns the expired rows that need to be physically deleted. Ordered by
--- earliest expiry so the job can process in deterministic batches.
-CREATE OR REPLACE FUNCTION expired_course_gists(limit_rows INT DEFAULT 200)
-RETURNS TABLE(id UUID, gist_id TEXT) AS $$
-  SELECT id, gist_id
+-- Returns expired rows for physical deletion, earliest first so the job can
+-- process deterministic batches.
+-- Dropped first, not replaced: the GitHub-backed revision returned
+-- `TABLE(id UUID, gist_id TEXT)`, and Postgres refuses CREATE OR REPLACE when
+-- the return type changes ("cannot change return type of existing function").
+DROP FUNCTION IF EXISTS expired_course_gists(INT);
+
+CREATE FUNCTION expired_course_gists(limit_rows INT DEFAULT 200)
+RETURNS TABLE(id UUID) AS $$
+  SELECT id
   FROM course_gists
   WHERE expires_at <= now()
   ORDER BY expires_at ASC

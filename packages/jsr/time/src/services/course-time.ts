@@ -9,6 +9,7 @@ import type {
 import { BaseCalendarModel } from "./base-calendar-model.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
 import { filterByDateRange } from "../utils/index.ts";
+import { courseJsonUrl } from "../utils/course-url.ts";
 import { getSupabase } from "./supabase.ts";
 
 export class CourseTime implements TutorsTimeCourse {
@@ -234,21 +235,28 @@ export class CourseTime implements TutorsTimeCourse {
   }
 
   /**
-   * Fetch tutors.json from the course's Netlify deployment and extract ignorePin.
+   * Fetch the course's published tutors.json and extract ignorePin.
    * Returns empty string if fetch fails, JSON is invalid, or ignorePin is missing.
+   *
+   * The origin comes from `courseJsonUrl`, so locally served and self-hosted
+   * courses resolve too — not just Netlify ones. An unreachable course yields
+   * `""`, which no input can satisfy, leaving the PIN dialog permanently shut.
    */
   static async getCoursePin(courseId: string): Promise<string> {
     const id = courseId.trim();
     if (!id) return "";
 
     try {
-      const url = `https://${id}.netlify.app/tutors.json`;
+      const url = courseJsonUrl(id);
       const res = await fetch(url);
       if (!res.ok) return "";
 
       const data = await res.json();
+      // `ignorepin: 4321` in properties.yaml parses as a *number*, so this is
+      // not the string the signature promises. PinDialog happens to coerce
+      // before comparing, but nothing obliges the next caller to.
       const pin = data?.properties?.ignorepin;
-      return pin;
+      return pin == null ? "" : String(pin);
     } catch {
       return "";
     }

@@ -5,9 +5,10 @@
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
   import OnlineButton from "../buttons/OnlineButton.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { currentCourse, tutorsId } from "@tutors/runes";
+  import { currentCourse, tutorsId, isEducator } from "@tutors/runes";
   import { analyticsEnabled } from "@tutors/connect";
   import { t } from "@tutors/i18n";
+  import { timeAppUrl } from "../utils/time-app";
 
   function logout() {
     tutorsConnectService.disconnect("/");
@@ -46,10 +47,24 @@
       {:else}
         <MenuItem text={t("menu.sharePresence")} type="offline" onClick={shareStatusChange} />
       {/if}
+      <!--
+        Educators only, unlike the TutorsTime entries above: those are gated on
+        the presence toggle, which every student can turn on. `isEducator` comes
+        from the course's `enrollment.educators` — the same list the dashboard
+        re-checks server-side before returning a single snippet.
+      -->
+      {#if isEducator.value}
+        <MenuItem
+          link={timeAppUrl(currentCourse.value?.courseId, "gists")}
+          text={t("lecturer.snippets.title")}
+          type="note"
+          targetStr="_blank"
+        />
+      {/if}
       {#if tutorsId.value?.share === "true"}
         {#if analyticsEnabled}
           <MenuItem link="/time/{currentCourse.value?.courseId}" text={t("menu.tutorsTime")} type="tutorsTime" />
-          <MenuItem link="https://time.tutors.dev/{currentCourse.value?.courseId}" text={t("menu.educatorTime")} type="tutorsTime" targetStr="_blank" />
+          <MenuItem link={timeAppUrl(currentCourse.value?.courseId)} text={t("menu.educatorTime")} type="tutorsTime" targetStr="_blank" />
         {/if}
         <MenuItem link="/live/{currentCourse.value?.courseId}" text={t("menu.tutorsLive")} type="live" targetStr="_blank" />
 

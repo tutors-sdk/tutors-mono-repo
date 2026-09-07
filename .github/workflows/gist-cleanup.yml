@@ -1,10 +1,11 @@
-name: Gist Cleanup
+name: Snippet Cleanup
 
-# Purges expired course gists (issue #155 — 48h ephemeral snippet sharing).
-# For every row where expires_at <= now() the job:
-#   1. Best-effort-deletes the GitHub gist using the student's stored token.
-#   2. Removes the metadata row (which cascades to the stored token).
-# Rows whose token has been rotated are still purged so they stop surfacing.
+# Purges expired course snippets (issue #155 — 48h ephemeral snippet sharing).
+# Snippets live entirely in Supabase, so expiry is just a row delete: every row
+# where expires_at <= now() is removed, in batches. There is no GitHub call and
+# no stored access token, so there is no partial-failure state to reconcile.
+# Reads already filter on expires_at, so this job reclaims storage rather than
+# enforcing the cap.
 
 on:
   schedule:
@@ -19,7 +20,7 @@ permissions:
 
 jobs:
   purge:
-    name: Purge expired gists
+    name: Purge expired snippets
     runs-on: ubuntu-latest
     # Only run scheduled runs on `main` (prevents forked-repo schedule abuse);
     # manual dispatch is allowed from any branch.
@@ -51,5 +52,5 @@ jobs:
       - name: Upload summary
         if: always()
         run: |
-          echo "## Gist cleanup summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Snippet cleanup summary" >> $GITHUB_STEP_SUMMARY
           echo "See the log above for per-row details." >> $GITHUB_STEP_SUMMARY

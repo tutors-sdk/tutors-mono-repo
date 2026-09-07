@@ -156,6 +156,8 @@ const de: Record<string, string> = {
   "lecturer.access.lecturers": "Dozenten",
   "lecturer.control.title": "Kurssteuerung",
   "lecturer.control.placeholder": "Kurssteuerungsfunktionen werden hier hinzugefuegt",
+  "lecturer.snippets.title": "Geteilte Ausschnitte",
+  "lecturer.snippets.hint": "Oeffnet in TutorsTime",
   "lecturer.locked.overlay": "Dieser Inhalt ist gesperrt",
 
   "a11y.skipToContent": "Zum Inhalt springen",

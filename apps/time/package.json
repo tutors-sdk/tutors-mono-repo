@@ -12,6 +12,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@auth/core": "^0.41.3",
+    "@auth/sveltekit": "^1.11.3",
     "@iconify/svelte": "^5.2.2",
     "@supabase/supabase-js": "^2.112.4",
     "@tutors/community": "workspace:*",

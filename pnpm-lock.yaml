@@ -217,6 +217,9 @@ importers:
       '@iconify/svelte':
         specifier: ^5.2.2
         version: 5.2.2(svelte@5.57.0(@typescript-eslint/types@8.68.0))
+      '@supabase/supabase-js':
+        specifier: ^2.112.4
+        version: 2.112.4
       '@tutors/community':
         specifier: workspace:*
         version: link:../../packages/svelte/community
@@ -323,6 +326,12 @@ importers:
 
   apps/time:
     dependencies:
+      '@auth/core':
+        specifier: ^0.41.3
+        version: 0.41.3
+      '@auth/sveltekit':
+        specifier: ^1.11.3
+        version: 1.11.3(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       '@iconify/svelte':
         specifier: ^5.2.2
         version: 5.2.2(svelte@5.57.0(@typescript-eslint/types@8.68.0))

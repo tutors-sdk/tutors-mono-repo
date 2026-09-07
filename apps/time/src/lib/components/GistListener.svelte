@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { onGistCreated, type GistCreatedEvent } from "@tutors/community";
+  import { onGistCreated } from "@tutors/community";
   import { toaster, BROADCAST_TOAST_DURATION } from "@tutors/ui-primitives/utils/toaster";
 
   interface Props {
@@ -10,19 +10,21 @@
 
   let { courseId }: Props = $props();
 
-  function showGistToast(event: GistCreatedEvent) {
-    const name = (event.student_name ?? event.student_id ?? "").trim() || "A student";
-    const title = (event.title ?? "").trim();
-    const description = title ? `${name} shared \u201C${title}\u201D` : `${name} shared a snippet`;
-
+  /**
+   * The realtime ping carries no snippet data — see gist-broadcast.ts. Supabase
+   * broadcast rides the public anon key, so anything put on the wire is
+   * readable by anyone. The toast therefore says only that *something* was
+   * shared, and points at the authorised dashboard for the detail.
+   */
+  function showGistToast() {
     toaster.create({
       type: "info",
       title: "New snippet shared",
-      description,
+      description: "A student shared a snippet with this course.",
       duration: BROADCAST_TOAST_DURATION,
       meta: {
-        actionUrl: event.gistUrl,
-        actionLabel: "View gist"
+        actionUrl: `/${courseId}/gists`,
+        actionLabel: "Open snippets"
       }
     });
   }
@@ -32,9 +34,6 @@
   $effect(() => {
     const id = courseId.trim();
     if (!id) return;
-    // onGistCreated guarantees exactly-once delivery per tab and is wired to
-    // the shared per-course Supabase broadcast channel (set up via
-    // presenceService's setGistSupabase on app import).
     stop = onGistCreated(id, showGistToast);
     return () => {
       stop?.();

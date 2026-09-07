@@ -23,19 +23,21 @@ export type SupabaseLike = Pick<SupabaseClient, "channel" | "removeChannel">;
 /** Wire event name (hyphenated to match the `lo-event` / `course-broadcast` convention). */
 const GIST_CREATED_EVENT = "gist-created";
 
+/**
+ * A content-free "something was shared" ping.
+ *
+ * Supabase broadcast rides the public anon key, so every field here is
+ * readable by anyone who joins the course topic — including students. Nothing
+ * identifying or authored may be added: no student name or login, no snippet
+ * title, no learning-object title, no snippet body. Receivers react by
+ * re-fetching through an authorised server route, which is where access
+ * control actually lives.
+ */
 export interface GistCreatedEvent {
   type: "gist-created";
   /** Stable id — guarantees exactly-once delivery per tab (crosses Supabase/BroadcastChannel). */
   id: string;
   courseId: string;
-  gistId: string;
-  gistUrl: string;
-  student_id: string;
-  student_name?: string;
-  title?: string;
-  lo_route?: string;
-  lo_title?: string;
-  expires_at?: string;
   sentAt: number;
 }
 
@@ -81,21 +83,13 @@ export function onGistCreated(courseId: string, handler: Handler): () => void {
  * Requires a configured Supabase client.
  * @returns `true` on success, `false` if not configured.
  */
-export function sendGistCreated(courseId: string, event: Omit<GistCreatedEvent, "type" | "id" | "sentAt">): boolean {
-  if (!supabase || !courseId || !event || !event.gistId || !event.gistUrl) return false;
+export function sendGistCreated(courseId: string): boolean {
+  if (!supabase || !courseId) return false;
   const state = stateFor(courseId);
   const payload: GistCreatedEvent = {
     type: "gist-created",
     id: defaultId(),
     courseId,
-    gistId: event.gistId,
-    gistUrl: event.gistUrl,
-    student_id: event.student_id,
-    student_name: event.student_name,
-    title: event.title,
-    lo_route: event.lo_route,
-    lo_title: event.lo_title,
-    expires_at: event.expires_at,
     sentAt: Date.now()
   };
   state.channel?.send({ type: "broadcast", event: GIST_CREATED_EVENT, payload });
@@ -159,10 +153,6 @@ function isGistCreated(e: unknown, courseId: string): e is GistCreatedEvent {
     rec != null &&
     rec.type === "gist-created" &&
     rec.courseId === courseId &&
-    typeof rec.gistId === "string" &&
-    rec.gistId.length > 0 &&
-    typeof rec.gistUrl === "string" &&
-    rec.gistUrl.length > 0 &&
     typeof rec.id === "string" &&
     rec.id.length > 0
   );
