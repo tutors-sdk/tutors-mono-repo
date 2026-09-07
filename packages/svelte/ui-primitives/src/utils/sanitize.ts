@@ -11,7 +11,10 @@ const ALLOWED_IFRAME_HOSTS = [
 function isAllowedIframeSrc(src: string): boolean {
   try {
     const url = new URL(src);
-    return ALLOWED_IFRAME_HOSTS.some((host) => url.hostname === host);
+    if (ALLOWED_IFRAME_HOSTS.some((host) => url.hostname === host)) {
+      return true;
+    }
+    return url.hostname.endsWith(".panopto.eu") || url.hostname.endsWith(".panopto.com");
   } catch {
     return false;
   }
