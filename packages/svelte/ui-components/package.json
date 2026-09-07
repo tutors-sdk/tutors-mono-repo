@@ -46,7 +46,7 @@
     "codemirror": "^6.0.2",
     "isomorphic-dompurify": "^3.23.0",
     "file-saver": "^2.0.5",
-    "pdfjs-dist": "^6.2.108"
+    "pdfjs-dist": "^6.3.289"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",
