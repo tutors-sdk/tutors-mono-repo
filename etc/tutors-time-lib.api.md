@@ -93,6 +93,9 @@ export class CourseTime implements TutorsTimeCourse;
 // (from src/utils/calendar-utils.ts)
 export function cellColorForMinutes(minutes: number | null | undefined) : string;
 
+// (from src/utils/course-url.ts)
+export function courseJsonUrl(courseId: string) : string;
+
 // (from src/utils/lab-utils.ts)
 export function extractLabIdentifier(loId: string) : string;
 
@@ -146,7 +149,7 @@ export const TutorsTime: TutorsTimeService;
 |------|-------|
 | class | 3 |
 | const | 1 |
-| function | 14 |
+| function | 15 |
 | interface | 7 |
 | type | 14 |
-| **Total** | **39** |
+| **Total** | **40** |
