@@ -43,8 +43,13 @@ jobs:
             fi
           done
 
+      # The time app is built as well as the reader. It now carries server-side
+      # authorisation for the snippet dashboard, which nothing else here would
+      # compile; and `svelte-kit sync` during its build is what writes
+      # `apps/time/.svelte-kit/tsconfig.json`, without which the unit tests that
+      # import from `apps/time/src` cannot be transformed.
       - name: Build all packages and apps
-        run: pnpm build
+        run: pnpm build && pnpm --filter tutors-time build
 
       - name: Check API surface reports
         run: pnpm api-report:check
