@@ -327,8 +327,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       '@supabase/supabase-js':
-        specifier: ^2.112.4
-        version: 2.112.4
+        specifier: ^2.115.0
+        version: 2.115.0
       '@tutors/community':
         specifier: workspace:*
         version: link:../../packages/svelte/community
@@ -438,14 +438,14 @@ importers:
   packages/jsr/time:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.112.4
-        version: 2.112.4
+        specifier: ^2.115.0
+        version: 2.115.0
 
   packages/svelte/community:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.112.4
-        version: 2.112.4
+        specifier: ^2.115.0
+        version: 2.115.0
       '@tutors/course':
         specifier: workspace:*
         version: link:../course
@@ -466,7 +466,7 @@ importers:
     dependencies:
       '@auth/sveltekit':
         specifier: ^1.11.3
-        version: 1.11.3(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.9(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.56.9(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.56.9(@typescript-eslint/types@8.68.0))
+        version: 1.11.3(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
@@ -487,7 +487,7 @@ importers:
         version: link:../../jsr/model
       svelte:
         specifier: ^5.0.0
-        version: 5.56.9(@typescript-eslint/types@8.68.0)
+        version: 5.57.0(@typescript-eslint/types@8.68.0)
 
   packages/svelte/course:
     dependencies:
@@ -2032,31 +2032,31 @@ packages:
       '@stryker-mutator/core': 10.0.0
       vitest: '>=2.0.0'
 
-  '@supabase/auth-js@2.112.4':
-    resolution: {integrity: sha512-z8DesgwLzKM5PiT0yNmJU8VJyh1zAhYi+20Z7drdJQLXg/wWW4yGt/un+He5ERYUo94Vz66t5aeyr1DIDemI5A==}
+  '@supabase/auth-js@2.115.0':
+    resolution: {integrity: sha512-YNQlQWm1H0gsXHSY8Jd/xepBhjO0Zhwx04iW17A83/joQ5kFiUin6iPj9s9kZZvupnwLjXVP/diTFiLz2jUbwQ==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/functions-js@2.112.4':
-    resolution: {integrity: sha512-DQ0aVH8wSQAccVqNoEkec62qCu2QRNyoGN53RqsVZ1k6F1zq4/v8scrlR6LNT2RJmT97apiTmORijPVhErCS2g==}
+  '@supabase/functions-js@2.115.0':
+    resolution: {integrity: sha512-p97V6/YFcdp+zblFDVJaE8f9rGKTNz0PRzyJ2d1w/EYIU5lwidKuc3l/wM+u27ACmAC62albvoGiUGzLPSg7Aw==}
     engines: {node: '>=22.0.0'}
 
   '@supabase/phoenix@0.4.5':
     resolution: {integrity: sha512-aAn9H9ovVyeApKy11OWOrrOGq8DV68yWeH4ud2lN9fzn4aO8Zb5GLL9m1pUg9nLqIcT+ZDfAcsZe0E/nqdv2lw==}
 
-  '@supabase/postgrest-js@2.112.4':
-    resolution: {integrity: sha512-uaubtPSeg2TR4wrtfQoQWgkTAe+a0qWX2KhmwvTfNl5mGN9+U7owiJt6abk3o/V6O899PSRD1yzxs5RlF4xTug==}
+  '@supabase/postgrest-js@2.115.0':
+    resolution: {integrity: sha512-DdERcurLh5t84pgSywDg2LjLR5le7XAzl52/iQhC7FdboWDqGfDPMfaWJV3MHvhyxSlSNzbpSQG+RiQOBSn/4w==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/realtime-js@2.112.4':
-    resolution: {integrity: sha512-vZ+j079SKrM0Xiq7MJCvQKLDpaH2kfKfLY68xuQE1sqsCsMmx1CyrDBJHsxZ3cX01VOs5SI9igmoZAF3BmdZxw==}
+  '@supabase/realtime-js@2.115.0':
+    resolution: {integrity: sha512-5HyBkvlA/IUV2v8jX3uLTdy15jmTPRVXwXKoxvH2SKw5jZMNURxCxt+VpCEukscXQlY7pUpH8Cy4NH6io4iaRw==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/storage-js@2.112.4':
-    resolution: {integrity: sha512-lQ0JemuTlMIXVKgSci1qez8yPnM5hyDngeAfEBjZS2Om4D+Cus0EE5BE6glFobrxdyii1OF4UzWfF0zcQgDq5A==}
+  '@supabase/storage-js@2.115.0':
+    resolution: {integrity: sha512-dLyIxzbO+MCcKHhcce8rVUCQX1iyqXqQ8ytgkOVYJ7D+Zp0qKylPtQH3hamgxrGSxtDjaw47Urpzw2iK9PsKdA==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/supabase-js@2.112.4':
-    resolution: {integrity: sha512-UiCX1udlFY1fQQrO7Z3GU7obQsju0w5Vk9mOOwalfo/+Gy+tahWVenSSuu5E/GTy/q//HxvGv2IrCdW66/61kw==}
+  '@supabase/supabase-js@2.115.0':
+    resolution: {integrity: sha512-PYJSxtCo37R7tTZW6pAqsxUeSx/dlhA7zn8RzKEUSCqyTxCUhG+iHrDTb04UyVBYbttaUbhwkNTvb8h5HW+uZA==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0'
@@ -4596,10 +4596,6 @@ packages:
     resolution: {integrity: sha512-PY8LOw7xP6c8IOiVqdo0sbbZVYhXRSfklOQLAUyGBKqjTX0wx/z4l/9J+PmBpmlLnxzEb1NqltxQ5/wZme/Cmg==}
     engines: {node: '>=18'}
 
-  svelte@5.56.9:
-    resolution: {integrity: sha512-VT8kSnlEg8069w7AiCcAk3Yf5xvMnrGTagVOmU/OpOLHaHnNqXhWZCH/4EVga/bT/HtWhvE6/fHrXLErx7OnJA==}
-    engines: {node: '>=18'}
-
   svelte@5.57.0:
     resolution: {integrity: sha512-NdbDn7fl4be1ViUG0oq/lvG6OZy3oENolV2ONjiqqsfVoeAfzaQAKUcEX3MrQod/Bebv1PgwET9rfXhgn9s4Kg==}
     engines: {node: '>=18'}
@@ -5034,13 +5030,6 @@ snapshots:
       oauth4webapi: 3.8.6
       preact: 10.24.3
       preact-render-to-string: 6.5.11(preact@10.24.3)
-
-  '@auth/sveltekit@1.11.3(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.9(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.56.9(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.56.9(@typescript-eslint/types@8.68.0))':
-    dependencies:
-      '@auth/core': 0.41.3
-      '@sveltejs/kit': 2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.9(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.56.9(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
-      set-cookie-parser: 2.7.2
-      svelte: 5.56.9(@typescript-eslint/types@8.68.0)
 
   '@auth/sveltekit@1.11.3(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))':
     dependencies:
@@ -6164,37 +6153,37 @@ snapshots:
       tslib: 2.8.1
       vitest: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.12.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
 
-  '@supabase/auth-js@2.112.4':
+  '@supabase/auth-js@2.115.0':
     dependencies:
       tslib: 2.8.1
 
-  '@supabase/functions-js@2.112.4':
+  '@supabase/functions-js@2.115.0':
     dependencies:
       tslib: 2.8.1
 
   '@supabase/phoenix@0.4.5': {}
 
-  '@supabase/postgrest-js@2.112.4':
+  '@supabase/postgrest-js@2.115.0':
     dependencies:
       tslib: 2.8.1
 
-  '@supabase/realtime-js@2.112.4':
+  '@supabase/realtime-js@2.115.0':
     dependencies:
       '@supabase/phoenix': 0.4.5
       tslib: 2.8.1
 
-  '@supabase/storage-js@2.112.4':
+  '@supabase/storage-js@2.115.0':
     dependencies:
       iceberg-js: 0.8.1
       tslib: 2.8.1
 
-  '@supabase/supabase-js@2.112.4':
+  '@supabase/supabase-js@2.115.0':
     dependencies:
-      '@supabase/auth-js': 2.112.4
-      '@supabase/functions-js': 2.112.4
-      '@supabase/postgrest-js': 2.112.4
-      '@supabase/realtime-js': 2.112.4
-      '@supabase/storage-js': 2.112.4
+      '@supabase/auth-js': 2.115.0
+      '@supabase/functions-js': 2.115.0
+      '@supabase/postgrest-js': 2.115.0
+      '@supabase/realtime-js': 2.115.0
+      '@supabase/storage-js': 2.115.0
 
   '@sveltejs/acorn-typescript@1.0.11(acorn@8.17.0)':
     dependencies:
@@ -6225,26 +6214,6 @@ snapshots:
       sirv: 3.0.2
       svelte: 5.56.8(@typescript-eslint/types@8.68.0)
       vite: 8.2.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
-    optionalDependencies:
-      typescript: 6.0.3
-
-  '@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.9(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.56.9(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.11(acorn@8.17.0)
-      '@sveltejs/vite-plugin-svelte': 7.3.0(svelte@5.56.9(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
-      '@types/cookie': 0.6.0
-      acorn: 8.17.0
-      cookie: 0.7.2
-      devalue: 5.8.2
-      esm-env: 1.2.2
-      kleur: 4.1.5
-      magic-string: 0.30.21
-      mrmime: 2.0.1
-      set-cookie-parser: 3.1.2
-      sirv: 3.0.2
-      svelte: 5.56.9(@typescript-eslint/types@8.68.0)
-      vite: 8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
     optionalDependencies:
       typescript: 6.0.3
 
@@ -6289,15 +6258,6 @@ snapshots:
       svelte: 5.56.8(@typescript-eslint/types@8.68.0)
       vite: 8.2.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
       vitefu: 1.1.3(vite@8.2.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
-
-  '@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.56.9(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
-    dependencies:
-      deepmerge: 4.3.1
-      magic-string: 1.1.1
-      obug: 2.1.4
-      svelte: 5.56.9(@typescript-eslint/types@8.68.0)
-      vite: 8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)
-      vitefu: 1.1.3(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
 
   '@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))':
     dependencies:
@@ -9215,27 +9175,6 @@ snapshots:
       '@types/estree': 1.0.9
       '@types/trusted-types': 2.0.7
       acorn: 8.17.0
-      aria-query: 5.3.1
-      axobject-query: 4.1.0
-      clsx: 2.1.1
-      devalue: 5.8.2
-      esm-env: 1.2.2
-      esrap: 2.3.0(@typescript-eslint/types@8.68.0)
-      is-reference: 3.0.3
-      locate-character: 3.0.0
-      magic-string: 0.30.21
-      zimmerframe: 1.1.4
-    transitivePeerDependencies:
-      - '@typescript-eslint/types'
-
-  svelte@5.56.9(@typescript-eslint/types@8.68.0):
-    dependencies:
-      '@jridgewell/remapping': 2.3.5
-      '@jridgewell/sourcemap-codec': 1.5.5
-      '@sveltejs/acorn-typescript': 1.0.11(acorn@8.18.0)
-      '@types/estree': 1.0.9
-      '@types/trusted-types': 2.0.7
-      acorn: 8.18.0
       aria-query: 5.3.1
       axobject-query: 4.1.0
       clsx: 2.1.1
