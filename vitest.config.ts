@@ -1,5 +1,14 @@
 import { defineConfig } from "vitest/config";
 import { resolve } from "path";
+import { createRequire } from "module";
+
+// packages/jsr/gen is a Deno package, so its `js-yaml` / `front-matter` imports
+// have no node_modules of their own to resolve against. Resolve them from the
+// workspace root by name rather than by pnpm virtual-store path, so version
+// bumps don't silently break the aliases.
+const require = createRequire(import.meta.url);
+const jsYaml = require.resolve("js-yaml");
+const frontMatter = require.resolve("front-matter");
 
 export default defineConfig({
   test: {
@@ -25,9 +34,9 @@ export default defineConfig({
       "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
       "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
       "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
-      "front-matter": resolve(__dirname, "node_modules/.pnpm/front-matter@4.0.2/node_modules/front-matter/index.js"),
-      "js-yaml": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
-      "npm:js-yaml@^4": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
+      "front-matter": frontMatter,
+      "js-yaml": jsYaml,
+      "npm:js-yaml@^4": jsYaml,
       "npm:archiver@^7": resolve(__dirname, "tests/support/archiver-shim.ts"),
       "@marp-team/marp-core": resolve(__dirname, "packages/svelte/course/node_modules/@marp-team/marp-core/lib/marp.js"),
       "@vento/vento": resolve(__dirname, "tests/support/vento-stub.ts"),
