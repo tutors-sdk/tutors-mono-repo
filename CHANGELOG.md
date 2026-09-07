@@ -8,6 +8,12 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.4 (2026-09)
+
+#### Fixes
+
+- Exclude locked content from walls: labs/talks/videos under a locked topic are now hidden from students on wall pages, with correct ancestor matching for topics nested inside units (PR #183)
+
 ### v16.1.3 (2026-09)
 
 #### Features
