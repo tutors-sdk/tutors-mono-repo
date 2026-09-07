@@ -12,22 +12,37 @@
 
 #### Features
 
-- **Ephemeral snippet sharing (GitHub Gists)** — signed-in students can share a snippet from the reader; a secret gist is created, recorded as a 48-hour-ephemeral course gist, and the course lecturer is notified in real time (issue #155)
-  - New "Share snippet" flow: sign in with GitHub, paste a snippet, and it is saved as a secret gist owned by the student's own account
-  - New `/api/gists` server endpoint (rate-limited, size-bounded, secret gists only) that creates the gist, stores metadata, and fires a `gist-created` broadcast on the course channel
-  - GitHub OAuth now requests the `gist` scope in addition to `read:user user:email`. **Existing users are re-prompted for consent on next sign-in.** The `gist` scope lets Tutors create *your* gist — nothing more.
-  - The GitHub access token is captured on the session JWT and is **never sent to the browser**; it is used only server-side and stored in a separate table (`course_gist_secrets`) that is fully closed to anonymous clients.
+- **Ephemeral snippet sharing** — signed-in students can share a code snippet with their tutor from inside the reader; it appears on a lecturer dashboard in TutorsTime and disappears after 48 hours (issue #155)
+  - New "Share snippet" flow: sign in with GitHub, paste a snippet, and it is filed against the learning object you shared it from
+  - New `/api/gists` server endpoint (rate-limited, size-bounded) that stores the snippet and fires a content-free `gist-created` broadcast on the course channel
+  - GitHub OAuth scope is unchanged (`read:user user:email`). Snippets are **not** GitHub Gists: they live in Supabase, so Tutors never asks for the `gist` scope and never holds a GitHub access token on a student's behalf. A student cannot currently re-read or withdraw a snippet they have shared.
+  - Lecturer panel and profile menu link through to the dashboard for educators
 
 #### Security
 
-- New `PRIVATE_SUPABASE_SERVICE_KEY` env var for authenticated server writes (reader endpoint + cleanup job). The service-role key is never exposed to the client.
-- New `course_gists` + `course_gist_secrets` tables with Row Level Security; public metadata is read-only for anonymous clients and auto-hidden once `expires_at` passes; the token table is closed to anonymous clients outright.
+- New `PRIVATE_SUPABASE_SERVICE_KEY` env var for authenticated server reads and writes (reader endpoint, dashboard, cleanup job). The service-role key is never exposed to the client.
+- New `course_gists` table with Row Level Security enabled and **no policies** — it is closed to anonymous clients outright, since the anon key ships in every client bundle. All access goes through server routes.
+- The lecturer dashboard authorises each request against the course's `enrollment.educators`, read from the published `tutors.json`. **A course must be republished with an `enrollment.yaml` before snippet sharing works for it.**
+- Realtime carries only a "something was shared in course X" ping with no snippet body, title, or student name; the dashboard re-fetches through the authorised route.
+- TutorsTime now supports GitHub sign-in, and needs its own GitHub OAuth App (one app permits one callback URL).
+- The snippet dashboard is exempt from the course PIN, which is a shared secret rather than a per-user check; every other TutorsTime route still prompts.
+
+#### Fixes
+
+- `getCoursePin` now returns a string as its signature promises; `ignorepin: 4321` parses as a YAML number.
 
 #### Maintenance
 
-- New `gist-cleanup.yml` GitHub Actions workflow (cron, 2×/day) purges expired gists on GitHub (best-effort, using the stored student token) and removes the metadata rows.
+- New `gist-cleanup.yml` GitHub Actions workflow (cron, 2×/day) purges expired snippet rows. Reads already filter on `expires_at`, so this reclaims storage rather than enforcing the cap.
 - New `scripts/purge-course-gists.ts` maintenance script (supports `DRY_RUN=1`).
-- Contract tests for the `course_gists` row schema and the `gist-created` realtime protocol.
+- New `scripts/dev/fake-supabase.mjs`, a PostgREST + Realtime stand-in for driving the feature locally against a real published course.
+- Contract tests for the `course_gists` row schema, the `gist-created` realtime protocol, and `enrollment` publication.
+
+### v16.1.4 (2026-09)
+
+#### Fixes
+
+- Exclude locked content from walls: labs/talks/videos under a locked topic are now hidden from students on wall pages, with correct ancestor matching for topics nested inside units (PR #183)
 
 ### v16.1.3 (2026-09)
 

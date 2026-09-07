@@ -819,6 +819,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../runes
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/model
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.68.0)

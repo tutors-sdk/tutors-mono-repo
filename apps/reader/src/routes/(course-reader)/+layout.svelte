@@ -5,6 +5,7 @@
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
   import { currentCourse, isEducator, contentLocks } from "@tutors/runes";
+  import { rbacService, isLoRouteLocked } from "@tutors/rbac";
   import { afterNavigate, goto } from "$app/navigation";
 
   type Props = { children: Snippet };
@@ -28,11 +29,14 @@
 
   afterNavigate(({ to }) => {
     if (currentCourse.value?.hasEnrollment && !isEducator.value && to?.url?.pathname) {
-      for (const [route, locked] of contentLocks.value) {
-        if (locked && to.url.pathname.includes(route)) {
-          goto(`/course/${currentCourse.value.courseId}`);
-          return;
-        }
+      const pathname = to.url.pathname;
+      const lo = currentCourse.value.loIndex?.get(pathname);
+      const blocked = lo
+        ? rbacService.isLoLocked(lo)
+        : isLoRouteLocked(pathname, contentLocks.value);
+      if (blocked) {
+        goto(`/course/${currentCourse.value.courseId}`);
+        return;
       }
     }
     const elemPage = document.querySelector("#content-panel");
