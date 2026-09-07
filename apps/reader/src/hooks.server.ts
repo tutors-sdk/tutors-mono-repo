@@ -14,6 +14,11 @@ const { handle: authInitHandle } = SvelteKitAuth({
     GithubProvider({
       clientId: PRIVATE_AUTH_GITHUB_ID,
       clientSecret: PRIVATE_AUTH_GITHUB_SECRET,
+      // Identity only. Snippet sharing (issue #155) stores snippets in
+      // Supabase rather than as GitHub gists precisely so that Tutors never
+      // has to ask a whole cohort for the `gist` scope — which grants
+      // read/write over every gist the student owns, not just ours.
+      authorization: { params: { scope: "read:user user:email" } },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       profile(profile: any) {
         return {

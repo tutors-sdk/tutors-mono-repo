@@ -156,6 +156,8 @@ const es: Record<string, string> = {
   "lecturer.access.lecturers": "Profesores",
   "lecturer.control.title": "Control del curso",
   "lecturer.control.placeholder": "Las funciones de control del curso se agregaran aqui",
+  "lecturer.snippets.title": "Fragmentos compartidos",
+  "lecturer.snippets.hint": "Se abre en TutorsTime",
   "lecturer.locked.overlay": "Este contenido esta bloqueado",
 
   "a11y.skipToContent": "Ir al contenido",

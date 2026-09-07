@@ -156,6 +156,8 @@ const fr: Record<string, string> = {
   "lecturer.access.lecturers": "Enseignants",
   "lecturer.control.title": "Controle du cours",
   "lecturer.control.placeholder": "Les fonctions de controle du cours seront ajoutees ici",
+  "lecturer.snippets.title": "Extraits partages",
+  "lecturer.snippets.hint": "Ouvre dans TutorsTime",
   "lecturer.locked.overlay": "Ce contenu est verrouille",
 
   "a11y.skipToContent": "Aller au contenu",

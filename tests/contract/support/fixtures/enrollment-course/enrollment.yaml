@@ -1,0 +1,8 @@
+  educators:
+    - lecturer-one
+    - lecturer-two
+  whitelist:
+    - student1
+  students:
+    - name: "A Student"
+      id: student1

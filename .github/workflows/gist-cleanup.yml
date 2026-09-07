@@ -1,0 +1,56 @@
+name: Snippet Cleanup
+
+# Purges expired course snippets (issue #155 — 48h ephemeral snippet sharing).
+# Snippets live entirely in Supabase, so expiry is just a row delete: every row
+# where expires_at <= now() is removed, in batches. There is no GitHub call and
+# no stored access token, so there is no partial-failure state to reconcile.
+# Reads already filter on expires_at, so this job reclaims storage rather than
+# enforcing the cap.
+
+on:
+  schedule:
+    # Runs twice a day at 00:15 and 12:15 UTC — well within the 48h cap so
+    # no valid gist is lost even if a run fails and the next retries.
+    - cron: "15 0,12 * * *"
+  # Manual trigger for testing or to catch up after a long outage.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  purge:
+    name: Purge expired snippets
+    runs-on: ubuntu-latest
+    # Only run scheduled runs on `main` (prevents forked-repo schedule abuse);
+    # manual dispatch is allowed from any branch.
+    if: github.repository == 'tutors-sdk/tutors-mono-repo' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prod=false
+
+      - name: Run purge
+        env:
+          SUPABASE_URL: ${{ vars.PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: pnpm tsx scripts/purge-course-gists.ts
+
+      - name: Upload summary
+        if: always()
+        run: |
+          echo "## Snippet cleanup summary" >> $GITHUB_STEP_SUMMARY
+          echo "See the log above for per-row details." >> $GITHUB_STEP_SUMMARY

@@ -8,6 +8,36 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- **Ephemeral snippet sharing** — signed-in students can share a code snippet with their tutor from inside the reader; it appears on a lecturer dashboard in TutorsTime and disappears after 48 hours (issue #155)
+  - New "Share snippet" flow: sign in with GitHub, paste a snippet, and it is filed against the learning object you shared it from
+  - New `/api/gists` server endpoint (rate-limited, size-bounded) that stores the snippet and fires a content-free `gist-created` broadcast on the course channel
+  - GitHub OAuth scope is unchanged (`read:user user:email`). Snippets are **not** GitHub Gists: they live in Supabase, so Tutors never asks for the `gist` scope and never holds a GitHub access token on a student's behalf. A student cannot currently re-read or withdraw a snippet they have shared.
+  - Lecturer panel and profile menu link through to the dashboard for educators
+
+#### Security
+
+- New `PRIVATE_SUPABASE_SERVICE_KEY` env var for authenticated server reads and writes (reader endpoint, dashboard, cleanup job). The service-role key is never exposed to the client.
+- New `course_gists` table with Row Level Security enabled and **no policies** — it is closed to anonymous clients outright, since the anon key ships in every client bundle. All access goes through server routes.
+- The lecturer dashboard authorises each request against the course's `enrollment.educators`, read from the published `tutors.json`. **A course must be republished with an `enrollment.yaml` before snippet sharing works for it.**
+- Realtime carries only a "something was shared in course X" ping with no snippet body, title, or student name; the dashboard re-fetches through the authorised route.
+- TutorsTime now supports GitHub sign-in, and needs its own GitHub OAuth App (one app permits one callback URL).
+- The snippet dashboard is exempt from the course PIN, which is a shared secret rather than a per-user check; every other TutorsTime route still prompts.
+
+#### Fixes
+
+- `getCoursePin` now returns a string as its signature promises; `ignorepin: 4321` parses as a YAML number.
+
+#### Maintenance
+
+- New `gist-cleanup.yml` GitHub Actions workflow (cron, 2×/day) purges expired snippet rows. Reads already filter on `expires_at`, so this reclaims storage rather than enforcing the cap.
+- New `scripts/purge-course-gists.ts` maintenance script (supports `DRY_RUN=1`).
+- New `scripts/dev/fake-supabase.mjs`, a PostgREST + Realtime stand-in for driving the feature locally against a real published course.
+- Contract tests for the `course_gists` row schema, the `gist-created` realtime protocol, and `enrollment` publication.
+
 ### v16.1.4 (2026-09)
 
 #### Fixes
@@ -116,6 +146,13 @@
 ---
 
 ## Time (`tutors-time`)
+
+### v16.2.0 (2026-09)
+
+#### Features
+
+- **Shared snippets dashboard** — new "Shared Snippets" view (PIN-gated, like the other dashboard views) listing the active gists a course's students have shared, with student avatar, learning object, creation time, and a live "time remaining" column (issue #155)
+- Live updates: new snippets appear in real time via the course `gist-created` broadcast; the lecturer also receives a toast with a "View gist" action (activating the previously-unused toast scaffolding)
 
 ### v1.0.0 (2026-08)
 

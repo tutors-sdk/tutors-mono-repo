@@ -95,6 +95,66 @@ export const RealtimeChannelSchema = z.object({
   type: z.enum(["global", "course"]),
 });
 
+/**
+ * Lecturer → student real-time toast broadcast (issue #78).
+ * Mirrors CourseBroadcast in packages/svelte/community/src/services/broadcast.ts.
+ */
+export const CourseBroadcastSchema = z.object({
+  type: z.literal("course:broadcast"),
+  id: z.string().min(1),
+  courseId: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  actionUrl: z.string().optional(),
+  actionLabel: z.string().optional(),
+  senderName: z.string().min(1),
+  sentAt: z.number(),
+});
+
+// ---------------------------------------------------------------------------
+// Ephemeral snippet sharing (issue #155)
+// ---------------------------------------------------------------------------
+
+/**
+ * A row in the `course_gists` table.
+ *
+ * The snippet body lives in this row (`content`), not on GitHub. The table is
+ * CLOSED to the anon role — only the reader's write route and the time app's
+ * authorised educator route touch it, both with the service key.
+ */
+export const CourseGistSchema = z.object({
+  id: z.string().uuid(),
+  created_at: z.string(),
+  expires_at: z.string(),
+  course_id: z.string().min(1),
+  // GitHub login of the creator.
+  student_id: z.string().min(1),
+  student_name: z.string().nullish(),
+  filename: z.string().nullish(),
+  content: z.string().min(1),
+  title: z.string().nullish(),
+  lo_route: z.string().nullish(),
+  lo_title: z.string().nullish(),
+});
+
+/**
+ * The `gist-created` broadcast payload on the course channel.
+ *
+ * `.strict()` is load-bearing, not tidiness: this payload rides the public
+ * anon key, so any student who joins the course topic can read it. The schema
+ * rejects unknown keys so that re-adding an identifying field (student login,
+ * snippet title, body…) fails the contract test rather than silently leaking.
+ */
+export const GistCreatedEventSchema = z
+  .object({
+    type: z.literal("gist-created"),
+    /** Stable id — guarantees exactly-once delivery per tab. */
+    id: z.string().min(1),
+    courseId: z.string().min(1),
+    sentAt: z.number(),
+  })
+  .strict();
+
 const LoBaseSchema = z.object({
   type: z.string(),
   id: z.string(),
@@ -237,3 +297,6 @@ export type WhiteboardSceneInit = z.infer<typeof WhiteboardSceneInitSchema>;
 export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
 export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
 export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;
+export type CourseBroadcast = z.infer<typeof CourseBroadcastSchema>;
+export type CourseGist = z.infer<typeof CourseGistSchema>;
+export type GistCreatedEvent = z.infer<typeof GistCreatedEventSchema>;

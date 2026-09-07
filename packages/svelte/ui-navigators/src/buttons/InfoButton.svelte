@@ -7,6 +7,8 @@
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
   import type { Lo, Composite } from "@tutors/tutors-model-lib";
+  import BroadcastPanel from "../panels/BroadcastPanel.svelte";
+  import { timeAppUrl } from "../utils/time-app";
 
   let { showEducatorPanel = false } = $props();
 
@@ -94,6 +96,19 @@
 
       <Tabs.Content value="enrollment">
         <div class="space-y-3 p-2">
+          <a
+            href={timeAppUrl(course?.courseId, "gists")}
+            target="_blank"
+            rel="noopener"
+            class="hover:preset-tonal flex items-center justify-between rounded-lg border-b p-2"
+          >
+            <span class="flex items-center gap-2">
+              <Icon type="note" height="20" />
+              <span class="text-sm">{t("lecturer.snippets.title")}</span>
+            </span>
+            <span class="text-surface-500 text-xs">{t("lecturer.snippets.hint")}</span>
+          </a>
+
           {#if enrollment?.educators && enrollment.educators.length > 0}
             <div>
               <h4 class="mb-1 text-sm font-medium">Educators</h4>
@@ -144,9 +159,28 @@
       </Tabs.Content>
 
       <Tabs.Content value="control">
-        <div class="space-y-2 p-2">
-          <p class="text-sm text-surface-500">{t("lecturer.control.placeholder")}</p>
+        <!--
+          Snippets live in the TutorsTime app, not here: reading them needs the
+          service-role key, which only a server route may hold. This is a link
+          out, and the destination re-checks `enrollment.educators` server-side
+          — being able to see the link is not what grants access.
+        -->
+        <div class="mb-2 border-b p-2">
+          <a
+            href={timeAppUrl(course?.courseId, "gists")}
+            target="_blank"
+            rel="noopener"
+            class="flex items-center justify-between rounded-lg p-2 hover:preset-tonal"
+          >
+            <span class="flex items-center gap-2">
+              <Icon type="note" height="20" />
+              <span class="text-sm">{t("lecturer.snippets.title")}</span>
+            </span>
+            <span class="text-xs text-surface-500">{t("lecturer.snippets.hint")}</span>
+          </a>
         </div>
+
+        <BroadcastPanel />
       </Tabs.Content>
 
       <Tabs.Content value="access">

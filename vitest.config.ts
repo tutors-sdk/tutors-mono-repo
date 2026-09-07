@@ -25,6 +25,11 @@ export default defineConfig({
       "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
       "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
       "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
+      // Only the reader depends on Auth.js, so the bare specifier does not
+      // resolve from the repo root — without this, `vi.mock("@auth/core/jwt")`
+      // registers against a different id than the app imports and silently
+      // fails to intercept.
+      "@auth/core/jwt": resolve(__dirname, "apps/reader/node_modules/@auth/core/jwt.js"),
       "front-matter": resolve(__dirname, "node_modules/.pnpm/front-matter@4.0.2/node_modules/front-matter/index.js"),
       "js-yaml": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
       "npm:js-yaml@^4": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
