@@ -1,8 +1,50 @@
 import { rune } from "@tutors/runes";
 import { contentLocks, isEducator, locksLoaded, tutorsId, currentCourse } from "@tutors/runes";
+import type { Lo } from "@tutors/tutors-model-lib";
 import type { Role, Permission } from "./types.ts";
 import { roleHasPermission } from "./permissions.ts";
 import { getLocksForCourse, upsertLock } from "./lock-store.ts";
+
+function normalizeRoute(route: string): string {
+  return route.replace(/\/+$/, "");
+}
+
+function isRouteLocked(route: string, locks: Map<string, boolean>): boolean {
+  if (!route) return false;
+  const normalized = normalizeRoute(route);
+  return locks.get(route) === true || locks.get(normalized) === true;
+}
+
+/** Path after the LO-type segment, e.g. `/lab/cs101/week-01` → `cs101/week-01`. */
+function routePathAfterType(route: string): string {
+  const parts = normalizeRoute(route).split("/").filter(Boolean);
+  return parts.slice(1).join("/");
+}
+
+/** Returns true if loRoute matches any locked route (exact or descendant). */
+export function isLoRouteLocked(
+  loRoute: string,
+  locks: Map<string, boolean>,
+): boolean {
+  if (!loRoute) return false;
+
+  const normalized = normalizeRoute(loRoute);
+  if (isRouteLocked(normalized, locks)) return true;
+
+  const loPath = routePathAfterType(normalized);
+  if (!loPath) return false;
+
+  for (const [route, locked] of locks) {
+    if (!locked) continue;
+    const lockPath = routePathAfterType(route);
+    // Require course id + at least one segment so `/topic/{courseId}` cannot lock the whole course.
+    if (!lockPath || lockPath.split("/").length < 2) continue;
+    if (loPath === lockPath || loPath.startsWith(`${lockPath}/`)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function createRbacService() {
   const currentRole = rune<Role>("student");
@@ -37,7 +79,10 @@ function createRbacService() {
   }
 
   async function loadContentLocks(courseId: string): Promise<void> {
-    if (!courseId) return;
+    if (!courseId) {
+      locksLoaded.value = true;
+      return;
+    }
     locksLoaded.value = false;
 
     const locks = await getLocksForCourse(courseId);
@@ -80,6 +125,24 @@ function createRbacService() {
     return contentLocks.value.get(loRoute) === true;
   }
 
+  function isLoLocked(lo: Lo): boolean {
+    const locks = contentLocks.value;
+    let current: Lo | undefined = lo;
+    while (current) {
+      if (
+        current.type !== "course" &&
+        current.type !== "unit" &&
+        current.type !== "side" &&
+        current.route &&
+        isRouteLocked(current.route, locks)
+      ) {
+        return true;
+      }
+      current = current.parentLo;
+    }
+    return false;
+  }
+
   function checkLecturerStatus(course?: { enrollment?: { educators?: string[] } }): void {
     const login = tutorsId.value?.login;
     const educators = course?.enrollment?.educators ?? currentCourse.value?.enrollment?.educators ?? [];
@@ -114,6 +177,7 @@ function createRbacService() {
     loadContentLocks,
     toggleContentLock,
     isLocked,
+    isLoLocked,
     checkLecturerStatus,
     clear
   };

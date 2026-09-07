@@ -77,11 +77,26 @@ Educators can lock and unlock top-level learning objects (topics, units) to hide
 4. Locked content is **completely hidden** from students — not blurred or greyed out.
 5. A `locksLoaded` rune prevents locked content from flashing briefly before the lock state is fetched.
 
+### Descendant Route Filtering
+
+Locks are stored by **topic or unit route** (e.g. `/course/cs101/topic-01`). Filtering uses **ancestor matching**: a learning object is hidden if its route includes any locked route. This matches the navigation guard in `+layout.svelte`, which blocks direct access to locked routes and their descendants.
+
+| LO route | Locked route | Hidden from students? |
+|----------|--------------|-------------------------|
+| `/course/cs101/topic-01` | `/course/cs101/topic-01` | Yes (exact match) |
+| `/course/cs101/topic-01/lab-03` | `/course/cs101/topic-01` | Yes (descendant) |
+| `/course/cs101/topic-02/lab-03` | `/course/cs101/topic-01` | No |
+
+This ensures child learning objects (labs, talks, notes, videos, etc.) disappear from **walls** (`/wall/lab/...`, `/wall/talk/...`, `/wall/video/...`) when their parent topic or unit is locked, not only from the course home cards.
+
+The shared helper `isLoRouteLocked(loRoute, locks)` (exported from `@tutors/rbac`) implements this check. UI components call `rbacService.isLoLocked(lo)`, which delegates to `isLoRouteLocked` using the current `contentLocks` map. Educator bypass remains in the UI layer (`isEducator`).
+
 ### Student View
 
-- Locked learning objects are removed from the card/unit layout entirely
+- Locked learning objects are removed from card, unit, and wall layouts entirely (including descendants of a locked topic or unit)
 - Students see no indication that content has been locked
 - The info sidebar shows standard course information only
+- Direct navigation to a locked route or any descendant is redirected (see `+layout.svelte`)
 
 ### Educator View
 
@@ -109,8 +124,8 @@ Located at `packages/svelte/utils/rbac/`. Contains:
 | `src/types.ts` | `Role`, `Permission`, and `ContentLock` type definitions |
 | `src/permissions.ts` | Static role-to-permission mapping and query functions |
 | `src/lock-store.ts` | Supabase CRUD operations for `tutors_content_locks` table |
-| `src/rbac-service.svelte.ts` | Main service: role resolution, lock management, educator status |
-| `src/index.ts` | Public exports |
+| `src/rbac-service.svelte.ts` | Main service: role resolution, lock management, educator status, `isLoRouteLocked` / `isLoLocked` |
+| `src/index.ts` | Public exports (`rbacService`, `isLoRouteLocked`) |
 
 ### Reactive State (Runes)
 
@@ -127,8 +142,10 @@ The following runes in `@tutors/runes` support RBAC:
 | File | What it does |
 |------|-------------|
 | `connect.svelte.ts` | Calls `rbacService.loadRole()`, `checkLecturerStatus()`, and `loadContentLocks()` on course visit. Educator bypass in `checkWhiteList()`. |
-| `Cards.svelte` | Hides locked cards from students. Shows lock icon on locked cards for educators. Waits for `locksLoaded`. |
-| `Units.svelte` | Same pattern as Cards for unit-level content. |
+| `Cards.svelte` | Hides locked cards (and descendants) from students via `rbacService.isLoLocked`. Shows lock icon on directly locked cards for educators. Waits for `locksLoaded`. |
+| `Units.svelte` | Same lock filtering as Cards for unit-level content. |
+| `Wall.svelte` | Filters video/podcast walls with `rbacService.isLoLocked` (these paths bypass Cards). Waits for `locksLoaded`. |
+| `+layout.svelte` (reader) | Redirects students away from locked routes and descendants (`pathname.includes(route)`). |
 | `InfoButton.svelte` | Renders tabbed educator panel when `showEducatorPanel` is true. Contains lock toggle switches. |
 | `MainNavigator.svelte` | Passes `isEducator.value` as `showEducatorPanel` prop to InfoButton. |
 | `Sidebar.svelte` | Accepts `width` prop to support wider educator sidebar. |
@@ -144,7 +161,7 @@ rbacService.checkLecturerStatus() → isEducator rune
     ↓
 MainNavigator passes showEducatorPanel → InfoButton
     ↓
-Cards/Units read isEducator + contentLocks to filter visible content
+Cards/Units/Wall call rbacService.isLoLocked + isEducator to filter visible content
 ```
 
 ## Supabase Setup
