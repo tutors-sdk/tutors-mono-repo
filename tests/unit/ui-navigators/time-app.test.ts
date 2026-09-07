@@ -47,6 +47,15 @@ describe("timeAppUrl", () => {
     expect(timeAppUrl("cs101", "/gists")).toBe("https://time.tutors.dev/cs101/gists");
   });
 
+  it("stays linear on a long run of leading slashes", () => {
+    // `/^\/+/` was quadratic on this shape — same class as the course-url
+    // ReDoS. Callers pass literals today, but that is not a guarantee.
+    stubHostname("cs101.netlify.app");
+    const started = performance.now();
+    expect(timeAppUrl("cs101", `${"/".repeat(50_000)}gists`)).toBe("https://time.tutors.dev/cs101/gists");
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+
   it("falls back to production when there is no location (SSR)", () => {
     vi.stubGlobal("location", undefined);
     expect(timeAppUrl("cs101")).toBe("https://time.tutors.dev/cs101");

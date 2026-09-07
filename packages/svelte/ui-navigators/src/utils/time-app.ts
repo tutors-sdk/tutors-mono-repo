@@ -27,6 +27,10 @@ function timeAppOrigin(): string {
  */
 export function timeAppUrl(courseId: string | undefined, path = ""): string {
   const id = (courseId ?? "").trim();
-  const suffix = path ? `/${path.replace(/^\/+/, "")}` : "";
+  // Leading `/` trimmed by scanning rather than `/^\/+/`, which backtracks
+  // quadratically on a long run of slashes (CodeQL js/polynomial-redos).
+  let start = 0;
+  while (start < path.length && path.charCodeAt(start) === 47) start++;
+  const suffix = path ? `/${path.slice(start)}` : "";
   return `${timeAppOrigin()}/${id}${suffix}`;
 }

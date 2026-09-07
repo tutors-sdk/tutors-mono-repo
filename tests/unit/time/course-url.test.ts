@@ -44,6 +44,15 @@ describe("courseJsonUrl", () => {
   it("trims surrounding whitespace", () => {
     expect(courseJsonUrl("  cs101-2025  ")).toBe("https://cs101-2025.netlify.app/tutors.json");
   });
+
+  it("stays linear on a long run of trailing slashes", () => {
+    // The course id comes off a URL parameter. Stripping with `/\/+$/` made
+    // this quadratic (CodeQL js/polynomial-redos): 50k slashes took seconds.
+    const id = `localhost:8080${"/".repeat(50_000)}`;
+    const started = performance.now();
+    expect(courseJsonUrl(id)).toBe("http://localhost:8080/tutors.json");
+    expect(performance.now() - started).toBeLessThan(250);
+  });
 });
 
 describe("CourseTime.getCoursePin", () => {
