@@ -88,13 +88,13 @@
 {/snippet}
 
 {#snippet figure(cardDetails: CardDetails)}
-  <figure class="flex items-center justify-center">
+  <figure class="flex items-center justify-center {isCircular ? 'h-full w-full min-h-0' : ''}">
     {#if cardDetails.student}
-      <img src={cardDetails.student.avatar} alt={cardDetails.student.fullName} class="{styles.image} object-contain object-center {isCircular ? 'rounded-full' : 'rounded-xl'}" />
+      <img src={cardDetails.student.avatar} alt={cardDetails.student.fullName} class="{styles.image} object-contain object-center {isCircular ? 'max-h-full max-w-full rounded-full' : 'rounded-xl'}" />
     {:else if cardDetails.icon}
-      <Iconify icon={cardDetails.icon.type} color={cardDetails.icon.color} height={styles.icon} />
+      <Iconify icon={cardDetails.icon.type} color={cardDetails.icon.color} height={styles.icon} class={isCircular ? "h-auto max-h-full w-auto max-w-full" : ""} />
     {:else}
-      <img src={cardDetails.img} alt={cardDetails.title} class="{styles.image} object-contain object-center {isCircular ? 'rounded-full' : ''}" />
+      <img src={cardDetails.img} alt={cardDetails.title} class="{styles.image} object-contain object-center {isCircular ? 'max-h-full max-w-full rounded-full' : ''}" />
     {/if}
   </figure>
 {/snippet}
@@ -123,14 +123,14 @@
 {/snippet}
 
 {#snippet circular(cardDetails: CardDetails)}
-  <div class="relative flex h-full flex-col items-center justify-center p-4 text-center">
-    <div class="text-l absolute top-8 right-0 left-0 line-clamp-1 px-2 {styles.heading}">
+  <div class="flex h-full flex-col items-center justify-center gap-1 px-8 py-6 text-center">
+    <div class="line-clamp-2 w-full shrink-0 text-balance {styles.heading}">
       {cardDetails.title}
     </div>
-    <div class="mt-8 flex flex-1 items-center justify-center">
+    <div class="flex min-h-0 w-full flex-1 items-center justify-center">
       {@render figure(cardDetails)}
     </div>
-    <div class="mb-2">
+    <div class="shrink-0">
       <Icon type={cardDetails.type} height={styles.iconHeight} />
     </div>
   </div>
