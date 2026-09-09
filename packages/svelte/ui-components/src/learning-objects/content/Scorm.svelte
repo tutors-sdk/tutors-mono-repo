@@ -3,7 +3,7 @@
   import { browser } from "$app/environment";
   import type { Scorm } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
-  import { startScormSession, type ScormSession, type ScormSummary } from "@tutors/scorm";
+  import { scormAssetUrl, startScormSession, type ScormSession, type ScormSummary } from "@tutors/scorm";
   import { getScormRecord, upsertScormRecord } from "@tutors/community/utils/supabase-client";
 
   interface Props {
@@ -24,6 +24,15 @@
   let isFullscreen = $state(false);
 
   let session: ScormSession | undefined;
+
+  /**
+   * The package is framed from the reader rather than from the course's own host.
+   *
+   * A SCO finds the LMS by walking up `window.parent` looking for `API`, and that walk
+   * stops dead at an origin boundary. Courses are published to their own static host, so
+   * the files are passed through the reader to bring them onto this origin.
+   */
+  const frameSrc = $derived(lo.scorm ? scormAssetUrl(lo.scorm) : "");
 
   const courseId = $derived(lo.parentCourse?.courseId ?? "unknown");
   const learnerId = $derived(tutorsId.value?.login ?? "anonymous");
@@ -84,11 +93,17 @@
       </button>
     </div>
     {#if ready}
+      <!--
+        allow-same-origin is what lets the package reach the run-time, so the sandbox
+        cannot isolate the SCO's scripts from this page; what it does still withhold is
+        navigating the reader away, and unsandboxing itself in a frame of its own.
+      -->
       <iframe
-        src={lo.scorm}
+        src={frameSrc}
         title={lo.title}
         class="w-full border-0 {isFullscreen ? 'flex-1' : 'rounded-b-lg'}"
         style={isFullscreen ? "" : "height: 80vh;"}
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
         allowfullscreen
       ></iframe>
     {:else}

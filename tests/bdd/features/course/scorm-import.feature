@@ -37,6 +37,13 @@ Feature: SCORM Import
     And the system shall keep the author's markdown out of the package
     And the system shall publish the card image beside the package
 
+  @ears-ubiquitous
+  Scenario: The package is framed from the reader's own origin
+    Given a course containing an imported SCORM package
+    Then the system shall frame the package from the reader rather than from the course host
+    And the system shall serve only files belonging to a package
+    And the system shall refuse a host only the reader's own machine can reach
+
   @ears-state-driven
   Scenario: A learner resumes where they left off
     While a learner has a suspended attempt at an imported package

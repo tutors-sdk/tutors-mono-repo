@@ -251,6 +251,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
+      '@tutors/scorm':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/scorm
       '@tutors/themes':
         specifier: workspace:*
         version: link:../../packages/svelte/themes

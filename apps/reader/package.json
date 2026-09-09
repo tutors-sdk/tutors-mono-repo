@@ -26,6 +26,7 @@
     "@tutors/logger": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
+    "@tutors/scorm": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-create": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",

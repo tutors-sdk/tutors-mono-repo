@@ -8,6 +8,7 @@
 export { createScorm12Api, createScorm2004Api, installScormApi, ScormRuntime } from "./api.ts";
 export type { Scorm12Api, Scorm2004Api } from "./api.ts";
 export { CmiModel, SCORM_ERROR } from "./model.ts";
+export { resolveScormAsset, SCORM_ASSET_ROUTE, scormAssetUrl } from "./proxy.ts";
 export { startScormSession } from "./session.ts";
 export type { ScormSession, ScormSessionOptions } from "./session.ts";
 export { createLocalScormStore, createScormStore } from "./store.ts";

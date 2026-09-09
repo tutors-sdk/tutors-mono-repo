@@ -11,7 +11,7 @@ import { FluentIconLib } from "../../../../packages/svelte/themes/src/icons/flue
 import { HeroIconLib } from "../../../../packages/svelte/themes/src/icons/hero-icons";
 import { FestiveIcons } from "../../../../packages/svelte/themes/src/icons/festive-icons";
 import { EasterIcons } from "../../../../packages/svelte/themes/src/icons/easter-icons";
-import { createLocalScormStore, installScormApi, type Scorm12Api } from "../../../../packages/svelte/utils/scorm/src/index";
+import { createLocalScormStore, installScormApi, resolveScormAsset, scormAssetUrl, type Scorm12Api } from "../../../../packages/svelte/utils/scorm/src/index";
 import { buildZip } from "../../../support/zip-writer";
 import type { Lo, Scorm } from "../../../../packages/jsr/model/src/types/learning-objects";
 
@@ -197,6 +197,27 @@ describe("Course: SCORM Import", () => {
 
     it("shall publish the card image beside the package", () => {
       expect(fs.existsSync(path.join(output, "topic-01", "scorm-quiz", "scorm-quiz.png"))).toBe(true);
+    });
+  });
+
+  describe("The package is framed from the reader's own origin", () => {
+    it("shall frame the package from the reader rather than from the course host", () => {
+      // A SCO finds the LMS by walking up window.parent, and that walk stops at an origin
+      // boundary, so the package has to be served from the page that publishes the API.
+      expect(scormAssetUrl("https://course.netlify.app/topic-01/scorm-quiz/package/shared/launch.html")).toBe(
+        "/scorm-content/course.netlify.app/topic-01/scorm-quiz/package/shared/launch.html",
+      );
+    });
+
+    it("shall serve only files belonging to a package", () => {
+      expect(resolveScormAsset("course.netlify.app", "topic-01/scorm-quiz/package/shared/launch.html")).toBe(
+        "https://course.netlify.app/topic-01/scorm-quiz/package/shared/launch.html",
+      );
+      expect(resolveScormAsset("course.netlify.app", "tutors.json")).toBeUndefined();
+    });
+
+    it("shall refuse a host only the reader's own machine can reach", () => {
+      expect(resolveScormAsset("169.254.169.254", "topic-01/scorm-quiz/package/launch.html")).toBeUndefined();
     });
   });
 

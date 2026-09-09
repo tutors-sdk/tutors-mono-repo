@@ -3,6 +3,7 @@ import { CmiModel, SCORM_ERROR } from "../../../packages/svelte/utils/scorm/src/
 import { formatDuration, parseDuration } from "../../../packages/svelte/utils/scorm/src/time.ts";
 import { createLocalScormStore, createScormStore } from "../../../packages/svelte/utils/scorm/src/store.ts";
 import { createScorm12Api, createScorm2004Api, installScormApi, ScormRuntime } from "../../../packages/svelte/utils/scorm/src/api.ts";
+import { resolveScormAsset, scormAssetUrl } from "../../../packages/svelte/utils/scorm/src/proxy.ts";
 import type { ScormStore, ScormSummary } from "../../../packages/svelte/utils/scorm/src/types.ts";
 
 /** A store that keeps the last snapshot, so tests can see what would have been persisted. */
@@ -380,5 +381,69 @@ describe("createScormStore", () => {
     const store = createScormStore("smoke", "/scorm/smoke/quiz-3");
     store.save({ "cmi.location": "question-2" }, { completionStatus: "incomplete", successStatus: "unknown", totalTime: 0 });
     expect(store.load()["cmi.location"]).toBe("question-2");
+  });
+});
+
+describe("scormAssetUrl", () => {
+  it("brings the package onto the reader's own origin", () => {
+    expect(scormAssetUrl("https://reference-course.netlify.app/topic-07/scorm-demo/package/index.html")).toBe(
+      "/scorm-content/reference-course.netlify.app/topic-07/scorm-demo/package/index.html",
+    );
+  });
+
+  it("keeps the host's port, so a course served locally still resolves", () => {
+    expect(scormAssetUrl("http://localhost:8080/topic-01/scorm-quiz/package/launch.html")).toBe(
+      "/scorm-content/localhost:8080/topic-01/scorm-quiz/package/launch.html",
+    );
+  });
+
+  it("leaves anything that is not a package address alone", () => {
+    // Better to frame the original and have the content report no LMS than to frame a
+    // reader URL that resolves to nothing.
+    expect(scormAssetUrl("https://example.com/somewhere/else.html")).toBe("https://example.com/somewhere/else.html");
+    expect(scormAssetUrl("not a url")).toBe("not a url");
+  });
+});
+
+describe("resolveScormAsset", () => {
+  it("addresses the course's own host over https", () => {
+    expect(resolveScormAsset("reference-course.netlify.app", "topic-07/scorm-demo/package/index.html")).toBe(
+      "https://reference-course.netlify.app/topic-07/scorm-demo/package/index.html",
+    );
+  });
+
+  it("serves files the package asks for beneath its launch file", () => {
+    expect(resolveScormAsset("course.netlify.app", "/topic-01/quiz/package/assets/module.css")).toBe(
+      "https://course.netlify.app/topic-01/quiz/package/assets/module.css",
+    );
+  });
+
+  it("refuses a path that does not belong to a package", () => {
+    // Without this the endpoint would fetch any address a visitor named.
+    expect(resolveScormAsset("example.com", "secrets.json")).toBeUndefined();
+    expect(resolveScormAsset("example.com", "topic-01/quiz/packages/index.html")).toBeUndefined();
+  });
+
+  it("refuses a path that tries to climb out of the package", () => {
+    expect(resolveScormAsset("course.netlify.app", "topic-01/quiz/package/../../../secrets.json")).toBeUndefined();
+  });
+
+  it("refuses a host carrying anything but a name and a port", () => {
+    expect(resolveScormAsset("course.netlify.app/../evil.com", "quiz/package/index.html")).toBeUndefined();
+    expect(resolveScormAsset("user@evil.com", "quiz/package/index.html")).toBeUndefined();
+    expect(resolveScormAsset("", "quiz/package/index.html")).toBeUndefined();
+  });
+
+  it("refuses a host only the machine itself can reach", () => {
+    // A deployed reader proxying one of these would be reaching into its own network.
+    ["localhost:8080", "127.0.0.1", "10.0.0.5", "192.168.1.9", "172.20.0.3", "169.254.169.254"].forEach((host) => {
+      expect(resolveScormAsset(host, "quiz/package/index.html")).toBeUndefined();
+    });
+  });
+
+  it("allows one in development, where the course is served from the same machine", () => {
+    expect(resolveScormAsset("localhost:8080", "topic-01/quiz/package/index.html", { allowPrivateHosts: true })).toBe(
+      "http://localhost:8080/topic-01/quiz/package/index.html",
+    );
   });
 });
