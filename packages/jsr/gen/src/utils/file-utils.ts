@@ -114,18 +114,24 @@ export function withoutHeaderFromBody(body: string): string {
   return content;
 }
 
-export function copyFolder(src: string, dest: string): void {
+/**
+ * Copy a folder recursively.
+ *
+ * An optional filter selects which source paths are copied, receiving each file and
+ * directory in turn; returning false for a directory skips the whole subtree.
+ */
+export function copyFolder(src: string, dest: string, filter?: (src: string) => boolean): void {
   try {
     // Delete destination if it exists to ensure clean overwrite
     if (fs.existsSync(dest)) {
       fs.rmSync(dest, { recursive: true, force: true });
     }
-    
+
     const stats = fs.statSync(src);
     if (stats.isDirectory()) {
       // Create destination directory and copy contents
       fs.mkdirSync(dest, { recursive: true });
-      fs.cpSync(src, dest, { recursive: true });
+      fs.cpSync(src, dest, { recursive: true, filter: filter ? (source) => filter(source) : undefined });
     } else {
       // For single file, ensure parent directory exists
       fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -179,6 +185,32 @@ export function readYamlFile(yamlFilePath: string): any {
     throw err;
   }
   return yamlData;
+}
+
+/**
+ * Compress a whole directory tree, preserving its internal structure.
+ *
+ * Distinct from compressToZip, which flattens to numbered basenames. A SCORM
+ * package requires imsmanifest.xml at the archive root with the content laid
+ * out beneath it, so directory entries have to survive. Unlike compressToZip
+ * this also awaits finalisation, so callers can rely on the file being complete
+ * when the promise resolves.
+ */
+export function compressFolderToZip(srcFolder: string, outputPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    const output = fs.createWriteStream(outputPath);
+    const archive = archiver("zip", {
+      zlib: { level: 9 }, // Maximum compression level
+    });
+    output.on("close", () => resolve());
+    output.on("error", reject);
+    archive.on("error", reject);
+    archive.pipe(output);
+    // false => contents are placed at the archive root, not under a folder
+    archive.directory(srcFolder, false);
+    archive.finalize();
+  });
 }
 
 export async function compressToZip(files: string[], outputPath: string) {

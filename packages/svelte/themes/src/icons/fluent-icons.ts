@@ -30,6 +30,7 @@ export const FluentIconLib: IconLib = {
   tutorial: { type: "fluent:arrow-clockwise-dashes-settings-24-regular", color: "primary" },
   notebook: { type: "simple-icons:jupyter", color: "error" },
   whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
+  scorm: { type: "fluent:box-24-filled", color: "secondary" },
   podcast: { type: "fluent:mic-20-filled", color: "primary" },
 
   // pdf reader icons

@@ -102,7 +102,7 @@ export function createCompanions(course: Course) {
 export function createWalls(course: Course) {
   course.walls = [];
   course.wallMap = new Map<string, Lo[]>();
-  ["talk", "tutorial", "note", "lab", "notebook", "podcast", "web", "archive", "github"].forEach((type) => addWall(course, type as LoType));
+  ["talk", "tutorial", "note", "lab", "notebook", "podcast", "web", "archive", "github", "scorm"].forEach((type) => addWall(course, type as LoType));
   course.wallBar = {
     show: true,
     bar: [],
@@ -156,6 +156,7 @@ export function loadPropertyFlags(course: Course) {
   }
   course.hasWhiteboard = (course.properties?.whiteboard as unknown as number) === 1;
   course.ignorePin = course.properties?.ignorepin?.toString();
+  loadScormFlags(course);
   if (course.properties?.icon && typeof course.properties.icon === "object") {
     const icon = course.properties.icon as { type?: string; color?: string };
     if (icon.type && icon.color) {
@@ -172,6 +173,33 @@ export function loadPropertyFlags(course: Course) {
       setShowHide(lo, true);
     }
   });
+}
+
+/**
+ * Read the optional `scorm:` block from properties.yaml:
+ *
+ * ```yaml
+ * scorm:
+ *   version: both        # 1.2 | 2004 | both
+ *   identifier: MY-COURSE
+ * ```
+ *
+ * Values are normalised as strings because YAML parses an unquoted `1.2` as a float and
+ * `2004` as an integer, so an author writing either is doing nothing wrong.
+ */
+function loadScormFlags(course: Course) {
+  course.scormVersions = ["1.2", "2004"];
+  const scorm = course.properties?.scorm as unknown as { version?: unknown; identifier?: unknown } | undefined;
+  if (!scorm || typeof scorm !== "object") return;
+  const version = scorm.version?.toString().trim().toLowerCase();
+  if (version === "1.2" || version === "1_2" || version === "12") {
+    course.scormVersions = ["1.2"];
+  } else if (version === "2004") {
+    course.scormVersions = ["2004"];
+  }
+  if (scorm.identifier) {
+    course.scormIdentifier = scorm.identifier.toString();
+  }
 }
 
 export function initCalendar(course: Course) {

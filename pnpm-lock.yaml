@@ -610,6 +610,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
+      '@tutors/scorm':
+        specifier: workspace:*
+        version: link:../utils/scorm
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
@@ -829,6 +832,8 @@ importers:
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.69.0)
+
+  packages/svelte/utils/scorm: {}
 
   packages/svelte/utils/tour:
     dependencies:

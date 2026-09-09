@@ -11,6 +11,9 @@ import { initTemplateEngine } from "./templates/template-engine.ts";
 import { buildTree, copyAssetFiles } from "./services/resource-builder.ts";
 import type { LearningResource } from "./types/types.ts";
 
+export { generateScormCourse } from "./scorm/emitter.ts";
+export type { ScormExportOptions } from "./scorm/emitter.ts";
+
 export function parseCourse(folder: string, silent: boolean = false): [Course, LearningResource] {
   const lr = buildTree(folder);
   const course = buildCourse(lr, silent);

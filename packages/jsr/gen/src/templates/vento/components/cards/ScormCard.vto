@@ -1,0 +1,18 @@
+{{ export function scormCard(lo) }}
+  {{# The run-time has to publish window.API before the frame below starts loading: a SCO
+      searches for it during its own load and gives up if it is missing. #}}
+  {{ set rootPath = lo |> wallLink }}
+  <script>
+    window.TUTORS_SCORM = {
+      version: "{{ lo.scormVersion }}",
+      courseId: "{{ lo.parentCourse.courseId }}",
+      loId: "{{ lo.route }}",
+      masteryScore: "{{ lo.masteryScore || '' }}"
+    };
+  </script>
+  <script src="{{ rootPath }}tutors-scorm-lms.js"></script>
+  <div class="bg-base-100 rounded-xl shadow-lg p-4 my-4">
+    <div class="pb-2 text-sm font-semibold">SCORM {{ lo.scormVersion }}</div>
+    <iframe title="{{ lo.title }}" src="./package/{{ lo.scormFile }}" width="100%" height="800px" allowfullscreen></iframe>
+  </div>
+{{ /export }}

@@ -35,14 +35,15 @@ describe("simpleTypes", () => {
       "note", "archive", "web", "github", "panelnote",
       "paneltalk", "panelvideo", "podcast", "talk",
       "book", "lab", "tutorial", "notebook", "whiteboard",
+      "scorm",
     ];
     expected.forEach((t) => {
       expect(simpleTypes).toContain(t);
     });
   });
 
-  it("has exactly 14 entries", () => {
-    expect(simpleTypes.length).toBe(14);
+  it("has exactly 15 entries", () => {
+    expect(simpleTypes.length).toBe(15);
   });
 
   it("does not contain composite types", () => {

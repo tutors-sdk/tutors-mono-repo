@@ -136,7 +136,7 @@ describe("UnitCard: type indicators", () => {
     expect(loCompositeTypes).toContain("course");
   });
 
-  it("total known types should be 18", () => {
-    expect(knownLoTypes.length).toBe(18);
+  it("total known types should be 19", () => {
+    expect(knownLoTypes.length).toBe(19);
   });
 });
