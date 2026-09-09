@@ -28,6 +28,7 @@ export const HeroIconLib: IconLib = {
   note: { type: "heroicons:document-text", color: "warning" },
   notebook: { type: "simple-icons:jupyter", color: "success" },
   whiteboard: { type: "heroicons-outline:pencil-square", color: "primary" },
+  scorm: { type: "heroicons:cube", color: "secondary" },
   panelnote: { type: "heroicons:document-text", color: "warning" },
 
   // pdf reader icons

@@ -23,6 +23,7 @@ export const EasterIcons: IconLib = {
   note: { type: "fluent:notepad-16-regular", color: "success" },
   notebook: { type: "simple-icons:jupyter", color: "error" },
   whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
+  scorm: { type: "fluent:box-24-filled", color: "secondary" },
   archive: { type: "mdi:basket-outline", color: "error" },
   web: { type: "fluent:bookmark-24-regular", color: "primary" },
   github: { type: "mdi:github", color: "warning" },
