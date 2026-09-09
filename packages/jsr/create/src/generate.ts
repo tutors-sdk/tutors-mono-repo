@@ -4,7 +4,7 @@ import { padNumber, LAB_STEP_COUNT } from "./types.ts";
 export type { CourseSpec } from "./types.ts";
 export { slugify, defaultSpec } from "./types.ts";
 export { nextSteps } from "./templates.ts";
-import { courseMd, propertiesYaml, netlifyToml, calendarYaml, enrollmentYaml, sideMd, unitMd, topicMd, topicIcons, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
+import { courseMd, propertiesYaml, netlifyToml, calendarYaml, enrollmentYaml, gitignoreFile, readmeMd, sideMd, unitMd, topicMd, topicIcons, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
 
 export interface GeneratedFile {
   relativePath: string;
@@ -47,6 +47,15 @@ export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
   }
   if (spec.includeEnrollment) {
     files.push({ relativePath: "enrollment.yaml", content: enrollmentYaml(spec) });
+  }
+
+  // Repository hygiene: keep the generated site out of Git, and give the repo
+  // a landing page for anyone who finds it on GitHub rather than in Tutors.
+  if (spec.includeGitignore) {
+    files.push({ relativePath: ".gitignore", content: gitignoreFile() });
+  }
+  if (spec.includeReadme) {
+    files.push({ relativePath: "README.md", content: readmeMd(spec) });
   }
 
   // Side unit: a single talk and note displayed in the sidebar.
