@@ -218,13 +218,20 @@ export function buildLmsRuntimeScript(): string {
     "404": "Element is write only"
   };
 
+  // Matched by hand rather than by building a regex out of the element name: the name
+  // comes from the content, so it can hold regex meta-characters.
   function countOf(prefix) {
-    var pattern = new RegExp("^" + prefix.replace(/\\./g, "\\\\.") + "\\\\.(\\\\d+)\\\\.");
+    var start = prefix + ".";
     var highest = -1;
     for (var element in data) {
       if (!data.hasOwnProperty(element)) continue;
-      var match = pattern.exec(element);
-      if (match) highest = Math.max(highest, parseInt(match[1], 10));
+      if (element.slice(0, start.length) !== start) continue;
+      var rest = element.slice(start.length);
+      var dot = rest.indexOf(".");
+      if (dot <= 0) continue;
+      var index = rest.slice(0, dot);
+      if (!/^[0-9]+$/.test(index)) continue;
+      highest = Math.max(highest, parseInt(index, 10));
     }
     return String(highest + 1);
   }

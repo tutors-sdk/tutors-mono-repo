@@ -125,6 +125,22 @@ describe("CmiModel", () => {
     expect(model.set("cmi.objectives._count", "9")).toBe(SCORM_ERROR.readOnly);
   });
 
+  it("counts an element name holding regex meta-characters without faltering", () => {
+    // The name comes from the content, so it reaches the count as-is. Treating it as a
+    // pattern would throw here and take the run-time down with it.
+    const model = new CmiModel("2004");
+    expect(model.get("cmi.vendor(a|b)[._count").value).toBe("0");
+    model.set("cmi.vendor(a|b)[.2.id", "vendor-3");
+    expect(model.get("cmi.vendor(a|b)[._count").value).toBe("3");
+    expect(model.get("cmi.\\d._count").value).toBe("0");
+  });
+
+  it("ignores an index that is not a number", () => {
+    const model = new CmiModel("2004");
+    model.set("cmi.objectives.first.id", "obj-1");
+    expect(model.get("cmi.objectives._count").value).toBe("0");
+  });
+
   it("stores elements it does not know about", () => {
     const model = new CmiModel("2004");
     expect(model.set("cmi.vendor.state", "x=1")).toBe(SCORM_ERROR.none);

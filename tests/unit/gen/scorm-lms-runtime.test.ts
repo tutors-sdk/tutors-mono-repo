@@ -125,6 +125,15 @@ describe("buildLmsRuntimeScript: the data model", () => {
     expect(harness.api.GetValue("cmi.interactions._count")).toBe("3");
   });
 
+  it("counts an element name holding regex meta-characters without faltering", () => {
+    // Matches the reader-side run-time: the name comes from the content, so treating it
+    // as a pattern would throw and take the whole API down.
+    const harness = open2004();
+    expect(harness.api.GetValue("cmi.vendor(a|b)[._count")).toBe("0");
+    harness.api.SetValue("cmi.vendor(a|b)[.1.id", "q2");
+    expect(harness.api.GetValue("cmi.vendor(a|b)[._count")).toBe("2");
+  });
+
   it("stores elements it has never heard of rather than rejecting them", () => {
     const harness = open2004();
     expect(harness.api.SetValue("cmi.vendor.private_state", "x=1")).toBe("true");

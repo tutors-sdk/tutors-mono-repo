@@ -152,11 +152,19 @@ export class CmiModel {
    * the SCO sets.
    */
   private countOf(prefix: string): string {
+    // Matched by hand rather than by building a regex out of the element name. The name
+    // comes from the content, so it can hold regex meta-characters, and escaping them all
+    // correctly is the sort of thing that is quietly wrong for years.
+    const start = `${prefix}.`;
     let highest = -1;
-    const pattern = new RegExp(`^${prefix.replace(/\./g, "\\.")}\\.(\\d+)\\.`);
     for (const key of Object.keys(this.data)) {
-      const match = pattern.exec(key);
-      if (match) highest = Math.max(highest, Number(match[1]));
+      if (!key.startsWith(start)) continue;
+      const rest = key.slice(start.length);
+      const dot = rest.indexOf(".");
+      if (dot <= 0) continue;
+      const index = rest.slice(0, dot);
+      if (!/^\d+$/.test(index)) continue;
+      highest = Math.max(highest, Number(index));
     }
     return String(highest + 1);
   }
