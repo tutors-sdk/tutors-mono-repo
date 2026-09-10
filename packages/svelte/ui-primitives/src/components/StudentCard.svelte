@@ -46,25 +46,27 @@
 
 <div class={cardShellClass}>
   <div class="flex h-full w-full flex-col">
-    <div class="relative flex w-full shrink-0 items-center justify-center border-b px-3 py-3" style="border-color: light-dark(var(--color-surface-300), var(--color-surface-600));">
-      <span class="absolute top-1/2 left-3 z-10 -translate-y-1/2">
+    <div class="flex w-full shrink-0 items-center gap-2 border-b px-3 py-3" style="border-color: light-dark(var(--color-surface-300), var(--color-surface-600));">
+      <span class="shrink-0">
         <Icon type={sentiment} tip={`Sentiment — ${sentiment}.`} height="28" />
       </span>
-      {#if student.id}
-        <a
-          href="https://github.com/{student.id}"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-primary hover:text-primary-dark line-clamp-1 min-w-0 max-w-full px-12 text-center {styles.heading} relative z-20 underline underline-offset-2 transition-colors"
-        >
-          {student.fullName ?? student.id}
-        </a>
-      {:else}
-        <span class="line-clamp-1 min-w-0 max-w-full px-12 text-center {styles.heading}">
-          {student.fullName}
-        </span>
-      {/if}
-      <span class="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap">
+      <div class="flex min-w-0 flex-1 justify-center">
+        {#if student.id}
+          <a
+            href="https://github.com/{student.id}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-primary hover:text-primary-dark min-w-0 truncate text-center {styles.heading} underline underline-offset-2 transition-colors"
+          >
+            {student.fullName ?? student.id}
+          </a>
+        {:else}
+          <span class="min-w-0 truncate text-center {styles.heading}">
+            {student.fullName}
+          </span>
+        {/if}
+      </div>
+      <span class="flex shrink-0 items-center gap-1 whitespace-nowrap">
         <span>{lo.type}</span><Icon type={lo.type} height={styles.iconHeight} />
       </span>
     </div>
