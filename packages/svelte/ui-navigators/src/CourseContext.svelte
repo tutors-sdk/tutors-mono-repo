@@ -4,5 +4,5 @@
 </script>
 
 <div class=" max-h-[90vh] overflow-y-auto">
-  <LoContextTree lo={currentCourse?.value} />
+  <LoContextTree lo={currentCourse?.value} expandAll={false} />
 </div>

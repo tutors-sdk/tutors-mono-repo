@@ -127,18 +127,21 @@ function createRbacService() {
 
   function isLoLocked(lo: Lo): boolean {
     const locks = contentLocks.value;
-    let current: Lo | undefined = lo;
-    while (current) {
-      if (
-        current.type !== "course" &&
-        current.type !== "unit" &&
-        current.type !== "side" &&
-        current.route &&
-        isRouteLocked(current.route, locks)
-      ) {
-        return true;
-      }
-      current = current.parentLo;
+    if (lo.route && isLoRouteLocked(lo.route, locks)) return true;
+    if (lo.video && lo.video !== lo.route && isLoRouteLocked(lo.video, locks)) return true;
+    return false;
+  }
+
+  function isLoVisibleToStudent(lo: Lo): boolean {
+    if (lo.hide) return false;
+    if (isEducator.value || !currentCourse.value?.hasEnrollment) return true;
+    if (!locksLoaded.value) return false;
+    return !isLoLocked(lo);
+  }
+
+  function hasActiveLocks(): boolean {
+    for (const locked of contentLocks.value.values()) {
+      if (locked) return true;
     }
     return false;
   }
@@ -178,6 +181,8 @@ function createRbacService() {
     toggleContentLock,
     isLocked,
     isLoLocked,
+    isLoVisibleToStudent,
+    hasActiveLocks,
     checkLecturerStatus,
     clear
   };

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 
 vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
   getLocksForCourse: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { contentLocks } from "../../../packages/svelte/runes/src/index.svelte.ts";
+import { contentLocks, currentCourse, locksLoaded } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { isLoRouteLocked, rbacService } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
 import type { Lo } from "@tutors/tutors-model-lib";
 
@@ -112,9 +112,53 @@ describe("rbacService.isLoLocked", () => {
     expect(rbacService.isLoLocked(otherTopic)).toBe(false);
   });
 
+  it("returns true for a panelvideo under a locked topic", () => {
+    const video = {
+      route: "/video/cs101/week-01/intro",
+      type: "panelvideo",
+      parentLo: topic,
+    } as Lo;
+    contentLocks.value = new Map([["/topic/cs101/week-01", true]]);
+    expect(rbacService.isLoLocked(video)).toBe(true);
+  });
+
   it("does not hide all content when the course route is locked", () => {
     contentLocks.value = new Map([["/course/cs101", true]]);
     expect(rbacService.isLoLocked(otherTopic)).toBe(false);
     expect(rbacService.isLoLocked(topic)).toBe(false);
+  });
+});
+
+describe("rbacService.isLoVisibleToStudent", () => {
+  const lo = { route: "/topic/cs101/week-01", hide: false } as Lo;
+
+  beforeEach(() => {
+    contentLocks.value = new Map();
+    locksLoaded.value = true;
+    currentCourse.value = { hasEnrollment: true } as any;
+  });
+
+  it("returns false for hidden los", () => {
+    expect(rbacService.isLoVisibleToStudent({ ...lo, hide: true })).toBe(false);
+  });
+
+  it("returns true when course has no enrollment", () => {
+    currentCourse.value = { hasEnrollment: false } as any;
+    contentLocks.value = new Map([["/topic/cs101/week-01", true]]);
+    expect(rbacService.isLoVisibleToStudent(lo)).toBe(true);
+  });
+
+  it("returns false while locks are loading for enrolled students", () => {
+    locksLoaded.value = false;
+    expect(rbacService.isLoVisibleToStudent(lo)).toBe(false);
+  });
+
+  it("returns false for locked los on enrolled courses", () => {
+    contentLocks.value = new Map([["/topic/cs101/week-01", true]]);
+    expect(rbacService.isLoVisibleToStudent(lo)).toBe(false);
+  });
+
+  it("returns true for unlocked los on enrolled courses", () => {
+    expect(rbacService.isLoVisibleToStudent(lo)).toBe(true);
   });
 });
