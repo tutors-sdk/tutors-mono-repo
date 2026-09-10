@@ -13,22 +13,35 @@ const llmsText = "text in markdown";
 const pdfsZip = "archive of pdfs";
 const videoTxt = "video";
 
-function courseSummary(course: Course): string {
+export type LlmsVisibility = {
+  isVisible: (lo: Lo) => boolean;
+  hideCourseWideLinks: boolean;
+};
+
+function courseSummary(course: Course, visibility?: LlmsVisibility): string {
+  const isVisible = visibility?.isVisible ?? (() => true);
+  const hideCourseWide = visibility?.hideCourseWideLinks ?? false;
+
   const fileName = toSnakeCase(course.title);
-  let links: string[] = [];
-  links.push(`- [${fileName}-complete-llms.txt](https://${course.courseUrl}/llms/${fileName}-complete-llms.txt) — ${llmsText}`);
-  const talks = filterByType(course.los, "talk");
-  if (talks.length > 0) {
-    links.push(`- [${fileName}-complete-pdfs.zip](https://${course.courseUrl}/llms/${fileName}-complete-pdfs.zip) — ${pdfsZip}`);
+  const links: string[] = [];
+
+  if (!hideCourseWide) {
+    links.push(`- [${fileName}-complete-llms.txt](https://${course.courseUrl}/llms/${fileName}-complete-llms.txt) — ${llmsText}`);
+    const talks = filterByType(course.los, "talk").filter(isVisible);
+    if (talks.length > 0) {
+      links.push(`- [${fileName}-complete-pdfs.zip](https://${course.courseUrl}/llms/${fileName}-complete-pdfs.zip) — ${pdfsZip}`);
+    }
   }
+
   return links.join("\n");
 }
 
-function topics(course: Course): string {
-  let topicStr: string[] = [];
+function topics(course: Course, visibility?: LlmsVisibility): string {
+  const isVisible = visibility?.isVisible ?? (() => true);
+  const topicStr: string[] = [];
   const topicLos = filterByType(course.los, "topic");
   topicLos.forEach((lo: Lo, index: number) => {
-    if (lo.type === "topic" && lo.hide !== true) {
+    if (lo.type === "topic" && isVisible(lo)) {
       const topic = lo as Topic;
       const paddedIndex = index.toString().padStart(2, "0");
       const title = `${paddedIndex}-${toSnakeCase(topic.title)}`;
@@ -39,6 +52,7 @@ function topics(course: Course): string {
       const allLos = flattenLos(topic.los);
       const videos = allLos.filter((lo) => lo.type === "panelvideo");
       videos.forEach((video: Lo) => {
+        if (!isVisible(video)) return;
         const videoConfig = getVideoConfig(video);
         if (videoConfig.externalUrl) {
           topicStr.push(`- [${video.title}](${videoConfig.externalUrl}) — ${videoTxt}`);
@@ -53,8 +67,8 @@ function topics(course: Course): string {
   return str;
 }
 
-export function generateLlms(course: Course): string {
-  const summary = courseSummary(course);
-  const topicStr = topics(course);
+export function generateLlms(course: Course, visibility?: LlmsVisibility): string {
+  const summary = courseSummary(course, visibility);
+  const topicStr = topics(course, visibility);
   return convertMdToHtml(summary + topicStr);
 }

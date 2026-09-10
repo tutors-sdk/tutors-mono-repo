@@ -35,7 +35,9 @@ lerna-debug.log*
 Thumbs.db
 
 # Editor directories
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
