@@ -173,7 +173,43 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "tour.calendar.title": "Féilire",
   "tour.calendar.description": "Féach ar sceideal an chúrsa agus féach cad atá le teacht an tseachtain seo.",
   "tour.info.title": "Eolas faoin gCúrsa",
-  "tour.info.description": "Léigh eolas mionsonraithe faoin gcúrsa seo, lena n-áirítear a thuairisc agus a chuspóirí."
+  "tour.info.description": "Léigh eolas mionsonraithe faoin gcúrsa seo, lena n-áirítear a thuairisc agus a chuspóirí.",
+
+  // Playground
+  "playground.run": "Rith",
+  "playground.running": "Á rith…",
+  "playground.stop": "Stad",
+  "playground.runTests": "Rith na seiceálacha",
+  "playground.reset": "Athshocraigh",
+  "playground.resetConfirm": "Na hathruithe a chaitheamh amach agus na comhaid bhunaidh a athchóiriú?",
+  "playground.share": "Comhroinn",
+  "playground.shareCopied": "Cóipeáladh an nasc chuig an ngearrthaisce",
+  "playground.shareReady": "Tá an nasc sa bharra seoltaí",
+  "playground.newFile": "Comhad nua",
+  "playground.deleteFile": "Scrios an comhad",
+  "playground.output": "Aschur",
+  "playground.clear": "Glan",
+  "playground.noOutput": "Rith an cód chun an t-aschur a fheiceáil anseo.",
+  "playground.ok": "Críochnaithe",
+  "playground.failed": "Críochnaithe le hearráidí",
+  "playground.saving": "Á shábháil…",
+  "playground.saved": "Sábháilte sa bhrabhsálaí seo",
+  "playground.sharedNotice": "Spás oibre comhroinnte — ní shábhálfar athruithe",
+  "playground.handIn": "Tabhair isteach don léachtóir",
+  "playground.handedIn": "Tugadh isteach ag",
+  "playground.handInHint": "Fanann do chuid oibre sa bhrabhsálaí seo go dtí go dtugann tú isteach í",
+  "playground.liveShare": "Lig do mo léachtóir féachaint beo",
+  "playground.liveWatching": "Tá do léachtóir ag féachaint",
+  "playground.submissions": "Tugtha isteach",
+  "playground.refresh": "Athnuaigh",
+  "playground.watchLive": "Féach beo",
+  "playground.noSubmissions": "Níor tugadh aon rud isteach fós.",
+  "playground.liveNow": "ag comhroinnt anois",
+
+  // Notebook kernel
+  "notebook.runAll": "Rith gach cill",
+  "notebook.restartKernel": "Atosaigh an eithne",
+  "notebook.notRunnable": "Ní ritheann an teanga eithne seo sa bhrabhsálaí."
 } as const;
 
 export default ga;

@@ -16,10 +16,10 @@
     "npm:@mdit/plugin-katex@^1.1.0": "1.1.0_markdown-it@15.0.1",
     "npm:@playwright/test@^1.62.1": "1.62.1",
     "npm:@stryker-mutator/core@10": "10.0.0",
-    "npm:@stryker-mutator/vitest-runner@10": "10.0.0_@stryker-mutator+core@10.0.0_vitest@4.1.11__@vitest+coverage-v8@4.1.11__happy-dom@20.14.0_happy-dom@20.14.0",
+    "npm:@stryker-mutator/vitest-runner@10": "10.0.0_@stryker-mutator+core@10.0.0_vitest@4.1.11_happy-dom@20.14.0",
     "npm:@supabase/supabase-js@^2.115.0": "2.116.0",
     "npm:@supabase/supabase-js@^2.96.0": "2.116.0",
-    "npm:@testing-library/svelte@^5.4.2": "5.4.2_vitest@4.1.11__@vitest+coverage-v8@4.1.11__happy-dom@20.14.0_happy-dom@20.14.0",
+    "npm:@testing-library/svelte@^5.4.2": "5.4.2_vitest@4.1.11_happy-dom@20.14.0",
     "npm:@types/estree@1.0.6": "1.0.6",
     "npm:@types/markdown-it@^14.1.2": "14.1.2",
     "npm:@vitest/coverage-v8@^4.1.11": "4.1.11_vitest@4.1.11_happy-dom@20.14.0_vite@8.2.2",
@@ -38,6 +38,7 @@
     "npm:js-yaml@4": "4.3.0",
     "npm:js-yaml@^4.1.1": "4.3.0",
     "npm:js-yaml@^5.4.1": "5.4.1",
+    "npm:katex@~0.16.47": "0.16.47",
     "npm:markdown-it-anchor@^9.2.0": "9.2.1_@types+markdown-it@14.1.2_markdown-it@15.0.1",
     "npm:markdown-it-anchor@^9.2.1": "9.2.1_@types+markdown-it@14.1.2_markdown-it@15.0.1",
     "npm:markdown-it-deflist@3": "3.0.1",
@@ -52,6 +53,7 @@
     "npm:markdown-it@^14.2.0": "14.3.0",
     "npm:markdown-it@^15.0.1": "15.0.1",
     "npm:meriyah@6.0.5": "6.0.5",
+    "npm:pyodide@^314.0.6": "314.0.6",
     "npm:shiki-transformer-copy-button@^0.0.5": "0.0.5",
     "npm:shiki-transformer-copy-button@^0.0.6": "0.0.6",
     "npm:tsx@^4.23.13": "4.23.13",
@@ -1037,7 +1039,7 @@
     "@stryker-mutator/util@10.0.0": {
       "integrity": "sha512-LzOpHiJaCp2ABQgnPMlrQQcsK43bd5Vo/2FGL78aN62yDoeRQ+4j3tzeuXxK5OAHdC3fUz6TDoy4IsoAuLAd3w=="
     },
-    "@stryker-mutator/vitest-runner@10.0.0_@stryker-mutator+core@10.0.0_vitest@4.1.11__@vitest+coverage-v8@4.1.11__happy-dom@20.14.0_happy-dom@20.14.0": {
+    "@stryker-mutator/vitest-runner@10.0.0_@stryker-mutator+core@10.0.0_vitest@4.1.11_happy-dom@20.14.0": {
       "integrity": "sha512-SHK2/vfvRUpiz7jXPnQMBnr6zLdm69DK03Mo5mPhaZWcRSygrKUqYsPqWsXsK+5ySHzlMTfCyFK5NQ/X9sJFFw==",
       "dependencies": [
         "@stryker-mutator/api",
@@ -1118,7 +1120,7 @@
         "svelte"
       ]
     },
-    "@testing-library/svelte@5.4.2_vitest@4.1.11__@vitest+coverage-v8@4.1.11__happy-dom@20.14.0_happy-dom@20.14.0": {
+    "@testing-library/svelte@5.4.2_vitest@4.1.11_happy-dom@20.14.0": {
       "integrity": "sha512-4o31E4HGo5BU5KwPkulNRocEden+7Tt9JYm9uhln5ajF7DULeyFA46BBWVfKJ8Ms9B3JmOFPTIiVamH7n3KpuQ==",
       "dependencies": [
         "@testing-library/dom",
@@ -1142,6 +1144,9 @@
     },
     "@types/deep-eql@4.0.2": {
       "integrity": "sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw=="
+    },
+    "@types/emscripten@1.41.6": {
+      "integrity": "sha512-uN+9i8bFT5CUcZfyIEYDrSueACEyKGbUs5kC/72DGlZZoinh84sJfVV0i8UOJD1asdzkvLPBRrKs41kZ8MdEXg=="
     },
     "@types/esrecurse@4.3.1": {
       "integrity": "sha512-xJBAbDifo5hpffDBuHl0Y8ywswbiAp/Wi7Y/GtAgSlZyIABppyurxVueOPE8LUQOxdlgi6Zqce7uoEpqNTeiUw=="
@@ -2354,6 +2359,13 @@
       "integrity": "sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==",
       "bin": true
     },
+    "katex@0.16.47": {
+      "integrity": "sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==",
+      "dependencies": [
+        "commander@8.3.0"
+      ],
+      "bin": true
+    },
     "katex@0.17.0": {
       "integrity": "sha512-Vdw0ATsQ9V+LuegM/BTwQqV/6cTl5lbGcIrU+BCgLxyf6bo38ybOr372tuSIxir3CN720flu1meYR6XzNMwQnw==",
       "dependencies": [
@@ -2833,6 +2845,13 @@
     },
     "pure-rand@8.4.2": {
       "integrity": "sha512-vvuOGgcuPJAirlHvuQw1TrOiw7ptaIXXmIbNuiNOY6lNGJJH49PQ1Kj4nd783nPdQhQdicgOjVI2yI/9BD6/Ng=="
+    },
+    "pyodide@314.0.6": {
+      "integrity": "sha512-BKDTJyIqFxC4BExLqeRS3f5xvXZIjOt8C3zGLN/Cc7tFxSwvKVhVkchQQ2AGLOtR4YrVOIFxbV8poyDOOmWwxQ==",
+      "dependencies": [
+        "@types/emscripten",
+        "ws"
+      ]
     },
     "qs@6.15.1": {
       "integrity": "sha512-6YHEFRL9mfgcAvql/XhwTvf5jKcOiiupt2FiJxHkiX1z4j7WL8J/jRHYLluORvc1XxB5rV20KoeK00gVJamspg==",
@@ -3389,6 +3408,8 @@
         "npm:globals@^17.12.0",
         "npm:happy-dom@^20.14.0",
         "npm:js-yaml@^4.1.1",
+        "npm:katex@~0.16.47",
+        "npm:pyodide@^314.0.6",
         "npm:tsx@^4.23.13",
         "npm:typescript-eslint@^8.69.0",
         "npm:vitest@^4.1.11",

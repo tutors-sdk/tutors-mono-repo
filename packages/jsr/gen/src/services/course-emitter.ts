@@ -25,6 +25,11 @@ async function emitScorm(lo: Lo, path: string) {
   await publishTemplate(scormPath, "index.html", "Scorm", lo);
 }
 
+async function emitPlayground(lo: Lo, path: string) {
+  const playgroundPath = `${path}/${lo.id}`;
+  await publishTemplate(playgroundPath, "index.html", "Playground", lo);
+}
+
 async function emitTutorial(lo: Lo, path: string) {
   const tutorialPath = `${path}/${lo.id}`;
   await publishTemplate(tutorialPath, "index.html", "Tutorial", lo);
@@ -63,6 +68,9 @@ async function emitLoPage(lo: Lo, path: string) {
   }
   if (lo.type == "scorm") {
     await emitScorm(lo, path);
+  }
+  if (lo.type == "playground") {
+    await emitPlayground(lo, path);
   }
 }
 

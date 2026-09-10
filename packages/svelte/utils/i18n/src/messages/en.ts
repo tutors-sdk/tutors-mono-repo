@@ -198,7 +198,43 @@ Tutors is an open source application - the data collection component [is here](h
   "tour.calendar.title": "Calendar",
   "tour.calendar.description": "View the course schedule and see what is coming up this week.",
   "tour.info.title": "Course Info",
-  "tour.info.description": "Read detailed information about this course, including its description and objectives."
+  "tour.info.description": "Read detailed information about this course, including its description and objectives.",
+
+  // Playground
+  "playground.run": "Run",
+  "playground.running": "Running…",
+  "playground.stop": "Stop",
+  "playground.runTests": "Run checks",
+  "playground.reset": "Reset",
+  "playground.resetConfirm": "Discard your changes and restore the original files?",
+  "playground.share": "Share",
+  "playground.shareCopied": "Link copied to your clipboard",
+  "playground.shareReady": "Link is in the address bar",
+  "playground.newFile": "New file",
+  "playground.deleteFile": "Delete file",
+  "playground.output": "Output",
+  "playground.clear": "Clear",
+  "playground.noOutput": "Run the code to see its output here.",
+  "playground.ok": "Finished",
+  "playground.failed": "Finished with errors",
+  "playground.saving": "Saving…",
+  "playground.saved": "Saved in this browser",
+  "playground.sharedNotice": "Viewing a shared workspace — changes are not saved",
+  "playground.handIn": "Hand in to your lecturer",
+  "playground.handedIn": "Handed in at",
+  "playground.handInHint": "Your work stays in this browser until you hand it in",
+  "playground.liveShare": "Let my lecturer watch live",
+  "playground.liveWatching": "Your lecturer is watching",
+  "playground.submissions": "Handed in",
+  "playground.refresh": "Refresh",
+  "playground.watchLive": "Watch live",
+  "playground.noSubmissions": "Nothing has been handed in yet.",
+  "playground.liveNow": "sharing now",
+
+  // Notebook kernel
+  "notebook.runAll": "Run all cells",
+  "notebook.restartKernel": "Restart kernel",
+  "notebook.notRunnable": "This kernel language does not run in the browser."
 } as const;
 
 export default en;

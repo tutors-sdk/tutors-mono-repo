@@ -186,7 +186,43 @@ const it: Record<string, string> = {
   "tour.calendar.title": "Calendario",
   "tour.calendar.description": "Visualizza il programma del corso e scopri cosa e previsto per questa settimana.",
   "tour.info.title": "Informazioni sul corso",
-  "tour.info.description": "Leggi informazioni dettagliate su questo corso, inclusa la descrizione e gli obiettivi."
+  "tour.info.description": "Leggi informazioni dettagliate su questo corso, inclusa la descrizione e gli obiettivi.",
+
+  // Playground
+  "playground.run": "Esegui",
+  "playground.running": "Esecuzione…",
+  "playground.stop": "Ferma",
+  "playground.runTests": "Esegui i controlli",
+  "playground.reset": "Ripristina",
+  "playground.resetConfirm": "Vuoi annullare le modifiche e ripristinare i file originali?",
+  "playground.share": "Condividi",
+  "playground.shareCopied": "Link copiato negli appunti",
+  "playground.shareReady": "Il link è nella barra degli indirizzi",
+  "playground.newFile": "Nuovo file",
+  "playground.deleteFile": "Elimina file",
+  "playground.output": "Output",
+  "playground.clear": "Pulisci",
+  "playground.noOutput": "Esegui il codice per vedere qui il suo output.",
+  "playground.ok": "Completato",
+  "playground.failed": "Completato con errori",
+  "playground.saving": "Salvataggio…",
+  "playground.saved": "Salvato in questo browser",
+  "playground.sharedNotice": "Spazio di lavoro condiviso — le modifiche non vengono salvate",
+  "playground.handIn": "Consegna al docente",
+  "playground.handedIn": "Consegnato alle",
+  "playground.handInHint": "Il tuo lavoro resta in questo browser finché non lo consegni",
+  "playground.liveShare": "Consenti al docente di seguirmi in diretta",
+  "playground.liveWatching": "Il docente ti sta seguendo",
+  "playground.submissions": "Consegne",
+  "playground.refresh": "Aggiorna",
+  "playground.watchLive": "Segui in diretta",
+  "playground.noSubmissions": "Non è stato consegnato ancora nulla.",
+  "playground.liveNow": "in diretta",
+
+  // Notebook kernel
+  "notebook.runAll": "Esegui tutte le celle",
+  "notebook.restartKernel": "Riavvia il kernel",
+  "notebook.notRunnable": "Questo linguaggio del kernel non viene eseguito nel browser."
 };
 
 export default it;

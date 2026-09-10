@@ -12,8 +12,10 @@
     },
     "./services/*": "./src/services/*",
     "./utils/supabase-client": "./src/utils/supabase-client.ts",
+    "./utils/playground-store": "./src/utils/playground-store.ts",
     "./utils/error-transport": "./src/utils/error-transport.ts",
-    "./utils/health-check": "./src/utils/health-check.ts"
+    "./utils/health-check": "./src/utils/health-check.ts",
+    "./services/playground-live": "./src/services/playground-live.svelte.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.115.0",

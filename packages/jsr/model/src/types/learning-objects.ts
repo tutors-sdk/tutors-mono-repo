@@ -164,6 +164,46 @@ export type Whiteboard = Lo & {
 };
 
 /**
+ * A single file in a playground workspace
+ *
+ * Contents are carried inline in the course tree rather than fetched: a workspace is a
+ * handful of small text files, and inlining them means the editor has everything it needs
+ * as soon as the course loads.
+ */
+export type PlaygroundFile = {
+  path: string;
+  content: string;
+  /** Shown but not editable — scaffolding the student is meant to read, not change */
+  readOnly?: boolean;
+};
+
+/**
+ * Languages Tutors can execute in the browser
+ */
+export type PlaygroundRuntime = "python" | "javascript" | "typescript";
+
+/**
+ * Playground learning object
+ * An editable workspace the student runs in the browser on a WebAssembly runtime
+ */
+export type Playground = Lo & {
+  type: "playground";
+  runtime: PlaygroundRuntime;
+  /** Path of the file the runtime starts from */
+  entry: string;
+  files: PlaygroundFile[];
+  /** Packages the runtime installs before the first run, where the runtime supports it */
+  packages: string[];
+  /**
+   * Optional check the student can run against their own work.
+   *
+   * These ship to the browser like everything else, so they are a formative aid and not
+   * an assessment: a student who looks can read them.
+   */
+  tests?: PlaygroundFile;
+};
+
+/**
  * SCORM learning object
  * Represents an imported third-party SCORM package, launched in an iframe
  * with Tutors providing the run-time API

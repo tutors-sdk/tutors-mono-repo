@@ -14,6 +14,7 @@
   "dependencies": {
     "@auth/core": "^0.41.3",
     "@auth/sveltekit": "^1.11.3",
+    "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/state": "^6.7.1",
     "@codemirror/theme-one-dark": "^6.1.3",
@@ -26,6 +27,7 @@
     "@tutors/logger": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
+    "@tutors/runtime": "workspace:*",
     "@tutors/scorm": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-create": "workspace:*",

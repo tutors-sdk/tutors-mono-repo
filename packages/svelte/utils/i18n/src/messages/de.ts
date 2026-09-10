@@ -186,7 +186,43 @@ const de: Record<string, string> = {
   "tour.calendar.title": "Kalender",
   "tour.calendar.description": "Sehen Sie den Kursplan und was diese Woche ansteht.",
   "tour.info.title": "Kursinformationen",
-  "tour.info.description": "Lesen Sie detaillierte Informationen ueber diesen Kurs, einschliesslich seiner Beschreibung und Ziele."
+  "tour.info.description": "Lesen Sie detaillierte Informationen ueber diesen Kurs, einschliesslich seiner Beschreibung und Ziele.",
+
+  // Playground
+  "playground.run": "Ausführen",
+  "playground.running": "Wird ausgeführt…",
+  "playground.stop": "Stoppen",
+  "playground.runTests": "Prüfungen ausführen",
+  "playground.reset": "Zurücksetzen",
+  "playground.resetConfirm": "Ihre Änderungen verwerfen und die ursprünglichen Dateien wiederherstellen?",
+  "playground.share": "Teilen",
+  "playground.shareCopied": "Link in die Zwischenablage kopiert",
+  "playground.shareReady": "Der Link steht in der Adressleiste",
+  "playground.newFile": "Neue Datei",
+  "playground.deleteFile": "Datei löschen",
+  "playground.output": "Ausgabe",
+  "playground.clear": "Leeren",
+  "playground.noOutput": "Führen Sie den Code aus, um hier die Ausgabe zu sehen.",
+  "playground.ok": "Fertig",
+  "playground.failed": "Mit Fehlern beendet",
+  "playground.saving": "Wird gespeichert…",
+  "playground.saved": "In diesem Browser gespeichert",
+  "playground.sharedNotice": "Geteilter Arbeitsbereich — Änderungen werden nicht gespeichert",
+  "playground.handIn": "Bei der Lehrperson abgeben",
+  "playground.handedIn": "Abgegeben um",
+  "playground.handInHint": "Ihre Arbeit bleibt in diesem Browser, bis Sie sie abgeben",
+  "playground.liveShare": "Meine Lehrperson darf live zusehen",
+  "playground.liveWatching": "Ihre Lehrperson sieht zu",
+  "playground.submissions": "Abgaben",
+  "playground.refresh": "Aktualisieren",
+  "playground.watchLive": "Live zusehen",
+  "playground.noSubmissions": "Es wurde noch nichts abgegeben.",
+  "playground.liveNow": "teilt gerade",
+
+  // Notebook kernel
+  "notebook.runAll": "Alle Zellen ausführen",
+  "notebook.restartKernel": "Kernel neu starten",
+  "notebook.notRunnable": "Diese Kernel-Sprache läuft nicht im Browser."
 };
 
 export default de;

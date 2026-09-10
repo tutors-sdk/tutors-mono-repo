@@ -31,6 +31,9 @@ import {
   type Notebook,
   type NotebookCell,
   type NotebookOutput,
+  type Playground,
+  type PlaygroundFile,
+  type PlaygroundRuntime,
   Podcast,
   preOrder,
   Properties,
@@ -39,7 +42,7 @@ import {
   Tutorial,
   type Whiteboard,
 } from "@tutors/tutors-model-lib";
-import { readWholeFile, readYamlFile } from "../utils/file-utils.ts";
+import { getFileName, getFileType, readWholeFile, readYamlFile } from "../utils/file-utils.ts";
 import { readScormPackage, SCORM_CONTENT_FOLDER } from "../scorm/package.ts";
 import type { LearningResource } from "../types/types.ts";
 
@@ -184,6 +187,125 @@ function buildNotebook(lo: Lo, lr: LearningResource) {
   }
 }
 
+/** Source file types a playground workspace may contain, and the runtime each one implies. */
+const PLAYGROUND_RUNTIMES: Record<string, PlaygroundRuntime> = {
+  py: "python",
+  js: "javascript",
+  mjs: "javascript",
+  ts: "typescript",
+};
+
+/** Carried into the workspace so the code can read them, but not runnable on their own. */
+const PLAYGROUND_DATA_TYPES = ["json", "txt", "csv"];
+
+/** A single runaway file would be inlined into the course tree and downloaded by every student. */
+const PLAYGROUND_FILE_LIMIT = 256 * 1024;
+
+function isTestFile(name: string): boolean {
+  return /^test[_-]/.test(name) || /[._-]test\.(py|js|mjs|ts)$/.test(name) || /[._-]spec\.(py|js|mjs|ts)$/.test(name);
+}
+
+/**
+ * Read a `playground-*` folder into an editable workspace.
+ *
+ * Only the files sitting directly in the folder are part of the workspace. Subfolders are
+ * pruned from the course tree before this runs, so a nested file would silently vanish;
+ * a flat folder is what an author can actually rely on.
+ *
+ * Everything is optional. A folder holding one `main.py` is a valid playground — the
+ * `playground.yaml` exists for the cases where the defaults guess wrong.
+ */
+function buildPlayground(lo: Lo, lr: LearningResource) {
+  const playground = lo as Playground;
+  const config = readPlaygroundConfig(lr);
+
+  const sources = lr.files
+    .filter((file) => {
+      const type = getFileType(file);
+      return type in PLAYGROUND_RUNTIMES || PLAYGROUND_DATA_TYPES.includes(type);
+    })
+    .map((file) => ({ name: getFileName(file), path: file }));
+
+  const testsName = config.tests ?? sources.find((source) => isTestFile(source.name))?.name;
+  const workspace = sources.filter((source) => source.name !== testsName);
+
+  const entry = config.entry ?? pickEntry(workspace.map((source) => source.name));
+  playground.entry = entry;
+  playground.runtime = config.runtime ?? PLAYGROUND_RUNTIMES[getFileType(entry)] ?? "python";
+  playground.packages = config.packages;
+  playground.files = workspace
+    .map((source) => readPlaygroundFile(source.name, source.path, config.readOnly))
+    .filter((file): file is PlaygroundFile => file !== null)
+    // The entry point is what the student is asked to work on, so it leads.
+    .sort((a, b) => Number(b.path === entry) - Number(a.path === entry));
+
+  const testsPath = testsName ? sources.find((source) => source.name === testsName)?.path : undefined;
+  if (testsName && testsPath) {
+    const tests = readPlaygroundFile(testsName, testsPath, []);
+    if (tests) playground.tests = tests;
+  }
+
+  if (playground.files.length === 0) {
+    console.log(`No source files found in ${lr.route}. A playground needs at least one .py, .js or .ts file.`);
+  }
+
+  playground.img = getLabImage(lr);
+  playground.imgFile = `img/${getLabImageFile(lr)}`;
+  if (!playground.img) {
+    playground.img = getImage(lr);
+    playground.imgFile = getImageFile(lr);
+  }
+}
+
+function readPlaygroundFile(name: string, path: string, readOnly: string[]): PlaygroundFile | null {
+  const content = readWholeFile(path);
+  if (content.length > PLAYGROUND_FILE_LIMIT) {
+    console.log(`${path} is too large to inline in a playground (limit ${PLAYGROUND_FILE_LIMIT} bytes) and was skipped.`);
+    return null;
+  }
+  const file: PlaygroundFile = { path: name, content };
+  if (readOnly.includes(name)) file.readOnly = true;
+  return file;
+}
+
+/** `main.*` is the convention; failing that the first source file is as good a guess as any. */
+function pickEntry(names: string[]): string {
+  const main = names.find((name) => /^main\.(py|js|mjs|ts)$/.test(name));
+  if (main) return main;
+  const runnable = names.find((name) => getFileType(name) in PLAYGROUND_RUNTIMES);
+  return runnable ?? names[0] ?? "main.py";
+}
+
+interface PlaygroundConfig {
+  runtime?: PlaygroundRuntime;
+  entry?: string;
+  tests?: string;
+  packages: string[];
+  readOnly: string[];
+}
+
+function readPlaygroundConfig(lr: LearningResource): PlaygroundConfig {
+  const config: PlaygroundConfig = { packages: [], readOnly: [] };
+  const configFile = lr.files.find((file) => getFileName(file) === "playground.yaml");
+  if (!configFile) return config;
+
+  const yaml = readYamlFile(configFile);
+  if (!yaml || typeof yaml !== "object") return config;
+
+  if (typeof yaml.runtime === "string" && ["python", "javascript", "typescript"].includes(yaml.runtime)) {
+    config.runtime = yaml.runtime as PlaygroundRuntime;
+  }
+  if (typeof yaml.entry === "string") config.entry = yaml.entry;
+  if (typeof yaml.tests === "string") config.tests = yaml.tests;
+  if (Array.isArray(yaml.packages)) {
+    config.packages = yaml.packages.filter((name: unknown) => typeof name === "string");
+  }
+  if (Array.isArray(yaml.readOnly)) {
+    config.readOnly = yaml.readOnly.filter((name: unknown) => typeof name === "string");
+  }
+  return config;
+}
+
 function buildWhiteboard(lo: Lo, lr: LearningResource) {
   const whiteboard = lo as Whiteboard;
   const excalidrawFiles = getFilesWithType(lr, "excalidraw");
@@ -233,6 +355,9 @@ function buildSimpleLo(lo: Lo, lr: LearningResource): Lo {
       break;
     case "notebook":
       buildNotebook(lo, lr);
+      break;
+    case "playground":
+      buildPlayground(lo, lr);
       break;
     case "whiteboard":
       buildWhiteboard(lo, lr);

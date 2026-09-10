@@ -11,7 +11,37 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://esm.sh; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'"
+    # 'wasm-unsafe-eval' is what lets the reader compile WebAssembly at all; without it the
+    # code run-time cannot start. It permits WebAssembly and nothing else — plain eval is
+    # still refused on this origin. The run-time's own frame has a separate policy below.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://esm.sh; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'"
+
+# The sandboxed code run-time. See the note in apps/reader/vite.config.ts, which carries
+# the same rules for local development: this frame has an opaque origin, so it fetches its
+# own assets cross-origin, `'self'` cannot match anything inside it, and executing
+# arbitrary code is the point. It has no cookies, no storage and no route back into the
+# reader, which is what keeps that acceptable.
+[[headers]]
+  for = "/runtimes/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Content-Security-Policy = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https:; worker-src blob:; connect-src blob: data: https:; style-src 'unsafe-inline'; img-src data: blob:"
+
+[[headers]]
+  for = "/runtimes/pyodide/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/runtimes/typescript/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/runtimes/katex/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/build/*"

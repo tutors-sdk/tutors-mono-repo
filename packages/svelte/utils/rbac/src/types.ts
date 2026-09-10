@@ -4,7 +4,10 @@ export type Permission =
   | "broadcast"
   | "quiz:manage"
   | "analytics:view"
-  | "content:lock";
+  | "content:lock"
+  // Reading the playground work students have handed in. Enforced in the database by the
+  // policies on `playground_snapshots`; this is the same rule stated where the UI can ask.
+  | "playground:view";
 
 export interface ContentLock {
   id?: string;
