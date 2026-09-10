@@ -66,8 +66,8 @@
           </span>
         {/if}
       </div>
-      <span class="flex shrink-0 items-center gap-1 whitespace-nowrap">
-        <span>{lo.type}</span><Icon type={lo.type} height={styles.iconHeight} />
+      <span class="flex min-w-0 items-center gap-1">
+        <span class="truncate">{lo.type}</span><span class="shrink-0"><Icon type={lo.type} height={styles.iconHeight} /></span>
       </span>
     </div>
     <a href={route} target={target || undefined} class="text-inherit relative flex min-h-0 flex-1 gap-1 no-underline">
