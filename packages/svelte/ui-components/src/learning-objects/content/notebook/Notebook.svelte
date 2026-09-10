@@ -6,13 +6,20 @@
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { copyCode } from "@tutors/course/markdown";
+  import { t } from "@tutors/i18n";
   import NotebookCell from "./cells/NotebookCell.svelte";
+  import { createNotebookKernel, setNotebookKernel } from "./notebook-kernel.svelte.ts";
   import "./notebook-styles.css";
 
   interface Props {
     notebook: LiveNotebook;
   }
   let { notebook }: Props = $props();
+
+  // One kernel for the notebook, handed to the cells through context. Nothing is
+  // downloaded until a cell is actually run.
+  const kernel = createNotebookKernel(notebook.notebook.kernelLanguage);
+  setNotebookKernel(kernel);
 
   let loaded = false;
   let revealedOutputs = $state<Record<number, boolean>>({});
@@ -104,6 +111,7 @@
 
   onDestroy(() => {
     browser ? window.removeEventListener("keydown", keypressInput) : null;
+    kernel.dispose();
   });
 
   afterNavigate(() => {
@@ -119,10 +127,12 @@
 </script>
 
 <svelte:head>
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css"
-  />
+  <!--
+    Served from here rather than from a CDN, like the code run-times: the reader's content
+    security policy allows stylesheets from itself, and a maths-heavy notebook should not
+    depend on a third-party host being reachable. `pnpm runtimes:sync` puts it there.
+  -->
+  <link rel="stylesheet" href="/runtimes/katex/katex.min.css" />
 </svelte:head>
 
 <div class="notebook-content w-full pb-14">
@@ -144,6 +154,19 @@
 
     <!-- Main content area -->
     <div class="min-h-screen flex-1 mr-4" use:copyCode>
+      {#if kernel.runtime}
+        <div class="bg-surface-100 dark:bg-surface-800 border-surface-200 dark:border-surface-700 mb-2 flex items-center gap-2 rounded-lg border px-3 py-1.5">
+          <button class="bg-surface-200 dark:bg-surface-700 hover:bg-surface-300 dark:hover:bg-surface-600 rounded-md px-3 py-1 text-xs font-medium disabled:opacity-50" onclick={() => kernel.runAll()} disabled={kernel.busy}>
+            {t("notebook.runAll")}
+          </button>
+          <button class="bg-surface-200 dark:bg-surface-700 hover:bg-surface-300 dark:hover:bg-surface-600 rounded-md px-3 py-1 text-xs font-medium" onclick={() => kernel.restart()}>
+            {t("notebook.restartKernel")}
+          </button>
+          <div class="flex-1"></div>
+          <span class="text-surface-500 text-xs" aria-live="polite">{kernel.detail || kernel.phase}</span>
+        </div>
+      {/if}
+
       <div id="notebook-panel" class="mt-[-60px] block pt-[60px]">
         {#key currentCodeTheme.value}
           {#each notebook.cells as cell, i}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tutors code run-time</title>
+  </head>
+  <body>
+    <!--
+      The sandbox.
+
+      This page is framed with sandbox="allow-scripts" and nothing else, so it runs on an
+      opaque origin: no cookies, no localStorage, no IndexedDB, no reach into the reader.
+      It owns one worker, relays the protocol between the parent page and that worker, and
+      throws the worker away when asked to stop — which is how a runaway loop is killed,
+      since no WebAssembly run-time here can be relied on to answer an interrupt.
+
+      It holds no logic of its own beyond that. The engines live in kernel-worker.js.
+    -->
+    <script>
+      (function () {
+        const NAMESPACE = "tutors-runtime";
+        const WORKER_URL = new URL("./kernel-worker.js", location.href).href;
+
+        const params = new URLSearchParams(location.search);
+        const token = params.get("token") || "";
+        const runtime = params.get("runtime") || "python";
+
+        let worker = null;
+        let workerSource = null;
+
+        function send(event) {
+          parent.postMessage({ ns: NAMESPACE, token: token, event: event }, "*");
+        }
+
+        /**
+         * Workers cannot be loaded by URL from an opaque origin, so the source is fetched
+         * and started from a blob. The fetch is cross-origin from here, which is why the
+         * reader serves /runtimes/* with an allow-origin header.
+         */
+        async function spawn() {
+          if (worker) return worker;
+          if (workerSource === null) {
+            const response = await fetch(WORKER_URL);
+            if (!response.ok) throw new Error("Could not load the run-time worker (" + response.status + ")");
+            workerSource = await response.text();
+          }
+          const blob = new Blob([workerSource], { type: "text/javascript" });
+          worker = new Worker(URL.createObjectURL(blob));
+          worker.onmessage = function (event) {
+            send(event.data);
+          };
+          worker.onerror = function (event) {
+            send({ type: "error", id: currentId, message: event.message || "The run-time stopped unexpectedly." });
+            send({ type: "done", id: currentId, ok: false, durationMs: 0 });
+          };
+          worker.postMessage({ type: "configure", baseUrl: new URL("./", location.href).href, runtime: runtime });
+          return worker;
+        }
+
+        function discard() {
+          if (!worker) return;
+          worker.terminate();
+          worker = null;
+        }
+
+        let currentId = "";
+
+        window.addEventListener("message", async function (event) {
+          const data = event.data;
+          if (!data || data.ns !== NAMESPACE || data.token !== token) return;
+          if (event.source !== parent) return;
+
+          if (data.type === "execute") {
+            currentId = data.id;
+            try {
+              const target = await spawn();
+              target.postMessage({ type: "execute", request: data });
+            } catch (error) {
+              send({ type: "error", id: data.id, message: String(error && error.message ? error.message : error) });
+              send({ type: "done", id: data.id, ok: false, durationMs: 0 });
+            }
+            return;
+          }
+
+          if (data.type === "stop" || data.type === "restart") {
+            discard();
+            send({ type: "status", phase: "idle", detail: "Run-time restarted" });
+          }
+        });
+
+        send({ type: "ready" });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{{ export function playgroundCard(lo) }}
+  {{# A generated site is static files on a web host, with no reader to host the sandboxed
+      run-time, so the workspace is published as a listing. The code is still the point:
+      a student reading the site offline can follow it, and the reader runs the same files. #}}
+  <div class="bg-base-100 rounded-xl shadow-lg p-4 my-4">
+    <div class="flex items-center justify-between pb-2">
+      <span class="text-sm font-semibold">{{ lo.runtime }} playground</span>
+      <span class="text-xs opacity-60">Run this in the Tutors reader</span>
+    </div>
+    {{ for file of lo.files }}
+      <div class="mb-4">
+        <div class="text-xs font-mono opacity-70 pb-1">{{ file.path }}</div>
+        <pre class="rounded-lg p-3 overflow-x-auto text-sm"><code>{{ file.content }}</code></pre>
+      </div>
+    {{ /for }}
+    {{ if lo.tests }}
+      <div class="mb-2">
+        <div class="text-xs font-mono opacity-70 pb-1">{{ lo.tests.path }}</div>
+        <pre class="rounded-lg p-3 overflow-x-auto text-sm"><code>{{ lo.tests.content }}</code></pre>
+      </div>
+    {{ /if }}
+  </div>
+{{ /export }}

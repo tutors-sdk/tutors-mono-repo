@@ -31,6 +31,7 @@ export const FluentIconLib: IconLib = {
   notebook: { type: "simple-icons:jupyter", color: "error" },
   whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
   scorm: { type: "fluent:box-24-filled", color: "secondary" },
+  playground: { type: "fluent:code-24-filled", color: "primary" },
   podcast: { type: "fluent:mic-20-filled", color: "primary" },
 
   // pdf reader icons

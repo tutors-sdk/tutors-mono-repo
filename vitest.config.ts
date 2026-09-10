@@ -10,6 +10,11 @@ const require = createRequire(import.meta.url);
 const jsYaml = require.resolve("js-yaml");
 const frontMatter = require.resolve("front-matter");
 
+// The workspace root and packages/svelte/community resolve @supabase/supabase-js to
+// different copies, so a `vi.mock` written in a test would not be the module the code
+// under test imported. One alias makes both the same module.
+const supabase = require.resolve("@supabase/supabase-js", { paths: [resolve(__dirname, "packages/svelte/community")] });
+
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
@@ -33,6 +38,7 @@ export default defineConfig({
       "@tutors/tutors-gen-lib": resolve(__dirname, "packages/jsr/gen/src/tutors.ts"),
       "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
       "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
+      "@supabase/supabase-js": supabase,
       "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
       "front-matter": frontMatter,
       "js-yaml": jsYaml,

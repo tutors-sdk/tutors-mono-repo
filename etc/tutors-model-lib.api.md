@@ -85,6 +85,15 @@ export type PanelTalk = Talk & { type: "paneltalk"; };
 export type PanelVideo = Lo & { type: "panelvideo"; };
 
 // (from src/types/learning-objects.ts)
+export type Playground = Lo & { type: "playground"; runtime: PlaygroundRuntime; entry: string; files: PlaygroundFile[]; packages: string[]; tests?: PlaygroundFile; };
+
+// (from src/types/learning-objects.ts)
+export type PlaygroundFile = { path: string; content: string; readOnly?: boolean; };
+
+// (from src/types/learning-objects.ts)
+export type PlaygroundRuntime = "python" | "javascript" | "typescript";
+
+// (from src/types/learning-objects.ts)
 export type Podcast = Lo & { type: "podcast"; episode: PodcastEpisodeIdentifier; };
 
 // (from src/types/media-types.ts)
@@ -280,5 +289,5 @@ export const simpleTypes: string[];
 | const | 8 |
 | function | 32 |
 | interface | 1 |
-| type | 41 |
-| **Total** | **83** |
+| type | 44 |
+| **Total** | **86** |

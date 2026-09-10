@@ -24,6 +24,7 @@ export const EasterIcons: IconLib = {
   notebook: { type: "simple-icons:jupyter", color: "error" },
   whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
   scorm: { type: "fluent:box-24-filled", color: "secondary" },
+  playground: { type: "fluent:code-24-filled", color: "primary" },
   archive: { type: "mdi:basket-outline", color: "error" },
   web: { type: "fluent:bookmark-24-regular", color: "primary" },
   github: { type: "mdi:github", color: "warning" },
