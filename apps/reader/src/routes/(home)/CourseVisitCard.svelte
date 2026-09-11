@@ -16,25 +16,48 @@
       <p class="line-clamp-1 font-bold">{courseVisit.title}</p>
       <p class="line-clamp-1">{courseVisit.credits}</p>
       <p class="line-clamp-1">
-        {t("course.visitCard.lastAccessed")} {courseVisit.lastVisit?.slice(0, 10)}
+        {t("course.visitCard.lastAccessed")}
+        {courseVisit.lastVisit?.slice(0, 10)}
         {courseVisit.lastVisit.slice(11, 19)}
       </p>
       <p>{t("course.visitCard.visits")} {courseVisit.visits}</p>
     </section>
     <section class="content-center">
       {#if courseVisit.icon}
-        <Iconify icon={courseVisit.icon.type} color={courseVisit.icon.color} height="96" />
+        <Iconify
+          icon={courseVisit.icon.type}
+          color={courseVisit.icon.color}
+          height="96"
+        />
       {:else}
-        <img class="h-20" src={courseVisit.img} alt={courseVisit.title} />
+        <img class="h-20" src={courseVisit.image} alt={courseVisit.title} />
       {/if}
     </section>
   </div>
   <footer class="card-footer p-0">
     <div class="flex w-full">
-      <a class="variant-filled-primary btn hover:preset-tonal m-0 w-2/3 rounded-t-none rounded-br-none" href={"/course/" + courseVisit.id}>{t("course.visitCard.visitCourse")}</a>
-      <button class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none" onclick={() => deleteCourse(courseVisit.id)}>{t("course.visitCard.delete")}</button>
-      <button class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none" aria-label={courseVisit.favourite ? t("course.visitCard.unstar") : t("course.visitCard.star")} onclick={() => starUnstarCourse(courseVisit.id)}>
-        <Iconify icon={courseVisit.favourite ? "openmoji:star" : "openmoji:black-star"} width="36" height="36" />
+      <a
+        class="variant-filled-primary btn hover:preset-tonal m-0 w-2/3 rounded-t-none rounded-br-none"
+        href={"/course/" + courseVisit.id}
+        >{t("course.visitCard.visitCourse")}</a
+      >
+      <button
+        class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none"
+        onclick={() => deleteCourse(courseVisit.id)}
+        >{t("course.visitCard.delete")}</button
+      >
+      <button
+        class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none"
+        aria-label={courseVisit.favourite
+          ? t("course.visitCard.unstar")
+          : t("course.visitCard.star")}
+        onclick={() => starUnstarCourse(courseVisit.id)}
+      >
+        <Iconify
+          icon={courseVisit.favourite ? "openmoji:star" : "openmoji:black-star"}
+          width="36"
+          height="36"
+        />
       </button>
     </div>
   </footer>
