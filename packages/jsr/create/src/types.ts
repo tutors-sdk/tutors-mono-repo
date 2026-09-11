@@ -9,6 +9,10 @@ export interface CourseSpec {
   includeLabs: boolean;
   includeCalendar: boolean;
   includeEnrollment: boolean;
+  includeGitignore: boolean;
+  includeReadme: boolean;
+  /** Free text placed under the heading of the generated README. */
+  readmeDescription: string;
 }
 
 /** Fixed number of steps generated for each lab (in addition to the Setup step). */
@@ -25,6 +29,9 @@ export const defaultSpec: CourseSpec = {
   includeLabs: true,
   includeCalendar: false,
   includeEnrollment: false,
+  includeGitignore: true,
+  includeReadme: false,
+  readmeDescription: "",
 };
 
 export function slugify(name: string): string {

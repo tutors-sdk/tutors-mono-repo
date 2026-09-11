@@ -120,6 +120,106 @@ export function netlifyToml(): string {
 `;
 }
 
+/**
+ * A general-purpose .gitignore for a course repository. The first block is
+ * Tutors-specific - the generator writes its output into ./json (jsr:@tutors/tutors)
+ * or ./html (jsr:@tutors/tutors-lite) beside the source, and neither belongs in
+ * Git. Those two are anchored with a leading slash so a course folder that
+ * legitimately holds `json` or `html` material further down is untouched. The
+ * rest is the usual editor/OS/Node hygiene, including `~*` for the temporary
+ * twins Office leaves behind while a deck is open.
+ */
+export function gitignoreFile(): string {
+  return `# Generated Tutors site - rebuilt on every publish, never commit it.
+/json/
+/html/
+_site/
+
+# Netlify CLI state
+.netlify/
+
+# Open/temporary Office documents (PowerPoint, Word, Excel)
+~*
+*.tmp
+*.bak
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node tooling (lab code, build scripts)
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.pnpm-store/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+`;
+}
+
+/**
+ * A GitHub landing page for the course repository. It carries whatever
+ * description the author typed in the wizard, then explains what the repo is
+ * and how to publish it - the parts a visitor arriving from GitHub needs and
+ * that course.md (which is read inside Tutors) does not cover.
+ */
+export function readmeMd(spec: CourseSpec): string {
+  const description = spec.readmeDescription.trim() || "A short description of this course goes here.";
+  const byline = spec.lecturerName ? `\n_${spec.lecturerName}_\n` : "";
+
+  return `# ${spec.courseName}
+${byline}
+${description}
+
+## About this repository
+
+This is a [Tutors](https://tutors.dev) course. The Markdown, images and slide
+decks here are the source; the course website is generated from them, so edit
+the source and republish rather than editing the published site.
+
+## Publishing
+
+The repository is set up for Netlify and \`netlify.toml\` holds the build
+command, so connecting it to a Netlify site is all that is needed - every push
+to the default branch rebuilds the course.
+
+To build it locally instead, install [Deno](https://deno.com) and run:
+
+\`\`\`bash
+deno run -A jsr:@tutors/tutors
+\`\`\`
+
+That writes the site into \`./json\`, which is ignored by Git.
+
+## Reference
+
+- [Tutors Reference Manual](https://tutors.dev/course/tutors-reference-manual)
+- [Course properties](https://tutors.dev/note/tutors-reference-manual/unit-1-getting-started/note-d-properties)
+`;
+}
+
 /** Local-timezone YYYY-MM-DD (avoids the UTC roll-back of toISOString). */
 function isoDate(d: Date): string {
   const y = d.getFullYear();
