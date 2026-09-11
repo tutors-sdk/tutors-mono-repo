@@ -8,6 +8,20 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.5 (2026-09)
+
+#### Features
+
+- Panopto video support: embed Panopto-hosted videos in courses via `panopto=` video identifiers (PR #188)
+
+#### Fixes
+
+- Course visit card thumbnail missing on home page recently accessed / favourites cards for courses without a custom icon (PR #191)
+- Content locking: course context sidebar tree collapsed by default; TOC tree refactored with RBAC-aware visibility filtering; LLM export links respect content locks for enrolled students (PR #204)
+- Circular card title no longer hidden behind the card image (PR #194)
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+- PDF.js worker updated
+
 ### v16.1.4 (2026-09)
 
 #### Fixes
@@ -87,6 +101,12 @@
 ---
 
 ## Live (`tutors-live`)
+
+### v16.1.5 (2026-09)
+
+#### Fixes
+
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
 
 ### v16.0.2 (2026-08)
 
