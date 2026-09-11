@@ -50,6 +50,7 @@ function createRbacService() {
   const currentRole = rune<Role>("student");
   const currentUserId = rune("");
   const currentCourseId = rune("");
+  let loadedLocksCourseId = "";
 
   function loadRole(userId: string, courseId: string, course?: { enrollment?: { educators?: string[] } }): void {
     if (!userId || !courseId) {
@@ -81,27 +82,36 @@ function createRbacService() {
   async function loadContentLocks(courseId: string): Promise<void> {
     if (!courseId) {
       locksLoaded.value = true;
+      loadedLocksCourseId = "";
       return;
     }
-    locksLoaded.value = false;
-
-    const locks = await getLocksForCourse(courseId);
-    const lockMap = new Map<string, boolean>();
-
-    if (locks.length > 0) {
-      locks.forEach((lock) => lockMap.set(lock.lo_route, lock.locked));
-    } else if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(`tutors-locks-${courseId}`);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as Record<string, boolean>;
-          Object.entries(parsed).forEach(([route, locked]) => lockMap.set(route, locked));
-        } catch { /* ignore parse errors */ }
-      }
+    // Only clear the loaded flag when switching courses — avoids TOC remount loops
+    // for enrolled students while locks are refreshed for the same course.
+    if (loadedLocksCourseId !== courseId) {
+      locksLoaded.value = false;
     }
 
-    contentLocks.value = lockMap;
-    locksLoaded.value = true;
+    try {
+      const locks = await getLocksForCourse(courseId);
+      const lockMap = new Map<string, boolean>();
+
+      if (locks.length > 0) {
+        locks.forEach((lock) => lockMap.set(lock.lo_route, lock.locked));
+      } else if (typeof window !== "undefined") {
+        const stored = localStorage.getItem(`tutors-locks-${courseId}`);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as Record<string, boolean>;
+            Object.entries(parsed).forEach(([route, locked]) => lockMap.set(route, locked));
+          } catch { /* ignore parse errors */ }
+        }
+      }
+
+      contentLocks.value = lockMap;
+    } finally {
+      locksLoaded.value = true;
+      loadedLocksCourseId = courseId;
+    }
   }
 
   async function toggleContentLock(loRoute: string, locked: boolean): Promise<boolean> {
@@ -126,6 +136,9 @@ function createRbacService() {
   }
 
   function isLoLocked(lo: Lo): boolean {
+    // Course home remains reachable even if a stale lock exists on the course route.
+    if (lo.type === "course") return false;
+
     const locks = contentLocks.value;
     if (lo.route && isLoRouteLocked(lo.route, locks)) return true;
     if (lo.video && lo.video !== lo.route && isLoRouteLocked(lo.video, locks)) return true;
@@ -162,6 +175,8 @@ function createRbacService() {
     currentCourseId.value = "";
     contentLocks.value = new Map();
     isEducator.value = false;
+    locksLoaded.value = false;
+    loadedLocksCourseId = "";
   }
 
   return {

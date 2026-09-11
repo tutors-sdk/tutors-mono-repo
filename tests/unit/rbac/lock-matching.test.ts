@@ -127,6 +127,11 @@ describe("rbacService.isLoLocked", () => {
     expect(rbacService.isLoLocked(otherTopic)).toBe(false);
     expect(rbacService.isLoLocked(topic)).toBe(false);
   });
+
+  it("does not treat the course home LO as locked", () => {
+    contentLocks.value = new Map([["/course/cs101", true]]);
+    expect(rbacService.isLoLocked({ route: "/course/cs101", type: "course" } as Lo)).toBe(false);
+  });
 });
 
 describe("rbacService.isLoVisibleToStudent", () => {
