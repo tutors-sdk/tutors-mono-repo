@@ -1,5 +1,6 @@
 import type { ActionReturn } from "svelte/action";
 import { parseQuizMarkdown } from "./quiz-parser.ts";
+import { ensureEmbeddedQuiz, hashQuizSource } from "./quiz-store.ts";
 
 /**
  * Svelte action applied to a rendered-markdown container. It finds any
@@ -34,6 +35,12 @@ function renderQuizBlocks(container: HTMLElement) {
     }
 
     const courseId = extractCourseIdFromUrl();
+
+    // Seed the embedded quiz into the local store under a stable content-hash
+    // id, so the card can link to a reloadable /quiz/[courseid]/[quizid] URL.
+    const quizId = hashQuizSource(source);
+    ensureEmbeddedQuiz(quizId, courseId, parsed);
+
     node.innerHTML = "";
     node.className =
       "quiz-embed border-primary-500 bg-surface-100 dark:bg-surface-900 rounded-xl border-[1px] p-4 my-4";
@@ -52,12 +59,10 @@ function renderQuizBlocks(container: HTMLElement) {
     `;
 
     const link = document.createElement("a");
-    link.href = `/quiz/${courseId}`;
+    link.href = `/quiz/${courseId}/${quizId}`;
     link.className =
       "px-4 py-2 rounded-lg text-sm font-medium preset-filled-primary-500 no-underline";
     link.textContent = "Open Quiz";
-    link.dataset.quizTitle = parsed.title;
-    link.dataset.quizData = JSON.stringify(parsed);
 
     wrapper.appendChild(info);
     wrapper.appendChild(link);

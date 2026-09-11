@@ -232,6 +232,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
+      '@tutors/quiz':
+        specifier: workspace:*
+        version: link:../../packages/svelte/quiz
       '@tutors/rbac':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/rbac
