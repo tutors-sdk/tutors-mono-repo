@@ -1,35 +1,49 @@
 <script lang="ts">
-  import type { Lo } from "@tutors/tutors-model-lib";
+  import type { Composite, Lo } from "@tutors/tutors-model-lib";
   import { TreeView, createTreeViewCollection, useTreeView } from "@skeletonlabs/skeleton-svelte";
   import { onMount } from "svelte";
   import LoReference from "./LoReference.svelte";
   import Icon from "./Icon.svelte";
+  import { isEducator } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
 
-  let { lo, expandAll = true }: { lo: Lo; expandAll?: boolean } = $props();
+  let { lo, expandAll = false }: { lo: Lo; expandAll?: boolean } = $props();
 
   type Node = { id: string; name: string; lo?: Lo; children?: Node[] };
 
+  function childEntries(item: Lo): Lo[] {
+    const toc = item?.toc ?? [];
+    if (toc.length > 0) return toc;
+    return (item as Composite)?.los ?? [];
+  }
+
   function isVisible(child: Lo): boolean {
+    if (isEducator.value) return !child.hide;
     return rbacService.isLoVisibleToStudent(child);
   }
 
-  function mapLoToNode(item: Lo, parentPath: string, index: number): Node {
+  function mapLoToNode(item: Lo, parentPath: string, index: number): Node | null {
     const thisPath = `${parentPath}/${index}`;
-    const children = (item?.toc ?? [])
+    const entries = childEntries(item);
+    const children = entries
       .filter(isVisible)
-      .map((child, i) => mapLoToNode(child, thisPath, i));
+      .map((child, i) => mapLoToNode(child, thisPath, i))
+      .filter((node): node is Node => node !== null);
+
+    if (entries.length > 0 && children.length === 0) return null;
+
     return {
-      id: item.id,
+      id: item.id || item.route || thisPath,
       name: item?.title || "",
       lo: item,
       children,
     };
   }
 
-  const rootChildren = (lo?.toc ?? [])
+  const rootChildren = childEntries(lo)
     .filter(isVisible)
-    .map((child, i) => mapLoToNode(child, "root", i));
+    .map((child, i) => mapLoToNode(child, "root", i))
+    .filter((node): node is Node => node !== null);
 
   const collection = createTreeViewCollection<Node>({
     nodeToValue: (node) => node.id,
@@ -45,8 +59,13 @@
   onMount(() => {
     if (expandAll) {
       treeView().expand();
+      allExpanded = true;
+    } else {
+      treeView().collapse();
+      allExpanded = false;
     }
   });
+
   function toggleExpandAll() {
     if (allExpanded) {
       treeView().collapse();

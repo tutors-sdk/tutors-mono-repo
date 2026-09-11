@@ -143,10 +143,12 @@ export const tutorsConnectService: TutorsConnectService = {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
     }
-    if (course.hasEnrollment && tutorsId.value?.login) {
-      rbacService.loadRole(tutorsId.value.login, course.courseId, course);
+    if (course.hasEnrollment) {
       rbacService.loadContentLocks(course.courseId);
-      rbacService.checkLecturerStatus(course);
+      if (tutorsId.value?.login) {
+        rbacService.loadRole(tutorsId.value.login, course.courseId, course);
+        rbacService.checkLecturerStatus(course);
+      }
     } else {
       rbacService.clear();
     }

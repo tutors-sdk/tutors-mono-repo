@@ -3,7 +3,7 @@
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
-  import { currentCourse, isEducator, contentLocks } from "@tutors/runes";
+  import { currentCourse, isEducator, contentLocks, locksLoaded, tutorsId } from "@tutors/runes";
   import { rbacService, isLoRouteLocked } from "@tutors/rbac";
   import { afterNavigate, goto } from "$app/navigation";
 
@@ -16,25 +16,47 @@
   tutorsConnectService.startTimer();
 
   let lastCourseId = "";
+  let roleLoadedForCourse = "";
   $effect(() => {
     tutorsConnectService.learningEvent(page.params);
 
-    if (currentCourse.value?.courseId !== lastCourseId) {
+    const course = currentCourse.value;
+    const courseId = course?.courseId;
+    if (!courseId) return;
+
+    if (courseId !== lastCourseId) {
       tutorsConnectService.checkWhiteList();
-      tutorsConnectService.courseVisit(currentCourse.value!);
-      lastCourseId = currentCourse.value?.courseId!;
+      tutorsConnectService.courseVisit(course);
+      lastCourseId = courseId;
+      roleLoadedForCourse = "";
+      return;
+    }
+
+    const login = tutorsId.value?.login;
+    if (course.hasEnrollment && login && roleLoadedForCourse !== courseId) {
+      rbacService.loadRole(login, courseId, course);
+      rbacService.checkLecturerStatus(course);
+      roleLoadedForCourse = courseId;
     }
   });
 
   afterNavigate(({ to }) => {
-    if (currentCourse.value?.hasEnrollment && !isEducator.value && to?.url?.pathname) {
+    if (
+      currentCourse.value?.hasEnrollment &&
+      !isEducator.value &&
+      locksLoaded.value &&
+      to?.url?.pathname
+    ) {
       const pathname = to.url.pathname;
+      const courseHome = `/course/${currentCourse.value.courseId}`;
+      if (pathname === courseHome) return;
+
       const lo = currentCourse.value.loIndex?.get(pathname);
       const blocked = lo
         ? rbacService.isLoLocked(lo)
         : isLoRouteLocked(pathname, contentLocks.value);
       if (blocked) {
-        goto(`/course/${currentCourse.value.courseId}`);
+        void goto(courseHome, { replaceState: true });
         return;
       }
     }
