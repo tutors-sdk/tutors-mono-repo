@@ -13,6 +13,7 @@ const filesToDownload = [
   'components/cards/CompositeCard.vto',
   'components/cards/Image.vto',
   'components/cards/NoteCard.vto',
+  'components/cards/ScormCard.vto',
   'components/cards/PanelCards.vto',
   'components/cards/TalkCard.vto',
   'components/cards/UnitCard.vto',
@@ -34,6 +35,7 @@ const filesToDownload = [
   'Talk.vto',
   'layouts/main.vto',
   'Note.vto',
+  'Scorm.vto',
   'Tutorial.vto',
   'Topic.vto',
   'Wall.vto'

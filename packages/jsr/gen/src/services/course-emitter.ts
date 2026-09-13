@@ -1,5 +1,8 @@
 import type { Course, Lab, Lo, Talk, Topic, Unit } from "@tutors/tutors-model-lib";
+import { filterByType } from "@tutors/tutors-model-lib";
 import { publishTemplate } from "../templates/template-engine.ts";
+import { buildLmsRuntimeScript, LMS_RUNTIME_FILE } from "../scorm/lms-runtime.ts";
+import { writeFile } from "../utils/file-utils.ts";
 import { isMarpContent, renderMarpToStaticHtml } from "./marp-renderer.ts";
 
 async function emitTalk(lo: Talk, path: string) {
@@ -15,6 +18,11 @@ async function emitTalk(lo: Talk, path: string) {
 async function emitNote(lo: Lo, path: string) {
   const notePath = `${path}/${lo.id}`;
   await publishTemplate(notePath, "index.html", "Note", lo);
+}
+
+async function emitScorm(lo: Lo, path: string) {
+  const scormPath = `${path}/${lo.id}`;
+  await publishTemplate(scormPath, "index.html", "Scorm", lo);
 }
 
 async function emitTutorial(lo: Lo, path: string) {
@@ -52,6 +60,9 @@ async function emitLoPage(lo: Lo, path: string) {
   }
   if (lo.type == "talk") {
     await emitTalk(lo as Talk, `${path}`);
+  }
+  if (lo.type == "scorm") {
+    await emitScorm(lo, path);
   }
 }
 
@@ -96,4 +107,9 @@ export async function emitStaticCourse(path: string, lo: Course) {
   }
   await publishTemplate(path, "index.html", "Composite", lo);
   await emitWalls(path, lo);
+  // Every imported SCO shares one run-time, written to the course root and reached from
+  // any depth through the relative path the templates already compute.
+  if (filterByType(lo.los ?? [], "scorm").length > 0) {
+    writeFile(path, LMS_RUNTIME_FILE, buildLmsRuntimeScript());
+  }
 }

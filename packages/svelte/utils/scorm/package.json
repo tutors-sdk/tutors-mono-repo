@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/scorm",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "SCORM run-time environment: lets Tutors act as the LMS for an imported SCORM package",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

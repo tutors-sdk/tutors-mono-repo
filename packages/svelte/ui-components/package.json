@@ -39,6 +39,7 @@
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
+    "@tutors/scorm": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@tutors/ui-navigators": "workspace:*",

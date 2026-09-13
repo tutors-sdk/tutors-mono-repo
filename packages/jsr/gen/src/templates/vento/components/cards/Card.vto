@@ -23,7 +23,9 @@
               {{ else if lo.videoids.videoIds.length > 0 && lo.videoids.videoIds[lo.videoids.videoIds.length - 1].service === 'vimp' }}
                 {{ icon("video", 30, "https://vimp.oth-regensburg.de/media/embed?key=" + lo.videoids.videoIds[lo.videoids.videoIds.length - 1].id, "Play") }}
               {{ else if lo.videoids.videoIds.length > 0 && lo.videoids.videoIds[lo.videoids.videoIds.length - 1].service === 'panopto' }}
-                {{ icon("video", 30, lo.videoids.videoIds[lo.videoids.videoIds.length - 1].id |> panoptoViewerUrl, "Play") }}
+                {{# a filter cannot be piped inside a call argument: vento reads the rest of the line as the filter name #}}
+                {{ set panoptoUrl = lo.videoids.videoIds[lo.videoids.videoIds.length - 1].id |> panoptoViewerUrl }}
+                {{ icon("video", 30, panoptoUrl, "Play") }}
               {{ else }}
                 {{ icon("video", 30, "https://www.youtube.com/watch?v=" + lo.videoid, "Play") }}
               {{ /if }}

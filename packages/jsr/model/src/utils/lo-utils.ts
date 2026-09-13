@@ -11,6 +11,7 @@ import {
   type PanelTalk,
   type PanelVideo,
   type Podcast,
+  type Scorm,
   type Side,
   type Talk,
   type Tutorial,
@@ -90,6 +91,10 @@ export function injectCourseUrl(los: Lo[], id: string, url: string) {
     if (lo.type === "whiteboard") {
       const whiteboard = lo as Whiteboard;
       whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
+    }
+    if (lo.type === "scorm") {
+      const scorm = lo as Scorm;
+      scorm.scorm = scorm.scorm?.replace("{{COURSEURL}}", url);
     }
     // legacy version of generator included hash based routes;
     // remove these now:

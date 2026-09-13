@@ -21,6 +21,7 @@ import {
   type Course,
   type Lab,
   type Lo,
+  type Scorm,
   type Talk,
   type Topic,
   type Tutorial,
@@ -163,6 +164,10 @@ function injectCourseUrl(los: Lo[], id: string, url: string) {
       const whiteboard = lo as Whiteboard;
       whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
     }
+    if (lo.type === "scorm") {
+      const scorm = lo as Scorm;
+      scorm.scorm = scorm.scorm?.replace("{{COURSEURL}}", url);
+    }
 
     localizePath(lo);
     fixRoutePaths(lo);
@@ -179,6 +184,9 @@ function localizePath(lo: Lo) {
     }
     if ((lo as any).excalidraw) {
       (lo as any).excalidraw = (lo as any).excalidraw?.replace("https://", "http://");
+    }
+    if ((lo as any).scorm) {
+      (lo as any).scorm = (lo as any).scorm?.replace("https://", "http://");
     }
   }
 }

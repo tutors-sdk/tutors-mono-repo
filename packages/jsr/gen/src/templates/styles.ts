@@ -24,7 +24,8 @@ export const icons = {
   'toc': "fluent:line-horizontal-3-20-filled",
   'info': "fluent:info-28-regular",
   'podcast': "fluent:mic-20-filled",
-  'notebook': 'fluent:notebook-24-regular'
+  'notebook': 'fluent:notebook-24-regular',
+  'scorm': 'fluent:box-24-filled'
 } as const;
 
 export const colours = {
@@ -45,6 +46,7 @@ export const colours = {
   'panelnote': '#d27711',
   'podcast': '#ba5150',
   'notebook': '#557927',
+  'scorm': '#7c5cbf',
 } as const;
 
 export const backgroundColours = {
@@ -66,6 +68,7 @@ export const backgroundColours = {
   'podcast': '#ba5150',
   'panelnote': '#d27711',
   'notebook': '#557927',
+  'scorm': '#7c5cbf',
 } as const;
 
 export type IconType = keyof typeof icons;
@@ -105,6 +108,7 @@ export const loColours = {
   "info": { border: "#37919b", background: "#37919b" },
   "podcast": { border: "#008c8f", background: "#d6e9e9" },
   "notebook": { border: "#557927", background: "#d9eee0" },
+  "scorm": { border: "#7c5cbf", background: "#e6dff5" },
 }
 
 export function loBorderColour(type: IconType): string {

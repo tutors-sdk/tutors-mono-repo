@@ -7,6 +7,12 @@
 
 ```ts
 
+// --- types ---
+
+// (from src/tutors.ts)
+export type { ScormExportOptions };
+
+
 // --- functions ---
 
 // (from src/tutors.ts)
@@ -17,6 +23,9 @@ export function decorateCourse(course: Course);
 
 // (from src/tutors.ts)
 export function generateDynamicCourse(lo: Lo, folder: string) : boolean;
+
+// (from src/scorm/emitter.ts)
+export async function generateScormCourse(course: Course, srcHtmlFolder: string, destFolder: string, options: ScormExportOptions) : Promise<string>;
 
 // (from src/tutors.ts)
 export async function generateStaticCourse(course: Course, destFolder: string, srcVentoFolder: string) : Promise<boolean>;
@@ -30,5 +39,6 @@ export function parseCourse(folder: string, silent: boolean = false) : [Course, 
 
 | Kind | Count |
 |------|-------|
-| function | 5 |
-| **Total** | **5** |
+| function | 6 |
+| type | 1 |
+| **Total** | **7** |

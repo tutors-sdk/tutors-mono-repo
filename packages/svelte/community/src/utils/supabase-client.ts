@@ -126,6 +126,85 @@ export async function getTutorsConnectLatestLosByCourseId(courseId: string): Pro
   return (data ?? []) as TutorsConnectLatestRow[];
 }
 
+/** The subset of a SCO's state Tutors reports on; mirrors `ScormSummary` in `@tutors/scorm`. */
+export interface ScormRecordSummary {
+  completionStatus: string;
+  successStatus: string;
+  scoreRaw?: number;
+  scoreMax?: number;
+  scoreScaled?: number;
+  totalTime: number;
+}
+
+/**
+ * Reads a learner's saved SCORM state so a SCO can resume where it left off.
+ * @async
+ * @param courseId - Identifier of the course
+ * @param studentId - Identifier of the student
+ * @param loId - Identifier of the learning object
+ * @returns The stored CMI data model, or an empty object for a first attempt
+ */
+export async function getScormRecord(courseId: string, studentId: string, loId: string): Promise<Record<string, string>> {
+  if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return {};
+  if (!courseId || !studentId || !loId) return {};
+
+  const { data, error } = await supabase.from("scorm_records").select("cmi").eq("course_id", courseId).eq("student_id", studentId).eq("lo_id", loId).maybeSingle();
+
+  if (error) {
+    log.error("getScormRecord failed:", error);
+    return {};
+  }
+  return ((data as { cmi: Record<string, string> } | null)?.cmi ?? {}) as Record<string, string>;
+}
+
+/**
+ * Stores a learner's SCORM state.
+ *
+ * Called from the SCO's own Commit and Terminate, which are synchronous and cannot wait
+ * for a round trip, so this never throws — a failed save leaves the browser-local copy
+ * as the record of the attempt.
+ * @async
+ * @param courseId - Identifier of the course
+ * @param studentId - Identifier of the student
+ * @param loId - Identifier of the learning object
+ * @param scormVersion - SCORM profile the package declares
+ * @param cmi - The complete CMI data model as the SCO left it
+ * @param summary - The fields Tutors extracts for reporting
+ */
+export async function upsertScormRecord(
+  courseId: string,
+  studentId: string,
+  loId: string,
+  scormVersion: string,
+  cmi: Record<string, string>,
+  summary: ScormRecordSummary
+): Promise<void> {
+  if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return;
+  if (!courseId || !studentId || !loId) return;
+
+  const { error } = await supabase.from("scorm_records").upsert(
+    {
+      course_id: courseId,
+      student_id: studentId,
+      lo_id: loId,
+      scorm_version: scormVersion,
+      cmi: cmi,
+      completion_status: summary.completionStatus,
+      success_status: summary.successStatus,
+      score_raw: summary.scoreRaw ?? null,
+      score_max: summary.scoreMax ?? null,
+      score_scaled: summary.scoreScaled ?? null,
+      total_time: summary.totalTime,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "student_id, course_id, lo_id" }
+  );
+
+  if (error) {
+    log.error("upsertScormRecord failed:", error);
+  }
+}
+
 /**
  * Retrieves the number of learning record increments for a specific field
  * @async

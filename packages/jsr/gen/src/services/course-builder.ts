@@ -21,8 +21,26 @@ import {
   readVideoIds,
   removeLeadingHashes,
 } from "../utils/lr-utils.ts";
-import { type Archive, type Composite, type Course, isCompositeLo, type Lab, type Lo, type Notebook, type NotebookCell, type NotebookOutput, Podcast, preOrder, Properties, type Talk, Tutorial, type Whiteboard } from "@tutors/tutors-model-lib";
+import {
+  type Archive,
+  type Composite,
+  type Course,
+  isCompositeLo,
+  type Lab,
+  type Lo,
+  type Notebook,
+  type NotebookCell,
+  type NotebookOutput,
+  Podcast,
+  preOrder,
+  Properties,
+  type Scorm,
+  type Talk,
+  Tutorial,
+  type Whiteboard,
+} from "@tutors/tutors-model-lib";
 import { readWholeFile, readYamlFile } from "../utils/file-utils.ts";
+import { readScormPackage, SCORM_CONTENT_FOLDER } from "../scorm/package.ts";
 import type { LearningResource } from "../types/types.ts";
 
 let silentGlobal = false;
@@ -175,8 +193,41 @@ function buildWhiteboard(lo: Lo, lr: LearningResource) {
   }
 }
 
+/**
+ * A `scorm-*` folder holds a third-party package rather than Tutors content, so its
+ * shape is discovered from its own imsmanifest.xml instead of from naming conventions.
+ */
+function buildScormLo(lo: Lo, lr: LearningResource) {
+  const scorm = lo as Scorm;
+  let source;
+  try {
+    source = readScormPackage(lr.files);
+  } catch (error) {
+    console.log(`Tutors could not read the SCORM package in ${lr.route}: ${(error as Error).message}`);
+    return;
+  }
+  if (!source) {
+    console.log(`No SCORM package found in ${lr.route}. Expected an imsmanifest.xml, or a .zip containing one.`);
+    return;
+  }
+  scorm.scormVersion = source.info.version;
+  scorm.scormFile = source.info.launchFile;
+  scorm.scorm = `https://{{COURSEURL}}${lr.route.replace(lr.courseRoot, "")}/${SCORM_CONTENT_FOLDER}/${source.info.launchFile}`;
+  // Vendor packages usually name themselves; the folder's .md only has to override that.
+  if (!scorm.title && source.info.title) {
+    scorm.title = source.info.title;
+  }
+  const masteryScore = Number(lo.frontMatter?.masteryScore);
+  if (!isNaN(masteryScore)) {
+    scorm.masteryScore = masteryScore;
+  }
+}
+
 function buildSimpleLo(lo: Lo, lr: LearningResource): Lo {
   switch (lo.type) {
+    case "scorm":
+      buildScormLo(lo, lr);
+      break;
     case "lab":
       buildLab(lo, lr);
       break;

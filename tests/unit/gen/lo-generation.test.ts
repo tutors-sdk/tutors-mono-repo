@@ -181,3 +181,36 @@ describe("lo-generation: Whiteboard shape", () => {
     expect(typeof whiteboard.excalidrawFile).toBe("string");
   });
 });
+
+describe("lo-generation: Scorm shape", () => {
+  const scorm = makeBaseLo({
+    type: "scorm",
+    scorm: "https://{{COURSEURL}}/topic-01/scorm-quiz/package/index.html",
+    scormFile: "index.html",
+    scormVersion: "1.2",
+    masteryScore: 80,
+  });
+
+  it("has type 'scorm'", () => {
+    expect(scorm.type).toBe("scorm");
+  });
+
+  it("has scorm and scormFile fields", () => {
+    expect(typeof scorm.scorm).toBe("string");
+    expect(typeof scorm.scormFile).toBe("string");
+  });
+
+  it("launches from within the extracted package folder", () => {
+    expect(scorm.scorm).toContain("/package/");
+    expect(scorm.scorm).toContain(scorm.scormFile as string);
+  });
+
+  it("declares the SCORM profile the package was authored against", () => {
+    expect(["1.2", "2004"]).toContain(scorm.scormVersion);
+  });
+
+  it("carries an optional mastery score", () => {
+    expect(typeof scorm.masteryScore).toBe("number");
+    expect(makeBaseLo({ type: "scorm" }).masteryScore).toBeUndefined();
+  });
+});

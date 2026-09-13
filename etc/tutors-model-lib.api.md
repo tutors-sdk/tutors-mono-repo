@@ -28,7 +28,7 @@ export type Calendar = { title: string; year?: number; weeks: WeekType[]; curren
 export type Composite = Lo & { toc: Lo[]; los: Lo[]; panels: Panels; units: Units; };
 
 // (from src/types/learning-objects.ts)
-export type Course = Composite & { type: "course"; courseId: string; courseUrl: string; topicIndex: Map<string, Topic>; loIndex: Map<string, Lo>; walls?: Lo[][]; wallMap?: Map<string, Lo[]>; properties: Properties; calendar?: Properties; enrollment?: Enrollment; courseCalendar?: Calendar; authLevel: number; isPortfolio: boolean; isPrivate: boolean; llm: number; pdfOrientation: string; areVideosHidden: boolean; areLabStepsAutoNumbered: boolean; hasEnrollment: boolean; hasCalendar: boolean; hasWhiteboard: boolean; defaultPdfReader: string; footer: string; ignorePin: string; companions: IconNavBar; wallBar: IconNavBar; };
+export type Course = Composite & { type: "course"; courseId: string; courseUrl: string; topicIndex: Map<string, Topic>; loIndex: Map<string, Lo>; walls?: Lo[][]; wallMap?: Map<string, Lo[]>; properties: Properties; calendar?: Properties; enrollment?: Enrollment; courseCalendar?: Calendar; authLevel: number; isPortfolio: boolean; isPrivate: boolean; llm: number; pdfOrientation: string; areVideosHidden: boolean; areLabStepsAutoNumbered: boolean; hasEnrollment: boolean; hasCalendar: boolean; hasWhiteboard: boolean; defaultPdfReader: string; footer: string; ignorePin: string; scormVersions: ScormVersion[]; scormIdentifier?: string; companions: IconNavBar; wallBar: IconNavBar; };
 
 // (from src/types/tutors-id-types.ts)
 export type CourseSentimentId = (typeof COURSE_SENTIMENT_IDS)[number];
@@ -92,6 +92,12 @@ export type PodcastEpisodeIdentifier = { service: string; id: string; };
 
 // (from src/services/search.ts)
 export type ResultType = { fenced: boolean; language: string; contentMd: string; lab: Lo; html: string; title: string; link: string; };
+
+// (from src/types/learning-objects.ts)
+export type Scorm = Lo & { type: "scorm"; scorm: string; scormFile: string; scormVersion: ScormVersion; masteryScore?: number; };
+
+// (from src/types/learning-objects.ts)
+export type ScormVersion = "1.2" | "2004";
 
 // (from src/types/learning-objects.ts)
 export type Side = Composite & { type: "side"; };
@@ -193,6 +199,9 @@ export function flattenLos(los: Lo[]) : Lo[];
 export function getPanels(los: Lo[]) : Panels;
 
 // (from src/utils/lo-utils.ts)
+export function getPanoptoUrls(id: string) :;
+
+// (from src/utils/lo-utils.ts)
 export function getUnits(los: Lo[]) : Units;
 
 // (from src/utils/lo-utils.ts)
@@ -269,7 +278,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 31 |
+| function | 32 |
 | interface | 1 |
-| type | 39 |
-| **Total** | **80** |
+| type | 41 |
+| **Total** | **83** |
