@@ -14,6 +14,7 @@
   "dependencies": {
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/hooks": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",

@@ -15,6 +15,7 @@
     "@iconify/svelte": "^5.2.2",
     "@supabase/supabase-js": "^2.116.0",
     "@tutors/community": "workspace:*",
+    "@tutors/hooks": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
