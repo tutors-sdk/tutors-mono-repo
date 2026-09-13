@@ -36,12 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Create .env for SvelteKit apps
-        run: |
-          for dir in apps/reader apps/catalogue apps/live apps/time; do
-            if [ -d "$dir" ]; then
-              cp .env.example "$dir/.env"
-            fi
-          done
+        run: cp .env.example .env
 
       - name: Build all packages and apps
         run: pnpm build
