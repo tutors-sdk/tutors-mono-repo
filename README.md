@@ -28,6 +28,7 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/jsr/gen` - Course generation utilities
 - `packages/jsr/tutors` - JSR reader package (JSON course generator)
 - `packages/jsr/tutors-lite` - Static HTML course generator
+- `packages/jsr/create` - Course scaffolder (CLI and reader wizard)
 
 **Foundation Layer (Svelte):**
 - `packages/svelte/utils/logger` - Logging utility
@@ -37,11 +38,14 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/svelte/course` - Course content processing
 - `packages/svelte/utils/a11y` - Accessibility utilities
 - `packages/svelte/utils/i18n` - Internationalization
+- `packages/svelte/utils/privacy` - Privacy and consent handling
+- `packages/svelte/utils/tour` - Guided tour
 
 **Feature Services:**
 - `packages/svelte/themes` - Theme management and styling
 - `packages/svelte/community` - Community features
 - `packages/svelte/connect` - Authentication and user management
+- `packages/svelte/utils/rbac` - Role-based access control and content locking
 
 **UI Layer:**
 - `packages/svelte/ui-primitives` - Primitive UI components (Icon, Menu, Sidebar, Image)
@@ -59,7 +63,7 @@ This repository uses pnpm workspaces to manage multiple packages and application
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 22.12.0
 - pnpm >= 8.0.0
 
 ### Installation

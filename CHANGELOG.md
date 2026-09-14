@@ -8,6 +8,16 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.7 (2026-09)
+
+#### Features
+
+- Create wizard: optional **.gitignore** and **README** in generated courses, with the README carrying the typed course description and lecturer name (PR #197)
+
+#### Fixes
+
+- Tutors Live link in the connected profile menu now points at the live deployment rather than a `/live/` path on the reader origin (PR #225)
+
 ### v16.1.6 (2026-09)
 
 #### Fixes
@@ -117,6 +127,12 @@
 
 ## Live (`tutors-live`)
 
+### v16.1.7 (2026-09)
+
+#### Fixes
+
+- Course group header links no longer 404. Both were reader-origin paths inherited from the pre-monorepo single-deployment layout: the live stream link now resolves to `/{courseId}` on the live app itself (PR #225), and the course title links to the reader at `https://tutors.dev/course/{courseId}`
+
 ### v16.1.5 (2026-09)
 
 #### Fixes
@@ -161,6 +177,11 @@
 ---
 
 ## Shared Packages
+
+### v5.2.4 (2026-09)
+
+- `tutors-create`: optional `.gitignore` and `README.md` in generated courses, exposed as CLI flags and reader wizard checkboxes; the `.gitignore` covers the generated site output and the usual editor/OS cruft (PR #197)
+- `model-lib`: API surface report regenerated for `getPanoptoUrls` (PR #193)
 
 ### v5.2.3 (2026-09)
 
