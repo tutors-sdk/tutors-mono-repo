@@ -12,9 +12,17 @@ const frontMatter = require.resolve("front-matter");
 
 export default defineConfig({
   test: {
-    include: ["tests/**/*.test.ts", "tests/**/*.steps.ts", "packages/**/src/**/__tests__/**/*.test.ts"],
+    include: [
+      "tests/**/*.test.ts",
+      "tests/**/*.steps.ts",
+      // Co-located package suites. The pattern anchors on each package's own src/ so
+      // pnpm's workspace symlinks under */node_modules/@tutors/* are not walked.
+      "packages/svelte/*/src/**/__tests__/**/*.test.ts",
+      "packages/svelte/utils/*/src/**/__tests__/**/*.test.ts"
+    ],
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
-    exclude: ["tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Setting exclude replaces vitest's defaults, so node_modules must be listed explicitly.
+    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
     server: {
       deps: {
         // Ships imports of SvelteKit's `$app/*` virtual modules, which only
