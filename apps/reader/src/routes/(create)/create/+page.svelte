@@ -19,6 +19,9 @@
   let includeLabs = $state(true);
   let includeCalendar = $state(false);
   let includeEnrollment = $state(false);
+  let includeGitignore = $state(true);
+  let includeReadme = $state(false);
+  let readmeDescription = $state("");
   let downloaded = $state(false);
 
   const steps = ["Course Info", "Structure", "Preview", "Download"];
@@ -34,7 +37,10 @@
     includeNotes,
     includeLabs,
     includeCalendar,
-    includeEnrollment
+    includeEnrollment,
+    includeGitignore,
+    includeReadme,
+    readmeDescription
   });
 
   // Preview and download are both derived from the shared scaffolder output,
@@ -80,6 +86,9 @@
           bind:includeLabs
           bind:includeCalendar
           bind:includeEnrollment
+          bind:includeGitignore
+          bind:includeReadme
+          bind:readmeDescription
           onnext={next}
           onback={back}
         />

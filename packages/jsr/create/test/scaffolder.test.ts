@@ -13,6 +13,9 @@ const minimalSpec: CourseSpec = {
   includeLabs: false,
   includeCalendar: false,
   includeEnrollment: false,
+  includeGitignore: false,
+  includeReadme: false,
+  readmeDescription: "",
 };
 
 Deno.test("generateCourseFiles - minimal spec produces course.md and properties.yaml", () => {
@@ -165,6 +168,60 @@ Deno.test("generateCourseFiles - enrollment.yaml only when enabled and fully com
   assertEquals(nonComment, []);
 });
 
+Deno.test("generateCourseFiles - .gitignore only when enabled", () => {
+  const off = generateCourseFiles({ ...minimalSpec, includeGitignore: false });
+  assertEquals(off.filter((f) => f.relativePath === ".gitignore").length, 0);
+
+  const on = generateCourseFiles({ ...minimalSpec, includeGitignore: true });
+  assertEquals(on.filter((f) => f.relativePath === ".gitignore").length, 1);
+});
+
+Deno.test("generateCourseFiles - .gitignore covers the generated site and the usual cruft", () => {
+  const files = generateCourseFiles({ ...minimalSpec, includeGitignore: true });
+  const ignore = files.find((f) => f.relativePath === ".gitignore")!;
+  const patterns = ignore.content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith("#"));
+
+  // The generator's own output: ./json (tutors) and ./html (tutors-lite),
+  // anchored so only the course root is matched.
+  assert(patterns.includes("/json/"));
+  assert(patterns.includes("/html/"));
+  // The patterns called out in the original request, plus Node.
+  for (const expected of ["~*", ".DS_Store", "_site/", ".netlify/", "node_modules/"]) {
+    assert(patterns.includes(expected), `.gitignore should ignore ${expected}`);
+  }
+});
+
+Deno.test("generateCourseFiles - README only when enabled, carrying the typed description", () => {
+  const off = generateCourseFiles({ ...minimalSpec, includeReadme: false, readmeDescription: "Hidden" });
+  assertEquals(off.filter((f) => f.relativePath === "README.md").length, 0);
+
+  const on = generateCourseFiles({
+    ...minimalSpec,
+    courseName: "Web Fundamentals",
+    includeReadme: true,
+    readmeDescription: "An introduction to the modern web stack.",
+  });
+  const readme = on.find((f) => f.relativePath === "README.md")!;
+  assert(readme);
+  assert(readme.content.startsWith("# Web Fundamentals"));
+  assert(readme.content.includes("An introduction to the modern web stack."));
+});
+
+Deno.test("generateCourseFiles - README falls back to placeholder text and names the lecturer", () => {
+  const files = generateCourseFiles({
+    ...minimalSpec,
+    lecturerName: "Dr. Smith",
+    includeReadme: true,
+    readmeDescription: "   ",
+  });
+  const readme = files.find((f) => f.relativePath === "README.md")!;
+  assert(readme.content.includes("A short description of this course goes here."));
+  assert(readme.content.includes("Dr. Smith"));
+});
+
 Deno.test("generateCourseFiles - full spec generates expected structure", () => {
   const spec: CourseSpec = {
     courseName: "Full Course",
@@ -177,6 +234,9 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     includeLabs: true,
     includeCalendar: true,
     includeEnrollment: true,
+    includeGitignore: true,
+    includeReadme: true,
+    readmeDescription: "A worked example course.",
   };
   const files = generateCourseFiles(spec);
   const paths = files.map((f) => f.relativePath).sort();
@@ -195,6 +255,8 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     "netlify.toml",
     "calendar.yaml",
     "enrollment.yaml",
+    ".gitignore",
+    "README.md",
     "side/side.md",
     "side/talk-01/talk-01.md",
     "side/talk-01/talk.marp",

@@ -42,6 +42,10 @@ export function runCli(): void {
   const includeLabs = promptYesNo("  Include a lab in each topic?", defaultSpec.includeLabs);
   const includeCalendar = promptYesNo("  Include a calendar?", defaultSpec.includeCalendar);
   const includeEnrollment = promptYesNo("  Include an enrollment list?", defaultSpec.includeEnrollment);
+  const includeGitignore = promptYesNo("  Include a .gitignore?", defaultSpec.includeGitignore);
+  const includeReadme = promptYesNo("  Include a README?", defaultSpec.includeReadme);
+  // Only worth asking for a description when a README is actually being written.
+  const readmeDescription = includeReadme ? prompt("  Short description for the README (optional):") || "" : "";
 
   const spec: CourseSpec = {
     courseName,
@@ -54,6 +58,9 @@ export function runCli(): void {
     includeLabs,
     includeCalendar,
     includeEnrollment,
+    includeGitignore,
+    includeReadme,
+    readmeDescription: readmeDescription.trim(),
   };
 
   console.log(`\n  Creating course in ./${courseId}/ ...\n`);
