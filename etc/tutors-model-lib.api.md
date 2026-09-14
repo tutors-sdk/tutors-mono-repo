@@ -193,6 +193,9 @@ export function flattenLos(los: Lo[]) : Lo[];
 export function getPanels(los: Lo[]) : Panels;
 
 // (from src/utils/lo-utils.ts)
+export function getPanoptoUrls(id: string) :;
+
+// (from src/utils/lo-utils.ts)
 export function getUnits(los: Lo[]) : Units;
 
 // (from src/utils/lo-utils.ts)
@@ -269,7 +272,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 31 |
+| function | 32 |
 | interface | 1 |
 | type | 39 |
-| **Total** | **80** |
+| **Total** | **81** |
