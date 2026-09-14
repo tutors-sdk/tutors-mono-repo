@@ -63,7 +63,7 @@
   }
 
   function handleDownload() {
-    downloadCourseZip(files, courseId);
+    downloadCourseZip(files, courseId, spec);
     downloaded = true;
   }
 </script>
