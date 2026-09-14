@@ -4,10 +4,14 @@
   import { onMount } from "svelte";
   import LoReference from "./LoReference.svelte";
   import Icon from "./Icon.svelte";
-  import { isEducator } from "@tutors/runes";
-  import { rbacService } from "@tutors/rbac";
 
-  let { lo, expandAll = false }: { lo: Lo; expandAll?: boolean } = $props();
+  type Props = {
+    lo: Lo;
+    expandAll?: boolean;
+    /** Decides which child entries are shown; defaults to hiding los flagged `hide`. Hosts plug in RBAC here. */
+    isVisible?: (lo: Lo) => boolean;
+  };
+  let { lo, expandAll = false, isVisible = (child: Lo) => !child.hide }: Props = $props();
 
   type Node = { id: string; name: string; lo?: Lo; children?: Node[] };
 
@@ -15,11 +19,6 @@
     const toc = item?.toc ?? [];
     if (toc.length > 0) return toc;
     return (item as Composite)?.los ?? [];
-  }
-
-  function isVisible(child: Lo): boolean {
-    if (isEducator.value) return !child.hide;
-    return rbacService.isLoVisibleToStudent(child);
   }
 
   function mapLoToNode(item: Lo, parentPath: string, index: number): Node | null {
