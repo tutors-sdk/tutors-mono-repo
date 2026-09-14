@@ -17,7 +17,7 @@
 
   const student = $derived(lo.user!);
   const target = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? "_blank" : "");
-  const route = $derived(lo.loRoute);
+  const route = $derived(`https://tutors.dev${lo.loRoute}`);
   const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
   const style = $derived(cardLayout?.style ?? themeService.cardStyle.value);
   const sentiment = $derived(student.sentiment ?? "neutral");

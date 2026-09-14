@@ -7,7 +7,7 @@
   {#each liveService.coursesOnline.value as lo}
     <Card
       cardDetails={{
-        route: lo.loRoute,
+        route: `https://tutors.dev${lo.loRoute}`,
         title: lo.courseTitle,
         type: lo.type,
         summary: lo.title,
