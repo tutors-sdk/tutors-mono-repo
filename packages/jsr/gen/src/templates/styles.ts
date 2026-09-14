@@ -1,3 +1,5 @@
+import { getLoTypeDefinition } from "@tutors/tutors-model-lib";
+
 export const icons = {
   'course': 'fluent:notebook-24-filled',
   'topic': 'fluent:bookmark-24-filled',
@@ -70,12 +72,19 @@ export const backgroundColours = {
 
 export type IconType = keyof typeof icons;
 
-export function getIconType(type: IconType): string {
-  if (type in icons) {
+function isBuiltInIcon(type: string): type is IconType {
+  return type in icons;
+}
+
+/**
+ * Iconify name for a learning object type: the built-in table first, then
+ * any type registered through the model's registerLoType, then the course icon.
+ */
+export function getIconType(type: string): string {
+  if (isBuiltInIcon(type)) {
     return icons[type];
   }
-  // Fallback to a default icon if type doesn't exist
-  return icons.course;
+  return getLoTypeDefinition(type)?.palette?.icon ?? icons.course;
 }
 
 export const loColours = {
@@ -107,10 +116,18 @@ export const loColours = {
   "notebook": { border: "#557927", background: "#d9eee0" },
 }
 
-export function loBorderColour(type: IconType): string {
-  return loColours[type]?.border ?? "#37919b";
+export function loBorderColour(type: string): string {
+  if (isBuiltInIcon(type)) {
+    return loColours[type]?.border ?? "#37919b";
+  }
+  const palette = getLoTypeDefinition(type)?.palette;
+  return palette?.border ?? palette?.colour ?? "#37919b";
 }
 
-export function loBackgroundColour(type: IconType): string {
-  return loColours[type]?.background ?? "#37919b";
+export function loBackgroundColour(type: string): string {
+  if (isBuiltInIcon(type)) {
+    return loColours[type]?.background ?? "#37919b";
+  }
+  const palette = getLoTypeDefinition(type)?.palette;
+  return palette?.cardBackground ?? palette?.background ?? "#37919b";
 }

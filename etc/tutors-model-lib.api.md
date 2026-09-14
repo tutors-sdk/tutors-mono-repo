@@ -18,6 +18,12 @@ export interface LearningRecord;
 // (from src/types/tutors-id-types.ts)
 export interface LoEventRecord;
 
+// (from src/types/lo-type-registry.ts)
+export interface LoTypeDefinition;
+
+// (from src/types/lo-type-registry.ts)
+export interface LoTypePalette;
+
 // (from src/types/tutors-id-types.ts)
 export interface LoUser;
 
@@ -198,6 +204,9 @@ export function fixRoutePaths(lo: Lo);
 // (from src/utils/lo-utils.ts)
 export function flattenLos(los: Lo[]) : Lo[];
 
+// (from src/types/lo-type-registry.ts)
+export function getLoTypeDefinition(type: string) : LoTypeDefinition | undefined;
+
 // (from src/utils/lo-utils.ts)
 export function getPanels(los: Lo[]) : Panels;
 
@@ -233,6 +242,12 @@ export function loadPropertyFlags(course: Course);
 
 // (from src/utils/lo-utils.ts)
 export function localizePath(lo: Lo, protocol?: string);
+
+// (from src/types/lo-type-registry.ts)
+export function registeredLoTypes() : LoTypeDefinition[];
+
+// (from src/types/lo-type-registry.ts)
+export function registerLoType(definition: LoTypeDefinition) : void;
 
 // (from src/utils/lo-utils.ts)
 export function removeLeadingHashes(str: string) : string;
@@ -284,7 +299,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 33 |
-| interface | 4 |
+| function | 36 |
+| interface | 6 |
 | type | 39 |
-| **Total** | **85** |
+| **Total** | **90** |
