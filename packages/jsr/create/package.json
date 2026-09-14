@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-create",
-  "version": "5.2.3",
+  "version": "5.2.4",
   "license": "MIT",
   "type": "module",
   "exports": {
