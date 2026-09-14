@@ -9,8 +9,17 @@
 
 // --- interfaces ---
 
+// (from src/services/lo-tree.ts)
+export interface DecorateCourseOptions;
+
 // (from src/types/type-utils.ts)
 export interface LearningRecord;
+
+// (from src/types/tutors-id-types.ts)
+export interface LoEventRecord;
+
+// (from src/types/tutors-id-types.ts)
+export interface LoUser;
 
 
 // --- types ---
@@ -169,10 +178,10 @@ export function createWalls(course: Course);
 export function crumbs(lo: Lo | undefined, los: Lo[]);
 
 // (from src/services/lo-tree.ts)
-export function decorateCourseTree( course: Course, courseId: string, courseUrl, );
+export function decorateCourseTree( course: Course, courseId: string, courseUrl, options: DecorateCourseOptions = {}, );
 
 // (from src/services/lo-tree.ts)
-export function decorateLoTree(course: Course, lo: Lo);
+export function decorateLoTree(course: Course, lo: Lo, options: DecorateCourseOptions = {});
 
 // (from src/services/search.ts)
 export function extractPath(astring: string) : string;
@@ -208,7 +217,7 @@ export function initCalendar(course: Course);
 export function initHighlighter(codeHighlighter: any);
 
 // (from src/utils/lo-utils.ts)
-export function injectCourseUrl(los: Lo[], id: string, url: string);
+export function injectCourseUrl(los: Lo[], id: string, url: string, protocol?: string);
 
 // (from src/types/type-utils.ts)
 export function isCompositeLo(lo: Lo) : boolean;
@@ -221,6 +230,9 @@ export function loadIcon(lo: Lo) : IconType | undefined;
 
 // (from src/utils/course-utils.ts)
 export function loadPropertyFlags(course: Course);
+
+// (from src/utils/lo-utils.ts)
+export function localizePath(lo: Lo, protocol?: string);
 
 // (from src/utils/lo-utils.ts)
 export function removeLeadingHashes(str: string) : string;
@@ -272,7 +284,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 32 |
-| interface | 1 |
+| function | 33 |
+| interface | 4 |
 | type | 39 |
-| **Total** | **81** |
+| **Total** | **85** |

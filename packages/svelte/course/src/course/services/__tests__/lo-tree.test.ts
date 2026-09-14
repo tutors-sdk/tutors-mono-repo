@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { determineCourseUrl, decorateCourseTree, injectCourseUrl } from '../lo-tree';
-import { courseProtocol } from '../../../runes.svelte';
+import { courseProtocol } from '@tutors/runes';
 import type { Course, Lo } from '@tutors/tutors-model-lib';
 
 describe('determineCourseUrl()', () => {

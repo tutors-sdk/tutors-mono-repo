@@ -528,9 +528,6 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
-      '@tutors/themes':
-        specifier: workspace:*
-        version: link:../themes
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -555,9 +552,6 @@ importers:
 
   packages/svelte/themes:
     dependencies:
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger

@@ -1,3 +1,12 @@
+<script module lang="ts">
+  import { setCompanionIconRegistrar } from "@tutors/course";
+  import { themeService } from "@tutors/themes";
+
+  // The course package decorates course trees without knowing about themes;
+  // the shell bridges the two so custom companion icons land in the icon libraries.
+  setCompanionIconRegistrar((key, icon) => themeService.addIcon(key, icon));
+</script>
+
 <script lang="ts">
   import Footer from "./footers/Footer.svelte";
   import { onMount, type Snippet } from "svelte";

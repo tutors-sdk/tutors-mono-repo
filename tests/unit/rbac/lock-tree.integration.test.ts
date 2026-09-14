@@ -7,7 +7,7 @@ vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
   removeLock: vi.fn(),
 }));
 
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("@tutors/runes", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,
@@ -20,7 +20,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { contentLocks, courseProtocol } from "../../../packages/svelte/runes/src/index.svelte.ts";
+import { contentLocks, courseProtocol } from "@tutors/runes";
 import { decorateCourseTree } from "../../../packages/svelte/course/src/course/services/lo-tree.ts";
 import { filterByType, flattenLos } from "@tutors/tutors-model-lib";
 import { rbacService } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
