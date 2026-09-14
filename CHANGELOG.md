@@ -8,6 +8,25 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.8 (2026-09)
+
+#### Features
+
+- Create wizard: optional `.gitignore` and README in generated courses (PR #197)
+- Create wizard: the downloaded zip now includes a `course.json` manifest describing the generated course (PR #153)
+- Create wizard: import an existing `course.json` to pre-fill the wizard fields (PR #154)
+
+#### Fixes
+
+- Logging: the analytics beacon now flushes reliably, UI errors are reported through the logger rather than silently swallowed, and stray console output was removed from Marp talks and the whiteboard viewer (PR #173)
+- Tutors Live menu link now points at the Live deployment instead of a reader-relative path that 404s (PR #225)
+
+#### Chores
+
+- API surface report regenerated for `getPanoptoUrls` (PR #193)
+- Dependency update: eslint 10.10.0 (PR #189)
+- README: Node prerequisite corrected to >= 22.12.0, matching the `engines.node` raised in v16.1.6
+
 ### v16.1.6 (2026-09)
 
 #### Fixes
@@ -117,6 +136,13 @@
 
 ## Live (`tutors-live`)
 
+### v16.1.8 (2026-09)
+
+#### Fixes
+
+- Course group header: the course title link pointed at `/course/{courseId}`, which 404s on the Live deployment — it now targets the reader origin, and the live stream link is relative to Live itself (PRs #225, #226)
+- Online course and student cards linked to reader-relative paths broadcast over presence, so every card 404d on the Live origin; they now resolve against the reader (PR #226)
+
 ### v16.1.5 (2026-09)
 
 #### Fixes
@@ -152,6 +178,16 @@
 
 ## Time (`tutors-time`)
 
+### v16.1.8 (2026-09)
+
+> `apps/time` has tracked the monorepo version since v16.0.0; the v1.0.0 entry
+> below records its migration from the standalone repository.
+
+#### Fixes
+
+- Logging: assignment, calendar and learning-record tables now report load failures through the logger instead of failing silently (PR #173)
+- Student cards linked to reader-relative paths and 404d on the Time origin; they now resolve against the reader (PR #226)
+
 ### v1.0.0 (2026-08)
 
 - Migrated from standalone `tutors-time` repository into monorepo at `apps/time`
@@ -161,6 +197,10 @@
 ---
 
 ## Shared Packages
+
+### v5.2.4 (2026-09)
+
+- `tutors-create`: optional `.gitignore` and README in generated courses, offered by both the CLI prompts and the reader wizard (PR #197)
 
 ### v5.2.3 (2026-09)
 
