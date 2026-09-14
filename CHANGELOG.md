@@ -8,6 +8,21 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.1.6 (2026-09)
+
+#### Fixes
+
+- Content locking: enrolled students no longer hit a navigation loop ("Attempt to use history.pushState() more than 100 times per 10 seconds") when landing on a locked route — the redirect target is excluded from the lock check and the redirect replaces history rather than pushing to it (PR #205)
+- Content locking: the course context tree (TOC sidebar) now renders for enrolled students, rebuilding when lock state resolves instead of being computed once at mount (PR #205)
+- Content locking: educator/student role is re-resolved after sign-in on enrolment courses, so lock state matches the signed-in user without a page reload (PR #205)
+- Content locking: locks are now loaded in anonymous-mode builds; previously an enrolment course rendered with no cards, wall entries or context tree because lock state never resolved
+- Content locking: a failing lock store no longer surfaces as an unhandled promise rejection on every course visit
+
+#### Chores
+
+- Dependency updates: mermaid 12, markdown-it-anchor 10, vite 8.3, zod 4.6, @supabase/supabase-js 2.116, isomorphic-dompurify 4.2, @playwright/test 1.63, typescript-eslint 8.70, and the GitHub Actions group (PRs #215–#223)
+- `engines.node` raised to >=22.12.0, required by mermaid 12 and already matching CI and the Netlify builds
+
 ### v16.1.5 (2026-09)
 
 #### Features
