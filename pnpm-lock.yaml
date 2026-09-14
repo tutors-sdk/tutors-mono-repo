@@ -805,6 +805,12 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../logger
+      '@tutors/supabase':
+        specifier: workspace:*
+        version: link:../supabase
+      '@tutors/tutors-time-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/time
 
   packages/svelte/utils/i18n:
     dependencies:

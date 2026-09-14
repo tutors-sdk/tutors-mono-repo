@@ -1,10 +1,9 @@
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
-import { TutorsTime, initSupabase } from "@tutors/tutors-time-lib";
-
-// Run before any load functions. Hooks modules load at app startup.
+import { TutorsTime } from "@tutors/tutors-time-lib";
+import { initTutorsTimeSupabase } from "@tutors/hooks";
 
 export async function load({ params }: { params: Record<string, string> }) {
-  initSupabase(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+  // Universal load also runs during SSR, where hooks.client.ts has not run.
+  initTutorsTimeSupabase();
 
   const courseId = (params.courseid ?? "").trim();
   const studentId = (params.studentid ?? "").trim();
