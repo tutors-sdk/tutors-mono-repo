@@ -133,6 +133,13 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param course - Course being visited
    */
   courseVisit(course: Course) {
+    // Locks gate what students can see, so they must load even in anonymous mode -
+    // otherwise `locksLoaded` never becomes true and the course renders empty.
+    if (course.hasEnrollment) {
+      void rbacService.loadContentLocks(course.courseId);
+    } else {
+      rbacService.clear();
+    }
     if (anonMode) return;
     if (analyticsEnabled) {
       updateCourseList(course);
@@ -143,14 +150,9 @@ export const tutorsConnectService: TutorsConnectService = {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
     }
-    if (course.hasEnrollment) {
-      rbacService.loadContentLocks(course.courseId);
-      if (tutorsId.value?.login) {
-        rbacService.loadRole(tutorsId.value.login, course.courseId, course);
-        rbacService.checkLecturerStatus(course);
-      }
-    } else {
-      rbacService.clear();
+    if (course.hasEnrollment && tutorsId.value?.login) {
+      rbacService.loadRole(tutorsId.value.login, course.courseId, course);
+      rbacService.checkLecturerStatus(course);
     }
   },
 

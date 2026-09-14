@@ -1,3 +1,4 @@
+import log from "@tutors/logger";
 import { rune } from "@tutors/runes";
 import { contentLocks, isEducator, locksLoaded, tutorsId, currentCourse } from "@tutors/runes";
 import type { Lo } from "@tutors/tutors-model-lib";
@@ -108,6 +109,11 @@ function createRbacService() {
       }
 
       contentLocks.value = lockMap;
+    } catch (error) {
+      // Never reject: callers fire this without awaiting, and an unhandled
+      // rejection here would surface as a console error on every course visit.
+      log.error("loadContentLocks failed:", error);
+      contentLocks.value = new Map();
     } finally {
       locksLoaded.value = true;
       loadedLocksCourseId = courseId;
@@ -175,7 +181,8 @@ function createRbacService() {
     currentCourseId.value = "";
     contentLocks.value = new Map();
     isEducator.value = false;
-    locksLoaded.value = false;
+    // Lock state is known - there are none - so consumers must not treat this as pending.
+    locksLoaded.value = true;
     loadedLocksCourseId = "";
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "tutors-live",
-  "version": "16.1.5",
+  "version": "16.1.6",
   "license": "MIT",
   "description": "Tutors Live - Real-time student activity tracking",
   "private": true,
@@ -33,6 +33,6 @@
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.2.2"
+    "vite": "^8.3.0"
   }
 }

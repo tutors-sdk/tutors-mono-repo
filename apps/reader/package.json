@@ -1,6 +1,6 @@
 {
   "name": "tutors-reader",
-  "version": "16.1.5",
+  "version": "16.1.6",
   "license": "MIT",
   "description": "Tutors - Clean modern course reader",
   "private": true,
@@ -39,7 +39,7 @@
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
     "pdfjs-dist": "^6.3.289",
-    "zod": "^4.5.4"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.1",
@@ -54,6 +54,6 @@
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.2.2"
+    "vite": "^8.3.0"
   }
 }

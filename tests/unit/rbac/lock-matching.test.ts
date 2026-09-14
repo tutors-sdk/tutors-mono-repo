@@ -19,6 +19,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
 });
 
 import { contentLocks, currentCourse, locksLoaded } from "../../../packages/svelte/runes/src/index.svelte.ts";
+import { getLocksForCourse } from "../../../packages/svelte/utils/rbac/src/lock-store.ts";
 import { isLoRouteLocked, rbacService } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
 import type { Lo } from "@tutors/tutors-model-lib";
 
@@ -165,5 +166,44 @@ describe("rbacService.isLoVisibleToStudent", () => {
 
   it("returns true for unlocked los on enrolled courses", () => {
     expect(rbacService.isLoVisibleToStudent(lo)).toBe(true);
+  });
+});
+
+describe("rbacService.loadContentLocks", () => {
+  beforeEach(() => {
+    vi.mocked(getLocksForCourse).mockReset();
+    contentLocks.value = new Map();
+    locksLoaded.value = false;
+  });
+
+  it("marks locks as loaded once the store responds", async () => {
+    vi.mocked(getLocksForCourse).mockResolvedValue([
+      { lo_route: "/topic/cs101/week-01", locked: true } as any,
+    ]);
+    await rbacService.loadContentLocks("cs101");
+    expect(locksLoaded.value).toBe(true);
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+  });
+
+  it("resolves rather than rejecting when the lock store fails", async () => {
+    vi.mocked(getLocksForCourse).mockRejectedValue(new Error("network down"));
+    await expect(rbacService.loadContentLocks("cs999")).resolves.toBeUndefined();
+    expect(locksLoaded.value).toBe(true);
+    expect(contentLocks.value.size).toBe(0);
+  });
+
+  it("marks locks as loaded when there is no course id", async () => {
+    await rbacService.loadContentLocks("");
+    expect(locksLoaded.value).toBe(true);
+  });
+});
+
+describe("rbacService.clear", () => {
+  it("leaves lock state resolved, not pending", () => {
+    locksLoaded.value = false;
+    contentLocks.value = new Map([["/topic/cs101/week-01", true]]);
+    rbacService.clear();
+    expect(locksLoaded.value).toBe(true);
+    expect(contentLocks.value.size).toBe(0);
   });
 });

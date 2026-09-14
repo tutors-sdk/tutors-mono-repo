@@ -1,6 +1,6 @@
 {
   "name": "tutors-mono-repo",
-  "version": "16.1.5",
+  "version": "16.1.6",
   "license": "MIT",
   "private": true,
   "packageManager": "pnpm@11.24.0",
@@ -31,7 +31,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",
     "@testing-library/svelte": "^5.4.2",
@@ -47,12 +47,12 @@
     "js-yaml": "^4.1.1",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.69.0",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^4.1.11",
-    "zod": "^4.5.4"
+    "zod": "^4.6.2"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=22.12.0",
     "pnpm": ">=8.0.0"
   }
 }
