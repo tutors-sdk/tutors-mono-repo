@@ -1,4 +1,4 @@
-import { supabase } from "@tutors/community";
+import { supabase } from "@tutors/supabase";
 import log from "@tutors/logger";
 import type { ContentLock } from "./types.ts";
 

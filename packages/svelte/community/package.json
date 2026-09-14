@@ -20,7 +20,8 @@
     "@tutors/course": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*"
+    "@tutors/tutors-model-lib": "workspace:*",
+    "@tutors/supabase": "workspace:*"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

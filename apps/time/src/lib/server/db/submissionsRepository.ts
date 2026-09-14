@@ -1,5 +1,4 @@
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from "$env/static/public";
-import { createClient } from "@supabase/supabase-js";
+import { requireSupabase } from "@tutors/supabase";
 import type { MoodleAssignSubmission, MoodleModule } from "$lib/server/api/moodle";
 
 export interface AssignmentRow {
@@ -84,7 +83,7 @@ function toSubmissionRow(
 }
 
 function getClient() {
-  return createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+  return requireSupabase();
 }
 
 export async function getLastSyncedAt(courseId: string): Promise<string | null> {

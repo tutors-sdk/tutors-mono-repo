@@ -351,9 +351,6 @@ importers:
       '@iconify/svelte':
         specifier: ^5.2.2
         version: 5.2.2(svelte@5.57.0(@typescript-eslint/types@8.70.0))
-      '@supabase/supabase-js':
-        specifier: ^2.116.0
-        version: 2.116.0
       '@tutors/community':
         specifier: workspace:*
         version: link:../../packages/svelte/community
@@ -363,6 +360,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
+      '@tutors/supabase':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/supabase
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
@@ -483,6 +483,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
+      '@tutors/supabase':
+        specifier: workspace:*
+        version: link:../utils/supabase
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -741,24 +744,15 @@ importers:
       '@tutors/a11y':
         specifier: workspace:*
         version: link:../utils/a11y
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n
-      '@tutors/rbac':
-        specifier: workspace:*
-        version: link:../utils/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
-      '@tutors/tour':
-        specifier: workspace:*
-        version: link:../utils/tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -838,21 +832,30 @@ importers:
 
   packages/svelte/utils/rbac:
     dependencies:
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../../community
       '@tutors/logger':
         specifier: workspace:*
         version: link:../logger
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../runes
+      '@tutors/supabase':
+        specifier: workspace:*
+        version: link:../supabase
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../../jsr/model
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.70.0)
+
+  packages/svelte/utils/supabase:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.116.0
+        version: 2.116.0
+      '@sveltejs/kit':
+        specifier: '>=2.70.2 <3'
+        version: 2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13))
 
   packages/svelte/utils/tour:
     dependencies:
