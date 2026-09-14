@@ -6,7 +6,7 @@ vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
   removeLock: vi.fn(),
 }));
 
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("@tutors/runes", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,
@@ -18,7 +18,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { contentLocks, currentCourse, locksLoaded } from "../../../packages/svelte/runes/src/index.svelte.ts";
+import { contentLocks, currentCourse, locksLoaded } from "@tutors/runes";
 import { getLocksForCourse } from "../../../packages/svelte/utils/rbac/src/lock-store.ts";
 import { isLoRouteLocked, rbacService } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
 import type { Lo } from "@tutors/tutors-model-lib";

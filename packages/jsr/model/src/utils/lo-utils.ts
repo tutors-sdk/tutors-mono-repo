@@ -58,7 +58,25 @@ export function fixRoutePaths(lo: Lo) {
   }
 }
 
-export function injectCourseUrl(los: Lo[], id: string, url: string) {
+/**
+ * Downgrades https links to http when a course is served from a local
+ * (http-only) server; a no-op for any other protocol.
+ */
+export function localizePath(lo: Lo, protocol?: string) {
+  if (protocol !== "http://") return;
+  lo.route = lo.route?.replace("https://", "http://");
+  lo.video = lo.video?.replace("https://", "http://");
+  lo.img = lo.img?.replace("https://", "http://");
+  const withAssets = lo as Lo & { pdf?: string; excalidraw?: string };
+  if (withAssets.pdf) {
+    withAssets.pdf = withAssets.pdf.replace("https://", "http://");
+  }
+  if (withAssets.excalidraw) {
+    withAssets.excalidraw = withAssets.excalidraw.replace("https://", "http://");
+  }
+}
+
+export function injectCourseUrl(los: Lo[], id: string, url: string, protocol?: string) {
   los.forEach((lo) => {
     if (lo.type === "archive") {
       const archive: Archive = lo as Archive;
@@ -91,6 +109,7 @@ export function injectCourseUrl(los: Lo[], id: string, url: string) {
       const whiteboard = lo as Whiteboard;
       whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
     }
+    localizePath(lo, protocol);
     // legacy version of generator included hash based routes;
     // remove these now:
     fixRoutePaths(lo);

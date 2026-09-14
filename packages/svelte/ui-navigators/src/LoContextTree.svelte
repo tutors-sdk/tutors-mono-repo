@@ -2,7 +2,7 @@
   import type { Lo } from "@tutors/tutors-model-lib";
   import { contentLocks, currentCourse, isEducator, locksLoaded } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
-  import LoContextTreeView from "./LoContextTreeView.svelte";
+  import LoContextTreeView from "@tutors/ui-primitives/components/LoContextTreeView.svelte";
 
   let { lo, expandAll = false }: { lo: Lo; expandAll?: boolean } = $props();
 
@@ -17,6 +17,12 @@
     isEducator.value || !currentCourse.value?.hasEnrollment || locksLoaded.value,
   );
 
+  // Educators see everything that is not hidden; students only what RBAC allows.
+  function isVisible(child: Lo): boolean {
+    if (isEducator.value) return !child.hide;
+    return rbacService.isLoVisibleToStudent(child);
+  }
+
   let lockFingerprint = $derived(
     isEducator.value || !currentCourse.value?.hasEnrollment
       ? "all"
@@ -30,6 +36,6 @@
 
 {#if lo && showTree}
   {#key lockFingerprint}
-    <LoContextTreeView {lo} {expandAll} />
+    <LoContextTreeView {lo} {expandAll} {isVisible} />
   {/key}
 {/if}

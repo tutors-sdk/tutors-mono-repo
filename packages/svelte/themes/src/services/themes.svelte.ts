@@ -12,7 +12,7 @@ import { FestiveIcons } from "../icons/festive-icons.ts";
 import { makeItSnow, makeItStopSnowing } from "../events/festive.svelte.ts";
 
 import { rune } from "@tutors/runes";
-import type { IconType } from "@tutors/tutors-model-lib";
+import { getLoTypeDefinition, type IconType } from "@tutors/tutors-model-lib";
 import log from "@tutors/logger";
 
 /**
@@ -161,10 +161,14 @@ export const themeService: ThemeService = {
     const iconLib = themeService.themes.find((theme) => theme.name === this.currentTheme.value)?.icons;
     if (iconLib && iconLib[type]) {
       return iconLib[type];
-    } else {
-      log.warn("No type found for icon", type);
-      return FluentIconLib.tutors;
     }
+    // Learning object types registered by feature packages carry their own default icon
+    const registered = getLoTypeDefinition(type)?.icon;
+    if (registered) {
+      return registered;
+    }
+    log.warn("No type found for icon", type);
+    return FluentIconLib.tutors;
   },
 
   /**
@@ -188,7 +192,7 @@ export const themeService: ThemeService = {
     if (iconLib && iconLib[type]) {
       return iconLib[type].color;
     }
-    return "primary";
+    return getLoTypeDefinition(type)?.icon?.color ?? "primary";
   },
 
   /**

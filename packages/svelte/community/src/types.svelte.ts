@@ -1,21 +1,13 @@
-import type { TutorsId } from "@tutors/tutors-model-lib";
-import type { Course, IconType, Lo } from "@tutors/tutors-model-lib";
+import type { Course, IconType, Lo, LoEventRecord, LoUser, TutorsId } from "@tutors/tutors-model-lib";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-/**
- * Minimal user information for learning object interactions
- */
-export interface LoUser {
-  fullName: string;
-  avatar: string;
-  id: string;
-  sentiment: string;
-}
+/** Re-exported for backward compatibility; the type now lives in the model package. */
+export type { LoUser };
 
 /**
  * Record of user interaction with a learning object
  * Uses Svelte's state management for reactivity
  */
-export class LoRecord {
+export class LoRecord implements LoEventRecord {
   courseId: string = $state("");
   courseUrl: string = $state("");
   courseTitle: string = $state("");

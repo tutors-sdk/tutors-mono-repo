@@ -43,7 +43,7 @@ vi.mock("../../../packages/svelte/connect/src/utils/allCourseAccess.ts", () => (
   updateCourseList: vi.fn()
 }));
 
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("@tutors/runes", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,

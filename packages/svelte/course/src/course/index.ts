@@ -6,3 +6,4 @@
 export { courseService } from "./services/course.svelte.ts";
 export { LiveLab } from "./services/live-lab.ts";
 export { LiveNotebook } from "./services/live-notebook.ts";
+export { setCompanionIconRegistrar, type CompanionIconRegistrar } from "./services/lo-tree.ts";

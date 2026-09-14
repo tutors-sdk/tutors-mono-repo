@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentCourse } from "@tutors/runes";
-  import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
+  import LoContextTree from "./LoContextTree.svelte";
 
   const course = $derived(currentCourse.value);
 </script>

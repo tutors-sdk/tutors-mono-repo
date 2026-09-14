@@ -5,19 +5,15 @@
  * Provides low-level database operations for the Tutors platform
  */
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_ANON_MODE } from "$env/static/public";
+import { isAnonMode, supabase } from "@tutors/supabase";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
 import log from "@tutors/logger";
 
-export let supabase: SupabaseClient;
-
-if (PUBLIC_ANON_MODE !== "TRUE") {
-  supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
-}
+/** The shared anon client; created once in @tutors/supabase and re-exported here for existing importers. */
+export { supabase };
 
 export function localYyyyMmDd(d = new Date()) {
   const y = d.getFullYear();
@@ -80,7 +76,7 @@ export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = ne
  * Fire-and-forget from presence; does not throw.
  */
 export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
-  if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return;
+  if (isAnonMode || typeof supabase === "undefined") return;
 
   const rec = loRecord as { courseId?: string; user?: { id?: string } };
   const courseId = rec.courseId?.trim();
@@ -107,7 +103,7 @@ export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<voi
  * Sorted by `received_at` descending (most recently updated first).
  */
 export async function getTutorsConnectLatestLosByCourseId(courseId: string): Promise<TutorsConnectLatestRow[]> {
-  if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
+  if (isAnonMode || typeof supabase === "undefined") return [];
 
   const id = courseId?.trim();
   if (!id) return [];
@@ -382,7 +378,7 @@ function normalizeStoredSentiment(raw: string | null | undefined): string | null
  * @returns Stored sentiment if present and valid per {@link COURSE_SENTIMENT_IDS}, otherwise null (includes no row).
  */
 export async function getTutorsConnectUserSentiment(githubId: string): Promise<string | null> {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
+  if (isAnonMode || !githubId) return null;
 
   const { data, error } = await supabase.from("tutors-connect-users").select("sentiment").eq("github_id", githubId).maybeSingle();
 
@@ -400,7 +396,7 @@ export async function getTutorsConnectUserSentiment(githubId: string): Promise<s
  * @param sentiment - Current mood string
  */
 export async function updateTutorsConnectUserSentiment(githubId: string, sentiment: string) {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
+  if (isAnonMode || !githubId) return;
 
   const { error } = await supabase
     .from("tutors-connect-users")
@@ -422,7 +418,7 @@ export async function updateTutorsConnectUserSentiment(githubId: string, sentime
  * @returns Stored online_status if present, otherwise null (includes no row).
  */
 export async function getTutorsConnectUserOnlineStatus(githubId: string): Promise<string | null> {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
+  if (isAnonMode || !githubId) return null;
 
   const { data, error } = await supabase.from("tutors-connect-users").select("online_status").eq("github_id", githubId).maybeSingle();
 
@@ -440,7 +436,7 @@ export async function getTutorsConnectUserOnlineStatus(githubId: string): Promis
  * Sets online_status on tutors-connect-users (mirrors share: visible / sharing = online).
  */
 export async function updateTutorsConnectUserOnlineStatus(githubId: string, onlineStatus: "online" | "offline") {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
+  if (isAnonMode || !githubId) return;
 
   const { error } = await supabase
     .from("tutors-connect-users")

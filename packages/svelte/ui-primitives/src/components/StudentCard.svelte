@@ -1,6 +1,6 @@
 <script lang="ts">
   import Iconify from "@iconify/svelte";
-  import type { LoEvent } from "@tutors/community";
+  import type { LoEventRecord } from "@tutors/tutors-model-lib";
   import { cardStyles, type CardConfig } from "@tutors/themes";
   import Icon from "./Icon.svelte";
   import { themeService } from "@tutors/themes";
@@ -10,7 +10,7 @@
     cardLayout,
     showCourseTitle = false
   } = $props<{
-    lo: LoEvent;
+    lo: LoEventRecord;
     cardLayout?: CardConfig;
     showCourseTitle?: boolean;
   }>();

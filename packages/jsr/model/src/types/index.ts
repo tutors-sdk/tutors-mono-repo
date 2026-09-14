@@ -3,4 +3,5 @@ export * from "./media-types.ts";
 export * from "./calendar-types.ts";
 export * from "./learning-objects.ts";
 export * from "./type-utils.ts";
+export * from "./lo-type-registry.ts";
 export * from "./tutors-id-types.ts";

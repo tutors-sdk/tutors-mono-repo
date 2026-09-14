@@ -13,14 +13,14 @@
   },
   "dependencies": {
     "@iconify/svelte": "^5.2.2",
-    "@supabase/supabase-js": "^2.116.0",
     "@tutors/community": "workspace:*",
     "@tutors/hooks": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
     "ag-grid-community": "^36.1.0",
-    "jheat.js": "^5.2.0"
+    "jheat.js": "^5.2.0",
+    "@tutors/supabase": "workspace:*"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.1",

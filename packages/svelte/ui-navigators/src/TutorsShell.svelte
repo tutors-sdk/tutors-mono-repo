@@ -1,3 +1,12 @@
+<script module lang="ts">
+  import { setCompanionIconRegistrar } from "@tutors/course";
+  import { themeService } from "@tutors/themes";
+
+  // The course package decorates course trees without knowing about themes;
+  // the shell bridges the two so custom companion icons land in the icon libraries.
+  setCompanionIconRegistrar((key, icon) => themeService.addIcon(key, icon));
+</script>
+
 <script lang="ts">
   import Footer from "./footers/Footer.svelte";
   import { onMount, type Snippet } from "svelte";
@@ -7,7 +16,7 @@
   import { fly, slide } from "svelte/transition";
   import { prefersReducedMotion } from "@tutors/a11y";
   import { t } from "@tutors/i18n";
-  import TourOverlay from "@tutors/ui-primitives/components/TourOverlay.svelte";
+  import TourOverlay from "./TourOverlay.svelte";
   import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
 
   type Props = { children: Snippet; hideNavigator?: boolean; showConnect?: boolean };
