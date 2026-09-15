@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 5176",
     "build": "vite build",
+    "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
@@ -15,6 +16,7 @@
     "@iconify/svelte": "^5.2.2",
     "@supabase/supabase-js": "^2.116.0",
     "@tutors/community": "workspace:*",
+    "@tutors/hooks": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",

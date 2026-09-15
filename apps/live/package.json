@@ -8,12 +8,14 @@
   "scripts": {
     "dev": "vite dev --port 5174",
     "build": "vite build",
+    "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/hooks": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",

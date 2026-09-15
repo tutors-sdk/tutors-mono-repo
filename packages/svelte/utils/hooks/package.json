@@ -1,0 +1,21 @@
+{
+  "name": "@tutors/hooks",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Shared SvelteKit hooks for Tutors apps",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mode": "./src/mode.ts",
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts"
+  },
+  "dependencies": {
+    "@tutors/community": "workspace:*",
+    "@tutors/logger": "workspace:*"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": "^2.0.0"
+  }
+}

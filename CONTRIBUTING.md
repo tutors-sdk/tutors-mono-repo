@@ -55,12 +55,13 @@ cd tutors-mono-repo
 # Install dependencies
 pnpm install
 
-# Copy environment variables
-cp .env.example apps/reader/.env
-cp .env.example apps/catalogue/.env
-cp .env.example apps/live/.env
-cp .env.example apps/time/.env
+# Copy environment variables (single root file — all apps read from here)
+cp .env.example .env
 ```
+
+`.env.example` sets `PUBLIC_TUTORS_HOOKS_MODE=shared`, which runs the apps on the
+shared `@tutors/hooks` package. Set it to `legacy` (or leave it unset) to run each
+app's original inline hooks instead. See `packages/svelte/utils/hooks/README.md`.
 
 ### Running the Development Server
 

@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
@@ -22,6 +23,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/hooks": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/rbac": "workspace:*",

@@ -1,10 +1,13 @@
-import type { Handle, HandleServerError } from "@sveltejs/kit";
+import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { SvelteKitAuth } from "@auth/sveltekit";
 import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import log from "@tutors/logger";
+import { env } from "$env/dynamic/public";
+import { usesSharedHooks } from "@tutors/hooks/mode";
+import { securityHeaders, createServerErrorHandler } from "@tutors/hooks/server";
+import * as legacy from "./legacy-hooks.server";
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -55,20 +58,10 @@ const localeHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-const securityHeaders: Handle = async ({ event, resolve }) => {
-  const response = await resolve(event);
-  response.headers.set("X-Frame-Options", "SAMEORIGIN");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  return response;
-};
+// PUBLIC_TUTORS_HOOKS_MODE picks the shared @tutors/hooks implementation or this
+// app's original inline hooks. See packages/svelte/utils/hooks/README.md.
+const shared = usesSharedHooks(env.PUBLIC_TUTORS_HOOKS_MODE);
 
-export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
+export const handle = sequence(localeHandle, shared ? securityHeaders : legacy.securityHeaders, authInitHandle);
 
-export const handleError: HandleServerError = ({ error }) => {
-  log.error("Server error:", error instanceof Error ? error : { details: error });
-  return {
-    message: "An unexpected error occurred"
-  };
-};
+export const handleError = shared ? createServerErrorHandler() : legacy.handleError;

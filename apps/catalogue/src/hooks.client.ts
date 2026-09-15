@@ -1,19 +1,16 @@
-import type { HandleClientError } from "@sveltejs/kit";
-import log, { addTransport } from "@tutors/logger";
-import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
+import { env } from "$env/dynamic/public";
+import { usesSharedHooks } from "@tutors/hooks/mode";
+import { initClientErrorHandling, createClientErrorHandler } from "@tutors/hooks/client";
+import * as legacy from "./legacy-hooks.client";
 
-addTransport(createSupabaseErrorTransport("tutors-catalogue"));
+// PUBLIC_TUTORS_HOOKS_MODE picks the shared @tutors/hooks implementation or this
+// app's original inline hooks. See packages/svelte/utils/hooks/README.md.
+const shared = usesSharedHooks(env.PUBLIC_TUTORS_HOOKS_MODE);
 
-window.addEventListener("unhandledrejection", (event) => {
-  log.error("Unhandled promise rejection", {
-    reason: event.reason instanceof Error ? event.reason.message : String(event.reason),
-    stack: event.reason instanceof Error ? event.reason.stack : undefined
-  });
-});
+if (shared) {
+  initClientErrorHandling("tutors-catalogue");
+} else {
+  legacy.init();
+}
 
-export const handleError: HandleClientError = ({ error }) => {
-  log.error("Client error:", error instanceof Error ? error : { details: error });
-  return {
-    message: "An unexpected error occurred"
-  };
-};
+export const handleError = shared ? createClientErrorHandler() : legacy.handleError;

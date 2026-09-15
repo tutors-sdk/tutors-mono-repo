@@ -36,12 +36,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Create .env for SvelteKit apps
-        run: |
-          for dir in apps/reader apps/catalogue apps/live apps/time; do
-            if [ -d "$dir" ]; then
-              cp .env.example "$dir/.env"
-            fi
-          done
+        run: cp .env.example .env
+
+      # Generates each app's .svelte-kit/tsconfig.json, which the app tsconfigs extend.
+      # Tests import app source files (e.g. legacy hooks), so every app must be synced,
+      # not only the ones that get type-checked below.
+      - name: Sync SvelteKit apps
+        run: pnpm -r --filter "./apps/**" exec svelte-kit sync
 
       - name: Build all packages and apps
         run: pnpm build

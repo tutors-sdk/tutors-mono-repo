@@ -12,7 +12,8 @@ const config = {
   },
 
   kit: {
-    adapter: adapter()
+    adapter: adapter(),
+    env: { dir: '../..' }
   }
 };
 
