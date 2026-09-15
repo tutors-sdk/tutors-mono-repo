@@ -15,7 +15,7 @@ labels:
 
 images:
   - name: tutors-app
-    newName: registry.example.com/tutors/catalogue
+    newName: quay.io/tutors-sdk/tutors-catalogue
     newTag: latest
 
 patches:

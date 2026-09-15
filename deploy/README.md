@@ -17,6 +17,40 @@ docker build --build-arg APP_NAME=time -t tutors/time .
 Optional build args: `NODE_VERSION` (default `22`), `GIT_SHA` and `BUILD_DATE`
 for the OCI labels. The build needs BuildKit (default in Docker 23+).
 
+## Published images
+
+The `Container Image Build` workflow (`.github/workflows/image-build.yml`)
+builds all four apps from this Dockerfile and publishes them to
+`quay.io/tutors-sdk/tutors-<app>`. Every image is scanned with Trivy before
+the job passes; CRITICAL and HIGH findings with an available fix fail it.
+
+| Event | Tags pushed |
+| --- | --- |
+| Pull request (touching the build context) | none, build and scan only |
+| Push to `main` | `sha-<short>`, `latest` |
+| Push to an `rc/**` branch | `rc-<branch>`, `sha-<short>` |
+| Tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `sha-<short>` |
+
+Pushing needs two repository secrets holding a Quay.io robot account:
+`QUAY_USERNAME` and `QUAY_PASSWORD`. Without them PR builds still run; only
+the push steps on `main`, `rc/**` and tags need the credentials.
+
+## Staging stack
+
+`deploy/staging/compose.yaml` runs the four published images on one host,
+with the same read-only, capability-dropped posture as the local stack. It
+builds nothing, so `IMAGE_TAG` selects exactly what to run:
+
+```bash
+cd deploy/staging
+cp .env.example .env               # Supabase, OAuth, Moodle, origins
+IMAGE_TAG=rc-16.2.0 docker compose up -d
+docker compose pull && docker compose up -d   # roll forward
+```
+
+Set each `*_ORIGIN` to the URL users reach the app on; adapter-node uses it
+for absolute URLs and CSRF checks.
+
 ## Run locally
 
 A step-by-step walkthrough, including troubleshooting, is in
@@ -66,8 +100,9 @@ kubectl kustomize deploy/k8s/overlays/reader   # render
 oc apply -k deploy/k8s/overlays/reader          # deploy
 ```
 
-Before applying, replace `registry.example.com/tutors/<app>` in the overlay
-with the real image reference and fill in the ConfigMap values. The reader
+Each overlay points at `quay.io/tutors-sdk/tutors-<app>:latest`; pin
+`newTag` to a release (`16.2.0`) or commit (`sha-<short>`) before applying to
+production, and fill in the ConfigMap values. The reader
 overlay expects a `reader-tutors-app-oauth` Secret; copy
 `overlays/reader/secrets.yaml.example` to `secrets.yaml` (git-ignored) and
 apply it separately.

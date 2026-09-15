@@ -1,0 +1,108 @@
+name: Container Image Build
+
+# Builds the four Tutors app images from the root Dockerfile
+# (--build-arg APP_NAME=<app>, see deploy/README.md) and publishes them to
+# quay.io/tutors-sdk/tutors-<app>.
+#
+#   pull_request        build and scan only, nothing is pushed
+#   push to main        push  sha-<short>  and  latest
+#   push to rc/**       push  rc-<branch>  (for example rc-16.2.0)
+#   push tag vX.Y.Z     push  X.Y.Z  and  X.Y
+#
+# Every image is scanned with Trivy; CRITICAL and HIGH findings with an
+# available fix stop the workflow.
+
+on:
+  push:
+    branches: [main, "rc/**"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+    # Only the paths that enter the build context (see .dockerignore) can
+    # change the image, so doc-only PRs skip the four builds.
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - apps/**
+      - packages/**
+      - .github/workflows/image-build.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: image-${{ github.ref }}-${{ matrix.app }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [reader, catalogue, live, time]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # The Dockerfile uses BuildKit cache mounts for the pnpm store, which
+      # need the buildx container driver.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Login to Quay.io
+        if: github.event_name == 'push'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: quay.io/tutors-sdk/tutors-${{ matrix.app }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=ref,event=branch,prefix=rc-,enable=${{ startsWith(github.ref, 'refs/heads/rc/') }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=tutors-${{ matrix.app }}
+            org.opencontainers.image.licenses=MIT
+
+      # OCI revision/created labels come from the metadata step above, so the
+      # Dockerfile's GIT_SHA and BUILD_DATE build args are not needed here.
+      # The cache scope is per app: the four builds share the deps stage but
+      # would otherwise overwrite one another's cache entry.
+      - name: Build and push
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: APP_NAME=${{ matrix.app }}
+          push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name != 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+      # steps.meta.outputs.version is the highest-priority tag that was
+      # applied (latest on main, sha-<short> on PRs, X.Y.Z on release tags),
+      # so it always names an image that exists locally or in the registry.
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: quay.io/tutors-sdk/tutors-${{ matrix.app }}:${{ steps.meta.outputs.version }}
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
