@@ -4,7 +4,10 @@ import { SvelteKitAuth } from "@auth/sveltekit";
 import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import { securityHeaders, createServerErrorHandler } from "@tutors/hooks";
+import { env } from "$env/dynamic/public";
+import { usesSharedHooks } from "@tutors/hooks/mode";
+import { securityHeaders, createServerErrorHandler } from "@tutors/hooks/server";
+import * as legacy from "./legacy-hooks.server";
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -55,6 +58,10 @@ const localeHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
+// PUBLIC_TUTORS_HOOKS_MODE picks the shared @tutors/hooks implementation or this
+// app's original inline hooks. See packages/svelte/utils/hooks/README.md.
+const shared = usesSharedHooks(env.PUBLIC_TUTORS_HOOKS_MODE);
 
-export const handleError = createServerErrorHandler();
+export const handle = sequence(localeHandle, shared ? securityHeaders : legacy.securityHeaders, authInitHandle);
+
+export const handleError = shared ? createServerErrorHandler() : legacy.handleError;
