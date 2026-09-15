@@ -43,6 +43,12 @@ jobs:
             fi
           done
 
+      # Generates each app's .svelte-kit/tsconfig.json, which the app tsconfigs extend.
+      # Tests import app source files (e.g. legacy hooks), so every app must be synced,
+      # not only the ones that get type-checked below.
+      - name: Sync SvelteKit apps
+        run: pnpm -r --filter "./apps/**" exec svelte-kit sync
+
       - name: Build all packages and apps
         run: pnpm build
 
