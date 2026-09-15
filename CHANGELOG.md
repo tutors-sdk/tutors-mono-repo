@@ -4,7 +4,249 @@
 > [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors).
 > Version history prior to v16.0.0 originates from that repository.
 
-## [Unreleased]
+---
+
+## Reader (`tutors-reader`)
+
+### v16.1.8 (2026-09)
+
+#### Features
+
+- Create wizard: optional `.gitignore` and README in generated courses (PR #197)
+- Create wizard: the downloaded zip now includes a `course.json` manifest describing the generated course (PR #153)
+- Create wizard: import an existing `course.json` to pre-fill the wizard fields (PR #154)
+
+#### Fixes
+
+- Logging: the analytics beacon now flushes reliably, UI errors are reported through the logger rather than silently swallowed, and stray console output was removed from Marp talks and the whiteboard viewer (PR #173)
+- Tutors Live menu link now points at the Live deployment instead of a reader-relative path that 404s (PR #225)
+
+#### Chores
+
+- API surface report regenerated for `getPanoptoUrls` (PR #193)
+- Dependency update: eslint 10.10.0 (PR #189)
+- README: Node prerequisite corrected to >= 22.12.0, matching the `engines.node` raised in v16.1.6
+
+### v16.1.6 (2026-09)
+
+#### Fixes
+
+- Content locking: enrolled students no longer hit a navigation loop ("Attempt to use history.pushState() more than 100 times per 10 seconds") when landing on a locked route — the redirect target is excluded from the lock check and the redirect replaces history rather than pushing to it (PR #205)
+- Content locking: the course context tree (TOC sidebar) now renders for enrolled students, rebuilding when lock state resolves instead of being computed once at mount (PR #205)
+- Content locking: educator/student role is re-resolved after sign-in on enrolment courses, so lock state matches the signed-in user without a page reload (PR #205)
+- Content locking: locks are now loaded in anonymous-mode builds; previously an enrolment course rendered with no cards, wall entries or context tree because lock state never resolved
+- Content locking: a failing lock store no longer surfaces as an unhandled promise rejection on every course visit
+
+#### Chores
+
+- Dependency updates: mermaid 12, markdown-it-anchor 10, vite 8.3, zod 4.6, @supabase/supabase-js 2.116, isomorphic-dompurify 4.2, @playwright/test 1.63, typescript-eslint 8.70, and the GitHub Actions group (PRs #215–#223)
+- `engines.node` raised to >=22.12.0, required by mermaid 12 and already matching CI and the Netlify builds
+
+### v16.1.5 (2026-09)
+
+#### Features
+
+- Panopto video support: embed Panopto-hosted videos in courses via `panopto=` video identifiers (PR #188)
+
+#### Fixes
+
+- Course visit card thumbnail missing on home page recently accessed / favourites cards for courses without a custom icon (PR #191)
+- Content locking: course context sidebar tree collapsed by default; TOC tree refactored with RBAC-aware visibility filtering; LLM export links respect content locks for enrolled students (PR #204)
+- Circular card title no longer hidden behind the card image (PR #194)
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+- PDF.js worker updated
+
+### v16.1.4 (2026-09)
+
+#### Fixes
+
+- Exclude locked content from walls: labs/talks/videos under a locked topic are now hidden from students on wall pages, with correct ancestor matching for topics nested inside units (PR #183)
+
+### v16.1.3 (2026-09)
+
+#### Features
+
+- Create wizard: new **Include calendar** and **Include enrollment** options, seeding `calendar.yaml` (12-week worked example with a reading-week break and assignments at weeks 6 and 12) and a fully-commented `enrollment.yaml`; enriched `properties.yaml` with commented, documented examples for every supported property (PR #147)
+- Home footer: replaced the Catalogue link with an "Explore What's New in Tutors" link
+
+#### Fixes
+
+- Custom companion icons defined in `properties.yaml` are now registered in the theme icon library so they render correctly (previously all other custom-companion aspects worked except the icon) (PR #147)
+
+### v16.1.2 (2026-08)
+
+#### Fixes
+
+- Units containing only panel talks (or other panel LOs) now display correctly — `hasVisibleLos` previously ignored panel content excluded from `standardLos` (PR #107)
+
+### v16.1.1 (2026-08)
+
+#### Features
+
+- New calendar format with week numbers, assessments, and year field (backward compatible with legacy format)
+- Whiteboard property flag (`whiteboard: 1`) to control course whiteboard visibility
+- RBAC system: educator role via `educators` array in `enrollment.yaml`
+- Educator panel with tabbed sidebar (Info, Locks, Enrollment, Access)
+- Content locking: educators can lock/unlock individual topics to control student visibility
+
+#### Fixes
+
+- Educator role no longer persists when navigating to a course without enrollment
+- Content locks now target individual topics within units (previously locked at unit level, causing all units to share a single lock state)
+- Unit containers hidden when all their topics are locked (no empty unit shells for students)
+- Supabase Realtime broadcast callback types aligned with API
+
+### v16.1.0 (2026-08)
+
+- Version bump (superseded by 16.1.1)
+
+### v16.0.4 (2026-08)
+
+- Whiteboard learning object type with Excalidraw viewer support
+- Version bump aligned with JSR packages 5.1.0 release
+
+### v16.0.2 (2026-08)
+
+#### Fixes
+
+- Remove CSP config that blocked Adobe Acrobat PDF viewer SDK and other external scripts
+- Remove DOMPurify sanitization from Marp slide rendering — Marp HTML is from trusted course markdown, and DOMPurify strips SVG/foreignObject elements required for rendering
+- Revert hooks.server.ts to v16.0.0 version — remove Zod env validation that throws on missing env vars
+
+### v16.0.1 (2026-08)
+
+#### Security
+
+- Replace unmaintained `@iktakahiro/markdown-it-katex` with `@mdit/plugin-katex` v1.0.2, resolving 3 CVEs (PR #28)
+- Override vulnerable `cookie` dependency to `>=0.7.0 <1.0.0` (PR #27)
+
+#### Features
+
+- OKF v0.2 knowledge bundle generator for LLM codebase analysis (PR #24)
+
+#### Fixes
+
+- KaTeX CDN CSS updated from 0.16.8 to 0.18.1
+
+### v16.0.0 (2026-08)
+
+- Initial monorepo release
+
+---
+
+## Live (`tutors-live`)
+
+### v16.1.8 (2026-09)
+
+#### Fixes
+
+- Course group header: the course title link pointed at `/course/{courseId}`, which 404s on the Live deployment — it now targets the reader origin, and the live stream link is relative to Live itself (PRs #225, #226)
+- Online course and student cards linked to reader-relative paths broadcast over presence, so every card 404d on the Live origin; they now resolve against the reader (PR #226)
+
+### v16.1.5 (2026-09)
+
+#### Fixes
+
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+
+### v16.0.2 (2026-08)
+
+#### Fixes
+
+- Disable SSR — browser-only APIs (PartyKit/WebSocket) caused 500 errors on Netlify serverless functions
+- Remove hooks.server.ts and hooks.client.ts — added by PRs but not present in v16.0.0, caused deployment failures
+
+### v16.0.0 (2026-08)
+
+- Initial monorepo release
+
+---
+
+## Catalogue (`tutors-catalogue`)
+
+### v16.0.2 (2026-08)
+
+#### Fixes
+
+- Remove hooks.server.ts and hooks.client.ts — caused deployment failures
+
+### v16.0.0 (2026-08)
+
+- Initial monorepo release
+
+---
+
+## Time (`tutors-time`)
+
+### v16.1.8 (2026-09)
+
+> `apps/time` has tracked the monorepo version since v16.0.0; the v1.0.0 entry
+> below records its migration from the standalone repository.
+
+#### Fixes
+
+- Logging: assignment, calendar and learning-record tables now report load failures through the logger instead of failing silently (PR #173)
+- Student cards linked to reader-relative paths and 404d on the Time origin; they now resolve against the reader (PR #226)
+
+### v1.0.0 (2026-08)
+
+- Migrated from standalone `tutors-time` repository into monorepo at `apps/time`
+- Updated to Skeleton v5 theme system (cerberus/terminus/rose)
+- Fix AG Grid v35 theming conflict — add `theme: "legacy"` to all grid instances
+
+---
+
+## Shared Packages
+
+### v5.2.4 (2026-09)
+
+- `tutors-create`: optional `.gitignore` and README in generated courses, offered by both the CLI prompts and the reader wizard (PR #197)
+
+### v5.2.3 (2026-09)
+
+- `tutors-create`: **Include calendar** and **Include enrollment** scaffold options (CLI prompts + reader wizard checkboxes); calendar off by default
+- `tutors-create`: generated `calendar.yaml` provides a 12-week worked example with a reading-week break and assignments at weeks 6 and 12, plus a documentation link
+- `tutors-create`: generated `enrollment.yaml` is fully commented, notes that the IDs are GitHub IDs and that `auth: 1` must be set in `properties.yaml`, and links the RBAC reference
+- `tutors-create`: generated `properties.yaml` seeds `credits` with the course author and includes commented, documented examples for every supported property (including a custom `companions` map)
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.2.3
+
+### v5.2.2 (2026-08)
+
+- `tutors-create`: enriched scaffold — `netlify.toml`, `side.md`, and colour companion icons (PR #146)
+
+### v5.2.1 (2026-08)
+
+- `tutors-create`: runnable via `deno run` and prints its version in the CLI banner (PR #138)
+
+### v5.2.0 (2026-08)
+
+- New `tutors-create` course scaffolder: CLI and reader wizard sharing a common generator; full course template (units, side, talks, Marp, icons) with editable zip download (PR #114, #118, #119)
+- Align all JSR package versions to 5.2.0 (PR #136)
+
+### v5.1.0 (2026-08)
+
+- Marp slide rendering support in tutors-lite static HTML generator
+- Marp markdown-it guard in model-lib — skip markdown-it processing for Marp talks to prevent slide separator mangling
+- Notebook rendering guard in model-lib — skip generic markdown conversion for notebooks (cells converted separately)
+- Notebook static HTML rendering in tutors-lite (read-only cell display with syntax highlighting and output rendering)
+- Cascading version alignment: `model-lib` 5.1.0, `gen-lib` 5.1.0, `tutors` 5.1.0, `tutors-lite` deps updated to ^5.1.0
+
+### v5.0.6 (2026-08)
+
+- Align all JSR package versions (`model`, `time`, `gen`, `tutors`) to 5.0.6
+
+### Infrastructure
+
+- GitHub Actions CI workflows (PR #25)
+- Restore fuzz tests with dedicated `vitest.config.fuzz.ts` using threads pool (PR #30)
+- Fix analytics service test assertions to match two-argument call signature
+- Cap cookie override below 1.0.0 to preserve `parse`/`serialize` named exports required by `@sveltejs/kit`
+
+---
+
+## Pre-Monorepo History
+
+> Entries below originate from [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors) prior to the v16.0.0 monorepo migration.
 
 ## v16.0.0 (2026-08)
 

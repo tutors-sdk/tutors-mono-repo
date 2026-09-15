@@ -22,6 +22,7 @@ export const EasterIcons: IconLib = {
   lab: { type: "fluent:beaker-24-filled", color: "error" },
   note: { type: "fluent:notepad-16-regular", color: "success" },
   notebook: { type: "simple-icons:jupyter", color: "error" },
+  whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
   archive: { type: "mdi:basket-outline", color: "error" },
   web: { type: "fluent:bookmark-24-regular", color: "primary" },
   github: { type: "mdi:github", color: "warning" },
@@ -77,6 +78,10 @@ export const EasterIcons: IconLib = {
   overwhelmed: { type: "twemoji:exploding-head", color: "warning" },
   confused: { type: "twemoji:face-with-spiral-eyes", color: "secondary" },
   drained: { type: "twemoji:melting-face", color: "error" },
+
+  lock: { type: "fluent:lock-closed-24-filled", color: "error" },
+  unlock: { type: "fluent:lock-open-24-filled", color: "success" },
+  educator: { type: "fluent:person-key-20-filled", color: "error" },
 
   default: { type: "fluent:re-order-dots-vertical-24-filled", color: "error" }
 };

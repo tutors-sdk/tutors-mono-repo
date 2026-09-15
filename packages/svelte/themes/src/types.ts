@@ -4,7 +4,7 @@
  */
 
 import type { IconType } from "@tutors/tutors-model-lib";
-import type { LoUser } from "../community/index.ts";
+import type { LoUser } from "@tutors/community";
 
 /**
  * Collection of icon definitions

@@ -39,15 +39,15 @@ A comprehensive, multi-tier testing framework built around BDD-first principles 
 
 ## Tier 4: Contract Tests (`tests/contract/`)
 
-**Approach**: Zod schemas define the expected shape of every external API surface — Supabase table rows (6 tables), RPC responses (2 RPCs), PartyKit WebSocket messages (LoRecord protocol), and generated course JSON structure. Tests validate that mock data conforming to these schemas is accepted, and that malformed data is rejected.
+**Approach**: Zod schemas define the expected shape of every external API surface — Supabase table rows (6 tables), RPC responses (2 RPCs), Supabase Realtime broadcast messages (LoRecord protocol), and generated course JSON structure. Tests validate that mock data conforming to these schemas is accepted, and that malformed data is rejected.
 
-**Importance**: Tutors depends on three external services (Supabase, PartyKit, GitHub OAuth) plus its own course JSON format. When any of these change shape — a Supabase column renamed, a PartyKit message field added, a course JSON property dropped — the app breaks silently at runtime. Contract tests make these API boundaries explicit and testable. A failing contract test tells you exactly which service changed and which field is affected, before the bug reaches users. This is especially critical for the `learning_records` and `calendar` tables, which drive all analytics features.
+**Importance**: Tutors depends on two external services (Supabase, GitHub OAuth) plus its own course JSON format. When any of these change shape — a Supabase column renamed, a broadcast message field added, a course JSON property dropped — the app breaks silently at runtime. Contract tests make these API boundaries explicit and testable. A failing contract test tells you exactly which service changed and which field is affected, before the bug reaches users. This is especially critical for the `learning_records` and `calendar` tables, which drive all analytics features.
 
 ---
 
-## Tier 5: Fuzz Tests (`tests/fuzz/`) — *excluded from default run*
+## Tier 5: Fuzz Tests (`tests/fuzz/`)
 
-**Status**: Excluded from `pnpm vitest run` pending a fast-check v4 compatibility fix (`fc.stringMatching()` crashes the vitest worker process). The test files are retained locally for future re-enablement. Run manually with `pnpm vitest run tests/fuzz/ --pool threads` if needed.
+**Status**: Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Uses a dedicated vitest config with `pool: "threads"` because fast-check v4 property generation crashes vitest's default fork pool workers. Runs in CI on every push/PR.
 
 **Approach**: Property-based testing with `fast-check`. Generators produce random but valid inputs (calendar entries, LO trees) and assert invariants that must hold for all inputs — totals are non-negative, medians are within range, tree traversals visit every node.
 
@@ -85,9 +85,9 @@ See `guides/MUTATION-TESTING.md` for full details.
 
 ---
 
-## Tier 9: Schema-Driven Tests (`tests/fuzz/schema-driven.fuzz.test.ts`, `tests/contract/support/schema-*`) — *excluded from default run*
+## Tier 9: Schema-Driven Tests (`tests/fuzz/schema-driven.fuzz.test.ts`, `tests/contract/support/schema-*`)
 
-**Status**: Excluded alongside fuzz tests (same fast-check v4 worker crash). The schema support infrastructure (`schema-generators.ts`, `schema-snapshots.ts`, `schemas.ts`) is used by contract tests and remains active.
+**Status**: Active as part of `pnpm test:fuzz`. Schema support infrastructure (`schema-generators.ts`, `schema-snapshots.ts`, `schemas.ts`) is also used by contract tests.
 
 **Approach**: Bridges Zod schemas (from contract tests) to fast-check arbitraries for property-based testing. A `zodToArbitrary()` converter generates random-but-valid data from any Zod schema, enabling three capabilities: (1) round-trip validation — generated data always passes the originating schema, (2) schema snapshot regression — a `zodToJsonSchema()` converter creates JSON Schema snapshots that detect unintended drift, (3) boundary validation — `schema-validated-fixtures.ts` wraps BDD fixture factories with Zod `.parse()` calls so every fixture conforms to the canonical API shape.
 

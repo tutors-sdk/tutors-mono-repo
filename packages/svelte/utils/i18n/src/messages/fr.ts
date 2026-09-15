@@ -39,6 +39,7 @@ const fr: Record<string, string> = {
   "menu.dashboard": "Tableau de bord",
   "menu.githubProfile": "Profil Github",
   "menu.disconnect": "Se deconnecter",
+  "menu.profile": "Menu du profil",
 
   // Home page
   "home.title": "Tutors :",
@@ -52,6 +53,7 @@ const fr: Record<string, string> = {
   "home.source": "Source",
   "home.catalogue": "Catalogue",
   "home.live": "En direct",
+  "home.create": "Créer",
   "home.connectedAs": "Connecte en tant que :",
   "home.favourites": "Favoris",
   "home.recentlyAccessed": "Consultes recemment",
@@ -133,12 +135,58 @@ const fr: Record<string, string> = {
   "notFound.title": "Page non trouvee",
 
   // Accessibility
+  // Lecturer panel
+  "lecturer.panel.title": "Panneau enseignant",
+  "lecturer.panel.tip": "Ouvrir le panneau enseignant",
+  "lecturer.locks.title": "Verrouillages de contenu",
+  "lecturer.locks.lock": "Verrouiller",
+  "lecturer.locks.unlock": "Deverrouiller",
+  "lecturer.locks.locked": "Verrouille",
+  "lecturer.locks.unlocked": "Deverrouille",
+  "lecturer.locks.empty": "Aucun contenu verrouillable trouve",
+  "lecturer.enrollment.title": "Inscription",
+  "lecturer.enrollment.whitelist": "Liste blanche",
+  "lecturer.enrollment.students": "Etudiants",
+  "lecturer.enrollment.empty": "Aucun utilisateur inscrit",
+  "lecturer.enrollment.placeholder": "Nom d'utilisateur GitHub",
+  "lecturer.enrollment.add": "Ajouter",
+  "lecturer.access.title": "Acces",
+  "lecturer.access.authLevel": "Niveau d'auth",
+  "lecturer.access.owner": "Proprietaire",
+  "lecturer.access.lecturers": "Enseignants",
+  "lecturer.control.title": "Controle du cours",
+  "lecturer.control.placeholder": "Les fonctions de controle du cours seront ajoutees ici",
+  "lecturer.locked.overlay": "Ce contenu est verrouille",
+
   "a11y.skipToContent": "Aller au contenu",
   "a11y.mainNavigation": "Navigation principale",
   "a11y.breadcrumbs": "Fil d'Ariane",
   "a11y.secondaryNavigation": "Navigation secondaire",
   "a11y.sidebar": "Barre laterale",
-  "a11y.footer": "Pied de page"
+  "a11y.footer": "Pied de page",
+
+  // Guided tour
+  "tour.ariaLabel": "Visite guidee",
+  "tour.skip": "Passer",
+  "tour.prev": "Retour",
+  "tour.next": "Suivant",
+  "tour.finish": "Terminer",
+  "tour.menuLabel": "Visite guidee",
+  "tour.startButton": "Commencer la visite",
+  "tour.courseTitle.title": "Titre du cours",
+  "tour.courseTitle.description": "Ceci affiche le nom et l'image du cours que vous consultez actuellement.",
+  "tour.search.title": "Recherche",
+  "tour.search.description": "Trouvez rapidement du contenu dans ce cours. Vous pouvez aussi appuyer sur Ctrl+K (ou Cmd+K sur Mac) a tout moment.",
+  "tour.layout.title": "Theme et mise en page",
+  "tour.layout.description": "Personnalisez l'apparence : basculez entre le mode clair et sombre, changez le style des cartes, le theme et la langue.",
+  "tour.profile.title": "Votre profil",
+  "tour.profile.description": "Connectez-vous avec GitHub pour suivre votre progression et activer les fonctionnalites de presence en direct.",
+  "tour.toc.title": "Arborescence du cours",
+  "tour.toc.description": "Ouvrez l'arborescence complete du cours pour voir tous les sujets et naviguer directement vers n'importe quelle section.",
+  "tour.calendar.title": "Calendrier",
+  "tour.calendar.description": "Consultez le calendrier du cours et voyez ce qui est prevu cette semaine.",
+  "tour.info.title": "Informations sur le cours",
+  "tour.info.description": "Lisez les informations detaillees sur ce cours, y compris sa description et ses objectifs."
 };
 
 export default fr;

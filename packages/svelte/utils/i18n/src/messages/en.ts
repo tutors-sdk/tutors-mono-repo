@@ -39,6 +39,7 @@ const en = {
   "menu.dashboard": "Dashboard",
   "menu.githubProfile": "Github Profile",
   "menu.disconnect": "Disconnect",
+  "menu.profile": "Profile menu",
 
   // Home page
   "home.title": "Tutors:",
@@ -52,6 +53,7 @@ const en = {
   "home.source": "Source",
   "home.catalogue": "Catalogue",
   "home.live": "Live",
+  "home.create": "Create",
   "home.connectedAs": "Connected as:",
   "home.favourites": "Favourites",
   "home.recentlyAccessed": "Recently accessed",
@@ -133,7 +135,7 @@ Tutors is an open source application - the data collection component [is here](h
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "An [Open Learning Web Toolkit](/course/tutors-reference-manual): Explore the [Tutors Catalogue](https://catalogue.tutors.dev)",
+  "footer.message": "An [Open Learning Web Toolkit](/course/tutors-reference-manual): Explore [What's New in Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "sponsors",
   "footer.setuAlt": "South East Technological University",
 
@@ -145,12 +147,58 @@ Tutors is an open source application - the data collection component [is here](h
   "notFound.title": "Not Found",
 
   // Accessibility
+  // Lecturer panel
+  "lecturer.panel.title": "Lecturer Panel",
+  "lecturer.panel.tip": "Open Lecturer Panel",
+  "lecturer.locks.title": "Content Locks",
+  "lecturer.locks.lock": "Lock",
+  "lecturer.locks.unlock": "Unlock",
+  "lecturer.locks.locked": "Locked",
+  "lecturer.locks.unlocked": "Unlocked",
+  "lecturer.locks.empty": "No lockable content found",
+  "lecturer.enrollment.title": "Enrollment",
+  "lecturer.enrollment.whitelist": "Whitelist",
+  "lecturer.enrollment.students": "Students",
+  "lecturer.enrollment.empty": "No enrolled users",
+  "lecturer.enrollment.placeholder": "GitHub username",
+  "lecturer.enrollment.add": "Add",
+  "lecturer.access.title": "Access",
+  "lecturer.access.authLevel": "Auth Level",
+  "lecturer.access.owner": "Owner",
+  "lecturer.access.lecturers": "Lecturers",
+  "lecturer.control.title": "Course Control",
+  "lecturer.control.placeholder": "Course control features will be added here",
+  "lecturer.locked.overlay": "This content is locked",
+
   "a11y.skipToContent": "Skip to content",
   "a11y.mainNavigation": "Main navigation",
   "a11y.breadcrumbs": "Breadcrumbs",
   "a11y.secondaryNavigation": "Secondary navigation",
   "a11y.sidebar": "Sidebar",
-  "a11y.footer": "Site footer"
+  "a11y.footer": "Site footer",
+
+  // Guided tour
+  "tour.ariaLabel": "Guided tour",
+  "tour.skip": "Skip",
+  "tour.prev": "Back",
+  "tour.next": "Next",
+  "tour.finish": "Done",
+  "tour.menuLabel": "Guided Tour",
+  "tour.startButton": "Start Tour",
+  "tour.courseTitle.title": "Course Title",
+  "tour.courseTitle.description": "This shows the name and image of the course you are currently viewing.",
+  "tour.search.title": "Search",
+  "tour.search.description": "Quickly find content in this course. You can also press Ctrl+K (or Cmd+K on Mac) anytime.",
+  "tour.layout.title": "Theme & Layout",
+  "tour.layout.description": "Customize the appearance: switch between light and dark mode, change the card style, theme, and language.",
+  "tour.profile.title": "Your Profile",
+  "tour.profile.description": "Sign in with GitHub to track your progress and enable live presence features.",
+  "tour.toc.title": "Course Tree",
+  "tour.toc.description": "Open the full course tree to see all topics and navigate directly to any section.",
+  "tour.calendar.title": "Calendar",
+  "tour.calendar.description": "View the course schedule and see what is coming up this week.",
+  "tour.info.title": "Course Info",
+  "tour.info.description": "Read detailed information about this course, including its description and objectives."
 } as const;
 
 export default en;

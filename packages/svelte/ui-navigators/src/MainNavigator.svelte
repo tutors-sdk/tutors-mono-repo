@@ -7,12 +7,13 @@
   import TutorsTimeIndicator from "@tutors/ui-navigators/buttons/TutorsTimeIndicator.svelte";
   import TocButton from "@tutors/ui-navigators/buttons/TocButton.svelte";
   import InfoButton from "@tutors/ui-navigators/buttons/InfoButton.svelte";
+  import WhiteboardButton from "@tutors/ui-navigators/buttons/WhiteboardButton.svelte";
   import AnonProfile from "@tutors/ui-navigators/tutors-connect/AnonProfile.svelte";
   import ConnectedProfile from "@tutors/ui-navigators/tutors-connect/ConnectedProfile.svelte";
   import TutorsTitle from "@tutors/ui-navigators/titles/TutorsTitle.svelte";
   import CalendarButton from "@tutors/ui-navigators/buttons/CalendarButton.svelte";
   import CourseSentimentButton from "@tutors/ui-navigators/buttons/CourseSentimentButton.svelte";
-  import { currentCourse, tutorsId } from "@tutors/runes";
+  import { currentCourse, tutorsId, isEducator } from "@tutors/runes";
   import { t } from "@tutors/i18n";
 
   let { showConnect = true } = $props();
@@ -24,7 +25,7 @@
     <AppBar.Lead>
       {#if currentCourse?.value}
         <span class="hidden md:block">
-          <InfoButton />
+          <InfoButton showEducatorPanel={isEducator.value} />
         </span>
       {:else}
         <span class="ml-12">
@@ -62,12 +63,17 @@
             <SearchButton />
           {/if}
         </div>
+        {#if currentCourse?.value?.hasWhiteboard}
+          <div class="hidden md:flex items-center">
+            <WhiteboardButton />
+          </div>
+        {/if}
       </div>
       <div class="flex items-center">
         <LayoutMenu />
       </div>
       {#if showConnect}
-        <span class="mx-2 h-10 w-[1px]" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
+        <span class="mx-2 h-10 w-[1px]" role="separator" aria-hidden="true" style="background-color: light-dark(rgb(156, 163, 175), rgb(229, 231, 235));"></span>
         {#if !currentCourse?.value?.isPrivate}
           <div class="relative">
             {#if !tutorsId.value?.login}

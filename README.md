@@ -1,5 +1,9 @@
 # Tutors Mono Repo
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tutors-sdk/tutors-mono-repo/badge)](https://scorecard.dev/viewer/?uri=github.com/tutors-sdk/tutors-mono-repo)
+<!-- OpenSSF Best Practices badge: register at https://www.bestpractices.dev/en/projects/new and replace PROJECT_ID below -->
+<!-- [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/PROJECT_ID/badge)](https://www.bestpractices.dev/projects/PROJECT_ID) -->
+
 A modern monorepo for the Tutors educational platform - an open-source course reader and learning management system built with Svelte 5, SvelteKit, and TypeScript.
 
 ## Features
@@ -22,7 +26,9 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/jsr/model` - Core data models and types
 - `packages/jsr/time` - Time tracking utilities
 - `packages/jsr/gen` - Course generation utilities
-- `packages/jsr/tutors` - JSR reader package
+- `packages/jsr/tutors` - JSR reader package (JSON course generator)
+- `packages/jsr/tutors-lite` - Static HTML course generator
+- `packages/jsr/create` - Course scaffolder (CLI and reader wizard)
 
 **Foundation Layer (Svelte):**
 - `packages/svelte/utils/logger` - Logging utility
@@ -37,6 +43,9 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/svelte/themes` - Theme management and styling
 - `packages/svelte/community` - Community features
 - `packages/svelte/connect` - Authentication and user management
+- `packages/svelte/utils/rbac` - Role resolution and content locking
+- `packages/svelte/utils/privacy` - Consent management
+- `packages/svelte/utils/tour` - Guided product tours
 
 **UI Layer:**
 - `packages/svelte/ui-primitives` - Primitive UI components (Icon, Menu, Sidebar, Image)
@@ -48,16 +57,13 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `apps/reader` - Main course reader application
 - `apps/catalogue` - Course catalog application
 - `apps/live` - Live classroom application
-
-### Services
-
-- `services/party` - PartyKit server for real-time collaboration and live features
+- `apps/time` - Student activity and time tracking dashboard
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 22.12.0
 - pnpm >= 8.0.0
 
 ### Installation
@@ -89,6 +95,7 @@ The `...` suffix in `pnpm --filter tutors-reader...` builds tutors-reader and al
 pnpm --filter tutors-reader dev
 pnpm --filter catalogue dev
 pnpm --filter live dev
+pnpm --filter tutors-time dev
 
 # Rebuild the UI packages after changes
 pnpm --filter @tutors/ui-primitives build

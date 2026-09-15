@@ -1,13 +1,21 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-
-const startTime = Date.now();
+import { checkSupabase, getRecentErrorCounts } from "@tutors/community/utils/health-check";
 
 export const GET: RequestHandler = async () => {
+  const [supabaseCheck, errorCounts] = await Promise.all([checkSupabase(), getRecentErrorCounts()]);
+
+  const overallStatus = supabaseCheck.status === "ok" || supabaseCheck.status === "skipped" ? "ok" : "degraded";
+
   return json({
-    status: "ok",
-    service: "tutors-catalogue",
+    status: overallStatus,
     timestamp: new Date().toISOString(),
-    uptime_s: Math.round((Date.now() - startTime) / 1000)
+    app: "tutors-catalogue",
+    checks: {
+      supabase: supabaseCheck
+    },
+    errors: {
+      last60min: errorCounts
+    }
   });
 };

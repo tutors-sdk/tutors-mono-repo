@@ -39,6 +39,7 @@ const de: Record<string, string> = {
   "menu.dashboard": "Dashboard",
   "menu.githubProfile": "Github-Profil",
   "menu.disconnect": "Trennen",
+  "menu.profile": "Profilmenü",
 
   // Home page
   "home.title": "Tutors:",
@@ -52,6 +53,7 @@ const de: Record<string, string> = {
   "home.source": "Quellcode",
   "home.catalogue": "Katalog",
   "home.live": "Live",
+  "home.create": "Erstellen",
   "home.connectedAs": "Verbunden als:",
   "home.favourites": "Favoriten",
   "home.recentlyAccessed": "Zuletzt besucht",
@@ -121,7 +123,7 @@ const de: Record<string, string> = {
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "Ein [Offenes Web-Lern-Toolkit](/course/tutors-reference-manual): Entdecken Sie den [Tutors-Katalog](https://catalogue.tutors.dev)",
+  "footer.message": "Ein [Offenes Web-Lern-Toolkit](/course/tutors-reference-manual): Entdecken Sie, [Was ist neu in Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "Sponsoren",
   "footer.setuAlt": "South East Technological University",
 
@@ -133,12 +135,58 @@ const de: Record<string, string> = {
   "notFound.title": "Nicht gefunden",
 
   // Accessibility
+  // Lecturer panel
+  "lecturer.panel.title": "Dozenten-Panel",
+  "lecturer.panel.tip": "Dozenten-Panel oeffnen",
+  "lecturer.locks.title": "Inhaltssperren",
+  "lecturer.locks.lock": "Sperren",
+  "lecturer.locks.unlock": "Entsperren",
+  "lecturer.locks.locked": "Gesperrt",
+  "lecturer.locks.unlocked": "Entsperrt",
+  "lecturer.locks.empty": "Keine sperrbaren Inhalte gefunden",
+  "lecturer.enrollment.title": "Einschreibung",
+  "lecturer.enrollment.whitelist": "Whitelist",
+  "lecturer.enrollment.students": "Studierende",
+  "lecturer.enrollment.empty": "Keine eingeschriebenen Benutzer",
+  "lecturer.enrollment.placeholder": "GitHub-Benutzername",
+  "lecturer.enrollment.add": "Hinzufuegen",
+  "lecturer.access.title": "Zugang",
+  "lecturer.access.authLevel": "Auth-Stufe",
+  "lecturer.access.owner": "Eigentuemer",
+  "lecturer.access.lecturers": "Dozenten",
+  "lecturer.control.title": "Kurssteuerung",
+  "lecturer.control.placeholder": "Kurssteuerungsfunktionen werden hier hinzugefuegt",
+  "lecturer.locked.overlay": "Dieser Inhalt ist gesperrt",
+
   "a11y.skipToContent": "Zum Inhalt springen",
   "a11y.mainNavigation": "Hauptnavigation",
   "a11y.breadcrumbs": "Brotkruemelnavigation",
   "a11y.secondaryNavigation": "Sekundaere Navigation",
   "a11y.sidebar": "Seitenleiste",
-  "a11y.footer": "Seitenfuss"
+  "a11y.footer": "Seitenfuss",
+
+  // Guided tour
+  "tour.ariaLabel": "Gefuehrte Tour",
+  "tour.skip": "Ueberspringen",
+  "tour.prev": "Zurueck",
+  "tour.next": "Weiter",
+  "tour.finish": "Fertig",
+  "tour.menuLabel": "Gefuehrte Tour",
+  "tour.startButton": "Tour starten",
+  "tour.courseTitle.title": "Kurstitel",
+  "tour.courseTitle.description": "Hier werden der Name und das Bild des aktuell angezeigten Kurses angezeigt.",
+  "tour.search.title": "Suche",
+  "tour.search.description": "Finden Sie schnell Inhalte in diesem Kurs. Sie koennen auch jederzeit Strg+K (oder Cmd+K auf dem Mac) druecken.",
+  "tour.layout.title": "Design und Layout",
+  "tour.layout.description": "Passen Sie das Erscheinungsbild an: Wechseln Sie zwischen hellem und dunklem Modus, aendern Sie den Kartenstil, das Design und die Sprache.",
+  "tour.profile.title": "Ihr Profil",
+  "tour.profile.description": "Melden Sie sich mit GitHub an, um Ihren Fortschritt zu verfolgen und Live-Praesenzfunktionen zu aktivieren.",
+  "tour.toc.title": "Kursbaum",
+  "tour.toc.description": "Oeffnen Sie den vollstaendigen Kursbaum, um alle Themen zu sehen und direkt zu einem Abschnitt zu navigieren.",
+  "tour.calendar.title": "Kalender",
+  "tour.calendar.description": "Sehen Sie den Kursplan und was diese Woche ansteht.",
+  "tour.info.title": "Kursinformationen",
+  "tour.info.description": "Lesen Sie detaillierte Informationen ueber diesen Kurs, einschliesslich seiner Beschreibung und Ziele."
 };
 
 export default de;

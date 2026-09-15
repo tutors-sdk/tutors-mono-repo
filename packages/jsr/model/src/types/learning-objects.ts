@@ -154,6 +154,16 @@ export type Notebook = Lo & {
 };
 
 /**
+ * Whiteboard learning object
+ * Represents an Excalidraw whiteboard scene
+ */
+export type Whiteboard = Lo & {
+  type: "whiteboard";
+  excalidraw: string;
+  excalidrawFile: string;
+};
+
+/**
  * Podcast learning object
  * Represents a podcast episode
  */
@@ -261,6 +271,7 @@ export type Course = Composite & {
   areLabStepsAutoNumbered: boolean;
   hasEnrollment: boolean;
   hasCalendar: boolean;
+  hasWhiteboard: boolean;
   defaultPdfReader: string;
   footer: string;
   ignorePin: string;

@@ -13,10 +13,16 @@ import {
   ConnectCourseSchema,
   ConnectLatestSchema,
   LoRecordSchema,
-  PartyKitRoomSchema,
+  RealtimeChannelSchema,
   CourseJsonSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
+  WhiteboardSceneInitSchema,
+  WhiteboardSceneUpdateSchema,
+  WhiteboardSceneSnapshotSchema,
+  WhiteboardCursorUpdateSchema,
+  WhiteboardRoomSchema,
+  WhiteboardInitEditorSchema,
 } from "./schemas";
 
 // ---------------------------------------------------------------------------
@@ -131,10 +137,16 @@ export const SCHEMA_SNAPSHOTS: Record<string, JsonSchema> = {
   ConnectCourse: zodToJsonSchema(ConnectCourseSchema),
   ConnectLatest: zodToJsonSchema(ConnectLatestSchema),
   LoRecord: zodToJsonSchema(LoRecordSchema),
-  PartyKitRoom: zodToJsonSchema(PartyKitRoomSchema),
+  RealtimeChannel: zodToJsonSchema(RealtimeChannelSchema),
   CourseJson: zodToJsonSchema(CourseJsonSchema),
   IncrementCalendarParams: zodToJsonSchema(IncrementCalendarParamsSchema),
   GetCountLearningRecordsParams: zodToJsonSchema(GetCountLearningRecordsParamsSchema),
+  WhiteboardSceneInit: zodToJsonSchema(WhiteboardSceneInitSchema),
+  WhiteboardSceneUpdate: zodToJsonSchema(WhiteboardSceneUpdateSchema),
+  WhiteboardSceneSnapshot: zodToJsonSchema(WhiteboardSceneSnapshotSchema),
+  WhiteboardCursorUpdate: zodToJsonSchema(WhiteboardCursorUpdateSchema),
+  WhiteboardRoom: zodToJsonSchema(WhiteboardRoomSchema),
+  WhiteboardInitEditor: zodToJsonSchema(WhiteboardInitEditorSchema),
 };
 
 // ---------------------------------------------------------------------------

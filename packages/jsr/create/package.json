@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/tutors-create",
+  "version": "5.2.4",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./main.ts",
+    "./scaffolder": "./src/scaffolder.ts",
+    "./generate": "./src/generate.ts"
+  }
+}

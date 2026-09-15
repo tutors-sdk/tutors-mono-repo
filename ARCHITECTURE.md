@@ -56,8 +56,8 @@ This monorepo contains **4 distinct subsystems**:
 
 1. **JSR Packages** - Deno-compatible libraries for course generation and data models
 2. **Svelte Packages** - UI components and services for web applications
-3. **Applications** - End-user facing applications (reader, catalogue, live)
-4. **Services** - Backend infrastructure (PartyKit for real-time features)
+3. **Applications** - End-user facing applications (reader, catalogue, live, time)
+4. **Services** - Backend infrastructure (Supabase Realtime for presence)
 
 ---
 
@@ -89,7 +89,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                   Applications Layer                     │
-│        (reader, catalogue, live)                         │
+│        (reader, catalogue, live, time)                   │
 │        Consumes: All Svelte packages                     │
 └──────────────────────┬──────────────────────────────────┘
                        │
@@ -148,7 +148,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 
 **Backend Services**:
 - **Supabase**: Database, authentication, analytics
-- **PartyKit**: Real-time WebSocket communication
+- **Supabase Realtime**: Real-time broadcast communication (presence, live activity)
 - **Auth.js**: GitHub OAuth integration
 
 **JSR Ecosystem** (Deno-first):
@@ -169,7 +169,8 @@ tutors-mono-repo/
 │   │   ├── model/              # @tutors/tutors-model-lib
 │   │   ├── time/               # @tutors/tutors-time-lib
 │   │   ├── gen/                # @tutors/tutors-gen-lib
-│   │   └── tutors/             # @tutors/reader
+│   │   ├── tutors/             # @tutors/tutors (JSON course generator CLI)
+│   │   └── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
 │   │
 │   └── svelte/                 # Svelte-specific packages
 │       ├── runes/              # @tutors/runes
@@ -188,10 +189,8 @@ tutors-mono-repo/
 ├── apps/
 │   ├── reader/                 # Main course reader application
 │   ├── catalogue/              # Course catalog/discovery
-│   └── live/                   # Live presence tracking
-│
-├── services/
-│   └── party/                  # PartyKit real-time server
+│   ├── live/                   # Live presence tracking
+│   └── time/                   # Student activity & time tracking dashboard
 │
 ├── deno.json                   # Deno workspace configuration
 ├── pnpm-workspace.yaml         # pnpm workspace configuration
@@ -217,17 +216,17 @@ The JSR (JavaScript Registry) subsystem provides the **foundation layer** - core
 ### Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    JSR Subsystem                         │
-│                 (Deno-First, Node-Compatible)            │
-│                                                           │
-│  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐  │
-│  │  Model   │  │  Time  │  │   Gen    │  │  Tutors  │  │
-│  │  (Core)  │  │(Track) │  │(Gener.)  │  │  (CLI)   │  │
-│  └────┬─────┘  └───┬────┘  └────┬─────┘  └────┬─────┘  │
-└───────┼───────────┼─────────────┼─────────────┼─────────┘
-        │           │             │             │
-        └───────────┴─────────────┴─────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         JSR Subsystem                                │
+│                    (Deno-First, Node-Compatible)                     │
+│                                                                      │
+│  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │
+│  │  Model   │  │  Time  │  │   Gen    │  │  Tutors  │  │ Tutors │  │
+│  │  (Core)  │  │(Track) │  │(Gener.)  │  │  (JSON)  │  │  Lite  │  │
+│  └────┬─────┘  └───┬────┘  └────┬─────┘  └────┬─────┘  └───┬────┘  │
+└───────┼────────────┼────────────┼──────────────┼────────────┼────────┘
+        │            │            │              │            │
+        └────────────┴────────────┴──────────────┴────────────┘
         All published to jsr.io/@tutors/*
 ```
 
@@ -553,6 +552,44 @@ await emitter.emit(course);
 console.log(`Course generated: ${args.output}`);
 ```
 
+### 5. Tutors Lite Package (`packages/jsr/tutors-lite`)
+
+**Package Name**: `@tutors/tutors-lite`  
+**Purpose**: CLI entry point for static HTML course generation
+
+#### Key Responsibilities
+
+- **Static HTML Generation**: Produces a self-contained `html/` folder that can be opened locally or deployed to any static host
+- **Offline Capable**: Generated courses work without a backend — no authentication, analytics, or real-time features
+- **Template Rendering**: Uses Vento templates to produce responsive HTML pages for all learning object types
+
+#### Usage
+
+```bash
+# Generate static HTML course
+deno run -A jsr:@tutors/tutors-lite
+
+# Or locally
+deno run -A packages/jsr/tutors-lite/main.ts
+```
+
+#### How It Differs from `tutors`
+
+| | `tutors` (JSON) | `tutors-lite` (HTML) |
+|---|---|---|
+| Output | `json/tutors.json` | `html/` folder with `index.html` per page |
+| Requires reader app | Yes | No — self-contained static site |
+| Analytics/auth | Supported via Supabase | Not available |
+| Hosting | Needs tutors reader deployment | Any static host or local file:// |
+
+#### File Structure
+
+```
+packages/jsr/tutors-lite/
+├── deno.json              # JSR package configuration
+└── main.ts                # CLI entry point
+```
+
 ### JSR Publishing Workflow
 
 **Deno Configuration** (`deno.json`):
@@ -563,7 +600,8 @@ console.log(`Course generated: ${args.output}`);
     "./packages/jsr/model",
     "./packages/jsr/time",
     "./packages/jsr/gen",
-    "./packages/jsr/tutors"
+    "./packages/jsr/tutors",
+    "./packages/jsr/tutors-lite"
   ],
   "imports": {
     "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.0.0",
@@ -884,7 +922,7 @@ packages/svelte/themes/src/
 
 **Presence Service**:
 - Course-specific student presence
-- Real-time status updates via PartyKit
+- Real-time status updates via Supabase Realtime
 
 **Live Service**:
 - Platform-wide live activity monitoring
@@ -1139,7 +1177,6 @@ PUBLIC_ANON_MODE=TRUE
 # Or full mode with services
 PUBLIC_SUPABASE_URL=...
 PUBLIC_SUPABASE_ANON_KEY=...
-PUBLIC_party_kit_main_room=...
 PRIVATE_AUTH_GITHUB_ID=...
 PRIVATE_AUTH_GITHUB_SECRET=...
 PRIVATE_AUTH_SECRET=...
@@ -1161,80 +1198,101 @@ PRIVATE_AUTH_SECRET=...
 **Features**:
 - Live student count per course
 - Current page views
-- Real-time updates via PartyKit
+- Real-time updates via Supabase Realtime
+
+### 4. Time App (`apps/time`)
+
+**Purpose**: Student activity and time tracking dashboard
+
+**URL**: [time.tutors.dev](https://time.tutors.dev)
+
+**Features**:
+- Calendar heatmaps showing daily/weekly student activity
+- AG Grid-based lab and calendar data views with sortable columns
+- Median engagement metrics across students
+- Per-student activity drilldown with avatar, sentiment, and online status
+- Moodle assignment sync via server-side API integration
+
+**Key Dependencies**:
+- `@tutors/tutors-time-lib` (workspace) — analytics models, Supabase queries, calendar/lab data structures
+- `ag-grid-community` — data grids for lab steps, calendar entries, and median views
+- `jheat.js` — calendar heatmap visualisation
+- `@supabase/supabase-js` — direct Supabase access for time data
+
+**Route Structure**:
+- `/` — Course ID entry dialog
+- `/[courseid]` — Redirects to medians view
+- `/[courseid]/medians` — Median engagement across all students
+- `/[courseid]/calendar` — Calendar views (by day, by week, raw)
+- `/[courseid]/lab` — Lab views (by step, by lab, learning records)
+- `/[courseid]/[studentid]` — Individual student calendar view
+- `/[courseid]/assignments` — Moodle assignment data
+
+**Notes**:
+- Runs with `ssr = false` — all rendering is client-side (Supabase client is browser-only)
+- Uses AG Grid in legacy theme mode (`theme: "legacy"`) for compatibility with v35 Theming API
+- Dev server runs on port 5176
 
 ---
 
 ## Services
 
-### PartyKit Service (`services/party`)
+### Supabase Realtime (Broadcast Channels)
 
-**Purpose**: Real-time WebSocket server for live presence
+**Purpose**: Real-time presence and live activity tracking
+
+Real-time features use **Supabase Realtime Broadcast channels**, which are part of the existing Supabase project — no separate server or deployment is required.
 
 #### Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   PartyKit Server                        │
+│              Supabase Realtime Broadcast                  │
 │                                                           │
-│  ┌──────────────┐          ┌──────────────┐            │
-│  │   Server     │◄────────►│   Clients    │            │
-│  │  (WebSocket) │          │  (Browsers)  │            │
-│  └──────────────┘          └──────────────┘            │
-│         │                          │                     │
-│         └──────────┬───────────────┘                     │
-│                    │                                     │
-│         Room-based broadcasting                          │
-│         (one room per course)                            │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │              Supabase Project                     │   │
+│  │  ┌────────────────┐    ┌────────────────┐        │   │
+│  │  │ Global Channel │    │ Course Channel │  × N   │   │
+│  │  │ (all-course-   │    │ ({courseId})    │        │   │
+│  │  │  access)       │    │                │        │   │
+│  │  └───────┬────────┘    └───────┬────────┘        │   │
+│  │          └──────────┬──────────┘                  │   │
+│  │                     │                              │   │
+│  │          Channel-based broadcasting               │   │
+│  │          (one channel per course)                 │   │
+│  └──────────────────────────────────────────────────┘   │
+│                        ▲                                 │
+│                        │                                 │
+│               ┌────────┴────────┐                       │
+│               │    Clients      │                       │
+│               │   (Browsers)    │                       │
+│               └─────────────────┘                       │
 └─────────────────────────────────────────────────────────┘
-```
-
-#### Server Implementation
-
-**src/server.ts**:
-
-```typescript
-import type * as Party from "partykit/server";
-
-export default class TutorsServer implements Party.Server {
-  constructor(readonly room: Party.Room) {}
-
-  onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
-    // New client connected
-    console.log(`Client ${conn.id} joined room ${this.room.id}`);
-  }
-
-  onMessage(message: string, sender: Party.Connection) {
-    // Broadcast to all clients in the room
-    this.room.broadcast(message, [sender.id]);
-  }
-
-  onClose(conn: Party.Connection) {
-    console.log(`Client ${conn.id} left room ${this.room.id}`);
-  }
-}
 ```
 
 #### Client Usage
 
 ```typescript
-import PartySocket from "partysocket";
+import { supabase } from "../utils/supabase-client";
 
-const socket = new PartySocket({
-  host: PUBLIC_party_kit_main_room,
-  room: courseId
+// Subscribe to a channel (equivalent to joining a room)
+const channel = supabase
+  .channel(courseId, { config: { broadcast: { self: true } } })
+  .on("broadcast", { event: "lo-event" }, (payload) => {
+    const data = payload.payload;
+    // Handle presence update
+  })
+  .subscribe();
+
+// Send a broadcast message
+channel.send({
+  type: "broadcast",
+  event: "lo-event",
+  payload: { type: "presence", user: userId, page: currentPage }
 });
 
-socket.addEventListener("message", (event) => {
-  const data = JSON.parse(event.data);
-  // Handle presence update
-});
-
-socket.send(JSON.stringify({
-  type: "presence",
-  user: userId,
-  page: currentPage
-}));
+// Cleanup
+supabase.removeChannel(channel);
 ```
 
 ---
@@ -1253,8 +1311,9 @@ Author Creates Content
         │
         ▼
 ┌────────────────────────────────────────┐
-│  tutors-cli (JSR @tutors/reader)       │
+│  tutors CLI                             │
 │  $ deno run -A jsr:@tutors/reader      │
+│  $ deno run -A jsr:@tutors/tutors-lite │
 └──────────────┬─────────────────────────┘
                │
                ▼
@@ -1410,7 +1469,7 @@ Additional context...
          ▼
 5. analyticsService.reportPageLoad()
    - Send event to Supabase
-   - Broadcast presence to PartyKit
+   - Broadcast presence via Supabase Realtime
 ```
 
 ### Lab Viewing Sequence
@@ -1456,8 +1515,8 @@ analyticsService.reportPageLoad(lo)
       │   - Insert learning_event row
       │   - Update user_session
       │
-      └─► PartyKit (real-time broadcast)
-          - Send presence message to room
+      └─► Supabase Realtime (broadcast channel)
+          - Send presence message to channel
           - Other clients receive update
           - Live view shows current students
 ```
@@ -1469,7 +1528,7 @@ analyticsService.reportPageLoad(lo)
 ### Package Dependencies
 
 ```
-Applications (reader, catalogue, live)
+Applications (reader, catalogue, live, time)
         │
         ├─► @tutors/ui-components
         │   ├─► @tutors/ui-navigators
@@ -1554,6 +1613,7 @@ Applications (reader, catalogue, live)
 
 **Layer 6** (applications):
 - `reader`, `catalogue`, `live` → ui-primitives, ui-navigators, ui-components + other packages
+- `time` → @tutors/tutors-time-lib, ag-grid-community, jheat.js, @supabase/supabase-js (standalone dashboard, does not consume Svelte UI packages)
 
 ---
 
@@ -1598,7 +1658,7 @@ UI Updates
 - Course catalogue
 - Analytics data
 
-**PartyKit (WebSocket)**:
+**Supabase Realtime (Broadcast)**:
 - Real-time presence
 - Live student count
 - Current page views
@@ -1641,7 +1701,6 @@ PUBLIC_ANON_MODE=TRUE
 # apps/reader/.env
 PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=xxx
-PUBLIC_party_kit_main_room=https://tutors.partykit.dev
 PRIVATE_AUTH_GITHUB_ID=xxx
 PRIVATE_AUTH_GITHUB_SECRET=xxx
 PRIVATE_AUTH_SECRET=xxx
@@ -1662,6 +1721,7 @@ pnpm build     # Build reader app
 pnpm --filter reader dev
 pnpm --filter catalogue dev
 pnpm --filter live dev
+pnpm --filter tutors-time dev
 ```
 
 **Per Package**:
@@ -1766,27 +1826,10 @@ Set in Netlify/Vercel dashboard:
 ```
 PUBLIC_SUPABASE_URL
 PUBLIC_SUPABASE_ANON_KEY
-PUBLIC_party_kit_main_room
 PRIVATE_AUTH_GITHUB_ID
 PRIVATE_AUTH_GITHUB_SECRET
 PRIVATE_AUTH_SECRET
 PUBLIC_PDF_KEY
-```
-
-### PartyKit Service Deployment
-
-```bash
-cd services/party
-npx partykit deploy
-```
-
-Configuration (`partykit.json`):
-
-```json
-{
-  "name": "tutors",
-  "main": "src/server.ts"
-}
 ```
 
 ### Course Deployment
@@ -1878,16 +1921,16 @@ pnpm format
 - **Rune**: Svelte 5 reactive primitive ($state, $derived, $effect)
 - **SSR**: Server-Side Rendering
 - **CSR**: Client-Side Rendering
-- **PartyKit**: Real-time WebSocket platform
+- **Supabase Realtime**: Real-time broadcast channel platform (part of Supabase)
 - **Tutors Connect**: Authentication system
-- **Tutors Time**: Analytics and time tracking
+- **Tutors Time**: Analytics and time tracking (app at `apps/time`, library at `packages/jsr/time`)
 
 ### Useful Links
 
 - **Live Platform**: [https://tutors.dev](https://tutors.dev)
 - **Reference Manual**: [https://tutors-reference-manual.netlify.app](https://tutors-reference-manual.netlify.app)
 - **JSR Registry**: [https://jsr.io/@tutors](https://jsr.io/@tutors)
-- **PartyKit**: [https://partykit.io](https://partykit.io)
+- **Supabase Realtime**: [https://supabase.com/docs/guides/realtime](https://supabase.com/docs/guides/realtime)
 
 ### Version History
 

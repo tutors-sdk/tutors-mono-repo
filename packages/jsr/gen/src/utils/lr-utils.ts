@@ -5,7 +5,6 @@ import * as fs from "node:fs";
 import * as yaml from "js-yaml";
 import { imageTypes, PodcastEpisodeIdentifier, type VideoIdentifier, type VideoIdentifiers } from "@tutors/tutors-model-lib";
 import { getFileType, getHeaderFromBody, readFirstLineFromFile, readWholeFile, withoutHeaderFromBody } from "./file-utils.ts";
-import process from "node:process";
 import type { LearningResource } from "../types/types.ts";
 
 export function getFileWithName(lr: LearningResource, file: string) {
@@ -190,10 +189,11 @@ export function getMarkdown(
 }
 
 function parseProperty(nv: string): VideoIdentifier {
-  const nameValue = nv.split("=");
-  nameValue[0] = nameValue[0].replace("\r", "");
-  nameValue[1] = nameValue[1].replace("\r", "");
-  return { service: nameValue[0], id: nameValue[1] };
+  const idx = nv.indexOf("=");
+  return {
+    service: nv.slice(0, idx).replace("\r", ""),
+    id: nv.slice(idx + 1).replace("\r", ""),
+  };
 }
 
 export function readVideoIds(lr: LearningResource): VideoIdentifiers {
@@ -208,7 +208,7 @@ export function readVideoIds(lr: LearningResource): VideoIdentifiers {
 
     entries.forEach((entry) => {
       if (entry !== "") {
-        if (entry.includes("heanet") || entry.includes("vimp")) {
+        if (entry.includes("heanet") || entry.includes("vimp") || entry.includes("panopto")) {
           videos.videoIds.push(parseProperty(entry));
         } else {
           videos.videoid = entry;
@@ -240,7 +240,7 @@ export function readYaml(lr: LearningResource): any {
       );
       console.log(err.message);
       console.log("Review this file and try again....");
-      process.exit(1);
+      throw err;
     }
   }
   return yamlData;

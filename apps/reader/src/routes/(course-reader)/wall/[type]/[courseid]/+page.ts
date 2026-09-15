@@ -1,6 +1,7 @@
 import type { PageLoad } from "./$types";
 import { courseService } from "@tutors/course/course";
 import { currentLo } from "@tutors/runes";
+import type { Lo } from "@tutors/tutors-model-lib";
 export const ssr = false;
 
 export const load: PageLoad = async ({ params, fetch }) => {
@@ -15,7 +16,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
     parentLo: course,
     parentCourse: course,
     route: "wall"
-  };
+  } as unknown as Lo;
   return {
     type: params.type,
     lo: course,

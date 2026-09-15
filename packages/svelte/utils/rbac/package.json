@@ -1,0 +1,20 @@
+{
+  "name": "@tutors/rbac",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Role-based access control for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tutors/community": "workspace:*",
+    "@tutors/runes": "workspace:*",
+    "@tutors/logger": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

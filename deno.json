@@ -2,12 +2,14 @@
   "nodeModulesDir": "auto",
   "workspace": [
     "./packages/jsr/tutors",
+    "./packages/jsr/tutors-lite",
     "./packages/jsr/model",
     "./packages/jsr/gen",
-    "./packages/jsr/time"
+    "./packages/jsr/time",
+    "./packages/jsr/create"
   ],
   "fmt": {
-    "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/"],
+    "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/", "./packages/jsr/tutors-lite/"],
     "useTabs": false,
     "lineWidth": 180,
     "indentWidth": 2,

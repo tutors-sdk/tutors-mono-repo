@@ -27,6 +27,7 @@ export const HeroIconLib: IconLib = {
   paneltalk: { type: "heroicons-outline:presentation-chart-bar", color: "primary" },
   note: { type: "heroicons:document-text", color: "warning" },
   notebook: { type: "simple-icons:jupyter", color: "success" },
+  whiteboard: { type: "heroicons-outline:pencil-square", color: "primary" },
   panelnote: { type: "heroicons:document-text", color: "warning" },
 
   // pdf reader icons
@@ -77,6 +78,10 @@ export const HeroIconLib: IconLib = {
   overwhelmed: { type: "twemoji:exploding-head", color: "warning" },
   confused: { type: "twemoji:face-with-spiral-eyes", color: "secondary" },
   drained: { type: "twemoji:melting-face", color: "error" },
+
+  lock: { type: "heroicons-outline:lock-closed", color: "error" },
+  unlock: { type: "heroicons-outline:lock-open", color: "success" },
+  educator: { type: "fluent:person-key-20-filled", color: "error" },
 
   default: { type: "heroicons-outline:dots-vertical", color: "primary" }
 };

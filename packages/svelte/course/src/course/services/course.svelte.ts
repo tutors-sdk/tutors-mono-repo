@@ -7,7 +7,7 @@ import type { Lo, Course, Lab, Note, Notebook } from "@tutors/tutors-model-lib";
 import { LiveLab } from "./live-lab.ts";
 import { LiveNotebook } from "./live-notebook.ts";
 import { markdownService } from "../../markdown/index.ts";
-import { courseProtocol, currentCourse, currentLo, rune } from "@tutors/runes";
+import { courseProtocol, currentCourse, currentLo, rune, isEducator } from "@tutors/runes";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
 import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
 import log from "@tutors/logger";

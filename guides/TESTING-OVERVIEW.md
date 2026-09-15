@@ -12,9 +12,9 @@ A quick-reference companion to the full [Testing Guide](./TESTING.md). This docu
 | 4 | Integration (mocked) | Scaffolded | Every push |
 | 5 | E2E (Playwright) | Configured | PR / nightly |
 | 6 | Contract (API surface) | Scaffolded | PR / RC |
-| 7 | Fuzz (fast-check) | Excluded* | PR / RC |
+| 7 | Fuzz (fast-check) | Active (`pnpm test:fuzz`) | PR / RC |
 
-\* Fuzz tests are excluded from the default test run pending a fast-check v4 compatibility fix. Test files are retained locally.
+Fuzz runs via a dedicated Vitest config with the threads pool ([#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)); it is not part of default `pnpm test`.
 
 Additionally, **Gate 6: Release Artifact Testing** compares CLI output against production using the [tutors-reference-course](https://github.com/tutors-sdk/tutors-reference-course). This runs on RC branches and can be triggered manually.
 
@@ -27,7 +27,7 @@ Additionally, **Gate 6: Release Artifact Testing** compares CLI output against p
 | `pnpm test` | Unit + BDD (Tiers 1-2) via Turborepo | During development |
 | `pnpm test:bdd` | Root-level BDD step definitions | After changing feature behaviour |
 | `pnpm test:contract` | API surface snapshot tests | After modifying package exports |
-| `pnpm test:fuzz` | Property-based fuzz tests (currently excluded — see note above) | After changing data models/transforms |
+| `pnpm test:fuzz` | Property-based fuzz tests (threads pool) | After changing data models/transforms |
 | `pnpm test:e2e` | Playwright E2E tests | Before submitting a PR |
 | `pnpm test:components` | Svelte component tests | After UI changes |
 | `pnpm test:cli` | Deno CLI tests | After changing CLI code |
@@ -85,8 +85,7 @@ Coverage is enforced per-package via Vitest config. CI hard-fails if any package
 
 | Trigger | Workflow | Tests Run |
 |---|---|---|
-| Every push/PR | `ci.yml` | Lint, typecheck, unit + BDD, E2E (Chromium), CLI |
-| PRs only | `ci.yml` | Contract + fuzz (in addition to above) |
+| Every push/PR | `ci.yml` | Lint, typecheck, unit + BDD, fuzz, E2E (Chromium), CLI |
 | Daily 3 AM UTC | `nightly.yml` | Full E2E (all browsers), contract validation |
 | Push to `rc/**` | `rc-validation.yml` | All gates (9 jobs) — full test matrix |
 | Push to `rc/**` | `release-testing.yml` | Artifact regression, performance, smoke tests |
@@ -98,7 +97,7 @@ Coverage is enforced per-package via Vitest config. CI hard-fails if any package
 | 1 | Lint & Type Check | Zero ESLint errors, zero TypeScript errors |
 | 2a | Unit & BDD | All tests pass, coverage above thresholds |
 | 2b | Contract | API snapshots match (or intentionally updated) |
-| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (currently excluded — pending fast-check v4 fix) |
+| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (`FUZZ_RUNS=1000 pnpm test:fuzz`) |
 | 2d | CLI | All Deno tests pass |
 | 3a | Build Verification | All apps produce `.svelte-kit/` output |
 | 3b | Dependency Audit | Zero critical CVEs |
@@ -114,7 +113,7 @@ Every condition below is a **hard-fail** — the RC cannot merge to main until r
 | Any test tier fails | 2 |
 | Coverage below thresholds | 2 |
 | Contract snapshot mismatch (unintentional) | 2b |
-| Fuzz failure at 1000 runs (currently excluded) | 2c |
+| Fuzz failure at 1000 runs | 2c |
 | Production build fails | 3a |
 | Critical CVE in dependencies | 3b |
 | Cross-browser E2E failure | 4 |
@@ -146,7 +145,7 @@ Every condition below is a **hard-fail** — the RC cannot merge to main until r
 | `vitest.workspace.ts` | Workspace definition (all packages + apps) |
 | `tests/bdd/support/world.ts` | `TestWorld` — shared BDD test context |
 | `tests/bdd/support/fixtures.ts` | `TestDataFactory` — factory methods for mock data |
-| `tests/bdd/support/mocks.ts` | `MockSupabaseClient`, `MockPartySocket`, `createMockFetch` |
+| `tests/bdd/support/mocks.ts` | `MockSupabaseClient`, `MockRealtimeChannel`, `createMockFetch` |
 | `tests/release/comparators/json-comparator.ts` | Semantic JSON diff for artifact regression |
 
 ## Deep Dive

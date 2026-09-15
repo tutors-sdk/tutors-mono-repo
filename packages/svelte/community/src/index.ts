@@ -20,3 +20,6 @@ export {
   isReceivedAtInLocalMonth,
   isReceivedAtInLocalYear
 } from "./utils/supabase-client.ts";
+
+export { createSupabaseErrorTransport } from "./utils/error-transport.ts";
+export { checkSupabase, getRecentErrorCounts } from "./utils/health-check.ts";

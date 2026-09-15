@@ -39,6 +39,7 @@ const it: Record<string, string> = {
   "menu.dashboard": "Dashboard",
   "menu.githubProfile": "Profilo Github",
   "menu.disconnect": "Disconnetti",
+  "menu.profile": "Menu del profilo",
 
   // Home page
   "home.title": "Tutors:",
@@ -52,6 +53,7 @@ const it: Record<string, string> = {
   "home.source": "Sorgente",
   "home.catalogue": "Catalogo",
   "home.live": "Live",
+  "home.create": "Crea",
   "home.connectedAs": "Connesso come:",
   "home.favourites": "Preferiti",
   "home.recentlyAccessed": "Accesso recente",
@@ -121,7 +123,7 @@ const it: Record<string, string> = {
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "Un [Toolkit di apprendimento web aperto](/course/tutors-reference-manual): Esplora il [Catalogo Tutors](https://catalogue.tutors.dev)",
+  "footer.message": "Un [Toolkit di apprendimento web aperto](/course/tutors-reference-manual): Esplora le [Novità di Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "sponsor",
   "footer.setuAlt": "South East Technological University",
 
@@ -133,12 +135,58 @@ const it: Record<string, string> = {
   "notFound.title": "Non trovato",
 
   // Accessibility
+  // Lecturer panel
+  "lecturer.panel.title": "Pannello docente",
+  "lecturer.panel.tip": "Apri pannello docente",
+  "lecturer.locks.title": "Blocchi di contenuto",
+  "lecturer.locks.lock": "Blocca",
+  "lecturer.locks.unlock": "Sblocca",
+  "lecturer.locks.locked": "Bloccato",
+  "lecturer.locks.unlocked": "Sbloccato",
+  "lecturer.locks.empty": "Nessun contenuto bloccabile trovato",
+  "lecturer.enrollment.title": "Iscrizione",
+  "lecturer.enrollment.whitelist": "Lista bianca",
+  "lecturer.enrollment.students": "Studenti",
+  "lecturer.enrollment.empty": "Nessun utente iscritto",
+  "lecturer.enrollment.placeholder": "Nome utente GitHub",
+  "lecturer.enrollment.add": "Aggiungi",
+  "lecturer.access.title": "Accesso",
+  "lecturer.access.authLevel": "Livello di auth",
+  "lecturer.access.owner": "Proprietario",
+  "lecturer.access.lecturers": "Docenti",
+  "lecturer.control.title": "Controllo del corso",
+  "lecturer.control.placeholder": "Le funzioni di controllo del corso verranno aggiunte qui",
+  "lecturer.locked.overlay": "Questo contenuto e bloccato",
+
   "a11y.skipToContent": "Vai al contenuto",
   "a11y.mainNavigation": "Navigazione principale",
   "a11y.breadcrumbs": "Breadcrumb",
   "a11y.secondaryNavigation": "Navigazione secondaria",
   "a11y.sidebar": "Barra laterale",
-  "a11y.footer": "Pie di pagina"
+  "a11y.footer": "Pie di pagina",
+
+  // Guided tour
+  "tour.ariaLabel": "Tour guidato",
+  "tour.skip": "Salta",
+  "tour.prev": "Indietro",
+  "tour.next": "Avanti",
+  "tour.finish": "Fine",
+  "tour.menuLabel": "Tour guidato",
+  "tour.startButton": "Inizia il tour",
+  "tour.courseTitle.title": "Titolo del corso",
+  "tour.courseTitle.description": "Qui viene mostrato il nome e l'immagine del corso che stai visualizzando.",
+  "tour.search.title": "Cerca",
+  "tour.search.description": "Trova rapidamente i contenuti in questo corso. Puoi anche premere Ctrl+K (o Cmd+K su Mac) in qualsiasi momento.",
+  "tour.layout.title": "Tema e layout",
+  "tour.layout.description": "Personalizza l'aspetto: passa dalla modalita chiara a quella scura, cambia lo stile delle schede, il tema e la lingua.",
+  "tour.profile.title": "Il tuo profilo",
+  "tour.profile.description": "Accedi con GitHub per monitorare i tuoi progressi e attivare le funzionalita di presenza in tempo reale.",
+  "tour.toc.title": "Albero del corso",
+  "tour.toc.description": "Apri l'albero completo del corso per vedere tutti gli argomenti e navigare direttamente a qualsiasi sezione.",
+  "tour.calendar.title": "Calendario",
+  "tour.calendar.description": "Visualizza il programma del corso e scopri cosa e previsto per questa settimana.",
+  "tour.info.title": "Informazioni sul corso",
+  "tour.info.description": "Leggi informazioni dettagliate su questo corso, inclusa la descrizione e gli obiettivi."
 };
 
 export default it;

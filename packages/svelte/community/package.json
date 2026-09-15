@@ -1,21 +1,26 @@
 {
   "name": "@tutors/community",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "Community features: analytics, presence, live tracking, and catalogue for Tutors",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
     "./services/*": "./src/services/*",
-    "./utils/supabase-client": "./src/utils/supabase-client.ts"
+    "./utils/supabase-client": "./src/utils/supabase-client.ts",
+    "./utils/error-transport": "./src/utils/error-transport.ts",
+    "./utils/health-check": "./src/utils/health-check.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.111.0",
+    "@supabase/supabase-js": "^2.116.0",
     "@tutors/course": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*",
-    "partysocket": "^1.1.19"
+    "@tutors/tutors-model-lib": "workspace:*"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

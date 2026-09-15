@@ -1,5 +1,110 @@
 {{ export function talkCard(lo) }}
-  <div class="bg-base-100 rounded-xl shadow-lg p-4 my-4">
-    <iframe src="./{{ lo.pdfFile }}" width="100%" height="800px"></iframe>
-  </div>
+  {{ if lo.marpHtml }}
+    <style>
+      .marp-container {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .marp-slide-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      }
+      .marp-slide-wrapper svg[data-marpit-svg] {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .marp-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 0.75rem;
+      }
+      .marp-nav button {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        border: 1px solid #d1d5db;
+        background: white;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+      .marp-nav button:hover {
+        background: #f3f4f6;
+      }
+      .marp-nav button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .marp-slide-counter {
+        font-size: 0.875rem;
+        color: #6b7280;
+        min-width: 5rem;
+        text-align: center;
+      }
+    </style>
+    <div class="bg-base-100 rounded-xl shadow-lg p-4 my-4">
+      <div class="marp-container" id="marp-presentation">
+        <div class="marp-slide-wrapper marp-slides" id="marp-viewport"></div>
+        <div class="marp-nav">
+          <button id="marp-prev" onclick="marpNav(-1)" disabled>&larr; Previous</button>
+          <span class="marp-slide-counter" id="marp-counter">1 / 1</span>
+          <button id="marp-next" onclick="marpNav(1)">Next &rarr;</button>
+        </div>
+      </div>
+    </div>
+    <script id="marp-source" type="text/html">{{ lo.marpHtml }}</script>
+    <script id="marp-css-source" type="text/css">{{ lo.marpCss }}</script>
+    <script>
+      (function() {
+        var sourceEl = document.getElementById('marp-source');
+        var cssEl = document.getElementById('marp-css-source');
+        var container = document.createElement('div');
+        container.innerHTML = sourceEl.textContent;
+        var wrapper = container.querySelector('.marp-slides') || container;
+        var nodes = wrapper.querySelectorAll('svg[data-marpit-svg]');
+        if (nodes.length === 0) nodes = wrapper.querySelectorAll(':scope > section');
+        var slides = Array.from(nodes).map(function(s) { return s.outerHTML; });
+        var css = cssEl.textContent;
+        sourceEl.remove();
+        cssEl.remove();
+        if (slides.length === 0) return;
+        var styleTag = document.createElement('style');
+        styleTag.textContent = css;
+        document.head.appendChild(styleTag);
+        var idx = 0;
+        var viewport = document.getElementById('marp-viewport');
+        viewport.innerHTML = slides[0];
+        update();
+        function update() {
+          document.getElementById('marp-counter').textContent = (idx + 1) + ' / ' + slides.length;
+          document.getElementById('marp-prev').disabled = idx === 0;
+          document.getElementById('marp-next').disabled = idx === slides.length - 1;
+        }
+        window.marpNav = function(dir) {
+          var next = idx + dir;
+          if (next >= 0 && next < slides.length) {
+            idx = next;
+            viewport.innerHTML = slides[idx];
+            update();
+          }
+        };
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); marpNav(1); }
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); marpNav(-1); }
+        });
+      })();
+    </script>
+  {{ else }}
+    <div class="bg-base-100 rounded-xl shadow-lg p-4 my-4">
+      <iframe src="./{{ lo.pdfFile }}" width="100%" height="800px"></iframe>
+    </div>
+  {{ /if }}
 {{ /export }}

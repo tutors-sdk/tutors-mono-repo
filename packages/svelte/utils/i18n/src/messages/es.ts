@@ -39,6 +39,7 @@ const es: Record<string, string> = {
   "menu.dashboard": "Panel de control",
   "menu.githubProfile": "Perfil de Github",
   "menu.disconnect": "Desconectar",
+  "menu.profile": "Menú de perfil",
 
   // Home page
   "home.title": "Tutors:",
@@ -52,6 +53,7 @@ const es: Record<string, string> = {
   "home.source": "Codigo fuente",
   "home.catalogue": "Catalogo",
   "home.live": "En vivo",
+  "home.create": "Crear",
   "home.connectedAs": "Conectado como:",
   "home.favourites": "Favoritos",
   "home.recentlyAccessed": "Accedidos recientemente",
@@ -121,7 +123,7 @@ const es: Record<string, string> = {
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "Un [Kit de herramientas de aprendizaje web abierto](/course/tutors-reference-manual): Explore el [Catalogo de Tutors](https://catalogue.tutors.dev)",
+  "footer.message": "Un [Kit de herramientas de aprendizaje web abierto](/course/tutors-reference-manual): Explore las [Novedades de Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "patrocinadores",
   "footer.setuAlt": "South East Technological University",
 
@@ -133,12 +135,58 @@ const es: Record<string, string> = {
   "notFound.title": "No encontrado",
 
   // Accessibility
+  // Lecturer panel
+  "lecturer.panel.title": "Panel del profesor",
+  "lecturer.panel.tip": "Abrir panel del profesor",
+  "lecturer.locks.title": "Bloqueos de contenido",
+  "lecturer.locks.lock": "Bloquear",
+  "lecturer.locks.unlock": "Desbloquear",
+  "lecturer.locks.locked": "Bloqueado",
+  "lecturer.locks.unlocked": "Desbloqueado",
+  "lecturer.locks.empty": "No se encontro contenido bloqueable",
+  "lecturer.enrollment.title": "Inscripcion",
+  "lecturer.enrollment.whitelist": "Lista blanca",
+  "lecturer.enrollment.students": "Estudiantes",
+  "lecturer.enrollment.empty": "Sin usuarios inscritos",
+  "lecturer.enrollment.placeholder": "Nombre de usuario de GitHub",
+  "lecturer.enrollment.add": "Agregar",
+  "lecturer.access.title": "Acceso",
+  "lecturer.access.authLevel": "Nivel de auth",
+  "lecturer.access.owner": "Propietario",
+  "lecturer.access.lecturers": "Profesores",
+  "lecturer.control.title": "Control del curso",
+  "lecturer.control.placeholder": "Las funciones de control del curso se agregaran aqui",
+  "lecturer.locked.overlay": "Este contenido esta bloqueado",
+
   "a11y.skipToContent": "Ir al contenido",
   "a11y.mainNavigation": "Navegacion principal",
   "a11y.breadcrumbs": "Migas de pan",
   "a11y.secondaryNavigation": "Navegacion secundaria",
   "a11y.sidebar": "Barra lateral",
-  "a11y.footer": "Pie de pagina"
+  "a11y.footer": "Pie de pagina",
+
+  // Guided tour
+  "tour.ariaLabel": "Tour guiado",
+  "tour.skip": "Saltar",
+  "tour.prev": "Atras",
+  "tour.next": "Siguiente",
+  "tour.finish": "Listo",
+  "tour.menuLabel": "Tour guiado",
+  "tour.startButton": "Iniciar tour",
+  "tour.courseTitle.title": "Titulo del curso",
+  "tour.courseTitle.description": "Aqui se muestra el nombre y la imagen del curso que estas viendo actualmente.",
+  "tour.search.title": "Buscar",
+  "tour.search.description": "Encuentra rapidamente contenido en este curso. Tambien puedes presionar Ctrl+K (o Cmd+K en Mac) en cualquier momento.",
+  "tour.layout.title": "Tema y diseno",
+  "tour.layout.description": "Personaliza la apariencia: alterna entre modo claro y oscuro, cambia el estilo de las tarjetas, el tema y el idioma.",
+  "tour.profile.title": "Tu perfil",
+  "tour.profile.description": "Inicia sesion con GitHub para seguir tu progreso y activar las funciones de presencia en vivo.",
+  "tour.toc.title": "Arbol del curso",
+  "tour.toc.description": "Abre el arbol completo del curso para ver todos los temas y navegar directamente a cualquier seccion.",
+  "tour.calendar.title": "Calendario",
+  "tour.calendar.description": "Consulta el horario del curso y mira lo que viene esta semana.",
+  "tour.info.title": "Informacion del curso",
+  "tour.info.description": "Lee informacion detallada sobre este curso, incluyendo su descripcion y objetivos."
 };
 
 export default es;

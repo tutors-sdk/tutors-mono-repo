@@ -164,3 +164,20 @@ describe("lo-generation: Notebook shape", () => {
     expect(notebook.kernelName).toBe("python3");
   });
 });
+
+describe("lo-generation: Whiteboard shape", () => {
+  const whiteboard = makeBaseLo({
+    type: "whiteboard",
+    excalidraw: "https://example.com/scene.excalidraw",
+    excalidrawFile: "scene.excalidraw",
+  });
+
+  it("has type 'whiteboard'", () => {
+    expect(whiteboard.type).toBe("whiteboard");
+  });
+
+  it("has excalidraw and excalidrawFile fields", () => {
+    expect(typeof whiteboard.excalidraw).toBe("string");
+    expect(typeof whiteboard.excalidrawFile).toBe("string");
+  });
+});

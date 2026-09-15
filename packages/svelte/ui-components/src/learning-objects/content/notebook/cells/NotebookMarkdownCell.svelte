@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { NotebookCell } from "@tutors/tutors-model-lib";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
   interface Props {
     cell: NotebookCell;
@@ -9,6 +10,6 @@
 
 <div class="p-4">
   <article class="prose dark:prose-invert max-w-none">
-    {@html cell.sourceHtml ?? ""}
+    {@html sanitizeHtml(cell.sourceHtml ?? "")}
   </article>
 </div>

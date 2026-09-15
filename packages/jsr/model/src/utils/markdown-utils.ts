@@ -1,12 +1,21 @@
+// @ts-types="npm:@types/markdown-it@^14.1.2"
 import MarkdownIt from "markdown-it";
-import latex from "@iktakahiro/markdown-it-katex";
+import { katex as latex } from "@mdit/plugin-katex";
+// @ts-ignore no types available
 import anchor from "markdown-it-anchor";
+// @ts-ignore no types available
 import toc from "markdown-it-table-of-contents";
+// @ts-ignore no types available
 import { full as emoji } from "markdown-it-emoji";
+// @ts-ignore no types available
 import sub from "markdown-it-sub";
+// @ts-ignore no types available
 import sup from "markdown-it-sup";
+// @ts-ignore no types available
 import mark from "markdown-it-mark";
+// @ts-ignore no types available
 import footnote from "markdown-it-footnote";
+// @ts-ignore no types available
 import deflist from "markdown-it-deflist";
 import { addCopyButton } from "shiki-transformer-copy-button";
 import type { Course, Lab, Lo, Note } from "../types/index.ts";
@@ -100,6 +109,7 @@ export function convertLoToHtml(course: Course, lo: Lo, protocol: string = "http
     convertNoteToHtml(course, lo as Note);
   } else {
     if (lo.summary) lo.summary = convertMdToHtml(lo.summary);
+    if (lo.type === "talk" && lo.frontMatter?.marp) return;
     let md = lo.contentMd;
     if (md) {
       if (course.courseUrl) {

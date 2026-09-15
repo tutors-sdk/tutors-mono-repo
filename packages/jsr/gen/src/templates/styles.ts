@@ -23,7 +23,8 @@ export const icons = {
   'teams': 'logos:microsoft-teams',
   'toc': "fluent:line-horizontal-3-20-filled",
   'info': "fluent:info-28-regular",
-  'podcast': "fluent:mic-20-filled"
+  'podcast': "fluent:mic-20-filled",
+  'notebook': 'fluent:notebook-24-regular'
 } as const;
 
 export const colours = {
@@ -43,6 +44,7 @@ export const colours = {
   'tutorial': '#ba5150',
   'panelnote': '#d27711',
   'podcast': '#ba5150',
+  'notebook': '#557927',
 } as const;
 
 export const backgroundColours = {
@@ -63,6 +65,7 @@ export const backgroundColours = {
   'tutorial': '#ba5150',
   'podcast': '#ba5150',
   'panelnote': '#d27711',
+  'notebook': '#557927',
 } as const;
 
 export type IconType = keyof typeof icons;
@@ -101,12 +104,13 @@ export const loColours = {
   "toc": { border: "#37919b", background: "#37919b" },
   "info": { border: "#37919b", background: "#37919b" },
   "podcast": { border: "#008c8f", background: "#d6e9e9" },
+  "notebook": { border: "#557927", background: "#d9eee0" },
 }
 
 export function loBorderColour(type: IconType): string {
-  return loColours[type].border;
+  return loColours[type]?.border ?? "#37919b";
 }
 
 export function loBackgroundColour(type: IconType): string {
-  return loColours[type].background;
+  return loColours[type]?.background ?? "#37919b";
 }

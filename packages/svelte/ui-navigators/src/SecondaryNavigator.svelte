@@ -10,8 +10,7 @@
   const isClassic = $derived(themeService.currentTheme.value === "classic");
 </script>
 
-<div
-  role="navigation"
+<nav
   aria-label={t("a11y.secondaryNavigation")}
   class="sticky top-0 z-20 mb-2 flex h-12 border-b-[1px]"
   style="background-color: light-dark(var(--color-primary-50), {isClassic ? 'var(--color-tertiary-900)' : 'var(--color-primary-900)'}); border-color: light-dark(var(--color-primary-100), var(--color-primary-800));"
@@ -31,4 +30,4 @@
       <IconBar nav={currentCourse?.value?.wallBar} />
     </div>
   {/if}
-</div>
+</nav>

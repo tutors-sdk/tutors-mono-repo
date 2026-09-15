@@ -5,7 +5,7 @@ import { copyFolder } from "../utils/file-utils.ts";
 let destVentoDir = "";
 //const srcVentoDir = "https://raw.githubusercontent.com/tutors-sdk/tutors-cli/refs/heads/master/tutors-gen-lib/src/templates/vento/";
 
-const srcVentoDir = "https://raw.githubusercontent.com/tutors-sdk/tutors-apps/refs/heads/development/cli/tutors-gen-lib/src/templates/vento/";
+const srcVentoDir = "https://raw.githubusercontent.com/tutors-sdk/tutors-mono-repo/refs/heads/main/packages/jsr/gen/src/templates/vento/";
 
 const filesToDownload = [
   'components/cards/Card.vto',

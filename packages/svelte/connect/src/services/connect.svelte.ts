@@ -13,7 +13,8 @@ import type { Course } from "@tutors/tutors-model-lib";
 import { analyticsService, presenceService } from "@tutors/community";
 import { PUBLIC_ANON_MODE } from "$env/static/public";
 
-import { currentCourse, currentLo, tutorsId } from "@tutors/runes";
+import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
+import { rbacService } from "@tutors/rbac";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
@@ -69,7 +70,7 @@ export const tutorsConnectService: TutorsConnectService = {
       tutorsId.value = user;
       tutorsId.value.sentiment! = (await getTutorsConnectUserSentiment(user.login)) ?? "neutral";
       tutorsId.value.share = (await getTutorsConnectUserOnlineStatus(user.login)) ?? "online";
-      addOrUpdateStudent(user).catch(() => {});
+      addOrUpdateStudent(user).catch((err) => log.error("Failed to update student record:", err));
       if (browser) {
         if (!localStorage.share) {
           localStorage.share = true;
@@ -132,6 +133,13 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param course - Course being visited
    */
   courseVisit(course: Course) {
+    // Locks gate what students can see, so they must load even in anonymous mode -
+    // otherwise `locksLoaded` never becomes true and the course renders empty.
+    if (course.hasEnrollment) {
+      void rbacService.loadContentLocks(course.courseId);
+    } else {
+      rbacService.clear();
+    }
     if (anonMode) return;
     if (analyticsEnabled) {
       updateCourseList(course);
@@ -141,6 +149,10 @@ export const tutorsConnectService: TutorsConnectService = {
     if (course.authLevel! > 0 && !tutorsId.value?.login) {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
+    }
+    if (course.hasEnrollment && tutorsId.value?.login) {
+      rbacService.loadRole(tutorsId.value.login, course.courseId, course);
+      rbacService.checkLecturerStatus(course);
     }
   },
 
@@ -214,12 +226,16 @@ export const tutorsConnectService: TutorsConnectService = {
   },
 
   checkWhiteList(): void {
-    const enrollment = currentCourse.value?.enrollment;
+    const course = currentCourse.value;
+    if (!course?.authLevel || course.authLevel < 1) return;
+    const enrollment = course.enrollment;
     if (enrollment?.whitelist && enrollment.whitelist.length > 0) {
       if (!tutorsId.value?.login) {
         goto(`/`);
       } else {
-        if (!enrollment.whitelist.includes(tutorsId.value.login)) {
+        const login = tutorsId.value.login;
+        const isEducator = enrollment.educators?.includes(login) ?? false;
+        if (!isEducator && !enrollment.whitelist.includes(login)) {
           goto(`/`);
         }
       }

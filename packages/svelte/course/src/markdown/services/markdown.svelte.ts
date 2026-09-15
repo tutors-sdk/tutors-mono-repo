@@ -107,7 +107,7 @@ if (browser && localStorage.codeTheme) {
 initHighlighter(shiki);
 
 const defaultFence = markdownIt.renderer.rules.fence!;
-markdownIt.renderer.rules.fence = (tokens, idx, options, env, self) => {
+markdownIt.renderer.rules.fence = (tokens: any, idx: any, options: any, env: any, self: any) => {
   const token = tokens[idx];
   if (token.info.trim() === "mermaid") {
     const escaped = token.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

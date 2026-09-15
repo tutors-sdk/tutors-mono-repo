@@ -3,7 +3,6 @@ import * as path from "node:path";
 import * as yaml from "npm:js-yaml@^4";
 import archiver from "npm:archiver@^7";
 
-import { exit } from "node:process";
 
 export function removeFirstLine(str: string): string {
   return str.split("\n").slice(1).join("\n");
@@ -177,7 +176,7 @@ export function readYamlFile(yamlFilePath: string): any {
     );
     console.log(err.message);
     console.log("Review this file and try again....");
-    exit(1);
+    throw err;
   }
   return yamlData;
 }

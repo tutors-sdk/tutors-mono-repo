@@ -14,10 +14,16 @@ import {
   ConnectCourseSchema,
   ConnectLatestSchema,
   LoRecordSchema,
-  PartyKitRoomSchema,
+  RealtimeChannelSchema,
   CourseJsonSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
+  WhiteboardSceneInitSchema,
+  WhiteboardSceneUpdateSchema,
+  WhiteboardSceneSnapshotSchema,
+  WhiteboardCursorUpdateSchema,
+  WhiteboardRoomSchema,
+  WhiteboardInitEditorSchema,
 } from "../contract/support/schemas";
 
 describe("Schema Snapshot Regression", () => {
@@ -29,10 +35,16 @@ describe("Schema Snapshot Regression", () => {
     { name: "ConnectCourse", schema: ConnectCourseSchema },
     { name: "ConnectLatest", schema: ConnectLatestSchema },
     { name: "LoRecord", schema: LoRecordSchema },
-    { name: "PartyKitRoom", schema: PartyKitRoomSchema },
+    { name: "RealtimeChannel", schema: RealtimeChannelSchema },
     { name: "CourseJson", schema: CourseJsonSchema },
     { name: "IncrementCalendarParams", schema: IncrementCalendarParamsSchema },
     { name: "GetCountLearningRecordsParams", schema: GetCountLearningRecordsParamsSchema },
+    { name: "WhiteboardSceneInit", schema: WhiteboardSceneInitSchema },
+    { name: "WhiteboardSceneUpdate", schema: WhiteboardSceneUpdateSchema },
+    { name: "WhiteboardSceneSnapshot", schema: WhiteboardSceneSnapshotSchema },
+    { name: "WhiteboardCursorUpdate", schema: WhiteboardCursorUpdateSchema },
+    { name: "WhiteboardRoom", schema: WhiteboardRoomSchema },
+    { name: "WhiteboardInitEditor", schema: WhiteboardInitEditorSchema },
   ];
 
   for (const { name, schema } of schemas) {

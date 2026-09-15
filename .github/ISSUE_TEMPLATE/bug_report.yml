@@ -1,0 +1,61 @@
+name: Bug Report
+description: Report a bug in the Tutors platform
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below.
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which application?
+      options:
+        - Reader (tutors-reader)
+        - Catalogue
+        - Live
+        - Time
+        - CLI (tutors/tutors-lite)
+        - Other/Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      value: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, OS, and any relevant version info.
+      value: |
+        - Browser:
+        - OS:
+        - Node version:

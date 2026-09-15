@@ -1,4 +1,5 @@
 import { courseProtocol } from "@tutors/runes";
+import { themeService } from "@tutors/themes";
 import {
   allVideoLos,
   convertLoToHtml,
@@ -22,7 +23,8 @@ import {
   type Lo,
   type Talk,
   type Topic,
-  type Tutorial
+  type Tutorial,
+  type Whiteboard
 } from "@tutors/tutors-model-lib";
 
 export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "") {
@@ -55,9 +57,30 @@ export function decorateCourseTree(course: Course, courseId: string = "", course
 
   loadPropertyFlags(course);
   createCompanions(course);
+  registerCompanionIcons(course);
   createWalls(course);
   // createToc(course);
   initCalendar(course);
+
+}
+
+/**
+ * Custom companions declared in properties.yaml are rendered by their key
+ * (e.g. "piazza"), so that key must exist in the theme icon libraries - exactly
+ * like the built-in companions (slack, moodle, ...) which are pre-registered in
+ * fluent-icons.ts. Built-in companion keys resolve for free; custom ones do not
+ * until we add them here. This lives in the Svelte layer (not the framework-free
+ * model package) because it depends on themeService, and it runs synchronously
+ * during course load so the icons are registered before the toolbar renders.
+ */
+function registerCompanionIcons(course: Course) {
+  const companions = course.properties?.companions as unknown as Record<string, { icon?: { type: string; color: string } }> | undefined;
+  if (!companions) return;
+  for (const [key, companion] of Object.entries(companions)) {
+    if (companion?.icon?.type) {
+      themeService.addIcon(key, { type: companion.icon.type, color: companion.icon.color });
+    }
+  }
 }
 
 function decorateLoTree(course: Course, lo: Lo) {
@@ -136,6 +159,10 @@ function injectCourseUrl(los: Lo[], id: string, url: string) {
       const lab = lo as Lab;
       lab.pdf = lab.pdf?.replace("{{COURSEURL}}", url);
     }
+    if (lo.type === "whiteboard") {
+      const whiteboard = lo as Whiteboard;
+      whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
+    }
 
     localizePath(lo);
     fixRoutePaths(lo);
@@ -149,6 +176,9 @@ function localizePath(lo: Lo) {
     lo.img = lo.img?.replace("https://", "http://");
     if ((lo as any).pdf) {
       (lo as any).pdf = (lo as any).pdf?.replace("https://", "http://");
+    }
+    if ((lo as any).excalidraw) {
+      (lo as any).excalidraw = (lo as any).excalidraw?.replace("https://", "http://");
     }
   }
 }

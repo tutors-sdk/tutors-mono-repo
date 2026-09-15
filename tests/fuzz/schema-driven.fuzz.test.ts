@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 import { z } from "zod";
 import {
-  zodToArbitrary,
   calendarEntryArbitrary,
   loRecordArbitrary,
   learningRecordArb,
@@ -11,7 +10,7 @@ import {
   connectCourseArb,
   connectLatestArb,
   loRecordArb,
-  partyKitRoomArb,
+  realtimeChannelArb,
   incrementCalendarParamsArb,
   validateOrThrow,
   validateSafe,
@@ -24,7 +23,7 @@ import {
   ConnectCourseSchema,
   ConnectLatestSchema,
   LoRecordSchema,
-  PartyKitRoomSchema,
+  RealtimeChannelSchema,
   IncrementCalendarParamsSchema,
 } from "../contract/support/schemas";
 import {
@@ -94,10 +93,10 @@ describe("Schema-Driven Fuzz: round-trip validation", () => {
     );
   });
 
-  it("PartyKitRoom: generated data passes schema", () => {
+  it("RealtimeChannel: generated data passes schema", () => {
     fc.assert(
-      fc.property(partyKitRoomArb, (room) => {
-        expect(PartyKitRoomSchema.safeParse(room).success).toBe(true);
+      fc.property(realtimeChannelArb, (channel) => {
+        expect(RealtimeChannelSchema.safeParse(channel).success).toBe(true);
       }),
       { numRuns: FUZZ_RUNS }
     );
@@ -212,31 +211,37 @@ describe("Schema-Driven Fuzz: rejection testing", () => {
   });
 
   it("ConnectUser rejects non-URL avatar_url", () => {
+    // Zod 4 URL validation accepts many scheme-like strings (e.g. "A: ").
+    // Generate values that are known-invalid rather than filtering on "http".
+    const invalidUrlArb = fc.constantFrom(
+      "not-a-url",
+      "://missing-scheme",
+      "just text",
+      "",
+      "http://"
+    );
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 1, maxLength: 50 }).filter((s) => !s.startsWith("http")),
-        (badUrl) => {
-          const user = {
-            id: "u1",
-            github_id: "gh-1",
-            full_name: "Test",
-            avatar_url: badUrl,
-            created_at: "2024-01-15T10:00:00Z",
-          };
-          expect(ConnectUserSchema.safeParse(user).success).toBe(false);
-        }
-      ),
+      fc.property(invalidUrlArb, (badUrl) => {
+        const user = {
+          id: "u1",
+          github_id: "gh-1",
+          full_name: "Test",
+          avatar_url: badUrl,
+          created_at: "2024-01-15T10:00:00Z"
+        };
+        expect(ConnectUserSchema.safeParse(user).success).toBe(false);
+      }),
       { numRuns: FUZZ_RUNS }
     );
   });
 
-  it("PartyKitRoom rejects invalid room type", () => {
+  it("RealtimeChannel rejects invalid channel type", () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 20 }).filter((s) => s !== "global" && s !== "course"),
         (badType) => {
-          const room = { roomId: "room-1", type: badType };
-          expect(PartyKitRoomSchema.safeParse(room).success).toBe(false);
+          const channel = { channelName: "channel-1", type: badType };
+          expect(RealtimeChannelSchema.safeParse(channel).success).toBe(false);
         }
       ),
       { numRuns: FUZZ_RUNS }
@@ -251,7 +256,7 @@ describe("Schema-Driven Fuzz: snapshot stability", () => {
   it("all registered schemas have snapshots", () => {
     const expectedSchemas = [
       "LearningRecord", "CalendarEntry", "ConnectUser", "ConnectProfile",
-      "ConnectCourse", "ConnectLatest", "LoRecord", "PartyKitRoom",
+      "ConnectCourse", "ConnectLatest", "LoRecord", "RealtimeChannel",
       "CourseJson", "IncrementCalendarParams", "GetCountLearningRecordsParams",
     ];
     for (const name of expectedSchemas) {

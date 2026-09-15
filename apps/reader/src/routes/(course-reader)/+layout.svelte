@@ -3,8 +3,9 @@
   import type { Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import { page } from "$app/state";
-  import { currentCourse } from "@tutors/runes";
-  import { afterNavigate } from "$app/navigation";
+  import { currentCourse, isEducator, contentLocks, locksLoaded, tutorsId } from "@tutors/runes";
+  import { rbacService, isLoRouteLocked } from "@tutors/rbac";
+  import { afterNavigate, goto } from "$app/navigation";
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
@@ -15,17 +16,50 @@
   tutorsConnectService.startTimer();
 
   let lastCourseId = "";
+  let roleLoadedForCourse = "";
   $effect(() => {
     tutorsConnectService.learningEvent(page.params);
 
-    if (currentCourse.value?.courseId !== lastCourseId) {
+    const course = currentCourse.value;
+    const courseId = course?.courseId;
+    if (!courseId) return;
+
+    if (courseId !== lastCourseId) {
       tutorsConnectService.checkWhiteList();
-      tutorsConnectService.courseVisit(currentCourse.value!);
-      lastCourseId = currentCourse.value?.courseId!;
+      tutorsConnectService.courseVisit(course);
+      lastCourseId = courseId;
+      roleLoadedForCourse = "";
+      return;
+    }
+
+    const login = tutorsId.value?.login;
+    if (course.hasEnrollment && login && roleLoadedForCourse !== courseId) {
+      rbacService.loadRole(login, courseId, course);
+      rbacService.checkLecturerStatus(course);
+      roleLoadedForCourse = courseId;
     }
   });
 
-  afterNavigate(() => {
+  afterNavigate(({ to }) => {
+    if (
+      currentCourse.value?.hasEnrollment &&
+      !isEducator.value &&
+      locksLoaded.value &&
+      to?.url?.pathname
+    ) {
+      const pathname = to.url.pathname;
+      const courseHome = `/course/${currentCourse.value.courseId}`;
+      if (pathname === courseHome) return;
+
+      const lo = currentCourse.value.loIndex?.get(pathname);
+      const blocked = lo
+        ? rbacService.isLoLocked(lo)
+        : isLoRouteLocked(pathname, contentLocks.value);
+      if (blocked) {
+        void goto(courseHome, { replaceState: true });
+        return;
+      }
+    }
     const elemPage = document.querySelector("#content-panel");
     if (elemPage && window.innerWidth >= 600) {
       elemPage.scrollIntoView({ behavior: "smooth", block: "start" });

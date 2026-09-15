@@ -1,9 +1,15 @@
 import type { Course, Lab, Lo, Talk, Topic, Unit } from "@tutors/tutors-model-lib";
 import { publishTemplate } from "../templates/template-engine.ts";
+import { isMarpContent, renderMarpToStaticHtml } from "./marp-renderer.ts";
 
 async function emitTalk(lo: Talk, path: string) {
   const talkPath = `${path}/${lo.id}`;
-  await publishTemplate(talkPath, "index.html", "Talk", lo);
+  if (isMarpContent(lo)) {
+    const { slidesHtml, css } = renderMarpToStaticHtml(lo);
+    await publishTemplate(talkPath, "index.html", "Talk", { ...lo, marpHtml: slidesHtml, marpCss: css });
+  } else {
+    await publishTemplate(talkPath, "index.html", "Talk", lo);
+  }
 }
 
 async function emitNote(lo: Lo, path: string) {

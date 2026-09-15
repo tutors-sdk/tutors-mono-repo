@@ -4,12 +4,13 @@ import fr from "./messages/fr.ts";
 import de from "./messages/de.ts";
 import it from "./messages/it.ts";
 import es from "./messages/es.ts";
+import ga from "./messages/ga.ts";
 
-export const SUPPORTED_LOCALES = ["en", "fr", "de", "it", "es"] as const;
+export const SUPPORTED_LOCALES = ["en", "fr", "de", "it", "es", "ga"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export type { MessageKey };
 
-const messages: Record<SupportedLocale, Record<string, string>> = { en, fr, de, it, es };
+const messages: Record<SupportedLocale, Record<string, string>> = { en, fr, de, it, es, ga };
 
 export const locale = rune<SupportedLocale>("en");
 

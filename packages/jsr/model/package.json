@@ -1,24 +1,25 @@
 {
   "name": "@tutors/tutors-model-lib",
-  "version": "5.0.4",
+  "version": "5.2.3",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": "./src/tutors.ts"
   },
   "dependencies": {
-    "@iktakahiro/markdown-it-katex": "^4.0.1",
+    "@mdit/plugin-katex": "^1.1.0",
     "front-matter": "^4.0.2",
-    "js-yaml": "^5.2.3",
+    "js-yaml": "^5.4.1",
     "archiver": "^8.0.0",
-    "markdown-it": "^14.1.1",
-    "markdown-it-anchor": "^9.2.0",
+    "markdown-it": "^15.0.1",
+    "markdown-it-anchor": "^10.0.0",
     "markdown-it-deflist": "^3.0.0",
-    "markdown-it-emoji": "^3.0.0",
+    "markdown-it-emoji": "^3.1.0",
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-mark": "^4.0.0",
     "markdown-it-sub": "^2.0.0",
     "markdown-it-sup": "^2.0.0",
-    "markdown-it-table-of-contents": "^1.1.0",
+    "markdown-it-table-of-contents": "^1.2.0",
     "shiki-transformer-copy-button": "^0.0.6"
   }
 }

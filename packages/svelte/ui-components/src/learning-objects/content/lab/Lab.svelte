@@ -52,9 +52,7 @@
 <svelte:head>
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
-    integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn"
-    crossorigin="anonymous"
+    href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css"
   />
 </svelte:head>
 
@@ -65,7 +63,7 @@
         class="card sticky top-14 m-2 h-auto rounded-xl border-[1px] py-4"
         style="background-color: light-dark(var(--color-surface-100), var(--color-surface-950)); border-color: light-dark(var(--color-primary-100), var(--color-primary-500));"
       >
-        <nav class="nav-list">
+        <nav class="nav-list" aria-label="Lab steps">
           <ul>
             {@html sanitizeHtml(lab.navbarHtml ?? "")}
           </ul>
@@ -84,7 +82,7 @@
   </div>
 
   <div class="fixed bottom-0 left-0 z-50 block w-full rounded-sm border lg:hidden" style="background-color: light-dark(var(--color-primary-50), var(--color-primary-900));">
-    <nav class="flex flex-wrap justify-between p-2">
+    <nav class="flex flex-wrap justify-between p-2" aria-label="Lab steps">
       {@html sanitizeHtml(lab.horizontalNavbarHtml ?? "")}
     </nav>
   </div>

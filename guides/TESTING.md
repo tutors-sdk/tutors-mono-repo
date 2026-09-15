@@ -11,7 +11,7 @@ Tutors uses a multi-tier testing strategy to ensure correctness at every level �
 | 1. TDD (unit)                | Per-module unit tests with mocked dependencies                             | Vitest / Deno  |
 | 2. BDD (behavioral)          | Gherkin-style scenarios covering user-facing behaviors                     | Vitest         |
 | 3. Component (browser)       | Svelte component rendering in real browser (Vitest Browser Mode)           | Vitest         |
-| 4. Integration (mocked)      | Cross-package workflows with mocked Supabase/PartyKit                      | Vitest         |
+| 4. Integration (mocked)      | Cross-package workflows with mocked Supabase/Realtime                      | Vitest         |
 | 5. E2E (Playwright)          | Full user journeys against real dev server                                 | Playwright     |
 | 6. Contract (API surface)    | Snapshot-based public API breaking-change detector for JSR packages        | Vitest         |
 | 7. Fuzz (fast-check)         | Property-based testing of data models, tree construction, aggregation (excluded from default run — pending fast-check v4 fix) | Vitest         |
@@ -58,7 +58,7 @@ tutors-mono-repo/
 │   │   └── support/
 │   │       ├── world.ts                      # TestWorld class (shared test context)
 │   │       ├── fixtures.ts                   # TestDataFactory (factory methods)
-│   │       └── mocks.ts                      # MockSupabaseClient, MockPartySocket, createMockFetch
+│   │       └── mocks.ts                      # MockSupabaseClient, MockRealtimeChannel, createMockFetch
 │   ├── contract/                             # API surface snapshot tests
 │   │   ├── model-lib-api.test.ts
 │   │   ├── time-lib-api.test.ts
@@ -237,7 +237,7 @@ Cross-package workflow tests with mocked external services. These verify the dat
 | Suite                          | Description                                                    | External Mock   |
 | ------------------------------ | -------------------------------------------------------------- | --------------- |
 | `course-service.test.ts`       | Course URL > fetch > JSON parse > model decoration > tree      | Fetch (MSW)     |
-| `presence-service.test.ts`     | PartyKit message > event parse > state update > UI data        | MockPartySocket |
+| `presence-service.test.ts`     | Realtime broadcast > event parse > state update > UI data      | MockRealtimeChannel |
 | `analytics-pipeline.test.ts`   | Supabase query > calendar/lab model building > grid data       | MockSupabase    |
 | `auth-flow.test.ts`            | GitHub OAuth > session creation > profile loading              | MSW handlers    |
 
@@ -273,11 +273,11 @@ Snapshot the public API surface of each JSR-published package. Acts as a **break
 
 Each test uses `toMatchSnapshot()` for the full export list, so any addition, removal, or rename is caught.
 
-### Tier 7: Property-Based / Fuzz Tests (fast-check) — *excluded from default run*
+### Tier 7: Property-Based / Fuzz Tests (fast-check)
 
 **Location:** `tests/fuzz/`
-**Config:** `vitest.config.ts` (root level, excluded via `exclude` array)
-**Status:** Excluded from `pnpm vitest run` pending a fast-check v4 compatibility fix (`fc.stringMatching()` crashes the vitest worker process). Test files are retained for future re-enablement. Run manually with `pnpm vitest run tests/fuzz/ --pool threads` if needed.
+**Config:** `vitest.config.fuzz.ts` (dedicated config with `pool: "threads"`)
+**Status:** Active via `pnpm test:fuzz`. Uses a separate vitest config with threads pool because fast-check v4 property generation crashes vitest's default fork pool workers. Runs in CI on every push/PR.
 
 [fast-check](https://github.com/dubzzz/fast-check) property-based testing:
 
@@ -316,7 +316,7 @@ All unit and BDD tests use mocked external services. No real HTTP requests, WebS
 | Service              | Mock Class/Function      | Capabilities                                              |
 | -------------------- | ------------------------ | --------------------------------------------------------- |
 | Supabase             | `MockSupabaseClient`     | Query builder chain (select, eq, neq, gte, lte, order, limit, single) |
-| PartyKit WebSocket   | `MockPartySocket`        | `simulateMessage(data)`, `simulateClose()`, `readyState`  |
+| Supabase Realtime    | `MockRealtimeChannel`    | `simulateBroadcast(event, data)`, `subscribe()`, `unsubscribe()` |
 | HTTP Fetch           | `createMockFetch()`      | URL pattern matching, custom response handlers, 404 default |
 
 ### Test Helpers
@@ -479,7 +479,7 @@ When an `rc/*` branch is created, the full RC validation pipeline runs automatic
 | 1 | Lint & Type Check | Zero ESLint errors, zero TypeScript errors |
 | 2a | Unit & BDD | All tests pass, coverage above thresholds |
 | 2b | Contract | API snapshots match (or intentionally updated) |
-| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (currently excluded — pending fast-check v4 fix) |
+| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (`FUZZ_RUNS=1000 pnpm test:fuzz`) |
 | 2d | CLI (Deno) | All Deno tests pass |
 | 3a | Build Verification | All apps produce `.svelte-kit/` output |
 | 3b | Dependency Audit | Zero critical CVEs |
@@ -670,7 +670,7 @@ node --inspect-brk node_modules/.bin/vitest run --pool=forks tests/contract/mode
 | `tests/bdd/steps/`                                | Step definition files                                     |
 | `tests/bdd/support/world.ts`                      | TestWorld shared context class                            |
 | `tests/bdd/support/fixtures.ts`                   | TestDataFactory (factory methods)                         |
-| `tests/bdd/support/mocks.ts`                      | MockSupabaseClient, MockPartySocket, createMockFetch      |
+| `tests/bdd/support/mocks.ts`                      | MockSupabaseClient, MockRealtimeChannel, createMockFetch  |
 | `tests/contract/`                                 | API surface snapshot suites                               |
 | `tests/fuzz/`                                     | Property-based fuzz suites                                |
 | `tests/integration/`                              | Cross-package integration tests                           |

@@ -30,6 +30,6 @@ Feature: Error Handling
 
   @ears-unwanted
   Scenario: WebSocket disconnection
-    If the PartyKit WebSocket connection drops
+    If the Supabase Realtime connection drops
     Then the system shall attempt reconnection
     And the presence UI shall indicate the connection status

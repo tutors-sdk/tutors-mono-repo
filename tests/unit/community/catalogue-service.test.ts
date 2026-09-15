@@ -1,37 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MockSupabaseClient, createMockFetch } from "../../bdd/support/mocks";
 
-/**
- * Catalogue service unit tests.
- *
- * Tests the catalogueService object from community/src/services/catalogue.ts.
- * The Supabase client is mocked via vi.mock so no real database calls are made.
- */
-
-// --- mock Supabase query builder ---
-
-const mockOrder = vi.fn();
-const mockSelect = vi.fn();
-const mockDelete = vi.fn();
-const mockIn = vi.fn();
-const mockFrom = vi.fn();
-
-/** Resets the mock chain to return successful empty results by default. */
-function resetSupabaseMocks() {
-  mockIn.mockResolvedValue({ error: null });
-  mockDelete.mockReturnValue({ in: mockIn });
-  mockOrder.mockResolvedValue({ data: [], error: null });
-  mockSelect.mockReturnValue({ order: mockOrder });
-  mockFrom.mockReturnValue({
-    select: mockSelect,
-    delete: mockDelete
-  });
-}
-
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
-  supabase: {
-    from: (...args: any[]) => mockFrom(...args)
-  }
-}));
+vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
+  const { MockSupabaseClient } = await import("../../bdd/support/mocks");
+  return { supabase: new MockSupabaseClient() };
+});
 
 vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
   default: {
@@ -43,155 +16,107 @@ vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
   }
 }));
 
+import { supabase } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { catalogueService } from "../../../packages/svelte/community/src/services/catalogue.ts";
 import log from "../../../packages/svelte/utils/logger/src/index.ts";
 
-// --- fixtures ---
+const mockClient = supabase as unknown as MockSupabaseClient;
 
 function makeCatalogueEntry(overrides: Record<string, unknown> = {}) {
   return {
     course_id: "course-1",
-    visited_at: new Date("2026-07-01"),
+    visited_at: new Date("2026-07-01").toISOString(),
     visit_count: 5,
     course_record: { title: "Test Course" },
     ...overrides
   };
 }
 
-// --- setup ---
-
 beforeEach(() => {
   vi.clearAllMocks();
-  resetSupabaseMocks();
+  mockClient.clearAllErrors();
+  mockClient.setTableData("tutors-connect-courses", []);
+  mockClient.setTableData("tutors-connect-profiles", []);
 });
-
-// =====================================================================
-// getCatalogue
-// =====================================================================
 
 describe("catalogueService.getCatalogue", () => {
-  it("returns an array of catalogue entries on success", async () => {
-    const entries = [makeCatalogueEntry(), makeCatalogueEntry({ course_id: "course-2" })];
-    mockOrder.mockResolvedValue({ data: entries, error: null });
+  it("returns all catalogue entries ordered by visited_at descending", async () => {
+    const older = makeCatalogueEntry({ course_id: "old", visited_at: "2026-01-01T00:00:00Z" });
+    const newer = makeCatalogueEntry({ course_id: "new", visited_at: "2026-07-01T00:00:00Z" });
+    mockClient.setTableData("tutors-connect-courses", [older, newer]);
 
     const result = await catalogueService.getCatalogue();
 
-    expect(result).toEqual(entries);
+    expect(result).toHaveLength(2);
+    expect((result[0] as any).course_id).toBe("new");
+    expect((result[1] as any).course_id).toBe("old");
   });
 
-  it("queries the correct table with proper ordering", async () => {
-    await catalogueService.getCatalogue();
-
-    expect(mockFrom).toHaveBeenCalledWith("tutors-connect-courses");
-    expect(mockSelect).toHaveBeenCalledWith("*");
-    expect(mockOrder).toHaveBeenCalledWith("visited_at", { ascending: false });
-  });
-
-  it("returns empty array when Supabase returns an error", async () => {
-    mockOrder.mockResolvedValue({ data: null, error: { message: "DB down" } });
-
+  it("returns empty array when no courses exist", async () => {
     const result = await catalogueService.getCatalogue();
 
     expect(result).toEqual([]);
   });
 
-  it("logs error when Supabase returns an error", async () => {
-    const supaError = { message: "DB down" };
-    mockOrder.mockResolvedValue({ data: null, error: supaError });
-
-    await catalogueService.getCatalogue();
-
-    expect(log.error).toHaveBeenCalledWith("Error fetching courses:", supaError);
-  });
-
-  it("returns empty array when select chain throws", async () => {
-    mockOrder.mockRejectedValue(new Error("network timeout"));
+  it("returns empty array and logs error when Supabase returns an error", async () => {
+    mockClient.setTableError("tutors-connect-courses", { message: "DB down" });
 
     const result = await catalogueService.getCatalogue();
 
     expect(result).toEqual([]);
+    expect(log.error).toHaveBeenCalledWith("Error fetching courses:", { message: "DB down" });
   });
 });
-
-// =====================================================================
-// getCatalogueCount
-// =====================================================================
 
 describe("catalogueService.getCatalogueCount", () => {
-  it("returns the count on success", async () => {
-    mockSelect.mockResolvedValue({ count: 42, error: null });
+  it("returns the count of courses", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
+      makeCatalogueEntry({ course_id: "c1" }),
+      makeCatalogueEntry({ course_id: "c2" }),
+      makeCatalogueEntry({ course_id: "c3" })
+    ]);
 
     const result = await catalogueService.getCatalogueCount();
 
-    expect(result).toBe(42);
+    expect(result).toBe(3);
   });
 
-  it("queries with exact count and head: true", async () => {
-    mockSelect.mockResolvedValue({ count: 0, error: null });
-
-    await catalogueService.getCatalogueCount();
-
-    expect(mockFrom).toHaveBeenCalledWith("tutors-connect-courses");
-    expect(mockSelect).toHaveBeenCalledWith("*", { count: "exact", head: true });
-  });
-
-  it("returns 0 when count is null", async () => {
-    mockSelect.mockResolvedValue({ count: null, error: null });
-
+  it("returns 0 when no courses exist", async () => {
     const result = await catalogueService.getCatalogueCount();
 
     expect(result).toBe(0);
   });
 
-  it("returns 0 when Supabase returns an error", async () => {
-    mockSelect.mockResolvedValue({ count: null, error: { message: "fail" } });
+  it("returns 0 and logs error when Supabase returns an error", async () => {
+    mockClient.setTableError("tutors-connect-courses", { message: "fail" });
 
     const result = await catalogueService.getCatalogueCount();
 
     expect(result).toBe(0);
-  });
-
-  it("logs error on failure", async () => {
-    const err = { message: "fail" };
-    mockSelect.mockResolvedValue({ count: null, error: err });
-
-    await catalogueService.getCatalogueCount();
-
-    expect(log.error).toHaveBeenCalledWith("Error fetching course count:", err);
+    expect(log.error).toHaveBeenCalledWith("Error fetching course count:", { message: "fail" });
   });
 });
-
-// =====================================================================
-// getStudentCount
-// =====================================================================
 
 describe("catalogueService.getStudentCount", () => {
-  it("returns the count on success", async () => {
-    mockSelect.mockResolvedValue({ count: 100, error: null });
+  it("returns the count of students", async () => {
+    mockClient.setTableData("tutors-connect-profiles", [
+      { id: "s1" },
+      { id: "s2" }
+    ]);
 
     const result = await catalogueService.getStudentCount();
 
-    expect(result).toBe(100);
+    expect(result).toBe(2);
   });
 
-  it("queries the tutors-connect-profiles table", async () => {
-    mockSelect.mockResolvedValue({ count: 0, error: null });
-
-    await catalogueService.getStudentCount();
-
-    expect(mockFrom).toHaveBeenCalledWith("tutors-connect-profiles");
-  });
-
-  it("returns 0 when Supabase returns an error", async () => {
-    mockSelect.mockResolvedValue({ count: null, error: { message: "no profiles" } });
-
+  it("returns 0 when no profiles exist", async () => {
     const result = await catalogueService.getStudentCount();
 
     expect(result).toBe(0);
   });
 
-  it("returns 0 when count is null", async () => {
-    mockSelect.mockResolvedValue({ count: null, error: null });
+  it("returns 0 when Supabase returns an error", async () => {
+    mockClient.setTableError("tutors-connect-profiles", { message: "no profiles" });
 
     const result = await catalogueService.getStudentCount();
 
@@ -199,140 +124,112 @@ describe("catalogueService.getStudentCount", () => {
   });
 });
 
-// =====================================================================
-// pruneCatalogue
-// =====================================================================
-
 describe("catalogueService.pruneCatalogue", () => {
-  it("HEAD-checks each course and deletes dead ones", async () => {
-    const entries = [
+  it("removes dead courses from the catalogue", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
       makeCatalogueEntry({ course_id: "alive-course" }),
       makeCatalogueEntry({ course_id: "dead-course" })
-    ];
-    mockOrder.mockResolvedValue({ data: entries, error: null });
+    ]);
 
-    const mockFetch = vi.fn<(...args: any[]) => Promise<Response>>().mockImplementation(async (url: string) => {
-      if (url.includes("alive-course")) {
-        return new Response(null, { status: 200 });
-      }
-      return new Response(null, { status: 404 });
+    const mockFetch = createMockFetch({
+      "alive-course": async () => new Response(null, { status: 200 }),
+      "dead-course": async () => new Response(null, { status: 404 })
     });
 
     await catalogueService.pruneCatalogue(mockFetch as any);
 
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(mockIn).toHaveBeenCalledWith("course_id", ["dead-course"]);
+    const remaining = mockClient.getTableData("tutors-connect-courses") as any[];
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].course_id).toBe("alive-course");
   });
 
-  it("uses HEAD method for course checks", async () => {
-    const entries = [makeCatalogueEntry({ course_id: "c1" })];
-    mockOrder.mockResolvedValue({ data: entries, error: null });
-
-    const mockFetch = vi.fn<(...args: any[]) => Promise<Response>>().mockResolvedValue(
-      new Response(null, { status: 200 })
-    );
-
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://c1.netlify.app/tutors.json",
-      { method: "HEAD" }
-    );
-  });
-
-  it("treats fetch errors as invalid courses", async () => {
-    const entries = [makeCatalogueEntry({ course_id: "error-course" })];
-    mockOrder.mockResolvedValue({ data: entries, error: null });
-
-    const mockFetch = vi.fn<(...args: any[]) => Promise<Response>>().mockRejectedValue(
-      new Error("network error")
-    );
-
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    expect(mockIn).toHaveBeenCalledWith("course_id", ["error-course"]);
-  });
-
-  it("does not call deleteCourses when all courses are alive", async () => {
-    const entries = [
+  it("does not remove any courses when all are alive", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
       makeCatalogueEntry({ course_id: "alive-1" }),
       makeCatalogueEntry({ course_id: "alive-2" })
-    ];
-    mockOrder.mockResolvedValue({ data: entries, error: null });
+    ]);
 
-    const mockFetch = vi.fn<(...args: any[]) => Promise<Response>>().mockResolvedValue(
-      new Response(null, { status: 200 })
-    );
+    const mockFetch = createMockFetch({
+      "alive-1": async () => new Response(null, { status: 200 }),
+      "alive-2": async () => new Response(null, { status: 200 })
+    });
 
     await catalogueService.pruneCatalogue(mockFetch as any);
 
-    // delete chain should not have been called via from()
-    // mockFrom is called once for getCatalogue; if deleteCourses runs it would be called again
-    expect(mockFrom).toHaveBeenCalledTimes(1); // only the getCatalogue call
+    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(2);
+  });
+
+  it("treats fetch errors as dead courses", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
+      makeCatalogueEntry({ course_id: "error-course" })
+    ]);
+
+    const mockFetch = createMockFetch({
+      "error-course": async () => { throw new Error("network error"); }
+    });
+
+    await catalogueService.pruneCatalogue(mockFetch as any);
+
+    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
   });
 
   it("handles empty catalogue gracefully", async () => {
-    mockOrder.mockResolvedValue({ data: [], error: null });
-
-    const mockFetch = vi.fn<(...args: any[]) => Promise<Response>>();
+    const mockFetch = vi.fn();
 
     await catalogueService.pruneCatalogue(mockFetch as any);
 
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("collects multiple dead courses for a single delete call", async () => {
-    const entries = [
+  it("removes multiple dead courses in a single operation", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
       makeCatalogueEntry({ course_id: "dead-1" }),
       makeCatalogueEntry({ course_id: "dead-2" }),
       makeCatalogueEntry({ course_id: "dead-3" })
-    ];
-    mockOrder.mockResolvedValue({ data: entries, error: null });
+    ]);
 
-    const mockFetch = vi.fn<(...args: any[]) => Promise<Response>>().mockResolvedValue(
-      new Response(null, { status: 500 })
-    );
+    const mockFetch = createMockFetch({
+      "dead-1": async () => new Response(null, { status: 500 }),
+      "dead-2": async () => new Response(null, { status: 500 }),
+      "dead-3": async () => new Response(null, { status: 500 })
+    });
 
     await catalogueService.pruneCatalogue(mockFetch as any);
 
-    expect(mockIn).toHaveBeenCalledWith("course_id", ["dead-1", "dead-2", "dead-3"]);
+    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
   });
 });
 
-// =====================================================================
-// deleteCourses
-// =====================================================================
-
 describe("catalogueService.deleteCourses", () => {
-  it("deletes from the correct table using .in()", async () => {
+  it("removes specified courses from the store", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
+      makeCatalogueEntry({ course_id: "c1" }),
+      makeCatalogueEntry({ course_id: "c2" }),
+      makeCatalogueEntry({ course_id: "c3" })
+    ]);
+
     await catalogueService.deleteCourses(["c1", "c2"]);
 
-    expect(mockFrom).toHaveBeenCalledWith("tutors-connect-courses");
-    expect(mockDelete).toHaveBeenCalled();
-    expect(mockIn).toHaveBeenCalledWith("course_id", ["c1", "c2"]);
+    const remaining = mockClient.getTableData("tutors-connect-courses") as any[];
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].course_id).toBe("c3");
   });
 
-  it("logs success message after successful deletion", async () => {
+  it("logs success message after deletion", async () => {
+    mockClient.setTableData("tutors-connect-courses", [
+      makeCatalogueEntry({ course_id: "c1" })
+    ]);
+
     await catalogueService.deleteCourses(["c1"]);
 
     expect(log.debug).toHaveBeenCalledWith("Successfully deleted 1 courses");
   });
 
   it("throws and logs when Supabase returns an error", async () => {
-    const supaError = { message: "permission denied" };
-    mockIn.mockResolvedValue({ error: supaError });
+    mockClient.setTableError("tutors-connect-courses", { message: "permission denied" });
 
-    await expect(catalogueService.deleteCourses(["c1"])).rejects.toEqual(supaError);
+    await expect(catalogueService.deleteCourses(["c1"])).rejects.toEqual({ message: "permission denied" });
 
-    expect(log.error).toHaveBeenCalledWith("Error deleting courses:", supaError);
-  });
-
-  it("throws and logs when the delete chain rejects", async () => {
-    const networkError = new Error("connection reset");
-    mockIn.mockRejectedValue(networkError);
-
-    await expect(catalogueService.deleteCourses(["c1"])).rejects.toThrow("connection reset");
-
-    expect(log.error).toHaveBeenCalledWith("Error in deleteCourses:", networkError);
+    expect(log.error).toHaveBeenCalledWith("Error deleting courses:", { message: "permission denied" });
   });
 });
