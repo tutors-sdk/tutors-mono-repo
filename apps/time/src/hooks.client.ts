@@ -1,6 +1,6 @@
 import type { HandleClientError } from "@sveltejs/kit";
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
-import log, { addTransport } from "@tutors/logger";
+import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
 (globalThis as any).__TUTORS_TIME_SUPABASE_INIT__ = {
@@ -12,6 +12,7 @@ import { initSupabase } from "@tutors/tutors-time-lib";
 
 initSupabase(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
 
+setAppName("tutors-time");
 addTransport(createSupabaseErrorTransport("tutors-time"));
 
 window.addEventListener("unhandledrejection", (event) => {

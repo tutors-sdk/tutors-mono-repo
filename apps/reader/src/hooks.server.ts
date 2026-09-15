@@ -1,10 +1,17 @@
-import type { Handle, HandleServerError } from "@sveltejs/kit";
+/* global APP_VERSION */
+import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { SvelteKitAuth } from "@auth/sveltekit";
 import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import log from "@tutors/logger";
+import { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+
+setAppName("tutors-reader");
+
+export const init: ServerInit = async () => {
+  logServiceStart({ version: APP_VERSION });
+};
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -50,6 +57,10 @@ const { handle: authInitHandle } = SvelteKitAuth({
   trustHost: true
 });
 
+// First in the chain so every request gets a correlation id and one completion line,
+// including requests that fail inside the hooks below.
+const requestLogger = createRequestLogger();
+
 const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.locale = initLocaleFromCookie(event.request.headers.get("cookie") ?? "");
   return resolve(event);
@@ -64,10 +75,10 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
+export const handle = sequence(requestLogger, localeHandle, securityHeaders, authInitHandle);
 
-export const handleError: HandleServerError = ({ error }) => {
-  log.error("Server error:", error instanceof Error ? error : { details: error });
+export const handleError: HandleServerError = ({ error, event, status, message }) => {
+  logRequestError({ error, event, status, message });
   return {
     message: "An unexpected error occurred"
   };

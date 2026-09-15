@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite dev --port 5175",
     "build": "vite build",
+    "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
