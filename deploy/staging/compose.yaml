@@ -1,0 +1,70 @@
+# Staging stack: runs the four Tutors apps from the images the
+# "Container Image Build" workflow publishes to quay.io/tutors-sdk.
+# Nothing is built here; for a from-source stack use the root compose.yaml.
+#
+#   cp .env.example .env                          # fill in Supabase, OAuth, Moodle values
+#   docker compose up -d
+#   docker compose pull && docker compose up -d   # roll to the current IMAGE_TAG
+#
+# IMAGE_TAG selects what to run: latest (main), rc-<branch> (release
+# candidates), X.Y.Z (releases) or sha-<short> (any main commit).
+# Host ports default to 3000-3003 (READER_PORT, CATALOGUE_PORT, LIVE_PORT,
+# TIME_PORT). Each app's *_ORIGIN must be the URL users actually reach it on,
+# or adapter-node rejects form posts as cross-site.
+name: tutors-staging
+
+x-app: &app
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  env_file:
+    - .env
+  restart: unless-stopped
+  healthcheck:
+    test:
+      - CMD
+      - node
+      - -e
+      - "fetch('http://127.0.0.1:3000/healthz/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+    interval: 15s
+    timeout: 3s
+    retries: 3
+    start_period: 10s
+
+services:
+  reader:
+    <<: *app
+    image: quay.io/tutors-sdk/tutors-reader:${IMAGE_TAG:-latest}
+    ports:
+      - "${READER_PORT:-3000}:3000"
+    environment:
+      ORIGIN: ${READER_ORIGIN:-http://localhost:3000}
+
+  catalogue:
+    <<: *app
+    image: quay.io/tutors-sdk/tutors-catalogue:${IMAGE_TAG:-latest}
+    ports:
+      - "${CATALOGUE_PORT:-3001}:3000"
+    environment:
+      ORIGIN: ${CATALOGUE_ORIGIN:-http://localhost:3001}
+
+  live:
+    <<: *app
+    image: quay.io/tutors-sdk/tutors-live:${IMAGE_TAG:-latest}
+    ports:
+      - "${LIVE_PORT:-3002}:3000"
+    environment:
+      ORIGIN: ${LIVE_ORIGIN:-http://localhost:3002}
+
+  time:
+    <<: *app
+    image: quay.io/tutors-sdk/tutors-time:${IMAGE_TAG:-latest}
+    ports:
+      - "${TIME_PORT:-3003}:3000"
+    environment:
+      ORIGIN: ${TIME_ORIGIN:-http://localhost:3003}

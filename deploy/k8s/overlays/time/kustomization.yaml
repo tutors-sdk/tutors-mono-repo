@@ -15,7 +15,7 @@ labels:
 
 images:
   - name: tutors-app
-    newName: registry.example.com/tutors/time
+    newName: quay.io/tutors-sdk/tutors-time
     newTag: latest
 
 patches:

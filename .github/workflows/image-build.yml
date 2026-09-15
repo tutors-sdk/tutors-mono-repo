@@ -1,19 +1,37 @@
 name: Container Image Build
 
-# Builds container images for all four Tutors apps and pushes them to
-# Quay.io.  PR builds validate the Dockerfile without pushing.
-# Depends on: the multi-stage Dockerfile introduced in PR #109.
+# Builds the four Tutors app images from the root Dockerfile
+# (--build-arg APP_NAME=<app>, see deploy/README.md) and publishes them to
+# quay.io/tutors-sdk/tutors-<app>.
+#
+#   pull_request        build and scan only, nothing is pushed
+#   push to main        push  sha-<short>  and  latest
+#   push to rc/**       push  rc-<branch>  (for example rc-16.2.0)
+#   push tag vX.Y.Z     push  X.Y.Z  and  X.Y
+#
+# Every image is scanned with Trivy; CRITICAL and HIGH findings with an
+# available fix stop the workflow.
 
 on:
   push:
-    branches: [main]
-    tags: ["rc/**"]
+    branches: [main, "rc/**"]
+    tags: ["v*"]
   pull_request:
     branches: [main]
+    # Only the paths that enter the build context (see .dockerignore) can
+    # change the image, so doc-only PRs skip the four builds.
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - apps/**
+      - packages/**
+      - .github/workflows/image-build.yml
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   build:
@@ -32,9 +50,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
-
+      # The Dockerfile uses BuildKit cache mounts for the pnpm store, which
+      # need the buildx container driver.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
@@ -53,9 +70,18 @@ jobs:
           images: quay.io/tutors-sdk/tutors-${{ matrix.app }}
           tags: |
             type=sha,prefix=sha-,format=short
+            type=ref,event=branch,prefix=rc-,enable=${{ startsWith(github.ref, 'refs/heads/rc/') }}
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=tutors-${{ matrix.app }}
+            org.opencontainers.image.licenses=MIT
 
+      # OCI revision/created labels come from the metadata step above, so the
+      # Dockerfile's GIT_SHA and BUILD_DATE build args are not needed here.
+      # The cache scope is per app: the four builds share the deps stage but
+      # would otherwise overwrite one another's cache entry.
       - name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -66,13 +92,16 @@ jobs:
           load: ${{ github.event_name != 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
+      # steps.meta.outputs.version is the highest-priority tag that was
+      # applied (latest on main, sha-<short> on PRs, X.Y.Z on release tags),
+      # so it always names an image that exists locally or in the registry.
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: quay.io/tutors-sdk/tutors-${{ matrix.app }}:sha-${{ github.sha }}
+          image-ref: quay.io/tutors-sdk/tutors-${{ matrix.app }}:${{ steps.meta.outputs.version }}
           format: table
           exit-code: "1"
           severity: CRITICAL,HIGH
