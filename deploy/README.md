@@ -19,6 +19,9 @@ for the OCI labels. The build needs BuildKit (default in Docker 23+).
 
 ## Run locally
 
+A step-by-step walkthrough, including troubleshooting, is in
+[`docs/LOCAL-CONTAINERS.md`](../docs/LOCAL-CONTAINERS.md).
+
 ```bash
 docker compose up --build          # all four apps on ports 3000-3003
 docker compose up --build reader   # one app
