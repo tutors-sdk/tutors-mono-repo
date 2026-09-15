@@ -1,4 +1,4 @@
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import { createClient } from "@supabase/supabase-js";
 import type { MoodleAssignSubmission, MoodleModule } from "$lib/server/api/moodle";
 
@@ -84,7 +84,7 @@ function toSubmissionRow(
 }
 
 function getClient() {
-  return createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+  return createClient(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 }
 
 export async function getLastSyncedAt(courseId: string): Promise<string | null> {

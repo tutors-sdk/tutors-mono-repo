@@ -2,7 +2,7 @@
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { SvelteKitAuth } from "@auth/sveltekit";
-import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
+import { env } from "$env/dynamic/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
@@ -19,8 +19,8 @@ const { handle: authInitHandle } = SvelteKitAuth({
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     GithubProvider({
-      clientId: PRIVATE_AUTH_GITHUB_ID,
-      clientSecret: PRIVATE_AUTH_GITHUB_SECRET,
+      clientId: env.PRIVATE_AUTH_GITHUB_ID,
+      clientSecret: env.PRIVATE_AUTH_GITHUB_SECRET,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       profile(profile: any) {
         return {
@@ -53,7 +53,7 @@ const { handle: authInitHandle } = SvelteKitAuth({
     strategy: "jwt"
   },
 
-  secret: PRIVATE_AUTH_SECRET,
+  secret: env.PRIVATE_AUTH_SECRET,
   trustHost: true
 });
 

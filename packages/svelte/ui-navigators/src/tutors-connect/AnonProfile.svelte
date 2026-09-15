@@ -2,7 +2,7 @@
   import { Avatar } from "@skeletonlabs/skeleton-svelte";
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
 
-  import { PUBLIC_ANON_MODE } from "$env/static/public";
+  import { env } from "$env/dynamic/public";
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
   import { t } from "@tutors/i18n";
 
@@ -20,7 +20,7 @@
 
 {#snippet menuContent()}
   <ul class="space-y-6">
-    {#if PUBLIC_ANON_MODE !== "TRUE"}
+    {#if env.PUBLIC_ANON_MODE !== "TRUE"}
       <MenuItem link="/auth{redirect}" text={t("menu.connect")} type="github" />
       <MenuItem link="/" text={t("menu.home")} type="tutors" />
     {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { PUBLIC_PDF_KEY } from "$env/static/public";
+  import { env } from "$env/dynamic/public";
   import { adobeLoaded, currentCourse } from "@tutors/runes";
   import type { Talk } from "@tutors/tutors-model-lib";
   import { onMount } from "svelte";
@@ -47,7 +47,7 @@
     if (!window.AdobeDC) return;
 
     adobeDCView = new window.AdobeDC.View({
-      clientId: PUBLIC_PDF_KEY,
+      clientId: env.PUBLIC_PDF_KEY,
       divId: viewerId
     });
 

@@ -56,3 +56,6 @@ reports/mutation/
 
 # Generated OKF knowledge bundle
 okf/
+
+# Kubernetes secrets are created out of band; only the example is tracked
+deploy/k8s/**/secrets.yaml

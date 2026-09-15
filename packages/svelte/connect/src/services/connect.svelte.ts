@@ -11,7 +11,7 @@ import { goto } from "$app/navigation";
 import type { Course } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
-import { PUBLIC_ANON_MODE } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
@@ -35,7 +35,7 @@ let anonMode = false;
 /** Global flag to disable analytics in case of database issues*/
 export let analyticsEnabled = true;
 
-if (PUBLIC_ANON_MODE === "TRUE") {
+if (env.PUBLIC_ANON_MODE === "TRUE") {
   anonMode = true;
 }
 

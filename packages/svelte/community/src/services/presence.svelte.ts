@@ -1,5 +1,5 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { PUBLIC_ANON_MODE } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import { rune, tutorsId } from "@tutors/runes";
@@ -33,14 +33,14 @@ export const presenceService: PresenceService = {
   },
 
   connectToAllCourseAccess(): void {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
     this.channelAll = supabase
       .channel("tutors-all-course-access", BROADCAST_CONFIG)
       .subscribe();
   },
 
   startPresenceListener(courseId: string) {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
     if (this.channelCourse) {
       supabase.removeChannel(this.channelCourse);
@@ -57,7 +57,7 @@ export const presenceService: PresenceService = {
   },
 
   sendLoEvent(course: Course, lo: Lo, student: TutorsId) {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
     const loRecord: LoRecord = {
       courseId: course.courseId,

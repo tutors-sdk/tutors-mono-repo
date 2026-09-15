@@ -1,0 +1,87 @@
+# Local stack: builds and runs all four apps from this checkout.
+#
+#   docker compose up --build            # all apps
+#   docker compose up --build reader     # just one
+#
+# Runtime configuration comes from an optional .env file in the repo root
+# (see .env.example). With no .env the apps start in anonymous mode.
+# Host ports default to 3000-3003; override with READER_PORT, CATALOGUE_PORT,
+# LIVE_PORT or TIME_PORT if one is already taken.
+name: tutors
+
+x-app: &app
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  env_file:
+    - path: .env
+      required: false
+  restart: unless-stopped
+  healthcheck:
+    test:
+      - CMD
+      - node
+      - -e
+      - "fetch('http://127.0.0.1:3000/healthz/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+    interval: 15s
+    timeout: 3s
+    retries: 3
+    start_period: 10s
+
+services:
+  reader:
+    <<: *app
+    image: tutors/reader:local
+    build:
+      context: .
+      args:
+        APP_NAME: reader
+    ports:
+      - "${READER_PORT:-3000}:3000"
+    environment:
+      ORIGIN: http://localhost:${READER_PORT:-3000}
+      PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
+
+  catalogue:
+    <<: *app
+    image: tutors/catalogue:local
+    build:
+      context: .
+      args:
+        APP_NAME: catalogue
+    ports:
+      - "${CATALOGUE_PORT:-3001}:3000"
+    environment:
+      ORIGIN: http://localhost:${CATALOGUE_PORT:-3001}
+      PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
+
+  live:
+    <<: *app
+    image: tutors/live:local
+    build:
+      context: .
+      args:
+        APP_NAME: live
+    ports:
+      - "${LIVE_PORT:-3002}:3000"
+    environment:
+      ORIGIN: http://localhost:${LIVE_PORT:-3002}
+      PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
+
+  time:
+    <<: *app
+    image: tutors/time:local
+    build:
+      context: .
+      args:
+        APP_NAME: time
+    ports:
+      - "${TIME_PORT:-3003}:3000"
+    environment:
+      ORIGIN: http://localhost:${TIME_PORT:-3003}
+      PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}

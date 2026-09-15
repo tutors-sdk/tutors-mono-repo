@@ -1,6 +1,6 @@
 import type { LogEntry } from "@tutors/logger";
 import { supabase } from "./supabase-client.ts";
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 
 let buffer: LogEntry[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -50,7 +50,7 @@ function flushOnUnload(appName: string) {
 
   const rows = batch.map((e) => buildRow(e, appName));
   const payload = JSON.stringify(rows);
-  const url = `${PUBLIC_SUPABASE_URL}/rest/v1/app_errors?Prefer=return=none&apikey=${PUBLIC_SUPABASE_ANON_KEY}`;
+  const url = `${env.PUBLIC_SUPABASE_URL}/rest/v1/app_errors?Prefer=return=none&apikey=${env.PUBLIC_SUPABASE_ANON_KEY}`;
 
   // sendBeacon survives page unload where async fetch does not
   const nav = navigator as Navigator & { sendBeacon?: (url: string, data: Blob) => boolean };
