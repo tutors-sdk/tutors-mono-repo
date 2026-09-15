@@ -7,10 +7,12 @@ import type { Course } from "@tutors/tutors-model-lib";
  * never becomes true and every card, wall and TOC entry stays hidden.
  */
 
-vi.mock("$env/static/public", () => ({
-  PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-  PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-  PUBLIC_ANON_MODE: "TRUE"
+vi.mock("$env/dynamic/public", () => ({
+  env: {
+    PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
+    PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
+    PUBLIC_ANON_MODE: "TRUE"
+  }
 }));
 
 vi.mock("$app/environment", () => ({ browser: false }));

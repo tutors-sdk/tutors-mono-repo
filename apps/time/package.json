@@ -13,24 +13,25 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@iconify/svelte": "^5.2.2",
-    "@supabase/supabase-js": "^2.116.0",
-    "@tutors/community": "workspace:*",
-    "@tutors/logger": "workspace:*",
-    "@tutors/ui-primitives": "workspace:*",
-    "@tutors/tutors-time-lib": "workspace:*",
-    "ag-grid-community": "^36.1.0",
-    "jheat.js": "^5.2.0"
+    "@supabase/supabase-js": "^2.116.0"
   },
   "devDependencies": {
+    "@iconify/svelte": "^5.2.2",
     "@skeletonlabs/skeleton": "^5.0.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.1",
     "@sveltejs/adapter-auto": "^7.0.1",
+    "@sveltejs/adapter-node": "^5.5.7",
     "@sveltejs/kit": "^2.70.3",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
+    "@tutors/community": "workspace:*",
+    "@tutors/logger": "workspace:*",
+    "@tutors/tutors-time-lib": "workspace:*",
+    "@tutors/ui-primitives": "workspace:*",
+    "ag-grid-community": "^36.1.0",
+    "jheat.js": "^5.2.0",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
