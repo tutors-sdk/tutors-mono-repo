@@ -1,7 +1,8 @@
 import type { HandleClientError } from "@sveltejs/kit";
-import log, { addTransport } from "@tutors/logger";
+import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
+setAppName("tutors-live");
 addTransport(createSupabaseErrorTransport("tutors-live"));
 
 window.addEventListener("unhandledrejection", (event) => {

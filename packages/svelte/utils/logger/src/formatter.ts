@@ -5,8 +5,9 @@ export function formatJson(entry: LogEntry): string {
 }
 
 export function formatPretty(entry: LogEntry): string {
-  const { timestamp, level, message, ...context } = entry;
-  const prefix = `[${timestamp}] [tutors:${level}]`;
+  const { timestamp, level, message, app, ...context } = entry;
+  const scope = typeof app === "string" && app.length > 0 ? app : "tutors";
+  const prefix = `[${timestamp}] [${scope}:${level}]`;
   const contextStr =
     Object.keys(context).length > 0 ? " " + JSON.stringify(context) : "";
   return `${prefix} ${message}${contextStr}`;

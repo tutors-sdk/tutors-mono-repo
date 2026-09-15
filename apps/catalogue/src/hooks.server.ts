@@ -1,5 +1,13 @@
-import type { Handle, HandleServerError } from "@sveltejs/kit";
-import log from "@tutors/logger";
+/* global APP_VERSION */
+import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
+import { sequence } from "@sveltejs/kit/hooks";
+import { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+
+setAppName("tutors-catalogue");
+
+export const init: ServerInit = async () => {
+  logServiceStart({ version: APP_VERSION });
+};
 
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
@@ -10,10 +18,10 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = securityHeaders;
+export const handle = sequence(createRequestLogger(), securityHeaders);
 
-export const handleError: HandleServerError = ({ error }) => {
-  log.error("Server error:", error instanceof Error ? error : { details: error });
+export const handleError: HandleServerError = ({ error, event, status, message }) => {
+  logRequestError({ error, event, status, message });
   return {
     message: "An unexpected error occurred"
   };
