@@ -31,7 +31,8 @@
     "architecture-report": "depcruise apps packages --config .dependency-cruiser.cjs --output-type err-long",
     "check:k8s": "tsx scripts/checks/k8s-conformance.ts",
     "check:container": "tsx scripts/checks/container-smoke.ts",
-    "check:test-time": "tsx scripts/checks/test-time-budget.ts"
+    "check:test-time": "tsx scripts/checks/test-time-budget.ts",
+    "check:generator-diff": "tsx scripts/checks/generator-diff.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

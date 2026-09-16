@@ -59,3 +59,5 @@ okf/
 
 # Kubernetes secrets are created out of band; only the example is tracked
 deploy/k8s/**/secrets.yaml
+# Generator differential work area (scripts/checks/generator-diff.ts)
+.generator-diff/

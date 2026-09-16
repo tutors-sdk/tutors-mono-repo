@@ -1,0 +1,17 @@
+# Intended generator output changes since the last release (runway tier C).
+#
+# Every difference between the base ref and this branch in the generated
+# corpus must match a claim, or scripts/checks/generator-diff.ts fails.
+# Claims that match nothing are reported as stale. Reset this list to
+# `claims: []` when a release is cut.
+#
+#   - corpus: synthetic          # glob, default "*"
+#     generator: tutors          # tutors | tutors-lite, glob, default "*"
+#     path: "tutors.json"        # glob over output paths (json/ or html/ relative)
+#     pointer: "/los/**/title"   # optional glob over the JSON location; ids appear as [id]
+#     reason: "#262 lab titles keep their numbering"   # must cite #issue, CHANGELOG or a Rule
+#
+# A claim covering every file (path "**" and no narrower pointer) is ignored
+# unless `approved: true` is set in a PR carrying the approve-broad-claim label:
+# it should be easy to claim precisely and awkward to claim everything.
+claims: []
