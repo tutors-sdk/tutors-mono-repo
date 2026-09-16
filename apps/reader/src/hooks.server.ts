@@ -6,6 +6,7 @@ import { env } from "$env/dynamic/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+import { metricsHandle } from "@tutors/metrics";
 
 setAppName("tutors-reader");
 
@@ -75,7 +76,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(requestLogger, localeHandle, securityHeaders, authInitHandle);
+export const handle = sequence(requestLogger, metricsHandle, localeHandle, securityHeaders, authInitHandle);
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
   logRequestError({ error, event, status, message });

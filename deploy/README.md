@@ -41,6 +41,7 @@ needs no Supabase project. If a host port is taken, override it, for example
 | Filesystem | read-only safe; nothing is written at runtime |
 | Liveness | `GET /healthz/live` returns `{"status":"ok"}` with no dependencies |
 | Readiness | `GET /healthz` also reports Supabase reachability |
+| Metrics | `GET /metrics` in Prometheus text format (request histogram/counter, in-flight gauge, Node process metrics) |
 | Entrypoint | `node build/index.js` (SvelteKit adapter-node) |
 
 Environment variables the server reads at startup:
@@ -54,6 +55,39 @@ Environment variables the server reads at startup:
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
 | `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
+| `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
+
+## Metrics
+
+Every app serves `GET /metrics` on its normal port: `http_request_duration_seconds`,
+`http_requests_total` and `http_requests_in_flight`, labelled by method, matched
+route and status, plus the default Node.js process metrics. `/metrics` and the
+`/healthz` probes are not counted. The route label is the SvelteKit route id,
+so unmatched requests share one `unmatched` series.
+
+Because the endpoint sits behind the public Route, set `METRICS_TOKEN` in
+production and give the scraper the same value (Prometheus `authorization`,
+ServiceMonitor `endpoints[].authorization`).
+
+`observability/compose.yaml` starts Prometheus and Grafana, provisioned with
+the data source, alert rules (error rate, p99 latency, target down) and a
+contact point template. It scrapes the apps through their host ports, so it
+runs alongside either the local stack or the staging stack:
+
+```bash
+cd observability && docker compose up -d   # Prometheus :9090, Grafana :3004
+```
+
+On a cluster with the Prometheus Operator (OpenShift user-workload
+monitoring), add the ServiceMonitor component to an overlay:
+
+```yaml
+components:
+  - ../../components/servicemonitor
+```
+
+The pod template also carries `prometheus.io/scrape` annotations for
+annotation-driven scrapers.
 
 ## Kubernetes / OpenShift
 

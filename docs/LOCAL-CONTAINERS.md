@@ -63,6 +63,17 @@ docker compose logs -f reader
 
 Logs are JSON lines, one per request, with the request id, route, status and duration.
 
+## Metrics, Prometheus and Grafana
+
+Each app also serves `GET /metrics` in Prometheus format. To see it in Grafana, start the observability stack in a second terminal; it scrapes the four apps through the ports above and needs no configuration:
+
+```bash
+cd observability
+docker compose up -d
+```
+
+Prometheus is at http://localhost:9090 and Grafana at http://localhost:3004 (admin / admin). The Prometheus data source and the alert rules are provisioned automatically. If you changed the app ports, edit `observability/prometheus/prometheus.yml` to match.
+
 ## Running with a real Supabase project and GitHub login
 
 Copy `.env.example` to `.env` in the repository root and fill in the values. Compose reads it automatically for every service. At minimum:
