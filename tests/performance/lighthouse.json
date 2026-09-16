@@ -1,0 +1,21 @@
+{
+  "note": "Lighthouse reference pages for runway tier L (scripts/checks/lighthouse.ts). Floors apply to the median score over runs. {course} is LIGHTHOUSE_COURSE. Lower a floor only with a reason in the PR.",
+  "runs": 3,
+  "preset": "desktop",
+  "pages": [
+    { "name": "home", "path": "/" },
+    { "name": "course", "path": "/course/{course}" },
+    {
+      "name": "lab",
+      "path": "/lab/{course}/topic-01-typical/unit-1/book-a",
+      "floors": { "accessibility": 0.85 },
+      "why": "Measured 0.88 on 16.2.0 (three runs, desktop preset). Raise back to the global 0.90 when the lab page's accessibility audits are fixed."
+    }
+  ],
+  "floors": {
+    "performance": 0.5,
+    "accessibility": 0.9,
+    "best-practices": 0.8,
+    "seo": 0.8
+  }
+}

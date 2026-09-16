@@ -23,7 +23,7 @@
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
     "test:a11y": "playwright test --config=playwright-a11y.config.ts",
-    "test:runway": "vitest run tests/architecture tests/suite-health tests/completeness tests/observability tests/conformance",
+    "test:runway": "vitest run tests/architecture tests/suite-health tests/completeness tests/observability tests/conformance tests/performance",
     "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build",
     "lint": "eslint .",
     "api-report": "tsx scripts/api-surface.ts",
@@ -32,6 +32,8 @@
     "check:k8s": "tsx scripts/checks/k8s-conformance.ts",
     "check:container": "tsx scripts/checks/container-smoke.ts",
     "check:bundle": "tsx scripts/checks/bundle-budget.ts",
+    "check:load": "tsx scripts/checks/load-test.ts",
+    "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
     "check:test-time": "tsx scripts/checks/test-time-budget.ts"
   },
   "devDependencies": {

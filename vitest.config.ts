@@ -14,7 +14,9 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
-    exclude: ["tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Replaces Vitest's default exclude, so node_modules must be listed again (the isolated
+    // Lighthouse runner under tests/performance/lighthouse has its own).
+    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
     server: {
       deps: {
         // Ships imports of SvelteKit's `$app/*` virtual modules, which only
