@@ -1,0 +1,8 @@
+# deno.json / package.json drift that predates the parity check.
+# This file may only shrink. The Node build (what the apps and tests use) is on
+# a newer major than the JSR publish for these; align deno.json imports after
+# checking the JSR build against the new majors.
+packages/jsr/model: dependency archiver major differs (deno.json ^7.0.1, package.json ^8.0.0)
+packages/jsr/model: dependency js-yaml major differs (deno.json ^4.1.1, package.json ^5.4.1)
+packages/jsr/model: dependency markdown-it major differs (deno.json ^14.2.0, package.json ^15.0.1)
+packages/jsr/model: dependency markdown-it-anchor major differs (deno.json ^9.2.0, package.json ^10.0.0)
