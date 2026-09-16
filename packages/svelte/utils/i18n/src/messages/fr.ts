@@ -164,6 +164,7 @@ const fr: Record<string, string> = {
   "a11y.secondaryNavigation": "Navigation secondaire",
   "a11y.sidebar": "Barre laterale",
   "a11y.footer": "Pied de page",
+  "a11y.tree.toggle": "Afficher ou masquer le contenu",
 
   // Guided tour
   "tour.ariaLabel": "Visite guidee",

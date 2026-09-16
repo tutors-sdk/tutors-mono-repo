@@ -6,6 +6,7 @@
   import Icon from "./Icon.svelte";
   import { isEducator } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
+  import { t } from "@tutors/i18n";
 
   let { lo, expandAll = false }: { lo: Lo; expandAll?: boolean } = $props();
 
@@ -15,6 +16,11 @@
     const toc = item?.toc ?? [];
     if (toc.length > 0) return toc;
     return (item as Composite)?.los ?? [];
+  }
+
+  /** Titles can carry inline markup (LoReference renders them as HTML); accessible names are plain text. */
+  function plainText(html: string): string {
+    return html.replace(/<[^>]*>/g, "").trim();
   }
 
   function isVisible(child: Lo): boolean {
@@ -77,11 +83,11 @@
 </script>
 
 <div class="mb-2 flex w-full items-center justify-center gap-2">
-  <button class="btn btn-sm border-1" onclick={toggleExpandAll}>
+  <button class="btn btn-sm border-1" onclick={toggleExpandAll} aria-label={allExpanded ? t("nav.context.collapseAll") : t("nav.context.expandAll")}>
     {#if allExpanded}
-      <Icon type="expanded" tip="Collapse all" />
+      <Icon type="expanded" tip={t("nav.context.collapseAll")} />
     {:else}
-      <Icon type="compacted" tip="Expand all" />
+      <Icon type="compacted" tip={t("nav.context.expandAll")} />
     {/if}
   </button>
 </div>
@@ -98,14 +104,18 @@
   <TreeView.NodeProvider value={{ node, indexPath }}>
     {#if node.children?.length}
       <TreeView.Branch>
-        <TreeView.BranchControl>
-          <TreeView.BranchIndicator />
-          <TreeView.BranchText class="py-0.5">
+        <!-- The link sits beside the branch control, not inside it: the control is
+             role="button", and a link inside a button is unreachable for assistive tech. -->
+        <div class="flex items-center">
+          <TreeView.BranchControl class="pe-0" aria-label={`${t("a11y.tree.toggle")}: ${plainText(node.name)}`}>
+            <TreeView.BranchIndicator />
+          </TreeView.BranchControl>
+          <TreeView.BranchText class="min-w-0 flex-1 py-0.5">
             {#if node.lo}
               <LoReference lo={node.lo} />
             {/if}
           </TreeView.BranchText>
-        </TreeView.BranchControl>
+        </div>
         <TreeView.BranchContent class="-pl-1">
           <TreeView.BranchIndentGuide />
           {#each node.children as childNode, childIndex (childNode)}
