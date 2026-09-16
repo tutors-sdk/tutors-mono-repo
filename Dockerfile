@@ -69,6 +69,16 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     NODE_OPTIONS=--enable-source-maps
 
+# Pick up Debian security fixes published after the base image was cut, then
+# drop npm, npx, corepack and yarn: the runtime only ever runs
+# `node build/index.js`, and the package managers' bundled dependencies are
+# what image scanners flag first.
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
+           /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn*
+
 WORKDIR /app
 
 # Owned by a non-root UID with GID 0 so OpenShift's arbitrary-UID model
