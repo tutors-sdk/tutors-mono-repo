@@ -1,0 +1,87 @@
+import { expect, type Page } from "@playwright/test";
+import { fixture, stack } from "./stack.ts";
+
+/**
+ * The named journeys (runway tier G). Each one drives the UI the way a person
+ * would and calls `onPage(pageKey)` after every page settles, so the caller
+ * decides what to capture: the specs run axe, the release harness will collect
+ * DOM, network and screenshots at the same points.
+ *
+ * Selectors are roles and accessible names only. If a journey cannot find
+ * something by role, that is an accessibility finding, not a reason to reach
+ * for CSS.
+ */
+export type OnPage = (pageKey: string) => Promise<void>;
+
+/** The lab step navigation that is visible at this viewport (sidebar on desktop, bottom bar on mobile). */
+function labSteps(page: Page) {
+  return page.getByRole("navigation", { name: "Lab steps" }).filter({ visible: true }).first();
+}
+
+/** Anonymous student: home page, open the fixture course, topic, lab, move through steps. */
+export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
+  await page.goto(`${stack.reader}/`);
+  await expect(page.getByRole("heading", { level: 1, name: /An Open Learning Web Toolkit/ })).toBeVisible();
+  await onPage("reader:home");
+
+  await page.goto(`${stack.reader}/course/${courseId}`);
+  await expect(page.getByRole("banner").getByRole("heading", { name: fixture.title })).toBeVisible();
+  await expect(page).toHaveTitle(fixture.title);
+  await onPage("reader:course");
+
+  await page.getByRole("link", { name: new RegExp(`^${fixture.topicTitle}\\b`) }).click();
+  await expect(page).toHaveURL(new RegExp(`/topic/${courseId}/${fixture.topicPath}$`));
+  await expect(page.getByRole("banner").getByRole("heading", { name: fixture.topicTitle })).toBeVisible();
+  await onPage("reader:topic");
+
+  await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.labTitle}\\b`) }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/lab/${courseId}/${fixture.labPath}`));
+  await expect(page.getByRole("article").getByRole("heading", { level: 1, name: fixture.firstStep.heading })).toBeVisible();
+  await expect(labSteps(page)).toBeVisible();
+  await onPage("reader:lab-step");
+
+  // Keyboard: the lab advances on ArrowRight.
+  await page.keyboard.press("ArrowRight");
+  await expect(page).toHaveURL(new RegExp(`/${fixture.labPath}/${fixture.secondStep.id}$`));
+  await expect(page.getByRole("article").getByRole("heading", { level: 1, name: fixture.secondStep.heading })).toBeVisible();
+
+  // Pointer: jump back to the first step from the step navigation.
+  await labSteps(page).getByRole("link", { name: fixture.firstStep.heading, exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/${fixture.labPath}/${fixture.firstStep.id}$`));
+}
+
+/** Anonymous student searches the course and gets a result linking to the matching note. */
+export async function anonymousStudentSearches(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
+  await page.goto(`${stack.reader}/course/${courseId}`);
+  await expect(page.getByRole("banner").getByRole("heading", { name: fixture.title })).toBeVisible();
+
+  await page.getByRole("button", { name: "Search this course" }).click();
+  await expect(page).toHaveURL(new RegExp(`/search/${courseId}$`));
+  const box = page.getByRole("textbox", { name: "Enter search term:" });
+  await expect(box).toBeVisible();
+  await onPage("reader:search");
+
+  await box.fill(fixture.searchTerm);
+  await box.press("Enter");
+  const results = page.getByRole("main").getByRole("link", { name: fixture.searchResultTitle });
+  await expect(results.first()).toBeVisible();
+  await onPage("reader:search-results");
+}
+
+/** The catalogue renders its (empty, anonymous) listing. */
+export async function catalogueLoads(page: Page, onPage: OnPage) {
+  await page.goto(`${stack.catalogue}/`);
+  await expect(page).toHaveTitle(/Tutors Catalogue/);
+  await expect(page.getByRole("main")).toContainText("Totals");
+  await onPage("catalogue:home");
+}
+
+/** Live renders its tabs with no presence data in anonymous mode. */
+export async function liveLoads(page: Page, onPage: OnPage) {
+  await page.goto(`${stack.live}/`);
+  await expect(page).toHaveTitle(/Tutors Live/);
+  await expect(page.getByRole("tab", { name: /^Courses/ })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: /^Students/ }).click();
+  await expect(page.getByRole("tab", { name: /^Students/ })).toHaveAttribute("aria-selected", "true");
+  await onPage("live:home");
+}
