@@ -112,9 +112,100 @@ jobs:
         if: always()
         run: pnpm check:test-time reports/vitest-nightly.json
 
+  e2e-stack-nightly:
+    name: E2E journeys (firefox, mobile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Build catalogue image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=catalogue
+          tags: tutors/catalogue:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-catalogue
+
+      - name: Build live image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=live
+          tags: tutors/live:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-live
+
+      - name: Build fixture course
+        run: pnpm e2e:stack:fixture
+
+      - name: Start stack
+        run: pnpm e2e:stack:up
+        env:
+          TUTORS_TAG: ci
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps firefox chromium
+
+      - name: Journeys
+        run: pnpm test:e2e:stack --project=firefox --project=mobile
+
+      - name: Baselines have no stale lines
+        run: pnpm test:e2e:stack:ratchet
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f tests/e2e-stack/compose.yaml logs --no-color
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e2e-stack-nightly-report
+          path: |
+            playwright-report/e2e-stack
+            test-results/e2e-stack
+          retention-days: 14
+
   report:
     name: Report Results
-    needs: [e2e-full, contract-snapshots, suite-health]
+    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -127,7 +218,8 @@ jobs:
           echo "| E2E Tests | ${{ needs.e2e-full.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Contract Snapshots | ${{ needs.contract-snapshots.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any job failed
-        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure'
+        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure'
         run: exit 1

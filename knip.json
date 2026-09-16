@@ -21,7 +21,8 @@
         "tests/**/*.{test,steps,spec}.ts",
         "*.config.{ts,js,mjs,cjs}",
         ".dependency-cruiser.cjs",
-        "tests/release/scripts/*.ts"
+        "tests/release/scripts/*.ts",
+        "tests/e2e-stack/fixture-course/build.ts"
       ],
       "project": [
         "scripts/**/*.ts",

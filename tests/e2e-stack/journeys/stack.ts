@@ -34,10 +34,10 @@ export const fixture = {
 };
 
 // Playwright compiles specs to CommonJS, so __dirname rather than import.meta.
-export const A11Y_BASELINE = resolve(__dirname, "../a11y-known-violations.txt");
-export const MOTION_BASELINE = resolve(__dirname, "../reduced-motion-known.txt");
+const A11Y_BASELINE = resolve(__dirname, "../a11y-known-violations.txt");
+const MOTION_BASELINE = resolve(__dirname, "../reduced-motion-known.txt");
 /** Every key observed in a run, one JSON line per audit; tests/e2e-stack/ratchet.mjs checks for stale baseline lines. */
-export const OBSERVED = resolve(process.env.E2E_OBSERVED_FILE ?? resolve(__dirname, "../../../test-results/e2e-stack-observed.jsonl"));
+const OBSERVED = resolve(process.env.E2E_OBSERVED_FILE ?? resolve(__dirname, "../../../test-results/e2e-stack-observed.jsonl"));
 
 function readBaseline(path: string): Set<string> {
   try {
