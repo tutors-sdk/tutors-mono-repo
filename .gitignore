@@ -47,6 +47,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 tests/release/.release-work/
+test-results/
+playwright-report/
+tests/e2e-stack/work/
 .stryker-tmp/
 reports/mutation/
 
