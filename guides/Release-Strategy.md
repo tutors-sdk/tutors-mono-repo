@@ -30,7 +30,7 @@ The existing workflow stages commits on a `development` branch for extended peri
 |--------|---------|----------|
 | `main` | Integration trunk. All PRs target this branch. Always deployable. | Permanent |
 | `feature/*`, `fix/*`, `chore/*` | Short-lived work branches off `main`. One concern per branch. | Days, not weeks |
-| `release/vX.Y.Z` | Cut from `main` when preparing a release. Only bug fixes land here. | Duration of RC hardening (typically 1-2 weeks) |
+| `release/vX.Y.Z` | Cut from `main` when preparing a release. Only bug fixes land here. | Permanent. Retained after shipping as a recovery point (see Final Release) |
 
 ### What Goes Away
 
@@ -109,7 +109,9 @@ When the RC is validated and stable:
 2. **Merge the release branch back to `main`** to capture any hardening fixes.
 3. **Create a GitHub Release** from the tag with release notes.
 4. **Deploy to production.**
-5. **Delete the release branch.** It has served its purpose.
+5. **Retain the release branch.** It is not deleted. The tag is the canonical, immutable artifact, but the branch is kept as a recovery point: if an issue surfaces late, the release line is still there to branch a fix from without first having to locate the right commit on `main`.
+
+   Two things follow from retaining it. A branch is mutable where a tag is not, so a retained release branch must not be pushed to after its release ships — once it moves it no longer records what was released. And retention is not a substitute for tagging: every release still gets a `vX.Y.Z` tag and a GitHub Release, which are what consumers and tooling read.
 
 ### 5. Hotfix Process
 
