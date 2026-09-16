@@ -17,6 +17,7 @@
     "test:bdd": "vitest run --config vitest.config.ts tests/bdd/",
     "test:contract": "vitest run tests/contract/",
     "test:fuzz": "vitest run --config vitest.config.fuzz.ts",
+    "test:tz": "tsx scripts/checks/tz-matrix.ts",
     "test:mutation": "npx stryker run",
     "test:e2e": "playwright test",
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
