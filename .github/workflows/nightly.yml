@@ -239,9 +239,107 @@ jobs:
       - name: Unit and property suites under UTC, Europe/Dublin, Pacific/Auckland
         run: pnpm test:tz
 
+  # Runway tier L: Lighthouse floors on three reader pages (medians of three runs).
+  lighthouse:
+    name: Lighthouse (reader)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the isolated Lighthouse runner
+        run: pnpm --dir tests/performance/lighthouse install --ignore-workspace --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Lighthouse
+        run: pnpm check:lighthouse --image tutors/reader:ci
+
+  # Runway tier L: k6 load (three runs, recorded for baselining) and a soak.
+  load:
+    name: Load and soak (reader)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Thresholds bite (negative fixture)
+        run: pnpm check:load --image tutors/reader:ci --duration 15s --env P95_MS=0 --expect-fail
+
+      - name: Load, three runs
+        run: pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3 --record reports/load-samples.json
+
+      - name: Soak
+        run: pnpm check:load --image tutors/reader:ci --script reader-soak.js --rate 5 --duration 45m
+
+      - name: Upload load samples
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: load-samples
+          path: reports/load-samples.json
+          retention-days: 30
+
   report:
     name: Report Results
-    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix]
+    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -256,7 +354,9 @@ jobs:
           echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lighthouse | ${{ needs.lighthouse.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Load and Soak | ${{ needs.load.result }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any job failed
-        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure'
+        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure'
         run: exit 1

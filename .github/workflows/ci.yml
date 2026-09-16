@@ -345,12 +345,49 @@ jobs:
             test-results/e2e-stack
           retention-days: 14
 
+  # Runway tier L: per-app client bundle ceilings (tests/performance/bundle-budgets.json).
+  bundle-budgets:
+    name: Bundle budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live apps/time; do
+            cp .env.example "$dir/.env"
+          done
+
+      - name: Build every app
+        run: pnpm --filter "tutors-reader..." --filter "tutors-catalogue..." --filter "tutors-live..." --filter "tutors-time..." build
+        env:
+          SVELTEKIT_ADAPTER: node
+
+      - name: Check bundle budgets
+        run: pnpm check:bundle
+
   # The one check to mark as required in branch protection. A skipped or
   # cancelled job counts as a failure.
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack]
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets]
     runs-on: ubuntu-latest
     steps:
       - name: Every job succeeded
