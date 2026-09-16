@@ -29,7 +29,7 @@
     "e2e:stack:down": "docker compose -f tests/e2e-stack/compose.yaml down",
     "test:e2e:stack": "playwright test --config playwright.e2e-stack.config.ts",
     "test:e2e:stack:ratchet": "node tests/e2e-stack/ratchet.mjs",
-    "test:runway": "vitest run tests/architecture tests/suite-health tests/completeness tests/observability tests/conformance tests/security",
+    "test:runway": "vitest run tests/architecture tests/suite-health tests/completeness tests/observability tests/conformance tests/security tests/performance",
     "check:all": "pnpm run check && pnpm run test && pnpm run test:contract && pnpm run build",
     "lint": "eslint .",
     "api-report": "tsx scripts/api-surface.ts",
@@ -39,7 +39,10 @@
     "check:container": "tsx scripts/checks/container-smoke.ts",
     "check:test-time": "tsx scripts/checks/test-time-budget.ts",
     "check:knip": "tsx scripts/checks/knip.ts",
-    "check:audit": "tsx scripts/checks/dependency-audit.ts"
+    "check:audit": "tsx scripts/checks/dependency-audit.ts",
+    "check:bundle": "tsx scripts/checks/bundle-budget.ts",
+    "check:load": "tsx scripts/checks/load-test.ts",
+    "check:lighthouse": "tsx scripts/checks/lighthouse.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
