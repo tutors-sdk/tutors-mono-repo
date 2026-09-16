@@ -9,6 +9,19 @@
   let { calendar }: Props = $props();
   const hasAssessments = $derived(calendar.weeks.some((w) => w.assessment));
   const hasWeekNumbers = $derived(calendar.weeks.some((w) => w.weekNumber != null));
+
+  /** Format assessment due strings (e.g. 2026-09-16T17:00) like week dates: "Sep 16". */
+  function formatDueDate(due: string): string {
+    const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(due);
+    if (iso) {
+      return `${monthNames[Number(iso[2]) - 1]} ${Number(iso[3])}`;
+    }
+    const parsed = new Date(due);
+    if (!Number.isNaN(parsed.getTime())) {
+      return `${monthNames[parsed.getMonth()]} ${parsed.getDate()}`;
+    }
+    return due;
+  }
 </script>
 
 <h4 class="mb-4 text-center font-semibold">
@@ -41,7 +54,7 @@
               <td>
                 {#if week.assessment}
                   <div class="text-sm font-semibold">{week.assessment.name}</div>
-                  <div class="text-xs">Due: {week.assessment.due} ({week.assessment.percentage}%)</div>
+                  <div class="text-xs font-bold">Due: {formatDueDate(week.assessment.due)} ({week.assessment.percentage}%)</div>
                   <div class="text-xs">{week.assessment.submission}</div>
                 {/if}
               </td>
@@ -58,7 +71,7 @@
               <td>
                 {#if week.assessment}
                   <div class="text-sm font-semibold">{week.assessment.name}</div>
-                  <div class="text-xs">Due: {week.assessment.due} ({week.assessment.percentage}%)</div>
+                  <div class="text-xs font-bold">Due: {formatDueDate(week.assessment.due)} ({week.assessment.percentage}%)</div>
                   <div class="text-xs">{week.assessment.submission}</div>
                 {/if}
               </td>
