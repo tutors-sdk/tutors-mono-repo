@@ -151,5 +151,6 @@ describe("completeness (runway tier N)", () => {
     ];
     const result = ratchet(current, readBaseline(resolve(REPO_ROOT, BASELINE)));
     expect(result, describeRatchet("completeness", BASELINE, result)).toEqual({ added: [], stale: [] });
-  });
+    // Imports every locale and walks the tree; slow on a cold cache under a parallel run.
+  }, 60_000);
 });

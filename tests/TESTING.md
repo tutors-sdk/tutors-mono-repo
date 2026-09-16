@@ -53,6 +53,12 @@ A comprehensive, multi-tier testing framework built around BDD-first principles 
 
 **Importance**: Fuzz tests find edge cases that humans miss. A hand-written test might check 5 calendar entries, but a fuzz test checks 10,000 random combinations — including empty arrays, single elements, duplicate dates, and extreme values. For the calendar analytics engine, fuzz testing is essential: the `buildPivotedRows` and `median` functions must handle any student count, any date range, and any activity distribution without crashing or producing nonsensical results.
 
+**Runway tier B** (`course-model.fuzz.test.ts`, `calendar-time.fuzz.test.ts`): properties run against the real `packages/jsr/model` and `packages/jsr/time` code, never a local copy. Courses come from the shared arbitrary in `tests/support/arbitraries/course-tree.ts` (generator-shaped JSON with `{{COURSEURL}}` routes, nested composites, lab steps, Unicode, hidden los), which the generator differential and release harness reuse. Each property is a factory over the implementation it checks, and a negative fixture runs it against a deliberately broken wrapper to prove it can fail.
+
+- **Replay**: a failure prints `{ seed, path }`; rerun with `FUZZ_SEED=<seed> FUZZ_PATH=<path> pnpm test:fuzz`. `FUZZ_RUNS` raises the run count.
+- **Timezones**: `pnpm test:tz` runs the unit and property suites under UTC, Europe/Dublin and Pacific/Auckland and ratchets failures against `tests/fuzz/known-timezone-failures.txt`. Set the zone through the script, not `TZ=... pnpm test` in Git Bash, which does not pass `TZ` to Node on Windows; the suite asserts the zone really applied.
+- **No network**: `tests/support/no-network.ts` is a setup file for the root and fuzz configs. fetch, http(s), net and tls connections to anything but loopback throw unless the file is allow-listed there with a reason or calls `allowNetwork("reason")`.
+
 ---
 
 ## Tier 6: E2E Tests (`apps/*/tests/e2e/`)

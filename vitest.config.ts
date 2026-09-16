@@ -15,6 +15,8 @@ export default defineConfig({
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
     exclude: ["tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Unit and property tiers never reach the network (runway tier B).
+    setupFiles: ["tests/support/no-network.ts"],
     server: {
       deps: {
         // Ships imports of SvelteKit's `$app/*` virtual modules, which only
