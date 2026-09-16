@@ -125,12 +125,14 @@ export function iconLibraryFindings(base: { name: string; icons: object }, libra
 
 /* ---------------- documentation links ---------------- */
 
-/** GitHub's heading anchor: lowercase, punctuation dropped, spaces to hyphens. */
+/**
+ * GitHub's heading anchor: lowercase, punctuation dropped, spaces to hyphens.
+ * Inline HTML in a heading is not special-cased; its brackets are dropped as punctuation.
+ */
 export function githubSlug(heading: string): string {
   return heading
     .trim()
     .toLowerCase()
-    .replace(/<[^>]+>/g, "")
     .replace(/[`*_~[\]()]/g, "")
     .replace(/[^\p{L}\p{N}\s-]/gu, "")
     .replace(/\s/g, "-");
