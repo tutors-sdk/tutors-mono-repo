@@ -203,9 +203,45 @@ jobs:
             test-results/e2e-stack
           retention-days: 14
 
+  # Runway tier B: the unit and property suites under three timezones, ratcheted
+  # against tests/fuzz/known-timezone-failures.txt.
+  timezone-matrix:
+    name: Timezone matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live apps/time; do
+            cp .env.example "$dir/.env"
+          done
+
+      - name: Sync SvelteKit apps
+        run: pnpm -r --filter "./apps/**" exec svelte-kit sync
+
+      - name: Unit and property suites under UTC, Europe/Dublin, Pacific/Auckland
+        run: pnpm test:tz
+
   report:
     name: Report Results
-    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly]
+    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -219,7 +255,8 @@ jobs:
           echo "| Contract Snapshots | ${{ needs.contract-snapshots.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any job failed
-        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure'
+        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure'
         run: exit 1
