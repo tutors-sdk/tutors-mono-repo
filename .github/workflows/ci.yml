@@ -71,6 +71,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Runway tier A: unused files, exports and dependencies, ratcheted
+      # against tests/architecture/known-knip.txt.
+      - name: Unused code and dependencies (knip)
+        run: pnpm check:knip
+
       - name: Run unit tests
         run: pnpm exec vitest run --coverage
 

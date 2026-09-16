@@ -31,7 +31,8 @@
     "architecture-report": "depcruise apps packages --config .dependency-cruiser.cjs --output-type err-long",
     "check:k8s": "tsx scripts/checks/k8s-conformance.ts",
     "check:container": "tsx scripts/checks/container-smoke.ts",
-    "check:test-time": "tsx scripts/checks/test-time-budget.ts"
+    "check:test-time": "tsx scripts/checks/test-time-budget.ts",
+    "check:knip": "tsx scripts/checks/knip.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -51,6 +52,7 @@
     "globals": "^17.12.0",
     "happy-dom": "^20.14.0",
     "js-yaml": "^4.1.1",
+    "knip": "6.35.1",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
