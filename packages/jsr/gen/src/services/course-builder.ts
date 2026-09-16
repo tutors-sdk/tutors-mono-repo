@@ -83,8 +83,7 @@ function buildLab(lo: Lo, lr: LearningResource): Lo {
     const wholeFile = readWholeFile(chapterName);
     const contents = frontMatter(wholeFile);
     let theTitle = contents.body.substring(0, contents.body.indexOf("\n"));
-    theTitle = theTitle.replace("\r", "");
-    theTitle = removeLeadingHashes(theTitle);
+    theTitle = removeLeadingHashes(theTitle).trim();
     // The step id sits between the first and last "." of the file name (01.Setup.md -> Setup).
     // Take them from the file name, not the full path, which may contain dotted directories.
     const fileName = getFileName(chapterName);

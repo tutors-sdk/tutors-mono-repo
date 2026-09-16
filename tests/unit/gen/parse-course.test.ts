@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -50,5 +50,32 @@ describe("parseCourse: lab step ids", () => {
     expect(lab.los.map((step) => step.id)).toEqual(["Setup", "Step-01"]);
     expect(lab.los.map((step) => (step as Lo & { shortTitle: string }).shortTitle)).toEqual(["Setup", "Step-01"]);
     expect(lab.los.map((step) => step.route)).toEqual(["/lab/{{COURSEURL}}/topic-01/book-a/Setup", "/lab/{{COURSEURL}}/topic-01/book-a/Step-01"]);
+  });
+});
+
+describe("parseCourse: titles", () => {
+  it.each([
+    ["LF", "\n"],
+    ["CRLF", "\r\n"]
+  ])("reads titles without the space after # or a trailing carriage return (%s)", (_, eol) => {
+    const md = (title: string, heading = "#") => `${heading} ${title}${eol}A summary${eol}`;
+    const root = writeCourse("course", {
+      "course.md": md("Course"),
+      "topic-01/topic.md": md("Topic 1"),
+      "topic-01/note-1/note.md": md("Note 1"),
+      "topic-01/book-a/01.Setup.md": md("Lab 1", "##")
+    });
+    const [course] = parseCourse(root, true);
+    expect(course.title).toBe("Course");
+    expect(find(course, "topic-01").title).toBe("Topic 1");
+    expect(find(course, "note-1").title).toBe("Note 1");
+    expect((find(course, "book-a") as Lab).los[0].title).toBe("Lab 1");
+  });
+});
+
+describe("tutors-lite templates", () => {
+  it("Note.vto renders nothing after the note card", () => {
+    const template = readFileSync(join(__dirname, "../../../packages/jsr/gen/src/templates/vento/Note.vto"), "utf8");
+    expect(template).toMatch(/\{\{ noteCard\(lo\) \}\}\r?\n/);
   });
 });
