@@ -24,7 +24,8 @@ export function toPosix(path: string, from: string = REPO_ROOT): string {
 
 /**
  * Walk `dir` and return absolute paths of files whose name passes `accept`.
- * Dependencies, build output and caches are never visited.
+ * Dependencies, build output, caches and dot-directories (`.git`, `.claude`
+ * worktrees, editor state) are never visited.
  */
 export function walk(dir: string, accept: (name: string) => boolean, skip: ReadonlySet<string> = SKIP_DIRS): string[] {
   const out: string[] = [];
@@ -37,7 +38,7 @@ export function walk(dir: string, accept: (name: string) => boolean, skip: Reado
   for (const name of entries) {
     const full = join(dir, name);
     if (statSync(full).isDirectory()) {
-      if (!skip.has(name)) out.push(...walk(full, accept, skip));
+      if (!skip.has(name) && !name.startsWith(".")) out.push(...walk(full, accept, skip));
     } else if (accept(name)) {
       out.push(full);
     }
