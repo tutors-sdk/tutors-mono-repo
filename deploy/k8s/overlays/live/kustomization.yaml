@@ -16,7 +16,7 @@ labels:
 images:
   - name: tutors-app
     newName: registry.example.com/tutors/live
-    newTag: latest
+    newTag: "16.2.0"
 
 patches:
   - target:
