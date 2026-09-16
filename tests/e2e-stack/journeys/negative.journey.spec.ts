@@ -25,13 +25,4 @@ test.describe("journeys can fail", () => {
     await page.goto(`${stack.readerUnconfigured}/`);
     await expect(page.getByRole("heading", { level: 1, name: /An Open Learning Web Toolkit/ })).toBeVisible({ timeout: 10_000 });
   });
-
-  test("KNOWN BUG: opening search puts keyboard focus in the search box", async ({ page }) => {
-    // The search page focuses its input in onMount, then the layout's
-    // route-change focus handling moves focus to <main id="main-content">.
-    test.fail(true, "focus lands on #main-content, not the search input");
-    await page.goto(`${stack.reader}/course/${stack.courseId}`);
-    await page.getByRole("button", { name: "Search this course" }).click();
-    await expect(page.getByRole("textbox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
-  });
 });

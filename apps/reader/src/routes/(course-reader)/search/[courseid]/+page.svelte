@@ -88,6 +88,7 @@
       name="search"
       id="search"
       class="input flex-1 p-2"
+      data-autofocus
       placeholder="..."
       onkeydown={(e) => e.key === "Enter" && performSearch()}
     />

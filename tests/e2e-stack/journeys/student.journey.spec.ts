@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { anonymousStudentReadsCourse, anonymousStudentSearches, catalogueLoads, liveLoads } from "./journeys.ts";
-import { auditAccessibility, auditReducedMotion, collectPageErrors } from "./stack.ts";
+import { auditAccessibility, auditReducedMotion, collectPageErrors, fixture, stack } from "./stack.ts";
 
 /**
  * Runway tier G against the built images. Every page a journey reaches is
@@ -30,6 +30,20 @@ test.describe("anonymous student", () => {
     });
     expect(visited).toEqual(["reader:search", "reader:search-results"]);
     expect(errors, "uncaught errors in the page").toEqual([]);
+  });
+
+  test("opening search puts keyboard focus in the search box", async ({ page }) => {
+    // The search page places focus itself; the layout's route-change focus must not take it back.
+    await page.goto(`${stack.reader}/course/${stack.courseId}`);
+    await page.getByRole("button", { name: "Search this course" }).click();
+    await expect(page.getByRole("textbox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
+  });
+
+  test("following a link elsewhere moves keyboard focus to the main content", async ({ page }) => {
+    await page.goto(`${stack.reader}/course/${stack.courseId}`);
+    await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.topicTitle}\\b`) }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/topic/${stack.courseId}/${fixture.topicPath}$`));
+    await expect(page.getByRole("main")).toBeFocused({ timeout: 5_000 });
   });
 });
 

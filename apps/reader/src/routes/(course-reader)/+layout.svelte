@@ -64,7 +64,13 @@
     if (elemPage && window.innerWidth >= 600) {
       elemPage.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    document.getElementById("main-content")?.focus();
+    // Move keyboard focus to the new page's content, unless the page has already
+    // placed it on purpose (an element marked data-autofocus, like the search box).
+    // Pages mount before this runs, so without the check focus is taken straight back.
+    const main = document.getElementById("main-content");
+    const active = document.activeElement;
+    const placedByPage = active instanceof HTMLElement && active.hasAttribute("data-autofocus") && !!main?.contains(active);
+    if (!placedByPage) main?.focus();
   });
 </script>
 
