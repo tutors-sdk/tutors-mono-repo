@@ -337,9 +337,70 @@ jobs:
           path: reports/load-samples.json
           retention-days: 30
 
+  # Runway tier C: regenerate pinned public courses at upstream HEAD and diff
+  # against last night's output, so upstream content changes are noticed.
+  generator-corpus:
+    name: Generator corpus contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore last night's snapshot
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: corpus-store/previous
+          key: generator-corpus-${{ github.run_id }}
+          restore-keys: generator-corpus-
+
+      - name: Regenerate nightly courses at upstream HEAD
+        run: pnpm check:generator-diff --nightly --store corpus-store --fail-on-diff
+
+      - name: Keep tonight's snapshot as the next baseline
+        if: always()
+        run: |
+          if [ -d corpus-store/current ]; then
+            rm -rf corpus-store/previous && mv corpus-store/current corpus-store/previous
+          fi
+
+      - name: Save snapshot
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: corpus-store/previous
+          key: generator-corpus-${{ github.run_id }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: generator-corpus-report
+          path: corpus-store/previous/report.json
+          retention-days: 30
+
   report:
     name: Report Results
-    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load]
+    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load, generator-corpus]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -356,7 +417,8 @@ jobs:
           echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Lighthouse | ${{ needs.lighthouse.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Load and Soak | ${{ needs.load.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Generator Corpus | ${{ needs.generator-corpus.result }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any job failed
-        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure'
+        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure' || needs.generator-corpus.result == 'failure'
         run: exit 1

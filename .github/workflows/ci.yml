@@ -382,12 +382,83 @@ jobs:
       - name: Check bundle budgets
         run: pnpm check:bundle
 
+  # Runway tier C: on PRs that touch a generator, every difference in generated
+  # output for the corpus must be claimed in tests/generator/claims.yaml. On
+  # other PRs and on pushes the job succeeds without running, so the gate holds.
+  generator-diff:
+    name: Generator differential
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Did this PR touch a generator?
+        id: gen
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Deno
+        if: steps.gen.outputs.run == 'true'
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup pnpm
+        if: steps.gen.outputs.run == 'true'
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        if: steps.gen.outputs.run == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.gen.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Planted change is caught (self-test)
+        if: steps.gen.outputs.run == 'true'
+        run: pnpm check:generator-diff --plant
+
+      - name: Every output difference is claimed
+        if: steps.gen.outputs.run == 'true'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BROAD: ${{ contains(github.event.pull_request.labels.*.name, 'approve-broad-claim') }}
+        run: |
+          if [ "$BROAD" = "true" ]; then
+            pnpm check:generator-diff --base "origin/${BASE_REF}" --approve-broad
+          else
+            pnpm check:generator-diff --base "origin/${BASE_REF}"
+          fi
+
+      - name: Upload report
+        if: always() && steps.gen.outputs.run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: generator-diff-report
+          path: .generator-diff/report/
+          retention-days: 14
+
   # The one check to mark as required in branch protection. A skipped or
   # cancelled job counts as a failure.
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets]
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff]
     runs-on: ubuntu-latest
     steps:
       - name: Every job succeeded
