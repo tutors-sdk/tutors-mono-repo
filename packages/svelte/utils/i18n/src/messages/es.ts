@@ -96,6 +96,18 @@ const es: Record<string, string> = {
   // Auth
   "auth.signIn": "Inicio de sesion en Tutors",
   "auth.signInWithGithub": "Iniciar sesion con GitHub",
+  "auth.terms": `Estas a punto de autenticarte en Tutors con tus credenciales de Github. **Para la mayoria de los cursos no necesitas iniciar sesion en absoluto, asi que si lo prefieres puedes volver a la pagina del curso y continuar como en cualquier sitio web publico.**
+
+Si te registras o inicias sesion, primero necesitaras una cuenta de Github. Al iniciar sesion tendras disponible un panel sencillo y practico con enlaces rapidos a todos los cursos de Tutors a los que has accedido recientemente.
+
+Para algunos cursos, Tutors siempre requerira una cuenta para obtener acceso, y llegaras aqui. Una vez que hayas iniciado sesion, Tutors puede registrar cuanto tiempo permanece activa cada vista y enviar esta informacion al almacen de datos TutorsTime. Puedes ver esta informacion mediante la funcion Time del menu de perfil. Estos datos estan disponibles para ti y para el instructor de tu curso, pero no para otros estudiantes. No se recopilan otros datos, ni estos datos se transmiten a ningun lugar distinto del almacen de datos TutorsTime.
+
+La funcion Live, disponible desde el menu de perfil, tambien puede usar estos datos para mostrar un panel de estudiantes que estan actualmente en linea. **Puedes desactivar estas funciones deshabilitando la opcion Compartir presencia desde el menu de perfil.** Para obtener mas informacion sobre TutorsTime, consulta:
+
+- [Preguntas frecuentes de Tutors Time](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
+- [Preguntas frecuentes de Tutors Live](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
+
+Tutors es una aplicacion de codigo abierto; el componente de recopilacion de datos [esta aqui](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Nombre",
