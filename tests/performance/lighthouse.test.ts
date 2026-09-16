@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CATEGORIES,
   CONFIG_FILE,
+  DEFAULT_PAGE_VARS,
   collectLighthouseSamples,
   extractRun,
   floorFindings,
@@ -102,6 +103,13 @@ describe("lighthouse (runway tier L)", () => {
     expect(config.runs).toBeGreaterThanOrEqual(3);
     for (const category of CATEGORIES) expect(config.floors[category]).toBeGreaterThan(0);
     for (const page of config.pages.filter((p) => p.floors)) expect(page.why, `${page.name} overrides a floor without a why`).toBeTruthy();
-    expect(resolvePagePath("/lab/{course}/topic-01", "reference-course")).toBe("/lab/reference-course/topic-01");
+    for (const page of config.pages) expect(() => resolvePagePath(page.path, DEFAULT_PAGE_VARS), page.name).not.toThrow();
+  });
+
+  it("resolves page placeholders and rejects one with no value", () => {
+    expect(resolvePagePath("/lab/{course}/{lab}", { course: "localhost:8080", lab: "unit-1/topic-01/book-lab-01" })).toBe(
+      "/lab/localhost:8080/unit-1/topic-01/book-lab-01"
+    );
+    expect(() => resolvePagePath("/lab/{course}/{lab}", { course: "reference-course" })).toThrow("no value for {lab}");
   });
 });

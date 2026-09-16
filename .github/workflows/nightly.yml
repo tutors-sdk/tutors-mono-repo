@@ -239,7 +239,9 @@ jobs:
       - name: Unit and property suites under UTC, Europe/Dublin, Pacific/Auckland
         run: pnpm test:tz
 
-  # Runway tier L: Lighthouse floors on three reader pages (medians of three runs).
+  # Runway tier L: Lighthouse floors on three reader pages (medians of three runs),
+  # against the tier G fixture course so Netlify is not a dependency, with the
+  # samples recorded for baselining.
   lighthouse:
     name: Lighthouse (reader)
     runs-on: ubuntu-latest
@@ -249,6 +251,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -281,8 +288,26 @@ jobs:
           push: false
           cache-from: type=gha,scope=smoke-reader
 
+      - name: Build fixture course
+        run: pnpm e2e:stack:fixture
+
+      - name: Start fixture course server
+        run: docker compose -f tests/e2e-stack/compose.yaml up -d --wait course
+
       - name: Lighthouse
-        run: pnpm check:lighthouse --image tutors/reader:ci
+        env:
+          LIGHTHOUSE_COURSE: localhost:8080
+          LIGHTHOUSE_LAB: unit-1/topic-01/book-lab-01
+        run: pnpm check:lighthouse --image tutors/reader:ci --record reports/lighthouse-samples.json
+
+      - name: Upload Lighthouse samples
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lighthouse-samples
+          path: reports/lighthouse-samples.json
+          retention-days: 30
+          if-no-files-found: ignore
 
   # Runway tier L: k6 load (three runs, recorded for baselining) and a soak.
   load:
