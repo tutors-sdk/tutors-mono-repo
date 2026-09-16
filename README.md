@@ -31,7 +31,8 @@ This repository uses pnpm workspaces to manage multiple packages and application
 - `packages/jsr/create` - Course scaffolder (CLI and reader wizard)
 
 **Foundation Layer (Svelte):**
-- `packages/svelte/utils/logger` - Logging utility
+- `packages/svelte/utils/logger` - Logging utility and server request logger
+- `packages/svelte/utils/metrics` - Prometheus registry, request middleware and `/metrics` endpoint
 
 **Core Services:**
 - `packages/svelte/runes` - Svelte 5 reactive state management
@@ -105,6 +106,15 @@ pnpm --filter @tutors/ui-components build
 # Type checking
 pnpm check
 ```
+
+### Containers
+
+The apps also build as containers. `compose.yaml` at the repository root brings
+up all four locally, and `deploy/k8s` holds kustomize bases with per-app
+overlays. Setting `SVELTEKIT_ADAPTER=node` switches a build from `adapter-auto`
+to `adapter-node`; leaving it unset keeps the Netlify build path unchanged. See
+[docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md) for the local standup, and
+`observability/compose.yaml` for the Prometheus and Grafana stack.
 
 ## Technology Stack
 
