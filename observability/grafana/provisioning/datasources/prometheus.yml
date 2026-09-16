@@ -1,0 +1,12 @@
+# The Prometheus service from ../../compose.yaml. The uid is what the alert
+# rules in ../alerting/alerts.yml reference.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false

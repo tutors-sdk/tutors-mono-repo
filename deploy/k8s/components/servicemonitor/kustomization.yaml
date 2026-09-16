@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Opt-in Prometheus Operator scrape target for one app. Add to an overlay:
+#
+#   components:
+#     - ../../components/servicemonitor
+#
+# Needs the monitoring.coreos.com CRDs (OpenShift user-workload monitoring or
+# kube-prometheus-stack). Left out of the overlays by default so clusters
+# without the operator can still apply them.
+resources:
+  - servicemonitor.yaml
+
+# Teach the overlay label transformer about the ServiceMonitor selector so
+# its matchLabels are rewritten alongside the Service's labels.
+configurations:
+  - labels.yaml

@@ -41,6 +41,7 @@ export default defineConfig({
       "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
       "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
       "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
+      "@tutors/metrics": resolve(__dirname, "packages/svelte/utils/metrics/src/index.ts"),
       "$app/environment": resolve(__dirname, "tests/support/sveltekit-stubs.ts"),
       "$app/navigation": resolve(__dirname, "tests/support/sveltekit-stubs.ts"),
       "$app/paths": resolve(__dirname, "tests/support/sveltekit-stubs.ts"),

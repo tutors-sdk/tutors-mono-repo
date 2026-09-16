@@ -1,0 +1,7 @@
+# Field specs so overlay `labels` (with includeSelectors) also rewrite the
+# ServiceMonitor selector, keeping it in step with the Service it targets.
+commonLabels:
+  - path: spec/selector/matchLabels
+    create: true
+    group: monitoring.coreos.com
+    kind: ServiceMonitor

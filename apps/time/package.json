@@ -28,6 +28,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@tutors/community": "workspace:*",
     "@tutors/logger": "workspace:*",
+    "@tutors/metrics": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "ag-grid-community": "^36.1.0",
