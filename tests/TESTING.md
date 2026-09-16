@@ -95,9 +95,9 @@ See `guides/MUTATION-TESTING.md` for full details.
 
 ---
 
-## Tier 10: Runway Checks (`tests/architecture/`, `tests/suite-health/`, `tests/completeness/`, `tests/observability/`, `tests/conformance/`)
+## Tier 10: Runway Checks (`tests/architecture/`, `tests/suite-health/`, `tests/completeness/`, `tests/observability/`, `tests/conformance/`, `tests/security/`)
 
-**Approach**: Checks over the repository itself rather than over one module, from the Tutors Testing Runway (tiers A, J, K, N and O). The logic lives in `scripts/checks/` as pure functions; each test file runs it against **negative fixtures** that prove the check can fail, then against the real repo. Run them alone with `pnpm test:runway`; they also run in the normal `vitest run`.
+**Approach**: Checks over the repository itself rather than over one module, from the Tutors Testing Runway (tiers A, J, K, M, N and O). The logic lives in `scripts/checks/` as pure functions; each test file runs it against **negative fixtures** that prove the check can fail, then against the real repo. Run them alone with `pnpm test:runway`; they also run in the normal `vitest run`.
 
 | Tier | Directory | What fails the build |
 |---|---|---|
@@ -106,6 +106,7 @@ See `guides/MUTATION-TESTING.md` for full details.
 | N: Completeness | `tests/completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
 | K: Observability | `tests/observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
 | J: Conformance | `tests/conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
+| M: Security | `tests/security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path (known gaps in `known-response-gaps.txt`), a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
 
 **Ratchets**: checks that found problems on day one hold them in a baseline beside the test (`known-violations.txt`, `known-manifest-drift.txt`, `known-findings.txt`, `known-gaps.txt`). A new problem fails. So does a baseline line that no longer occurs, so fixing something means deleting its line, and a baseline can only shrink.
 
@@ -123,6 +124,9 @@ pnpm check:k8s                                  # render every overlay and apply
 pnpm check:k8s --out rendered                   # also write the output for kubeconform
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
 pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
+pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
+pnpm check:audit                                # pnpm audit against tests/security/audit-allowlist.json
+pnpm check:audit --base-dir base                # PR mode: only advisories absent from base/pnpm-lock.yaml fail
 pnpm architecture-report                        # every dependency-cruiser violation, known ones included
 ```
 

@@ -1,0 +1,24 @@
+# Response gaps that predate the tier M contract (tests/security/header-contract.json):
+# missing or wrong headers, and 5xx answers on the paths the contract probes.
+# Checked against each built image by `pnpm check:container --image <image> --app <app>`.
+# This file may only shrink: the smoke test fails on a new gap and on a line that no longer occurs.
+
+# No app sends a Content-Security-Policy. Writing one needs an inventory of what the
+# reader loads (Iconify, KaTeX, Mermaid, Adobe PDF embed, YouTube/Panopto/Vimeo frames,
+# Supabase realtime) and a report-only rollout, so it is not guessed here.
+missing-header: reader: Content-Security-Policy
+missing-header: catalogue: Content-Security-Policy
+missing-header: live: Content-Security-Policy
+missing-header: time: Content-Security-Policy
+
+# No app sends HSTS. It is usually set at the edge (OpenShift Route / Netlify);
+# delete these once either the apps or the edge config under deploy/ sets it.
+missing-header: reader: Strict-Transport-Security
+missing-header: catalogue: Strict-Transport-Security
+missing-header: live: Strict-Transport-Security
+missing-header: time: Strict-Transport-Security
+
+# The catalogue cannot render its error page for an unmatched URL: SvelteKit
+# throws "Missing +page.svelte component for route null" and answers 500
+# instead of 404. Reader, live and time answer 404.
+server-error: catalogue: GET /runway-smoke-not-found
