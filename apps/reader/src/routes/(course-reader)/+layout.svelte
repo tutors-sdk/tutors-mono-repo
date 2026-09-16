@@ -62,7 +62,8 @@
     }
     const elemPage = document.querySelector("#content-panel");
     if (elemPage && window.innerWidth >= 600) {
-      elemPage.scrollIntoView({ behavior: "smooth", block: "start" });
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      elemPage.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     }
     // Move keyboard focus to the new page's content, unless the page has already
     // placed it on purpose (an element marked data-autofocus, like the search box).

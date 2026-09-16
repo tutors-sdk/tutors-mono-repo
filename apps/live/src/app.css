@@ -12,6 +12,7 @@
 @import "@tutors/themes/styles/dyslexia.css";
 @import "@tutors/themes/styles/easter.css";
 @import "@tutors/themes/styles/prose-headings.css";
+@import "@tutors/themes/styles/reduced-motion.css";
 @import "@tutors/ui-components/styles.css";
 
 @source "../../../packages/svelte/ui-navigators/src/**/*.svelte";
