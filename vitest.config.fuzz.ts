@@ -12,6 +12,8 @@ export default defineConfig({
   test: {
     include: ["tests/fuzz/**/*.test.ts"],
     exclude: ["**/node_modules/**"],
+    // Unit and property tiers never reach the network (runway tier B).
+    setupFiles: ["tests/support/no-network.ts"],
     pool: "threads",
     fileParallelism: false,
     testTimeout: 60_000
