@@ -5,7 +5,7 @@
 #   // quarantine: #123 until 2026-10-01
 #
 # documentation-only: the 24 legacy feature files no runner loads; issue #214 retires them.
-# skip: lo-tree breadcrumbs and mutation killers under packages/svelte/course, which the root
+# skip: lo-tree mutation killers under packages/svelte/course, which the root
 #   vitest include does not run at all (see the architecture pass).
 # no-assertion: the best-practice axe test logs violations but never fails.
 
@@ -34,9 +34,4 @@ documentation-only: tests/bdd/features/student/search-content.feature
 documentation-only: tests/bdd/features/time/calendar-analytics.feature
 documentation-only: tests/bdd/features/time/lab-analytics.feature
 no-assertion: tests/e2e/accessibility.spec.ts :: course page passes landmark and navigation rules
-skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall NOT replace route when breadcrumbs[1].type is neither "unit" nor "side"
-skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall check breadcrumbs[1].type when length > 2
-skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall replace "topic" with "course" when breadcrumbs[1].type is "side"
-skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall replace "topic" with "course" when breadcrumbs[1].type is "unit"
-skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall still check breadcrumbs[1] when length > 3
 skip: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers

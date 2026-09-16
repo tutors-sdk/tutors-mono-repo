@@ -83,7 +83,7 @@ function registerCompanionIcons(course: Course) {
   }
 }
 
-function decorateLoTree(course: Course, lo: Lo) {
+export function decorateLoTree(course: Course, lo: Lo) {
   // every Lo knows its parent
   lo.parentCourse = course;
   // recover icon from frontmatter if present
@@ -93,7 +93,10 @@ function decorateLoTree(course: Course, lo: Lo) {
   crumbs(lo, lo.breadCrumbs);
   if (lo.breadCrumbs?.length > 2) {
     if (lo.breadCrumbs[1].type === "unit" || lo.breadCrumbs[1].type === "side") {
-      lo.breadCrumbs[1].route = lo.breadCrumbs[1].route.replace("topic", "course");
+      // The generator routes a top-level unit or side to its parent page as /topic/<course id>,
+      // which is really the course page. Rewrite only that leading segment: this runs once per
+      // descendant, and a course id such as "web-topics-2026" must come through intact.
+      lo.breadCrumbs[1].route = lo.breadCrumbs[1].route.replace(/^\/topic(?=\/|$)/, "/course");
     }
   }
 
