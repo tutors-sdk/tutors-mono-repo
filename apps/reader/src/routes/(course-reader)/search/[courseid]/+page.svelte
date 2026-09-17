@@ -77,7 +77,7 @@
 <div class="card container mx-auto mb-4 p-4">
   <label for="search" class="label"><span>{t("course.search.label")}</span></label>
   <div class="flex items-center gap-2">
-    <button onclick={performSearch} class="hover:preset-tonal-secondary dark:hover:preset-tonal-tertiary flex items-center gap-2 rounded-lg p-3 text-sm font-bold">
+    <button onclick={performSearch} aria-label={t("course.search.button")} class="hover:preset-tonal-secondary dark:hover:preset-tonal-tertiary flex items-center gap-2 rounded-lg p-3 text-sm font-bold">
       <Icon type="search" tip={t("nav.search.tip")} />
       <span class="hidden lg:block">{t("course.search.button")}</span>
     </button>
@@ -88,6 +88,7 @@
       name="search"
       id="search"
       class="input flex-1 p-2"
+      data-autofocus
       placeholder="..."
       onkeydown={(e) => e.key === "Enter" && performSearch()}
     />

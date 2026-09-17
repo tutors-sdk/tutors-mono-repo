@@ -257,6 +257,13 @@ any single one. Versioned with the monorepo.
 
 ## Shared Packages
 
+### v5.3.0 (2026-09)
+
+- `model`: new `quiz` learning object type, registered in `simpleTypes` and `preOrder`. Without it the generator mistypes a `quiz-*` folder as its enclosing topic, so publishing this is what makes authored quizzes reachable
+- `model`: new `pluraliseLoType` export, so a quiz wall reads "All quizzes" rather than "All quizs"
+- `model`: quiz walls registered in `createWalls`
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.3.0
+
 ### v5.2.4 (2026-09)
 
 - `tutors-create`: optional `.gitignore` and README in generated courses, offered by both the CLI prompts and the reader wizard (PR #197)

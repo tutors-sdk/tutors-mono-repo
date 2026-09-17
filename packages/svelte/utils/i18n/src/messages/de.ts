@@ -96,6 +96,18 @@ const de: Record<string, string> = {
   // Auth
   "auth.signIn": "Tutors Anmeldung",
   "auth.signInWithGithub": "Mit GitHub anmelden",
+  "auth.terms": `Sie werden gleich mit Ihren Github-Zugangsdaten bei Tutors authentifiziert. **Fuer die meisten Kurse muessen Sie sich gar nicht anmelden. Wenn Sie moechten, koennen Sie daher zur Kursseite zurueckkehren und den Kurs wie auf jeder oeffentlichen Website fortsetzen.**
+
+Wenn Sie sich registrieren oder anmelden, benoetigen Sie zuerst ein Github-Konto. Nach der Anmeldung steht Ihnen dann ein einfaches, praktisches Dashboard mit Schnelllinks zu allen Tutors-Kursen zur Verfuegung, auf die Sie kuerzlich zugegriffen haben.
+
+Fuer einige Kurse verlangt Tutors immer ein Konto, um Zugriff zu erhalten, und Sie landen dann hier. Nach der Anmeldung kann Tutors aufzeichnen, wie lange jede Ansicht aktiv ist, und diese Daten an den TutorsTime-Datenspeicher senden. Sie koennen diese Informationen ueber die Time-Funktion im Profilmenu einsehen. Diese Daten stehen Ihnen und der Lehrperson Ihres Kurses zur Verfuegung, jedoch nicht anderen Studierenden. Es werden keine weiteren Daten erhoben, und diese Daten werden nirgendwohin ausser an den TutorsTime-Datenspeicher uebermittelt.
+
+Die Live-Funktion, die im Profilmenu verfuegbar ist, kann diese Daten ebenfalls nutzen, um ein Panel der derzeit online befindlichen Studierenden anzuzeigen. **Sie koennen diese Funktionen deaktivieren, indem Sie im Profilmenu die Option Praesenz teilen ausschalten.** Weitere Informationen zu TutorsTime finden Sie hier:
+
+- [Tutors Time FAQ](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
+- [Tutors Live FAQ](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
+
+Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finden Sie hier](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Name",
@@ -164,6 +176,7 @@ const de: Record<string, string> = {
   "a11y.secondaryNavigation": "Sekundaere Navigation",
   "a11y.sidebar": "Seitenleiste",
   "a11y.footer": "Seitenfuss",
+  "a11y.tree.toggle": "Inhalt ein- oder ausblenden",
 
   // Guided tour
   "tour.ariaLabel": "Gefuehrte Tour",
