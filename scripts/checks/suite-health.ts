@@ -178,3 +178,79 @@ export function lintFeatureFiles(root: string = REPO_ROOT): { kind: FeatureFindi
     })
     .sort((a, b) => a.file.localeCompare(b.file));
 }
+
+/* ---------------- uncollected test files ---------------- */
+
+/** What one runner config collects, as repo-relative path patterns. */
+export interface TestRunner {
+  config: string;
+  include: RegExp[];
+  exclude: RegExp[];
+}
+
+const RUNNER_CONFIG = /^(vitest|playwright)[\w.-]*\.config(\.[\w-]+)?\.[cm]?[jt]s$/;
+/** Vitest's and Playwright's default: any `.test` or `.spec` file under the config's directory. */
+const DEFAULT_MATCH = /(?:.*\/)?[^/]*\.(test|spec)\.[cm]?[jt]sx?$/;
+
+function stringsOf(node: ts.Expression): string[] | undefined {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return [node.text];
+  if (ts.isArrayLiteralExpression(node) && node.elements.every((e) => ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e))) {
+    return node.elements.map((e) => (e as ts.StringLiteral).text);
+  }
+  return undefined;
+}
+
+/**
+ * Reads include/exclude (Vitest, inside `test: {}`) or testDir/testMatch/testIgnore
+ * (Playwright, top level) from a config's literal values. A value the check
+ * cannot read statically is an error, so a config cannot silently opt out.
+ */
+export function readRunner(config: string, text: string): TestRunner {
+  const source = ts.createSourceFile(config, text, ts.ScriptTarget.Latest, true);
+  const values = new Map<string, string[]>();
+  const vitest = /(^|\/)vitest/.test(config);
+  const wanted = (node: ts.ObjectLiteralElementLike, key: string) => {
+    const owner = node.parent.parent;
+    if (vitest) return ts.isPropertyAssignment(owner) && ts.isIdentifier(owner.name) && owner.name.text === "test" && (key === "include" || key === "exclude");
+    return (ts.isCallExpression(owner) || ts.isExportAssignment(owner)) && ["testDir", "testMatch", "testIgnore"].includes(key);
+  };
+  const visit = (node: ts.Node) => {
+    if ((ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) && ts.isIdentifier(node.name) && wanted(node, node.name.text)) {
+      const key = node.name.text;
+      const strings = ts.isPropertyAssignment(node) ? stringsOf(node.initializer) : undefined;
+      if (!strings) throw new Error(`${config}: ${key} is not a string literal or an array of them`);
+      values.set(key, strings);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+
+  const configDir = config.includes("/") ? config.slice(0, config.lastIndexOf("/") + 1) : "";
+  const testDir = vitest ? "" : (values.get("testDir")?.[0] ?? ".").replace(/^\.\/?/, "").replace(/\/$/, "");
+  const base = testDir ? `${configDir}${testDir}/` : configDir;
+  // A pattern without a slash matches a file name at any depth, as both runners do.
+  const pattern = (glob: string) => {
+    const clean = glob.replace(/^\.\//, "");
+    return new RegExp(`^${escapeRegExp(base)}${globToRegExp(clean.includes("/") ? clean : `**/${clean}`).source.slice(1)}`);
+  };
+  const defaultMatch = new RegExp(`^${escapeRegExp(base)}${DEFAULT_MATCH.source}`);
+  const include = values.get(vitest ? "include" : "testMatch")?.map(pattern) ?? [defaultMatch];
+  return { config, include, exclude: (values.get(vitest ? "exclude" : "testIgnore") ?? []).map(pattern) };
+}
+
+export function discoverRunners(root: string = REPO_ROOT): TestRunner[] {
+  return walk(root, (name) => RUNNER_CONFIG.test(name))
+    .map((path) => toPosix(path, root))
+    .filter((file) => !file.includes("/fixtures/"))
+    .sort()
+    .map((file) => readRunner(file, readText(join(root, file))));
+}
+
+/** Test files no runner config collects: they look like coverage and run nowhere. */
+export function lintUncollectedTests(root: string = REPO_ROOT): string[] {
+  const runners = discoverRunners(root);
+  return findTestFiles(root)
+    .map((path) => toPosix(path, root))
+    .filter((file) => !runners.some((r) => r.include.some((p) => p.test(file)) && !r.exclude.some((p) => p.test(file))))
+    .map((file) => `uncollected: ${file}`);
+}
