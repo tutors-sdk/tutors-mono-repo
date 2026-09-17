@@ -9,7 +9,7 @@ import { auditAccessibility, auditReducedMotion, collectPageErrors } from "./sta
  * prefers-reduced-motion.
  */
 test.describe("anonymous student", () => {
-  test("reads a course: home, course, topic, lab, next step", async ({ page }, testInfo) => {
+  test("reads a course: home, course, topic, lab, next step, talk", async ({ page }, testInfo) => {
     const errors = collectPageErrors(page);
     const visited: string[] = [];
     await anonymousStudentReadsCourse(page, async (pageKey) => {

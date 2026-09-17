@@ -28,6 +28,10 @@ export const fixture = {
   labPath: "unit-1/topic-01/book-lab-01",
   firstStep: { id: "Setup", heading: "Lab 1" },
   secondStep: { id: "Step-01", heading: "Step 1" },
+  /** build.ts appends inline math and a Mermaid flowchart (with this accTitle) to the second step. */
+  secondStepDiagram: "Read then practise",
+  /** The scaffolder's starter Marp deck for topic 1; its first slide has this heading. */
+  talk: { title: "Talk 1", path: "unit-1/topic-01/talk-01", firstSlideHeading: "Presentation Title" },
   /** Appears in both notes' body; a result links to `<topic>/ <note>` (the generator keeps a leading space in titles). */
   searchTerm: "reference material",
   searchResultTitle: /Topic 1\/\s*Note 1/
