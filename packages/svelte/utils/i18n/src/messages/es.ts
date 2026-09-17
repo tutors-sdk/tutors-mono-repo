@@ -1,35 +1,35 @@
 const es: Record<string, string> = {
   // Navigation
   "nav.search": "Buscar",
-  "nav.search.exit": "Salir de la busqueda",
+  "nav.search.exit": "Salir de la búsqueda",
   "nav.search.tip": "Buscar en este curso",
-  "nav.layout": "Diseno",
-  "nav.layout.options": "Opciones de diseno",
+  "nav.layout": "Diseño",
+  "nav.layout.options": "Opciones de diseño",
   "nav.layout.appearance": "Apariencia",
   "nav.layout.cardStyle": "Estilo de tarjeta",
   "nav.layout.theme": "Tema",
-  "nav.layout.codeStyle": "Estilo de codigo",
-  "nav.layout.layout": "Disposicion",
+  "nav.layout.codeStyle": "Estilo de código",
+  "nav.layout.layout": "Disposición",
   "nav.layout.language": "Idioma",
-  "nav.layout.tip": "Abrir menu de tema",
+  "nav.layout.tip": "Abrir menú de tema",
   "nav.info.title": "Info del curso",
   "nav.info.tip": "Abrir info del curso",
-  "nav.toc.suffix": "Arbol del curso",
-  "nav.toc.tip": "Abrir arbol del curso",
+  "nav.toc.suffix": "Árbol del curso",
+  "nav.toc.tip": "Abrir árbol del curso",
   "nav.calendar.label": "Semana actual",
   "nav.calendar.tip": "Ver calendario de este curso",
   "nav.online.view": "Ver",
-  "nav.online.online": "En linea",
-  "nav.llms.tip": "Una version de este curso para LLMs",
+  "nav.online.online": "En línea",
+  "nav.llms.tip": "Una versión de este curso para LLMs",
   "nav.time.tip": "Este curso utiliza Tutors Time",
   "nav.edit.tip": "Editar este curso",
   "nav.context.collapseAll": "Contraer todo",
   "nav.context.expandAll": "Expandir todo",
-  "nav.breadcrumbs.goHome": "Ir a la pagina principal del curso",
+  "nav.breadcrumbs.goHome": "Ir a la página principal del curso",
   "nav.breadcrumbs.goTo": "Ir a",
 
-  // Profile menus
-  "menu.anonName": "Perfil anonimo de Tutors",
+  // Profile menús
+  "menu.anonName": "Perfil anónimo de Tutors",
   "menu.connect": "Conectar",
   "menu.home": "Inicio",
   "menu.sharePresence": "Compartir presencia",
@@ -46,12 +46,12 @@ const es: Record<string, string> = {
   "home.titleAn": "Un",
   "home.openLearning": "Aprendizaje abierto",
   "home.webToolkit": "Kit de herramientas web",
-  "home.description": "Componentes y servicios de codigo abierto que apoyan la creacion de experiencias de aprendizaje utilizando estandares web. Desarrollado en",
+  "home.description": "Componentes y servicios de código abierto que apoyan la creación de experiencias de aprendizaje utilizando estándares web. Desarrollado en",
   "home.setu": "SETU",
   "home.location": ", Waterford, Irlanda.",
   "home.docs": "Docs",
-  "home.source": "Codigo fuente",
-  "home.catalogue": "Catalogo",
+  "home.source": "Código fuente",
+  "home.catalogue": "Catálogo",
   "home.live": "En vivo",
   "home.create": "Crear",
   "home.connectedAs": "Conectado como:",
@@ -59,19 +59,19 @@ const es: Record<string, string> = {
   "home.recentlyAccessed": "Accedidos recientemente",
   "home.values.title": "Los <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Valores</span> del proyecto",
   "home.developer.title": "Experiencia del desarrollador",
-  "home.developer.description": "La <b>Experiencia del desarrollador</b> prioriza la especificacion e implementacion de <b>componentes y servicios robustos, bien documentados y de bajo acoplamiento</b>, integrados en un <b>conjunto de herramientas coherente</b> abierto a contribuciones de <b>diversas habilidades</b>.",
+  "home.developer.description": "La <b>Experiencia del desarrollador</b> prioriza la especificación e implementación de <b>componentes y servicios robustos, bien documentados y de bajo acoplamiento</b>, integrados en un <b>conjunto de herramientas coherente</b> abierto a contribuciones de <b>diversas habilidades</b>.",
   "home.educator.title": "Experiencia del educador",
-  "home.educator.description": "La <b>Experiencia del educador</b> prioriza la creacion de <b>rutas guiadas</b> a traves de un curriculo mediante la creacion de materiales didacticos que son <b>autonomos, estructuralmente alineados, componibles, auditables, extensibles, versionados</b> y <b>independientes</b>.",
+  "home.educator.description": "La <b>Experiencia del educador</b> prioriza la creación de <b>rutas guiadas</b> a través de un currículo mediante la creación de materiales didácticos que son <b>autónomos, estructuralmente alineados, componibles, auditables, extensibles, versionados</b> y <b>independientes</b>.",
   "home.learner.title": "Experiencia del estudiante",
-  "home.learner.description": "La <b>Experiencia del estudiante</b> prioriza las interacciones web que son <b>atractivas, contextuales, enlazables, buscables, accesibles</b> y <b>responsivas</b>. Ademas, la experiencia debe fomentar un sentido de <b>comunidad</b> y <b>conexion</b> entre los estudiantes.",
+  "home.learner.description": "La <b>Experiencia del estudiante</b> prioriza las interacciones web que son <b>atractivas, contextuales, enlazables, buscables, accesibles</b> y <b>responsivas</b>. Además, la experiencia debe fomentar un sentido de <b>comunidad</b> y <b>conexión</b> entre los estudiantes.",
   "home.credits.title": "Un proyecto completamente <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Open Source</span>",
-  "home.credits.description": "Tutors es un proyecto de codigo abierto disponible de forma gratuita en GitHub bajo la licencia MIT.",
-  "home.credits.viewSource": "Ver codigo fuente",
+  "home.credits.description": "Tutors es un proyecto de código abierto disponible de forma gratuita en GitHub bajo la licencia MIT.",
+  "home.credits.viewSource": "Ver código fuente",
 
   // Course reader
-  "course.search.label": "Ingrese un termino de busqueda:",
+  "course.search.label": "Ingrese un término de búsqueda:",
   "course.search.button": "Buscar",
-  "course.visitCard.lastAccessed": "Ultimo acceso:",
+  "course.visitCard.lastAccessed": "Último acceso:",
   "course.visitCard.visits": "Visitas:",
   "course.visitCard.visitCourse": "Visitar curso",
   "course.visitCard.delete": "Eliminar",
@@ -80,34 +80,34 @@ const es: Record<string, string> = {
   "course.title.fallback": "Tutors",
 
   // Live page
-  "live.onlineNow": "En linea ahora",
+  "live.onlineNow": "En línea ahora",
   "live.latestActivity": "Ultima actividad",
   "live.today": "Hoy",
   "live.thisWeek": "Esta semana",
   "live.thisMonth": "Este mes",
-  "live.thisYear": "Este ano",
-  "live.emptyOnline": "No hay estudiantes en linea para este curso en este momento.",
+  "live.thisYear": "Este año",
+  "live.emptyOnline": "No hay estudiantes en línea para este curso en este momento.",
   "live.emptyToday": "No hay actividad registrada hoy para este curso.",
   "live.emptyWeek": "No hay actividad anterior esta semana para este curso.",
   "live.emptyMonth": "No hay actividad anterior este mes para este curso.",
-  "live.emptyYear": "No hay actividad anterior este ano para este curso.",
+  "live.emptyYear": "No hay actividad anterior este año para este curso.",
   "live.catalogue.totals": "Totales:",
 
   // Auth
-  "auth.signIn": "Inicio de sesion en Tutors",
-  "auth.signInWithGithub": "Iniciar sesion con GitHub",
-  "auth.terms": `Estas a punto de autenticarte en Tutors con tus credenciales de Github. **Para la mayoria de los cursos no necesitas iniciar sesion en absoluto, asi que si lo prefieres puedes volver a la pagina del curso y continuar como en cualquier sitio web publico.**
+  "auth.signIn": "Inicio de sesión en Tutors",
+  "auth.signInWithGithub": "Iniciar sesión con GitHub",
+  "auth.terms": `Estás a punto de autenticarte en Tutors con tus credenciales de Github. **Para la mayoría de los cursos no necesitas iniciar sesión en absoluto, así que si lo prefieres puedes volver a la página del curso y continuar como en cualquier sitio web público.**
 
-Si te registras o inicias sesion, primero necesitaras una cuenta de Github. Al iniciar sesion tendras disponible un panel sencillo y practico con enlaces rapidos a todos los cursos de Tutors a los que has accedido recientemente.
+Si te registras o inicias sesión, primero necesitarás una cuenta de Github. Al iniciar sesión tendrás disponible un panel sencillo y práctico con enlaces rápidos a todos los cursos de Tutors a los que has accedido recientemente.
 
-Para algunos cursos, Tutors siempre requerira una cuenta para obtener acceso, y llegaras aqui. Una vez que hayas iniciado sesion, Tutors puede registrar cuanto tiempo permanece activa cada vista y enviar esta informacion al almacen de datos TutorsTime. Puedes ver esta informacion mediante la funcion Time del menu de perfil. Estos datos estan disponibles para ti y para el instructor de tu curso, pero no para otros estudiantes. No se recopilan otros datos, ni estos datos se transmiten a ningun lugar distinto del almacen de datos TutorsTime.
+Para algunos cursos, Tutors siempre requerirá una cuenta para obtener acceso, y llegarás aquí. Una vez que hayas iniciado sesión, Tutors puede registrar cuánto tiempo permanece activa cada vista y enviar esta información al almacén de datos TutorsTime. Puedes ver esta información mediante la función Time del menú de perfil. Estos datos están disponibles para ti y para el instructor de tu curso, pero no para otros estudiantes. No se recopilan otros datos, ni estos datos se transmiten a ningún lugar distinto del almacén de datos TutorsTime.
 
-La funcion Live, disponible desde el menu de perfil, tambien puede usar estos datos para mostrar un panel de estudiantes que estan actualmente en linea. **Puedes desactivar estas funciones deshabilitando la opcion Compartir presencia desde el menu de perfil.** Para obtener mas informacion sobre TutorsTime, consulta:
+La función Live, disponible desde el menú de perfil, también puede usar estos datos para mostrar un panel de estudiantes que están actualmente en línea. **Puedes desactivar estas funciones deshabilitando la opción Compartir presencia desde el menú de perfil.** Para obtener más información sobre TutorsTime, consulta:
 
 - [Preguntas frecuentes de Tutors Time](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
 - [Preguntas frecuentes de Tutors Live](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
 
-Tutors es una aplicacion de codigo abierto; el componente de recopilacion de datos [esta aqui](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
+Tutors es una aplicación de código abierto; el componente de recopilación de datos [está aquí](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Nombre",
@@ -130,7 +130,7 @@ Tutors es una aplicacion de codigo abierto; el componente de recopilacion de dat
   "content.type": "Tipo",
   "content.dateStarts": "Fecha de inicio",
   "content.sentiment": "Sentimiento del curso",
-  "content.sentimentOpen": "Abrir menu para cambiar.",
+  "content.sentimentOpen": "Abrir menú para cambiar.",
   "content.sentimentLabel": "Sentimiento",
 
   // Footer
@@ -155,8 +155,8 @@ Tutors es una aplicacion de codigo abierto; el componente de recopilacion de dat
   "lecturer.locks.unlock": "Desbloquear",
   "lecturer.locks.locked": "Bloqueado",
   "lecturer.locks.unlocked": "Desbloqueado",
-  "lecturer.locks.empty": "No se encontro contenido bloqueable",
-  "lecturer.enrollment.title": "Inscripcion",
+  "lecturer.locks.empty": "No se encontró contenido bloqueable",
+  "lecturer.enrollment.title": "Inscripción",
   "lecturer.enrollment.whitelist": "Lista blanca",
   "lecturer.enrollment.students": "Estudiantes",
   "lecturer.enrollment.empty": "Sin usuarios inscritos",
@@ -167,39 +167,39 @@ Tutors es una aplicacion de codigo abierto; el componente de recopilacion de dat
   "lecturer.access.owner": "Propietario",
   "lecturer.access.lecturers": "Profesores",
   "lecturer.control.title": "Control del curso",
-  "lecturer.control.placeholder": "Las funciones de control del curso se agregaran aqui",
-  "lecturer.locked.overlay": "Este contenido esta bloqueado",
+  "lecturer.control.placeholder": "Las funciones de control del curso se agregarán aquí",
+  "lecturer.locked.overlay": "Este contenido está bloqueado",
 
   "a11y.skipToContent": "Ir al contenido",
-  "a11y.mainNavigation": "Navegacion principal",
+  "a11y.mainNavigation": "Navegación principal",
   "a11y.breadcrumbs": "Migas de pan",
-  "a11y.secondaryNavigation": "Navegacion secundaria",
+  "a11y.secondaryNavigation": "Navegación secundaria",
   "a11y.sidebar": "Barra lateral",
-  "a11y.footer": "Pie de pagina",
+  "a11y.footer": "Pie de página",
   "a11y.tree.toggle": "Mostrar u ocultar el contenido",
 
   // Guided tour
   "tour.ariaLabel": "Tour guiado",
   "tour.skip": "Saltar",
-  "tour.prev": "Atras",
+  "tour.prev": "Atrás",
   "tour.next": "Siguiente",
   "tour.finish": "Listo",
   "tour.menuLabel": "Tour guiado",
   "tour.startButton": "Iniciar tour",
-  "tour.courseTitle.title": "Titulo del curso",
-  "tour.courseTitle.description": "Aqui se muestra el nombre y la imagen del curso que estas viendo actualmente.",
+  "tour.courseTitle.title": "Título del curso",
+  "tour.courseTitle.description": "Aqui se muestra el nombre y la imagen del curso que estás viendo actualmente.",
   "tour.search.title": "Buscar",
-  "tour.search.description": "Encuentra rapidamente contenido en este curso. Tambien puedes presionar Ctrl+K (o Cmd+K en Mac) en cualquier momento.",
-  "tour.layout.title": "Tema y diseno",
+  "tour.search.description": "Encuentra rápidamente contenido en este curso. También puedes presionar Ctrl+K (o Cmd+K en Mac) en cualquier momento.",
+  "tour.layout.title": "Tema y diseño",
   "tour.layout.description": "Personaliza la apariencia: alterna entre modo claro y oscuro, cambia el estilo de las tarjetas, el tema y el idioma.",
   "tour.profile.title": "Tu perfil",
-  "tour.profile.description": "Inicia sesion con GitHub para seguir tu progreso y activar las funciones de presencia en vivo.",
-  "tour.toc.title": "Arbol del curso",
-  "tour.toc.description": "Abre el arbol completo del curso para ver todos los temas y navegar directamente a cualquier seccion.",
+  "tour.profile.description": "Inicia sesión con GitHub para seguir tu progreso y activar las funciones de presencia en vivo.",
+  "tour.toc.title": "Árbol del curso",
+  "tour.toc.description": "Abre el árbol completo del curso para ver todos los temas y navegar directamente a cualquier sección.",
   "tour.calendar.title": "Calendario",
   "tour.calendar.description": "Consulta el horario del curso y mira lo que viene esta semana.",
-  "tour.info.title": "Informacion del curso",
-  "tour.info.description": "Lee informacion detallada sobre este curso, incluyendo su descripcion y objetivos."
+  "tour.info.title": "Información del curso",
+  "tour.info.description": "Lee información detallada sobre este curso, incluyendo su descripción y objetivos."
 };
 
 export default es;
