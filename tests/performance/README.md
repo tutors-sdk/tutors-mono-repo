@@ -32,4 +32,4 @@ pnpm check:lighthouse --image tutors/reader:ci --record reports/lighthouse-sampl
   pnpm exec playwright install chromium
   ```
 
-- The reader renders in the browser, so the course and lab pages fetch course content from a course site. In CI, set `LIGHTHOUSE_COURSE` and point the reader at the tier G fixture course server so Netlify is not a dependency of the run.
+- The reader renders in the browser, so the course and lab pages fetch course content from a course site. `{course}` and `{lab}` in `lighthouse.json` come from `LIGHTHOUSE_COURSE` and `LIGHTHOUSE_LAB`, which default to the Netlify reference course. The nightly job starts the tier G fixture course (`docker compose -f tests/e2e-stack/compose.yaml up -d --wait course`) and sets them to `localhost:8080` and `unit-1/topic-01/book-lab-01`, so Netlify is not a dependency of the run. It also records its samples (`--record`) as the `lighthouse-samples` artifact, which is what a `--baseline` file is made from.
