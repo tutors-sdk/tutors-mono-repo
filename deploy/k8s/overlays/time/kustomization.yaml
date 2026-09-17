@@ -16,7 +16,7 @@ labels:
 images:
   - name: tutors-app
     newName: registry.example.com/tutors/time
-    newTag: latest
+    newTag: "16.2.0"
 
 patches:
   - target:
@@ -26,3 +26,13 @@ patches:
       - op: replace
         path: /data/ORIGIN
         value: "https://time.tutors.dev"
+      # Moodle sync. MOODLE_WS_TOKEN is a secret: see secrets.yaml.example.
+      - op: add
+        path: /data/MOODLE_WS_URL
+        value: ""
+      - op: add
+        path: /data/MOODLE_WS_REST_FORMAT
+        value: "json"
+      - op: add
+        path: /data/SYNC_INTERVAL_MINUTES
+        value: "60"

@@ -1,0 +1,91 @@
+# knip findings that predate tier A's knip check (config: knip.json).
+# This file may only shrink: fix the finding and delete its line.
+
+# Workspace dependencies declared but never imported. The @tutors/course entries are
+# the package.json half of the course -> themes -> community -> course cycle pnpm warns
+# about; removing them clears the warning without touching code.
+dependencies: packages/svelte/community/package.json: @tutors/course
+dependencies: packages/svelte/connect/package.json: @tutors/course
+dependencies: packages/svelte/ui-components/package.json: @tutors/a11y
+dependencies: packages/svelte/utils/a11y/package.json: @tutors/course
+dependencies: packages/svelte/utils/i18n/package.json: @tutors/course
+devDependencies: apps/catalogue/package.json: @tutors/course
+devDependencies: apps/catalogue/package.json: @tutors/tutors-model-lib
+
+# npm dependencies declared but never imported.
+dependencies: apps/reader/package.json: dompurify
+dependencies: packages/jsr/model/package.json: archiver
+dependencies: packages/jsr/model/package.json: front-matter
+dependencies: packages/jsr/model/package.json: js-yaml
+dependencies: packages/svelte/ui-components/package.json: codemirror
+dependencies: packages/svelte/ui-components/package.json: isomorphic-dompurify
+devDependencies: apps/reader/package.json: @codemirror/lang-python
+devDependencies: apps/reader/package.json: @codemirror/state
+devDependencies: apps/reader/package.json: @codemirror/theme-one-dark
+devDependencies: apps/reader/package.json: @codemirror/view
+devDependencies: apps/reader/package.json: codemirror
+devDependencies: apps/reader/package.json: file-saver
+devDependencies: apps/reader/package.json: pdfjs-dist
+devDependencies: apps/reader/package.json: zod
+devDependencies: package.json: @testing-library/svelte
+devDependencies: package.json: clsx
+devDependencies: package.json: esm-env
+devDependencies: packages/svelte/ui-navigators/package.json: @iconify/svelte
+
+# @sveltejs/kit used by packages that rely on the consuming app providing it (peer dependency).
+# gen-lib is imported through a Vitest alias rather than a declared dependency.
+unlisted: packages/svelte/course/src/ambient.d.ts: @sveltejs/kit
+unlisted: packages/svelte/utils/metrics/src/middleware.ts: @sveltejs/kit
+unlisted: tests/contract/gen-lib-api.test.ts: @tutors/tutors-gen-lib
+
+# packages/svelte/course __tests__ import a path that does not exist; the root Vitest
+# include never runs them (see known-findings.txt in tests/suite-health).
+unresolved: packages/svelte/course/src/course/services/__tests__/lo-tree-advanced.test.ts: ../../../runes.svelte
+unresolved: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts: ../../../runes.svelte
+unresolved: packages/svelte/course/src/course/services/__tests__/lo-tree.test.ts: ../../../runes.svelte
+
+# Files nothing imports.
+unused-file: apps/reader/src/lib/env.ts
+unused-file: apps/time/src/lib/components/calendar/CalendarMedianGrid.svelte
+unused-file: apps/time/src/lib/components/labs/LabsMedianGrid.svelte
+unused-file: tests/bdd/support/ears-tags.ts
+unused-file: tests/bdd/support/personas.ts
+unused-file: tests/bdd/support/schema-validated-fixtures.ts
+
+# Exports and types nothing imports.
+exports: tests/contract/support/schema-generators.ts: calendarEntryArb
+exports: tests/contract/support/schema-generators.ts: generateMock
+exports: tests/contract/support/schema-generators.ts: generateMocks
+exports: tests/contract/support/schema-generators.ts: getCountLearningRecordsParamsArb
+exports: tests/contract/support/schema-generators.ts: loRecordUserArb
+exports: tests/contract/support/schema-generators.ts: whiteboardCursorUpdateArb
+exports: tests/contract/support/schema-generators.ts: whiteboardInitEditorArb
+exports: tests/contract/support/schema-generators.ts: whiteboardRoomArb
+exports: tests/contract/support/schema-generators.ts: whiteboardSceneInitArb
+exports: tests/contract/support/schema-generators.ts: whiteboardSceneSnapshotArb
+exports: tests/contract/support/schema-generators.ts: whiteboardSceneUpdateArb
+exports: tests/contract/support/schema-generators.ts: zodToArbitrary
+exports: tests/contract/support/schemas.ts: WhiteboardAppStateSchema
+exports: tests/contract/support/schemas.ts: WhiteboardElementSchema
+exports: tests/contract/support/schemas.ts: WhiteboardPointerSchema
+exports: tests/contract/support/schemas.ts: WhiteboardUserSchema
+types: apps/time/src/lib/server/api/moodle.ts: MoodleAssignSubmissionPlugin
+types: apps/time/src/lib/server/api/moodle.ts: MoodleAssignSubmissionsByAssignment
+types: apps/time/src/lib/server/api/moodle.ts: MoodleContentFile
+types: apps/time/src/lib/server/api/moodle.ts: MoodleModuleContent
+types: apps/time/src/lib/server/api/moodle.ts: MoodleWarning
+types: apps/time/src/lib/server/db/submissionsRepository.ts: AssignmentRow
+types: apps/time/src/lib/server/db/submissionsRepository.ts: SubmissionRow
+types: apps/time/src/lib/server/services/AssignmentsService.ts: MoodleAssignSubmission
+types: tests/contract/support/schemas.ts: CalendarEntry
+types: tests/contract/support/schemas.ts: ConnectCourse
+types: tests/contract/support/schemas.ts: ConnectLatest
+types: tests/contract/support/schemas.ts: ConnectProfile
+types: tests/contract/support/schemas.ts: ConnectUser
+types: tests/contract/support/schemas.ts: CourseJson
+types: tests/contract/support/schemas.ts: LearningRecord
+types: tests/contract/support/schemas.ts: LoRecord
+types: tests/contract/support/schemas.ts: WhiteboardCursorUpdate
+types: tests/contract/support/schemas.ts: WhiteboardSceneInit
+types: tests/contract/support/schemas.ts: WhiteboardSceneSnapshot
+types: tests/contract/support/schemas.ts: WhiteboardSceneUpdate

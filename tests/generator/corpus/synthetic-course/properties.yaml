@@ -1,0 +1,17 @@
+credits: Tutors generator corpus
+moodle: https://moodle.example.org
+youtube: https://www.youtube.com/playlist?list=PLcorpus
+github: https://github.com/tutors-sdk/example
+auth: 0
+labStepsAutoNumber: false
+llm: 1
+ignorepin: 1234
+ignore:
+  - topic-09-hidden
+companions:
+  piazza:
+    link: https://piazza.com/
+    title: Piazza Q & A
+    icon:
+      type: academicons:piazza
+      color: info

@@ -1,0 +1,3 @@
+# Corpus bytes are generator input: never convert line endings, so every
+# platform generates from identical files.
+* -text
