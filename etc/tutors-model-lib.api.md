@@ -148,6 +148,9 @@ export function allVideoLos(los: Lo[]) : Lo[];
 export function convertLabToHtml(course: Course, lab: Lab, protocol: string);
 
 // (from src/utils/markdown-utils.ts)
+export function convertLoSummaryToHtml(lo: Lo, codeTheme: string);
+
+// (from src/utils/markdown-utils.ts)
 export function convertLoToHtml(course: Course, lo: Lo, protocol: string);
 
 // (from src/utils/markdown-utils.ts)
@@ -281,7 +284,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 35 |
+| function | 36 |
 | interface | 1 |
 | type | 39 |
-| **Total** | **84** |
+| **Total** | **85** |

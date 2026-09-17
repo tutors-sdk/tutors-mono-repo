@@ -135,13 +135,12 @@ export const markdownService: MarkdownService = {
 
   /**
    * Converts lab markdown content to HTML
-   * Processes both lab summary and individual steps
+   * Processes the individual steps; the summary is converted once when the Lo tree is built
    * @param course - Course containing the lab
    * @param lab - Lab to convert
    * @param refreshOnly - If true, skips URL processing
    */
   convertLabToHtml(course: Course, lab: Lab, refreshOnly: boolean = false) {
-    lab.summary = convertMdToHtml(lab.summary, currentCodeTheme.value);
     const url = lab.route.replace(`/lab/${course.courseId}`, course.courseUrl);
     lab?.los?.forEach((step) => {
       if (course.courseUrl && !refreshOnly) {
@@ -160,7 +159,6 @@ export const markdownService: MarkdownService = {
    * @param refreshOnly - If true, skips URL processing
    */
   convertNoteToHtml(course: Course, note: Note, refreshOnly: boolean = false) {
-    note.summary = convertMdToHtml(note.summary, currentCodeTheme.value);
     const url = note.route.replace(`/note/${course.courseId}`, course.courseUrl);
     if (!refreshOnly) {
       note.contentMd = filter(note.contentMd, url, courseProtocol.value);
