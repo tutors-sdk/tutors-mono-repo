@@ -76,7 +76,7 @@ function key(testInfo: TestInfo, pageKey: string, finding: string): string {
  * the link, and a card's hover scale then changes colours and overlaps under
  * axe's colour-contrast sampling, which made the audit flaky.
  */
-export async function settle(page: Page) {
+async function settle(page: Page) {
   await page.mouse.move(0, 0);
   await page.evaluate(async () => {
     const running = document.getAnimations().filter((animation) => animation.effect?.getTiming().iterations !== Infinity);
