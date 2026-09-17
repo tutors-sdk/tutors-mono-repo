@@ -96,6 +96,18 @@ const fr: Record<string, string> = {
   // Auth
   "auth.signIn": "Connexion Tutors",
   "auth.signInWithGithub": "Se connecter avec GitHub",
+  "auth.terms": `Vous etes sur le point d'etre authentifie via vos identifiants Github pour acceder a Tutors. **Pour la plupart des cours, vous n'avez pas besoin de vous connecter du tout. Si vous preferez, vous pouvez donc revenir a la page du cours et le suivre comme n'importe quel site web public.**
+
+Si vous vous inscrivez ou vous connectez, vous aurez d'abord besoin d'un compte Github. La connexion mettra ensuite a votre disposition un tableau de bord simple et pratique avec des liens rapides vers tous les cours Tutors auxquels vous avez accede recemment.
+
+Pour certains cours, Tutors exigera toujours un compte pour obtenir l'acces, et vous arriverez alors ici. Une fois connecte, Tutors peut enregistrer la duree pendant laquelle chaque vue reste active et envoyer ces donnees au magasin de donnees TutorsTime. Vous pouvez consulter ces informations via la fonctionnalite Time du menu de profil. Ces donnees sont disponibles pour vous et pour l'enseignant de votre cours, mais pas pour les autres etudiants. Aucune autre donnee n'est collectee, et ces donnees ne sont transmises nulle part ailleurs qu'au magasin de donnees TutorsTime.
+
+La fonctionnalite Live, disponible depuis le menu de profil, peut aussi utiliser ces donnees pour afficher un panneau des etudiants actuellement en ligne. **Vous pouvez vous desinscrire de ces fonctionnalites en desactivant l'option Partager la presence dans le menu de profil.** Pour en savoir plus sur TutorsTime, consultez :
+
+- [FAQ Tutors Time](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
+- [FAQ Tutors Live](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
+
+Tutors est une application open source - le composant de collecte des donnees [se trouve ici](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Nom",
