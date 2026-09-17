@@ -72,6 +72,84 @@ services:
     environment:
       ORIGIN: http://localhost:${LIVE_PORT:-3002}
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
+      # Unset, these default to the memory pipeline: one container, no broker,
+      # no database, a working dashboard. The `live-pipeline` profile below sets
+      # them to the networked adapters.
+      LIVE_BUS: ${LIVE_BUS:-}
+      LIVE_HOT_STORE: ${LIVE_HOT_STORE:-}
+      LIVE_WAREHOUSE: ${LIVE_WAREHOUSE:-}
+      LIVE_REDIS_URL: ${LIVE_REDIS_URL:-}
+      LIVE_DATABASE_URL: ${LIVE_DATABASE_URL:-}
+      LIVE_TERMS: ${LIVE_TERMS:-}
+
+  # The full pipeline, off by default:
+  #
+  #   docker compose --profile live-pipeline up --build
+  #
+  # brings up Valkey, TimescaleDB and the ingest consumer. Point the live app at
+  # them with LIVE_BUS=redis LIVE_HOT_STORE=valkey LIVE_WAREHOUSE=postgres and
+  # the two URLs below.
+  valkey:
+    profiles: ["live-pipeline"]
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  timescaledb:
+    profiles: ["live-pipeline"]
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: ${LIVE_DB_USER:-tutors}
+      POSTGRES_PASSWORD: ${LIVE_DB_PASSWORD:-tutors}
+      POSTGRES_DB: ${LIVE_DB_NAME:-tutorslive}
+    ports:
+      - "${LIVE_DB_PORT:-5432}:5432"
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LIVE_DB_USER:-tutors} -d ${LIVE_DB_NAME:-tutorslive}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  live-ingest:
+    profiles: ["live-pipeline"]
+    image: tutors/live-ingest:local
+    build:
+      context: .
+      dockerfile: services/live-ingest/Dockerfile
+    init: true
+    restart: unless-stopped
+    depends_on:
+      valkey:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    environment:
+      PORT: 3010
+      LIVE_BUS: redis
+      LIVE_HOT_STORE: valkey
+      LIVE_WAREHOUSE: postgres
+      LIVE_REDIS_URL: redis://valkey:6379
+      LIVE_DATABASE_URL: postgres://${LIVE_DB_USER:-tutors}:${LIVE_DB_PASSWORD:-tutors}@timescaledb:5432/${LIVE_DB_NAME:-tutorslive}
+    ports:
+      - "${LIVE_INGEST_PORT:-3010}:3010"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3010/healthz/live').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   time:
     <<: *app
@@ -85,3 +163,6 @@ services:
     environment:
       ORIGIN: http://localhost:${TIME_PORT:-3003}
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
+
+volumes:
+  timescale-data:

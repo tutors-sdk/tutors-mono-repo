@@ -6,7 +6,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./registry": "./src/metrics.ts"
   },
   "dependencies": {
     "@prometheus-io/client": "^0.16.1"

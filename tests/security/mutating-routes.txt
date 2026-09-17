@@ -10,3 +10,4 @@
 time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one)
 reader POST /auth/signin/github | hook | who: anyone; Auth.js starts the GitHub OAuth flow
 reader POST /auth/signout | hook | who: a signed-in user; Auth.js checks its own CSRF token
+live POST /api/live/events | who: anyone; the Tutors Live ingest endpoint is anonymous by design, so validation and a 64KB body limit are the only controls (tier F must add a rate limit)
