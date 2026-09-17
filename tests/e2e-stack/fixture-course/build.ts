@@ -39,6 +39,26 @@ writeCourseToFilesystem(FIXTURE_SPEC, srcDir);
 // The scaffolder nests the course under its id, as `deno run jsr:@tutors/tutors-create` does.
 const courseDir = `${srcDir}/${FIXTURE_SPEC.courseId}`;
 
+// Math and a diagram on the lab's second step, so the journeys prove KaTeX and
+// Mermaid still render now that the reader loads them on demand.
+await Deno.writeTextFile(
+  `${courseDir}/unit-1/topic-01/book-lab-01/01.Step-01.md`,
+  [
+    "",
+    "## Renderers",
+    "",
+    "Euler's identity: $e^{i\\pi} + 1 = 0$.",
+    "",
+    "```mermaid",
+    "flowchart LR",
+    "  accTitle: Read then practise",
+    "  Read --> Practise",
+    "```",
+    ""
+  ].join("\n"),
+  { append: true }
+);
+
 // The generator resolves course files relative to the working directory, as the tutors CLI does.
 Deno.chdir(courseDir);
 const [course, lr] = parseCourse(courseDir);

@@ -219,8 +219,14 @@ export function isValid(str: string) : boolean;
 // (from src/utils/lo-utils.ts)
 export function loadIcon(lo: Lo) : IconType | undefined;
 
+// (from src/utils/markdown-utils.ts)
+export function loadMath() : Promise<void>;
+
 // (from src/utils/course-utils.ts)
 export function loadPropertyFlags(course: Course);
+
+// (from src/utils/markdown-utils.ts)
+export function mayContainMath(text: string) : boolean;
 
 // (from src/utils/course-utils.ts)
 export function pluraliseLoType(type: string) : string;
@@ -275,7 +281,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 33 |
+| function | 35 |
 | interface | 1 |
 | type | 39 |
-| **Total** | **82** |
+| **Total** | **84** |

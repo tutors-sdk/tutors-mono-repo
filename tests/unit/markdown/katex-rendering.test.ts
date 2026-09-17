@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { markdownIt } from "../../../packages/jsr/model/src/utils/markdown-utils";
+import { beforeAll, describe, it, expect } from "vitest";
+import { loadMath, markdownIt } from "../../../packages/jsr/model/src/utils/markdown-utils";
 
 /**
  * Tests for KaTeX math rendering via @mdit/plugin-katex.
@@ -7,6 +7,8 @@ import { markdownIt } from "../../../packages/jsr/model/src/utils/markdown-utils
  * and edge cases for the markdown-it + katex pipeline.
  */
 describe("KaTeX Math Rendering", () => {
+  beforeAll(() => loadMath());
+
   describe("inline math", () => {
     it("shall render inline math with single dollar delimiters", () => {
       const result = markdownIt.render("$E=mc^2$");
