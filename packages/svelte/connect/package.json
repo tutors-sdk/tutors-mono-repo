@@ -15,7 +15,6 @@
     "@tutors/runes": "workspace:*",
     "@tutors/community": "workspace:*",
     "@tutors/rbac": "workspace:*",
-    "@tutors/course": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@auth/sveltekit": "^1.11.3"
   },

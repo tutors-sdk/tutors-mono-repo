@@ -30,9 +30,8 @@ export const FIXTURE_SPEC = {
 };
 
 const outDir = Deno.args[0] ?? fileURLToPath(new URL("../work/course", import.meta.url));
-// Scaffold into a temp dir: the generator derives lab step ids from the text
-// between the first and last "." of the step's full path, so a source path
-// containing a dotted directory (.claude, .work, ~/.cache) corrupts every step id.
+// Scaffold into a temp dir, outside the repo. (Generators before the dotted-path
+// fix also corrupted every lab step id under a dotted directory such as .claude.)
 const srcDir = await Deno.makeTempDir({ prefix: "tutors_fixture_" });
 
 await Deno.remove(outDir, { recursive: true }).catch(() => {});

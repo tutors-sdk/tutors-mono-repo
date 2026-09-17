@@ -17,8 +17,3 @@ missing-header: reader: Strict-Transport-Security
 missing-header: catalogue: Strict-Transport-Security
 missing-header: live: Strict-Transport-Security
 missing-header: time: Strict-Transport-Security
-
-# The catalogue cannot render its error page for an unmatched URL: SvelteKit
-# throws "Missing +page.svelte component for route null" and answers 500
-# instead of 404. Reader, live and time answer 404.
-server-error: catalogue: GET /runway-smoke-not-found

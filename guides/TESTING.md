@@ -36,7 +36,6 @@ Coverage is collected from all `src/**/*.ts` and `src/**/*.svelte` files (exclud
 ```
 tutors-mono-repo/
 ├── vitest.config.ts                          # Root-level Vitest config (coverage thresholds, path aliases)
-├── vitest.workspace.ts                       # Vitest workspace (all packages + apps)
 ├── tests/                                    # Root-level cross-cutting test suites
 │   ├── bdd/                                  # BDD tests (Gherkin features + step definitions)
 │   │   ├── features/
@@ -160,7 +159,7 @@ pnpm test:release:bench
 ### Tier 1: TDD Unit Tests
 
 **Location:** Co-located `*.test.ts` files within each package and app
-**Config:** Per-package `vitest.config.ts` + `vitest.workspace.ts`
+**Config:** Root `vitest.config.ts`
 **Run:** `pnpm turbo test`
 
 Per-package unit test coverage targets:
@@ -306,7 +305,6 @@ Three levels of Vitest configuration:
 | Config                   | Scope                        | Coverage    | Environment | Timeout |
 | ------------------------ | ---------------------------- | ----------- | ----------- | ------- |
 | `vitest.config.ts`       | Root-level (BDD, contract, fuzz, integration) | v8, thresholds enforced | Node | Default |
-| `vitest.workspace.ts`    | All packages + apps          | Per-project | Per-project | Default |
 | Per-app `vitest.config.ts` | App-specific tests           | v8          | happy-dom   | Default |
 
 ### Mocking
@@ -663,7 +661,6 @@ node --inspect-brk node_modules/.bin/vitest run --pool=forks tests/contract/mode
 | Path                                              | Purpose                                                   |
 | ------------------------------------------------- | --------------------------------------------------------- |
 | `vitest.config.ts`                                | Root Vitest config (coverage thresholds, path aliases)    |
-| `vitest.workspace.ts`                             | Vitest workspace definition (all packages + apps)         |
 | `guides/TESTING.md`                               | This file — comprehensive testing guide                   |
 | `guides/TESTING-OVERVIEW.md`                      | Quick-reference testing overview                          |
 | `tests/bdd/features/`                             | Gherkin feature files                                     |
