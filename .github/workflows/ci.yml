@@ -71,8 +71,403 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Runway tier A: unused files, exports and dependencies, ratcheted
+      # against tests/architecture/known-knip.txt.
+      - name: Unused code and dependencies (knip)
+        run: pnpm check:knip
+
       - name: Run unit tests
         run: pnpm exec vitest run --coverage
 
       - name: Run fuzz tests
         run: pnpm test:fuzz
+
+  # Testing runway tier J: the manifests render, validate against the
+  # Kubernetes schemas and satisfy the restricted-SCC policies in
+  # scripts/checks/conformance.ts. The policy unit tests and the config
+  # completeness check run with the rest of Vitest above.
+  platform-conformance:
+    name: Platform conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Render overlays and check policies
+        run: pnpm check:k8s --out rendered
+
+      - name: Validate rendered manifests against Kubernetes schemas
+        run: >
+          docker run --rm -v "$PWD:/work:ro" -w /work
+          ghcr.io/yannh/kubeconform@sha256:85dbef6b4b312b99133decc9c6fc9495e9fc5f92293d4ff3b7e1b30f5611823c
+          -strict -summary -kubernetes-version 1.33.0 rendered
+
+      - name: Schema validation rejects an invalid manifest (negative fixture)
+        run: |
+          if docker run --rm -v "$PWD:/work:ro" -w /work \
+            ghcr.io/yannh/kubeconform@sha256:85dbef6b4b312b99133decc9c6fc9495e9fc5f92293d4ff3b7e1b30f5611823c \
+            -strict -kubernetes-version 1.33.0 tests/conformance/fixtures/invalid-manifest.yaml; then
+            echo "::error::kubeconform accepted tests/conformance/fixtures/invalid-manifest.yaml"
+            exit 1
+          fi
+
+  # Testing runway tiers J and K against the built image: arbitrary UID,
+  # read-only root, .env.example values only; healthz, metrics and log contract.
+  container-smoke:
+    name: Container smoke (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [reader, catalogue, live, time]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=${{ matrix.app }}
+          tags: tutors/${{ matrix.app }}:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=smoke-${{ matrix.app }}
+
+      # --app adds the tier M checks: header contract, cookie flags, cross-site POSTs.
+      - name: Smoke test the image
+        run: pnpm check:container --image "tutors/${MATRIX_APP}:ci" --app "${MATRIX_APP}"
+        env:
+          MATRIX_APP: ${{ matrix.app }}
+
+  container-smoke-fixtures:
+    name: Container smoke negative fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build fixture image
+        run: docker build -t tutors-smoke-fixture tests/conformance/fixtures/faulty-image
+
+      - name: Healthy fixture passes
+        run: pnpm check:container --image tutors-smoke-fixture
+
+      - name: Fixture that writes to its root filesystem fails
+        run: pnpm check:container --image tutors-smoke-fixture --env FIXTURE_FAULT=readonly --startup-budget-ms 10000 --expect-fail
+
+      - name: Fixture that needs UID 1001 fails
+        run: pnpm check:container --image tutors-smoke-fixture --env FIXTURE_FAULT=uid --startup-budget-ms 10000 --expect-fail
+
+      - name: Fixture without security headers fails the tier M checks
+        run: pnpm check:container --image tutors-smoke-fixture --app time --expect-fail
+
+  # Runway tier M: on pull requests only advisories the branch introduces fail;
+  # on main every advisory must be fixed or allow-listed with an unexpired reason.
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Base branch manifests
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          mkdir base
+          for f in pnpm-lock.yaml package.json pnpm-workspace.yaml; do git show "origin/${BASE_REF}:$f" > "base/$f"; done
+
+      - name: Audit new advisories
+        if: github.event_name == 'pull_request'
+        run: pnpm check:audit --base-dir base
+
+      - name: Audit every advisory
+        if: github.event_name != 'pull_request'
+        run: pnpm check:audit
+
+  # Runway tier G: named journeys and axe/reduced-motion ratchets against the
+  # built images and a fixture course server, never vite dev.
+  e2e-stack:
+    name: E2E journeys (built images)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Build catalogue image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=catalogue
+          tags: tutors/catalogue:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-catalogue
+
+      - name: Build live image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=live
+          tags: tutors/live:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-live
+
+      - name: Build fixture course
+        run: pnpm e2e:stack:fixture
+
+      - name: Start stack
+        run: pnpm e2e:stack:up
+        env:
+          TUTORS_TAG: ci
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Journeys
+        run: pnpm test:e2e:stack --project=chromium --project=webkit
+
+      - name: Baselines have no stale lines
+        run: pnpm test:e2e:stack:ratchet
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f tests/e2e-stack/compose.yaml logs --no-color
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e2e-stack-report
+          path: |
+            playwright-report/e2e-stack
+            test-results/e2e-stack
+          retention-days: 14
+
+  # Runway tier L: per-app client bundle ceilings (tests/performance/bundle-budgets.json).
+  bundle-budgets:
+    name: Bundle budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live apps/time; do
+            cp .env.example "$dir/.env"
+          done
+
+      - name: Build every app
+        run: pnpm --filter "tutors-reader..." --filter "tutors-catalogue..." --filter "tutors-live..." --filter "tutors-time..." build
+        env:
+          SVELTEKIT_ADAPTER: node
+
+      - name: Check bundle budgets
+        run: pnpm check:bundle
+
+  # Runway tier C: on PRs that touch a generator, every difference in generated
+  # output for the corpus must be claimed in tests/generator/claims.yaml. On
+  # other PRs and on pushes the job succeeds without running, so the gate holds.
+  generator-diff:
+    name: Generator differential
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Did this PR touch a generator?
+        id: gen
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Deno
+        if: steps.gen.outputs.run == 'true'
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup pnpm
+        if: steps.gen.outputs.run == 'true'
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        if: steps.gen.outputs.run == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.gen.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Planted change is caught (self-test)
+        if: steps.gen.outputs.run == 'true'
+        run: pnpm check:generator-diff --plant
+
+      - name: Every output difference is claimed
+        if: steps.gen.outputs.run == 'true'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BROAD: ${{ contains(github.event.pull_request.labels.*.name, 'approve-broad-claim') }}
+        run: |
+          if [ "$BROAD" = "true" ]; then
+            pnpm check:generator-diff --base "origin/${BASE_REF}" --approve-broad
+          else
+            pnpm check:generator-diff --base "origin/${BASE_REF}"
+          fi
+
+      - name: Upload report
+        if: always() && steps.gen.outputs.run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: generator-diff-report
+          path: .generator-diff/report/
+          retention-days: 14
+
+  # The one check to mark as required in branch protection. A skipped or
+  # cancelled job counts as a failure.
+  ci-success:
+    name: CI success
+    if: always()
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A required job finished with '$result' (results: $RESULTS)"
+              exit 1
+            fi
+          done

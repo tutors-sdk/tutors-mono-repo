@@ -101,10 +101,19 @@ oc apply -k deploy/k8s/overlays/reader          # deploy
 ```
 
 Before applying, replace `registry.example.com/tutors/<app>` in the overlay
-with the real image reference and fill in the ConfigMap values. The reader
-overlay expects a `reader-tutors-app-oauth` Secret; copy
-`overlays/reader/secrets.yaml.example` to `secrets.yaml` (git-ignored) and
-apply it separately.
+with the real image reference and fill in the ConfigMap values. Image tags are
+pinned to the release version in the root `package.json` (never `latest`); the
+release checklist bumps them together. The reader overlay expects a
+`reader-tutors-app-oauth` Secret; copy `overlays/reader/secrets.yaml.example`
+to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads
+an optional `<app>-tutors-app-secrets` Secret for `METRICS_TOKEN`
+(`base/secrets.yaml.example`); the time app's example adds `MOODLE_WS_TOKEN`.
+
+`pnpm check:k8s` renders every overlay and checks it against the policies in
+`scripts/checks/conformance.ts`: pinned images, requests and limits, probes,
+and a security context `restricted-v2` admits. CI also validates the rendered
+output with kubeconform. Every variable the apps read must appear both in
+`.env.example` and in these manifests, or the conformance tests fail.
 
 The pod spec runs as non-root with a read-only root filesystem, all
 capabilities dropped and the default seccomp profile, which satisfies the

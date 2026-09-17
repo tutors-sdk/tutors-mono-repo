@@ -5,7 +5,7 @@ import { SvelteKitAuth } from "@auth/sveltekit";
 import { env } from "$env/dynamic/private";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+import log, { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 
 setAppName("tutors-reader");
@@ -55,7 +55,17 @@ const { handle: authInitHandle } = SvelteKitAuth({
   },
 
   secret: env.PRIVATE_AUTH_SECRET,
-  trustHost: true
+  trustHost: true,
+
+  // Route Auth.js output through the structured logger; its default writes
+  // coloured plain text that log collectors cannot parse.
+  logger: {
+    error: (error) => log.error("Auth.js error", error),
+    // @auth/sveltekit turns off Auth.js's own CSRF token and relies on
+    // SvelteKit's origin check, so "csrf-disabled" arrives on every auth request.
+    warn: (code) => (code === "csrf-disabled" ? log.debug("Auth.js warning", { code }) : log.warn("Auth.js warning", { code })),
+    debug: (message, metadata) => log.debug(`Auth.js: ${message}`, { metadata })
+  }
 });
 
 // First in the chain so every request gets a correlation id and one completion line,

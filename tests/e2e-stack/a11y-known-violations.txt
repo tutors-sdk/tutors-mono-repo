@@ -1,0 +1,43 @@
+# Serious and critical axe violations (WCAG 2.1 A/AA) that predate tier G.
+# Format: `<project> | <page> :: <axe rule>`. Shrink-only: journeys fail on
+# a line that is not here, and `node tests/e2e-stack/ratchet.mjs` fails on a
+# line that no longer occurs. Fixing one means deleting its line.
+#
+# button-name (critical): the course-tree dialog trigger in the reader banner
+#   (#dialog:c2:trigger) and the lab page's small action button have no accessible name.
+# list / listitem (serious): the lab steps navigation renders <a><li>…</li></a>
+#   inside <ul>, so the list items are not children of the list.
+# nested-interactive (serious): the lab page tree view puts a link inside a
+#   button inside a treeitem.
+# link-name (serious, mobile viewport only): a link in the collapsed mobile
+#   navigation has no accessible name.
+# reader:home, catalogue:home and live:home have no serious or critical violations.
+chromium | reader:course :: button-name
+chromium | reader:lab-step :: button-name
+chromium | reader:lab-step :: list
+chromium | reader:lab-step :: listitem
+chromium | reader:lab-step :: nested-interactive
+chromium | reader:search :: button-name
+chromium | reader:search-results :: button-name
+chromium | reader:topic :: button-name
+firefox | reader:course :: button-name
+firefox | reader:lab-step :: button-name
+firefox | reader:lab-step :: list
+firefox | reader:lab-step :: listitem
+firefox | reader:lab-step :: nested-interactive
+firefox | reader:search :: button-name
+firefox | reader:search-results :: button-name
+firefox | reader:topic :: button-name
+mobile | reader:course :: link-name
+mobile | reader:lab-step :: link-name
+mobile | reader:search :: button-name
+mobile | reader:search-results :: button-name
+mobile | reader:topic :: link-name
+webkit | reader:course :: button-name
+webkit | reader:lab-step :: button-name
+webkit | reader:lab-step :: list
+webkit | reader:lab-step :: listitem
+webkit | reader:lab-step :: nested-interactive
+webkit | reader:search :: button-name
+webkit | reader:search-results :: button-name
+webkit | reader:topic :: button-name
