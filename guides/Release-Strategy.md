@@ -80,7 +80,7 @@ When `main` has accumulated enough changes for a release (or a time-based cadenc
 
 1. **Determine the version bump.** Review merged PRs since the last release. Apply semver rules.
 2. **Create the release branch:** `git checkout -b release/vX.Y.Z main`
-3. **Bump the version** in `package.json` and update `CHANGELOG.md`.
+3. **Bump the version** in `package.json`, set the same version as `newTag` in each `deploy/k8s/overlays/*/kustomization.yaml`, and update `CHANGELOG.md`. The conformance tests fail until the overlay tags match, so the overlays always name the image being released.
 4. **Tag the first RC:** `git tag vX.Y.Z-rc.1`
 5. **Deploy RC to staging** for validation.
 

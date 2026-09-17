@@ -95,6 +95,41 @@ See `guides/MUTATION-TESTING.md` for full details.
 
 ---
 
+## Tier 10: Runway Checks (`tests/architecture/`, `tests/suite-health/`, `tests/completeness/`, `tests/observability/`, `tests/conformance/`)
+
+**Approach**: Checks over the repository itself rather than over one module, from the Tutors Testing Runway (tiers A, J, K, N and O). The logic lives in `scripts/checks/` as pure functions; each test file runs it against **negative fixtures** that prove the check can fail, then against the real repo. Run them alone with `pnpm test:runway`; they also run in the normal `vitest run`.
+
+| Tier | Directory | What fails the build |
+|---|---|---|
+| A: Architecture | `tests/architecture/` | An import that goes up a layer (README "Architecture"), an app importing another app, a relative import into another workspace, a cycle across packages (`.dependency-cruiser.cjs`); `deno.json` and `package.json` disagreeing on name, version, exports or dependency majors |
+| O: Suite health | `tests/suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads |
+| N: Completeness | `tests/completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
+| K: Observability | `tests/observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
+| J: Conformance | `tests/conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
+
+**Ratchets**: checks that found problems on day one hold them in a baseline beside the test (`known-violations.txt`, `known-manifest-drift.txt`, `known-findings.txt`, `known-gaps.txt`). A new problem fails. So does a baseline line that no longer occurs, so fixing something means deleting its line, and a baseline can only shrink.
+
+**Quarantine**: a test may be skipped without a baseline entry if the line above names an issue and an expiry. After that date it fails again:
+
+```ts
+// quarantine: #123 until 2026-10-01
+it.skip("flaky in webkit", () => { ... });
+```
+
+**Outside Vitest** (they need Docker or kustomize, and run as their own CI jobs):
+
+```bash
+pnpm check:k8s                                  # render every overlay and apply the manifest policies
+pnpm check:k8s --out rendered                   # also write the output for kubeconform
+docker build --build-arg APP_NAME=reader -t tutors/reader:local .
+pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
+pnpm architecture-report                        # every dependency-cruiser violation, known ones included
+```
+
+The container check proves it can fail against `tests/conformance/fixtures/faulty-image` (`FIXTURE_FAULT=readonly` or `uid`); CI runs kubeconform against `tests/conformance/fixtures/invalid-manifest.yaml` for the same reason.
+
+---
+
 ## Running Tests
 
 ```bash

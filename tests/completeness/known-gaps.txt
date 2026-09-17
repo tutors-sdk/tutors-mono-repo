@@ -1,0 +1,79 @@
+# Completeness gaps that predate tier N (scripts/checks/completeness.ts).
+# This file may only shrink: fixing a gap means deleting its line here.
+
+# Translations. PR #248 adds auth.terms for de/es/fr/it.
+missing-translation: de: auth.terms
+missing-translation: es: auth.terms
+missing-translation: fr: auth.terms
+missing-translation: ga: home.create
+missing-translation: ga: lecturer.access.authLevel
+missing-translation: ga: lecturer.access.lecturers
+missing-translation: ga: lecturer.access.owner
+missing-translation: ga: lecturer.access.title
+missing-translation: ga: lecturer.control.placeholder
+missing-translation: ga: lecturer.control.title
+missing-translation: ga: lecturer.enrollment.add
+missing-translation: ga: lecturer.enrollment.empty
+missing-translation: ga: lecturer.enrollment.placeholder
+missing-translation: ga: lecturer.enrollment.students
+missing-translation: ga: lecturer.enrollment.title
+missing-translation: ga: lecturer.enrollment.whitelist
+missing-translation: ga: lecturer.locked.overlay
+missing-translation: ga: lecturer.locks.empty
+missing-translation: ga: lecturer.locks.lock
+missing-translation: ga: lecturer.locks.locked
+missing-translation: ga: lecturer.locks.title
+missing-translation: ga: lecturer.locks.unlock
+missing-translation: ga: lecturer.locks.unlocked
+missing-translation: ga: lecturer.panel.tip
+missing-translation: ga: lecturer.panel.title
+missing-translation: ga: menu.profile
+missing-translation: it: auth.terms
+
+# Icon libraries without the coursetree, podcast and tutorial icons FluentIconLib has;
+# those learning objects fall back to the generic Tutors icon (with a console warning) under these themes.
+missing-icon: EasterIcons: coursetree
+missing-icon: EasterIcons: podcast
+missing-icon: EasterIcons: tutorial
+missing-icon: FestiveIcons: coursetree
+missing-icon: FestiveIcons: podcast
+missing-icon: FestiveIcons: tutorial
+missing-icon: HeroIconLib: coursetree
+missing-icon: HeroIconLib: podcast
+missing-icon: HeroIconLib: tutorial
+
+# App READMEs out of step with package.json (good first issue #244).
+readme-missing: apps/time
+readme-unknown-package: apps/catalogue: @tutors/ui
+readme-unknown-package: apps/live: @tutors/ui
+readme-unknown-package: apps/reader: @tutors/ui
+readme-unlisted-package: apps/catalogue: @tutors/community
+readme-unlisted-package: apps/catalogue: @tutors/logger
+readme-unlisted-package: apps/catalogue: @tutors/metrics
+readme-unlisted-package: apps/catalogue: @tutors/runes
+readme-unlisted-package: apps/catalogue: @tutors/themes
+readme-unlisted-package: apps/catalogue: @tutors/tutors-model-lib
+readme-unlisted-package: apps/catalogue: @tutors/ui-components
+readme-unlisted-package: apps/catalogue: @tutors/ui-navigators
+readme-unlisted-package: apps/catalogue: @tutors/ui-primitives
+readme-unlisted-package: apps/live: @tutors/community
+readme-unlisted-package: apps/live: @tutors/logger
+readme-unlisted-package: apps/live: @tutors/metrics
+readme-unlisted-package: apps/live: @tutors/runes
+readme-unlisted-package: apps/live: @tutors/themes
+readme-unlisted-package: apps/live: @tutors/tutors-model-lib
+readme-unlisted-package: apps/live: @tutors/ui-components
+readme-unlisted-package: apps/live: @tutors/ui-navigators
+readme-unlisted-package: apps/live: @tutors/ui-primitives
+readme-unlisted-package: apps/reader: @tutors/community
+readme-unlisted-package: apps/reader: @tutors/connect
+readme-unlisted-package: apps/reader: @tutors/logger
+readme-unlisted-package: apps/reader: @tutors/metrics
+readme-unlisted-package: apps/reader: @tutors/rbac
+readme-unlisted-package: apps/reader: @tutors/runes
+readme-unlisted-package: apps/reader: @tutors/tutors-create
+readme-unlisted-package: apps/reader: @tutors/tutors-model-lib
+readme-unlisted-package: apps/reader: @tutors/tutors-time-lib
+readme-unlisted-package: apps/reader: @tutors/ui-components
+readme-unlisted-package: apps/reader: @tutors/ui-navigators
+readme-unlisted-package: apps/reader: @tutors/ui-primitives

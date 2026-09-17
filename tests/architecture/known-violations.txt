@@ -1,0 +1,7 @@
+# Architecture violations that predate tier A (rules in .dependency-cruiser.cjs).
+# This file may only shrink: the test fails on new violations and on entries
+# that no longer occur. Format: `rule: from -> to`.
+
+# course (core) reads the icon library from themeService (feature).
+# Removed by the "break package cycles" move in PR #228.
+layer-core: packages/svelte/course/src/course/services/lo-tree.ts -> packages/svelte/themes/src/index.ts
