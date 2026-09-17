@@ -8,6 +8,22 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.1 (2026-09)
+
+#### Features
+
+- Quiz learning objects (PR #260): a `quiz-*` folder containing a markdown file with a fenced `quiz` block renders as an interactive quiz — one question at a time, free navigation between questions, submission gated on a complete answer set, and a scored results page with a retake. Multiple-choice and true/false are supported, and question and option text is rendered as markdown
+- Quiz options form a WAI-ARIA radio group with roving tabindex and arrow-key navigation
+- A quiz wall at `/wall/quiz/{courseid}`, listing every quiz in a course
+
+  Answers are held in memory only and are not recorded; `time_limit` is accepted
+  by the parser but not yet enforced. This is a self-check for students rather
+  than an assessment.
+
+  Courses must be regenerated with `@tutors/tutors-gen-lib` 5.3.0 or later.
+  Earlier generators do not know the `quiz` type and mistype a `quiz-*` folder
+  as its enclosing topic, which renders as an empty topic page.
+
 ### v16.2.0 (2026-09)
 
 #### Features
@@ -256,6 +272,19 @@ any single one. Versioned with the monorepo.
 ---
 
 ## Shared Packages
+
+### Unreleased
+
+- `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
+- `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
+- `tutors-lite`: note pages no longer render a stray `s` after the note card
+
+### v5.3.0 (2026-09)
+
+- `model`: new `quiz` learning object type, registered in `simpleTypes` and `preOrder`. Without it the generator mistypes a `quiz-*` folder as its enclosing topic, so publishing this is what makes authored quizzes reachable
+- `model`: new `pluraliseLoType` export, so a quiz wall reads "All quizzes" rather than "All quizs"
+- `model`: quiz walls registered in `createWalls`
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.3.0
 
 ### v5.2.4 (2026-09)
 

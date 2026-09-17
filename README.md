@@ -6,6 +6,24 @@
 
 A modern monorepo for the Tutors educational platform - an open-source course reader and learning management system built with Svelte 5, SvelteKit, and TypeScript.
 
+## Quick start
+
+Ten minutes from clone to a rendered course. Requires Node.js >= 22.12.0 and pnpm >= 8.
+
+```bash
+git clone https://github.com/tutors-sdk/tutors-mono-repo.git
+cd tutors-mono-repo
+pnpm install
+cp .env.example apps/reader/.env
+pnpm dev
+```
+
+Then open **http://localhost:5173/course/reference-course**.
+
+That is it. `pnpm dev` builds the three UI packages in the right order and starts the reader. The copied `.env` has `PUBLIC_ANON_MODE=TRUE`, so no Supabase project, GitHub OAuth app or other backend is needed; the reader fetches the course straight from `https://reference-course.netlify.app/tutors.json`. Any published Tutors course works the same way: `http://localhost:5173/course/<course-id>`.
+
+New here? Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) next. It follows that URL through the code to the rendered cards, naming every file on the way. Then pick something from the [`good first issue`](https://github.com/tutors-sdk/tutors-mono-repo/labels/good%20first%20issue) list.
+
 ## Features
 
 - 📚 **Course Reader** - Beautiful, responsive course content viewer
@@ -18,47 +36,65 @@ A modern monorepo for the Tutors educational platform - an open-source course re
 
 ## Structure
 
-This repository uses pnpm workspaces to manage multiple packages and applications.
-
-### Packages
-
-**Foundation Layer (JSR Published):**
-- `packages/jsr/model` - Core data models and types
-- `packages/jsr/time` - Time tracking utilities
-- `packages/jsr/gen` - Course generation utilities
-- `packages/jsr/tutors` - JSR reader package (JSON course generator)
-- `packages/jsr/tutors-lite` - Static HTML course generator
-- `packages/jsr/create` - Course scaffolder (CLI and reader wizard)
-
-**Foundation Layer (Svelte):**
-- `packages/svelte/utils/logger` - Logging utility and server request logger
-- `packages/svelte/utils/metrics` - Prometheus registry, request middleware and `/metrics` endpoint
-
-**Core Services:**
-- `packages/svelte/runes` - Svelte 5 reactive state management
-- `packages/svelte/course` - Course content processing
-- `packages/svelte/utils/a11y` - Accessibility utilities
-- `packages/svelte/utils/i18n` - Internationalization
-
-**Feature Services:**
-- `packages/svelte/themes` - Theme management and styling
-- `packages/svelte/community` - Community features
-- `packages/svelte/connect` - Authentication and user management
-- `packages/svelte/utils/rbac` - Role resolution and content locking
-- `packages/svelte/utils/privacy` - Consent management
-- `packages/svelte/utils/tour` - Guided product tours
-
-**UI Layer:**
-- `packages/svelte/ui-primitives` - Primitive UI components (Icon, Menu, Sidebar, Image)
-- `packages/svelte/ui-navigators` - Navigator components (MainNavigator, SecondaryNavigator, Footer, TutorsShell)
-- `packages/svelte/ui-components` - High-level UI components (learning objects, time views)
+This repository uses pnpm workspaces. Directory names and package names differ, so every table below shows both: the **Package** column is what you pass to `pnpm --filter`. Aligning the two is tracked in [#233](https://github.com/tutors-sdk/tutors-mono-repo/issues/233).
 
 ### Applications
 
-- `apps/reader` - Main course reader application
-- `apps/catalogue` - Course catalog application
-- `apps/live` - Live classroom application
-- `apps/time` - Student activity and time tracking dashboard
+| Directory | Package | What it is | Dev port |
+|---|---|---|---|
+| `apps/reader` | `tutors-reader` | The course reader (the app behind tutors.dev) | 5173 |
+| `apps/catalogue` | `tutors-catalogue` | Course catalogue | 5175 |
+| `apps/live` | `tutors-live` | Live classroom / presence | 5174 |
+| `apps/time` | `tutors-time` | Student activity and time-tracking dashboard | 5176 |
+
+### Packages
+
+**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; three of them also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
+
+| Directory | Package | What it is |
+|---|---|---|
+| `packages/jsr/model` | `@tutors/tutors-model-lib` | Core data models, types and the course-tree utilities |
+| `packages/jsr/time` | `@tutors/tutors-time-lib` | Time tracking utilities |
+| `packages/jsr/gen` | `@tutors/tutors-gen-lib` | Course generation utilities |
+| `packages/jsr/tutors` | `@tutors/tutors` | The generator that turns a course folder into `tutors.json` |
+| `packages/jsr/tutors-lite` | `@tutors/tutors-lite` | Static HTML course generator |
+| `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
+
+**Foundation layer, Svelte.**
+
+| Directory | Package | What it is |
+|---|---|---|
+| `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
+| `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+
+**Core services.**
+
+| Directory | Package | What it is |
+|---|---|---|
+| `packages/svelte/runes` | `@tutors/runes` | Svelte 5 reactive state shared across packages |
+| `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
+| `packages/svelte/utils/a11y` | `@tutors/a11y` | Accessibility utilities |
+| `packages/svelte/utils/i18n` | `@tutors/i18n` | Internationalization (six locales) |
+
+**Feature services.**
+
+| Directory | Package | What it is |
+|---|---|---|
+| `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
+| `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
+| `packages/svelte/community` | `@tutors/community` | Presence and community features |
+| `packages/svelte/connect` | `@tutors/connect` | Authentication and user management |
+| `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
+| `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
+| `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
+
+**UI layer.** Strict one-directional dependency: `ui-components → ui-navigators → ui-primitives`.
+
+| Directory | Package | What it is |
+|---|---|---|
+| `packages/svelte/ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
+| `packages/svelte/ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
+| `packages/svelte/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
 
 ## Getting Started
 
@@ -69,43 +105,50 @@ This repository uses pnpm workspaces to manage multiple packages and application
 
 ### Installation
 
+The [Quick start](#quick-start) above is the whole install for the reader. For the other apps, each one reads its own `.env`:
+
 ```bash
-# Install dependencies
-pnpm install
-
-# Build the UI packages (must be done before running any app)
-pnpm --filter @tutors/ui-primitives build
-pnpm --filter @tutors/ui-navigators build
-pnpm --filter @tutors/ui-components build
-
-# Run the reader development server
-pnpm --filter tutors-reader dev
-
-# Build the reader for production
-pnpm --filter tutors-reader... build
+cp .env.example apps/catalogue/.env
+cp .env.example apps/live/.env
+cp .env.example apps/time/.env
 ```
-
-The UI packages must be built in order — `ui-primitives` first, then `ui-navigators`, then `ui-components` which produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. Running `pnpm dev` from the root handles this automatically.
-
-The `...` suffix in `pnpm --filter tutors-reader...` builds tutors-reader and all its workspace dependencies in the correct order.
 
 ### Development
 
 ```bash
-# Run specific app
-pnpm --filter tutors-reader dev
-pnpm --filter catalogue dev
-pnpm --filter live dev
-pnpm --filter tutors-time dev
+# Reader (builds the UI packages first, then starts on :5173)
+pnpm dev
 
-# Rebuild the UI packages after changes
+# Other apps
+pnpm --filter tutors-catalogue dev   # :5175
+pnpm --filter tutors-live dev        # :5174
+pnpm --filter tutors-time dev        # :5176
+
+# Minimum bar before opening a PR
+pnpm lint
+pnpm test
+pnpm check
+```
+
+`pnpm dev` is a shortcut for the four commands below. You only need them individually if you have changed a UI package and want to rebuild it without restarting:
+
+```bash
 pnpm --filter @tutors/ui-primitives build
 pnpm --filter @tutors/ui-navigators build
 pnpm --filter @tutors/ui-components build
-
-# Type checking
-pnpm check
+pnpm --filter tutors-reader dev
 ```
+
+The order matters. `ui-components` is built last because its build produces `dist/style.css`, the pre-compiled Tailwind and Skeleton stylesheet the apps import.
+
+### Building
+
+```bash
+# Build the reader and every workspace package it depends on, in order
+pnpm build
+```
+
+The `...` suffix in `pnpm --filter tutors-reader... build` (which is what `pnpm build` runs) means "this package and all its workspace dependencies".
 
 ### Containers
 
@@ -116,12 +159,29 @@ to `adapter-node`; leaving it unset keeps the Netlify build path unchanged. See
 [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md) for the local standup, and
 `observability/compose.yaml` for the Prometheus and Grafana stack.
 
+## Documentation
+
+Docs live in five places. This is the index.
+
+| Read this | When you want to |
+|---|---|
+| [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) | Understand how one course page gets from URL to pixels. **Start here.** |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Look something up: every package, service and data flow, in depth |
+| [guides/TESTING-OVERVIEW.md](guides/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/TESTING.md](guides/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
+| [guides/EARS-METHODOLOGY.md](guides/EARS-METHODOLOGY.md), [guides/MUTATION-TESTING.md](guides/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite |
+| [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
+| [guides/Release-Strategy.md](guides/Release-Strategy.md), [tests/release/RELEASE-TESTING.md](tests/release/RELEASE-TESTING.md) | Cut or validate a release |
+| [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md), [deploy/README.md](deploy/README.md) | Run in containers or deploy to a cluster |
+| [docs/DATA-INVENTORY.md](docs/DATA-INVENTORY.md), [docs/PRIVACY-POLICY-TEMPLATE.md](docs/PRIVACY-POLICY-TEMPLATE.md), [SECURITY.md](SECURITY.md) | Privacy, data and security posture |
+| [docs/okf-guide.md](docs/okf-guide.md) | Generate the Open Knowledge Framework export |
+
 ## Technology Stack
 
 - **Framework:** SvelteKit 2.x with Svelte 5
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4.x + Skeleton UI
-- **Package Manager:** pnpm workspaces
+- **Package Manager:** pnpm workspaces (Deno for the JSR packages)
 - **Code Formatting:** Mermaid, Shiki syntax highlighting
 - **Markdown:** markdown-it with KaTeX support
 
@@ -139,6 +199,8 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 
+That is the vertical view, which answers "what may depend on what". [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) is the horizontal view, which answers "where does this pixel come from". Most changes need the second one.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
@@ -150,5 +212,5 @@ See LICENSE file for details.
 ## Links
 
 - **Documentation:** [tutors.dev](https://tutors.dev)
-- **Issues:** [GitHub Issues](https://github.com/tutors-sdk/tutors/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/tutors-sdk/tutors/discussions)
+- **Issues:** [GitHub Issues](https://github.com/tutors-sdk/tutors-mono-repo/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/tutors-sdk/tutors-mono-repo/discussions)

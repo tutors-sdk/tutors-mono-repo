@@ -14,6 +14,7 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
   beforeEach(() => {
     courseProtocol.value = "https://";
     mockCourse = {
+      type: "course",
       title: "Test Course",
       courseId: "test",
       courseUrl: "test.com",
@@ -21,7 +22,7 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
       los: [],
       loIndex: new Map(),
       topicIndex: new Map()
-    } as Course;
+    } as unknown as Course;
   });
 
   describe("WHEN breadcrumbs length is exactly 2", () => {
@@ -42,8 +43,7 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
   });
 
   describe("WHEN breadcrumbs length is exactly 3", () => {
-    it.skip("shall check breadcrumbs[1].type when length > 2", () => {
-      // Create a nested structure that will have breadcrumbs length = 3
+    it("shall check breadcrumbs[1].type when length > 2", () => {
       const topic: Composite = {
         type: "topic",
         title: "Topic",
@@ -52,7 +52,7 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
           {
             type: "unit",
             title: "Unit 1",
-            route: "/topic/test/unit1",
+            route: "/topic/test/t1",
             los: []
           } as any
         ]
@@ -62,82 +62,54 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
       decorateLoTree(mockCourse, mockCourse);
 
       const unit = topic.los[0];
-      expect(unit.breadCrumbs).toBeDefined();
-      expect(unit.breadCrumbs!.length).toBeGreaterThan(2);
+      expect(unit.breadCrumbs!.map((crumb) => crumb.type)).toEqual(["course", "topic", "unit"]);
+      // breadcrumbs[1] is a topic, so the unit inside it keeps its topic route
+      expect(unit.route).toBe("/topic/test/t1");
     });
 
-    it.skip('shall replace "topic" with "course" when breadcrumbs[1].type is "unit"', () => {
-      const topic: Composite = {
-        type: "topic",
-        title: "Topic",
-        route: "/topic/test/t1",
+    it('shall replace "topic" with "course" when breadcrumbs[1].type is "unit"', () => {
+      // The generator routes a unit directly under the course as /topic/<course id>
+      const unit: Composite = {
+        type: "unit",
+        title: "Unit 1",
+        route: "/topic/web-topics-2026",
         los: [
-          {
-            type: "unit",
-            title: "Unit 1",
-            route: "/topic/test/unit1",
-            los: [
-              {
-                type: "talk",
-                title: "Talk",
-                route: "/talk/test/talk1",
-                los: []
-              } as any
-            ]
-          } as any
+          { type: "talk", title: "Talk 1", route: "/talk/web-topics-2026/unit-1/talk-1", los: [] } as any,
+          { type: "talk", title: "Talk 2", route: "/talk/web-topics-2026/unit-1/talk-2", los: [] } as any
         ]
       } as any;
 
-      mockCourse.los = [topic as any];
+      mockCourse.los = [unit as any];
       decorateLoTree(mockCourse, mockCourse);
 
-      const unit = topic.los[0];
-      const talk = (unit as Composite).los[0];
-
-      // The talk should have breadcrumbs with modified route
-      expect(talk.breadCrumbs).toBeDefined();
-      if (talk.breadCrumbs && talk.breadCrumbs.length > 2) {
-        // breadcrumbs[1] should have its route changed from "topic" to "course"
-        const secondBreadcrumb = talk.breadCrumbs[1];
-        if (secondBreadcrumb.type === "unit") {
-          expect(secondBreadcrumb.route).toContain("/course/");
-          expect(secondBreadcrumb.route).not.toContain("/topic/");
-        }
+      for (const talk of unit.los) {
+        expect(talk.breadCrumbs![1]).toBe(unit);
       }
+      // Rewritten once per talk, but only the leading segment: the course id keeps "topics"
+      expect(unit.route).toBe("/course/web-topics-2026");
     });
 
-    it.skip('shall replace "topic" with "course" when breadcrumbs[1].type is "side"', () => {
-      const topic: Composite = {
-        type: "topic",
-        title: "Topic",
-        route: "/topic/test/t1",
+    it('shall replace "topic" with "course" when breadcrumbs[1].type is "side"', () => {
+      const side: Composite = {
+        type: "side",
+        title: "Side 1",
+        route: "/topic/topics-in-ai",
         los: [
-          {
-            type: "side",
-            title: "Side 1",
-            route: "/topic/test/side1",
-            los: []
-          } as any
+          { type: "talk", title: "Talk 1", route: "/talk/topics-in-ai/side-1/talk-1", los: [] } as any,
+          { type: "note", title: "Note 1", route: "/note/topics-in-ai/side-1/note-1", los: [] } as any
         ]
       } as any;
 
-      mockCourse.los = [topic as any];
+      mockCourse.los = [side as any];
       decorateLoTree(mockCourse, mockCourse);
 
-      const side = topic.los[0];
-
-      // Side is a composite, should have breadcrumbs
-      expect(side.breadCrumbs).toBeDefined();
-      if (side.breadCrumbs && side.breadCrumbs.length > 2) {
-        const secondBreadcrumb = side.breadCrumbs[1];
-        if (secondBreadcrumb.type === "side") {
-          expect(secondBreadcrumb.route).toContain("/course/");
-          expect(secondBreadcrumb.route).not.toContain("/topic/");
-        }
+      for (const child of side.los) {
+        expect(child.breadCrumbs![1]).toBe(side);
       }
+      expect(side.route).toBe("/course/topics-in-ai");
     });
 
-    it.skip('shall NOT replace route when breadcrumbs[1].type is neither "unit" nor "side"', () => {
+    it('shall NOT replace route when breadcrumbs[1].type is neither "unit" nor "side"', () => {
       const topic: Composite = {
         type: "topic",
         title: "Topic",
@@ -146,7 +118,7 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
           {
             type: "lab",
             title: "Lab 1",
-            route: "/topic/test/lab1",
+            route: "/lab/test/t1/lab1",
             los: []
           } as any
         ]
@@ -156,54 +128,29 @@ describe("decorateLoTree() - Breadcrumb Logic", () => {
       decorateLoTree(mockCourse, mockCourse);
 
       const lab = topic.los[0];
-
-      // Lab has breadcrumbs but breadcrumbs[1].type is "topic" not "unit" or "side"
-      // So the route replacement shouldn't happen
-      expect(lab.breadCrumbs).toBeDefined();
+      expect(lab.breadCrumbs![1]).toBe(topic);
+      expect(topic.route).toBe("/topic/test/t1");
     });
   });
 
   describe("WHEN breadcrumbs length is greater than 3", () => {
-    it.skip("shall still check breadcrumbs[1] when length > 3", () => {
-      // Create deeply nested structure
-      const topic: Composite = {
-        type: "topic",
-        title: "Topic",
-        route: "/topic/test/t1",
-        los: [
-          {
-            type: "unit",
-            title: "Unit 1",
-            route: "/topic/test/unit1",
-            los: [
-              {
-                type: "talk",
-                title: "Talk",
-                route: "/talk/test/talk1",
-                los: []
-              } as any
-            ]
-          } as any
-        ]
+    it("shall still check breadcrumbs[1] when length > 3", () => {
+      const talk = { type: "talk", title: "Talk", route: "/talk/web-topics-2026/unit-1/topic-1/talk1", los: [] } as any;
+      const topic = { type: "topic", title: "Topic", route: "/topic/web-topics-2026/unit-1/topic-1", los: [talk] } as any;
+      const unit: Composite = {
+        type: "unit",
+        title: "Unit 1",
+        route: "/topic/web-topics-2026",
+        los: [topic]
       } as any;
 
-      mockCourse.los = [topic as any];
+      mockCourse.los = [unit as any];
       decorateLoTree(mockCourse, mockCourse);
 
-      const unit = topic.los[0] as Composite;
-      const talk = unit.los[0];
-
-      // Talk has unit as parent, so breadcrumbs should be modified
-      expect(talk.breadCrumbs).toBeDefined();
-      expect(talk.breadCrumbs!.length).toBeGreaterThan(2);
-
-      // Still should check breadcrumbs[1]
-      if (talk.breadCrumbs && talk.breadCrumbs.length > 2) {
-        const secondBreadcrumb = talk.breadCrumbs[1];
-        if (secondBreadcrumb.type === "unit") {
-          expect(secondBreadcrumb.route).toContain("/course/");
-        }
-      }
+      expect(talk.breadCrumbs!.map((crumb: Lo) => crumb.type)).toEqual(["course", "unit", "topic", "talk"]);
+      expect(unit.route).toBe("/course/web-topics-2026");
+      // Deeper crumbs are not rewritten
+      expect(topic.route).toBe("/topic/web-topics-2026/unit-1/topic-1");
     });
   });
 

@@ -21,7 +21,11 @@ export const LogLineSchema = z
   })
   .loose();
 
-/** The one line the request logger writes when a request finishes. */
+/**
+ * The one line the request logger writes when a request finishes. `loadError`
+ * marks a server error SvelteKit answered with a non-5xx status (a failing
+ * server load inside a 200 `__data.json`); such a line is always error level.
+ */
 export const RequestCompletedSchema = LogLineSchema.extend({
   message: z.literal("request completed"),
   requestId: z.string().min(1),
@@ -29,7 +33,11 @@ export const RequestCompletedSchema = LogLineSchema.extend({
   path: z.string().startsWith("/"),
   route: z.string().nullable(),
   status: z.number().int().min(100).max(599),
-  duration_ms: z.number().nonnegative()
+  duration_ms: z.number().nonnegative(),
+  loadError: z.literal(true).optional()
+}).refine((line) => line.loadError !== true || line.level === "error", {
+  path: ["level"],
+  message: "a completion line with loadError must be logged at error"
 });
 
 export type LogLine = z.infer<typeof LogLineSchema>;
@@ -76,7 +84,9 @@ export function parseLogStream(stdout: string): { lines: unknown[]; findings: st
 /**
  * The contract for one failed request: every line about it carries its
  * request id, and exactly one error-level line carries a stack. Zero means
- * the failure is invisible; more than one means one fault pages twice.
+ * the failure is invisible; more than one means one fault pages twice. The
+ * completion line must also record the failure, either as a 5xx status or,
+ * when SvelteKit answered 200 with an error node, as `loadError: true`.
  */
 export function failedRequestFindings(lines: LogLine[], requestId: string): string[] {
   const findings: string[] = [];
@@ -86,6 +96,12 @@ export function failedRequestFindings(lines: LogLine[], requestId: string): stri
   }
   const withStack = lines.filter((line) => line.level === "error" && typeof line.stack === "string" && line.stack !== "");
   if (withStack.length !== 1) findings.push(`expected exactly 1 error line with a stack, found ${withStack.length}`);
+  for (const line of lines.filter((l) => l.message === "request completed")) {
+    const status = typeof line.status === "number" ? line.status : undefined;
+    if ((status === undefined || status < 500) && line.loadError !== true) {
+      findings.push(`"request completed" records status ${status} at ${line.level} without loadError, so the failure looks like a success`);
+    }
+  }
   return findings;
 }
 

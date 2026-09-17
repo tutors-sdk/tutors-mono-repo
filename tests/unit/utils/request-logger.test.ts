@@ -81,6 +81,45 @@ describe("request logger: completion line", () => {
   });
 });
 
+describe("request logger: failures SvelteKit answers with a 200", () => {
+  const failingLoad = (status: number, responseStatus = 200) => async (event: ReturnType<typeof makeEvent>) => {
+    logRequestError({ error: new Error("load threw"), event, status, message: "Internal Error" }, capture().logger);
+    return new Response("{}", { status: responseStatus });
+  };
+
+  it("marks the completion line with loadError and logs it at error", async () => {
+    const { logger, entries } = capture();
+    const handle = createRequestLogger({ logger });
+
+    const response = await handle({ event: makeEvent({ path: "/course/cs101/__data.json" }), resolve: failingLoad(500) });
+
+    expect(response.status).toBe(200);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ level: "error", message: "request completed", status: 200, loadError: true });
+  });
+
+  it("leaves a response that is already 5xx unmarked", async () => {
+    const { logger, entries } = capture();
+    await createRequestLogger({ logger })({ event: makeEvent(), resolve: failingLoad(500, 500) });
+    expect(entries[0]).toMatchObject({ level: "error", status: 500 });
+    expect(entries[0]).not.toHaveProperty("loadError");
+  });
+
+  it("does not treat an unmatched route (404 through handleError) as a load error", async () => {
+    const { logger, entries } = capture();
+    await createRequestLogger({ logger })({ event: makeEvent({ routeId: null }), resolve: failingLoad(404, 404) });
+    expect(entries[0]).toMatchObject({ level: "warn", status: 404 });
+    expect(entries[0]).not.toHaveProperty("loadError");
+  });
+
+  it("keeps successful requests unmarked", async () => {
+    const { logger, entries } = capture();
+    await createRequestLogger({ logger })({ event: makeEvent(), resolve: respond(200) });
+    expect(entries[0]).toMatchObject({ level: "info", status: 200 });
+    expect(entries[0]).not.toHaveProperty("loadError");
+  });
+});
+
 describe("request logger: correlation id", () => {
   it("generates a UUID and returns it in the response header and locals", async () => {
     const { logger, entries } = capture();
@@ -212,6 +251,19 @@ describe("logRequestError", () => {
       error: "boom",
     });
     expect(entries[0].stack).toBeDefined();
+  });
+
+  it("keeps the highest error status on locals for the completion line", () => {
+    const { logger } = capture();
+    const event = makeEvent() as ReturnType<typeof makeEvent> & { locals: { requestErrorStatus?: number } };
+
+    logRequestError({ error: new Error("first"), event, status: 500 }, logger);
+    logRequestError({ error: new Error("second"), event, status: 404 }, logger);
+    expect(event.locals.requestErrorStatus).toBe(500);
+
+    const unknownStatus = makeEvent() as typeof event;
+    logRequestError({ error: new Error("no status"), event: unknownStatus }, logger);
+    expect(unknownStatus.locals.requestErrorStatus).toBe(500);
   });
 
   it("logs unmatched routes at warn instead of error", () => {

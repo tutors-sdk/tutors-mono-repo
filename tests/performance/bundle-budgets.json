@@ -1,24 +1,24 @@
 {
-  "note": "Gzip byte ceilings per app from scripts/checks/bundle-budget.ts, measured 2026-09-16 on 16.2.0 plus headroom. Lower a ceiling when an app shrinks; raising one needs a reason in the PR. Regenerate a proposal with pnpm check:bundle --propose.",
+  "note": "Gzip byte ceilings per app from scripts/checks/bundle-budget.ts, measured 2026-09-17 on 16.2.0 with KaTeX, MathJax, Marp and Mermaid loaded on demand, plus headroom. Lower a ceiling when an app shrinks; raising one needs a reason in the PR. Regenerate a proposal with pnpm check:bundle --propose.",
   "headroom": 0.05,
   "apps": {
     "reader": {
       "jsGzipBytes": 3941376,
       "cssGzipBytes": 40960,
-      "largestJsChunkGzipBytes": 1579008
+      "largestJsChunkGzipBytes": 1211392
     },
     "catalogue": {
-      "jsGzipBytes": 1981440,
+      "jsGzipBytes": 771072,
       "cssGzipBytes": 29696,
-      "largestJsChunkGzipBytes": 1667072
+      "largestJsChunkGzipBytes": 455680
     },
     "live": {
-      "jsGzipBytes": 1994752,
+      "jsGzipBytes": 783360,
       "cssGzipBytes": 29696,
-      "largestJsChunkGzipBytes": 1577984
+      "largestJsChunkGzipBytes": 366592
     },
     "time": {
-      "jsGzipBytes": 692224,
+      "jsGzipBytes": 611328,
       "cssGzipBytes": 80896,
       "largestJsChunkGzipBytes": 311296
     }

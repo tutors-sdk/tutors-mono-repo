@@ -1,10 +1,19 @@
 import type { Lo } from "@tutors/tutors-model-lib";
-import { Marp } from "@marp-team/marp-core";
+import type { Marp } from "@marp-team/marp-core";
 
-const marp = new Marp({
-  container: { tag: "div", class: "marp-slides" },
-  html: true
-});
+let marp: Promise<Marp> | undefined;
+
+/** Marp Core bundles MathJax, KaTeX and highlight.js, so it is imported only when a Marp talk is rendered. */
+function getMarp(): Promise<Marp> {
+  marp ??= import("@marp-team/marp-core").then(
+    ({ Marp }) =>
+      new Marp({
+        container: { tag: "div", class: "marp-slides" },
+        html: true
+      })
+  );
+  return marp;
+}
 
 export function isMarpContent(lo: Lo): boolean {
   const marpValue = lo.frontMatter?.marp;
@@ -29,6 +38,6 @@ export function buildMarpMarkdown(lo: Lo): string {
   return lines.join("\n") + lo.contentMd;
 }
 
-export function renderMarpSlides(markdown: string): { html: string; css: string } {
-  return marp.render(markdown);
+export async function renderMarpSlides(markdown: string): Promise<{ html: string; css: string }> {
+  return (await getMarp()).render(markdown);
 }

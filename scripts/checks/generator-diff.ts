@@ -178,17 +178,18 @@ function sourceFor(entry: CorpusEntry, upstreamHead = false): { dir: string; rev
 
 /**
  * Where courses are generated. Always the same absolute path, so both sides see
- * identical inputs, and free of dots: the generator derives lab step ids from
- * the first "." in the absolute file path (buildLab in course-builder.ts), so a
- * course under a dotted directory such as .claude or .generator-diff gets
- * broken step ids and tutors-lite fails outright.
+ * identical inputs, and free of dots: generators before the dotted-path fix
+ * derived lab step ids from the first "." in the absolute file path (buildLab
+ * in course-builder.ts), so under a dotted directory such as .claude or
+ * .generator-diff a base ref from before the fix gets broken step ids and
+ * tutors-lite fails outright.
  */
 const COURSES = join(tmpdir(), "tutors-generator-diff");
 
 function generate(tree: string, generator: GeneratorName, source: string, corpus: string): Snapshot {
   const course = join(COURSES, corpus);
   if (course.includes(".")) {
-    throw new Error(`course path ${course} contains a "." and would trip the generator's lab step id bug; set TMPDIR to a dot-free directory`);
+    throw new Error(`course path ${course} contains a "." and would trip the lab step id bug in older base generators; set TMPDIR to a dot-free directory`);
   }
   rmSync(course, { recursive: true, force: true });
   cpSync(source, course, {

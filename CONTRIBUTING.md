@@ -7,6 +7,7 @@ Thank you for your interest in contributing to the Tutors project! We welcome co
 - [Ways to Contribute](#ways-to-contribute)
 - [Getting Started](#getting-started)
 - [Development Setup](#development-setup)
+- [Finding Your Way Around](#finding-your-way-around)
 - [Making Changes](#making-changes)
 - [Pull Request Process](#pull-request-process)
 - [Coding Standards](#coding-standards)
@@ -31,60 +32,81 @@ Contributions are not limited to code. Here are some ways you can help:
 
 ### Finding Something to Work On
 
-1. **Good First Issues** — Look for issues labeled [`good first issue`](https://github.com/tutors-sdk/tutors-mono-repo/labels/good%20first%20issue). These are specifically curated for new contributors with clear scope and guidance.
+1. **Good First Issues** — Look for issues labeled [`good first issue`](https://github.com/tutors-sdk/tutors-mono-repo/labels/good%20first%20issue). Each one names the files to change, the expected result and how to check it. Most touch one package and need no knowledge of the wider architecture.
 2. **Help Wanted** — Issues labeled [`help wanted`](https://github.com/tutors-sdk/tutors-mono-repo/labels/help%20wanted) are ready for community contribution.
 3. **Bug Reports** — Check the [`bug`](https://github.com/tutors-sdk/tutors-mono-repo/labels/bug) label for confirmed bugs.
 
-Before starting work on a significant change, please open an issue or comment on an existing one to discuss your approach. This prevents duplicate effort and ensures your contribution aligns with the project direction.
+Before starting work on a significant change, please open an issue or comment on an existing one to discuss your approach. This prevents duplicate effort and ensures your contribution aligns with the project direction. For a good-first-issue, a comment saying "I'll take this" is enough.
 
 ## Development Setup
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 22.12.0 (the `engines` field in `package.json` is the source of truth)
 - pnpm >= 8.0.0
 - Git
 
-### Installation
+### Quick start
 
 ```bash
-# Clone the repository
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
-
-# Install dependencies
 pnpm install
-
-# Copy environment variables
 cp .env.example apps/reader/.env
+pnpm dev
+```
+
+Open **http://localhost:5173/course/reference-course**. You should see a rendered course.
+
+What just happened:
+
+- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); a devcontainer that avoids the local install is tracked in [#236](https://github.com/tutors-sdk/tutors-mono-repo/issues/236).
+- The copied `.env` has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
+- `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.
+
+If any step of this did not work as written, that is a bug in this document. Please open an issue or a PR; see [#245](https://github.com/tutors-sdk/tutors-mono-repo/issues/245).
+
+### Running the other apps
+
+Each app reads its own `.env`, so copy the example once per app you want to run:
+
+```bash
 cp .env.example apps/catalogue/.env
 cp .env.example apps/live/.env
 cp .env.example apps/time/.env
+
+pnpm --filter tutors-catalogue dev   # http://localhost:5175
+pnpm --filter tutors-live dev        # http://localhost:5174
+pnpm --filter tutors-time dev        # http://localhost:5176
 ```
 
-### Running the Development Server
+Package names differ from directory names. The tables in [README.md](README.md#structure) list both.
+
+### Rebuilding after a UI package change
+
+`pnpm dev` builds the UI packages once, at startup. If you edit anything under `packages/svelte/ui-primitives`, `ui-navigators` or `ui-components`, rebuild them (or restart `pnpm dev`):
 
 ```bash
-# Run the reader app (most common)
-pnpm --filter tutors-reader dev
-
-# Run other apps
-pnpm --filter tutors-catalogue dev
-pnpm --filter tutors-live dev
-pnpm --filter tutors-time dev
+pnpm --filter @tutors/ui-primitives build
+pnpm --filter @tutors/ui-navigators build
+pnpm --filter @tutors/ui-components build
 ```
 
 ### Building
 
 ```bash
-# Build all packages (respects dependency order)
+# Build the reader and every workspace package it depends on, in order
 pnpm build
-
-# Build a specific app with its dependencies
-pnpm --filter tutors-reader... build
 ```
 
-The UI packages must be built in order: `ui-primitives` → `ui-navigators` → `ui-components`. The `pnpm build` command handles this automatically.
+## Finding Your Way Around
+
+Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) first. It follows one course page from the URL to the rendered cards and names every file on the way. Most changes people want to make (how a page looks, what a card shows, how navigation behaves) live on that path.
+
+[ARCHITECTURE.md](ARCHITECTURE.md) is the full reference: every package, service and data flow. Use it to look things up, not as a first read.
+
+The [Documentation](README.md#documentation) table in the README indexes everything else.
 
 ## Making Changes
 
@@ -100,19 +122,26 @@ Types: `feature/`, `fix/`, `docs/`, `test/`, `refactor/`, `chore/`
 
 ### Testing Your Changes
 
+The repository has several test tiers. You are expected to run three things before opening a PR:
+
 ```bash
-# Run unit tests
-pnpm exec vitest run
-
-# Run tests in watch mode
-pnpm exec vitest
-
-# Run fuzz tests
-pnpm test:fuzz
-
-# Type check all apps
-pnpm check
+pnpm lint    # ESLint
+pnpm test    # unit, BDD, contract and component tests (vitest)
+pnpm check   # svelte-check on the reader
 ```
+
+`pnpm check` currently reports a handful of pre-existing errors that are tracked in [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235). New errors in files you touched are yours; the existing ones are not.
+
+Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), end-to-end (`pnpm test:e2e`), accessibility (`pnpm test:a11y`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
+
+Useful while developing:
+
+```bash
+pnpm exec vitest                                   # watch mode
+pnpm exec vitest run tests/unit/utils/i18n.test.ts # one file
+```
+
+[guides/TESTING-OVERVIEW.md](guides/TESTING-OVERVIEW.md) explains the tiers and where a new test belongs.
 
 ### Commit Messages
 
@@ -128,9 +157,11 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 
 ## Pull Request Process
 
+A [pull request template](.github/PULL_REQUEST_TEMPLATE.md) is filled in for you when you open a PR. It asks for the three local checks above and, for UI changes, a screenshot.
+
 1. **Ensure your branch is up to date** with `main`
-2. **All CI checks must pass** — type checking, unit tests, and fuzz tests are mandatory
-3. **Provide context** — Describe what changed and why in the PR description
+2. **Run the three local checks** — `pnpm lint`, `pnpm test`, `pnpm check`
+3. **Provide context** — Describe what changed and why in the PR description, and link the issue
 4. **Keep PRs focused** — One logical change per PR. Large PRs are harder to review.
 5. **Respond to feedback** — Reviewers may request changes. This is collaborative, not adversarial.
 
@@ -160,34 +191,38 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 
 ```
 tutors-mono-repo/
-├── apps/                    # Deployable applications
-│   ├── reader/              # Main course reader
-│   ├── catalogue/           # Course catalog
-│   ├── live/                # Live classroom
-│   └── time/                # Activity dashboard
+├── apps/                    # Deployable applications (pnpm)
+│   ├── reader/              # Main course reader        → tutors-reader
+│   ├── catalogue/           # Course catalog            → tutors-catalogue
+│   ├── live/                # Live classroom            → tutors-live
+│   └── time/                # Activity dashboard        → tutors-time
 ├── packages/
-│   ├── jsr/                 # Foundation packages (published to JSR)
-│   │   ├── model/           # Core data models
-│   │   ├── time/            # Time tracking
-│   │   ├── gen/             # Course generation
-│   │   ├── tutors/          # JSON course generator
-│   │   └── tutors-lite/     # Static HTML generator
-│   └── svelte/              # Svelte packages
+│   ├── jsr/                 # Foundation packages, published to JSR (Deno)
+│   │   ├── model/           # Core data models          → @tutors/tutors-model-lib
+│   │   ├── time/            # Time tracking             → @tutors/tutors-time-lib
+│   │   ├── gen/             # Course generation         → @tutors/tutors-gen-lib
+│   │   ├── tutors/          # JSON course generator     → @tutors/tutors
+│   │   ├── tutors-lite/     # Static HTML generator     → @tutors/tutors-lite
+│   │   └── create/          # Course scaffolder         → @tutors/tutors-create
+│   └── svelte/              # Svelte packages (pnpm)    → @tutors/<name>
 │       ├── runes/           # Reactive state management
-│       ├── course/          # Course processing
+│       ├── course/          # Course loading and Markdown
 │       ├── themes/          # Theme management
 │       ├── community/       # Community features
 │       ├── connect/         # Authentication
 │       ├── ui-primitives/   # Base UI components
 │       ├── ui-navigators/   # Navigation components
 │       ├── ui-components/   # Domain UI components
-│       └── utils/           # Shared utilities (logger, a11y, i18n)
+│       └── utils/           # logger, metrics, a11y, i18n, rbac, privacy, tour
+├── docs/                    # Walkthrough, containers, privacy, data inventory
+├── guides/                  # Testing, EARS, RBAC, release strategy
 └── tests/                   # Test suites
     ├── unit/                # Unit tests
     ├── bdd/                 # BDD feature tests
     ├── contract/            # API contract tests
     ├── fuzz/                # Property-based fuzz tests
     ├── components/          # Component tests
+    ├── e2e/                 # Accessibility audit
     ├── mutation/            # Mutation testing
     └── release/             # Release validation
 ```

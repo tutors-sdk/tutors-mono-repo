@@ -24,13 +24,17 @@ export const fixture = {
   title: "Runway Fixture Course",
   topicTitle: "Topic 1",
   topicPath: "unit-1/topic-01",
+  /** The scaffolder's starter Marp deck for topic 1; its first slide has this heading. */
+  talk: { title: "Talk 1", path: "unit-1/topic-01/talk-01", firstSlideHeading: "Presentation Title" },
   labTitle: "Lab 1",
   labPath: "unit-1/topic-01/book-lab-01",
+  /** build.ts appends inline math and a Mermaid flowchart (with this accTitle) to the second step. */
+  secondStepDiagram: "Read then practise",
   firstStep: { id: "Setup", heading: "Lab 1" },
   secondStep: { id: "Step-01", heading: "Step 1" },
-  /** Appears in both notes' body; a result links to `<topic>/ <note>` (the generator keeps a leading space in titles). */
+  /** Appears in both notes' body; a result links to `<topic>/<note>`. */
   searchTerm: "reference material",
-  searchResultTitle: /Topic 1\/\s*Note 1/
+  searchResultTitle: /Topic 1\/Note 1/
 };
 
 // Playwright compiles specs to CommonJS, so __dirname rather than import.meta.
