@@ -125,14 +125,14 @@ Types: `feature/`, `fix/`, `docs/`, `test/`, `refactor/`, `chore/`
 The repository has several test tiers. You are expected to run three things before opening a PR:
 
 ```bash
-pnpm lint    # ESLint
-pnpm test    # unit, BDD, contract and component tests (vitest)
-pnpm check   # svelte-check on the reader
+pnpm lint                        # ESLint
+pnpm test                        # vitest: unit, BDD steps, component, contract and the repo-level checks
+pnpm check                       # svelte-check on the reader
 ```
 
-`pnpm check` currently reports a handful of pre-existing errors that are tracked in [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235). New errors in files you touched are yours; the existing ones are not.
+The type check reports a handful of pre-existing errors that are tracked in [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235). New errors in files you touched are yours; the existing ones are not.
 
-Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), end-to-end (`pnpm test:e2e`), accessibility (`pnpm test:a11y`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
+Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), the browser journeys against built images (`pnpm test:e2e:stack`), accessibility (`pnpm test:a11y`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 
 Useful while developing:
 
