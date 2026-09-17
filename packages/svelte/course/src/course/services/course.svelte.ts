@@ -21,8 +21,6 @@ export const courseService: CourseService = {
   notes: new Map<string, Note>(),
   /** Cache of live notebook instances indexed by notebookId */
   notebooks: new Map<string, LiveNotebook>(),
-  /** Cache of quiz learning objects indexed by route */
-  quizzes: new Map<string, Lo>(),
   /** Current course URL */
   courseUrl: rune(""),
 
@@ -176,12 +174,8 @@ export const courseService: CourseService = {
         this.notebooks.set(loId, liveNotebook);
       }
     }
-    if (lo?.type === "quiz") {
-      if (!this.quizzes.has(loId)) {
-        // No markdown conversion: a quiz definition is parsed, not rendered as html
-        this.quizzes.set(loId, lo);
-      }
-    }
+    // A quiz needs no processing here: its renderer splits the quiz definition
+    // out of contentMd and converts the surrounding prose itself.
     return lo ?? course;
   },
 
