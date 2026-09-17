@@ -176,6 +176,7 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "a11y.secondaryNavigation": "Sekundäre Navigation",
   "a11y.sidebar": "Seitenleiste",
   "a11y.footer": "Seitenfuß",
+  "a11y.tree.toggle": "Inhalt ein- oder ausblenden",
 
   // Guided tour
   "tour.ariaLabel": "Geführte Tour",

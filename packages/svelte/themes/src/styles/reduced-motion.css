@@ -1,0 +1,24 @@
+/*
+ * Honour the operating system's "reduce motion" setting across every theme.
+ *
+ * Unlayered and !important so it wins over Tailwind utilities (transition-all,
+ * hover:scale, animate-spin) and Skeleton component styles, which all live in
+ * cascade layers. Durations become effectively zero rather than `none`, so
+ * transitionend / animationend still fire for code that waits on them.
+ *
+ * JavaScript-driven motion (scrollIntoView with behavior: "smooth", Svelte
+ * transitions) cannot be reached from CSS; check prefersReducedMotion from
+ * @tutors/a11y there.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

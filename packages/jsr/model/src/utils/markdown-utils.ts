@@ -1,6 +1,5 @@
 // @ts-types="npm:@types/markdown-it@^14.1.2"
 import MarkdownIt from "markdown-it";
-import { katex as latex } from "@mdit/plugin-katex";
 // @ts-ignore no types available
 import anchor from "markdown-it-anchor";
 // @ts-ignore no types available
@@ -56,7 +55,6 @@ export const markdownIt: MarkdownIt = new MarkdownIt({
 });
 
 const tocOptions = { includeLevel: [1, 2, 3] };
-markdownIt.use(latex);
 markdownIt.use(anchor, {
   permalink: anchor.permalink.headerLink(),
 });
@@ -73,6 +71,31 @@ markdownIt.use(podcastPlayer);
 markdownIt.renderer.rules.blockquote_open = quote_open;
 markdownIt.renderer.rules.blockquote_close = quote_close;
 markdownIt.renderer.rules.link_open = link_open as unknown as typeof markdownIt.renderer.rules.link_open;
+
+let mathLoading: Promise<void> | undefined;
+
+/**
+ * Registers KaTeX math rendering (`$...$` and `$$...$$`) on markdownIt.
+ * KaTeX is imported on demand so a browser only downloads it for a course
+ * that contains math; await this before rendering such markdown. Registering
+ * after the other plugins gives the same output as registering first: the
+ * math rules are anchored to built-in rules ("escape", "blockquote") that no
+ * other plugin here inserts next to. Safe to call repeatedly.
+ */
+export function loadMath(): Promise<void> {
+  mathLoading ??= import("@mdit/plugin-katex").then(({ katex }) => {
+    markdownIt.use(katex);
+  });
+  return mathLoading;
+}
+
+/**
+ * False only when the text renders identically with or without math: every
+ * delimiter the KaTeX plugin recognises starts with "$".
+ */
+export function mayContainMath(text: string): boolean {
+  return text.includes("$");
+}
 
 export function convertMdToHtml(md: string, codeTheme: string = "ayu-dark"): string {
   currentTheme = codeTheme;

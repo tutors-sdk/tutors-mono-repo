@@ -3,7 +3,7 @@
  * Handles course loading, caching, and content transformation.
  */
 
-import type { Lo, Course, Lab, Note, Notebook } from "@tutors/tutors-model-lib";
+import { loadMath, mayContainMath, type Lo, type Course, type Lab, type Note, type Notebook } from "@tutors/tutors-model-lib";
 import { LiveLab } from "./live-lab.ts";
 import { LiveNotebook } from "./live-notebook.ts";
 import { markdownService } from "../../markdown/index.ts";
@@ -42,8 +42,10 @@ export const courseService: CourseService = {
         if (!response.ok) {
           throw new Error(`Fetch failed with status ${response.status}`);
         }
-        const data = await response.json();
-        course = data as Course;
+        const text = await response.text();
+        // KaTeX is loaded on demand; every later conversion of this course is synchronous, so load it before any.
+        if (mayContainMath(text)) await loadMath();
+        course = JSON.parse(text) as Course;
         decorateCourseTree(course, courseId, courseUrl);
         this.courses.set(courseId, course);
       } catch (error) {
@@ -174,6 +176,8 @@ export const courseService: CourseService = {
         this.notebooks.set(loId, liveNotebook);
       }
     }
+    // A quiz needs no processing here: its renderer splits the quiz definition
+    // out of contentMd and converts the surrounding prose itself.
     return lo ?? course;
   },
 

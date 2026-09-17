@@ -8,7 +8,11 @@ const DEFAULT_SLOW_MS = 2000;
 /** Incoming ids are echoed into logs and headers, so only accept a conservative charset. */
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
 
-type LocalsWithRequestId = { requestId?: string };
+type LocalsWithRequestId = {
+  requestId?: string;
+  /** Highest status `logRequestError` saw for this request; read back by the completion line. */
+  requestErrorStatus?: number;
+};
 
 /**
  * Pick the correlation id for a request: the caller's `x-request-id` when it
@@ -96,12 +100,17 @@ export function createRequestLogger(options: RequestLoggerOptions = {}) {
     if (!ignored) {
       const duration_ms = elapsedMs(start);
       const slow = duration_ms >= slowRequestMs;
-      const level = levelForStatus(response.status, slow);
+      // SvelteKit answers a `__data.json` request whose server load threw with a 200
+      // carrying an error node. handleError still saw the 500, so the line records it.
+      const errorStatus = (event.locals as LocalsWithRequestId).requestErrorStatus;
+      const loadError = errorStatus !== undefined && errorStatus >= 500 && response.status < 500;
+      const level = levelForStatus(loadError ? errorStatus : response.status, slow);
       logger[level]("request completed", {
         ...fields,
         status: response.status,
         duration_ms,
         ...(slow ? { slow: true } : {}),
+        ...(loadError ? { loadError: true } : {}),
       });
     }
 
@@ -114,11 +123,17 @@ export function createRequestLogger(options: RequestLoggerOptions = {}) {
  * SvelteKit's `handleError` so the entry carries the same `requestId` as the
  * request line, and the user-facing error page can be matched to it.
  *
+ * The status is also kept on `event.locals`, so the request logger's
+ * completion line can mark a failure SvelteKit answered with a 200
+ * (`loadError: true`).
+ *
  * Returns the request id so callers can surface it to the user.
  */
 export function logRequestError(input: RequestErrorInput, logger: Logger = defaultLogger): string | undefined {
   const { error, event, status, message } = input;
-  const requestId = event ? (event.locals as LocalsWithRequestId).requestId : undefined;
+  const locals = event ? (event.locals as LocalsWithRequestId) : undefined;
+  if (locals) locals.requestErrorStatus = Math.max(locals.requestErrorStatus ?? 0, status ?? 500);
+  const requestId = locals?.requestId;
   const request = event ? requestFields(event, requestId) : { requestId };
   const cause =
     error instanceof Error

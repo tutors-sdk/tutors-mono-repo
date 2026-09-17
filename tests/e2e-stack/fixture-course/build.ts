@@ -30,15 +30,34 @@ export const FIXTURE_SPEC = {
 };
 
 const outDir = Deno.args[0] ?? fileURLToPath(new URL("../work/course", import.meta.url));
-// Scaffold into a temp dir: the generator derives lab step ids from the text
-// between the first and last "." of the step's full path, so a source path
-// containing a dotted directory (.claude, .work, ~/.cache) corrupts every step id.
+// Scaffold into a temp dir, outside the repo. (Generators before the dotted-path
+// fix also corrupted every lab step id under a dotted directory such as .claude.)
 const srcDir = await Deno.makeTempDir({ prefix: "tutors_fixture_" });
 
 await Deno.remove(outDir, { recursive: true }).catch(() => {});
 writeCourseToFilesystem(FIXTURE_SPEC, srcDir);
 // The scaffolder nests the course under its id, as `deno run jsr:@tutors/tutors-create` does.
 const courseDir = `${srcDir}/${FIXTURE_SPEC.courseId}`;
+
+// Math and a diagram on the lab's second step, so the journeys prove KaTeX and
+// Mermaid still render now that the reader loads them on demand.
+await Deno.writeTextFile(
+  `${courseDir}/unit-1/topic-01/book-lab-01/01.Step-01.md`,
+  [
+    "",
+    "## Renderers",
+    "",
+    "Euler's identity: $e^{i\\pi} + 1 = 0$.",
+    "",
+    "```mermaid",
+    "flowchart LR",
+    "  accTitle: Read then practise",
+    "  Read --> Practise",
+    "```",
+    ""
+  ].join("\n"),
+  { append: true }
+);
 
 // The generator resolves course files relative to the working directory, as the tutors CLI does.
 Deno.chdir(courseDir);

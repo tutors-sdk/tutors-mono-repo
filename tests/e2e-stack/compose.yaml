@@ -70,9 +70,9 @@ services:
     environment:
       <<: *app-env
       ORIGIN: http://localhost:${READER_PORT:-3000}
-      # Anonymous mode still needs an Auth.js secret: without one the root layout's
-      # auth() throws MissingSecret and every page is a 500. reader-unconfigured
-      # below keeps that failure visible; this value exists only for the E2E stack.
+      # Anonymous mode with a secret set, as a deployment that also offers sign-in
+      # would run it. reader-unconfigured below runs with no secret at all; this
+      # value exists only for the E2E stack.
       PRIVATE_AUTH_SECRET: e2e-stack-only-not-a-real-secret-0000000000
     depends_on:
       course:

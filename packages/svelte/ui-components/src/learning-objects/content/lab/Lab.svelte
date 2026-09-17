@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { onDestroy, onMount } from "svelte";
   import { goto, afterNavigate } from "$app/navigation";
+  import { prefersReducedMotion } from "@tutors/a11y";
   import type { LiveLab } from "@tutors/course/course";
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
@@ -32,7 +33,7 @@
     }
     const elemPage = document.querySelector("#lab-panel");
     if (elemPage && window.innerWidth >= 600) {
-      elemPage.scrollIntoView({ behavior: "smooth", block: "start" });
+      elemPage.scrollIntoView({ behavior: prefersReducedMotion.value ? "auto" : "smooth", block: "start" });
     }
   });
 

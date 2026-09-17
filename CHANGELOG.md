@@ -257,6 +257,19 @@ any single one. Versioned with the monorepo.
 
 ## Shared Packages
 
+### Unreleased
+
+- `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
+- `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
+- `tutors-lite`: note pages no longer render a stray `s` after the note card
+
+### v5.3.0 (2026-09)
+
+- `model`: new `quiz` learning object type, registered in `simpleTypes` and `preOrder`. Without it the generator mistypes a `quiz-*` folder as its enclosing topic, so publishing this is what makes authored quizzes reachable
+- `model`: new `pluraliseLoType` export, so a quiz wall reads "All quizzes" rather than "All quizs"
+- `model`: quiz walls registered in `createWalls`
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.3.0
+
 ### v5.2.4 (2026-09)
 
 - `tutors-create`: optional `.gitignore` and README in generated courses, offered by both the CLI prompts and the reader wizard (PR #197)

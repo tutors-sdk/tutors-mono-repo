@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
 import { isMarpContent, buildMarpMarkdown, renderMarpSlides } from "../../../packages/svelte/course/src/markdown/services/marp-renderer";
 
 function makeLo(overrides: Record<string, any> = {}): any {
@@ -144,38 +144,41 @@ describe("buildMarpMarkdown", () => {
 });
 
 describe("renderMarpSlides", () => {
-  it("returns html and css properties", () => {
-    const result = renderMarpSlides("# Slide 1");
+  // Marp Core is imported on first render; that import is slow on a cold module cache, so pay it once here.
+  beforeAll(() => renderMarpSlides(""), 120_000);
+
+  it("returns html and css properties", async () => {
+    const result = await renderMarpSlides("# Slide 1");
     expect(result).toHaveProperty("html");
     expect(result).toHaveProperty("css");
   });
 
-  it("wraps slide content in section tags", () => {
-    const result = renderMarpSlides("# Test slide");
+  it("wraps slide content in section tags", async () => {
+    const result = await renderMarpSlides("# Test slide");
     expect(result.html).toContain("<section");
     expect(result.html).toContain("</section>");
   });
 
-  it("renders markdown headings into HTML", () => {
-    const result = renderMarpSlides("# Test slide");
+  it("renders markdown headings into HTML", async () => {
+    const result = await renderMarpSlides("# Test slide");
     expect(result.html).toContain("Test slide");
     expect(result.html).toContain("<h1");
   });
 
-  it("renders paragraph content", () => {
-    const result = renderMarpSlides("Some paragraph text");
+  it("renders paragraph content", async () => {
+    const result = await renderMarpSlides("Some paragraph text");
     expect(result.html).toContain("Some paragraph text");
     expect(result.html).toContain("<section");
   });
 
-  it("produces real CSS", () => {
-    const result = renderMarpSlides("# Slide 1");
+  it("produces real CSS", async () => {
+    const result = await renderMarpSlides("# Slide 1");
     expect(typeof result.css).toBe("string");
     expect(result.css.length).toBeGreaterThan(100);
   });
 
-  it("renders multiple slides separated by ---", () => {
-    const result = renderMarpSlides("# Slide 1\n\n---\n\n# Slide 2");
+  it("renders multiple slides separated by ---", async () => {
+    const result = await renderMarpSlides("# Slide 1\n\n---\n\n# Slide 2");
     expect(result.html).toContain("Slide 1");
     expect(result.html).toContain("Slide 2");
   });

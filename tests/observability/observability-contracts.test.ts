@@ -59,12 +59,18 @@ describe("observability contracts (runway tier K)", () => {
     });
 
     it("negative fixtures: rejects a bad level, a missing request id on a completion line and a non-JSON line", () => {
+      const completed = { timestamp: "2026-09-16T10:00:00.000Z", message: "request completed", requestId: "r1", method: "GET", path: "/", route: null, status: 200, duration_ms: 3 };
       const findings = logSchemaFindings([
         { timestamp: "2026-09-16T10:00:00.000Z", level: "fatal", message: "boom" },
-        { timestamp: "2026-09-16T10:00:00.000Z", level: "info", message: "request completed", method: "GET", path: "/", route: null, status: 200, duration_ms: 3 }
+        { ...completed, requestId: undefined, level: "info" },
+        { ...completed, level: "info", loadError: true },
+        { ...completed, level: "error", loadError: "yes" }
       ]);
       expect(findings.some((f) => f.startsWith("line 1: level"))).toBe(true);
       expect(findings.some((f) => f.startsWith("line 2: requestId"))).toBe(true);
+      expect(findings).toContain("line 3: level a completion line with loadError must be logged at error");
+      expect(findings.some((f) => f.startsWith("line 4: loadError"))).toBe(true);
+      expect(logSchemaFindings([{ ...completed, level: "error", loadError: true }])).toEqual([]);
       expect(parseLogStream('{"level":"info"}\nListening on http://0.0.0.0:3000\nServer ready\n').findings).toEqual([
         "line 2: not JSON: Server ready"
       ]);
@@ -84,6 +90,31 @@ describe("observability contracts (runway tier K)", () => {
       expect(response.status).toBe(500);
       expect(response.headers.get("x-request-id")).toBe("req-contract-1");
       expect(failedRequestFindings(entries as LogLine[], "req-contract-1")).toEqual([]);
+    });
+
+    it("a server load that throws inside a 200 __data.json response is still logged as a failure", async () => {
+      const { entries, logger } = capture();
+      const handle = chain(createRequestLogger({ logger }) as unknown as Handle, metricsHandle as unknown as Handle);
+      // SvelteKit calls handleError for the failing node, then answers 200 with an error node in the JSON.
+      const response = await handle(makeEvent("/course/cs101/__data.json", { "x-request-id": "req-contract-2" }) as never, async (event) => {
+        logRequestError({ error: new Error("MissingSecret"), event, status: 500, message: "Internal Error" }, logger);
+        return Response.json({ type: "data", nodes: [{ type: "error", error: { message: "An unexpected error occurred" } }] });
+      });
+
+      expect(response.status).toBe(200);
+      expect(failedRequestFindings(entries as LogLine[], "req-contract-2")).toEqual([]);
+      expect(logSchemaFindings(entries)).toEqual([]);
+      expect(entries.find((e) => e.message === "request completed")).toMatchObject({ level: "error", status: 200, loadError: true });
+    });
+
+    it("negative fixture: flags a completion line that records a failed data request as a plain 200", () => {
+      const lines = [
+        { timestamp: "2026-09-16T10:00:00.000Z", level: "error", message: "Unhandled server error", requestId: "r1", status: 500, stack: "Error: x" },
+        { timestamp: "2026-09-16T10:00:00.000Z", level: "info", message: "request completed", requestId: "r1", status: 200 }
+      ] as LogLine[];
+      expect(failedRequestFindings(lines, "r1")).toEqual([
+        '"request completed" records status 200 at info without loadError, so the failure looks like a success'
+      ]);
     });
 
     it("negative fixtures: flags an uncorrelated line, a silent failure and a double-logged failure", () => {
