@@ -33,9 +33,9 @@
     if (browser) window.removeEventListener("keydown", keypressInput);
   });
 
-  function loadSlides() {
+  async function loadSlides() {
     try {
-      const { html, css } = renderMarpSlides(buildMarpMarkdown(lo));
+      const { html, css } = await renderMarpSlides(buildMarpMarkdown(lo));
       marpCss = css;
 
       const parser = new DOMParser();
