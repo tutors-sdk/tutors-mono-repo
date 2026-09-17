@@ -26,6 +26,13 @@ export interface ParsedQuiz {
   questions: QuizQuestion[];
 }
 
+export interface QuizScore {
+  correct: number;
+  total: number;
+  /** `correct` as a whole-number percentage of `total`; 0 for an empty quiz. */
+  percentage: number;
+}
+
 /** A quiz learning object's markdown, split into prose and quiz definition. */
 export interface QuizContent {
   /** Everything outside the quiz fence, still markdown. */

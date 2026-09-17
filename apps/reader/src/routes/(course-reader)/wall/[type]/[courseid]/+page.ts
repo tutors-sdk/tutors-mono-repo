@@ -1,7 +1,7 @@
 import type { PageLoad } from "./$types";
 import { courseService } from "@tutors/course/course";
 import { currentLo } from "@tutors/runes";
-import type { Lo } from "@tutors/tutors-model-lib";
+import { pluraliseLoType, type Lo } from "@tutors/tutors-model-lib";
 export const ssr = false;
 
 export const load: PageLoad = async ({ params, fetch }) => {
@@ -11,7 +11,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
 
   currentLo.value = {
     breadCrumbs: [course],
-    title: `All ${params.type}s in Module`,
+    title: `All ${pluraliseLoType(params.type)} in Module`,
     type: type,
     parentLo: course,
     parentCourse: course,
