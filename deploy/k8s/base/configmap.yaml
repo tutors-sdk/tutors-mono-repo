@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tutors-app-config
+  labels:
+    app.kubernetes.io/part-of: tutors
+data:
+  # Public URL of the app. adapter-node uses it to build absolute URLs and to
+  # validate form submissions, so it must match the Route/Ingress host.
+  ORIGIN: "https://tutors.dev"
+  # Trust the proxy headers set by the OpenShift router / ingress controller.
+  PROTOCOL_HEADER: "x-forwarded-proto"
+  HOST_HEADER: "x-forwarded-host"
+  ADDRESS_HEADER: "x-forwarded-for"
+  XFF_DEPTH: "1"
+  # Application settings (see .env.example). Set per environment.
+  PUBLIC_SUPABASE_URL: ""
+  PUBLIC_SUPABASE_ANON_KEY: ""
+  PUBLIC_ANON_MODE: ""
+  PUBLIC_PDF_KEY: ""
+  LOG_LEVEL: "info"

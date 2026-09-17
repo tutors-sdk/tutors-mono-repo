@@ -17,6 +17,11 @@
   let topicsPerUnit = $state(3);
   let includeNotes = $state(true);
   let includeLabs = $state(true);
+  let includeCalendar = $state(false);
+  let includeEnrollment = $state(false);
+  let includeGitignore = $state(true);
+  let includeReadme = $state(false);
+  let readmeDescription = $state("");
   let downloaded = $state(false);
 
   const steps = ["Course Info", "Structure", "Preview", "Download"];
@@ -30,20 +35,20 @@
     includeSide,
     topicsPerUnit,
     includeNotes,
-    includeLabs
+    includeLabs,
+    includeCalendar,
+    includeEnrollment,
+    includeGitignore,
+    includeReadme,
+    readmeDescription
   });
 
   // Preview and download are both derived from the shared scaffolder output,
   // so they can never diverge.
   const files = $derived(generateCourseFiles(spec));
 
-  // The reader downloads a zip, so it leads with two zip-specific steps before
-  // the shared next-steps (edit -> run deno -> deploy).
-  const downloadSteps = $derived([
-    `Open a shell / terminal in the folder you downloaded the ${courseId}.zip file into`,
-    `Unzip ${courseId}.zip`,
-    ...nextSteps(spec)
-  ]);
+  // Identical to the CLI's next-steps: both render the shared nextSteps(spec).
+  const downloadSteps = $derived(nextSteps(spec));
 
   function next() {
     if (currentStep < steps.length - 1) currentStep++;
@@ -58,8 +63,21 @@
   }
 
   function handleDownload() {
-    downloadCourseZip(files, courseId);
+    downloadCourseZip(files, courseId, spec);
     downloaded = true;
+  }
+
+  function handleImport(imported: import("@tutors/tutors-create/generate").CourseSpec) {
+    courseName = imported.courseName;
+    lecturerName = imported.lecturerName;
+    courseId = imported.courseId || slugify(imported.courseName) || "my-new-course";
+    unitCount = imported.unitCount;
+    topicsPerUnit = imported.topicsPerUnit;
+    includeSide = imported.includeSide;
+    includeNotes = imported.includeNotes;
+    includeLabs = imported.includeLabs;
+    includeCalendar = imported.includeCalendar ?? false;
+    includeEnrollment = imported.includeEnrollment ?? false;
   }
 </script>
 
@@ -71,7 +89,7 @@
 
     <div class="mt-6">
       {#if currentStep === 0}
-        <CourseInfoStep bind:courseName bind:lecturerName onnext={submitInfo} onexit={() => goto("/")} />
+        <CourseInfoStep bind:courseName bind:lecturerName onnext={submitInfo} onexit={() => goto("/")} onimport={handleImport} />
       {:else if currentStep === 1}
         <StructureStep
           bind:unitCount
@@ -79,6 +97,11 @@
           bind:includeSide
           bind:includeNotes
           bind:includeLabs
+          bind:includeCalendar
+          bind:includeEnrollment
+          bind:includeGitignore
+          bind:includeReadme
+          bind:readmeDescription
           onnext={next}
           onback={back}
         />

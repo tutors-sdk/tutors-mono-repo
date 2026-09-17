@@ -1,0 +1,12 @@
+title: Semester 1
+year: 2026
+
+weeks:
+  - date: 2026-08-31
+    week: 0
+    topic: Induction
+    assessment: ~
+  - date: 2026-09-07
+    week: 1
+    topic: Topic 1
+    assessment: Lab 1

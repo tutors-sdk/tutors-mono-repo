@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namePrefix: reader-
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: tutors-reader
+      app.kubernetes.io/component: reader
+    includeSelectors: true
+    includeTemplates: true
+
+images:
+  - name: tutors-app
+    newName: registry.example.com/tutors/reader
+    newTag: "16.2.0"
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: tutors-app-config
+    patch: |
+      - op: replace
+        path: /data/ORIGIN
+        value: "https://reader.tutors.dev"
+
+  # GitHub OAuth credentials for Auth.js. Create from secrets.yaml.example;
+  # the secret is deliberately not managed by this kustomization.
+  - target:
+      kind: Deployment
+      name: tutors-app
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom/-
+        value:
+          secretRef:
+            name: reader-tutors-app-oauth

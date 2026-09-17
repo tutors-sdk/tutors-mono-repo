@@ -45,6 +45,17 @@
         allowtransparency={true}
         allowfullscreen
       ></iframe>
+    {:else if videoConfig.service === "panopto"}
+      <div class="relative mx-auto w-full max-w-5xl" style="aspect-ratio: 16/9;">
+        <iframe
+          title={lo.title}
+          class="absolute inset-0 h-full w-full border border-[#464646] box-border"
+          src={videoConfig.url}
+          allow="autoplay"
+          allowfullscreen
+          aria-label="Panopto Embedded Video Player"
+        ></iframe>
+      </div>
     {:else}
       <!-- <div class="relative mx-auto aspect-video w-3/4" style="padding-top: 40%;"> -->
       <div class="relative mr-2 w-full" style="aspect-ratio: 16/9;">

@@ -54,7 +54,7 @@
     <div class="mx-auto flex flex-wrap justify-center">
       {#key refresh}
         {#each los as lo}
-          {#if !lo.hide && !(contentLocks.value.get(lo.route) && !isEducator.value)}
+          {#if !lo.hide && !(rbacService.isLoLocked(lo) && !isEducator.value)}
             <div class="relative flex justify-center">
               <Card
                 cardDetails={{

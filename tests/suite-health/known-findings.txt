@@ -1,0 +1,51 @@
+# Suite-health findings that predate tier O (scripts/checks/suite-health.ts).
+# This file may only shrink. `.only` is never allowed here.
+#
+# New skips need a dated quarantine on the line above instead of an entry here:
+#   // quarantine: #123 until 2026-10-01
+#
+# documentation-only: the 24 legacy feature files no runner loads; issue #214 retires them.
+# skip: lo-tree breadcrumbs and mutation killers under packages/svelte/course, which the root
+#   vitest include does not run at all (see the architecture pass).
+# no-assertion: the best-practice axe test logs violations but never fails.
+# uncollected: test files no Vitest or Playwright config includes, so they run nowhere. The
+#   packages/svelte/course lo-tree tests cover a copy of decorateCourseTree that #228 removes;
+#   the create scaffolder test is a Deno test no workflow runs.
+
+documentation-only: tests/bdd/features/course/course-loading.feature
+documentation-only: tests/bdd/features/course/course-navigation.feature
+documentation-only: tests/bdd/features/developer/auth-integration.feature
+documentation-only: tests/bdd/features/developer/i18n-localisation.feature
+documentation-only: tests/bdd/features/developer/theme-customisation.feature
+documentation-only: tests/bdd/features/instructor/analytics-calendar.feature
+documentation-only: tests/bdd/features/instructor/analytics-lab.feature
+documentation-only: tests/bdd/features/instructor/course-authoring.feature
+documentation-only: tests/bdd/features/instructor/student-engagement.feature
+documentation-only: tests/bdd/features/instructor/whitelist-management.feature
+documentation-only: tests/bdd/features/live/presence-tracking.feature
+documentation-only: tests/bdd/features/shared/authentication.feature
+documentation-only: tests/bdd/features/shared/error-handling.feature
+documentation-only: tests/bdd/features/shared/offline-resilience.feature
+documentation-only: tests/bdd/features/shared/responsive-layout.feature
+documentation-only: tests/bdd/features/shared/theming.feature
+documentation-only: tests/bdd/features/student/accessibility.feature
+documentation-only: tests/bdd/features/student/course-discovery.feature
+documentation-only: tests/bdd/features/student/lab-interaction.feature
+documentation-only: tests/bdd/features/student/learning-progress.feature
+documentation-only: tests/bdd/features/student/live-presence.feature
+documentation-only: tests/bdd/features/student/search-content.feature
+documentation-only: tests/bdd/features/time/calendar-analytics.feature
+documentation-only: tests/bdd/features/time/lab-analytics.feature
+no-assertion: tests/e2e/accessibility.spec.ts :: course page passes landmark and navigation rules
+skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall NOT replace route when breadcrumbs[1].type is neither "unit" nor "side"
+skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall check breadcrumbs[1].type when length > 2
+skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall replace "topic" with "course" when breadcrumbs[1].type is "side"
+skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall replace "topic" with "course" when breadcrumbs[1].type is "unit"
+skip: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts :: shall still check breadcrumbs[1] when length > 3
+skip: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers
+uncollected: packages/jsr/create/test/scaffolder.test.ts
+uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-80-percent.test.ts
+uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-advanced.test.ts
+uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts
+uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts
+uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree.test.ts

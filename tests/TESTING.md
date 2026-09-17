@@ -53,6 +53,12 @@ A comprehensive, multi-tier testing framework built around BDD-first principles 
 
 **Importance**: Fuzz tests find edge cases that humans miss. A hand-written test might check 5 calendar entries, but a fuzz test checks 10,000 random combinations — including empty arrays, single elements, duplicate dates, and extreme values. For the calendar analytics engine, fuzz testing is essential: the `buildPivotedRows` and `median` functions must handle any student count, any date range, and any activity distribution without crashing or producing nonsensical results.
 
+**Runway tier B** (`course-model.fuzz.test.ts`, `calendar-time.fuzz.test.ts`): properties run against the real `packages/jsr/model` and `packages/jsr/time` code, never a local copy. Courses come from the shared arbitrary in `tests/support/arbitraries/course-tree.ts` (generator-shaped JSON with `{{COURSEURL}}` routes, nested composites, lab steps, Unicode, hidden los), which the generator differential and release harness reuse. Each property is a factory over the implementation it checks, and a negative fixture runs it against a deliberately broken wrapper to prove it can fail.
+
+- **Replay**: a failure prints `{ seed, path }`; rerun with `FUZZ_SEED=<seed> FUZZ_PATH=<path> pnpm test:fuzz`. `FUZZ_RUNS` raises the run count.
+- **Timezones**: `pnpm test:tz` runs the unit and property suites under UTC, Europe/Dublin and Pacific/Auckland and ratchets failures against `tests/fuzz/known-timezone-failures.txt`. Set the zone through the script, not `TZ=... pnpm test` in Git Bash, which does not pass `TZ` to Node on Windows; the suite asserts the zone really applied.
+- **No network**: `tests/support/no-network.ts` is a setup file for the root and fuzz configs. fetch, http(s), net and tls connections to anything but loopback throw unless the file is allow-listed there with a reason or calls `allowNetwork("reason")`.
+
 ---
 
 ## Tier 6: E2E Tests (`apps/*/tests/e2e/`)
@@ -92,6 +98,45 @@ See `guides/MUTATION-TESTING.md` for full details.
 **Approach**: Bridges Zod schemas (from contract tests) to fast-check arbitraries for property-based testing. A `zodToArbitrary()` converter generates random-but-valid data from any Zod schema, enabling three capabilities: (1) round-trip validation — generated data always passes the originating schema, (2) schema snapshot regression — a `zodToJsonSchema()` converter creates JSON Schema snapshots that detect unintended drift, (3) boundary validation — `schema-validated-fixtures.ts` wraps BDD fixture factories with Zod `.parse()` calls so every fixture conforms to the canonical API shape.
 
 **Importance**: Hand-crafted test fixtures drift from real API shapes over time. A fixture missing a field that the API added, or using a string where the API now expects a number, means the test passes but the code would fail in production. Schema-driven generation eliminates this class of bugs by deriving test data directly from the Zod schemas that define the API contract. The snapshot comparison catches schema changes that would otherwise be invisible until a deploy breaks — someone renames a Supabase column and the snapshot test fails immediately, before any feature test has to discover the breakage.
+
+---
+
+## Tier 10: Runway Checks (`tests/architecture/`, `tests/suite-health/`, `tests/completeness/`, `tests/observability/`, `tests/conformance/`, `tests/security/`)
+
+**Approach**: Checks over the repository itself rather than over one module, from the Tutors Testing Runway (tiers A, J, K, M, N and O). The logic lives in `scripts/checks/` as pure functions; each test file runs it against **negative fixtures** that prove the check can fail, then against the real repo. Run them alone with `pnpm test:runway`; they also run in the normal `vitest run`.
+
+| Tier | Directory | What fails the build |
+|---|---|---|
+| A: Architecture | `tests/architecture/` | An import that goes up a layer (README "Architecture"), an app importing another app, a relative import into another workspace, a cycle across packages (`.dependency-cruiser.cjs`); `deno.json` and `package.json` disagreeing on name, version, exports or dependency majors; new unused files, exports or dependencies (`pnpm check:knip`, config in `knip.json`, runs as a CI step) |
+| O: Suite health | `tests/suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads; a test file no Vitest or Playwright config collects. Nightly: a no-retry run, and a test file over its time budget (`tests/suite-health/time-budgets.json`, `pnpm check:test-time`) |
+| N: Completeness | `tests/completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
+| K: Observability | `tests/observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
+| J: Conformance | `tests/conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
+| M: Security | `tests/security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path (known gaps in `known-response-gaps.txt`), a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
+
+**Ratchets**: checks that found problems on day one hold them in a baseline beside the test (`known-violations.txt`, `known-manifest-drift.txt`, `known-findings.txt`, `known-gaps.txt`). A new problem fails. So does a baseline line that no longer occurs, so fixing something means deleting its line, and a baseline can only shrink.
+
+**Quarantine**: a test may be skipped without a baseline entry if the line above names an issue and an expiry. After that date it fails again:
+
+```ts
+// quarantine: #123 until 2026-10-01
+it.skip("flaky in webkit", () => { ... });
+```
+
+**Outside Vitest** (they need Docker or kustomize, and run as their own CI jobs):
+
+```bash
+pnpm check:k8s                                  # render every overlay and apply the manifest policies
+pnpm check:k8s --out rendered                   # also write the output for kubeconform
+docker build --build-arg APP_NAME=reader -t tutors/reader:local .
+pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
+pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
+pnpm check:audit                                # pnpm audit against tests/security/audit-allowlist.json
+pnpm check:audit --base-dir base                # PR mode: only advisories absent from base/pnpm-lock.yaml fail
+pnpm architecture-report                        # every dependency-cruiser violation, known ones included
+```
+
+The container check proves it can fail against `tests/conformance/fixtures/faulty-image` (`FIXTURE_FAULT=readonly` or `uid`); CI runs kubeconform against `tests/conformance/fixtures/invalid-manifest.yaml` for the same reason.
 
 ---
 

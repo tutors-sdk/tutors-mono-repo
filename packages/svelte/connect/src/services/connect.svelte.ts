@@ -11,7 +11,7 @@ import { goto } from "$app/navigation";
 import type { Course } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
-import { PUBLIC_ANON_MODE } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
@@ -35,7 +35,7 @@ let anonMode = false;
 /** Global flag to disable analytics in case of database issues*/
 export let analyticsEnabled = true;
 
-if (PUBLIC_ANON_MODE === "TRUE") {
+if (env.PUBLIC_ANON_MODE === "TRUE") {
   anonMode = true;
 }
 
@@ -133,6 +133,13 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param course - Course being visited
    */
   courseVisit(course: Course) {
+    // Locks gate what students can see, so they must load even in anonymous mode -
+    // otherwise `locksLoaded` never becomes true and the course renders empty.
+    if (course.hasEnrollment) {
+      void rbacService.loadContentLocks(course.courseId);
+    } else {
+      rbacService.clear();
+    }
     if (anonMode) return;
     if (analyticsEnabled) {
       updateCourseList(course);
@@ -145,10 +152,7 @@ export const tutorsConnectService: TutorsConnectService = {
     }
     if (course.hasEnrollment && tutorsId.value?.login) {
       rbacService.loadRole(tutorsId.value.login, course.courseId, course);
-      rbacService.loadContentLocks(course.courseId);
       rbacService.checkLecturerStatus(course);
-    } else {
-      rbacService.clear();
     }
   },
 

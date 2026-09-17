@@ -218,7 +218,7 @@ export function initCalendar(course: Course) {
     );
     course.courseCalendar = {
       title: calendarObj.title,
-      year: calendarObj.year,
+      year: calendarObj.year ? Number(calendarObj.year) : undefined,
       weeks,
       currentWeek,
     };

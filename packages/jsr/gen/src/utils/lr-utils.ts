@@ -189,10 +189,11 @@ export function getMarkdown(
 }
 
 function parseProperty(nv: string): VideoIdentifier {
-  const nameValue = nv.split("=");
-  nameValue[0] = nameValue[0].replace("\r", "");
-  nameValue[1] = nameValue[1].replace("\r", "");
-  return { service: nameValue[0], id: nameValue[1] };
+  const idx = nv.indexOf("=");
+  return {
+    service: nv.slice(0, idx).replace("\r", ""),
+    id: nv.slice(idx + 1).replace("\r", ""),
+  };
 }
 
 export function readVideoIds(lr: LearningResource): VideoIdentifiers {
@@ -207,7 +208,7 @@ export function readVideoIds(lr: LearningResource): VideoIdentifiers {
 
     entries.forEach((entry) => {
       if (entry !== "") {
-        if (entry.includes("heanet") || entry.includes("vimp")) {
+        if (entry.includes("heanet") || entry.includes("vimp") || entry.includes("panopto")) {
           videos.videoIds.push(parseProperty(entry));
         } else {
           videos.videoid = entry;

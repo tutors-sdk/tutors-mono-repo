@@ -1,6 +1,7 @@
 import type { CourseSpec } from "./types.ts";
 import { slugify, defaultSpec } from "./types.ts";
 import { writeCourseToFilesystem, nextStepsMessage } from "./scaffolder.ts";
+import denoConfig from "../deno.json" with { type: "json" };
 
 function promptRequired(message: string): string {
   const value = prompt(message);
@@ -29,7 +30,7 @@ function promptYesNo(message: string, fallback: boolean): boolean {
 }
 
 export function runCli(): void {
-  console.log("\n  Welcome to Tutors Course Creator!\n");
+  console.log(`\n  Welcome to Tutors Course Creator (${denoConfig.version})\n`);
 
   const courseName = promptRequired("  Course name:");
   const lecturerName = prompt("  Your name (optional):") || "";
@@ -39,6 +40,12 @@ export function runCli(): void {
   const topicsPerUnit = promptNumber("  Number of topics per unit", 1, 12, defaultSpec.topicsPerUnit);
   const includeNotes = promptYesNo("  Include a note in each topic?", defaultSpec.includeNotes);
   const includeLabs = promptYesNo("  Include a lab in each topic?", defaultSpec.includeLabs);
+  const includeCalendar = promptYesNo("  Include a calendar?", defaultSpec.includeCalendar);
+  const includeEnrollment = promptYesNo("  Include an enrollment list?", defaultSpec.includeEnrollment);
+  const includeGitignore = promptYesNo("  Include a .gitignore?", defaultSpec.includeGitignore);
+  const includeReadme = promptYesNo("  Include a README?", defaultSpec.includeReadme);
+  // Only worth asking for a description when a README is actually being written.
+  const readmeDescription = includeReadme ? prompt("  Short description for the README (optional):") || "" : "";
 
   const spec: CourseSpec = {
     courseName,
@@ -49,6 +56,11 @@ export function runCli(): void {
     topicsPerUnit,
     includeNotes,
     includeLabs,
+    includeCalendar,
+    includeEnrollment,
+    includeGitignore,
+    includeReadme,
+    readmeDescription: readmeDescription.trim(),
   };
 
   console.log(`\n  Creating course in ./${courseId}/ ...\n`);

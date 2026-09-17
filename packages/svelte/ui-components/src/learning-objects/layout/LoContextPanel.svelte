@@ -20,6 +20,6 @@
     <figure class="flex h-44 justify-center p-2">
       <Image lo={currentLo?.value} />
     </figure>
-    <LoContextTree lo={loContext} />
+    <LoContextTree lo={loContext} expandAll={false} />
   </div>
 </div>

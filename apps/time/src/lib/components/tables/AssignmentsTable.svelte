@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getSupabase } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
+  import log from "@tutors/logger";
 
   let { courseId }: { courseId: string } = $props();
 
@@ -60,6 +61,7 @@
         submissionCount: countsByAssignment.get(a.id as number) ?? 0
       }));
     } catch (e) {
+      log.error("AssignmentsTable failed to load:", e);
       error = e instanceof Error ? e.message : "Failed to load assignments";
     } finally {
       loading = false;

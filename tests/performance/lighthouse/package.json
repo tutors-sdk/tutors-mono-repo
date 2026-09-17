@@ -1,0 +1,9 @@
+{
+  "name": "tutors-lighthouse-runner",
+  "private": true,
+  "packageManager": "pnpm@11.24.0",
+  "description": "Isolated, lockfile-pinned Lighthouse for the runway tier L check. Installed only by the Lighthouse job: pnpm --dir tests/performance/lighthouse install --ignore-workspace --frozen-lockfile",
+  "devDependencies": {
+    "lighthouse": "13.4.1"
+  }
+}

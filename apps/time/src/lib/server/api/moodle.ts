@@ -1,8 +1,4 @@
-import {
-  MOODLE_WS_REST_FORMAT,
-  MOODLE_WS_TOKEN,
-  MOODLE_WS_URL
-} from "$env/static/private";
+import { env } from "$env/dynamic/private";
 
 type MoodleScalar = string | number | boolean;
 type MoodleParams = Record<string, MoodleScalar | null | undefined>;
@@ -142,9 +138,9 @@ export interface MoodleAssignSubmissionsResponse {
 
 function buildParams(wsFunction: string, params?: MoodleParams): URLSearchParams {
   const body = new URLSearchParams({
-    wstoken: MOODLE_WS_TOKEN,
+    wstoken: env.MOODLE_WS_TOKEN ?? "",
     wsfunction: wsFunction,
-    moodlewsrestformat: MOODLE_WS_REST_FORMAT
+    moodlewsrestformat: env.MOODLE_WS_REST_FORMAT ?? "json"
   });
 
   if (!params) return body;
@@ -164,7 +160,10 @@ function getMoodleError(payload: unknown): MoodleErrorResponse | null {
 }
 
 async function callMoodle<T>(wsFunction: string, params?: MoodleParams): Promise<T> {
-  const response = await fetch(MOODLE_WS_URL, {
+  if (!env.MOODLE_WS_URL) {
+    throw new Error("MOODLE_WS_URL is not configured");
+  }
+  const response = await fetch(env.MOODLE_WS_URL, {
     method: "POST",
     body: buildParams(wsFunction, params)
   });

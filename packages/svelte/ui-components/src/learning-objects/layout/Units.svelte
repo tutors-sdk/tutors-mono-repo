@@ -3,7 +3,8 @@
   import Panels from "./Panels.svelte";
   import Cards from "./Cards.svelte";
   import Image from "@tutors/ui-primitives/components/Image.svelte";
-  import { isEducator, contentLocks } from "@tutors/runes";
+  import { isEducator } from "@tutors/runes";
+  import { rbacService } from "@tutors/rbac";
 
   interface Props {
     units: Composite[];
@@ -11,7 +12,7 @@
   let { units }: Props = $props();
 
   function isVisibleLo(lo: Lo): boolean {
-    return !lo.hide && !contentLocks.value.get(lo.route);
+    return !lo.hide && !rbacService.isLoLocked(lo);
   }
 
   function hasVisibleLos(unit: Composite): boolean {

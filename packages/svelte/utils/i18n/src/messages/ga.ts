@@ -133,7 +133,7 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "An [Meánchiste Foghlama Gréasáin Oscailte](/course/tutors-reference-manual): Déan iniúchadh ar an [gCatalóg Tutors](https://catalogue.tutors.dev)",
+  "footer.message": "An [Meánchiste Foghlama Gréasáin Oscailte](/course/tutors-reference-manual): Déan iniúchadh ar [Cad atá Nua i Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "urraitheoirí",
   "footer.setuAlt": "Ollscoil Teicneolaíochta an Oirdheiscirt",
 

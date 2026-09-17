@@ -1,0 +1,14 @@
+{
+  "name": "@tutors/metrics",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Prometheus metrics for Tutors apps (shared registry, request middleware, /metrics endpoint)",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@prometheus-io/client": "^0.16.1"
+  }
+}

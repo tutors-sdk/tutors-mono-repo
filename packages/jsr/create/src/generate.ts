@@ -4,7 +4,7 @@ import { padNumber, LAB_STEP_COUNT } from "./types.ts";
 export type { CourseSpec } from "./types.ts";
 export { slugify, defaultSpec } from "./types.ts";
 export { nextSteps } from "./templates.ts";
-import { courseMd, propertiesYaml, unitMd, topicMd, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
+import { courseMd, propertiesYaml, netlifyToml, calendarYaml, enrollmentYaml, gitignoreFile, readmeMd, sideMd, unitMd, topicMd, topicIcons, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
 
 export interface GeneratedFile {
   relativePath: string;
@@ -38,14 +38,36 @@ export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
   const files: GeneratedFile[] = [];
   files.push({ relativePath: "course.md", content: courseMd(spec) });
   files.push({ relativePath: "properties.yaml", content: propertiesYaml(spec) });
+  files.push({ relativePath: "netlify.toml", content: netlifyToml() });
+
+  // Optional course-root descriptors: a schedule seeded from today's date and
+  // a (disabled) private-course enrollment list.
+  if (spec.includeCalendar) {
+    files.push({ relativePath: "calendar.yaml", content: calendarYaml(spec) });
+  }
+  if (spec.includeEnrollment) {
+    files.push({ relativePath: "enrollment.yaml", content: enrollmentYaml(spec) });
+  }
+
+  // Repository hygiene: keep the generated site out of Git, and give the repo
+  // a landing page for anyone who finds it on GitHub rather than in Tutors.
+  if (spec.includeGitignore) {
+    files.push({ relativePath: ".gitignore", content: gitignoreFile() });
+  }
+  if (spec.includeReadme) {
+    files.push({ relativePath: "README.md", content: readmeMd(spec) });
+  }
 
   // Side unit: a single talk and note displayed in the sidebar.
   if (spec.includeSide) {
+    files.push({ relativePath: "side/side.md", content: sideMd() });
     files.push(...talkFiles("side/talk-01", 1, "talk-01"));
     files.push({ relativePath: "side/note-01/note-01.md", content: noteMd(1) });
   }
 
-  // Units on the home page, each holding a set of topics.
+  // Units on the home page, each holding a set of topics. Topic icons cycle
+  // through the palette across the whole course, so each topic card differs.
+  let topicIndex = 0;
   for (let u = 1; u <= spec.unitCount; u++) {
     const unitSlug = `unit-${u}`;
     files.push({ relativePath: `${unitSlug}/unit.md`, content: unitMd(u) });
@@ -54,7 +76,9 @@ export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
       const topicNum = padNumber(t);
       const topicSlug = `topic-${topicNum}`;
       const topicDir = `${unitSlug}/${topicSlug}`;
-      files.push({ relativePath: `${topicDir}/${topicSlug}.md`, content: topicMd(t, `Topic ${t}`) });
+      const topicIcon = topicIcons[topicIndex % topicIcons.length];
+      topicIndex++;
+      files.push({ relativePath: `${topicDir}/${topicSlug}.md`, content: topicMd(t, `Topic ${t}`, topicIcon) });
 
       // Every topic gets a talk with a starter Marp deck.
       files.push(...talkFiles(`${topicDir}/talk-${topicNum}`, t, `talk-${topicNum}`));

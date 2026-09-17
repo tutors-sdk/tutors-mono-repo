@@ -1,5 +1,5 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { PUBLIC_ANON_MODE } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import { refreshLoRecord } from "./presence.svelte.ts";
 import { rune } from "@tutors/runes";
 import { LoRecord, type LiveService } from "../types.svelte.ts";
@@ -55,7 +55,7 @@ export const liveService: LiveService = {
 
   startGlobalPresenceService() {
     if (this.listeningAll) return;
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
     channelAll = supabase
       .channel("tutors-all-course-access", BROADCAST_CONFIG)
@@ -66,7 +66,7 @@ export const liveService: LiveService = {
   },
 
   startCoursePresenceListener(courseId: string) {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
     if (this.channelCourse) {
       supabase.removeChannel(this.channelCourse);

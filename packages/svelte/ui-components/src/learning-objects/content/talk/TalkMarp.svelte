@@ -7,6 +7,7 @@
   import { mermaidify } from "@tutors/course/markdown";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
+  import log from "@tutors/logger";
 
   interface Props {
     lo: Talk;
@@ -49,7 +50,7 @@
       }
       loading = false;
     } catch (e) {
-      console.error("Error rendering Marp slides:", e);
+      log.error("Error rendering Marp slides:", e);
       error = e instanceof Error ? e.message : "Failed to render slides";
       loading = false;
     }

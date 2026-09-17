@@ -1,0 +1,30 @@
+# Scrapes the four Tutors apps through the ports they publish on the host.
+# Adjust the targets if the apps run elsewhere or on other ports.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: tutors
+    metrics_path: /metrics
+    # If the apps are started with METRICS_TOKEN, present it on every scrape:
+    # authorization:
+    #   type: Bearer
+    #   credentials: <the token>
+    static_configs:
+      - targets: ["host.docker.internal:3000"]
+        labels:
+          app: reader
+      - targets: ["host.docker.internal:3001"]
+        labels:
+          app: catalogue
+      - targets: ["host.docker.internal:3002"]
+        labels:
+          app: live
+      - targets: ["host.docker.internal:3003"]
+        labels:
+          app: time
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

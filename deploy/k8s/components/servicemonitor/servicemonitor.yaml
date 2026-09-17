@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tutors-app
+  labels:
+    app.kubernetes.io/part-of: tutors
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tutors-app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 5s
+      # When the app runs with METRICS_TOKEN, present it from a Secret:
+      # authorization:
+      #   credentials:
+      #     name: tutors-app-metrics
+      #     key: token

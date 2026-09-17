@@ -123,7 +123,7 @@ const de: Record<string, string> = {
 
   // Footer
   "footer.version": "Tutors v:",
-  "footer.message": "Ein [Offenes Web-Lern-Toolkit](/course/tutors-reference-manual): Entdecken Sie den [Tutors-Katalog](https://catalogue.tutors.dev)",
+  "footer.message": "Ein [Offenes Web-Lern-Toolkit](/course/tutors-reference-manual): Entdecken Sie, [Was ist neu in Tutors](https://tutors.dev/note/tutors-reference-manual/side/note-whats-new)",
   "footer.sponsorsAlt": "Sponsoren",
   "footer.setuAlt": "South East Technological University",
 

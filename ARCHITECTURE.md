@@ -1113,7 +1113,7 @@ packages/svelte/ui-components/src/
 ### 9. Utility Packages (`packages/svelte/utils/`)
 
 **Logger** (`logger/`):
-- `@tutors/logger` - Logging utility using loglevel
+- `@tutors/logger` - Structured logging (JSON in production, request lifecycle hooks)
 
 **Accessibility** (`a11y/`):
 - `@tutors/a11y` - Reduced motion detection

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    ".claude/**",
+    "memory/**",
+    "coverage/**",
+    "reports/**",
+    "**/fixtures/**",
+    "tests/support/**",
+    "packages/jsr/create/test/**"
+  ],
+  "ignoreBinaries": [
+    "svelte-kit",
+    "deno"
+  ],
+  "vitest": false,
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/**/*.ts",
+        "tests/**/*.{test,steps,spec}.ts",
+        "*.config.{ts,js,mjs,cjs}",
+        ".dependency-cruiser.cjs",
+        "tests/release/scripts/*.ts",
+        "tests/e2e-stack/fixture-course/build.ts"
+      ],
+      "project": [
+        "scripts/**/*.ts",
+        "tests/**/*.ts"
+      ]
+    },
+    "apps/*": {
+      "entry": [
+        "src/routes/**/+*.{ts,svelte}",
+        "src/hooks.{server,client}.ts",
+        "tests/**/*.spec.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,svelte}"
+      ]
+    },
+    "packages/svelte/*": {
+      "project": [
+        "src/**/*.{ts,svelte}"
+      ]
+    },
+    "packages/svelte/utils/*": {
+      "project": [
+        "src/**/*.{ts,svelte}"
+      ]
+    },
+    "packages/jsr/*": {
+      "entry": [
+        "main.ts",
+        "src/tutors.ts",
+        "src/index.ts"
+      ],
+      "project": [
+        "**/*.ts"
+      ]
+    }
+  },
+  "ignoreUnresolved": [
+    "^[$]env/",
+    "^[$]app/",
+    "^[.]/[$]types$",
+    "^npm:",
+    "^jsr:"
+  ],
+  "ignoreDependencies": [
+    "tailwindcss",
+    "@tailwindcss/forms",
+    "@tailwindcss/typography",
+    "@skeletonlabs/skeleton",
+    "@skeletonlabs/skeleton-svelte",
+    "jsr"
+  ]
+}

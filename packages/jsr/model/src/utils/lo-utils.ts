@@ -192,23 +192,83 @@ export function setShowHide(lo: Lo, status: boolean) {
   }
 }
 
+export function getPanoptoUrls(id: string): { embedUrl: string; viewerUrl: string } {
+  const { host, sessionId } = resolvePanoptoHostAndId(id);
+  const embedUrl =
+    `https://${host}/Panopto/Pages/Embed.aspx?id=${sessionId}` +
+    "&autoplay=false&offerviewer=true&showtitle=true&showbrand=true&captions=false&interactivity=all";
+  const viewerUrl = `https://${host}/Panopto/Pages/Viewer.aspx?id=${sessionId}`;
+  return { embedUrl, viewerUrl };
+}
+
+function resolvePanoptoHostAndId(id: string): { host: string; sessionId: string } {
+  const trimmed = id.trim();
+  if (trimmed.includes("|")) {
+    const [host, sessionId] = trimmed.split("|", 2);
+    return { host, sessionId };
+  }
+  try {
+    const url = new URL(trimmed);
+    return { host: url.hostname, sessionId: url.searchParams.get("id") ?? "" };
+  } catch {
+    return { host: "", sessionId: trimmed };
+  }
+}
+
+const HOSTED_VIDEO_SERVICES = new Set(["heanet", "vimp", "panopto"]);
+
+function parseHostedVideoLine(value: string): VideoIdentifier | null {
+  const idx = value.indexOf("=");
+  if (idx <= 0) return null;
+  const service = value.slice(0, idx).trim();
+  if (!HOSTED_VIDEO_SERVICES.has(service)) return null;
+  return { service, id: value.slice(idx + 1).trim() };
+}
+
+function normalizeVideoEntry(service: string, id: string): VideoIdentifier {
+  const parsed = parseHostedVideoLine(id);
+  if (parsed) return parsed;
+  return { service, id };
+}
+
 export function getVideoConfig(lo: Lo): VideoIdentifier {
   const config: VideoIdentifier = { service: "youtube", id: "" };
   if (lo.videoids?.videoIds?.length > 0) {
     const lastVideo = lo.videoids.videoIds[lo.videoids.videoIds.length - 1];
-    if (lastVideo.service === "heanet" || lastVideo.service === "vimp") {
-      config.service = lastVideo.service;
-      config.id = lastVideo.id;
+    const normalized = normalizeVideoEntry(lastVideo.service, lastVideo.id);
+    if (HOSTED_VIDEO_SERVICES.has(normalized.service)) {
+      config.service = normalized.service;
+      config.id = normalized.id;
     } else {
       const parts = lo.video?.split("/") || [];
-      const id = parts.pop() || parts.pop() || "";
-      config.id = id;
+      const pathId = parts.pop() || parts.pop() || "";
+      const fromPath = normalizeVideoEntry("youtube", pathId);
+      if (HOSTED_VIDEO_SERVICES.has(fromPath.service)) {
+        config.service = fromPath.service;
+        config.id = fromPath.id;
+      } else {
+        const fromVideoid = normalizeVideoEntry("youtube", lo.videoids.videoid);
+        if (HOSTED_VIDEO_SERVICES.has(fromVideoid.service)) {
+          config.service = fromVideoid.service;
+          config.id = fromVideoid.id;
+        } else {
+          config.id = pathId;
+        }
+      }
     }
+  } else if (lo.videoids?.videoid) {
+    const normalized = normalizeVideoEntry("youtube", lo.videoids.videoid);
+    config.service = normalized.service;
+    config.id = normalized.id;
   }
   if (config.service === "heanet") {
     config.url = `https://media.heanet.ie/player/${config.id}`;
   } else if (config.service === "vimp") {
     config.url = `https://vimp.oth-regensburg.de/media/embed?key=${config.id}&autoplay=false&controls=true`;
+  } else if (config.service === "panopto") {
+    const { embedUrl, viewerUrl } = getPanoptoUrls(config.id);
+    config.url = embedUrl;
+    config.externalUrl = viewerUrl;
   } else if (config.service === "youtube") {
     config.url = `https://www.youtube.com/embed/${config.id}`;
     config.externalUrl = `https://www.youtube.com/watch?v=${config.id}`;

@@ -1,9 +1,10 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_ANON_MODE } from "$env/static/public";
+  import { env } from "$env/dynamic/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
   import { supabase } from "@tutors/community/utils/supabase-client";
+  import log from "@tutors/logger";
 
   interface Props {
     lo: Whiteboard;
@@ -33,7 +34,7 @@
   }
 
   async function loadSceneFromDb(roomId: string): Promise<any | null> {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return null;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return null;
     try {
       const { data } = await supabase
         .from("whiteboard_scenes")
@@ -50,7 +51,7 @@
   }
 
   function saveSceneToDb(roomId: string, elements: any[]) {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
       try {
@@ -79,6 +80,7 @@
       cachedScene = await response.json();
       setupMessageHandler();
     } catch (e: any) {
+      log.error("WhiteboardViewer failed to load scene:", e);
       error = e.message || "Failed to load whiteboard";
       loading = false;
     }
@@ -96,8 +98,8 @@
         const savedScene = await loadSceneFromDb(roomId);
         iframe?.contentWindow?.postMessage({
           type: "init-editor",
-          supabaseUrl: PUBLIC_SUPABASE_URL,
-          supabaseAnonKey: PUBLIC_SUPABASE_ANON_KEY,
+          supabaseUrl: env.PUBLIC_SUPABASE_URL,
+          supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
           roomId,
           user: {
             name: tutorsId.value?.name || "Anonymous",

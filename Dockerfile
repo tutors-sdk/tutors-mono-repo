@@ -1,0 +1,84 @@
+# syntax=docker/dockerfile:1
+
+# Builds any of the four SvelteKit apps in this monorepo into a self-contained
+# Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time>.
+#
+#   docker build --build-arg APP_NAME=reader -t tutors/reader .
+#   docker run --rm -p 3000:3000 -e ORIGIN=http://localhost:3000 tutors/reader
+#
+# All configuration (Supabase, auth, log level, ...) is read from the
+# environment at runtime via SvelteKit's $env/dynamic modules, so one image
+# serves every environment and no secret is ever baked into a layer.
+
+ARG NODE_VERSION=22
+
+# ---------------------------------------------------------------------------
+# base: Node plus the exact pnpm version pinned in package.json (via corepack)
+# ---------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-bookworm-slim AS base
+ENV PNPM_HOME=/pnpm \
+    COREPACK_HOME=/pnpm/corepack \
+    npm_config_store_dir=/pnpm/store \
+    CI=true
+ENV PATH=${PNPM_HOME}:${PATH}
+WORKDIR /app
+COPY package.json ./
+RUN corepack enable && corepack install
+
+# ---------------------------------------------------------------------------
+# deps: download every package in the lockfile into the pnpm store.
+# This layer is only invalidated when the lockfile changes, and the BuildKit
+# cache mount keeps already-downloaded tarballs across builds even then.
+# ---------------------------------------------------------------------------
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm fetch
+
+# ---------------------------------------------------------------------------
+# build: link the workspace offline, build the app and its workspace
+# dependencies, then produce a pruned production tree with `pnpm deploy`.
+# ---------------------------------------------------------------------------
+FROM deps AS build
+ARG APP_NAME=reader
+ENV SVELTEKIT_ADAPTER=node
+COPY . .
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --offline --frozen-lockfile
+RUN pnpm --filter "tutors-${APP_NAME}..." build
+# --legacy: this workspace uses symlinked (not injected) workspace packages.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm --filter "tutors-${APP_NAME}" deploy --prod --legacy --ignore-scripts /out
+
+# ---------------------------------------------------------------------------
+# runtime: minimal image with only the server bundle and production deps.
+# ---------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-bookworm-slim AS runtime
+ARG APP_NAME=reader
+ARG GIT_SHA=unknown
+ARG BUILD_DATE=unknown
+
+LABEL org.opencontainers.image.title="tutors-${APP_NAME}" \
+      org.opencontainers.image.source="https://github.com/tutors-sdk/tutors-mono-repo" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.licenses="MIT"
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOST=0.0.0.0 \
+    NODE_OPTIONS=--enable-source-maps
+
+WORKDIR /app
+
+# Owned by a non-root UID with GID 0 so OpenShift's arbitrary-UID model
+# (random UID, always GID 0) can read everything. Nothing here is writable
+# at runtime; the app never writes to its own filesystem.
+COPY --from=build --chown=1001:0 /out/package.json ./package.json
+COPY --from=build --chown=1001:0 /out/node_modules ./node_modules
+COPY --from=build --chown=1001:0 /out/build ./build
+
+USER 1001
+EXPOSE 3000
+
+CMD ["node", "build/index.js"]

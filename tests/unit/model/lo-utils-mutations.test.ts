@@ -472,6 +472,79 @@ describe("getVideoConfig — full coverage", () => {
     expect(config.externalUrl).toBeUndefined();
   });
 
+  it("returns panopto config for composite host|uuid videoid", () => {
+    const lo = makeLo({
+      video: "",
+      videoids: {
+        videoid: "setu-ie.cloud.panopto.eu|f285d4a8-7ebe-40b6-9388-b35b010953bf",
+        videoIds: [{
+          service: "panopto",
+          id: "setu-ie.cloud.panopto.eu|f285d4a8-7ebe-40b6-9388-b35b010953bf",
+        }],
+      },
+    });
+    const config = getVideoConfig(lo);
+    expect(config.service).toBe("panopto");
+    expect(config.url).toBe(
+      "https://setu-ie.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf&autoplay=false&offerviewer=true&showtitle=true&showbrand=true&captions=false&interactivity=all"
+    );
+    expect(config.externalUrl).toBe(
+      "https://setu-ie.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf"
+    );
+  });
+
+  it("returns panopto config for full embed URL videoid", () => {
+    const embedUrl =
+      "https://setu-ie.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf&autoplay=false";
+    const lo = makeLo({
+      video: "",
+      videoids: {
+        videoid: embedUrl,
+        videoIds: [{ service: "panopto", id: embedUrl }],
+      },
+    });
+    const config = getVideoConfig(lo);
+    expect(config.service).toBe("panopto");
+    expect(config.url).toContain("setu-ie.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf");
+    expect(config.externalUrl).toBe(
+      "https://setu-ie.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf"
+    );
+  });
+
+  it("selects panopto when it is the last entry in videoIds array", () => {
+    const lo = makeLo({
+      video: "",
+      videoids: {
+        videoid: "setu-ie.cloud.panopto.eu|f285d4a8-7ebe-40b6-9388-b35b010953bf",
+        videoIds: [
+          { service: "youtube", id: "first" },
+          {
+            service: "panopto",
+            id: "setu-ie.cloud.panopto.eu|f285d4a8-7ebe-40b6-9388-b35b010953bf",
+          },
+        ],
+      },
+    });
+    const config = getVideoConfig(lo);
+    expect(config.service).toBe("panopto");
+    expect(config.externalUrl).toContain("Viewer.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf");
+  });
+
+  it("normalizes legacy youtube entries that store the full panopto videoid line", () => {
+    const panoptoLine = "panopto=setu-ie.cloud.panopto.eu|f285d4a8-7ebe-40b6-9388-b35b010953bf";
+    const lo = makeLo({
+      video: `/video/reference-course/topic-03-media/unit-3-panopto/panelvideo/${panoptoLine}`,
+      videoids: {
+        videoid: panoptoLine,
+        videoIds: [{ service: "youtube", id: panoptoLine }],
+      },
+    });
+    const config = getVideoConfig(lo);
+    expect(config.service).toBe("panopto");
+    expect(config.url).toContain("setu-ie.cloud.panopto.eu/Panopto/Pages/Embed.aspx?id=f285d4a8-7ebe-40b6-9388-b35b010953bf");
+    expect(config.url).not.toContain("youtube.com");
+  });
+
   it("returns default youtube config with empty id when no videoids", () => {
     const lo = makeLo({
       video: "",

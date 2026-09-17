@@ -8,6 +8,81 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+#### Fixes
+
+- Calendar: assessment due dates are reformatted for display and emphasised in the week row; unparseable dates fall back to the raw value (PR #231)
+
+### v16.1.8 (2026-09)
+
+#### Features
+
+- Create wizard: optional `.gitignore` and README in generated courses (PR #197)
+- Create wizard: the downloaded zip now includes a `course.json` manifest describing the generated course (PR #153)
+- Create wizard: import an existing `course.json` to pre-fill the wizard fields (PR #154)
+
+#### Fixes
+
+- Logging: the analytics beacon now flushes reliably, UI errors are reported through the logger rather than silently swallowed, and stray console output was removed from Marp talks and the whiteboard viewer (PR #173)
+- Tutors Live menu link now points at the Live deployment instead of a reader-relative path that 404s (PR #225)
+
+#### Chores
+
+- API surface report regenerated for `getPanoptoUrls` (PR #193)
+- Dependency update: eslint 10.10.0 (PR #189)
+- README: Node prerequisite corrected to >= 22.12.0, matching the `engines.node` raised in v16.1.6
+
+### v16.1.6 (2026-09)
+
+#### Fixes
+
+- Content locking: enrolled students no longer hit a navigation loop ("Attempt to use history.pushState() more than 100 times per 10 seconds") when landing on a locked route — the redirect target is excluded from the lock check and the redirect replaces history rather than pushing to it (PR #205)
+- Content locking: the course context tree (TOC sidebar) now renders for enrolled students, rebuilding when lock state resolves instead of being computed once at mount (PR #205)
+- Content locking: educator/student role is re-resolved after sign-in on enrolment courses, so lock state matches the signed-in user without a page reload (PR #205)
+- Content locking: locks are now loaded in anonymous-mode builds; previously an enrolment course rendered with no cards, wall entries or context tree because lock state never resolved
+- Content locking: a failing lock store no longer surfaces as an unhandled promise rejection on every course visit
+
+#### Chores
+
+- Dependency updates: mermaid 12, markdown-it-anchor 10, vite 8.3, zod 4.6, @supabase/supabase-js 2.116, isomorphic-dompurify 4.2, @playwright/test 1.63, typescript-eslint 8.70, and the GitHub Actions group (PRs #215–#223)
+- `engines.node` raised to >=22.12.0, required by mermaid 12 and already matching CI and the Netlify builds
+
+### v16.1.5 (2026-09)
+
+#### Features
+
+- Panopto video support: embed Panopto-hosted videos in courses via `panopto=` video identifiers (PR #188)
+
+#### Fixes
+
+- Course visit card thumbnail missing on home page recently accessed / favourites cards for courses without a custom icon (PR #191)
+- Content locking: course context sidebar tree collapsed by default; TOC tree refactored with RBAC-aware visibility filtering; LLM export links respect content locks for enrolled students (PR #204)
+- Circular card title no longer hidden behind the card image (PR #194)
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+- PDF.js worker updated
+
+### v16.1.4 (2026-09)
+
+#### Fixes
+
+- Exclude locked content from walls: labs/talks/videos under a locked topic are now hidden from students on wall pages, with correct ancestor matching for topics nested inside units (PR #183)
+
+### v16.1.3 (2026-09)
+
+#### Features
+
+- Create wizard: new **Include calendar** and **Include enrollment** options, seeding `calendar.yaml` (12-week worked example with a reading-week break and assignments at weeks 6 and 12) and a fully-commented `enrollment.yaml`; enriched `properties.yaml` with commented, documented examples for every supported property (PR #147)
+- Home footer: replaced the Catalogue link with an "Explore What's New in Tutors" link
+
+#### Fixes
+
+- Custom companion icons defined in `properties.yaml` are now registered in the theme icon library so they render correctly (previously all other custom-companion aspects worked except the icon) (PR #147)
+
 ### v16.1.2 (2026-08)
 
 #### Fixes
@@ -71,6 +146,25 @@
 
 ## Live (`tutors-live`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+### v16.1.8 (2026-09)
+
+#### Fixes
+
+- Course group header: the course title link pointed at `/course/{courseId}`, which 404s on the Live deployment — it now targets the reader origin, and the live stream link is relative to Live itself (PRs #225, #226)
+- Online course and student cards linked to reader-relative paths broadcast over presence, so every card 404d on the Live origin; they now resolve against the reader (PR #226)
+
+### v16.1.5 (2026-09)
+
+#### Fixes
+
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
@@ -86,6 +180,12 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
@@ -100,6 +200,26 @@
 
 ## Time (`tutors-time`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+#### Fixes
+
+- Moodle API, submissions repository and the assignments sync service now report failures through the logger rather than the console (PR #116)
+
+### v16.1.8 (2026-09)
+
+> `apps/time` has tracked the monorepo version since v16.0.0; the v1.0.0 entry
+> below records its migration from the standalone repository.
+
+#### Fixes
+
+- Logging: assignment, calendar and learning-record tables now report load failures through the logger instead of failing silently (PR #173)
+- Student cards linked to reader-relative paths and 404d on the Time origin; they now resolve against the reader (PR #226)
+
 ### v1.0.0 (2026-08)
 
 - Migrated from standalone `tutors-time` repository into monorepo at `apps/time`
@@ -108,7 +228,59 @@
 
 ---
 
+## Infrastructure
+
+Cross-cutting changes that land in every application at once, rather than in
+any single one. Versioned with the monorepo.
+
+### v16.2.0 (2026-09)
+
+#### Structured logging (PR #116)
+
+- `@tutors/logger` gains a request logger: request lifecycle logs with a generated request id propagated through the server hooks of all four apps
+- Liveness probe at `/healthz/live` in reader, live, time and catalogue, for container and Kubernetes health checks
+- Console logging replaced with structured logger calls across the time app's server-side services
+
+#### Containerisation (PR #229)
+
+- `Dockerfile` and `compose.yaml` at the repository root, with `deploy/k8s` kustomize bases and per-app overlays for reader, live, time and catalogue
+- Runtime configuration via `.env.example`; apps read their environment at container start rather than build time
+- `svelte.config.js` in each app selects `adapter-node` when `SVELTEKIT_ADAPTER=node` and otherwise keeps `adapter-auto`, so the Netlify builds are unaffected by the container work
+- Local standup documented in `docs/LOCAL-CONTAINERS.md`
+
+#### Metrics and alerting (PR #144)
+
+- New `@tutors/metrics` package: a Prometheus registry, request middleware and a `/metrics` endpoint served by all four apps
+- Grafana alerting rules and a ServiceMonitor component for Prometheus Operator scraping under `observability/` and `deploy/k8s/components/`
+
+---
+
 ## Shared Packages
+
+### v5.2.4 (2026-09)
+
+- `tutors-create`: optional `.gitignore` and README in generated courses, offered by both the CLI prompts and the reader wizard (PR #197)
+
+### v5.2.3 (2026-09)
+
+- `tutors-create`: **Include calendar** and **Include enrollment** scaffold options (CLI prompts + reader wizard checkboxes); calendar off by default
+- `tutors-create`: generated `calendar.yaml` provides a 12-week worked example with a reading-week break and assignments at weeks 6 and 12, plus a documentation link
+- `tutors-create`: generated `enrollment.yaml` is fully commented, notes that the IDs are GitHub IDs and that `auth: 1` must be set in `properties.yaml`, and links the RBAC reference
+- `tutors-create`: generated `properties.yaml` seeds `credits` with the course author and includes commented, documented examples for every supported property (including a custom `companions` map)
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.2.3
+
+### v5.2.2 (2026-08)
+
+- `tutors-create`: enriched scaffold — `netlify.toml`, `side.md`, and colour companion icons (PR #146)
+
+### v5.2.1 (2026-08)
+
+- `tutors-create`: runnable via `deno run` and prints its version in the CLI banner (PR #138)
+
+### v5.2.0 (2026-08)
+
+- New `tutors-create` course scaffolder: CLI and reader wizard sharing a common generator; full course template (units, side, talks, Marp, icons) with editable zip download (PR #114, #118, #119)
+- Align all JSR package versions to 5.2.0 (PR #136)
 
 ### v5.1.0 (2026-08)
 

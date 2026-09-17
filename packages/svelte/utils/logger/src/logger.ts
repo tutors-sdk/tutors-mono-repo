@@ -1,4 +1,4 @@
-import type { LogLevel, LogEntry, Logger, LoggerOptions, Transport } from "./types.ts";
+import type { LogLevel, LogEntry, Logger, LoggerOptions, RuntimeOptions, Transport } from "./types.ts";
 import { formatJson, formatPretty } from "./formatter.ts";
 
 const globalTransports: Transport[] = [];
@@ -12,16 +12,14 @@ export function removeTransport(fn: Transport): void {
   if (idx !== -1) globalTransports.splice(idx, 1);
 }
 
+export const LOG_LEVELS: readonly LogLevel[] = ["debug", "info", "warn", "error"];
+
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
   warn: 2,
   error: 3,
 };
-
-const LEVEL_FROM_PRIORITY = Object.fromEntries(
-  Object.entries(LOG_LEVEL_PRIORITY).map(([k, v]) => [v, k as LogLevel]),
-);
 
 const CONSOLE_METHOD: Record<LogLevel, "debug" | "info" | "warn" | "error"> = {
   debug: "debug",
@@ -30,15 +28,85 @@ const CONSOLE_METHOD: Record<LogLevel, "debug" | "info" | "warn" | "error"> = {
   error: "error",
 };
 
+export function isLogLevel(value: unknown): value is LogLevel {
+  return typeof value === "string" && (LOG_LEVELS as readonly string[]).includes(value);
+}
+
 function isDev(): boolean {
   try {
-    return !!(import.meta as Record<string, unknown>).env &&
-      (import.meta as unknown as { env: { DEV?: boolean } }).env.DEV === true;
+    const meta = import.meta as unknown as { env?: { DEV?: boolean } };
+    return !!meta.env && meta.env.DEV === true;
   } catch {
     return (
       typeof process !== "undefined" && process.env?.NODE_ENV !== "production"
     );
   }
+}
+
+function isServer(): boolean {
+  return typeof process !== "undefined" && typeof process.versions?.node === "string";
+}
+
+function serverEnv(): Record<string, string | undefined> {
+  return isServer() ? process.env : {};
+}
+
+/**
+ * Resolve the level for the default logger.
+ *
+ * 1. `LOG_LEVEL` (server only) when it names a valid level, so operators can
+ *    tune verbosity per pod without a redeploy.
+ * 2. `debug` in dev builds.
+ * 3. `info` on the server, so request lifecycle and startup events are visible.
+ * 4. `warn` in the browser, keeping the console quiet for end users.
+ */
+export function resolveLogLevel(options: RuntimeOptions = {}): LogLevel {
+  const dev = options.dev ?? isDev();
+  const server = options.server ?? isServer();
+  const env = options.env ?? (server ? serverEnv() : {});
+  const requested = env.LOG_LEVEL?.trim().toLowerCase();
+  if (isLogLevel(requested)) return requested;
+  if (dev) return "debug";
+  return server ? "info" : "warn";
+}
+
+/**
+ * Fields describing where a log line came from. `hostname` is the pod name
+ * under Kubernetes (it sets `HOSTNAME`), `pid` distinguishes workers, and
+ * `environment` separates dev noise from production traffic in a collector.
+ */
+export function runtimeContext(options: RuntimeOptions = {}): Record<string, unknown> {
+  const dev = options.dev ?? isDev();
+  const server = options.server ?? isServer();
+  const context: Record<string, unknown> = {
+    environment: dev ? "development" : "production",
+  };
+  if (server) {
+    const env = options.env ?? serverEnv();
+    if (env.HOSTNAME) context.hostname = env.HOSTNAME;
+    if (typeof process !== "undefined" && typeof process.pid === "number") context.pid = process.pid;
+  }
+  return context;
+}
+
+let globalContext: Record<string, unknown> = {};
+
+/** Merge fields into the context attached to every entry from every logger instance. */
+export function setGlobalContext(context: Record<string, unknown>): void {
+  globalContext = { ...globalContext, ...context };
+}
+
+export function getGlobalContext(): Record<string, unknown> {
+  return { ...globalContext };
+}
+
+export function clearGlobalContext(): void {
+  globalContext = {};
+}
+
+/** Tag every entry with the emitting app, e.g. `tutors-reader`. */
+export function setAppName(name: string): void {
+  setGlobalContext({ app: name });
 }
 
 function isPlainObject(val: unknown): val is Record<string, unknown> {
@@ -90,15 +158,19 @@ function normalizeArgs(args: unknown[]): {
 }
 
 export class TutorsLogger implements Logger {
+  readonly level: LogLevel;
   private readonly threshold: number;
   private readonly context: Record<string, unknown>;
+  private readonly runtime: Record<string, unknown>;
   private readonly outputFn: (entry: LogEntry) => void;
 
   constructor(options: LoggerOptions = {}) {
     const dev = isDev();
-    const level = options.level ?? (dev ? "debug" : "warn");
-    this.threshold = LOG_LEVEL_PRIORITY[level];
+    this.level = options.level ?? resolveLogLevel({ dev });
+    this.threshold = LOG_LEVEL_PRIORITY[this.level];
     this.context = options.context ?? {};
+    // Runtime fields only travel with the JSON output; the pretty dev format stays readable.
+    this.runtime = dev ? {} : runtimeContext({ dev });
     this.outputFn = options.output ?? TutorsLogger.defaultOutput(dev);
   }
 
@@ -115,6 +187,8 @@ export class TutorsLogger implements Logger {
 
     const { message, context: callContext } = normalizeArgs(args);
     const entry: LogEntry = {
+      ...globalContext,
+      ...this.runtime,
       ...this.context,
       ...callContext,
       timestamp: new Date().toISOString(),
@@ -145,9 +219,22 @@ export class TutorsLogger implements Logger {
 
   child(context: Record<string, unknown>): Logger {
     return new TutorsLogger({
-      level: LEVEL_FROM_PRIORITY[this.threshold] as LogLevel,
+      level: this.level,
       context: { ...this.context, ...context },
       output: this.outputFn,
     });
   }
+}
+
+/** The shared logger used by `import log from "@tutors/logger"`. */
+export const defaultLogger: Logger = new TutorsLogger();
+
+/**
+ * Emit the one startup line operators look for after a deploy: which build is
+ * running, on which Node, and at what verbosity. Call it from SvelteKit's
+ * server `init` hook.
+ */
+export function logServiceStart(fields: Record<string, unknown> = {}, logger: Logger = defaultLogger): void {
+  const node = typeof process !== "undefined" ? process.version : undefined;
+  logger.info("Service starting", { logLevel: logger.level, node, ...fields });
 }
