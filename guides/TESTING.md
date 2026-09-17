@@ -1,678 +1,522 @@
-# Testing Guide for Tutors Mono Repo
+# Testing Guide
 
-> For a quick-reference overview, see [Testing Overview](./TESTING-OVERVIEW.md).
+The long form. [TESTING-OVERVIEW.md](./TESTING-OVERVIEW.md) is the one-page entry point and
+[../tests/TESTING.md](../tests/TESTING.md) maps each `tests/` directory to a tier, a runner
+and a command. This document explains, per tier, what it protects, where its code lives, how
+to run it on a laptop, how it proves it can fail, and which baseline it ratchets.
 
-## Overview
+Two rules shape everything here. Every failure class has exactly one owning tier, and no
+check is trusted until it has been watched failing against a deliberately broken fixture.
+Where a tier's suite has a `negative fixtures` block, that is what it is for.
 
-Tutors uses a multi-tier testing strategy to ensure correctness at every level — from individual utility functions to full end-to-end user journeys. BDD is the **primary testing paradigm**: every significant user-facing behavior has a corresponding Gherkin feature file. The strategy is adapted from [ESI.ts](https://github.com/lgriffin/ESI.ts/blob/master/guides/TESTING.md) and extended with release candidate (RC) protection gates for production-grade release safety.
-
-| Tier                         | Purpose                                                                    | Runner         |
-| ---------------------------- | -------------------------------------------------------------------------- | -------------- |
-| 1. TDD (unit)                | Per-module unit tests with mocked dependencies                             | Vitest / Deno  |
-| 2. BDD (behavioral)          | Gherkin-style scenarios covering user-facing behaviors                     | Vitest         |
-| 3. Component (browser)       | Svelte component rendering in real browser (Vitest Browser Mode)           | Vitest         |
-| 4. Integration (mocked)      | Cross-package workflows with mocked Supabase/Realtime                      | Vitest         |
-| 5. E2E (Playwright)          | Full user journeys against real dev server                                 | Playwright     |
-| 6. Contract (API surface)    | Snapshot-based public API breaking-change detector for JSR packages        | Vitest         |
-| 7. Fuzz (fast-check)         | Property-based testing of data models, tree construction, aggregation (excluded from default run — pending fast-check v4 fix) | Vitest         |
-
-Existing tests in the codebase (gen-lib Deno tests, course package Vitest tests) are preserved and incorporated into this framework. As new tests are written, this table will be updated with exact counts.
-
-## Coverage
-
-Coverage thresholds (enforced per-package via Vitest config):
-
-| Metric     | Threshold | Target |
-| ---------- | --------: | -----: |
-| Statements |       90% |    95% |
-| Branches   |       80% |    85% |
-| Functions  |       75% |    90% |
-| Lines      |       90% |    95% |
-
-Coverage is collected from all `src/**/*.ts` and `src/**/*.svelte` files (excluding `.d.ts`, `*.config.*`, and test files). The CI pipeline hard-fails if any package drops below thresholds.
-
-## Test Structure
-
-```
-tutors-mono-repo/
-├── vitest.config.ts                          # Root-level Vitest config (coverage thresholds, path aliases)
-├── tests/                                    # Root-level cross-cutting test suites
-│   ├── bdd/                                  # BDD tests (Gherkin features + step definitions)
-│   │   ├── features/
-│   │   │   ├── course/                       # Course reader features
-│   │   │   │   ├── course-loading.feature
-│   │   │   │   └── course-navigation.feature
-│   │   │   ├── live/                         # Live dashboard features
-│   │   │   │   └── presence-tracking.feature
-│   │   │   ├── time/                         # Analytics features
-│   │   │   │   ├── calendar-analytics.feature
-│   │   │   │   └── lab-analytics.feature
-│   │   │   └── shared/                       # Cross-app features
-│   │   │       ├── authentication.feature
-│   │   │       └── theming.feature
-│   │   ├── steps/                            # Step definitions (vitest)
-│   │   │   ├── course/
-│   │   │   ├── live/
-│   │   │   └── time/
-│   │   └── support/
-│   │       ├── world.ts                      # TestWorld class (shared test context)
-│   │       ├── fixtures.ts                   # TestDataFactory (factory methods)
-│   │       └── mocks.ts                      # MockSupabaseClient, MockRealtimeChannel, createMockFetch
-│   ├── contract/                             # API surface snapshot tests
-│   │   ├── model-lib-api.test.ts
-│   │   ├── time-lib-api.test.ts
-│   │   └── gen-lib-api.test.ts
-│   ├── fuzz/                                 # Property-based tests (fast-check)
-│   │   ├── calendar-model.fuzz.test.ts
-│   │   └── lo-tree-construction.fuzz.test.ts
-│   ├── integration/                          # Cross-package integration tests
-│   └── release/                              # Release artifact testing
-│       ├── scripts/
-│       │   ├── fetch-reference-course.ts
-│       │   ├── generate-baseline.ts
-│       │   ├── generate-candidate.ts
-│       │   ├── compare-artifacts.ts
-│       │   ├── visual-regression.ts
-│       │   ├── performance-benchmark.ts
-│       │   └── smoke-test-preview.ts
-│       └── comparators/
-│           └── json-comparator.ts
-├── apps/
-│   ├── reader/                               # App-level tests
-│   │   ├── playwright.config.ts
-│   │   └── tests/e2e/                        # E2E tests
-│   ├── catalogue/
-│   │   ├── playwright.config.ts
-│   │   └── tests/e2e/
-│   └── live/
-│       ├── playwright.config.ts
-│       └── tests/e2e/
-├── packages/
-│   ├── jsr/gen/test/                         # Existing Deno tests (preserved)
-│   └── svelte/course/src/.../__ tests__/     # Existing Vitest tests (preserved)
-└── .github/workflows/
-    ├── ci.yml                                # PR checks
-    ├── nightly.yml                           # Scheduled regression
-    ├── rc-validation.yml                     # RC gate pipeline
-    └── release-testing.yml                   # Artifact regression
-```
-
-## Running Tests
+## Running it locally
 
 ```bash
-# All unit + BDD tests (default) via Turborepo
-pnpm test
+pnpm install
+pnpm lint
+pnpm test                 # vitest run: everything under tests/ except e2e, e2e-stack, release, fuzz
+pnpm test:fuzz            # the property suites, threads pool
+pnpm test:runway          # only the repo-level suites
+pnpm exec vitest          # watch mode
+pnpm exec vitest run tests/unit/utils/i18n.test.ts
+pnpm exec vitest run -t "median"
+```
 
-# Root-level BDD/contract/fuzz only
-pnpm test:bdd
-pnpm test:contract
+`pnpm test` needs no services: `tests/support/no-network.ts` is a setup file for both the
+root and fuzz configs, and any `fetch`, `http(s)`, `net` or `tls` connection to anything but
+loopback throws. A test that genuinely needs the network calls `allowNetwork("reason")` or is
+listed with a reason in `NETWORK_ALLOWED_FILES`.
+
+### Windows and Git Bash
+
+| Symptom | Cause and fix |
+|---|---|
+| `TZ=Europe/Dublin pnpm test` appears to pass but tests the host zone | MSYS drops or rewrites `TZ` before Node sees it. Use `pnpm test:tz`, which spawns Vitest with both `TZ` and `TZ_MATRIX_ZONE` and asserts in the suite that the zone really applied |
+| `pnpm api-report:check` reports all three reports as fully rewritten | Git checked `etc/*.api.md` out with CRLF and the generator writes LF, so every line differs. CI on Linux is unaffected. Judge the real diff there, or compare with `git diff --ignore-cr-at-eol` after `pnpm api-report` |
+| `pnpm check:load` and the other Docker checks | Docker Desktop maps volume ownership, so the k6 `--user` flag the Linux runner needs is skipped on Windows. Keep other compose stacks off ports 3000–3003 and 8080 before starting the e2e stack |
+| `pnpm check:k8s`, `pnpm check:container`, `pnpm test:e2e:stack` | Need Docker (and `kustomize` via the script) running. They are CI jobs, not part of the expected local run |
+
+### `pnpm check` is broken at the root
+
+The root `check` script runs `npm run check --workspace=apps/reader`, but the repo has no
+npm `workspaces` field — it is a pnpm workspace — so npm answers `No workspaces found`. Use
+`pnpm --filter tutors-reader check`, which is what CI's type-check steps run. `rc-validation.yml`
+Gate 1 still calls the broken form.
+
+## Tier A — structure
+
+**Protects** the layering in [../ARCHITECTURE.md](../ARCHITECTURE.md): nothing imports up a
+layer, apps do not import each other, no relative import crosses a workspace, no cycle spans
+packages, `deno.json` and `package.json` agree for every JSR package, and no file, export or
+dependency is dead.
+
+**Lives in** `.dependency-cruiser.cjs` (layers and rules), `knip.json`,
+`scripts/checks/architecture.ts`, `scripts/checks/manifest-parity.ts`, `scripts/checks/knip.ts`,
+and the suites in `tests/architecture/`.
+
+```bash
+pnpm exec vitest run tests/architecture
+pnpm check:knip
+pnpm architecture-report      # every violation, baselined ones included
+```
+
+**Proves it can fail** against `tests/architecture/fixtures/workspace/`, a miniature repo whose
+files deliberately reach up a layer, import another app, use a cross-workspace relative import
+and form a cycle; the manifest-parity suite feeds it manifests with a bumped version, a rename,
+an added export and a dependency on another major; the knip suite feeds it output with no JSON
+report at all.
+
+**Baselines** `known-violations.txt`, `known-manifest-drift.txt`, `known-knip.txt`.
+
+## Tier B — logic and properties
+
+**Protects** the behaviour of the JSR packages (`model`, `gen`, `time`) and the Svelte packages
+at the function level, plus the invariants that must hold for *any* course or calendar, in any
+timezone.
+
+**Lives in** `tests/unit/**` (62 files, grouped by package), `tests/fuzz/**`,
+`tests/support/arbitraries/course-tree.ts` (the shared course arbitrary: generator-shaped JSON
+with `{{COURSEURL}}` routes, nested composites, lab steps, Unicode and hidden learning objects),
+`vitest.config.ts` and `vitest.config.fuzz.ts`.
+
+```bash
+pnpm exec vitest run tests/unit
 pnpm test:fuzz
-
-# All tests including E2E (full validation)
-pnpm check:all
+FUZZ_RUNS=1000 pnpm test:fuzz                          # what RC validation runs
+FUZZ_SEED=20260916 FUZZ_PATH=3:2:0 pnpm test:fuzz      # replay a reported failure
+pnpm test:tz                                           # UTC, Europe/Dublin, Pacific/Auckland
+pnpm test:tz -- tests/unit/time                        # restrict the unit part
 ```
 
-### Running Subsets
+Fuzz has its own config because fast-check v4 property generation crashes Vitest's default
+fork workers ([#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)); the fuzz config
+forces the threads pool, disables file parallelism and raises the timeout to 60 s. Properties
+run against the real package code, never a copy, and each property is a factory over the
+implementation it checks.
+
+**Proves it can fail** by running the same property against a deliberately broken wrapper and
+asserting that fast-check reports a replayable seed and path.
+
+**Baselines** `tests/fuzz/known-timezone-failures.txt`.
+
+**Coverage** is enforced by `pnpm test:coverage` (and `vitest run --coverage` in CI) against the
+thresholds in `vitest.config.ts`: statements 55, branches 50, functions 65, lines 55. These are
+the real numbers, set where the suite is rather than where it should be; raise them as the suite
+grows.
+
+## Tier C — generated output
+
+**Protects** the generator. Any change in what `packages/jsr/gen` produces for a fixed corpus
+must be claimed, so silent changes to course JSON, zips or the rendered site cannot ship.
+
+**Lives in** `scripts/checks/generator-diff.ts`, `scripts/checks/generator-compare.ts`,
+`tests/generator/corpus/synthetic-course/` (one course covering typical topics, panels, media,
+empty and hidden units, Unicode filenames), `tests/generator/corpus.yaml` (the pinned public
+courses used nightly), `tests/generator/claims.yaml` and `tests/generator/generator-compare.test.ts`.
 
 ```bash
-# Individual tiers
-pnpm turbo test                       # Tier 1: TDD unit tests (all packages + apps)
-pnpm test:bdd                         # Tier 2: BDD behavioral tests
-pnpm turbo test:components            # Tier 3: Svelte component tests (browser mode)
-pnpm test:integration                 # Tier 4: Cross-package integration tests
-pnpm turbo test:e2e                   # Tier 5: Playwright E2E tests
-pnpm test:contract                    # Tier 6: API surface contract tests
-pnpm test:fuzz                        # Tier 7: Property-based fuzz tests
-pnpm test:cli                         # CLI tests (Deno test runner)
-
-# Per-package tests
-pnpm --filter @tutors/course test
-pnpm --filter @tutors/runes test
-pnpm --filter @tutors/community test
-
-# Per-app tests
-pnpm --filter tutors-reader test
-pnpm --filter tutors-catalogue test
-pnpm --filter tutors-live test
-
-# E2E for a specific app
-pnpm --filter tutors-reader test:e2e
-pnpm --filter tutors-reader test:e2e:ui      # Interactive Playwright UI
-
-# With coverage
-pnpm vitest run --coverage            # Root-level coverage
-
-# Watch mode
-pnpm --filter tutors-reader test:watch
-
-# Run tests related to changed files only
-pnpm --filter tutors-reader test:changed
-
-# Release artifact testing
-pnpm test:release
-pnpm test:release:smoke
-pnpm test:release:bench
+pnpm exec vitest run tests/generator
+pnpm check:generator-diff --plant                    # self-test: a planted one-character change
+pnpm check:generator-diff --base origin/main
+pnpm check:generator-diff --base origin/main --approve-broad
 ```
 
-## Test Tiers
-
-### Tier 1: TDD Unit Tests
-
-**Location:** Co-located `*.test.ts` files within each package and app
-**Config:** Root `vitest.config.ts`
-**Run:** `pnpm turbo test`
-
-Per-package unit test coverage targets:
-
-| Package               | What to test                                                                   |
-| --------------------- | ------------------------------------------------------------------------------ |
-| `@tutors/course`      | LO tree traversal, `decorateCourseTree()`, URL/route handling, markdown parsing |
-| `@tutors/runes`       | Reactive state stores, derived state computations, state reset logic           |
-| `@tutors/community`   | Supabase query building, analytics data aggregation, presence event handling   |
-| `@tutors/connect`     | Auth session management, OAuth callback handling, profile loading              |
-| `@tutors/themes`      | Theme switching, icon resolution, display mode toggling                        |
-| `@tutors/logger`      | Log level filtering, message formatting                                        |
-| `@tutors/a11y`        | ARIA attribute generation, keyboard navigation helpers                         |
-| `@tutors/i18n`        | Translation key lookup, locale switching, fallback handling                    |
-| `@tutors/ui-primitives` | Component prop validation, event handler logic                               |
-| `@tutors/ui-navigators` | Navigator shells, main/secondary navigation, footer layout                   |
-| `@tutors/ui-components` | Compound component composition, slot handling                                |
-| JSR: `model`          | Type guard functions (`isCompositeLo()`, `isLab()`, etc.), search utilities    |
-| JSR: `time`           | `CalendarModel` building, `LabModel` building, date formatting utilities       |
-| JSR: `gen`             | File system operations, template engine, course parsing (existing Deno tests)  |
-
-### Tier 2: BDD Behavioral Tests
-
-**Location:** `tests/bdd/`
-**Config:** `vitest.config.ts` (root level, includes `tests/**/*.steps.ts`)
-**Run:** `pnpm test:bdd`
-
-Gherkin feature files covering 5 domains:
-
-| Domain   | Feature File                  | Scenarios | Description                                             |
-| -------- | ----------------------------- | --------: | ------------------------------------------------------- |
-| Course   | `course-loading.feature`      |         4 | Loading courses by URL, nested units, error handling     |
-| Course   | `course-navigation.feature`   |         4 | Topic-lab navigation, search, breadcrumbs                |
-| Live     | `presence-tracking.feature`   |         4 | WebSocket presence, student tracking, disconnect         |
-| Time     | `calendar-analytics.feature`  |         5 | Calendar heatmaps, day/week views, engagement            |
-| Time     | `lab-analytics.feature`       |         4 | Lab completion grids, step breakdowns                    |
-| Shared   | `authentication.feature`      |         4 | GitHub OAuth, anonymous vs authenticated access          |
-| Shared   | `theming.feature`             |         4 | Dark mode, themes, dyslexia font, card layouts           |
-
-#### BDD Best Practices
-
-- Feature files should be readable by non-developers — avoid implementation details in Given/When/Then steps
-- One feature file per user-facing capability, not per component or function
-- Use `Background` for shared setup across scenarios within a feature
-- Use `Scenario Outline` + `Examples` for data-driven tests with multiple inputs
-- Step definitions should be thin — delegate to `TestWorld`, `TestDataFactory`, and service methods
-- Include the user persona in the feature description ("As a student", "As an instructor")
-
-### Tier 3: Component Tests (Vitest Browser Mode)
-
-**Location:** Co-located `*.svelte.test.ts` files
-**Config:** Per-app `vitest.config.ts` with `@vitest/browser` provider
-**Run:** `pnpm turbo test:components`
-
-Component tests render Svelte 5 components in a real browser (Chromium via Playwright) using `vitest-browser-svelte`. This catches rendering bugs, event handling issues, and accessibility problems that JSDOM cannot.
-
-Target coverage:
-
-- **`@tutors/ui-primitives`** — Icon, IconBar, Image, Menu, MenuItem, TutorsIcon, NotFound
-- **`@tutors/ui-navigators`** — MainNavigator, SecondaryNavigator, Footer, TutorsShell
-- **`@tutors/ui-components`** — Card renderers, learning object views, time views
-- **`apps/reader`** — Lab, Talk, Video, Note renderers, search overlay, breadcrumbs
-- **`apps/live`** — Student cards, course cards, presence indicators
-- **`apps/catalogue`** — Course cards, filtering, catalogue layout
-
-### Tier 4: Integration Tests (Vitest, Mocked Services)
-
-**Location:** `tests/integration/`
-**Config:** `vitest.config.ts` (root level)
-**Run:** `pnpm test:integration`
-
-Cross-package workflow tests with mocked external services. These verify the data flow pipeline between packages without hitting real APIs.
-
-| Suite                          | Description                                                    | External Mock   |
-| ------------------------------ | -------------------------------------------------------------- | --------------- |
-| `course-service.test.ts`       | Course URL > fetch > JSON parse > model decoration > tree      | Fetch (MSW)     |
-| `presence-service.test.ts`     | Realtime broadcast > event parse > state update > UI data      | MockRealtimeChannel |
-| `analytics-pipeline.test.ts`   | Supabase query > calendar/lab model building > grid data       | MockSupabase    |
-| `auth-flow.test.ts`            | GitHub OAuth > session creation > profile loading              | MSW handlers    |
-
-### Tier 5: E2E Tests (Playwright)
-
-**Location:** Per-app `tests/e2e/` directories
-**Config:** Per-app `playwright.config.ts`
-**Run:** `pnpm turbo test:e2e`
-
-Full user journey tests running against a real Vite dev server:
-
-| App           | Planned Suites                                                   |
-| ------------- | ---------------------------------------------------------------- |
-| `reader`      | Course browsing, lab interaction, search, authentication         |
-| `live`        | Dashboard loading, presence display, catalogue browsing          |
-| `catalogue`   | Course catalogue browsing, filtering, navigation                 |
-
-E2E tests are the slowest tier and are **not** part of `pnpm test`. They run in CI on every PR and nightly.
-
-### Tier 6: Contract / API Surface Tests
-
-**Location:** `tests/contract/`
-**Config:** `vitest.config.ts` (root level)
-**Run:** `pnpm test:contract`
-
-Snapshot the public API surface of each JSR-published package. Acts as a **breaking-change detector** — if someone renames a function, removes an export, or changes a type guard, this test fails immediately before the change ships as a semver-violating release.
-
-| Suite                    | What it validates                                            |
-| ------------------------ | ------------------------------------------------------------ |
-| `model-lib-api.test.ts`  | Module exports, stable export names, type guard functions    |
-| `time-lib-api.test.ts`   | Module exports, stable export names, service classes/types   |
-| `gen-lib-api.test.ts`    | Module exports, stable export names, generation functions    |
-
-Each test uses `toMatchSnapshot()` for the full export list, so any addition, removal, or rename is caught.
-
-### Tier 7: Property-Based / Fuzz Tests (fast-check)
-
-**Location:** `tests/fuzz/`
-**Config:** `vitest.config.fuzz.ts` (dedicated config with `pool: "threads"`)
-**Status:** Active via `pnpm test:fuzz`. Uses a separate vitest config with threads pool because fast-check v4 property generation crashes vitest's default fork pool workers. Runs in CI on every push/PR.
-
-[fast-check](https://github.com/dubzzz/fast-check) property-based testing:
-
-| Suite                              | What it fuzzes                                                                   |
-| ---------------------------------- | -------------------------------------------------------------------------------- |
-| `calendar-model.fuzz.test.ts`      | Calendar row building with random entries, median computation with random arrays |
-| `lo-tree-construction.fuzz.test.ts`| LO tree construction with random depth/type combinations, parent ref integrity   |
-
-Properties verified (200 runs each, elevated to 1000 in RC):
-
-- Non-negative time values for any combination of inputs
-- One row per unique student in output
-- Total seconds correctness (sum of all timeactive)
-- Valid medians (between min and max, always finite)
-- Node count invariant (countNodes equals input length)
-- Depth bound (maxDepth <= max input depth + 1)
-- Parent reference correctness
-- Valid routes (non-empty, starts with `/`)
-
-## How Tests Work
-
-### Configuration
-
-Three levels of Vitest configuration:
-
-| Config                   | Scope                        | Coverage    | Environment | Timeout |
-| ------------------------ | ---------------------------- | ----------- | ----------- | ------- |
-| `vitest.config.ts`       | Root-level (BDD, contract, fuzz, integration) | v8, thresholds enforced | Node | Default |
-| Per-app `vitest.config.ts` | App-specific tests           | v8          | happy-dom   | Default |
-
-### Mocking
-
-All unit and BDD tests use mocked external services. No real HTTP requests, WebSocket connections, or database queries are made during Tiers 1-4.
-
-| Service              | Mock Class/Function      | Capabilities                                              |
-| -------------------- | ------------------------ | --------------------------------------------------------- |
-| Supabase             | `MockSupabaseClient`     | Query builder chain (select, eq, neq, gte, lte, order, limit, single) |
-| Supabase Realtime    | `MockRealtimeChannel`    | `simulateBroadcast(event, data)`, `subscribe()`, `unsubscribe()` |
-| HTTP Fetch           | `createMockFetch()`      | URL pattern matching, custom response handlers, 404 default |
-
-### Test Helpers
-
-#### TestWorld (`tests/bdd/support/world.ts`)
-
-Shared context object for BDD step definitions. Holds the state that flows between Given/When/Then steps:
-
-```typescript
-export class TestWorld {
-  fixtures: TestDataFactory;
-  course: Course | null = null;
-  presenceEvents: PresenceEvent[] = [];
-  onlineStudents: Map<string, PresenceEvent> = new Map();
-  calendarData: Array<{ studentid: string; timeactive: number; id: string }> = [];
-  authenticated: boolean = false;
-  error: Error | null = null;
-
-  reset(): void { /* resets all fields */ }
-}
-```
-
-#### TestDataFactory (`tests/bdd/support/fixtures.ts`)
-
-Factory for creating mock data with sensible defaults and optional overrides:
-
-```typescript
-const factory = new TestDataFactory();
-const course = factory.createCourse({ title: "Test Course", id: "test-101" });
-const student = factory.createStudent({ name: "Alice", onlineStatus: "online" });
-const entry = factory.createCalendarEntry({ studentid: student.id, timeactive: 45 });
-```
-
-## Adding New Tests
-
-### Checklist
-
-1. **Start with BDD**: Write the Gherkin feature file first. What behavior does the user expect? Place it in `tests/bdd/features/<domain>/`.
-2. **Write step definitions**: Create matching `*.steps.ts` in `tests/bdd/steps/<domain>/`. Use `TestWorld` for shared state and `TestDataFactory` for mock data.
-3. **Add unit tests**: Cover edge cases, error paths, and implementation details with co-located `*.test.ts` files.
-4. **Add component tests**: If there's a new Svelte component, add `*.svelte.test.ts` using `vitest-browser-svelte`.
-5. **Update contract snapshots**: If you've added/changed public exports from a `packages/jsr/*` package, update the corresponding contract test snapshot (`pnpm test:contract -- --update`).
-6. **Consider fuzz testing**: If the code handles arbitrary input (parsing, tree construction, data aggregation), add property-based tests in `tests/fuzz/`.
-7. **Add test data**: If new response types are needed, add factory methods to `TestDataFactory`.
-
-## BDD Test Pattern
-
-BDD tests use Gherkin `.feature` files with matching step definition files. Feature files describe user-facing behavior in natural language; step definitions implement the test logic.
-
-**Feature file** (`tests/bdd/features/course/course-loading.feature`):
-
-```gherkin
-Feature: Course Loading
-  As a student
-  I want to load a course from its URL
-  So that I can access learning materials
-
-  Background:
-    Given a published course "web-dev-101" exists
-    And the course has 3 topics with 2 labs each
-
-  Scenario: Successfully load a course
-    When I request the course "web-dev-101"
-    Then the course should load successfully
-    And the course title should be "Web Development 101"
-    And the course should have 3 topics
-
-  Scenario Outline: Load different learning object types
-    Given a learning object of type "<type>" exists in the course
-    When I navigate to the learning object
-    Then the learning object should have type "<type>"
-    And the learning object should have a valid route
-
-    Examples:
-      | type     |
-      | lab      |
-      | talk     |
-      | video    |
-      | note     |
-      | web      |
-      | github   |
-      | archive  |
-```
-
-**Step definitions** (`tests/bdd/steps/course/course-loading.steps.ts`):
-
-```typescript
-import { describe, it, expect, beforeEach } from "vitest";
-import { TestWorld } from "../../support/world";
-
-describe("Feature: Course Loading", () => {
-  let world: TestWorld;
-
-  beforeEach(() => {
-    world = new TestWorld();
-  });
-
-  describe("Scenario: Successfully load a course", () => {
-    it("should load and display the course correctly", () => {
-      const course = world.fixtures.createCourseWithTopics("web-dev-101", 3, 2);
-      course.title = "Web Development 101";
-      expect(course).toBeDefined();
-      expect(course.id).toBe("web-dev-101");
-      expect(course.title).toBe("Web Development 101");
-      expect(course.topics).toHaveLength(3);
-    });
-  });
-});
-```
-
-## TDD Test Pattern
-
-Each module has one or more co-located test files. Tests import the module under test, mock dependencies, call functions, and assert results.
-
-```typescript
-import { describe, it, expect } from "vitest";
-
-describe("decorateCourseTree", () => {
-  it("should assign parent references to all child learning objects", () => {
-    const course = createTestCourse();
-    decorateCourseTree(course);
-    course.topics.forEach(topic => {
-      topic.los.forEach(lo => {
-        expect(lo.parent).toBe(topic);
-      });
-    });
-  });
-});
-```
-
----
-
-## Release Candidate (RC) Protection
-
-### RC Branch Model
-
-```
-main (production) <-- rc/vX.Y.Z <-- development (integration)
-                      |
-                      +-- All CI checks must pass
-                      +-- RC validation pipeline runs
-                      +-- Manual QA sign-off required
-                      +-- Merge to main triggers release
-```
-
-**Branch protection rules:**
-
-| Branch        | Required Checks                                                         | Merge Requirements              |
-| ------------- | ----------------------------------------------------------------------- | ------------------------------- |
-| `development` | lint, typecheck, unit+BDD, contract, fuzz                               | 1 approval, CI green            |
-| `rc/*`        | Full RC validation pipeline (all tiers + performance + security + audit) | 2 approvals, all gates green    |
-| `main`        | RC validation must have passed on source branch                         | RC branch only, no direct push  |
-
-### RC Validation Pipeline
-
-When an `rc/*` branch is created, the full RC validation pipeline runs automatically via `.github/workflows/rc-validation.yml`. This is the **hardest gate** — it runs every test tier plus production-specific checks.
-
-| Gate | Job(s) | Pass Criteria |
-|------|--------|---------------|
-| 1 | Lint & Type Check | Zero ESLint errors, zero TypeScript errors |
-| 2a | Unit & BDD | All tests pass, coverage above thresholds |
-| 2b | Contract | API snapshots match (or intentionally updated) |
-| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (`FUZZ_RUNS=1000 pnpm test:fuzz`) |
-| 2d | CLI (Deno) | All Deno tests pass |
-| 3a | Build Verification | All apps produce `.svelte-kit/` output |
-| 3b | Dependency Audit | Zero critical CVEs |
-| 4 | Cross-Browser E2E | Pass on Chromium, Firefox, and WebKit |
-| 6 | Artifact Regression | CLI output matches production for reference course |
-
-### Hard-Fail Conditions
-
-The following conditions **block an RC from merging to main**:
-
-| Condition                           | Gate        | Rationale                                                   |
-| ----------------------------------- | ----------- | ----------------------------------------------------------- |
-| Any test tier fails                 | Gate 2      | Tests exist to prevent regressions                          |
-| Coverage drops below thresholds     | Gate 2      | 90% statement / 80% branch / 75% function / 90% line       |
-| Contract snapshot mismatch          | Gate 2b     | Unintentional API surface change = semver violation         |
-| Production build fails              | Gate 3a     | If it doesn't build, it doesn't ship                       |
-| High/critical CVE in dependencies   | Gate 3b     | Known vulnerabilities must be resolved before release       |
-| Cross-browser E2E failure           | Gate 4      | Must work on all major browsers                             |
-| Artifact regression (missing LOs)   | Gate 6      | CLI must produce identical output for the reference course  |
-| Fuzz test failure (1000 runs)       | Gate 2c     | Extended fuzz runs catch edge cases missed at 200 runs      |
-
-### Soft-Fail Conditions (Warnings)
-
-| Condition                              | Action Required                                              |
-| -------------------------------------- | ------------------------------------------------------------ |
-| Bundle size increase 5-10%             | Justification required in PR description                     |
-| New unimplemented BDD feature files    | Tracked in issue, not blocking                               |
-| Moderate CVEs in dependencies          | File issue for next sprint                                   |
-
-### Release Readiness Command
+Output is normalised before comparison — zip timestamps and compression, JSON key order, the
+checkout path, line endings — and every mask carries a reason. Differences are reported as
+hunks addressed by id, so inserting one learning object is one hunk rather than a cascade.
+Each hunk must match a claim in `claims.yaml`; a claim broad enough to hide unrelated change
+needs the `approve-broad-claim` label on the PR.
+
+**Proves it can fail** with the planted template change (`--plant`), which CI runs as a step
+before the real comparison.
+
+## Tier G — user journeys against built images
+
+**Protects** the journeys a person actually walks, in a real browser, against the **built
+container images** — not `vite dev` — with a fixture course server so GitHub and Netlify are
+not dependencies. It also owns the axe and reduced-motion audits at every page of every journey.
+
+**Lives in** `playwright.e2e-stack.config.ts` and `tests/e2e-stack/`. Read
+[../tests/e2e-stack/README.md](../tests/e2e-stack/README.md) for the compose services, the
+fixture course, the port and URL overrides and the file-by-file map; it is not repeated here.
 
 ```bash
-pnpm check:all
+pnpm e2e:stack:fixture                               # needs Deno
+docker compose build reader catalogue live           # root compose.yaml tags them tutors/<app>:local
+pnpm e2e:stack:up
+pnpm test:e2e:stack --project=chromium --project=webkit
+pnpm test:e2e:stack:ratchet
+pnpm e2e:stack:down
 ```
 
-This runs, in order:
+Journeys select by role and accessible name only, and never retry: a journey that needs a retry
+is a finding. PR runs chromium and webkit; the nightly runs firefox and mobile.
 
-1. `pnpm lint` — ESLint + Prettier
-2. `pnpm check` — TypeScript type checking via `svelte-check`
-3. `pnpm test` — Vitest unit + BDD tests (Tiers 1-2, all packages + apps via Turborepo)
-4. `pnpm test:bdd` — Root-level BDD step definitions
-5. `pnpm test:contract` — API surface snapshot tests (Tier 6)
-6. `pnpm test:fuzz` — Property-based fuzz tests (Tier 7)
-7. `pnpm test:e2e` — Playwright E2E tests across all apps (Tier 5)
-8. `pnpm build` — Full production build
+**Proves it can fail** with `tests/e2e-stack/journeys/negative.journey.spec.ts`, a set of
+`test.fail()` journeys that both demonstrate a journey can fail and pin known product bugs.
 
-### Gate 6: Release Artifact Testing
+**Baselines** `a11y-known-violations.txt` and `reduced-motion-known.txt`, keyed
+`<project> | <page> :: <finding>`, checked for stale lines by `pnpm test:e2e:stack:ratchet`.
 
-Beyond developer-centric tests, the RC pipeline includes artifact-level regression testing that compares what the CLI produces against the latest production version.
+## Tier J — platform conformance
 
-**Reference course:** [`tutors-sdk/tutors-reference-course`](https://github.com/tutors-sdk/tutors-reference-course)
+**Protects** the deployable: every kustomize overlay renders, validates against the Kubernetes
+schemas and satisfies the restricted-SCC policies; each overlay's image tag equals the root
+`package.json` version; the image runs under an arbitrary UID with a read-only root filesystem
+and only the values in `.env.example`; and every env var the code reads is documented in both
+`.env.example` and the manifests.
 
-#### Scripts (`tests/release/scripts/`)
+**Lives in** `scripts/checks/conformance.ts`, `scripts/checks/k8s-conformance.ts`,
+`scripts/checks/container-smoke.ts`, `tests/conformance/`, `deploy/k8s`.
 
-| Script | Purpose | Hard-fail? |
-|--------|---------|------------|
-| `fetch-reference-course.ts` | Clone/update the reference course from GitHub | Yes |
-| `generate-baseline.ts` | Generate JSON artifacts with the published production CLI from JSR | Yes |
-| `generate-candidate.ts` | Generate JSON artifacts with the local development CLI | Yes |
-| `compare-artifacts.ts` | Deep semantic diff of baseline vs candidate JSON | Yes |
-| `visual-regression.ts` | Playwright screenshots of production vs preview | Warning only |
-| `performance-benchmark.ts` | CLI generation time, SvelteKit build time, bundle size tracking | Fail on >20% regression |
-| `smoke-test-preview.ts` | Critical path smoke tests against deployed preview | Yes |
+```bash
+pnpm exec vitest run tests/conformance
+pnpm check:k8s                     # render overlays, apply policies
+pnpm check:k8s --out rendered      # also write manifests for kubeconform
+docker build --build-arg APP_NAME=reader -t tutors/reader:local .
+pnpm check:container --image tutors/reader:local
+```
 
----
+**Proves it can fail** with `tests/conformance/fixtures/faulty-image` — `FIXTURE_FAULT=readonly`
+writes to its root filesystem and `FIXTURE_FAULT=uid` insists on UID 1001, both run through
+`--expect-fail` in CI — and `tests/conformance/fixtures/invalid-manifest.yaml`, which kubeconform
+must reject.
 
-## CI Schedule
+## Tier K — observability contracts
 
-### Regular CI (Every Push / PR)
+**Protects** the ability to debug production: every log line matches the schema, every line of a
+failed request carries the caller's request id, exactly one error line carries a stack, each app's
+hooks put the request logger first, and every metric a provisioned Grafana alert queries exists in
+`/metrics`.
 
-| Job                   | Trigger                | Tests Run                          |
-| --------------------- | ---------------------- | ---------------------------------- |
-| Lint & Type Check     | Every push/PR          | ESLint, Prettier, svelte-check     |
-| Unit & BDD Tests      | Every push/PR          | Tiers 1-2 + coverage              |
-| E2E Tests             | Every push/PR          | Tier 5 (Chromium only)             |
-| CLI Tests             | Every push/PR          | Deno test runner                   |
-| Contract & Fuzz       | PRs only               | Tiers 6-7                          |
+**Lives in** `scripts/checks/observability.ts`, `tests/observability/observability-contracts.test.ts`,
+`observability/`, and the request logger in `packages/svelte/utils/logger`.
 
-### Nightly (Scheduled)
+```bash
+pnpm exec vitest run tests/observability
+pnpm check:container --image tutors/reader:local     # the same contract against the image
+```
 
-| Job                        | Schedule    | Tests Run                                        |
-| -------------------------- | ----------- | ------------------------------------------------ |
-| Full E2E Suite             | Daily 3 AM  | All apps, all browsers                           |
-| Contract Snapshot Validation | Daily 3 AM | API surface snapshots                            |
+**Proves it can fail** with negative fixtures for a bad level, a completion line missing its
+request id, a non-JSON line, a load that throws inside a 200 `__data.json` response, an
+uncorrelated line, a silently swallowed failure, a double-logged failure, a logger that is not
+first, a bare `handleError`, and a renamed metric — which must name the alert it broke.
 
-### RC Validation (On `rc/*` Branch)
+## Tier L — performance and capacity
 
-| Job                        | Trigger          | Tests Run                                             |
-| -------------------------- | ---------------- | ----------------------------------------------------- |
-| All Tiers                  | Push to `rc/**`  | Tiers 1-7, CLI, elevated fuzz (1000 runs)             |
-| Cross-Browser E2E          | Push to `rc/**`  | All apps x all browsers (Chromium, Firefox, WebKit)   |
-| Build Verification         | Push to `rc/**`  | Production build + bundle size regression check       |
-| Dependency Audit           | Push to `rc/**`  | `pnpm audit`, license compliance                      |
-| Artifact Regression        | Push to `rc/**`  | CLI output comparison against production              |
+**Protects** four ceilings: per-app client bundle size, Lighthouse floors on three reader pages,
+request latency and error rate under load, and memory growth over a soak.
 
----
+**Lives in** `scripts/checks/bundle-budget.ts`, `scripts/checks/lighthouse.ts`,
+`scripts/checks/load-test.ts`, `scripts/checks/lib/stats.ts`, `tests/performance/` (with
+`bundle-budgets.json`, `lighthouse.json`, the k6 scripts under `k6/` and an isolated Lighthouse
+runner under `lighthouse/`). See [../tests/performance/README.md](../tests/performance/README.md)
+for how samples become baselines.
 
-## Test Architecture Decisions
+```bash
+pnpm exec vitest run tests/performance
+SVELTEKIT_ADAPTER=node pnpm --filter "tutors-reader..." build && pnpm check:bundle
+pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3
+pnpm check:load --image tutors/reader:ci --script reader-soak.js --rate 5 --duration 45m
+pnpm check:lighthouse --image tutors/reader:ci
+```
 
-### Why seven tiers?
+Timings are never compared run to run: medians of repeated runs are compared against a noise
+band derived from a scaled median absolute deviation, so one slow run on a busy runner is not a
+regression. k6 runs as the runner's own uid because the temporary output directory is created
+0700; Docker Desktop maps ownership, so Windows needs nothing.
 
-Each tier catches a different class of defect:
+**Proves it can fail** with negative fixtures for a chunk over the largest-chunk ceiling, totals
+over their ceilings, an app with no budget, a median score below its floor, a Lighthouse runtime
+error, steady memory growth after warm-up, a soak whose late p95 doubled, and a 30% slower
+candidate; CI also runs `pnpm check:load --env P95_MS=0 --expect-fail` to prove the k6 thresholds
+bite.
 
-- **TDD unit tests** — fast, deterministic, cover every code path. Catch implementation bugs immediately.
-- **BDD behavioral tests** — Gherkin scenarios readable by non-engineers, verify user-facing behaviors match requirements.
-- **Component tests** — Real browser rendering catches Svelte-specific bugs (reactive state, DOM events, CSS) that JSDOM cannot replicate.
-- **Integration tests** — Verify cross-package data flow pipelines with deterministic mocked services.
-- **E2E tests** — Full user journeys through the real app catch routing, SSR, authentication flows, real browser interactions.
-- **Contract tests** — Snapshot-based public API surface tests act as a breaking-change detector.
-- **Fuzz tests** — Property-based testing with random inputs finds edge cases that human-written test cases miss.
+## Tier M — security contracts
 
-### Why BDD first?
+**Protects** the response and request surface: the header contract per app, cookie flags, the
+SvelteKit cross-site form check, an inventory of every mutating route with who may call it, and
+dependency advisories.
 
-Every significant user-facing behavior starts as a Gherkin feature file before implementation begins:
+**Lives in** `scripts/checks/security.ts`, `scripts/checks/dependency-audit.ts`,
+`tests/security/` (`header-contract.json`, `mutating-routes.txt`, `audit-allowlist.json`).
 
-1. **Requirements are explicit** — The feature file IS the specification.
-2. **Non-engineers can review** — Product owners, instructors, and QA can read and validate feature files.
-3. **Coverage is behavior-driven** — We test what the user sees and does, not implementation details.
-4. **Regression is human-readable** — When a BDD test fails, the failure message describes a broken user behavior.
+```bash
+pnpm exec vitest run tests/security
+pnpm check:audit                       # every advisory must be fixed or allow-listed
+pnpm check:audit --base-dir base       # PR mode: only advisories this branch adds
+pnpm check:container --image tutors/reader:local --app reader   # headers, cookies, CSRF
+```
 
-### Why both TDD and BDD?
+A new `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action fails the suite until it is listed in
+`mutating-routes.txt` with its callers. Authorisation itself — whether the right person may call
+it — is tier F, and is not built yet.
 
-TDD covers the **how** (internal functions, edge cases, error paths). BDD verifies the **what** (user-facing behaviors in Gherkin). The overlap is intentional.
+**Proves it can fail** with negative fixtures for a dropped CSP, a weakened frame policy, a short
+HSTS, each missing cookie flag, `SameSite=None` without `Secure`, a disabled origin check, an
+unlisted route, a stale inventory entry and a malformed audit allowance; CI also smokes an image
+with no security headers through `--expect-fail`.
 
-### Why snapshot the public API surface?
+**Baselines** `known-response-gaps.txt`.
 
-The three JSR-published packages (`@tutors/tutors-model-lib`, `@tutors/tutors-gen-lib`, `@tutors/tutors-time-lib`) are consumed by external Deno CLI tools and potentially by third-party integrations. The contract tests act as a semver guard.
+## Tier N — completeness
 
-### Why RC protection?
+**Protects** the things that are individually small and collectively fatal: translations (missing,
+orphan, blank, unknown `t("key")`, undeclared locale), theme base tokens and themes offered but
+never loaded, icon libraries missing an icon the base library defines, dead relative links and
+dead anchors in tracked Markdown, and app READMEs that disagree with their `@tutors/*` dependencies.
 
-The tutors platform serves students and instructors in real educational settings. A broken release can disrupt active courses. The RC gate ensures every test tier passes, cross-browser compatibility is verified, performance regressions are caught, accessibility standards are maintained, and dependency vulnerabilities are resolved — all before code reaches production.
+**Lives in** `scripts/checks/completeness.ts` and `tests/completeness/`.
 
----
+```bash
+pnpm exec vitest run tests/completeness
+```
+
+This is the tier that fails when documentation rots, so run it after editing any Markdown.
+
+**Proves it can fail** with fixture trees containing each of those faults, including duplicate
+GitHub anchors.
+
+**Baselines** `known-gaps.txt`.
+
+## Tier O — suite health
+
+**Protects** the suite itself: no `.only`, no skip/todo/fixme without a dated quarantine, no test
+without an assertion, no `.feature` file that no runner loads, no test file that no Vitest or
+Playwright config collects, and no file over its wall-clock budget.
+
+**Lives in** `scripts/checks/suite-health.ts`, `scripts/checks/test-time-budget.ts`,
+`tests/suite-health/` (`time-budgets.json`, fixture roots for the runner and feature scans).
+
+```bash
+pnpm exec vitest run tests/suite-health
+pnpm exec vitest run --retry=0 --reporter=json --outputFile=reports/vitest-nightly.json
+pnpm check:test-time reports/vitest-nightly.json
+```
+
+Quarantine syntax, checked by regex:
+
+```ts
+// quarantine: #123 until 2026-10-01
+it.skip("flaky in webkit", () => { ... });
+```
+
+A malformed or expired quarantine is a failure. The nightly run uses `--retry=0` because a test
+that only passes on retry is a flake, and PR retries hide it.
+
+**Baselines** `known-findings.txt`.
+
+## Contract and API surface
+
+Two different mechanisms, and changing a JSR package's exports means updating **both**.
+
+| Artefact | Generated by | Checked by |
+|---|---|---|
+| `etc/tutors-model-lib.api.md`, `etc/tutors-gen-lib.api.md`, `etc/tutors-time-lib.api.md` | `pnpm api-report` (`scripts/api-surface.ts`) | `pnpm api-report:check`, a step in the PR `build-and-test` job |
+| `tests/contract/__snapshots__/{model,gen,time}-lib-api.test.ts.snap` | `pnpm test:contract -u` | `pnpm test:contract`, also the nightly `contract-snapshots` job |
+
+On 17 September a PR added an export, regenerated the snapshot and not the report; `main` went
+red on `api-report:check` until the report was regenerated. If you touch the public surface of
+`model`, `gen` or `time`, run both and commit both.
+
+The rest of `tests/contract/` is Zod schemas for the external shapes the apps depend on — six
+Supabase tables, two RPCs, the realtime `LoRecord` and whiteboard protocols, and the generated
+course JSON — asserting that conforming data is accepted and malformed data rejected.
+`tests/mutation/schema-snapshot.test.ts` snapshots the schemas themselves as JSON Schema, so a
+renamed column shows up as a snapshot diff rather than a runtime surprise.
+
+## Mutation testing
+
+Stryker over five modules where a flipped comparison silently corrupts a dashboard:
+`search.ts`, `lo-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`, `calendar-utils.ts`.
+Thresholds: high 85, low 75, break 65.
+
+```bash
+pnpm test:mutation            # npx stryker run
+```
+
+It runs its own Vitest config (`vitest.config.mutation.ts`) listing the unit and property files
+that cover those modules. **No workflow runs it** — it is a local tool for now. Details and how
+to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
+
+## BDD and executable specs
+
+Today: `tests/bdd/features/` holds 24 Gherkin feature files with EARS tags, and
+`tests/bdd/steps/` holds Vitest suites named after those scenarios, backed by `TestWorld`,
+`TestDataFactory` and the mock Supabase/realtime clients in `tests/bdd/support/`.
+
+The honest state is that **no runner loads the feature files**. All 24 are recorded as
+`documentation-only` in `tests/suite-health/known-findings.txt`, and the step files are ordinary
+Vitest tests, many of which assert against fixtures rather than driving product code. So the
+features are specification prose and the steps are unit-ish tests that happen to be named after
+them.
+
+Tier D closes that: real executable specs, one runner, features that fail when the product
+does. It is tracked in [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214), which
+also retires the legacy feature files. The tag vocabulary and persona split are worth keeping —
+see [EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md) — and until #214 lands, prefer putting new
+behaviour in tier B (unit, property) or tier G (journeys), where it actually fails.
+
+## Dev-server smoke tests and the standalone axe audit
+
+Thin Playwright smoke tests live in `apps/<app>/tests/e2e/smoke.spec.ts` with a config per app
+(`apps/<app>/playwright.config.ts`), each starting `vite dev` on its own port — reader 5173,
+live 5174, catalogue 5175. They check that a page loads, `/auth` responds, an unknown course
+renders an error page, and there is at most one `h1`.
+
+```bash
+pnpm test:e2e            # reader, then catalogue, then live
+pnpm test:e2e:reader --retries=0
+```
+
+The root has no Playwright config on purpose: a bare `playwright test` would collect every
+Vitest file in the repo, so `pnpm test:e2e` chains the three per-app configs instead. These are
+smoke tests, not journeys — the real coverage is tier G against built images. No workflow runs
+them: they are a local convenience, and they need the app's own `.env` (copy `.env.example` into
+`apps/<app>/`) plus a warm dependency cache, or the first page load fails with Vite's
+`504 (Outdated Optimize Dep)`.
+
+`pnpm test:a11y` runs `tests/e2e/accessibility.spec.ts` (axe over a course page via
+`playwright-a11y.config.ts`) against `localhost:5173`. It runs in no workflow, and one of its
+tests logs violations without asserting — it is baselined as `no-assertion` in tier O. The
+enforced accessibility gate is the axe audit inside the tier G journeys.
+
+## Release testing
+
+Push to an `rc/**` branch and two workflows compare the candidate against what is published:
+the CLI's output for the reference course, a reader build comparison, benchmarks and smoke tests
+against a deployed preview. The scripts are Deno and live in `tests/release/scripts/`.
+
+```bash
+deno run -A tests/release/scripts/run-release-tests.ts --mode=all
+deno run -A tests/release/scripts/run-release-tests.ts --mode=cli --version=5.0.5
+```
+
+Gates, comparators, working directories and the go/no-go rule:
+[../tests/release/RELEASE-TESTING.md](../tests/release/RELEASE-TESTING.md). Branch model and
+versioning: [Release-Strategy.md](./Release-Strategy.md).
+
+## The release harness
+
+A separate project, outside this repository, stands up the **candidate image** and the
+**production tag** side by side and compares them: an A/A run first to measure the noise floor,
+then A/B on the same journeys, claims for every intended difference, plus migration, upgrade,
+post-deploy and kind-cluster phases and a mutant run to prove the comparison detects planted
+faults. It reuses this repo's course arbitrary and can point the tier G journeys at a second
+stack by changing the URLs.
+
+It is not wired into this repository yet: nothing here publishes an image for it to fetch and no
+workflow dispatches it. Treat its findings as pre-release evidence recorded by hand until that
+lands.
+
+## Planned tiers
+
+| Tier | Would own | Tracked by |
+|---|---|---|
+| D | Executable EARS/Gherkin specs | [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
+| F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](./RBAC.md) |
+| H | Message contracts for the realtime and broadcast protocols, versioned | No issue yet; shapes are snapshot-checked in `tests/contract/` |
+| I | Data migration and the Supabase exit | No issue yet |
+
+Do not claim these in documentation or PR descriptions until the suite and its negative fixture
+exist.
+
+## CI schedule
+
+### `ci.yml` — push to `main`, and every PR to `main`
+
+| Job | What it does |
+|---|---|
+| `build-and-test` | Install, copy `.env.example` into the four apps, `svelte-kit sync`, `pnpm build`, `pnpm api-report:check`, three `check` steps (`continue-on-error`, [#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53)), `pnpm lint`, `pnpm check:knip`, `vitest run --coverage`, `pnpm test:fuzz` |
+| `platform-conformance` | `pnpm check:k8s --out rendered`, kubeconform against the rendered manifests, and kubeconform must reject the invalid-manifest fixture |
+| `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …` |
+| `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
+| `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
+| `e2e-stack` | Build reader, catalogue and live images, build the fixture course, bring the stack up, run the journeys on chromium and webkit, then the baseline stale-line check; uploads the report and compose logs on failure |
+| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` |
+| `generator-diff` | Only when the PR touches `packages/jsr/{gen,tutors,tutors-lite,model}`, `deno.json(.lock)`, `tests/generator/` or `scripts/checks/generator-*`: the planted-change self-test, then every difference must be claimed |
+| `CI success` | Needs all eight; a skipped or cancelled job counts as a failure. The one required check |
+
+`codeql.yml` and `zizmor.yml` also run on every PR (CodeQL for JavaScript/TypeScript, zizmor over
+the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
+
+### `nightly.yml` — 03:00 UTC, or `workflow_dispatch`
+
+| Job | What it does |
+|---|---|
+| `contract-snapshots` | `pnpm test:contract` |
+| `suite-health` | `vitest run --retry=0` with a JSON report, then `pnpm check:test-time` on it |
+| `e2e-stack-nightly` | The tier G journeys on firefox and mobile, then the baseline stale-line check |
+| `timezone-matrix` | `pnpm test:tz` |
+| `lighthouse` | Build the reader image and the fixture course, serve the course, run Lighthouse against three pages and record the samples |
+| `load` | Prove the thresholds bite (`P95_MS=0 --expect-fail`), three 3-minute load runs recorded for baselining, then a 45-minute soak |
+| `generator-corpus` | Regenerate the pinned public courses at upstream HEAD and diff against last night's cached snapshot |
+| `report` | Writes the job table into the run summary and fails if any job failed |
+
+### `rc-validation.yml` — push to `rc/**`
+
+Gate 1 lint and type check, 2a unit and BDD with a coverage upload, 2b contract, 2c fuzz at
+`FUZZ_RUNS=1000`, 2d the Deno tests in `packages/jsr/gen`, 3a build verification, 3b dependency
+audit, 4 cross-browser E2E for the reader, 6 artifact regression, then an `RC Readiness Report`
+that fails if any gate failed.
+
+This workflow has not kept pace with the runway and two of its gates cannot pass as written:
+Gate 1 runs the broken root `pnpm check`, and Gate 4 runs `pnpm --filter tutors-reader test:e2e`,
+a script the apps do not define. It also duplicates work `ci.yml` now does better. Reconciling it
+is open work; do not read it as the authority on what a release is checked against.
+
+### `release-testing.yml` — push to `rc/**`, or `workflow_dispatch` with a baseline version
+
+Gate 6a artifact regression, 6b performance benchmark, 6c smoke tests against the deployed
+preview, then a report that blocks on 6a and 6c and warns on 6b.
 
 ## Debugging
 
 ```bash
-# Run a single test file
-pnpm vitest run tests/fuzz/calendar-model.fuzz.test.ts
+# One file, one test
+pnpm exec vitest run tests/unit/time/calendar-utils.test.ts
+pnpm exec vitest run -t "pivots rows by student"
 
-# Run tests matching a name pattern
-pnpm vitest run --testNamePattern="should always produce non-negative"
+# Why is this test not running anywhere?
+pnpm exec vitest run tests/suite-health          # tier O names uncollected files
 
-# Run with verbose output
-pnpm vitest run --reporter=verbose
+# A ratchet failed: which line?
+pnpm exec vitest run tests/architecture          # prints added and stale baseline lines
+pnpm architecture-report                         # full violation list with paths
 
-# Update contract snapshots after intentional API changes
-pnpm vitest run tests/contract -- --update
+# A property failed
+FUZZ_SEED=<seed> FUZZ_PATH=<path> pnpm test:fuzz
 
-# Run fuzz tests with more iterations (for RC validation)
-FUZZ_RUNS=1000 pnpm test:fuzz
+# A timezone-only failure
+pnpm test:tz -- tests/unit/time
 
-# Debug with Node inspector
-node --inspect-brk node_modules/.bin/vitest run --pool=forks tests/contract/model-lib-api.test.ts
+# A journey failed in CI
+pnpm e2e:stack:fixture && pnpm e2e:stack:up
+pnpm test:e2e:stack --project=chromium --debug
+docker compose -f tests/e2e-stack/compose.yaml logs --no-color
+pnpm exec playwright show-report playwright-report/e2e-stack
+pnpm e2e:stack:down
+
+# The image, not the app
+pnpm check:container --image tutors/reader:local --app reader
+
+# The public surface changed
+pnpm api-report && pnpm test:contract -u        # commit both
+
+# Coverage
+pnpm test:coverage && open coverage/index.html
 ```
 
-## Gaps and Future Work
+Playwright artefacts land in `playwright-report/e2e-stack` and `test-results/e2e-stack` for tier
+G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both on failure.
 
-| Gap                                | Severity | Notes                                                                      |
-| ---------------------------------- | -------- | -------------------------------------------------------------------------- |
-| No component tests implemented     | Medium   | Tier 3 is scaffolded but has no test files yet                             |
-| No integration tests implemented   | Medium   | Tier 4 is scaffolded but has no test files yet                             |
-| Limited unit test coverage         | Medium   | Only course and gen packages have tests currently                          |
-| No E2E tests for any app           | Medium   | Playwright configs provided, tests need writing                            |
-| BDD features without step defs     | Low      | Feature files exist but step definitions are pending                       |
-| No performance benchmarks          | Low      | No Tier 2.5 equivalent yet                                                |
-| No type tests (tsd equivalent)     | Low      | Consumer type correctness tests not yet set up                             |
-| Vitest not in devDependencies      | High     | Must add vitest and related packages to root/per-package devDependencies   |
+## Known gaps
 
-### Recommended Next Steps
-
-1. **Add testing dependencies** — Add `vitest`, `@vitest/coverage-v8`, `fast-check`, `@playwright/test`, `@testing-library/svelte`, `happy-dom` to package.json devDependencies
-2. **Implement BDD step definitions** — Start with course-loading and presence-tracking
-3. **Add component tests** — Start with `@tutors/ui-primitives` (highest reuse), then `@tutors/ui-navigators` (navigation shell)
-4. **Add integration tests** — Start with course loading pipeline (highest user impact)
-5. **Add E2E tests** — Start with reader app course browsing
-6. **Add performance benchmarks** — Guard SvelteKit SSR time, LO tree construction, calendar model building
-
-## File Reference
-
-| Path                                              | Purpose                                                   |
-| ------------------------------------------------- | --------------------------------------------------------- |
-| `vitest.config.ts`                                | Root Vitest config (coverage thresholds, path aliases)    |
-| `guides/TESTING.md`                               | This file — comprehensive testing guide                   |
-| `guides/TESTING-OVERVIEW.md`                      | Quick-reference testing overview                          |
-| `tests/bdd/features/`                             | Gherkin feature files                                     |
-| `tests/bdd/steps/`                                | Step definition files                                     |
-| `tests/bdd/support/world.ts`                      | TestWorld shared context class                            |
-| `tests/bdd/support/fixtures.ts`                   | TestDataFactory (factory methods)                         |
-| `tests/bdd/support/mocks.ts`                      | MockSupabaseClient, MockRealtimeChannel, createMockFetch  |
-| `tests/contract/`                                 | API surface snapshot suites                               |
-| `tests/fuzz/`                                     | Property-based fuzz suites                                |
-| `tests/integration/`                              | Cross-package integration tests                           |
-| `tests/release/`                                  | Release artifact testing scripts                          |
-| `.github/workflows/ci.yml`                        | PR checks                                                 |
-| `.github/workflows/nightly.yml`                   | Scheduled regression                                      |
-| `.github/workflows/rc-validation.yml`             | RC gate pipeline                                          |
-| `.github/workflows/release-testing.yml`           | Artifact regression + smoke tests                         |
+- Type errors are not a blocker yet ([#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53), [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235)).
+- Coverage thresholds sit at 55/50/65/55 and should ratchet upward.
+- `tests/components/` tests props, variants and state transitions as plain data; nothing renders
+  a Svelte component, and `@testing-library/svelte` is an unused dependency.
+- `tests/bdd/features/` is documentation only ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)).
+- Mutation testing runs nowhere in CI.
+- `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
+- Tiers D, F, H and I are not built.
