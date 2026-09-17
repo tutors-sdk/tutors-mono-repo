@@ -19,7 +19,7 @@
     "test:fuzz": "vitest run --config vitest.config.fuzz.ts",
     "test:tz": "tsx scripts/checks/tz-matrix.ts",
     "test:mutation": "npx stryker run",
-    "test:e2e": "playwright test",
+    "test:e2e": "pnpm test:e2e:reader && pnpm test:e2e:catalogue && pnpm test:e2e:live",
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",

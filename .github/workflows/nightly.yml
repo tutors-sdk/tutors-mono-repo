@@ -37,10 +37,26 @@ jobs:
       - name: Build all packages and apps
         run: pnpm build
 
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live; do
+            cp .env.example "$dir/.env"
+          done
+
+      # One step per app: the root has no Playwright config, so a bare
+      # `playwright test` collects every Vitest file in the repo.
       # No retries at night: a test that only passes on retry is a flake, and
       # retries on PRs hide it (runway tier O).
-      - name: Run full E2E test suite
-        run: pnpm test:e2e --retries=0
+      - name: E2E smoke (reader)
+        run: pnpm test:e2e:reader --retries=0
+
+      - name: E2E smoke (catalogue)
+        if: ${{ !cancelled() }}
+        run: pnpm test:e2e:catalogue --retries=0
+
+      - name: E2E smoke (live)
+        if: ${{ !cancelled() }}
+        run: pnpm test:e2e:live --retries=0
 
       - name: Upload Playwright report
         if: always()

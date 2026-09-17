@@ -201,8 +201,11 @@ async function waitHealthy(network: string, app: string, budgetMs = 60_000) {
 
 async function runK6(options: Options, network: string, app: string, outDir: string, run: number): Promise<{ result: RunResult; memory: number[]; exitCode: number }> {
   const summaryName = `summary-${run}.json`;
+  // mkdtemp makes outDir 0700 for this user; the k6 image's own user cannot write the
+  // summary there on a Linux runner. Docker Desktop maps ownership, so Windows needs nothing.
+  const user = process.getuid && process.getgid ? ["--user", `${process.getuid()}:${process.getgid()}`] : [];
   const args = [
-    "run", "--rm", "--network", network,
+    "run", "--rm", "--network", network, ...user,
     "--volume", `${join(REPO_ROOT, "tests/performance/k6")}:/scripts:ro`,
     "--volume", `${outDir}:/out`,
     "--env", `BASE_URL=http://${app}:3000`,
