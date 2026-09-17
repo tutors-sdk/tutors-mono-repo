@@ -67,6 +67,8 @@ export interface CourseService {
   notes: Map<string, Note>;
   /** Cache of live notebook instances */
   notebooks: Map<string, NotebookService>;
+  /** Cache of quiz learning objects */
+  quizzes: Map<string, Lo>;
   /** Current course URL */
   courseUrl: any;
 
