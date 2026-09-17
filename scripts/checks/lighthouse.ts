@@ -12,10 +12,14 @@
  * against the floors, and with --baseline every score and timing is compared
  * with recorded samples through lib/stats.ts rather than a raw percentage.
  *
- * Course pages render in the browser from a course site. `{course}` in a page
- * path is replaced by LIGHTHOUSE_COURSE (default reference-course); point the
- * reader at the tier G fixture course server in CI so GitHub and Netlify are
- * not dependencies of the run.
+ * Course pages render in the browser from a course site. `{course}` and `{lab}`
+ * in a page path are replaced by LIGHTHOUSE_COURSE and LIGHTHOUSE_LAB (defaults:
+ * the Netlify reference course). The nightly job serves the tier G fixture
+ * course instead, so GitHub and Netlify are not dependencies of the run:
+ *
+ *   pnpm e2e:stack:fixture
+ *   docker compose -f tests/e2e-stack/compose.yaml up -d --wait course
+ *   LIGHTHOUSE_COURSE=localhost:8080 LIGHTHOUSE_LAB=unit-1/topic-01/book-lab-01  *     pnpm check:lighthouse --image tutors/reader:local
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -144,8 +148,15 @@ export function lighthouseBaselineFindings(baseline: LighthouseSamples, candidat
   return { findings, notes };
 }
 
-export function resolvePagePath(path: string, course: string): string {
-  return path.replaceAll("{course}", course);
+/** Where `{course}` and `{lab}` point when LIGHTHOUSE_COURSE and LIGHTHOUSE_LAB are unset. */
+export const DEFAULT_PAGE_VARS = { course: "reference-course", lab: "topic-01-typical/unit-1/book-a" };
+
+/** Replaces `{name}` placeholders; a placeholder with no value is a config error, not a 404 to audit. */
+export function resolvePagePath(path: string, vars: Record<string, string>): string {
+  return path.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
+    if (vars[name] === undefined) throw new Error(`${path}: no value for ${placeholder}`);
+    return vars[name];
+  });
 }
 
 /* ---------------- runner ---------------- */
@@ -235,7 +246,10 @@ async function main() {
     process.exit(2);
   }
   const chrome = await chromiumPath();
-  const course = process.env.LIGHTHOUSE_COURSE ?? "reference-course";
+  const vars = {
+    course: process.env.LIGHTHOUSE_COURSE ?? DEFAULT_PAGE_VARS.course,
+    lab: process.env.LIGHTHOUSE_LAB ?? DEFAULT_PAGE_VARS.lab
+  };
   const started = options.image ? startImage(options.image) : undefined;
   const baseUrl = (started?.baseUrl ?? options.baseUrl!).replace(/\/$/, "");
   const outDir = mkdtempSync(join(tmpdir(), "tutors-lighthouse-"));
@@ -245,7 +259,7 @@ async function main() {
   try {
     await waitLive(baseUrl);
     for (const page of config.pages) {
-      const url = `${baseUrl}${resolvePagePath(page.path, course)}`;
+      const url = `${baseUrl}${resolvePagePath(page.path, vars)}`;
       runsByPage[page.name] = [];
       for (let run = 1; run <= runs; run++) {
         const result = audit(url, chrome, config.preset, outDir);

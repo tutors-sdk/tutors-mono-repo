@@ -1,14 +1,16 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   formatSuiteFinding,
   globToRegExp,
   lintFeatureFiles,
   lintTestSource,
-  lintTestSuite
+  lintTestSuite,
+  lintUncollectedTests,
+  readRunner
 } from "../../scripts/checks/suite-health.ts";
 import { describeRatchet, ratchet } from "../../scripts/checks/lib/ratchet.ts";
-import { REPO_ROOT, readBaseline } from "../../scripts/checks/lib/repo.ts";
+import { REPO_ROOT, readBaseline, readText } from "../../scripts/checks/lib/repo.ts";
 
 const BASELINE = "tests/suite-health/known-findings.txt";
 const TODAY = new Date("2026-09-16T12:00:00Z");
@@ -88,6 +90,19 @@ describe("suite health (runway tier O)", () => {
       ]);
     });
 
+    it("flags test files no runner config collects: outside include, excluded, unmatched by testMatch", () => {
+      expect(lintUncollectedTests(resolve(__dirname, "fixtures/runners-root"))).toEqual([
+        "uncollected: apps/web/e2e/unmatched.spec.ts",
+        "uncollected: packages/lib/src/__tests__/orphan.spec.ts",
+        "uncollected: tests/e2e/excluded.spec.ts"
+      ]);
+    });
+
+    it("refuses a runner config whose include it cannot read statically", () => {
+      const config = "tests/suite-health/fixtures/runner-unreadable/vitest.config.ts";
+      expect(() => readRunner(config, readText(join(REPO_ROOT, config)))).toThrow("include is not a string literal");
+    });
+
     it("matches cucumber path globs", () => {
       expect(globToRegExp("features/**/*.feature").test("features/0001-course.feature")).toBe(true);
       expect(globToRegExp("features/**/*.feature").test("features/student/0002-search.feature")).toBe(true);
@@ -99,7 +114,8 @@ describe("suite health (runway tier O)", () => {
   it("the repo adds no findings beyond the baseline, and the baseline has no stale entries", () => {
     const current = [
       ...lintTestSuite(REPO_ROOT).map(formatSuiteFinding),
-      ...lintFeatureFiles(REPO_ROOT).map((f) => `${f.kind}: ${f.file}`)
+      ...lintFeatureFiles(REPO_ROOT).map((f) => `${f.kind}: ${f.file}`),
+      ...lintUncollectedTests(REPO_ROOT)
     ];
     // `.only` is never baselined: it silently disables the rest of the suite.
     expect(current.filter((line) => line.startsWith("only:"))).toEqual([]);
