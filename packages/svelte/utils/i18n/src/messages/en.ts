@@ -176,6 +176,7 @@ Tutors is an open source application - the data collection component [is here](h
   "a11y.secondaryNavigation": "Secondary navigation",
   "a11y.sidebar": "Sidebar",
   "a11y.footer": "Site footer",
+  "a11y.tree.toggle": "Show or hide contents",
 
   // Guided tour
   "tour.ariaLabel": "Guided tour",

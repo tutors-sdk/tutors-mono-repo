@@ -101,8 +101,9 @@ export function decorateLoTree(course: Course, lo: Lo) {
   }
 
   // Convert contentMd to html
-  if (lo.type !== "lab" && lo.type !== "note" && lo.type !== "notebook") {
-    // Convert labs, notes & notebooks on demand as can be time consuming to convert all at once
+  if (lo.type !== "lab" && lo.type !== "note" && lo.type !== "notebook" && lo.type !== "quiz") {
+    // Convert labs, notes, notebooks & quizzes on demand as can be time consuming to convert all at once.
+    // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
     convertLoToHtml(course, lo);
   }
 

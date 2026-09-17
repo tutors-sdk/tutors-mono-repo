@@ -1,10 +1,7 @@
 # Completeness gaps that predate tier N (scripts/checks/completeness.ts).
 # This file may only shrink: fixing a gap means deleting its line here.
 
-# Translations. PR #248 adds auth.terms for de/es/fr/it.
-missing-translation: de: auth.terms
-missing-translation: es: auth.terms
-missing-translation: fr: auth.terms
+# Translations: the Irish lecturer-panel keys (#237).
 missing-translation: ga: home.create
 missing-translation: ga: lecturer.access.authLevel
 missing-translation: ga: lecturer.access.lecturers
@@ -28,7 +25,6 @@ missing-translation: ga: lecturer.locks.unlocked
 missing-translation: ga: lecturer.panel.tip
 missing-translation: ga: lecturer.panel.title
 missing-translation: ga: menu.profile
-missing-translation: it: auth.terms
 
 # Icon libraries without the coursetree, podcast and tutorial icons FluentIconLib has;
 # those learning objects fall back to the generic Tutors icon (with a console warning) under these themes.

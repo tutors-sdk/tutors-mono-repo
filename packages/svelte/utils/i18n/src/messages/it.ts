@@ -96,6 +96,18 @@ const it: Record<string, string> = {
   // Auth
   "auth.signIn": "Accesso Tutors",
   "auth.signInWithGithub": "Accedi con GitHub",
+  "auth.terms": `Stai per autenticarti su Tutors tramite le tue credenziali Github. **Per la maggior parte dei corsi non e necessario effettuare alcun accesso, quindi se preferisci puoi tornare alla pagina del corso e proseguire come faresti su qualsiasi sito web pubblico.**
+
+Se ti registri o accedi, avrai prima bisogno di un account Github. L'accesso rendera poi disponibile una dashboard semplice e comoda con link rapidi a tutti i corsi Tutors a cui hai avuto accesso di recente.
+
+Per alcuni corsi, Tutors richiedera sempre un account per ottenere l'accesso, e verrai portato qui. Una volta effettuato l'accesso, Tutors puo registrare per quanto tempo ogni vista rimane attiva e inviare questi dati all'archivio dati TutorsTime. Puoi visualizzare queste informazioni tramite la funzione Time nel menu del profilo. Questi dati sono disponibili per te e per l'istruttore del tuo corso, ma non per gli altri studenti. Non vengono raccolti altri dati, ne questi dati vengono trasmessi altrove oltre che all'archivio dati TutorsTime.
+
+La funzione Live, disponibile dal menu del profilo, puo usare questi dati anche per mostrare un pannello degli studenti attualmente online. **Puoi disattivare queste funzioni disabilitando l'opzione Condividi presenza dal menu del profilo.** Per saperne di piu su TutorsTime consulta:
+
+- [FAQ Tutors Time](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
+- [FAQ Tutors Live](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
+
+Tutors e un'applicazione open source: il componente di raccolta dati [si trova qui](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Nome",
@@ -164,6 +176,7 @@ const it: Record<string, string> = {
   "a11y.secondaryNavigation": "Navigazione secondaria",
   "a11y.sidebar": "Barra laterale",
   "a11y.footer": "Pie di pagina",
+  "a11y.tree.toggle": "Mostra o nascondi il contenuto",
 
   // Guided tour
   "tour.ariaLabel": "Tour guidato",
