@@ -219,8 +219,14 @@ export function isValid(str: string) : boolean;
 // (from src/utils/lo-utils.ts)
 export function loadIcon(lo: Lo) : IconType | undefined;
 
+// (from src/utils/markdown-utils.ts)
+export function loadMath() : Promise<void>;
+
 // (from src/utils/course-utils.ts)
 export function loadPropertyFlags(course: Course);
+
+// (from src/utils/markdown-utils.ts)
+export function mayContainMath(text: string) : boolean;
 
 // (from src/utils/lo-utils.ts)
 export function removeLeadingHashes(str: string) : string;
@@ -272,7 +278,7 @@ export const simpleTypes: string[];
 |------|-------|
 | class | 1 |
 | const | 8 |
-| function | 32 |
+| function | 34 |
 | interface | 1 |
 | type | 39 |
-| **Total** | **81** |
+| **Total** | **83** |
