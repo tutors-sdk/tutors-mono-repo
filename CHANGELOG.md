@@ -8,6 +8,22 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.1 (2026-09)
+
+#### Features
+
+- Quiz learning objects (PR #260): a `quiz-*` folder containing a markdown file with a fenced `quiz` block renders as an interactive quiz — one question at a time, free navigation between questions, submission gated on a complete answer set, and a scored results page with a retake. Multiple-choice and true/false are supported, and question and option text is rendered as markdown
+- Quiz options form a WAI-ARIA radio group with roving tabindex and arrow-key navigation
+- A quiz wall at `/wall/quiz/{courseid}`, listing every quiz in a course
+
+  Answers are held in memory only and are not recorded; `time_limit` is accepted
+  by the parser but not yet enforced. This is a self-check for students rather
+  than an assessment.
+
+  Courses must be regenerated with `@tutors/tutors-gen-lib` 5.3.0 or later.
+  Earlier generators do not know the `quiz` type and mistype a `quiz-*` folder
+  as its enclosing topic, which renders as an empty topic page.
+
 ### v16.2.0 (2026-09)
 
 #### Features
