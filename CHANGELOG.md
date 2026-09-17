@@ -8,6 +8,16 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+#### Fixes
+
+- Calendar: assessment due dates are reformatted for display and emphasised in the week row; unparseable dates fall back to the raw value (PR #231)
+
 ### v16.1.8 (2026-09)
 
 #### Features
@@ -136,6 +146,12 @@
 
 ## Live (`tutors-live`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
 ### v16.1.8 (2026-09)
 
 #### Fixes
@@ -164,6 +180,12 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
@@ -177,6 +199,16 @@
 ---
 
 ## Time (`tutors-time`)
+
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+#### Fixes
+
+- Moodle API, submissions repository and the assignments sync service now report failures through the logger rather than the console (PR #116)
 
 ### v16.1.8 (2026-09)
 
@@ -193,6 +225,33 @@
 - Migrated from standalone `tutors-time` repository into monorepo at `apps/time`
 - Updated to Skeleton v5 theme system (cerberus/terminus/rose)
 - Fix AG Grid v35 theming conflict — add `theme: "legacy"` to all grid instances
+
+---
+
+## Infrastructure
+
+Cross-cutting changes that land in every application at once, rather than in
+any single one. Versioned with the monorepo.
+
+### v16.2.0 (2026-09)
+
+#### Structured logging (PR #116)
+
+- `@tutors/logger` gains a request logger: request lifecycle logs with a generated request id propagated through the server hooks of all four apps
+- Liveness probe at `/healthz/live` in reader, live, time and catalogue, for container and Kubernetes health checks
+- Console logging replaced with structured logger calls across the time app's server-side services
+
+#### Containerisation (PR #229)
+
+- `Dockerfile` and `compose.yaml` at the repository root, with `deploy/k8s` kustomize bases and per-app overlays for reader, live, time and catalogue
+- Runtime configuration via `.env.example`; apps read their environment at container start rather than build time
+- `svelte.config.js` in each app selects `adapter-node` when `SVELTEKIT_ADAPTER=node` and otherwise keeps `adapter-auto`, so the Netlify builds are unaffected by the container work
+- Local standup documented in `docs/LOCAL-CONTAINERS.md`
+
+#### Metrics and alerting (PR #144)
+
+- New `@tutors/metrics` package: a Prometheus registry, request middleware and a `/metrics` endpoint served by all four apps
+- Grafana alerting rules and a ServiceMonitor component for Prometheus Operator scraping under `observability/` and `deploy/k8s/components/`
 
 ---
 

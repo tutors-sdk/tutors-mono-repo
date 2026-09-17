@@ -88,6 +88,7 @@ export default tseslint.config(
       "packages/jsr/**",
       "services/**",
       ".claude/**",
+      ".generator-diff/**",
     ],
   },
 );

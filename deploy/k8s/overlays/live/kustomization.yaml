@@ -16,7 +16,7 @@ labels:
 images:
   - name: tutors-app
     newName: quay.io/tutors-sdk/tutors-live
-    newTag: latest
+    newTag: "16.2.0"
 
 patches:
   - target:

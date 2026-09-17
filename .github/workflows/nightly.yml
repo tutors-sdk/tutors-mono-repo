@@ -37,8 +37,10 @@ jobs:
       - name: Build all packages and apps
         run: pnpm build
 
+      # No retries at night: a test that only passes on retry is a flake, and
+      # retries on PRs hide it (runway tier O).
       - name: Run full E2E test suite
-        run: pnpm test:e2e
+        run: pnpm test:e2e --retries=0
 
       - name: Upload Playwright report
         if: always()
@@ -73,9 +75,357 @@ jobs:
       - name: Run contract tests
         run: pnpm test:contract
 
+  suite-health:
+    name: Suite health (no retries, time budgets)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live apps/time; do
+            cp .env.example "$dir/.env"
+          done
+
+      - name: Sync SvelteKit apps
+        run: pnpm -r --filter "./apps/**" exec svelte-kit sync
+
+      - name: Run Vitest with no retries
+        run: pnpm exec vitest run --retry=0 --reporter=default --reporter=json --outputFile=reports/vitest-nightly.json
+
+      - name: Check per-file time budgets
+        if: always()
+        run: pnpm check:test-time reports/vitest-nightly.json
+
+  e2e-stack-nightly:
+    name: E2E journeys (firefox, mobile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Build catalogue image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=catalogue
+          tags: tutors/catalogue:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-catalogue
+
+      - name: Build live image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=live
+          tags: tutors/live:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-live
+
+      - name: Build fixture course
+        run: pnpm e2e:stack:fixture
+
+      - name: Start stack
+        run: pnpm e2e:stack:up
+        env:
+          TUTORS_TAG: ci
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps firefox chromium
+
+      - name: Journeys
+        run: pnpm test:e2e:stack --project=firefox --project=mobile
+
+      - name: Baselines have no stale lines
+        run: pnpm test:e2e:stack:ratchet
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f tests/e2e-stack/compose.yaml logs --no-color
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e2e-stack-nightly-report
+          path: |
+            playwright-report/e2e-stack
+            test-results/e2e-stack
+          retention-days: 14
+
+  # Runway tier B: the unit and property suites under three timezones, ratcheted
+  # against tests/fuzz/known-timezone-failures.txt.
+  timezone-matrix:
+    name: Timezone matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live apps/time; do
+            cp .env.example "$dir/.env"
+          done
+
+      - name: Sync SvelteKit apps
+        run: pnpm -r --filter "./apps/**" exec svelte-kit sync
+
+      - name: Unit and property suites under UTC, Europe/Dublin, Pacific/Auckland
+        run: pnpm test:tz
+
+  # Runway tier L: Lighthouse floors on three reader pages (medians of three runs),
+  # against the tier G fixture course so Netlify is not a dependency, with the
+  # samples recorded for baselining.
+  lighthouse:
+    name: Lighthouse (reader)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the isolated Lighthouse runner
+        run: pnpm --dir tests/performance/lighthouse install --ignore-workspace --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Build fixture course
+        run: pnpm e2e:stack:fixture
+
+      - name: Start fixture course server
+        run: docker compose -f tests/e2e-stack/compose.yaml up -d --wait course
+
+      - name: Lighthouse
+        env:
+          LIGHTHOUSE_COURSE: localhost:8080
+          LIGHTHOUSE_LAB: unit-1/topic-01/book-lab-01
+        run: pnpm check:lighthouse --image tutors/reader:ci --record reports/lighthouse-samples.json
+
+      - name: Upload Lighthouse samples
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lighthouse-samples
+          path: reports/lighthouse-samples.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # Runway tier L: k6 load (three runs, recorded for baselining) and a soak.
+  load:
+    name: Load and soak (reader)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build reader image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          build-args: APP_NAME=reader
+          tags: tutors/reader:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-reader
+
+      - name: Thresholds bite (negative fixture)
+        run: pnpm check:load --image tutors/reader:ci --duration 15s --env P95_MS=0 --expect-fail
+
+      - name: Load, three runs
+        run: pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3 --record reports/load-samples.json
+
+      - name: Soak
+        run: pnpm check:load --image tutors/reader:ci --script reader-soak.js --rate 5 --duration 45m
+
+      - name: Upload load samples
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: load-samples
+          path: reports/load-samples.json
+          retention-days: 30
+
+  # Runway tier C: regenerate pinned public courses at upstream HEAD and diff
+  # against last night's output, so upstream content changes are noticed.
+  generator-corpus:
+    name: Generator corpus contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore last night's snapshot
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: corpus-store/previous
+          key: generator-corpus-${{ github.run_id }}
+          restore-keys: generator-corpus-
+
+      - name: Regenerate nightly courses at upstream HEAD
+        run: pnpm check:generator-diff --nightly --store corpus-store --fail-on-diff
+
+      - name: Keep tonight's snapshot as the next baseline
+        if: always()
+        run: |
+          if [ -d corpus-store/current ]; then
+            rm -rf corpus-store/previous && mv corpus-store/current corpus-store/previous
+          fi
+
+      - name: Save snapshot
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: corpus-store/previous
+          key: generator-corpus-${{ github.run_id }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: generator-corpus-report
+          path: corpus-store/previous/report.json
+          retention-days: 30
+
   report:
     name: Report Results
-    needs: [e2e-full, contract-snapshots]
+    needs: [e2e-full, contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load, generator-corpus]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -87,7 +437,13 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Tests | ${{ needs.e2e-full.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Contract Snapshots | ${{ needs.contract-snapshots.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lighthouse | ${{ needs.lighthouse.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Load and Soak | ${{ needs.load.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Generator Corpus | ${{ needs.generator-corpus.result }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any job failed
-        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure'
+        if: needs.e2e-full.result == 'failure' || needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure' || needs.generator-corpus.result == 'failure'
         run: exit 1

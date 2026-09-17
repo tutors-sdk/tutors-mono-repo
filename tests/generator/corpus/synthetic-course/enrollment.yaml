@@ -1,0 +1,8 @@
+enrollment:
+  educators:
+    - educator1
+  whitelist:
+    - student1
+  students:
+    - name: "Seán Ó Briain"
+      github: student1

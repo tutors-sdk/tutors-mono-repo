@@ -20,6 +20,12 @@ spec:
       labels:
         app.kubernetes.io/name: tutors-app
         app.kubernetes.io/part-of: tutors
+      # For annotation-driven scrapers. Operator-based clusters use the
+      # optional ServiceMonitor component instead (deploy/k8s/components).
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "3000"
     spec:
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30

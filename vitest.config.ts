@@ -14,7 +14,11 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
-    exclude: ["tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Replaces Vitest's default exclude, so node_modules must be listed again (the isolated
+    // Lighthouse runner under tests/performance/lighthouse has its own).
+    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Unit and property tiers never reach the network (runway tier B).
+    setupFiles: ["tests/support/no-network.ts"],
     server: {
       deps: {
         // Ships imports of SvelteKit's `$app/*` virtual modules, which only
@@ -41,6 +45,7 @@ export default defineConfig({
       "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
       "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
       "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
+      "@tutors/metrics": resolve(__dirname, "packages/svelte/utils/metrics/src/index.ts"),
       "$app/environment": resolve(__dirname, "tests/support/sveltekit-stubs.ts"),
       "$app/navigation": resolve(__dirname, "tests/support/sveltekit-stubs.ts"),
       "$app/paths": resolve(__dirname, "tests/support/sveltekit-stubs.ts"),

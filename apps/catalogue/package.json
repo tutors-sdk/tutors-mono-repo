@@ -1,6 +1,6 @@
 {
   "name": "tutors-catalogue",
-  "version": "16.1.8",
+  "version": "16.2.0",
   "license": "MIT",
   "description": "Tutors Catalogue - Browse all Tutors courses",
   "private": true,
@@ -26,6 +26,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/logger": "workspace:*",
+    "@tutors/metrics": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
