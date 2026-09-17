@@ -36,7 +36,7 @@
 
 {#snippet menuSelector()}
   <div class="hover:preset-tonal-secondary rounded-lg p-2">
-    <Icon type={showEducatorPanel ? "educator" : "info"} tip={t("nav.info.tip")} height="25" />
+    <Icon type={showEducatorPanel ? "educator" : "info"} tip={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} height="25" />
   </div>
 {/snippet}
 
@@ -177,4 +177,4 @@
   {/if}
 {/snippet}
 
-<Sidebar {menuSelector} {sidebarContent} width={showEducatorPanel ? "w-2xl" : "w-sm"} />
+<Sidebar {menuSelector} {sidebarContent} width={showEducatorPanel ? "w-2xl" : "w-sm"} ariaLabel={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} />

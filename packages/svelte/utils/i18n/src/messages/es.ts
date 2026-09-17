@@ -176,6 +176,7 @@ Tutors es una aplicacion de codigo abierto; el componente de recopilacion de dat
   "a11y.secondaryNavigation": "Navegacion secundaria",
   "a11y.sidebar": "Barra lateral",
   "a11y.footer": "Pie de pagina",
+  "a11y.tree.toggle": "Mostrar u ocultar el contenido",
 
   // Guided tour
   "tour.ariaLabel": "Tour guiado",
