@@ -11,15 +11,24 @@
  *   - /metrics serves every series the Grafana alert rules query
  *   - a request carrying x-request-id is echoed and logged with that id
  *   - every log line is JSON and matches the log schema
+ *
+ * With `--app <name>` it also checks tier M against the image: the response
+ * header contract (tests/security/header-contract.json), no 5xx on the probed
+ * paths (known gaps for both ratcheted by known-response-gaps.txt), cookie
+ * flags, and that every mutating route in tests/security/mutating-routes.txt
+ * rejects a cross-site form post.
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { randomInt, randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { alertParityFindings, logSchemaFindings, parseLogStream, type LogLine } from "./observability.ts";
-import { REPO_ROOT, readText } from "./lib/repo.ts";
+import { REPO_ROOT, readBaseline, readText } from "./lib/repo.ts";
+import { describeRatchet, ratchet } from "./lib/ratchet.ts";
+import { cookieFindings, headerFindings, loadHeaderContract, parseInventory } from "./security.ts";
 
 interface Options {
   image: string;
+  app?: string;
   env: string[];
   startupBudgetMs: number;
   expectFail: boolean;
@@ -31,13 +40,14 @@ function parseArgs(argv: string[]): Options {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--image") options.image = argv[++i];
+    else if (arg === "--app") options.app = argv[++i];
     else if (arg === "--env") options.env.push(argv[++i]);
     else if (arg === "--startup-budget-ms") options.startupBudgetMs = Number(argv[++i]);
     else if (arg === "--expect-fail") options.expectFail = true;
     else if (arg === "--keep") options.keep = true;
   }
   if (!options.image) {
-    console.error("usage: container-smoke.ts --image <image> [--env KEY=VALUE]... [--startup-budget-ms N] [--expect-fail] [--keep]");
+    console.error("usage: container-smoke.ts --image <image> [--app <name>] [--env KEY=VALUE]... [--startup-budget-ms N] [--expect-fail] [--keep]");
     process.exit(2);
   }
   return options;
@@ -113,6 +123,8 @@ async function run(options: Options): Promise<string[]> {
       findings.push(...alertParityFindings(alerts, await metrics.text()).map((f) => `metrics: ${f}`));
     }
 
+    if (options.app) findings.push(...(await securityFindings(options.app, base)));
+
     // Give the logger a moment to flush the completion line.
     await sleep(500);
     const logs = spawnSync("docker", ["logs", name], { encoding: "utf8" });
@@ -132,6 +144,53 @@ async function run(options: Options): Promise<string[]> {
     }
     if (!options.keep) spawnSync("docker", ["rm", "--force", name], { stdio: "ignore" });
   }
+}
+
+const RESPONSE_GAPS = "tests/security/known-response-gaps.txt";
+
+/** Tier M against the running image: header contract, cookie flags and CSRF on mutating routes. */
+async function securityFindings(app: string, base: string): Promise<string[]> {
+  const findings: string[] = [];
+  const contract = loadHeaderContract();
+  const paths = contract.apps[app]?.paths;
+  if (!paths) return [`security: no entry for "${app}" in tests/security/header-contract.json`];
+
+  const gaps = new Set<string>();
+  const cookies = new Set<string>();
+  for (const path of paths) {
+    // As the router would forward it, so Auth.js issues the cookies it would issue in production.
+    const response = await fetchWithTimeout(`${base}${path}`, { redirect: "manual", headers: { "x-forwarded-proto": "https" } }, 15_000);
+    if (response.status >= 500) gaps.add(`server-error: ${app}: GET ${path}`);
+    headerFindings(app, response.headers, contract).forEach((gap) => gaps.add(gap));
+    cookieFindings(app, response.headers.getSetCookie(), { https: true }).forEach((f) => cookies.add(f));
+  }
+  const known = readBaseline(join(REPO_ROOT, RESPONSE_GAPS)).filter((line) => line.includes(`: ${app}: `));
+  const result = ratchet(gaps, known);
+  if (result.added.length > 0 || result.stale.length > 0) {
+    findings.push(`security: ${describeRatchet("response contract", RESPONSE_GAPS, result)}`);
+  }
+  findings.push(...[...cookies].map((f) => `security: ${f}`));
+
+  const inventory = parseInventory(readText(join(REPO_ROOT, "tests/security/mutating-routes.txt")));
+  for (const entry of inventory.filter((e) => e.key.startsWith(`${app} `))) {
+    const [, method, route] = entry.key.split(" ");
+    const path = route.replace(/\[[^\]]+\]/g, "runway");
+    // SvelteKit refuses cross-site form submissions before any hook or handler runs.
+    const response = await fetchWithTimeout(
+      `${base}${path}`,
+      {
+        method,
+        redirect: "manual",
+        headers: { origin: "https://attacker.example", "content-type": "application/x-www-form-urlencoded" },
+        body: "runway=csrf"
+      },
+      15_000
+    );
+    if (response.status !== 403) {
+      findings.push(`security: ${method} ${path} answered a cross-site form post with ${response.status}, expected 403`);
+    }
+  }
+  return findings;
 }
 
 async function main() {

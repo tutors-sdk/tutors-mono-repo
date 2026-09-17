@@ -1,0 +1,12 @@
+# Every route that changes state, and who may call it (runway tier M; the seed
+# of tier F's authorisation matrix). tests/security/security.test.ts fails when
+# a +server.ts exports POST/PUT/PATCH/DELETE or a +page.server.ts declares an
+# action that is not listed here, or when a listed route disappears.
+# The container smoke test posts a cross-site form to each route and expects 403.
+#
+# Format: `<app> <METHOD> <route id> | who: <callers>`
+# Add `| hook` for routes a hook mounts (discovery cannot see them).
+
+time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one)
+reader POST /auth/signin/github | hook | who: anyone; Auth.js starts the GitHub OAuth flow
+reader POST /auth/signout | hook | who: a signed-in user; Auth.js checks its own CSRF token

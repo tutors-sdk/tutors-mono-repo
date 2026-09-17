@@ -1,0 +1,9 @@
+{
+  "defaultMs": 10000,
+  "files": {
+    "tests/architecture/dependency-rules.test.ts": 30000,
+    "tests/contract/gen-lib-api.test.ts": 20000,
+    "tests/contract/time-lib-api.test.ts": 20000,
+    "tests/completeness/completeness.test.ts": 20000
+  }
+}

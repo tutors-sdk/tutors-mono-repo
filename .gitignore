@@ -47,6 +47,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 tests/release/.release-work/
+test-results/
+playwright-report/
+tests/e2e-stack/work/
 .stryker-tmp/
 reports/mutation/
 
@@ -59,3 +62,5 @@ okf/
 
 # Kubernetes secrets are created out of band; only the example is tracked
 deploy/k8s/**/secrets.yaml
+# Generator differential work area (scripts/checks/generator-diff.ts)
+.generator-diff/
