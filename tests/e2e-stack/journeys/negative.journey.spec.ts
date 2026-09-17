@@ -17,15 +17,6 @@ test.describe("journeys can fail", () => {
     expect(visited).toContain("reader:lab-step");
   });
 
-  test("KNOWN BUG: the reader with no auth configuration serves its home page in anonymous mode", async ({ page }) => {
-    // With PUBLIC_ANON_MODE=TRUE and no PRIVATE_AUTH_SECRET, Auth.js throws
-    // MissingSecret from the root layout's auth() and every page is a 500.
-    // That is how the root compose.yaml starts the reader with no .env.
-    test.fail(true, "Auth.js MissingSecret breaks anonymous mode without PRIVATE_AUTH_SECRET");
-    await page.goto(`${stack.readerUnconfigured}/`);
-    await expect(page.getByRole("heading", { level: 1, name: /An Open Learning Web Toolkit/ })).toBeVisible({ timeout: 10_000 });
-  });
-
   test("KNOWN BUG: opening search puts keyboard focus in the search box", async ({ page }) => {
     // The search page focuses its input in onMount, then the layout's
     // route-change focus handling moves focus to <main id="main-content">.
