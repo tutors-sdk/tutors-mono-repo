@@ -99,7 +99,8 @@ export function getHeaderFromBody(body: string): string {
   } else {
     header = array[0];
   }
-  return header;
+  // "# Title\r\n" is the title "Title", not " Title\r"
+  return header.trim();
 }
 
 export function withoutHeaderFromBody(body: string): string {

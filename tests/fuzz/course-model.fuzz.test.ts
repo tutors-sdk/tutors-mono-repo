@@ -179,17 +179,13 @@ describe("course model properties (runway tier B)", () => {
     fc.assert(modelProperties.searchFindsPlantedToken(real, searchHits), fuzzParameters(100));
   });
 
-  it("decorateCourseTree: routesPreserved, for course ids without 'topic'", () => {
-    const ids = courseIdArbitrary.filter((id) => !id.includes("topic"));
-    fc.assert(modelProperties.routesPreserved(real, ids), fuzzParameters(100));
+  it("decorateCourseTree: routesPreserved", () => {
+    fc.assert(modelProperties.routesPreserved(real), fuzzParameters(100));
   });
 
-  // Known bug, found by this property: decorateLoTree rewrites the first "topic" in the route of
-  // a top-level unit or side to "course" once per nested descendant, so a course id such as
-  // "web-topics-2026" turns /unit/web-topics-2026/unit-0 into /unit/web-courses-2026/unit-0 and
-  // the unit's link breaks. Same code in packages/svelte/course. `it.fails` turns red once fixed:
-  // then make this a plain `it` and drop the filter above.
-  it.fails("decorateCourseTree: routesPreserved, for any course id (known bug: 'topic' rewrite)", () => {
+  // Regression: decorateLoTree used to rewrite the first "topic" anywhere in a top-level unit or
+  // side route, once per nested descendant, so "web-topics-2026" became "web-courses-2026".
+  it("decorateCourseTree: routesPreserved, for course ids containing 'topic'", () => {
     const withTopic = fc.constantFrom("topics-in-ai", "web-topics-2026");
     fc.assert(modelProperties.routesPreserved(real, withTopic), { ...fuzzParameters(200), seed: 20260916 });
   });

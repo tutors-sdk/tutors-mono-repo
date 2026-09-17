@@ -1,14 +1,2 @@
 # Tests that fail under a non-UTC timezone (scripts/checks/tz-matrix.ts, `pnpm test:tz`).
 # This file may only shrink. Format: `zone :: file :: full test name`.
-
-# Lab views bucket learning records by the *process's* local date
-# (packages/jsr/time: lab-utils getDateFromLearningRecord and
-# BaseLabModel.getDateFromRecord use getFullYear/getMonth/getDate), while the
-# calendar views use the UTC DATE ids stored in Supabase. For a viewer east of
-# UTC, a record at 2025-03-15T14:00Z lands on the 16th in lab views and the 15th
-# in calendar views. Decide whether lab dates should be UTC (like the calendar)
-# or viewer-local (and then the calendar too), then fix and delete these lines.
-Pacific/Auckland :: tests/unit/time/base-lab-model.test.ts :: BaseLabModel.buildLabRowByDay builds a row with per-date durations for a student
-Pacific/Auckland :: tests/unit/time/base-lab-model.test.ts :: BaseLabModel.buildLabRowByDay sums durations for same student on same date
-Pacific/Auckland :: tests/unit/time/lab-utils.test.ts :: getDistinctSortedDatesFromRecords returns distinct sorted dates from records
-Pacific/Auckland :: tests/unit/time/lab-utils.test.ts :: getDistinctSortedDatesFromRecords returns single date for single record
