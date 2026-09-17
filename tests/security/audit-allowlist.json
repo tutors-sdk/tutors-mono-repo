@@ -1,17 +1,4 @@
 {
   "$comment": "Advisories accepted for a limited time (runway tier M). Each needs a reason and an expiry; an expired entry fails the nightly audit and warns on PRs. Check with: pnpm check:audit",
-  "allowances": [
-    {
-      "id": "GHSA-r5fr-rjxr-66jc",
-      "package": "lodash-es",
-      "reason": "lodash-es 4.17.23 arrives through @tutors/course > mermaid > chevrotain. The injection needs attacker-controlled _.template imports keys, which chevrotain does not pass. Fix: a pnpm override to lodash-es >=4.18.1 once mermaid is checked against it.",
-      "expires": "2026-10-16"
-    },
-    {
-      "id": "GHSA-f23m-r3pf-42rh",
-      "package": "lodash-es",
-      "reason": "Same path as GHSA-r5fr-rjxr-66jc; prototype pollution through _.unset/_.omit with attacker-controlled paths, which the grammar parser does not take from input. Same override fixes both.",
-      "expires": "2026-10-16"
-    }
-  ]
+  "allowances": []
 }
