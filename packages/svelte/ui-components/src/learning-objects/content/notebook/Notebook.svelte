@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { onDestroy, onMount } from "svelte";
   import { afterNavigate } from "$app/navigation";
+  import { prefersReducedMotion } from "@tutors/a11y";
   import type { LiveNotebook } from "@tutors/course/course";
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
@@ -29,7 +30,7 @@
   function scrollToCell(index: number) {
     const el = document.getElementById(`notebook-cell-${index}`);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.scrollIntoView({ behavior: prefersReducedMotion.value ? "auto" : "smooth", block: "start" });
     }
   }
 
@@ -113,7 +114,7 @@
     }
     const elemPage = document.querySelector("#notebook-panel");
     if (elemPage && window.innerWidth >= 600) {
-      elemPage.scrollIntoView({ behavior: "smooth", block: "start" });
+      elemPage.scrollIntoView({ behavior: prefersReducedMotion.value ? "auto" : "smooth", block: "start" });
     }
   });
 </script>

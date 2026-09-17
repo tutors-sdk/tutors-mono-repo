@@ -62,9 +62,12 @@ export class LiveLab implements LabService {
     this.navbarHtml = this.lab.los
       .map((chapter) => {
         const number = this.autoNumber ? chapter.shortTitle + ": " : "";
-        const active = encodeURI(chapter.shortTitle) === this.currentChapterShortTitle ? "font-bold bg-surface-200 dark:bg-surface-600 pl-4" : "";
+        const isActive = encodeURI(chapter.shortTitle) === this.currentChapterShortTitle;
+        const active = isActive ? "font-bold bg-surface-200 dark:bg-surface-600 pl-4" : "";
+        const current = isActive ? ` aria-current="step"` : "";
         const title = this.chaptersTitles.get(chapter.shortTitle);
-        return `<a href="${this.url}/${encodeURI(chapter.shortTitle)}"><li class="py-2 px-4 ${active} text-black! dark:text-white!">${escapeHtml(number)}${escapeHtml(title ?? "")}</li></a>`;
+        // <li> wraps <a>, not the other way round: list items must be direct children of the <ul>.
+        return `<li><a class="block py-2 px-4 ${active} text-black! dark:text-white!" href="${this.url}/${encodeURI(chapter.shortTitle)}"${current}>${escapeHtml(number)}${escapeHtml(title ?? "")}</a></li>`;
       })
       .join("");
 

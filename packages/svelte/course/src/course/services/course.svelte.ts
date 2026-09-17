@@ -176,6 +176,8 @@ export const courseService: CourseService = {
         this.notebooks.set(loId, liveNotebook);
       }
     }
+    // A quiz needs no processing here: its renderer splits the quiz definition
+    // out of contentMd and converts the surrounding prose itself.
     return lo ?? course;
   },
 

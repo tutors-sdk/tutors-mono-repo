@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { anonymousStudentReadsCourse, anonymousStudentSearches, catalogueLoads, liveLoads } from "./journeys.ts";
-import { auditAccessibility, auditReducedMotion, collectPageErrors } from "./stack.ts";
+import { auditAccessibility, auditReducedMotion, collectPageErrors, fixture, stack } from "./stack.ts";
 
 /**
  * Runway tier G against the built images. Every page a journey reaches is
@@ -29,6 +29,31 @@ test.describe("anonymous student", () => {
       await auditAccessibility(page, pageKey, testInfo);
     });
     expect(visited).toEqual(["reader:search", "reader:search-results"]);
+    expect(errors, "uncaught errors in the page").toEqual([]);
+  });
+
+  test("opening search puts keyboard focus in the search box", async ({ page }) => {
+    // The search page places focus itself; the layout's route-change focus must not take it back.
+    await page.goto(`${stack.reader}/course/${stack.courseId}`);
+    await page.getByRole("button", { name: "Search this course" }).click();
+    await expect(page.getByRole("textbox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
+  });
+
+  test("following a link elsewhere moves keyboard focus to the main content", async ({ page }) => {
+    await page.goto(`${stack.reader}/course/${stack.courseId}`);
+    await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.topicTitle}\\b`) }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/topic/${stack.courseId}/${fixture.topicPath}$`));
+    await expect(page.getByRole("main")).toBeFocused({ timeout: 5_000 });
+  });
+});
+
+test.describe("reader with no auth configuration", () => {
+  // The root compose.yaml with no .env: PUBLIC_ANON_MODE and no PRIVATE_AUTH_SECRET.
+  // Auth.js used to throw MissingSecret from the root layout and every page was a 500 (#252).
+  test("serves its home page in anonymous mode", async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await page.goto(`${stack.readerUnconfigured}/`);
+    await expect(page.getByRole("heading", { level: 1, name: /An Open Learning Web Toolkit/ })).toBeVisible({ timeout: 10_000 });
     expect(errors, "uncaught errors in the page").toEqual([]);
   });
 });
