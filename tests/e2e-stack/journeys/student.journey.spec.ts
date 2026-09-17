@@ -47,6 +47,17 @@ test.describe("anonymous student", () => {
   });
 });
 
+test.describe("reader with no auth configuration", () => {
+  // The root compose.yaml with no .env: PUBLIC_ANON_MODE and no PRIVATE_AUTH_SECRET.
+  // Auth.js used to throw MissingSecret from the root layout and every page was a 500 (#252).
+  test("serves its home page in anonymous mode", async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await page.goto(`${stack.readerUnconfigured}/`);
+    await expect(page.getByRole("heading", { level: 1, name: /An Open Learning Web Toolkit/ })).toBeVisible({ timeout: 10_000 });
+    expect(errors, "uncaught errors in the page").toEqual([]);
+  });
+});
+
 test.describe("other apps in anonymous mode", () => {
   test("catalogue renders its listing", async ({ page }, testInfo) => {
     const visited: string[] = [];
