@@ -81,6 +81,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | Directory | Package | What it is |
 |---|---|---|
 | `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
+| `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
 | `packages/svelte/connect` | `@tutors/connect` | Authentication and user management |
 | `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
