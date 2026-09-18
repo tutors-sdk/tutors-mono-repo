@@ -16,7 +16,7 @@ Three user personas drive the BDD test suite. Each represents a distinct stakeho
 - `lab-interaction.feature` — Step navigation, content rendering, breadcrumbs
 - `live-presence.feature` — Online users, sentiment, privacy controls
 - `search-content.feature` — Full-text search, fenced code, result limits
-- `accessibility.feature` — Keyboard nav, ARIA landmarks, alt text
+- [specifications/accessibility.md](./specifications/accessibility.md) — Keyboard nav, ARIA landmarks, alt text (prose; needs a browser)
 
 ## Instructor
 
@@ -43,5 +43,5 @@ Three user personas drive the BDD test suite. Each represents a distinct stakeho
 
 **Test Coverage**:
 - `theme-customisation.feature` — Themes, icon libraries, light/dark, code styles
-- `auth-integration.feature` — GitHub OAuth, sessions, expiry, error states
+- [specifications/auth-integration.md](./specifications/auth-integration.md) — GitHub OAuth, sessions, expiry, error states (prose; needs a browser)
 - `i18n-localisation.feature` — 5 locales, fallbacks, cookie persistence

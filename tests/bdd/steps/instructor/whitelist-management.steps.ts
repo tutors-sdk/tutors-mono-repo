@@ -1,67 +1,70 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { TestWorld } from "../../support/world";
-import { ExtendedTestDataFactory } from "../../support/extended-fixtures";
-import { MockAuthSession } from "../../support/extended-mocks";
+import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
+import { expect, vi } from "vitest";
 
-describe("Instructor: Whitelist Management", () => {
-  let world: TestWorld;
-  let extFactory: ExtendedTestDataFactory;
-  let auth: MockAuthSession;
+// The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
+// SvelteKit and Auth.js. Everything between them is product code.
+vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
+// `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
+vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
-  beforeEach(() => {
-    world = new TestWorld();
-    extFactory = new ExtendedTestDataFactory();
-    auth = new MockAuthSession();
-  });
+import { goto } from "$app/navigation";
+import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 
-  it("shall require authentication for private courses", () => {
-    const course = world.fixtures.createCourse({
-      properties: { isPrivate: "true" },
+const feature = await loadFeature("tests/bdd/features/instructor/whitelist-management.feature");
+
+const list = (csv: string) => csv.split(",").map((item) => item.trim());
+
+describeFeature(feature, ({ Scenario }) => {
+  let course: Course;
+
+  // `auth: 1` in properties.yaml is what makes the reader demand a sign-in; the whitelist comes from enrollment.yaml.
+  const restrictedCourse = (_ctx: unknown, courseId: string, whitelist: string, educators: string) => {
+    freshBrowser();
+    course = publishedCourse(courseId, 1, { auth: 1 }, { whitelist: list(whitelist), educators: list(educators), students: [] });
+  };
+  const signedIn = (_ctx: unknown, name: string) => signIn(githubUser(name));
+  const openCourse = () => openLo(course, labsOf(course)[0]);
+  const granted = () => expect(goto).not.toHaveBeenCalled();
+
+  Scenario("Private course requires authentication", ({ Given, And, When, Then }) => {
+    Given("the course {string} requires authentication", (_ctx, courseId: string) => {
+      freshBrowser();
+      course = publishedCourse(courseId, 1, { auth: 1 });
     });
-
-    expect(course.properties?.isPrivate).toBe("true");
-    expect(auth.isAuthenticated()).toBe(false);
+    And("nobody is signed in", () => {});
+    When("the course is opened", openCourse);
+    Then("the system shall require authentication before displaying content, remembering {string} for after sign-in", (_ctx, courseId: string) => {
+      expect(localStorage.loginCourse).toBe(courseId);
+    });
+    And("unauthenticated users shall be redirected to the sign-in page {string}", (_ctx, path: string) => {
+      expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
+    });
   });
 
-  it("shall grant access to whitelisted students", async () => {
-    await auth.signIn("github", { id: "github-user-1", name: "Alice" });
-    const whitelist = [
-      extFactory.createWhitelistEntry({ githubId: "github-user-1" }),
-      extFactory.createWhitelistEntry({ githubId: "github-user-2" }),
-    ];
-
-    const userId = "github-user-1";
-    const isWhitelisted = whitelist.some((w) => w.githubId === userId);
-
-    expect(auth.isAuthenticated()).toBe(true);
-    expect(isWhitelisted).toBe(true);
+  Scenario("Whitelisted student can access private course", ({ Given, And, When, Then }) => {
+    Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+    And("{string} is signed in", signedIn);
+    When("the course is opened", openCourse);
+    Then("the system shall grant access to the course content", granted);
   });
 
-  it("shall deny access to non-whitelisted students", async () => {
-    await auth.signIn("github", { id: "github-user-99", name: "Stranger" });
-    const whitelist = [
-      extFactory.createWhitelistEntry({ githubId: "github-user-1" }),
-    ];
-
-    const userId = "github-user-99";
-    const isWhitelisted = whitelist.some((w) => w.githubId === userId);
-
-    expect(auth.isAuthenticated()).toBe(true);
-    expect(isWhitelisted).toBe(false);
+  Scenario("Non-whitelisted student denied access", ({ Given, And, When, Then }) => {
+    Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+    And("{string} is signed in", signedIn);
+    When("the course is opened", openCourse);
+    Then("the system shall deny access to the course content by sending the student to {string}", (_ctx, path: string) => {
+      expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
+    });
   });
 
-  it("shall deny access by default when whitelist query fails", () => {
-    const queryError = { error: "Connection refused" };
-    const accessGranted = queryError.error ? false : true;
-
-    expect(accessGranted).toBe(false);
-  });
-
-  it("shall grant instructor access regardless of whitelist", async () => {
-    await auth.signIn("github", { id: "instructor-1", name: "Prof Smith" });
-    const session = auth.getSession("instructor-1");
-
-    expect(session).toBeDefined();
-    expect(auth.isAuthenticated()).toBe(true);
+  Scenario("Instructor always has access to their courses", ({ Given, And, When, Then }) => {
+    Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+    And("{string} is signed in", signedIn);
+    When("the course is opened", openCourse);
+    Then("the system shall grant access regardless of whitelist status", granted);
   });
 });

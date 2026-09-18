@@ -12,30 +12,6 @@
 #   includes, so they run nowhere. The packages/svelte/course lo-tree tests cover a copy of
 #   decorateCourseTree that #228 removes.
 
-documentation-only: tests/bdd/features/course/course-loading.feature
-documentation-only: tests/bdd/features/course/course-navigation.feature
-documentation-only: tests/bdd/features/developer/auth-integration.feature
-documentation-only: tests/bdd/features/developer/i18n-localisation.feature
-documentation-only: tests/bdd/features/developer/theme-customisation.feature
-documentation-only: tests/bdd/features/instructor/analytics-calendar.feature
-documentation-only: tests/bdd/features/instructor/analytics-lab.feature
-documentation-only: tests/bdd/features/instructor/course-authoring.feature
-documentation-only: tests/bdd/features/instructor/student-engagement.feature
-documentation-only: tests/bdd/features/instructor/whitelist-management.feature
-documentation-only: tests/bdd/features/live/presence-tracking.feature
-documentation-only: tests/bdd/features/shared/authentication.feature
-documentation-only: tests/bdd/features/shared/error-handling.feature
-documentation-only: tests/bdd/features/shared/offline-resilience.feature
-documentation-only: tests/bdd/features/shared/responsive-layout.feature
-documentation-only: tests/bdd/features/shared/theming.feature
-documentation-only: tests/bdd/features/student/accessibility.feature
-documentation-only: tests/bdd/features/student/course-discovery.feature
-documentation-only: tests/bdd/features/student/lab-interaction.feature
-documentation-only: tests/bdd/features/student/learning-progress.feature
-documentation-only: tests/bdd/features/student/live-presence.feature
-documentation-only: tests/bdd/features/student/search-content.feature
-documentation-only: tests/bdd/features/time/calendar-analytics.feature
-documentation-only: tests/bdd/features/time/lab-analytics.feature
 no-assertion: tests/e2e/accessibility.spec.ts :: course page passes landmark and navigation rules
 skip: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers
 uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-80-percent.test.ts

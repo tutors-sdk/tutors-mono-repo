@@ -1,46 +1,75 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { ExtendedTestDataFactory } from "../../support/extended-fixtures";
+// @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
+import { expect, vi } from "vitest";
+import { themeService } from "../../../../packages/svelte/themes/src/services/themes.svelte.ts";
+import { startLaterSession, startWithNoStoredPreferences } from "../../support/theme.ts";
 
-describe("Shared: Theming", () => {
-  let extFixtures: ExtendedTestDataFactory;
+// `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
+vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
-  beforeEach(() => {
-    extFixtures = new ExtendedTestDataFactory();
-  });
+const feature = await loadFeature("tests/bdd/features/shared/theming.feature");
 
-  it("shall switch between light and dark mode and persist preference", () => {
-    const lightTheme = extFixtures.createThemeConfig({ colorScheme: "light" });
-    expect(lightTheme.colorScheme).toBe("light");
+describeFeature(feature, ({ Scenario }) => {
+  const viewingInLightMode = () => {
+    startWithNoStoredPreferences(themeService);
+    expect(themeService.lightMode.value).toBe("light");
+  };
+  const selectTheme = (_ctx: unknown, name: string) => themeService.setTheme(name);
+  const themeAttributeIs = (_ctx: unknown, expected: string) => {
+    expect(document.documentElement.getAttribute("data-theme")).toBe(expected);
+  };
+  const storedPreferenceIs = (_ctx: unknown, key: string, expected: string) => {
+    expect(localStorage.getItem(key)).toBe(expected);
+  };
 
-    const darkTheme = extFixtures.createThemeConfig({ colorScheme: "dark" });
-    expect(darkTheme.colorScheme).toBe("dark");
-    expect(darkTheme.name).toBeDefined();
-  });
-
-  it("shall apply a Skeleton theme and update colour scheme", () => {
-    const crimson = extFixtures.createThemeConfig({
-      name: "crimson",
-      primaryColor: "#dc2626"
+  Scenario("Switch between light and dark mode", ({ Given, When, Then, And }) => {
+    Given("I am viewing a course in light mode", viewingInLightMode);
+    When("I toggle the dark mode switch", () => themeService.toggleDisplayMode());
+    Then("the interface should switch to {string} mode", (_ctx, mode: string) => {
+      expect(themeService.lightMode.value).toBe(mode);
+      expect(document.documentElement.classList.contains(mode)).toBe(true);
+      expect(document.documentElement.style.colorScheme).toBe(mode);
     });
-
-    expect(crimson.name).toBe("crimson");
-    expect(crimson.primaryColor).toBe("#dc2626");
+    And("the stored {string} preference should be {string}", storedPreferenceIs);
   });
 
-  it("shall render text in dyslexia-friendly font when enabled", () => {
-    const dyslexiaTheme = extFixtures.createThemeConfig({ name: "dyslexia" });
-    expect(dyslexiaTheme.name).toBe("dyslexia");
-
-    const preferences = new Map<string, string>();
-    preferences.set("font", "OpenDyslexic");
-    expect(preferences.get("font")).toBe("OpenDyslexic");
+  Scenario("Apply a Skeleton theme", ({ Given, When, Then, And }) => {
+    Given("the platform offers the themes {string}", (_ctx, names: string) => {
+      startWithNoStoredPreferences(themeService);
+      expect(themeService.themes.map((theme) => theme.name)).toEqual(names.split(", "));
+    });
+    When("I select the {string} theme", selectTheme);
+    Then("the document theme attribute should be {string}", themeAttributeIs);
+    And("the stored {string} preference should be {string}", storedPreferenceIs);
   });
 
-  it("shall switch between compact and expanded card layouts and persist preference", () => {
-    const layoutPreferences = { layout: "expanded" as "compact" | "expanded" };
-    expect(layoutPreferences.layout).toBe("expanded");
+  Scenario("Enable dyslexia-friendly font", ({ Given, When, Then, And }) => {
+    Given("I am viewing a course in light mode", viewingInLightMode);
+    When("I select the {string} theme", selectTheme);
+    Then("the document theme attribute should be {string}", themeAttributeIs);
+    And("the {string} stylesheet should set the base font family to {string}", (_ctx, name: string, fontFamily: string) => {
+      const css = readFileSync(`packages/svelte/themes/src/styles/${name}.css`, "utf8");
+      const block = css.slice(css.indexOf(`[data-theme="${name}"] {`));
+      expect(block.slice(0, block.indexOf("}"))).toContain(`--base-font-family: ${fontFamily};`);
+    });
+    And("a later session should start with the {string} theme", (_ctx, expected: string) => {
+      startLaterSession(themeService);
+      expect(themeService.currentTheme.value).toBe(expected);
+      expect(document.documentElement.getAttribute("data-theme")).toBe(expected);
+    });
+  });
 
-    layoutPreferences.layout = "compact";
-    expect(layoutPreferences.layout).toBe("compact");
+  Scenario("Toggle card layout preference", ({ Given, When, Then, And }) => {
+    Given("I am viewing a course in light mode", viewingInLightMode);
+    When("I toggle the card layout", () => themeService.toggleLayout());
+    Then("the card layout should be {string}", (_ctx, expected: string) => {
+      expect(themeService.layout.value).toBe(expected);
+    });
+    And("the stored {string} preference should be {string}", storedPreferenceIs);
+    And("a later session should start with the {string} card layout", (_ctx, expected: string) => {
+      startLaterSession(themeService);
+      expect(themeService.layout.value).toBe(expected);
+    });
   });
 });

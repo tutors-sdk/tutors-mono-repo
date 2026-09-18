@@ -164,17 +164,54 @@ export function executableFeatureGlobs(root: string = REPO_ROOT): string[] {
   return globs;
 }
 
-export type FeatureFindingKind = "documentation-only" | "no-scenarios";
+/**
+ * Features a steps file binds inside Vitest with vitest-cucumber, which fails the
+ * run when the feature and its steps drift apart. The path must be a literal
+ * relative to the repo root, so this check can read it without running anything.
+ */
+export function boundFeaturePaths(root: string = REPO_ROOT): Set<string> {
+  const bound = new Set<string>();
+  for (const path of findTestFiles(root)) {
+    for (const match of readText(path).matchAll(/\bloadFeature\(\s*["'`]([^"'`$]+\.feature)["'`]/g)) {
+      bound.add(match[1].replace(/^\.\//, ""));
+    }
+  }
+  return bound;
+}
 
-export function lintFeatureFiles(root: string = REPO_ROOT): { kind: FeatureFindingKind; file: string }[] {
+/** EARS keywords are not Gherkin: a parser drops the line, and the scenario passes without its precondition. */
+const DROPPED_STEP = /^\s*(While|Where|If)\s+\S/;
+/** vitest-cucumber leaves a scenario tagged `@ignore` unbound without failing. */
+const IGNORE_TAG = /^\s*(@\S+\s+)*@ignore\b/;
+
+export type FeatureFindingKind = "documentation-only" | "no-scenarios" | "dropped-step" | "ignored-scenario";
+
+export interface FeatureFinding {
+  kind: FeatureFindingKind;
+  file: string;
+  /** The offending line, for findings about one line rather than the whole file. */
+  detail?: string;
+}
+
+export function formatFeatureFinding(finding: FeatureFinding): string {
+  return finding.detail ? `${finding.kind}: ${finding.file} :: ${finding.detail}` : `${finding.kind}: ${finding.file}`;
+}
+
+export function lintFeatureFiles(root: string = REPO_ROOT): FeatureFinding[] {
   const globs = executableFeatureGlobs(root).map(globToRegExp);
+  const bound = boundFeaturePaths(root);
   return walk(root, (name) => name.endsWith(".feature"))
     .map((path) => ({ path, file: toPosix(path, root) }))
     .filter(({ file }) => !file.includes("/fixtures/"))
-    .flatMap(({ path, file }) => {
-      if (!/^\s*Scenario( Outline)?:/m.test(readText(path))) return [{ kind: "no-scenarios" as const, file }];
-      if (!globs.some((glob) => glob.test(file))) return [{ kind: "documentation-only" as const, file }];
-      return [];
+    .flatMap(({ path, file }): FeatureFinding[] => {
+      const text = readText(path);
+      if (!/^\s*Scenario( Outline)?:/m.test(text)) return [{ kind: "no-scenarios", file }];
+      if (!bound.has(file) && !globs.some((glob) => glob.test(file))) return [{ kind: "documentation-only", file }];
+      return text.split(/\r?\n/).flatMap((line): FeatureFinding[] => {
+        if (DROPPED_STEP.test(line)) return [{ kind: "dropped-step", file, detail: line.trim() }];
+        if (IGNORE_TAG.test(line)) return [{ kind: "ignored-scenario", file, detail: line.trim() }];
+        return [];
+      });
     })
     .sort((a, b) => a.file.localeCompare(b.file));
 }

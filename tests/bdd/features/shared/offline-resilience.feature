@@ -5,23 +5,10 @@ Feature: Offline Resilience
   So that I can continue using previously loaded content
 
   @ears-unwanted
-  Scenario: Reconnection after temporary disconnect
-    If the network connection is temporarily lost and restored
-    Then the system shall re-establish WebSocket connections
-    And the presence service shall resume broadcasting
-
-  @ears-state-driven
-  Scenario: Stale data indicator
-    While the system has not received fresh data for an extended period
-    Then the system shall indicate that displayed data may be stale
-
-  @ears-unwanted
   Scenario: Failed API call does not corrupt local state
-    If an API call to Supabase fails
-    Then the system shall retain previously loaded data
-    And the system shall not overwrite valid state with error state
-
-  @ears-state-driven
-  Scenario: Service worker caches static assets
-    While the application has been loaded at least once
-    Then static assets shall be available from the service worker cache
+    Given the reader has loaded the course "web-dev-101" titled "Web Development 101"
+    When the network becomes unavailable
+    And the reader fails to load the course "another-course"
+    Then the reader shall still serve "web-dev-101" titled "Web Development 101" without a network request
+    And the reader shall hold exactly 1 course in its cache
+    And the reader shall still open the topic "Topic 1" of "web-dev-101"

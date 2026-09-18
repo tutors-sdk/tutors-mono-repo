@@ -12,7 +12,7 @@ it can fail and when CI runs it are in the long form,
 | `unit/` | B | Vitest, `vitest.config.ts` | `pnpm exec vitest run tests/unit` |
 | `fuzz/` | B | Vitest, `vitest.config.fuzz.ts` (threads pool) | `pnpm test:fuzz` |
 | `generator/` | C | Vitest + Deno generator | `pnpm exec vitest run tests/generator`, `pnpm check:generator-diff` |
-| `bdd/` | D (planned) | Vitest collects `steps/**/*.steps.ts`; nothing loads `features/**` | `pnpm test:bdd` |
+| `bdd/` | D | Vitest collects `steps/**/*.steps.ts`, each of which loads its `features/**` file through `vitest-cucumber` | `pnpm test:bdd` |
 | `components/` | — | Vitest, no DOM environment | `pnpm exec vitest run tests/components` |
 | `contract/` | Contract | Vitest, with `__snapshots__/` | `pnpm test:contract` |
 | `e2e-stack/` | G | Playwright, `playwright.e2e-stack.config.ts` | `pnpm test:e2e:stack` |
@@ -68,18 +68,26 @@ difference — an unclaimed hunk fails the PR job, and a claim broad enough to h
 change needs the `approve-broad-claim` label. `pnpm check:generator-diff --plant` is the
 self-test that a one-character template change is caught.
 
-### `bdd/` (tier D, planned)
+### `bdd/` (tier D)
 
-`features/` holds 24 Gherkin files with EARS tags across the student, instructor, developer and
-shared personas. **No runner loads them** — all 24 are recorded as `documentation-only` in
-`suite-health/known-findings.txt`. `steps/` holds Vitest suites named after those scenarios,
-using `TestWorld`, `TestDataFactory` and the mock Supabase and realtime clients in `support/`;
-many assert against fixtures rather than driving product code.
+`features/` holds 20 Gherkin files, 73 scenarios, with EARS tags across the student,
+instructor, developer and shared personas. Every one is executable: its file under `steps/`
+loads it with `loadFeature("tests/bdd/features/…")` and binds each scenario with
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/), so the run fails when a scenario
+or a step exists in the feature and not in the steps, or the other way round.
 
-Treat this directory as specification prose plus some unit-level tests until
-[#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) makes the features
-executable. New behaviour is better protected in `unit/`, `fuzz/` or `e2e-stack/`. Tag
-vocabulary: [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md).
+Steps call product code — the model and time libraries, the course, theme, i18n, connect,
+presence and catalogue services — and assert on what it returns, writes or broadcasts. The
+stand-ins are at the edges only: `support/supabase-recorder.ts` for Supabase and realtime,
+`support/runes-stub.ts` and `support/svelte-runes-shim.ts` for `$state` (the root config has no
+Svelte compiler), and a stand-in `fetch` for the course host. `support/course.ts` publishes a
+course as the generator would and loads it through the real `decorateCourseTree`.
+
+Scenarios that need a browser, or describe behaviour the product does not have, are prose in
+[../guides/specifications/](../guides/specifications/README.md), each with the tier that covers
+it or a plain "nothing does". [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
+still owns the rest of the EARS plan: `Rule:` blocks and the structural audit. How to write and
+bind a scenario: [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md).
 
 ### `components/`
 
@@ -135,7 +143,7 @@ it can fail, then against the real repo.
 | L | `performance/` | A client bundle over its ceiling (`bundle-budgets.json`), a Lighthouse median below its floor (`lighthouse.json`), a k6 threshold crossed, memory growing after warm-up, a soak whose late p95 doubled. See [performance/README.md](./performance/README.md) |
 | M | `security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
 | N | `completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
-| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
+| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file that no steps file binds and no cucumber config loads, or one with an EARS keyword Gherkin drops (`While`, `Where`, `If`) or an `@ignore` tag; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
 
 ### `mutation/`
 
@@ -209,7 +217,7 @@ The container check proves it can fail against `conformance/fixtures/faulty-imag
 | `*.fuzz.test.ts` | Vitest (fuzz config only) | `fuzz/course-model.fuzz.test.ts` |
 | `*.journey.spec.ts` | Playwright (`playwright.e2e-stack.config.ts`) | `e2e-stack/journeys/student.journey.spec.ts` |
 | `*.spec.ts` | Playwright only, never Vitest | `e2e/accessibility.spec.ts` |
-| `*.feature` | Nothing today (tier D) | `bdd/features/student/lab-interaction.feature` |
+| `*.feature` | Vitest, through the steps file that loads it (tier D) | `bdd/features/student/lab-interaction.feature` |
 
 A new test file that no config collects fails tier O, so add the file to a directory an existing
 config already covers, or extend the config in the same commit.
