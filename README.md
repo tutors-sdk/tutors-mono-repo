@@ -66,6 +66,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/svelte/app-config` | `@tutors/app-config` | Build-time only: the `vite.config.ts` and `svelte.config.js` every app shares |
 
 **Core services.**
 

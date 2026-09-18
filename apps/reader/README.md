@@ -27,6 +27,7 @@ pnpm build
 - `@tutors/ui` for components
 - `@tutors/themes` for theming
 - `@tutors/i18n` for internationalization
+- `@tutors/app-config` for the shared `vite.config.ts` / `svelte.config.js` (build time only)
 - Skeleton UI for base components
 
 ## Architecture

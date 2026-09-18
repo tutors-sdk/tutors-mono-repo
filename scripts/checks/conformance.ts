@@ -94,6 +94,9 @@ export function repoConfigCompletenessFindings(root: string = REPO_ROOT): string
   const sources = sourceRoots
     .flatMap((dir) => walk(dir, (name) => /\.(ts|js|svelte)$/.test(name) && !/\.(test|spec)\.ts$/.test(name)))
     .filter((path) => !/[\\/](__tests__|tests)[\\/]/.test(path))
+    // Build-time config (the vite.config / svelte.config helpers): read while the
+    // image is built, never by a running pod, so outside the runtime env contract.
+    .filter((path) => !/[\\/]packages[\\/]svelte[\\/]app-config[\\/]/.test(path))
     .map((path) => ({ file: toPosix(path, root), text: readText(path) }));
   const k8sFiles = walk(join(root, "deploy/k8s"), (name) => /\.ya?ml(\.example)?$/.test(name)).map((path) => ({
     file: toPosix(path, root),
