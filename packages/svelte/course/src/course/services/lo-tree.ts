@@ -2,6 +2,7 @@ import { courseProtocol } from "@tutors/runes";
 import { themeService } from "@tutors/themes";
 import {
   allVideoLos,
+  convertLoSummaryToHtml,
   convertLoToHtml,
   createCompanions,
   createWalls,
@@ -105,6 +106,11 @@ export function decorateLoTree(course: Course, lo: Lo) {
     // Convert labs, notes, notebooks & quizzes on demand as can be time consuming to convert all at once.
     // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
     convertLoToHtml(course, lo);
+  } else {
+    // Only the body of those types waits for on demand conversion. The summary is a single
+    // line and its card is on screen as soon as the tree is built, so leaving it as markdown
+    // renders the source - "**bold**" and all - until the Lo itself is opened.
+    convertLoSummaryToHtml(lo);
   }
 
   if (isCompositeLo(lo)) {

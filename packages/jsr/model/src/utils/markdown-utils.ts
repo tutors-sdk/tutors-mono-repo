@@ -103,7 +103,6 @@ export function convertMdToHtml(md: string, codeTheme: string = "ayu-dark"): str
 }
 
 export function convertLabToHtml(course: Course, lab: Lab, protocol: string = "https://") {
-  lab.summary = markdownIt.render(lab.summary);
   const url = lab.route.replace(`/lab/${course.courseId}`, course.courseUrl);
   lab.los?.forEach((step) => {
     if (course.courseUrl) {
@@ -116,7 +115,6 @@ export function convertLabToHtml(course: Course, lab: Lab, protocol: string = "h
 }
 
 export function convertNoteToHtml(course: Course, note: Note, protocol: string = "https://") {
-  note.summary = convertMdToHtml(note.summary);
   const url = note.route.replace(`/note/${course.courseId}`, course.courseUrl);
   if (course.courseUrl) {
     note.contentMd = filter(note.contentMd, url, protocol);
@@ -125,13 +123,25 @@ export function convertNoteToHtml(course: Course, note: Note, protocol: string =
 }
 
 
+/**
+ * Converts an Lo summary - the single line of markdown below the title - to HTML.
+ *
+ * Kept separate from the body conversion because every Lo needs its summary as
+ * HTML the moment the tree is built (cards render it), while the types with
+ * large bodies are converted on demand. Conversion happens in place and is not
+ * idempotent, so this runs exactly once per Lo.
+ */
+export function convertLoSummaryToHtml(lo: Lo, codeTheme: string = "ayu-dark") {
+  if (lo.summary) lo.summary = convertMdToHtml(lo.summary, codeTheme);
+}
+
 export function convertLoToHtml(course: Course, lo: Lo, protocol: string = "https://") {
+  convertLoSummaryToHtml(lo);
   if (lo.type === "lab") {
-    convertLabToHtml(course, lo as Lab);
+    convertLabToHtml(course, lo as Lab, protocol);
   }else if (lo.type == "note") {
-    convertNoteToHtml(course, lo as Note);
+    convertNoteToHtml(course, lo as Note, protocol);
   } else {
-    if (lo.summary) lo.summary = convertMdToHtml(lo.summary);
     if (lo.type === "talk" && lo.frontMatter?.marp) return;
     let md = lo.contentMd;
     if (md) {
