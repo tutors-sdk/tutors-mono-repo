@@ -14,25 +14,15 @@ const fenceTilde = "~~~";
 /**
  * indicesOf  (source lines 175-191)
  *
- * Recursively locates start-indices of `substr` within `str`.
- * Line 182: n += arIndx[arIndx.length - 1] + substr.length
+ * Locates the start-indices of `substr` within `str`; occurrences may overlap.
  */
 function indicesOf(str: string, substr: string): number[] {
   const arIndx: number[] = [];
-  function inner(str: string, substr: string, arIndx: number[]): number[] {
-    let n = str.indexOf(substr);
-    if (n !== -1) {
-      const prev_n = n;
-      if (arIndx.length) {
-        n += arIndx[arIndx.length - 1] + substr.length;
-      }
-      arIndx.push(n);
-      return inner(str.slice(prev_n + 1), substr, arIndx);
-    } else {
-      return arIndx;
-    }
+  if (substr.length === 0) return arIndx;
+  for (let n = str.indexOf(substr); n !== -1; n = str.indexOf(substr, n + 1)) {
+    arIndx.push(n);
   }
-  return inner(str, substr, arIndx);
+  return arIndx;
 }
 
 /**
@@ -387,13 +377,15 @@ describe("indicesOf - recursive offset tracking (mutation #3)", () => {
     expect(result[1]).toBe(2); // Mutant would give 0
   });
 
-  it("handles multi-char substring with consistent results", () => {
-    // Multi-char substrings have a known offset pattern in this algorithm
+  it("returns exact indices for a multi-char substring", () => {
     const str = "foobarfoobarfoo";
     const result = indicesOf(str, "foo");
-    // Algorithm output: [0, 8, 16] (known from tracing)
-    expect(result).toEqual([0, 8, 16]);
-    expect(result).toHaveLength(3);
+    expect(result).toEqual([0, 6, 12]);
+    for (const idx of result) expect(str.slice(idx, idx + 3)).toBe("foo");
+  });
+
+  it("returns no indices for an empty substring", () => {
+    expect(indicesOf("abc", "")).toEqual([]);
   });
 
   it("finds newline characters at correct positions", () => {

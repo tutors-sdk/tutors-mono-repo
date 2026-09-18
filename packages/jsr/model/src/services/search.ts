@@ -160,7 +160,8 @@ export function isValid(str: string): boolean {
 
 /**
  * indicesOf: This method uses the Javascript indexOf method.
- * indexOf is invoked recursively to locate the start indices of an optionally recurring substring within a string.
+ * indexOf is invoked repeatedly to locate the start indices of an optionally recurring substring within a string.
+ * Occurrences may overlap: the search resumes one character after each hit.
  * The method is valid even if the specified substring is empty.
  * Since indexOf is case sensitive then it follows that indicesOf is case sensitive.
  *  Example: str = syeasy and hard synchronized syncsy'
@@ -174,20 +175,11 @@ export function isValid(str: string): boolean {
  */
 function indicesOf(str: string, substr: string): number[] {
   const arIndx: number[] = [];
-  function indicesOf(str: string, substr: string, arIndx: number[]): number[] {
-    let n = str.indexOf(substr);
-    if (n != -1) {
-      const prev_n = n;
-      if (arIndx.length) {
-        n += arIndx[arIndx.length - 1] + substr.length;
-      }
-      arIndx.push(n);
-      return indicesOf(str.slice(prev_n + 1), substr, arIndx);
-    } else {
-      return arIndx;
-    }
+  if (substr.length === 0) return arIndx;
+  for (let n = str.indexOf(substr); n !== -1; n = str.indexOf(substr, n + 1)) {
+    arIndx.push(n);
   }
-  return indicesOf(str, substr, arIndx);
+  return arIndx;
 }
 
 /**
