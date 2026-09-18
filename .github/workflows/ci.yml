@@ -453,12 +453,32 @@ jobs:
           path: .generator-diff/report/
           retention-days: 14
 
+  # Deno tests have no runner config, so this step is what collects them:
+  # tier O (scripts/checks/suite-health.ts) reads `deno test` steps as runners.
+  cli-tests:
+    name: CLI tests (Deno)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+
+      - name: Run create scaffolder tests
+        run: cd packages/jsr/create && deno test test/ --allow-all
+
   # The one check to mark as required in branch protection. A skipped or
   # cancelled job counts as a failure.
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff]
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff, cli-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Every job succeeded

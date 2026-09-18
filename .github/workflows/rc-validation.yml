@@ -139,8 +139,10 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Run gen-lib tests
-        run: cd packages/jsr/gen && deno test test/ --allow-all
+      # packages/jsr/gen has no test/ directory (its tests are Vitest suites under
+      # tests/unit/gen); the create scaffolder holds the repo's Deno tests.
+      - name: Run create scaffolder tests
+        run: cd packages/jsr/create && deno test test/ --allow-all
 
   build-verification:
     name: "Gate 3a: Build Verification"

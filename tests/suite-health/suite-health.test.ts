@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  discoverDenoRunners,
   formatSuiteFinding,
   globToRegExp,
   lintFeatureFiles,
@@ -90,12 +91,20 @@ describe("suite health (runway tier O)", () => {
       ]);
     });
 
-    it("flags test files no runner config collects: outside include, excluded, unmatched by testMatch", () => {
+    it("flags test files no runner collects: outside include, excluded, unmatched by testMatch, no deno test step", () => {
       expect(lintUncollectedTests(resolve(__dirname, "fixtures/runners-root"))).toEqual([
         "uncollected: apps/web/e2e/unmatched.spec.ts",
+        "uncollected: packages/cli/bench/orphan.test.js",
         "uncollected: packages/lib/src/__tests__/orphan.spec.ts",
         "uncollected: tests/e2e/excluded.spec.ts"
       ]);
+    });
+
+    it("reads a workflow's deno test step as a runner, and ignores a commented-out one", () => {
+      const runners = discoverDenoRunners(resolve(__dirname, "fixtures/runners-root"));
+      expect(runners.map((r) => r.config)).toEqual([".github/workflows/ci.yml"]);
+      expect(runners[0].include.some((p) => p.test("packages/cli/test/run.test.js"))).toBe(true);
+      expect(runners[0].include.some((p) => p.test("packages/cli/bench/orphan.test.js"))).toBe(false);
     });
 
     it("refuses a runner config whose include it cannot read statically", () => {
