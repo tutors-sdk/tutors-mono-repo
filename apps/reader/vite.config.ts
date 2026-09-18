@@ -9,6 +9,7 @@ const json = readFileSync(file, 'utf8');
 const pkg = JSON.parse(json);
 
 export default defineConfig({
+  envDir: '../../',
   define: {
     APP_VERSION: JSON.stringify(pkg.version)
   },

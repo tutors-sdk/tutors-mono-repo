@@ -52,7 +52,7 @@ Before starting work on a significant change, please open an issue or comment on
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
 pnpm install
-cp .env.example apps/reader/.env
+cp .env.example .env
 pnpm dev
 ```
 
@@ -61,7 +61,7 @@ Open **http://localhost:5173/course/reference-course**. You should see a rendere
 What just happened:
 
 - `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); a devcontainer that avoids the local install is tracked in [#236](https://github.com/tutors-sdk/tutors-mono-repo/issues/236).
-- The copied `.env` has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- The copied `.env` sits at the repository root and every app reads it: each app's Vite config sets `envDir` there, and its SvelteKit config sets `kit.env.dir` to match, so the `$env` modules resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
 - `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
 - `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.
 
@@ -69,13 +69,9 @@ If any step of this did not work as written, that is a bug in this document. Ple
 
 ### Running the other apps
 
-Each app reads its own `.env`, so copy the example once per app you want to run:
+All four apps read the same root `.env`, so the copy above is the only one needed:
 
 ```bash
-cp .env.example apps/catalogue/.env
-cp .env.example apps/live/.env
-cp .env.example apps/time/.env
-
 pnpm --filter tutors-catalogue dev   # http://localhost:5175
 pnpm --filter tutors-live dev        # http://localhost:5174
 pnpm --filter tutors-time dev        # http://localhost:5176
