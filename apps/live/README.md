@@ -7,7 +7,8 @@ Activity across all Tutors courses, in three layers: **Now** (who is reading thi
 - **Headline stats**: sessions, unique sessions, views, median and p90 session length, active courses, opted-in learners
 - **Heat maps**: service usage by hour of day and day of week, service usage by day, course activity by day
 - **Observations**: automatic cards for spikes, silent services, out-of-term activity and week-on-week drop-off
-- **Live presence**: active sessions and what they are reading, pushed over SSE
+- **Live presence**: a row per open session with its handle, what it is reading and when it was last seen, pushed over SSE
+- **Activity**: per-course last seen, visitors, sessions, how many came back the same day, median and total time on task
 - **Course drill-down**: per-course panels, top labs and topics, service mix
 - Anonymous by design: no identity required, opt-in only for signed-in learners
 - No authentication required to view
@@ -28,6 +29,7 @@ Activity across all Tutors courses, in three layers: **Now** (who is reading thi
 | `GET /api/live/stream` | SSE of `now` snapshots |
 | `GET /api/live/stats?range=today\|7d\|30d&course=` | headline stats, daily series, service mix, top courses |
 | `GET /api/live/heatmap?kind=service\|service-monthly\|course&range=&course=` | a heat map matrix |
+| `GET /api/live/activity?range=&course=` | per-course last seen, visitors, sessions, returning rate and time on task |
 | `GET /api/live/observations?range=` | observation cards |
 | `GET /api/live/courses` | the course filter options |
 

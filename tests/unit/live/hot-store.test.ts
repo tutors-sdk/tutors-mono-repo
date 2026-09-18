@@ -134,6 +134,30 @@ describe.each(adapters)("hot store (%s)", (_name, create) => {
     ]);
   });
 
+  it("lists one row per open session, freshest first, with a handle rather than the token", async () => {
+    const store = create();
+    await apply(store, [
+      { type: "lo.viewed", ts: stamp(0), sid: "2026-09-17.oldtoken", course: "cs101", lo: "/lab-1", loType: "lab" },
+      { type: "lo.viewed", ts: stamp(40), sid: "2026-09-17.newtoken", course: "cs200", lo: "/talk-2", loType: "talk" }
+    ]);
+
+    const { sessions } = await store.now(at(50));
+    expect(sessions.map((session) => [session.course, session.lo, session.idleSec])).toEqual([
+      ["cs200", "/talk-2", 10],
+      ["cs101", "/lab-1", 50]
+    ]);
+    expect(sessions.every((session) => /^[0-9a-f]{6}$/.test(session.handle))).toBe(true);
+    expect(JSON.stringify(sessions)).not.toContain("oldtoken");
+  });
+
+  it("drops a session from the rows as soon as it leaves the window", async () => {
+    const store = create();
+    await apply(store, [{ type: "course.opened", ts: stamp(0), sid: "s1", course: "cs101" }]);
+
+    expect((await store.now(at(30))).sessions).toHaveLength(1);
+    expect((await store.now(at(ACTIVE_WINDOW_MS / 1000 + 1))).sessions).toEqual([]);
+  });
+
   it("ignores an event whose timestamp is not a timestamp", async () => {
     const store = create();
     await apply(store, [{ type: "course.opened", ts: "never", sid: "s1", course: "cs101" } as LiveEvent]);

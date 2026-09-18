@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import type { HeatmapMatrix, NowSnapshot, RangeName, StatsResponse } from "@tutors/live-store";
-  import { fetchHeatmap, fetchNow, fetchStats, subscribeNow } from "$lib/client/live-api";
-  import { count, duration, loLabel } from "$lib/format";
+  import type { ActivityResponse, HeatmapMatrix, NowSnapshot, RangeName, StatsResponse } from "@tutors/live-store";
+  import { fetchActivity, fetchHeatmap, fetchNow, fetchStats, subscribeNow } from "$lib/client/live-api";
+  import { count, duration, loLabel, percent, since } from "$lib/format";
+  import ActiveSessions from "$lib/components/ActiveSessions.svelte";
   import HeatMap from "$lib/components/HeatMap.svelte";
+  import RepeatVisits from "$lib/components/RepeatVisits.svelte";
   import PrivacyNote from "$lib/components/PrivacyNote.svelte";
   import RangeSwitch from "$lib/components/RangeSwitch.svelte";
   import Sparkline from "$lib/components/Sparkline.svelte";
@@ -19,18 +21,26 @@
 
   let range = $state<RangeName>("7d");
   let stats = $state<StatsResponse | null>(null);
+  let activity = $state<ActivityResponse | null>(null);
   let heat = $state<HeatmapMatrix | null>(null);
   let now = $state<NowSnapshot | null>(null);
   let failure = $state<string | null>(null);
 
   const here = $derived(now?.courses.find((entry) => entry.course === courseId) ?? null);
+  const hereSessions = $derived((now?.sessions ?? []).filter((session) => session.course === courseId));
+  const mine = $derived(activity?.courses.find((entry) => entry.course === courseId) ?? null);
   const mix = $derived((stats?.serviceMix ?? []).filter((entry) => entry.touches > 0));
 
   async function load(selected: RangeName, id: string): Promise<void> {
     if (!id) return;
     try {
-      const [nextStats, nextHeat] = await Promise.all([fetchStats(selected, id), fetchHeatmap("service-monthly", selected, id)]);
+      const [nextStats, nextActivity, nextHeat] = await Promise.all([
+        fetchStats(selected, id),
+        fetchActivity(selected, id),
+        fetchHeatmap("service-monthly", selected, id)
+      ]);
       stats = nextStats;
+      activity = nextActivity;
       heat = nextHeat;
       failure = null;
     } catch (error) {
@@ -70,8 +80,10 @@
     <aside class="card preset-outlined-warning-500 p-3 text-sm">The live API did not answer: {failure}.</aside>
   {/if}
 
-  <section class="grid grid-cols-2 gap-3 md:grid-cols-4">
+  <section class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
     <StatTile label="Active now" value={count(here?.active ?? 0)} hint="sessions in the last 2 minutes" live />
+    <StatTile label="Last activity" value={since(mine?.lastSeen)} hint="most recent event on this course" live />
+    <StatTile label="Visitors" value={count(mine?.visitors ?? 0)} hint="{percent(mine?.returningRate ?? 0)} came back same day" />
     <StatTile label="Sessions" value={count(stats?.stats.sessions ?? 0)} hint="completed in range" />
     <StatTile label="Views" value={count(stats?.stats.views ?? 0)} hint="learning objects opened" />
     <StatTile
@@ -79,6 +91,11 @@
       value={duration(stats?.stats.medianSessionSec ?? 0)}
       hint="median · p90 {duration(stats?.stats.p90SessionSec ?? 0)}"
     />
+  </section>
+
+  <section class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+    <ActiveSessions sessions={hereSessions} hideCourse />
+    <RepeatVisits visits={activity?.repeatVisits ?? []} />
   </section>
 
   <section class="grid grid-cols-1 gap-3 lg:grid-cols-2">

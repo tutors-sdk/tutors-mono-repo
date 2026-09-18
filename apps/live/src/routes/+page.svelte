@@ -5,17 +5,19 @@
   import Courses from "@tutors/ui-components/time/Courses.svelte";
   import CoursesGroup from "@tutors/ui-components/time/CoursesGroup.svelte";
   import Students from "@tutors/ui-components/time/Students.svelte";
-  import type { HeatmapMatrix, NowSnapshot, Observation, RangeName, StatsResponse } from "@tutors/live-store";
-  import { fetchCourses, fetchHeatmap, fetchNow, fetchObservations, fetchStats, subscribeNow } from "$lib/client/live-api";
-  import { count, duration } from "$lib/format";
+  import type { ActivityResponse, HeatmapMatrix, NowSnapshot, Observation, RangeName, StatsResponse } from "@tutors/live-store";
+  import { fetchActivity, fetchCourses, fetchHeatmap, fetchNow, fetchObservations, fetchStats, subscribeNow } from "$lib/client/live-api";
+  import { count, duration, percent, since } from "$lib/format";
+  import ActiveSessions from "$lib/components/ActiveSessions.svelte";
+  import CourseActivityTable from "$lib/components/CourseActivityTable.svelte";
   import HeatMap from "$lib/components/HeatMap.svelte";
+  import RepeatVisits from "$lib/components/RepeatVisits.svelte";
   import NowPanel from "$lib/components/NowPanel.svelte";
   import ObservationCards from "$lib/components/ObservationCards.svelte";
   import PrivacyNote from "$lib/components/PrivacyNote.svelte";
   import RangeSwitch from "$lib/components/RangeSwitch.svelte";
   import Sparkline from "$lib/components/Sparkline.svelte";
   import StatTile from "$lib/components/StatTile.svelte";
-  import TopCourses from "$lib/components/TopCourses.svelte";
 
   /**
    * The dashboard, in the three layers the plan asks for: Now from the hot
@@ -29,22 +31,23 @@
   let now = $state<NowSnapshot | null>(null);
   let connected = $state(false);
   let stats = $state<StatsResponse | null>(null);
+  let activity = $state<ActivityResponse | null>(null);
   let serviceHeat = $state<HeatmapMatrix | null>(null);
   let courseHeat = $state<HeatmapMatrix | null>(null);
   let observations = $state<Observation[]>([]);
   let failure = $state<string | null>(null);
 
-  const activeNow = $derived(Object.fromEntries((now?.courses ?? []).map((entry) => [entry.course, entry.active])));
-
   async function loadRange(selected: RangeName, selectedCourse: string | null): Promise<void> {
     try {
-      const [nextStats, nextService, nextCourse, nextObservations] = await Promise.all([
+      const [nextStats, nextActivity, nextService, nextCourse, nextObservations] = await Promise.all([
         fetchStats(selected, selectedCourse),
+        fetchActivity(selected, selectedCourse),
         fetchHeatmap("service", selected, selectedCourse),
         fetchHeatmap("course", selected, selectedCourse),
         fetchObservations(selected)
       ]);
       stats = nextStats;
+      activity = nextActivity;
       serviceHeat = nextService;
       courseHeat = nextCourse;
       observations = nextObservations;
@@ -127,7 +130,8 @@
       value={duration(stats?.stats.medianSessionSec ?? 0)}
       hint="median · p90 {duration(stats?.stats.p90SessionSec ?? 0)}"
     />
-    <StatTile label="Active courses" value={count(stats?.stats.activeCourses ?? 0)} hint="{count(stats?.stats.optedInLearners ?? 0)} opted in" />
+    <StatTile label="Visitors" value={count(activity?.visitors ?? 0)} hint="{percent(activity?.returningRate ?? 0)} came back same day" />
+    <StatTile label="Last activity" value={since(activity?.lastSeen)} hint="{count(stats?.stats.activeCourses ?? 0)} active courses" live />
   </section>
 
   <section class="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -140,17 +144,23 @@
       {/if}
     </div>
     <div class="flex min-w-0 flex-col gap-3">
-      <NowPanel snapshot={now} />
       <section class="card preset-filled-surface-100-900 flex min-w-0 flex-col gap-2 p-4">
         <h2 class="text-base font-semibold">Sessions and views</h2>
         <Sparkline series={stats?.series ?? []} />
       </section>
+      <ObservationCards {observations} />
     </div>
   </section>
 
-  <section class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-    <TopCourses courses={stats?.topCourses ?? []} {activeNow} />
-    <ObservationCards {observations} />
+  <section class="grid grid-cols-1 gap-3 xl:grid-cols-3">
+    <div class="xl:col-span-2 flex min-w-0 flex-col gap-3">
+      <CourseActivityTable {activity} {range} />
+      <ActiveSessions sessions={now?.sessions ?? []} />
+    </div>
+    <div class="flex min-w-0 flex-col gap-3">
+      <RepeatVisits visits={activity?.repeatVisits ?? []} />
+      <NowPanel snapshot={now} />
+    </div>
   </section>
 
   <section class="card preset-filled-surface-100-900 p-4">

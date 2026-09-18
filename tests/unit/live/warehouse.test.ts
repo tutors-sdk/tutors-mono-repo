@@ -14,6 +14,11 @@ import { seed, sessionEvents } from "./fixtures.ts";
 const now = new Date(Date.UTC(2026, 8, 17, 12, 0, 0));
 const range = (fromDaysAgo: number) => ({ from: new Date(now.getTime() - fromDaysAgo * 86_400_000), to: now });
 
+/** An ISO instant `hoursAgo` before the fixed clock. */
+function iso(hoursAgo: number): string {
+  return new Date(now.getTime() - hoursAgo * 3_600_000).toISOString();
+}
+
 function spec(sid: string, course: string, hoursAgo: number, views: { lo: string; loType: string; service?: "lab" | "talk" | "pdf" }[]) {
   return { sid, course, at: new Date(now.getTime() - hoursAgo * 3_600_000), views };
 }
@@ -63,6 +68,22 @@ describe("memory warehouse", () => {
 
     expect(await warehouse.sessions(range(2))).toHaveLength(1);
     expect(await warehouse.sessions(range(0.5))).toHaveLength(0);
+  });
+
+  it("keeps both visits when one token opens the same course twice, as the session table does", async () => {
+    const warehouse = createMemoryWarehouse();
+    const morning = { sid: "t1", course: "cs101", uid: null, startedAt: iso(4), endedAt: iso(3.5), durationSec: 1800 };
+    const afternoon = { sid: "t1", course: "cs101", uid: null, startedAt: iso(2), endedAt: iso(1.5), durationSec: 1800 };
+
+    await warehouse.upsertSession(morning);
+    await warehouse.upsertSession(afternoon);
+    expect(await warehouse.sessions(range(1))).toHaveLength(2);
+
+    // Re-recording the same session replaces it rather than doubling it.
+    await warehouse.upsertSession({ ...afternoon, durationSec: 2400 });
+    const sessions = await warehouse.sessions(range(1));
+    expect(sessions).toHaveLength(2);
+    expect(sessions.map((session) => session.durationSec).sort()).toEqual([1800, 2400]);
   });
 
   it("narrows every query to one course when asked", async () => {

@@ -10,6 +10,7 @@
  */
 
 export type {
+  ActiveSession,
   Bus,
   CourseNow,
   HotStore,
@@ -28,7 +29,7 @@ export { connectPostgres, connectRedis, type RedisClient, type SqlClient } from 
 export { createMemoryBus, resetSharedMemoryBus, sharedMemoryBus } from "./bus/memory.ts";
 export { LIVE_STREAM, createRedisBus, type RedisBusOptions } from "./bus/redis.ts";
 
-export { ACTIVE_WINDOW_MS, SERVICE_WINDOW_MS, snapshotOf, type Presence, type Touch } from "./hot/window.ts";
+export { ACTIVE_WINDOW_MS, SERVICE_WINDOW_MS, sessionHandle, snapshotOf, type Presence, type Touch } from "./hot/window.ts";
 export { createMemoryHotStore } from "./hot/memory.ts";
 export { createValkeyHotStore } from "./hot/valkey.ts";
 
@@ -78,7 +79,17 @@ export {
   type TermWindow
 } from "./observations.ts";
 
-export { coursesFor, heatmapFor, observationsFor, statsFor, type StatsResponse } from "./read.ts";
+export {
+  activityReport,
+  courseActivity,
+  repeatVisits,
+  sessionsPerTokenDay,
+  type ActivityReport,
+  type CourseActivity,
+  type RepeatVisits
+} from "./activity.ts";
+
+export { activityFor, coursesFor, heatmapFor, observationsFor, statsFor, type ActivityResponse, type StatsResponse } from "./read.ts";
 
 export {
   LIVE_EVENTS_CORS_HEADERS,

@@ -1,5 +1,5 @@
 import type { Service } from "@tutors/live-events";
-import type { CourseNow, NowSnapshot, ServiceCount } from "../types.ts";
+import type { ActiveSession, CourseNow, NowSnapshot, ServiceCount } from "../types.ts";
 
 /**
  * Presence is a windowed view, not a running total: a session is "active now"
@@ -29,6 +29,22 @@ export interface Touch {
   at: number;
 }
 
+/**
+ * A short, stable label for a session token.
+ *
+ * FNV-1a rather than a cryptographic hash: the token it labels is already a
+ * random value that is thrown away every night, so this only has to be stable
+ * within a page and short enough to read.
+ */
+export function sessionHandle(sid: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < sid.length; i++) {
+    hash ^= sid.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0").slice(0, 6);
+}
+
 /** Builds the snapshot the `now` endpoint returns from the raw window contents. */
 export function snapshotOf(presences: Presence[], touches: Touch[], at: Date): NowSnapshot {
   const cutoff = at.getTime() - ACTIVE_WINDOW_MS;
@@ -52,10 +68,21 @@ export function snapshotOf(presences: Presence[], touches: Touch[], at: Date): N
   const serviceCutoff = at.getTime() - SERVICE_WINDOW_MS;
   const services = countServices(touches.filter((touch) => touch.at >= serviceCutoff));
 
+  const sessions: ActiveSession[] = live
+    .map((presence) => ({
+      handle: sessionHandle(presence.sid),
+      course: presence.course,
+      ...(presence.lo ? { lo: presence.lo } : {}),
+      lastSeen: new Date(presence.at).toISOString(),
+      idleSec: Math.max(0, Math.round((at.getTime() - presence.at) / 1000))
+    }))
+    .sort((a, b) => a.idleSec - b.idleSec || a.handle.localeCompare(b.handle));
+
   return {
     activeSessions: new Set(live.map((presence) => presence.sid)).size,
     courses,
     services,
+    sessions,
     updatedAt: at.toISOString()
   };
 }

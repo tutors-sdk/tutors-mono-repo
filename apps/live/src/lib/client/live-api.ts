@@ -1,4 +1,4 @@
-import type { HeatmapKind, HeatmapMatrix, NowSnapshot, Observation, RangeName, StatsResponse } from "@tutors/live-store";
+import type { ActivityResponse, HeatmapKind, HeatmapMatrix, NowSnapshot, Observation, RangeName, StatsResponse } from "@tutors/live-store";
 
 /**
  * The dashboard's view of `/api/live/*`.
@@ -29,6 +29,10 @@ export function fetchNow(fetcher: Fetcher = fetch): Promise<NowSnapshot> {
 
 export function fetchStats(range: RangeName, course: string | null, fetcher: Fetcher = fetch): Promise<StatsResponse> {
   return read<StatsResponse>(`/api/live/stats${query({ range, course })}`, fetcher);
+}
+
+export function fetchActivity(range: RangeName, course: string | null, fetcher: Fetcher = fetch): Promise<ActivityResponse> {
+  return read<ActivityResponse>(`/api/live/activity${query({ range, course })}`, fetcher);
 }
 
 export function fetchHeatmap(kind: HeatmapKind, range: RangeName, course: string | null, fetcher: Fetcher = fetch): Promise<HeatmapMatrix> {

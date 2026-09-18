@@ -20,7 +20,12 @@ test.describe("Live App Smoke Tests", () => {
     await expect(page.getByRole("heading", { name: "Tutors Live", level: 1 })).toBeVisible();
     await expect(page.getByRole("group", { name: "Time range" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Active now" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Top courses" })).toBeVisible();
+    // Exact: the heat map beside it is "Course activity by day", and Playwright
+    // matches an accessible name by substring unless told otherwise.
+    await expect(page.getByRole("heading", { name: "Course activity", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Course activity by day", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sessions open now" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Visits per day" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Observations" })).toBeVisible();
     await expect(page.getByText("Anonymous by design.")).toBeVisible();
   });
@@ -50,11 +55,29 @@ test.describe("Live App Smoke Tests", () => {
     expect(accepted.status()).toBe(202);
     expect(await accepted.json()).toEqual({ accepted: 3, rejected: 0 });
 
+    // `now` is cached briefly, so presence is eventually consistent for a poller;
+    // the SSE stream is the path that is not.
+    await expect
+      .poll(async () => ((await (await request.get("/api/live/now")).json()) as { courses: { course: string }[] }).courses.map((e) => e.course))
+      .toContain(course);
+
     const now = await (await request.get("/api/live/now")).json();
-    expect(now.courses.map((entry: { course: string }) => entry.course)).toContain(course);
+    // The session shows as a row with a handle, never with the token itself.
+    const row = now.sessions.find((entry: { course: string }) => entry.course === course);
+    expect(row.handle).toMatch(/^[0-9a-f]{6}$/);
+    expect(JSON.stringify(now)).not.toContain(sid);
+
+    await expect
+      .poll(async () => {
+        const activity = await (await request.get("/api/live/activity?range=today")).json();
+        return activity.courses.find((entry: { course: string }) => entry.course === course)?.activeNow ?? 0;
+      })
+      .toBeGreaterThan(0);
 
     await page.goto("/");
-    await expect(page.getByRole("link", { name: course })).toBeVisible();
+    // The course shows in more than one panel - the activity table and the
+    // session rows - so this asserts it arrived, not where it landed.
+    await expect(page.getByRole("link", { name: course }).first()).toBeVisible();
   });
 
   test("the ingest endpoint refuses a batch it cannot believe", async ({ request }) => {
@@ -82,7 +105,14 @@ test.describe("Live App Smoke Tests", () => {
     const observations = await (await request.get("/api/live/observations?range=7d")).json();
     expect(Array.isArray(observations.observations)).toBe(true);
 
+    const activity = await (await request.get("/api/live/activity?range=7d")).json();
+    expect(activity).toMatchObject({ range: "7d", course: null });
+    expect(Array.isArray(activity.courses)).toBe(true);
+    expect(Array.isArray(activity.repeatVisits)).toBe(true);
+    expect(activity.returningRate).toBeGreaterThanOrEqual(0);
+
     expect((await request.get("/api/live/heatmap?kind=weather&range=7d")).status()).toBe(400);
     expect((await request.get("/api/live/stats?range=forever")).status()).toBe(400);
+    expect((await request.get("/api/live/activity?range=forever")).status()).toBe(400);
   });
 });

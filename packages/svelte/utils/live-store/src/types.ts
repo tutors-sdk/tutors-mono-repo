@@ -26,7 +26,26 @@ export interface NowSnapshot {
   activeSessions: number;
   courses: CourseNow[];
   services: ServiceCount[];
+  /** One row per active session, most recently seen first. */
+  sessions: ActiveSession[];
   updatedAt: string;
+}
+
+/**
+ * One session that is open right now.
+ *
+ * It carries a `handle` rather than the session token: the token is already
+ * anonymous and rotates daily, but there is no reason for a public page to
+ * echo it, and a short derived label distinguishes rows just as well.
+ */
+export interface ActiveSession {
+  handle: string;
+  course: string;
+  /** What it is reading, when the session has said. */
+  lo?: string;
+  lastSeen: string;
+  /** Seconds since the last event, so the UI need not diff clocks. */
+  idleSec: number;
 }
 
 export interface CourseNow {

@@ -126,7 +126,9 @@ export function courseActivityHeatmap(range: Range, hourlySessions: HourlySessio
 
   return {
     kind: "course",
-    title: "Course activity",
+    // "by day" rather than plain "Course activity": the dashboard also carries a
+    // table of the same name, and two identical headings on one page help nobody.
+    title: "Course activity by day",
     x: days,
     y: courses,
     cells,

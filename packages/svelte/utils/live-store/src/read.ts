@@ -17,8 +17,9 @@ import {
   type SeriesPoint,
   type ServiceMixEntry
 } from "./metrics.ts";
+import { activityReport, type ActivityReport } from "./activity.ts";
 import { observe, type Observation, type TermWindow } from "./observations.ts";
-import type { LoTotals, Warehouse } from "./types.ts";
+import type { HotStore, LoTotals, Warehouse } from "./types.ts";
 
 /**
  * The read model behind `/api/live/*`.
@@ -103,6 +104,49 @@ export async function observationsFor(
 
   const [hourlySessions, hourly] = await Promise.all([warehouse.hourlySessions(lookback), warehouse.hourly(serviceWindow)]);
   return observe({ hourlySessions, hourly, now, options: { silentServiceDays, terms } });
+}
+
+export interface ActivityResponse extends ActivityReport {
+  range: RangeName;
+  course: string | null;
+  generatedAt: string;
+}
+
+/**
+ * The activity panel: per-course last seen, sessions, visitors and how many
+ * came back, plus the repeat-visit histogram.
+ *
+ * Presence is folded in from the hot store so "last seen" is not stuck at the
+ * last session that ended while somebody is still reading.
+ */
+export async function activityFor(
+  warehouse: Warehouse,
+  hot: HotStore,
+  name: RangeName,
+  course: string | null,
+  now: Date = new Date()
+): Promise<ActivityResponse> {
+  const range = rangeFor(name, now, course ?? undefined);
+  const [sessions, hourly, snapshot] = await Promise.all([warehouse.sessions(range), warehouse.hourly(range), hot.now(now)]);
+
+  const presence: Record<string, number> = {};
+  for (const entry of snapshot.courses) {
+    if (course === null || entry.course === course) presence[entry.course] = entry.active;
+  }
+
+  const report = activityReport(sessions, hourly, presence);
+  const liveLastSeen = snapshot.sessions.length > 0 ? snapshot.updatedAt : null;
+
+  return {
+    ...report,
+    lastSeen: report.lastSeen && liveLastSeen ? (report.lastSeen > liveLastSeen ? report.lastSeen : liveLastSeen) : (report.lastSeen ?? liveLastSeen),
+    courses: report.courses.map((entry) =>
+      entry.activeNow > 0 ? { ...entry, lastSeen: entry.lastSeen && entry.lastSeen > snapshot.updatedAt ? entry.lastSeen : snapshot.updatedAt } : entry
+    ),
+    range: name,
+    course,
+    generatedAt: now.toISOString()
+  };
 }
 
 /** The courses the filter offers, over the widest range the dashboard shows. */

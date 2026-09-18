@@ -74,10 +74,21 @@ Sessions still open do not appear in `live_sessions` until the consumer's sweepe
 | `GET /api/live/stream` | SSE of `now` snapshots, driven by the bus and coalesced to one per second | - |
 | `GET /api/live/stats?range=today\|7d\|30d&course=` | headline stats, daily series, service mix, top courses, and top learning objects when a course is selected | 30s |
 | `GET /api/live/heatmap?kind=service\|service-monthly\|course&range=&course=` | `{ x, y, cells, max, scale, unit }` | 5min |
+| `GET /api/live/activity?range=&course=` | per-course last seen, sessions, visitors, returning rate, median and total time, plus the repeat-visit histogram | 30s |
 | `GET /api/live/observations?range=` | observation cards | 5min |
 | `GET /api/live/courses` | the course filter's options | 5min |
 
 Heat maps bucket in local time: "Tuesday at 14:00" means the hour the learner was in.
+
+### What "visitor" and "came back" mean
+
+`/api/live/now` lists one row per open session, and `/api/live/activity` counts visitors. Both are bounded by the token rotating every night, so the words are used precisely:
+
+- **Session handle** - six hex characters derived from the day's token, not the token. It distinguishes rows on a page and means nothing tomorrow. The token itself is never sent to a browser.
+- **Visitor** - a distinct token-day. Two visits on one day are one visitor; the same person on two days is two, and nothing can tell that they were the same person.
+- **Came back** - the share of sessions belonging to a token that opened the course more than once *on the same day*. It is the only repeat-visit number this model can produce, and the UI says so under the table rather than leaving the heading to imply more.
+
+Answering "how many times has this learner logged in this week" would mean a token that survives the night, which is the one guarantee the design is built around. If that trade is ever wanted, it is a change to section 10 and to the footer, not a new query.
 
 ## Observations
 

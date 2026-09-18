@@ -21,6 +21,35 @@ export function shortDay(day: string): string {
   return date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 }
 
+/**
+ * How long ago an instant was, in the coarsest unit that is still useful.
+ *
+ * Anything older than a week gets a date instead: "9 days ago" is harder to
+ * place than "9 Sep".
+ */
+export function since(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return "never";
+  const at = Date.parse(iso);
+  if (Number.isNaN(at)) return "never";
+
+  const seconds = Math.max(0, Math.round((now.getTime() - at) / 1000));
+  if (seconds < 10) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days <= 7) return `${days}d ago`;
+  return new Date(at).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/** A fraction as a whole-number percentage. */
+export function percent(fraction: number): string {
+  if (!Number.isFinite(fraction) || fraction <= 0) return "0%";
+  return `${Math.round(fraction * 100)}%`;
+}
+
 /** The last segment of a learning object route, which is what identifies it to a reader. */
 export function loLabel(route: string): string {
   const parts = route.split("/").filter(Boolean);

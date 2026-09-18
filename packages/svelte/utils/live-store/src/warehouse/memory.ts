@@ -27,7 +27,13 @@ export function createMemoryWarehouse(options: MemoryWarehouseOptions = {}): War
   const retentionDays = options.retentionDays ?? 90;
   const maxEvents = options.maxEvents ?? 200_000;
   let events: LiveEvent[] = [];
-  const sessionsBySid = new Map<string, SessionRow>();
+  /**
+   * Keyed the same way `live_sessions` is: a token can open the same course
+   * twice in a day, and keying on the token alone would silently drop the
+   * second visit - which is the whole of the "came back" metric.
+   */
+  const sessionsByKey = new Map<string, SessionRow>();
+  const sessionKey = (session: SessionRow) => `${session.sid}|${session.course}|${session.startedAt}`;
 
   const inRange = (ts: string, range: Range) => {
     const at = Date.parse(ts);
@@ -47,7 +53,7 @@ export function createMemoryWarehouse(options: MemoryWarehouseOptions = {}): War
     },
 
     async upsertSession(session: SessionRow): Promise<void> {
-      sessionsBySid.set(session.sid, session);
+      sessionsByKey.set(sessionKey(session), session);
     },
 
     async hourly(range: Range): Promise<HourlyRow[]> {
@@ -85,7 +91,7 @@ export function createMemoryWarehouse(options: MemoryWarehouseOptions = {}): War
     },
 
     async sessions(range: Range): Promise<SessionRow[]> {
-      return [...sessionsBySid.values()]
+      return [...sessionsByKey.values()]
         .filter((session) => {
           if (range.course !== undefined && session.course !== range.course) return false;
           // A session counts in a range it overlaps, not only one it started in.
@@ -122,10 +128,10 @@ export function createMemoryWarehouse(options: MemoryWarehouseOptions = {}): War
         }
         return event;
       });
-      for (const [sid, session] of sessionsBySid) {
+      for (const [key, session] of sessionsByKey) {
         if (session.uid === uid) {
           purged += 1;
-          sessionsBySid.set(sid, { ...session, uid: null });
+          sessionsByKey.set(key, { ...session, uid: null });
         }
       }
       return purged;
@@ -133,7 +139,7 @@ export function createMemoryWarehouse(options: MemoryWarehouseOptions = {}): War
 
     async close(): Promise<void> {
       events = [];
-      sessionsBySid.clear();
+      sessionsByKey.clear();
     }
   };
 }
