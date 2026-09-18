@@ -106,6 +106,11 @@ describe("security contracts (runway tier M)", () => {
       expect(csrfConfigFindings(file, readText(join(REPO_ROOT, file)))).toEqual([]);
     });
 
+    it("the shared config the apps build on keeps the check on too", () => {
+      const file = "packages/svelte/app-config/src/svelte.js";
+      expect(csrfConfigFindings(file, readText(join(REPO_ROOT, file)))).toEqual([]);
+    });
+
     it("discovers mutating endpoints and form actions in every export style", () => {
       expect(routeIdFromFile("(course-reader)/course/[courseid]/+server.ts")).toBe("/course/[courseid]");
       expect(routeIdFromFile("+server.ts")).toBe("/");
