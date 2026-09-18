@@ -118,6 +118,17 @@ function isPlainObject(val: unknown): val is Record<string, unknown> {
   );
 }
 
+/**
+ * An error-shaped object (Supabase returns `{ message, code, details, hint }`) carries its
+ * text in `message`, which the entry's own `message` would overwrite. Keep it as `error`,
+ * the key an Error instance is logged under.
+ */
+function keepErrorText(context: Record<string, unknown>): Record<string, unknown> {
+  if (!("message" in context)) return context;
+  const { message, ...rest } = context;
+  return "error" in rest ? { ...rest, errorMessage: message } : { ...rest, error: message };
+}
+
 function normalizeArgs(args: unknown[]): {
   message: string;
   context: Record<string, unknown>;
@@ -127,7 +138,7 @@ function normalizeArgs(args: unknown[]): {
   }
 
   if (typeof args[0] === "string" && args.length >= 2 && isPlainObject(args[1])) {
-    return { message: args[0], context: args[1] };
+    return { message: args[0], context: keepErrorText(args[1]) };
   }
 
   if (typeof args[0] === "string" && args.length >= 2 && args[1] instanceof Error) {
