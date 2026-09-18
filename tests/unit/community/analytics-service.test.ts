@@ -23,7 +23,7 @@ vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () =>
   supabase: {}
 }));
 
-vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
+vi.mock("../../../packages/svelte/logger/src/index.ts", () => ({
   default: {
     error: vi.fn(),
     debug: vi.fn(),
@@ -34,7 +34,7 @@ vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
 }));
 
 import { analyticsService } from "../../../packages/svelte/community/src/services/analytics.svelte.ts";
-import log from "../../../packages/svelte/utils/logger/src/index.ts";
+import log from "../../../packages/svelte/logger/src/index.ts";
 
 function makeCourse(overrides: Record<string, unknown> = {}) {
   return {

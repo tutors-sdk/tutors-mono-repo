@@ -5,8 +5,8 @@ import {
   logRequestError,
   requestIdFrom,
   levelForStatus,
-} from "../../../packages/svelte/utils/logger/src/index.ts";
-import type { LogEntry } from "../../../packages/svelte/utils/logger/src/types.ts";
+} from "../../../packages/svelte/logger/src/index.ts";
+import type { LogEntry } from "../../../packages/svelte/logger/src/types.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 

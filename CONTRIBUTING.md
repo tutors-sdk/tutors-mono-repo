@@ -22,9 +22,9 @@ Contributions are not limited to code. Here are some ways you can help:
 |------|----------|----------|
 | **Code** | Bug fixes, features, refactoring | Developers familiar with Svelte/TypeScript |
 | **Documentation** | Guides, API docs, README improvements | Writers, new contributors learning the codebase |
-| **Translation** | Adding new locales to `packages/svelte/utils/i18n` | Multilingual contributors |
+| **Translation** | Adding new locales to `packages/svelte/i18n` | Multilingual contributors |
 | **Testing** | Writing tests, improving coverage, E2E scenarios | QA-focused contributors |
-| **Accessibility** | Auditing and improving a11y in `packages/svelte/utils/a11y` | UX and accessibility specialists |
+| **Accessibility** | Auditing and improving a11y in `packages/svelte/a11y` | UX and accessibility specialists |
 | **Bug Reports** | Filing detailed, reproducible issues | Anyone using Tutors |
 | **Design** | UI/UX improvements, visual regression | Designers and frontend developers |
 
@@ -213,7 +213,7 @@ tutors-mono-repo/
 │       ├── ui-primitives/   # Base UI components
 │       ├── ui-navigators/   # Navigation components
 │       ├── ui-components/   # Domain UI components
-│       └── utils/           # logger, metrics, a11y, i18n, rbac, privacy, tour
+│       └── logger/, metrics/, a11y/, i18n/, rbac/, privacy/, tour/   # Utilities
 ├── docs/                    # Walkthrough, containers, privacy, data inventory
 ├── guides/                  # Testing, EARS, RBAC, release strategy
 └── tests/                   # Test suites

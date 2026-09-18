@@ -18,8 +18,8 @@ import {
   logRequestError,
   setAppName,
   type LogEntry
-} from "../../packages/svelte/utils/logger/src/index.ts";
-import { metricsHandle, metricsRegistry } from "../../packages/svelte/utils/metrics/src/index.ts";
+} from "../../packages/svelte/logger/src/index.ts";
+import { metricsHandle, metricsRegistry } from "../../packages/svelte/metrics/src/index.ts";
 
 const APPS = ["reader", "catalogue", "live", "time"];
 const ALERTS = readText(join(REPO_ROOT, "observability/grafana/provisioning/alerting/alerts.yml"));

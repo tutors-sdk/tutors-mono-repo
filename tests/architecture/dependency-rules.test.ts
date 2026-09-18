@@ -10,11 +10,11 @@ const fixture = (path: string) => resolve(FIXTURE, path);
 /** Stand-ins for the workspace package names the fixture files import. */
 const FIXTURE_ALIASES = {
   "@tutors/tutors-model-lib": fixture("packages/jsr/model/src/index.ts"),
-  "@tutors/logger": fixture("packages/svelte/utils/logger/src/index.ts"),
+  "@tutors/logger": fixture("packages/svelte/logger/src/index.ts"),
   "@tutors/runes": fixture("packages/svelte/runes/src/index.ts"),
   "@tutors/themes": fixture("packages/svelte/themes/src/index.ts"),
   "@tutors/connect": fixture("packages/svelte/connect/src/index.ts"),
-  "@tutors/rbac": fixture("packages/svelte/utils/rbac/src/index.ts"),
+  "@tutors/rbac": fixture("packages/svelte/rbac/src/index.ts"),
   "@tutors/ui-primitives": fixture("packages/svelte/ui-primitives/src/index.ts"),
   "@tutors/ui-navigators": fixture("packages/svelte/ui-navigators/src/index.ts"),
   "@tutors/ui-components": fixture("packages/svelte/ui-components/src/index.ts"),
@@ -42,7 +42,7 @@ describe("architecture rules (runway tier A)", () => {
       ["no-app-to-app", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "packages/svelte/community/src/relative.ts", "packages/svelte/runes/src/index.ts"],
-      ["no-cross-package-cycle", "packages/svelte/connect/src/index.ts", "packages/svelte/utils/rbac/src/index.ts"]
+      ["no-cross-package-cycle", "packages/svelte/connect/src/index.ts", "packages/svelte/rbac/src/index.ts"]
     ])("%s catches %s -> %s", (rule, from, to) => {
       expect(violations).toContain(`${rule}: ${from} -> ${to}`);
     });

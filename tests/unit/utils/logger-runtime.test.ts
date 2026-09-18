@@ -10,9 +10,9 @@ import {
   isLogLevel,
   LOG_LEVELS,
   logServiceStart,
-} from "../../../packages/svelte/utils/logger/src/index.ts";
-import type { LogEntry } from "../../../packages/svelte/utils/logger/src/types.ts";
-import { formatPretty } from "../../../packages/svelte/utils/logger/src/formatter.ts";
+} from "../../../packages/svelte/logger/src/index.ts";
+import type { LogEntry } from "../../../packages/svelte/logger/src/types.ts";
+import { formatPretty } from "../../../packages/svelte/logger/src/formatter.ts";
 
 function capture(overrides: Record<string, unknown> = {}) {
   const entries: LogEntry[] = [];

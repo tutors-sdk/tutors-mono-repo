@@ -158,7 +158,7 @@ This is also why `pnpm dev` builds the UI packages before starting the reader. `
 | How `tutors.json` becomes a tree | `course/src/course/services/lo-tree.ts` and the helpers in `packages/jsr/model/src/utils/` |
 | The fields a learning object has | `packages/jsr/model/src/types/learning-objects.ts` |
 | The top bar, breadcrumbs or footer | `ui-navigators/src/MainNavigator.svelte`, `SecondaryNavigator.svelte`, `footers/Footer.svelte` |
-| Any visible string | `packages/svelte/utils/i18n/src/messages/en.ts`, then the other five locales |
+| Any visible string | `packages/svelte/i18n/src/messages/en.ts`, then the other five locales |
 | A theme, or a new one | `themes/src/styles/`, registered in `themes/src/services/themes.svelte.ts` |
 | What the reader does on first load | `apps/reader/src/routes/+layout.svelte` and `(course-reader)/+layout.svelte` |
 

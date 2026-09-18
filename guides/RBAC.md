@@ -117,7 +117,7 @@ When a course has auth level >= 1 and a whitelist, the system checks access on c
 
 ### Package: `@tutors/rbac`
 
-Located at `packages/svelte/utils/rbac/`. Contains:
+Located at `packages/svelte/rbac/`. Contains:
 
 | File | Purpose |
 |------|---------|
@@ -166,7 +166,7 @@ Cards/Units/Wall call rbacService.isLoLocked + isEducator to filter visible cont
 
 ## Supabase Setup
 
-The `tutors_content_locks` table must be created in your Supabase project. Run the SQL in `packages/svelte/utils/rbac/sql/002_content_locks.sql`:
+The `tutors_content_locks` table must be created in your Supabase project. Run the SQL in `packages/svelte/rbac/sql/002_content_locks.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS tutors_content_locks (
