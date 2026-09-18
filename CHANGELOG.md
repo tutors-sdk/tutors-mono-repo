@@ -8,6 +8,13 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.2 (2026-09)
+
+#### Fixes
+
+- Card summaries: markdown in the summary line of a lab, note, notebook or quiz now renders on the card. Summary conversion was deferred along with the body for these types, so a summary written as `**bold** intro` showed its own source until the learning object was opened (PR #263)
+- Translations: accents and umlauts restored across the German, Spanish, French and Italian messages — `oeffnen` is again `öffnen` (PR #259)
+
 ### v16.2.1 (2026-09)
 
 #### Features
@@ -248,6 +255,13 @@
 
 Cross-cutting changes that land in every application at once, rather than in
 any single one. Versioned with the monorepo.
+
+### v16.2.2 (2026-09)
+
+#### Chores
+
+- Testing guides rewritten (`guides/TESTING-OVERVIEW.md`, `guides/TESTING.md`, `tests/TESTING.md`), and the two nightly CI jobs left broken by the runway merges now pass; the broken nightly E2E job was dropped (PR #262)
+- E2E accessibility run settles the page before the axe audit, removing a flaky colour-contrast failure (PR #257)
 
 ### v16.2.0 (2026-09)
 
