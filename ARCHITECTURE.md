@@ -181,6 +181,7 @@ tutors-mono-repo/
 │       ├── ui-primitives/      # @tutors/ui-primitives
 │       ├── ui-navigators/      # @tutors/ui-navigators
 │       ├── ui-components/      # @tutors/ui-components
+│       ├── app-config/         # @tutors/app-config (shared vite/svelte build config)
 │       └── utils/              # Utility packages
 │           ├── logger/         # @tutors/logger
 │           ├── a11y/           # @tutors/a11y
@@ -1806,18 +1807,21 @@ pnpm build
 # Outputs to build/
 ```
 
-**Adapter Configuration** (`svelte.config.js`):
+**Build Configuration** (`vite.config.ts`, `svelte.config.js`):
+
+Every app builds on the shared helpers in `@tutors/app-config` (`packages/svelte/app-config`) and overrides only what is unique to it:
 
 ```javascript
-import adapter from "@sveltejs/adapter-auto";
+// vite.config.ts
+import { createViteConfig } from "@tutors/app-config/vite";
+export default createViteConfig(import.meta.url /*, { ...vite overrides } */);
 
-export default {
-  kit: {
-    adapter: adapter()
-    // Auto-detects Netlify, Vercel, Cloudflare
-  }
-};
+// svelte.config.js
+import { createSvelteConfig } from "@tutors/app-config/svelte";
+export default createSvelteConfig(/* { kit: { ...overrides } } */);
 ```
+
+`createViteConfig` sets `APP_VERSION` from the app's `package.json`, the Tailwind and SvelteKit plugins, and the `ssr.noExternal` list. `createSvelteConfig` picks the adapter: `adapter-auto` (detects Netlify, Vercel, Cloudflare) by default, `adapter-node` when `SVELTEKIT_ADAPTER=node`, which is what the container image sets.
 
 **Environment Variables** (production):
 
