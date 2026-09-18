@@ -1,6 +1,7 @@
 import { currentCourse, isEducator } from "@tutors/runes";
 import { courseService } from "@tutors/course/course";
 import { rbacService } from "@tutors/rbac";
+import type { Lo } from "@tutors/tutors-model-lib";
 import { generateLlms } from "./llms";
 
 export const ssr = false;
@@ -15,7 +16,7 @@ export const load = async ({ params, fetch }) => {
 
   const visibility = course.hasEnrollment && !isEducator.value
     ? {
-        isVisible: (lo) => rbacService.isLoVisibleToStudent(lo),
+        isVisible: (lo: Lo) => rbacService.isLoVisibleToStudent(lo),
         hideCourseWideLinks: rbacService.hasActiveLocks(),
       }
     : undefined;
