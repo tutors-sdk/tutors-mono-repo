@@ -6,7 +6,7 @@ import { MockI18nProvider } from "../../bdd/support/extended-mocks";
 /**
  * Internationalization (i18n) tests via MockI18nProvider.
  *
- * The i18n module at packages/svelte/utils/i18n/src/index.ts provides
+ * The i18n module at packages/svelte/i18n/src/index.ts provides
  * locale-based message translation. These tests validate locale switching,
  * fallback behaviour, and message extension.
  */

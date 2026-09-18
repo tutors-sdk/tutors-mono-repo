@@ -6,7 +6,7 @@ vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", async
   return { supabase: new MockSupabaseClient() };
 });
 
-vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
+vi.mock("../../../packages/svelte/logger/src/index.ts", () => ({
   default: {
     error: vi.fn(),
     debug: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
 
 import { supabase } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { catalogueService } from "../../../packages/svelte/community/src/services/catalogue.ts";
-import log from "../../../packages/svelte/utils/logger/src/index.ts";
+import log from "../../../packages/svelte/logger/src/index.ts";
 
 const mockClient = supabase as unknown as MockSupabaseClient;
 

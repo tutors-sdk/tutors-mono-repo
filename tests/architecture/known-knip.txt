@@ -28,7 +28,7 @@ devDependencies: packages/svelte/ui-navigators/package.json: @iconify/svelte
 # @sveltejs/kit used by packages that rely on the consuming app providing it (peer dependency).
 # gen-lib is imported through a Vitest alias rather than a declared dependency.
 unlisted: packages/svelte/course/src/ambient.d.ts: @sveltejs/kit
-unlisted: packages/svelte/utils/metrics/src/middleware.ts: @sveltejs/kit
+unlisted: packages/svelte/metrics/src/middleware.ts: @sveltejs/kit
 unlisted: tests/contract/gen-lib-api.test.ts: @tutors/tutors-gen-lib
 
 # packages/svelte/course __tests__ import a path that does not exist; the root Vitest

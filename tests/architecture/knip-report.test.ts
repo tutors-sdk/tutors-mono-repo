@@ -22,7 +22,7 @@ describe("knip report flattening (runway tier A)", () => {
       issues: [
         issue("apps/time/src/Old.svelte", { files: [{ name: "apps/time/src/Old.svelte" }] }),
         issue("packages/svelte/community/package.json", { dependencies: [{ name: "@tutors/course", line: 12 }] }),
-        issue("packages/svelte/utils/metrics/src/middleware.ts", { unlisted: [{ name: "@sveltejs/kit" }] }),
+        issue("packages/svelte/metrics/src/middleware.ts", { unlisted: [{ name: "@sveltejs/kit" }] }),
         issue("tests/contract/support/schemas.ts", {
           exports: [{ name: "WhiteboardUserSchema" }],
           types: [{ name: "LoRecord" }],
@@ -36,7 +36,7 @@ describe("knip report flattening (runway tier A)", () => {
       "duplicate-export: tests/contract/support/schemas.ts: a = b",
       "exports: tests/contract/support/schemas.ts: WhiteboardUserSchema",
       "types: tests/contract/support/schemas.ts: LoRecord",
-      "unlisted: packages/svelte/utils/metrics/src/middleware.ts: @sveltejs/kit",
+      "unlisted: packages/svelte/metrics/src/middleware.ts: @sveltejs/kit",
       "unused-file: apps/time/src/Old.svelte"
     ]);
   });

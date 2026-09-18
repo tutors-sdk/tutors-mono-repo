@@ -6,7 +6,7 @@ import {
   httpRequestsTotal,
   httpRequestsInFlight,
   httpRequestDuration,
-} from "../../../packages/svelte/utils/metrics/src/index.ts";
+} from "../../../packages/svelte/metrics/src/index.ts";
 
 function makeEvent(init: { method?: string; path?: string; headers?: Record<string, string>; routeId?: string | null } = {}) {
   const { method = "GET", path = "/course/cs101", headers = {}, routeId = "/course/[courseid]" } = init;

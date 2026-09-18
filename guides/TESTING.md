@@ -190,7 +190,7 @@ hooks put the request logger first, and every metric a provisioned Grafana alert
 `/metrics`.
 
 **Lives in** `scripts/checks/observability.ts`, `tests/observability/observability-contracts.test.ts`,
-`observability/`, and the request logger in `packages/svelte/utils/logger`.
+`observability/`, and the request logger in `packages/svelte/logger`.
 
 ```bash
 pnpm exec vitest run tests/observability

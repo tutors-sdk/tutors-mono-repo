@@ -78,7 +78,7 @@ The repository uses **pnpm workspaces** for package management, enabling:
 packages:
   - "packages/jsr/*"
   - "packages/svelte/*"
-  - "packages/svelte/utils/*"
+  - "packages/svelte/*"
   - "apps/*"
 ```
 
@@ -181,10 +181,13 @@ tutors-mono-repo/
 │       ├── ui-primitives/      # @tutors/ui-primitives
 │       ├── ui-navigators/      # @tutors/ui-navigators
 │       ├── ui-components/      # @tutors/ui-components
-│       └── utils/              # Utility packages
-│           ├── logger/         # @tutors/logger
-│           ├── a11y/           # @tutors/a11y
-│           └── i18n/           # @tutors/i18n
+│       ├── logger/             # @tutors/logger
+│       ├── metrics/            # @tutors/metrics
+│       ├── a11y/               # @tutors/a11y
+│       ├── i18n/               # @tutors/i18n
+│       ├── rbac/               # @tutors/rbac
+│       ├── privacy/            # @tutors/privacy
+│       └── tour/               # @tutors/tour
 │
 ├── apps/
 │   ├── reader/                 # Main course reader application
@@ -1110,7 +1113,7 @@ packages/svelte/ui-components/src/
 └── utils/
 ```
 
-### 9. Utility Packages (`packages/svelte/utils/`)
+### 9. Utility Packages (`packages/svelte/`)
 
 **Logger** (`logger/`):
 - `@tutors/logger` - Structured logging (JSON in production, request lifecycle hooks)

@@ -92,7 +92,7 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap â€
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`).
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/rbac/sql/003_whiteboard_scenes.sql`).
 
 ### Environment Variables
 

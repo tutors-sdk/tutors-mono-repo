@@ -54,7 +54,7 @@ export function extractTranslationKeys(file: string, text: string): { file: stri
   return [...text.matchAll(/(?<![\w$.])t\(\s*["'`]([A-Za-z0-9_.-]+)["'`]\s*\)/g)].map((m) => ({ file, key: m[1] }));
 }
 
-const I18N_DIR = "packages/svelte/utils/i18n/src";
+const I18N_DIR = "packages/svelte/i18n/src";
 
 export async function loadRepoMessages(root: string = REPO_ROOT): Promise<{ messages: Messages; declared: string[] }> {
   const dir = join(root, I18N_DIR, "messages");

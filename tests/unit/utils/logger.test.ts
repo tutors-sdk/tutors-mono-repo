@@ -1,10 +1,10 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { createLogger, addTransport, removeTransport } from "../../../packages/svelte/utils/logger/src/index.ts";
-import type { LogEntry } from "../../../packages/svelte/utils/logger/src/types.ts";
+import { createLogger, addTransport, removeTransport } from "../../../packages/svelte/logger/src/index.ts";
+import type { LogEntry } from "../../../packages/svelte/logger/src/types.ts";
 import {
   formatJson,
   formatPretty,
-} from "../../../packages/svelte/utils/logger/src/formatter.ts";
+} from "../../../packages/svelte/logger/src/formatter.ts";
 
 function createTestLogger(overrides: Record<string, unknown> = {}) {
   const entries: LogEntry[] = [];
@@ -258,7 +258,7 @@ describe("logger: createLogger factory", () => {
 describe("logger: backwards compatibility", () => {
   it("default export has error, warn, info, debug methods", async () => {
     const mod = await import(
-      "../../../packages/svelte/utils/logger/src/index.ts"
+      "../../../packages/svelte/logger/src/index.ts"
     );
     const log = mod.default;
     expect(typeof log.error).toBe("function");
@@ -269,7 +269,7 @@ describe("logger: backwards compatibility", () => {
 
   it("default export has child method", async () => {
     const mod = await import(
-      "../../../packages/svelte/utils/logger/src/index.ts"
+      "../../../packages/svelte/logger/src/index.ts"
     );
     expect(typeof mod.default.child).toBe("function");
   });

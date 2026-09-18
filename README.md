@@ -36,7 +36,7 @@ New here? Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md
 
 ## Structure
 
-This repository uses pnpm workspaces. Directory names and package names differ, so every table below shows both: the **Package** column is what you pass to `pnpm --filter`. Aligning the two is tracked in [#233](https://github.com/tutors-sdk/tutors-mono-repo/issues/233).
+This repository uses pnpm workspaces. For the Svelte packages the directory tells you the package name: `packages/svelte/<name>` is `@tutors/<name>`. Two groups do not follow that rule. The JSR packages keep their published names, which cannot change (`packages/jsr/model` is `@tutors/tutors-model-lib`); the JSR table below is the one place that mapping is recorded. The apps are unscoped: `apps/<name>` is `tutors-<name>`. In every table the **Package** column is what you pass to `pnpm --filter`.
 
 ### Applications
 
@@ -64,8 +64,8 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
-| `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/svelte/logger` | `@tutors/logger` | Logging utility and server request logger |
+| `packages/svelte/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
 
 **Core services.**
 
@@ -73,8 +73,8 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/runes` | `@tutors/runes` | Svelte 5 reactive state shared across packages |
 | `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
-| `packages/svelte/utils/a11y` | `@tutors/a11y` | Accessibility utilities |
-| `packages/svelte/utils/i18n` | `@tutors/i18n` | Internationalization (six locales) |
+| `packages/svelte/a11y` | `@tutors/a11y` | Accessibility utilities |
+| `packages/svelte/i18n` | `@tutors/i18n` | Internationalization (six locales) |
 
 **Feature services.**
 
@@ -84,9 +84,9 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
 | `packages/svelte/connect` | `@tutors/connect` | Authentication and user management |
-| `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
-| `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
-| `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
+| `packages/svelte/rbac` | `@tutors/rbac` | Role resolution and content locking |
+| `packages/svelte/privacy` | `@tutors/privacy` | Consent management |
+| `packages/svelte/tour` | `@tutors/tour` | Guided product tours |
 
 **UI layer.** Strict one-directional dependency: `ui-components → ui-navigators → ui-primitives`.
 

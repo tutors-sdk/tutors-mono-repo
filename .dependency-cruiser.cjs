@@ -12,10 +12,10 @@
 
 /** Workspace directories per layer, lowest first. Keep in step with README.md. */
 const LAYERS = [
-  { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/svelte/utils/logger", "packages/svelte/utils/metrics"] },
+  { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/svelte/logger", "packages/svelte/metrics"] },
   {
     name: "core",
-    paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/utils/a11y", "packages/svelte/utils/i18n"]
+    paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/a11y", "packages/svelte/i18n"]
   },
   {
     name: "feature",
@@ -23,9 +23,9 @@ const LAYERS = [
       "packages/svelte/themes",
       "packages/svelte/community",
       "packages/svelte/connect",
-      "packages/svelte/utils/rbac",
-      "packages/svelte/utils/privacy",
-      "packages/svelte/utils/tour"
+      "packages/svelte/rbac",
+      "packages/svelte/privacy",
+      "packages/svelte/tour"
     ]
   },
   { name: "ui-primitives", paths: ["packages/svelte/ui-primitives"] },
@@ -36,8 +36,8 @@ const LAYERS = [
 
 const anyOf = (paths) => `^(${paths.join("|")})/`;
 
-/** A workspace root: apps/x, packages/jsr/x, packages/svelte/utils/x or packages/svelte/x. */
-const WORKSPACE = "^((?:apps|packages/jsr|packages/svelte/utils|packages/svelte)/[^/]+)/";
+/** A workspace root: apps/x, packages/jsr/x or packages/svelte/x. */
+const WORKSPACE = "^((?:apps|packages/jsr|packages/svelte)/[^/]+)/";
 
 const layerRules = LAYERS.slice(0, -1).map((layer, index) => ({
   name: `layer-${layer.name}`,

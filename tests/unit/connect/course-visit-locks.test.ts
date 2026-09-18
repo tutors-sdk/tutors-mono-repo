@@ -56,7 +56,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-vi.mock("../../../packages/svelte/utils/rbac/src/index.ts", () => ({
+vi.mock("../../../packages/svelte/rbac/src/index.ts", () => ({
   rbacService: {
     loadContentLocks: vi.fn(() => Promise.resolve()),
     clear: vi.fn(),
@@ -66,7 +66,7 @@ vi.mock("../../../packages/svelte/utils/rbac/src/index.ts", () => ({
 }));
 
 import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
-import { rbacService } from "../../../packages/svelte/utils/rbac/src/index.ts";
+import { rbacService } from "../../../packages/svelte/rbac/src/index.ts";
 
 const enrolledCourse = { courseId: "cs101", hasEnrollment: true, authLevel: 0 } as unknown as Course;
 const openCourse = { courseId: "cs102", hasEnrollment: false, authLevel: 0 } as unknown as Course;

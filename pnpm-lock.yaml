@@ -126,10 +126,10 @@ importers:
         version: link:../../packages/svelte/course
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/svelte/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
+        version: link:../../packages/svelte/metrics
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
@@ -201,10 +201,10 @@ importers:
         version: link:../../packages/svelte/course
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/svelte/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
+        version: link:../../packages/svelte/metrics
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
@@ -304,16 +304,16 @@ importers:
         version: link:../../packages/svelte/course
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/i18n
+        version: link:../../packages/svelte/i18n
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/svelte/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
+        version: link:../../packages/svelte/metrics
       '@tutors/rbac':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/rbac
+        version: link:../../packages/svelte/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
@@ -413,10 +413,10 @@ importers:
         version: link:../../packages/svelte/community
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/svelte/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
+        version: link:../../packages/svelte/metrics
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
@@ -498,6 +498,15 @@ importers:
         specifier: ^2.116.0
         version: 2.116.0(@opentelemetry/api@1.9.1)
 
+  packages/svelte/a11y:
+    dependencies:
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.0(@typescript-eslint/types@8.70.0)
+
   packages/svelte/community:
     dependencies:
       '@supabase/supabase-js':
@@ -505,7 +514,7 @@ importers:
         version: 2.116.0(@opentelemetry/api@1.9.1)
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../utils/logger
+        version: link:../logger
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -526,10 +535,10 @@ importers:
         version: link:../community
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../utils/logger
+        version: link:../logger
       '@tutors/rbac':
         specifier: workspace:*
-        version: link:../utils/rbac
+        version: link:../rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -547,7 +556,7 @@ importers:
         version: 4.4.0
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../utils/logger
+        version: link:../logger
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -567,7 +576,52 @@ importers:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.70.0)
 
+  packages/svelte/i18n:
+    dependencies:
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../runes
+    devDependencies:
+      svelte:
+        specifier: ^5.57.0
+        version: 5.57.0(@typescript-eslint/types@8.70.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/svelte/logger: {}
+
+  packages/svelte/metrics:
+    dependencies:
+      '@prometheus-io/client':
+        specifier: ^0.16.1
+        version: 0.16.1
+
+  packages/svelte/privacy:
+    dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.0(@typescript-eslint/types@8.70.0)
+
   packages/svelte/quiz: {}
+
+  packages/svelte/rbac:
+    dependencies:
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../community
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../logger
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../runes
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../jsr/model
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.0(@typescript-eslint/types@8.70.0)
 
   packages/svelte/runes:
     dependencies:
@@ -585,7 +639,7 @@ importers:
         version: link:../community
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../utils/logger
+        version: link:../logger
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -599,6 +653,18 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+
+  packages/svelte/tour:
+    dependencies:
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.0(@typescript-eslint/types@8.70.0)
 
   packages/svelte/ui-components:
     dependencies:
@@ -628,7 +694,7 @@ importers:
         version: 2.70.3(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.70.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.0(@typescript-eslint/types@8.70.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
       '@tutors/a11y':
         specifier: workspace:*
-        version: link:../utils/a11y
+        version: link:../a11y
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
@@ -640,16 +706,16 @@ importers:
         version: link:../course
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../utils/i18n
+        version: link:../i18n
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../utils/logger
+        version: link:../logger
       '@tutors/quiz':
         specifier: workspace:*
         version: link:../quiz
       '@tutors/rbac':
         specifier: workspace:*
-        version: link:../utils/rbac
+        version: link:../rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -713,7 +779,7 @@ importers:
     dependencies:
       '@tutors/a11y':
         specifier: workspace:*
-        version: link:../utils/a11y
+        version: link:../a11y
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
@@ -725,13 +791,13 @@ importers:
         version: link:../course
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../utils/i18n
+        version: link:../i18n
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../utils/logger
+        version: link:../logger
       '@tutors/rbac':
         specifier: workspace:*
-        version: link:../utils/rbac
+        version: link:../rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -740,7 +806,7 @@ importers:
         version: link:../themes
       '@tutors/tour':
         specifier: workspace:*
-        version: link:../utils/tour
+        version: link:../tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -774,16 +840,16 @@ importers:
     dependencies:
       '@tutors/a11y':
         specifier: workspace:*
-        version: link:../utils/a11y
+        version: link:../a11y
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../utils/i18n
+        version: link:../i18n
       '@tutors/rbac':
         specifier: workspace:*
-        version: link:../utils/rbac
+        version: link:../rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -792,7 +858,7 @@ importers:
         version: link:../themes
       '@tutors/tour':
         specifier: workspace:*
-        version: link:../utils/tour
+        version: link:../tour
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
@@ -821,72 +887,6 @@ importers:
       vite:
         specifier: ^8.3.0
         version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
-
-  packages/svelte/utils/a11y:
-    dependencies:
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.70.0)
-
-  packages/svelte/utils/i18n:
-    dependencies:
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-    devDependencies:
-      svelte:
-        specifier: ^5.57.0
-        version: 5.57.0(@typescript-eslint/types@8.70.0)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
-  packages/svelte/utils/logger: {}
-
-  packages/svelte/utils/metrics:
-    dependencies:
-      '@prometheus-io/client':
-        specifier: ^0.16.1
-        version: 0.16.1
-
-  packages/svelte/utils/privacy:
-    dependencies:
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.70.0)
-
-  packages/svelte/utils/rbac:
-    dependencies:
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../../community
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../logger
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../../jsr/model
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.70.0)
-
-  packages/svelte/utils/tour:
-    dependencies:
-      '@tutors/i18n':
-        specifier: workspace:*
-        version: link:../i18n
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.70.0)
 
 packages:
 
