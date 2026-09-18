@@ -37,6 +37,12 @@ describe("searchHits", () => {
     });
   });
 
+  it("returns the whole content as the matching line when it has no newline", () => {
+    const lo = makeLo({ contentMd: "A one-line note about closures." });
+    const results = searchHits([lo], "closures");
+    expect(results.map((r) => r.contentMd)).toEqual(["A one-line note about closures."]);
+  });
+
   it("marks hits inside ``` fences as fenced and detects language", () => {
     const md = [
       "Some intro text",

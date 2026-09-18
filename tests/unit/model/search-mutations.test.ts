@@ -87,7 +87,7 @@ function findNearestNextIndex(
       return [i, indices[i]];
     }
   }
-  return [-1, -1];
+  return [indices.length, contentLen];
 }
 
 /**
@@ -474,16 +474,9 @@ describe("findNearestNextIndex (mutation #4 continued)", () => {
     expect(result).toEqual([2, 15]);
   });
 
-  it("returns [-1, -1] for empty indices array", () => {
+  it("returns the content length for an empty indices array: the content is one line", () => {
     const result = findNearestNextIndex([], 5, 50);
-    expect(result).toEqual([-1, -1]);
-  });
-
-  it("returns [-1, -1] tuple with exactly 2 elements", () => {
-    const result = findNearestNextIndex([], 5, 50);
-    expect(result).toHaveLength(2);
-    expect(result[0]).toBe(-1);
-    expect(result[1]).toBe(-1);
+    expect(result).toEqual([0, 50]);
   });
 
   it("returns content length (not index value) for edge condition", () => {
