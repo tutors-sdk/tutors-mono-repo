@@ -37,37 +37,6 @@ describe("searchHits", () => {
     });
   });
 
-  it("returns the right line for every repeat of a multi-character term", () => {
-    const lo = makeLo({
-      contentMd: "A function takes arguments.\nCall the function by name.\nReturn from a function\nNothing to find on this last line.",
-    });
-    const results = searchHits([lo], "function");
-    expect(results.map((r) => r.contentMd.trim())).toEqual([
-      "A function takes arguments.",
-      "Call the function by name.",
-      "Return from a function",
-    ]);
-  });
-
-  it("detects fencing and language for a hit in a later fence", () => {
-    const md = [
-      "```js",
-      "let a = 1;",
-      "```",
-      "Between the two fences, plain prose mentions total.",
-      "```python",
-      "total = 2",
-      "```",
-      "After both fences the total is prose again.",
-    ].join("\n");
-    const results = searchHits([makeLo({ contentMd: md })], "total");
-    expect(results.map((r) => [r.fenced, r.language])).toEqual([
-      [false, ""],
-      [true, "python"],
-      [false, ""],
-    ]);
-  });
-
   it("marks hits inside ``` fences as fenced and detects language", () => {
     const md = [
       "Some intro text",
@@ -109,6 +78,37 @@ describe("searchHits", () => {
     const results = searchHits([lo], "keyword");
     expect(results.length).toBe(1);
     expect(results[0].fenced).toBe(false);
+  });
+
+  it("returns the right line for every repeat of a multi-character term", () => {
+    const lo = makeLo({
+      contentMd: "A function takes arguments.\nCall the function by name.\nReturn from a function\nNothing to find on this last line.",
+    });
+    const results = searchHits([lo], "function");
+    expect(results.map((r) => r.contentMd.trim())).toEqual([
+      "A function takes arguments.",
+      "Call the function by name.",
+      "Return from a function",
+    ]);
+  });
+
+  it("detects fencing and language for a hit in a later fence", () => {
+    const md = [
+      "```js",
+      "let a = 1;",
+      "```",
+      "Between the two fences, plain prose mentions total.",
+      "```python",
+      "total = 2",
+      "```",
+      "After both fences the total is prose again.",
+    ].join("\n");
+    const results = searchHits([makeLo({ contentMd: md })], "total");
+    expect(results.map((r) => [r.fenced, r.language])).toEqual([
+      [false, ""],
+      [true, "python"],
+      [false, ""],
+    ]);
   });
 
   it("returns an empty array when the search term is not found", () => {
