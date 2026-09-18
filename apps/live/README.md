@@ -27,4 +27,5 @@ Runs on http://localhost:5174
 - SvelteKit + Svelte 5
 - `@tutors/ui` components
 - `@tutors/course` for live presence tracking
+- `@tutors/app-config` for the shared `vite.config.ts` / `svelte.config.js` (build time only)
 - Tailwind CSS v4 + Skeleton UI
