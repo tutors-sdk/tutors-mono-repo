@@ -169,6 +169,14 @@ jobs:
         env:
           MATRIX_APP: ${{ matrix.app }}
 
+      # .env.example runs the image anonymously. The reader is the only app with a
+      # sign-in flow, so probe it again with Auth.js on: the release harness found
+      # /auth/<courseid> answering 500 (jsdom's __dirname in the ESM server bundle)
+      # in exactly this mode.
+      - name: Smoke test the image with authentication enabled
+        if: matrix.app == 'reader'
+        run: pnpm check:container --image tutors/reader:ci --app reader --env PUBLIC_ANON_MODE=FALSE
+
   container-smoke-fixtures:
     name: Container smoke negative fixtures
     runs-on: ubuntu-latest

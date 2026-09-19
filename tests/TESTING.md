@@ -187,6 +187,7 @@ pnpm check:k8s --out rendered                      # also write the output for k
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
 pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
 pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
+pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with Auth.js on (CI runs both for the reader)
 pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
 pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail
 pnpm check:bundle                                  # after building the apps with SVELTEKIT_ADAPTER=node
