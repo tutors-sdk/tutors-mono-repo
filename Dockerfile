@@ -6,16 +6,27 @@
 #   docker build --build-arg APP_NAME=reader -t tutors/reader .
 #   docker run --rm -p 3000:3000 -e ORIGIN=http://localhost:3000 tutors/reader
 #
+# Published images live at quay.io/tutors-sdk/tutors-<app> (Quay repositories
+# are exactly <org>/<repo>, so the app is part of the repository name):
+#
+#   docker build --build-arg APP_NAME=reader --build-arg VERSION=16.2.2 \
+#     --build-arg GIT_SHA=$(git rev-parse HEAD) --build-arg BUILD_DATE=$(date -u +%FT%TZ) \
+#     -t quay.io/tutors-sdk/tutors-reader:16.2.2 .
+#
 # All configuration (Supabase, auth, log level, ...) is read from the
 # environment at runtime via SvelteKit's $env/dynamic modules, so one image
 # serves every environment and no secret is ever baked into a layer.
 
 ARG NODE_VERSION=22
+# Base images are fully qualified so the file builds the same under Docker,
+# Podman/Buildah and Quay's builders, which do not assume docker.io for short
+# names.
+ARG NODE_IMAGE=docker.io/library/node:${NODE_VERSION}-bookworm-slim
 
 # ---------------------------------------------------------------------------
 # base: Node plus the exact pnpm version pinned in package.json (via corepack)
 # ---------------------------------------------------------------------------
-FROM node:${NODE_VERSION}-bookworm-slim AS base
+FROM ${NODE_IMAGE} AS base
 ENV PNPM_HOME=/pnpm \
     COREPACK_HOME=/pnpm/corepack \
     npm_config_store_dir=/pnpm/store \
@@ -63,13 +74,20 @@ RUN if [ -n "${SOURCE_DATE_EPOCH}" ]; then find /out/build -exec touch -h -d "@$
 # ---------------------------------------------------------------------------
 # runtime: minimal image with only the server bundle and production deps.
 # ---------------------------------------------------------------------------
-FROM node:${NODE_VERSION}-bookworm-slim AS runtime
+FROM ${NODE_IMAGE} AS runtime
 ARG APP_NAME=reader
 ARG GIT_SHA=unknown
 ARG BUILD_DATE=unknown
+ARG VERSION=unknown
 
+# Quay shows description, source and version on the repository's tag page;
+# the release harness reads revision and version to trace a report to a commit.
 LABEL org.opencontainers.image.title="tutors-${APP_NAME}" \
+      org.opencontainers.image.description="Tutors ${APP_NAME}: SvelteKit app served by Node.js" \
+      org.opencontainers.image.vendor="Tutors SDK" \
+      org.opencontainers.image.url="https://tutors.dev" \
       org.opencontainers.image.source="https://github.com/tutors-sdk/tutors-mono-repo" \
+      org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${GIT_SHA}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.licenses="MIT"

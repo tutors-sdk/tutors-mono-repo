@@ -154,8 +154,23 @@ export function parseImage(image: string): { repository: string; tag?: string; d
 }
 
 /**
+ * Why a repository path cannot be pulled reliably, if it cannot. CRI-O (and so
+ * OpenShift) refuses or guesses at short names, so the registry host must be
+ * spelled out; and Quay repositories are exactly `quay.io/<org>/<repo>`, with
+ * no nested path segments.
+ */
+export function imageRepositoryFinding(repository: string): string | undefined {
+  const segments = repository.split("/");
+  const host = segments[0];
+  const qualified = segments.length > 1 && (host.includes(".") || host.includes(":") || host === "localhost");
+  if (!qualified) return "unqualified-image";
+  if (host === "quay.io" && segments.length !== 3) return "quay-nested-repository";
+  return undefined;
+}
+
+/**
  * Policies a workload must satisfy to run under OpenShift's `restricted-v2`
- * SCC and to be operable: pinned images, requests and limits, probes, and a
+ * SCC and to be operable: registry-qualified, pinned images, requests and limits, probes, and a
  * locked-down security context. Findings are `rule: Kind/name[/container]: detail`.
  */
 export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {}): string[] {
@@ -182,6 +197,8 @@ export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {})
     for (const container of containers) {
       const where = `${name}/${container.name}`;
       const image = parseImage(String(container.image ?? ""));
+      const repositoryFinding = imageRepositoryFinding(image.repository);
+      if (repositoryFinding) findings.push(`${repositoryFinding}: ${where}: ${container.image}`);
       if (!image.digest && (!image.tag || image.tag === "latest")) {
         findings.push(`unpinned-image: ${where}: ${container.image}`);
       } else if (options.expectedTag && !image.digest && image.tag !== options.expectedTag) {
