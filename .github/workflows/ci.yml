@@ -103,14 +103,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Render overlays and check policies
+      - name: Render overlays and substrate variants, check policies
         run: pnpm check:k8s --out rendered
 
+      # OpenShift's Route is not in the Kubernetes schemas, so that one kind is
+      # skipped by name (any other kind without a schema still fails). The
+      # policy check above covers the Route fields that matter.
       - name: Validate rendered manifests against Kubernetes schemas
         run: >
           docker run --rm -v "$PWD:/work:ro" -w /work
           ghcr.io/yannh/kubeconform@sha256:85dbef6b4b312b99133decc9c6fc9495e9fc5f92293d4ff3b7e1b30f5611823c
-          -strict -summary -kubernetes-version 1.33.0 rendered
+          -strict -summary -kubernetes-version 1.33.0
+          -skip route.openshift.io/v1/Route rendered
 
       - name: Schema validation rejects an invalid manifest (negative fixture)
         run: |

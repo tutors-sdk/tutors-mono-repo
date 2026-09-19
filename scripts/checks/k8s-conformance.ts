@@ -1,6 +1,7 @@
 /**
- * Render every kustomize overlay and check it against the platform policies
- * in conformance.ts (runway tier J).
+ * Render every kustomize overlay and substrate variant (overlay + Ingress or
+ * Route) and check it against the platform policies in conformance.ts (runway
+ * tier J).
  *
  *   pnpm check:k8s                    # render + policy check
  *   pnpm check:k8s --out rendered/    # also write each overlay for kubeconform
@@ -9,9 +10,9 @@
  * overlays always describe the version that is (or is about to be) deployed.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import yaml from "js-yaml";
-import { manifestPolicyFindings, overlayDirs, renderKustomization } from "./conformance.ts";
+import { entryPointPolicyFindings, manifestPolicyFindings, overlayDirs, renderKustomization, variantDirs } from "./conformance.ts";
 import { REPO_ROOT, readText, toPosix } from "./lib/repo.ts";
 
 const outIndex = process.argv.indexOf("--out");
@@ -21,10 +22,13 @@ const expectedTag: string = JSON.parse(readText(join(REPO_ROOT, "package.json"))
 let failures = 0;
 if (outDir) mkdirSync(outDir, { recursive: true });
 
-for (const dir of overlayDirs()) {
+for (const dir of [...overlayDirs(), ...variantDirs()]) {
   const rendered = renderKustomization(dir);
-  if (outDir) writeFileSync(join(outDir, `${basename(dir)}.yaml`), rendered);
-  const findings = manifestPolicyFindings(yaml.loadAll(rendered) as Record<string, unknown>[], { expectedTag });
+  // overlays/reader -> reader.yaml, variants/kind/reader -> kind-reader.yaml
+  const outName = toPosix(dir, join(REPO_ROOT, "deploy/k8s")).replace(/^(overlays|variants)\//, "").replaceAll("/", "-");
+  if (outDir) writeFileSync(join(outDir, `${outName}.yaml`), rendered);
+  const docs = yaml.loadAll(rendered) as Record<string, unknown>[];
+  const findings = [...manifestPolicyFindings(docs, { expectedTag }), ...entryPointPolicyFindings(docs)];
   const label = toPosix(dir);
   if (findings.length === 0) {
     console.log(`ok   ${label}`);

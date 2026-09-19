@@ -118,3 +118,74 @@ output with kubeconform. Every variable the apps read must appear both in
 The pod spec runs as non-root with a read-only root filesystem, all
 capabilities dropped and the default seccomp profile, which satisfies the
 OpenShift `restricted-v2` SCC without any extra grants.
+
+### Route and Ingress
+
+The overlays expose nothing outside the cluster. The entry point is a
+kustomize component per substrate, and `deploy/k8s/variants/<substrate>/<app>`
+is the overlay plus that component, so either renders without editing a file:
+
+```bash
+kubectl kustomize deploy/k8s/variants/openshift/reader   # overlay + Route
+kubectl kustomize deploy/k8s/variants/kind/reader        # overlay + Ingress
+oc apply -k deploy/k8s/variants/openshift/reader
+```
+
+| Component | Renders |
+| --- | --- |
+| `components/route` | `route.openshift.io/v1` Route, edge TLS with the router's certificate, plain HTTP redirected, to the Service's `http` port |
+| `components/ingress` | `networking.k8s.io/v1` Ingress, `ingressClassName: nginx`, no TLS block, to the Service's `http` port |
+
+The host is stated once, in the overlay's `ORIGIN`. The component copies the
+host out of it (`https://reader.tutors.dev` becomes `reader.tutors.dev`) and
+takes its name, labels and backend from the rendered Service. For that it has
+to sit one layer above the overlay, as the variants do:
+
+```yaml
+resources:
+  - ../../../overlays/reader
+components:
+  - ../../../components/route
+```
+
+Listing it in the overlay's own `components:` does not work: kustomize runs a
+component before that kustomization's patches and `namePrefix`, so the host
+would be the base `tutors.dev` and the backend the unprefixed Service.
+`pnpm check:k8s` fails such a rendering (`host-not-origin`,
+`backend-service-not-rendered`). The same ordering applies to a changed host:
+patch `ORIGIN` in a layer below the component (a kustomization over the
+overlay, then one that adds the component), or patch both `ORIGIN` and the
+host in a kustomization over the variant and let the check confirm they agree.
+An `ORIGIN` with a port needs the second form, since a host cannot carry one.
+
+adapter-node uses `ORIGIN` as given, so an `https://` origin needs TLS in
+front of the pod: the Route terminates it, while the Ingress needs either a
+TLS block or an `http://` `ORIGIN`. Another class or TLS is a patch in a
+kustomization over `variants/kind/<app>`:
+
+```yaml
+patches:
+  - target:
+      kind: Ingress
+    patch: |
+      - op: replace
+        path: /spec/ingressClassName
+        value: traefik
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts: [reader.tutors.dev]
+            secretName: reader-tutors-app-tls
+```
+
+The base ConfigMap already sets `PROTOCOL_HEADER`, `HOST_HEADER`,
+`ADDRESS_HEADER` and `XFF_DEPTH: "1"` for the `x-forwarded-*` headers that the
+OpenShift router and ingress-nginx add, so the client address and protocol
+survive one proxy hop; raise `XFF_DEPTH` if a load balancer in front adds
+another.
+
+`pnpm check:k8s` renders the variants along with the overlays and adds entry
+point policies: the host equals the `ORIGIN` host, the backend is a rendered
+Service and port, a Route terminates TLS and redirects plain HTTP, an Ingress
+names its class and any TLS block covers its host. kubeconform skips the Route
+kind only, as it is not in the Kubernetes schemas.
