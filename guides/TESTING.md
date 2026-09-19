@@ -478,6 +478,18 @@ is open work; do not read it as the authority on what a release is checked again
 Gate 6a artifact regression, 6b performance benchmark, 6c smoke tests against the deployed
 preview, then a report that blocks on 6a and 6c and warns on 6b.
 
+### `release-claims.yml` — push to `release/**`, and PRs from a `release/` branch
+
+`pnpm check:release-claims`: `release/claims.yaml` exists and is a claims file the release harness
+would accept. The same validator runs over the committed file in every PR through
+`tests/conformance/release-claims.test.ts`.
+
+### `release-dispatch.yml` — push to `release/**`
+
+Not a test tier: it tags the pushed commit `vX.Y.Z-rc.N`, publishes that tag's images and
+dispatches the separate release harness, which compares the candidate with production. See
+[Release-Strategy.md](Release-Strategy.md#release-harness).
+
 ## Debugging
 
 ```bash

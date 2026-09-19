@@ -1,0 +1,255 @@
+name: Release Candidate Dispatch
+
+# A push to a release branch becomes a release candidate:
+#
+#   1. candidate  tag the pushed commit vX.Y.Z-rc.N (next free N)
+#   2. images     build and publish the candidate's images from that tag, and
+#                 wait until the registry serves them
+#   3. dispatch   ask tutors-sdk/tutors-release-harness to judge the candidate
+#                 beside the production tag (repository_dispatch,
+#                 event_type release-candidate)
+#
+# Setup, the HARNESS_TOKEN secret and the payload are documented in
+# guides/Release-Strategy.md#release-harness.
+#
+# Two things this workflow is careful about:
+#
+#   - A tag created with GITHUB_TOKEN does not start other workflows, so the
+#     `v*` tag trigger of image-build.yml never fires for the tag made here.
+#     The images job starts image-build.yml itself with workflow_dispatch on
+#     the tag ref (workflow_dispatch is the documented exception to that rule)
+#     and watches that run. Until image-build.yml exists with a
+#     workflow_dispatch trigger the job says so and moves on: the harness
+#     builds a missing tag from the git ref instead.
+#   - The production tag is read from the reader overlay on main. On the
+#     release branch the overlay already names the version being released.
+
+on:
+  push:
+    branches: ["release/**"]
+
+# One candidate at a time per branch, and never cancel between tagging and
+# dispatching: a tag without a harness run is a candidate nobody judged.
+concurrency:
+  group: release-dispatch-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  HARNESS_REPO: tutors-sdk/tutors-release-harness
+  IMAGE_WORKFLOW: image-build.yml
+  IMAGE_PREFIX: quay.io/tutors-sdk/tutors-
+
+jobs:
+  candidate:
+    name: Tag the candidate
+    if: github.repository == 'tutors-sdk/tutors-mono-repo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # create the vX.Y.Z-rc.N tag ref
+    outputs:
+      ready: ${{ steps.version.outputs.ready }}
+      candidate: ${{ steps.tag.outputs.candidate }}
+      production: ${{ steps.production.outputs.production }}
+      migrations_a: ${{ steps.production.outputs.migrations_a }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # release/16.3.0 and release/v16.3.0 are both in use. The branch is a
+      # candidate once package.json carries the branch's version (step 3 of the
+      # release cut); pushes before that, and pushes to a retained branch whose
+      # release has shipped, are not candidates.
+      - name: Work out the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#release/}"
+          version="${version#v}"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Branch $GITHUB_REF_NAME does not name a version (expected release/X.Y.Z or release/vX.Y.Z)."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          package="$(node -p "require('./package.json').version")"
+          if [ "$package" != "$version" ]; then
+            echo "::notice::package.json is at $package, the branch says $version. Not a candidate until the version is bumped."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$version" --silent 2>/dev/null; then
+            echo "::warning::v$version is already tagged. A retained release branch must not move after its release ships; nothing dispatched."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ ! -f release/claims.yaml ]; then
+            echo "::error file=release/claims.yaml::release/claims.yaml is missing. A release carries one; claims: [] means nothing observable should differ."
+            exit 1
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Read the production tag from main
+        id: production
+        if: steps.version.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          production="$(gh api -H 'Accept: application/vnd.github.raw+json' \
+            "repos/$GITHUB_REPOSITORY/contents/deploy/k8s/overlays/reader/kustomization.yaml?ref=main" \
+            | sed -n 's/^[[:space:]]*newTag:[[:space:]]*"\{0,1\}\([^"[:space:]]*\)"\{0,1\}[[:space:]]*$/\1/p' | head -n 1)"
+          if ! printf '%s' "$production" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$'; then
+            echo "::error::Could not read images[].newTag from the reader overlay on main (got '$production')."
+            exit 1
+          fi
+          # Production's migrations come from its tag; releases before tagging
+          # was routine only have their retained branch.
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$production" --silent 2>/dev/null; then
+            migrations_a="v$production"
+          elif gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/release/$production" --silent 2>/dev/null; then
+            migrations_a="release/$production"
+          else
+            echo "::error::Production is $production but neither tag v$production nor branch release/$production exists."
+            exit 1
+          fi
+          echo "production=$production" >> "$GITHUB_OUTPUT"
+          echo "migrations_a=$migrations_a" >> "$GITHUB_OUTPUT"
+
+      # Created through the API: no git credentials on disk, and a ref that
+      # already exists is refused, so two runs cannot both take the same N.
+      # A re-run of this workflow reuses the rc tag already on this commit.
+      - name: Tag the next release candidate
+        id: tag
+        if: steps.version.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          refs="$(gh api --paginate "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v$VERSION-rc." \
+            --jq '.[] | [.ref, .object.sha] | @tsv')"
+          existing="$(printf '%s\n' "$refs" | awk -v sha="$GITHUB_SHA" -F '\t' '$2 == sha { sub("refs/tags/v", "", $1); print $1; exit }')"
+          if [ -n "$existing" ]; then
+            echo "This commit is already tagged v$existing; reusing it."
+            candidate="$existing"
+          else
+            last="$(printf '%s\n' "$refs" | sed -n "s|^refs/tags/v$VERSION-rc\.\([0-9][0-9]*\)[[:space:]].*|\1|p" | sort -n | tail -n 1)"
+            candidate="$VERSION-rc.$(( ${last:-0} + 1 ))"
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/v$candidate" -f "sha=$GITHUB_SHA" --silent
+            echo "Tagged $GITHUB_SHA as v$candidate."
+          fi
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
+          echo "Candidate \`v$candidate\` at \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+  images:
+    name: Publish the candidate's images
+    needs: candidate
+    if: needs.candidate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      actions: write # start image-build.yml on the tag and watch the run
+      contents: read
+    outputs:
+      published: ${{ steps.build.outputs.published }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CANDIDATE: ${{ needs.candidate.outputs.candidate }}
+    steps:
+      - name: Build the images from the tag
+        id: build
+        run: |
+          tag="v$CANDIDATE"
+          if ! gh api -H 'Accept: application/vnd.github.raw+json' \
+            "repos/$GITHUB_REPOSITORY/contents/.github/workflows/$IMAGE_WORKFLOW?ref=$tag" 2>/dev/null \
+            | grep -Eq '^[[:space:]]*workflow_dispatch:'; then
+            echo "::warning::$IMAGE_WORKFLOW is not on $tag or has no workflow_dispatch trigger. No images published; the harness will build $tag from the git ref."
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          gh workflow run "$IMAGE_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$tag"
+
+          run=""
+          for _ in $(seq 1 30); do
+            sleep 10
+            run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$IMAGE_WORKFLOW" --event workflow_dispatch \
+              --commit "$GITHUB_SHA" --limit 20 --json databaseId,headBranch,createdAt \
+              --jq "[.[] | select(.headBranch == \"$tag\" and .createdAt >= \"$started\")][0].databaseId // empty")"
+            [ -n "$run" ] && break
+          done
+          if [ -z "$run" ]; then
+            echo "::error::Started $IMAGE_WORKFLOW on $tag but no run appeared within five minutes."
+            exit 1
+          fi
+          echo "Image build: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run" | tee -a "$GITHUB_STEP_SUMMARY"
+          gh run watch "$run" --repo "$GITHUB_REPOSITORY" --interval 30 --exit-status > /dev/null
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+      # The run succeeding is not the contract; the registry serving the tag
+      # is. Anonymous, because the harness pulls anonymously too.
+      - name: Wait for the registry to serve every image
+        if: steps.build.outputs.published == 'true'
+        run: |
+          for app in reader catalogue live; do
+            image="$IMAGE_PREFIX$app:$CANDIDATE"
+            for attempt in $(seq 1 20); do
+              if docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
+                echo "OK: $image"
+                continue 2
+              fi
+              echo "waiting for $image ($attempt/20)"
+              sleep 15
+            done
+            echo "::error::$image is not in the registry after the image build succeeded."
+            exit 1
+          done
+
+  dispatch:
+    name: Dispatch the release harness
+    needs: [candidate, images]
+    if: needs.candidate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      # client_payload is the contract of .github/workflows/release.yml in the
+      # harness: production, candidate, claims_url, runs, migrations_a, migrations_b.
+      - name: Send release-candidate
+        env:
+          GH_TOKEN: ${{ secrets.HARNESS_TOKEN }}
+          PRODUCTION: ${{ needs.candidate.outputs.production }}
+          CANDIDATE: ${{ needs.candidate.outputs.candidate }}
+          MIGRATIONS_A: ${{ needs.candidate.outputs.migrations_a }}
+          PUBLISHED: ${{ needs.images.outputs.published }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::The HARNESS_TOKEN secret is not set. See guides/Release-Strategy.md#release-harness."
+            exit 1
+          fi
+          claims_url="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_SHA/release/claims.yaml"
+          jq -n \
+            --arg production "$PRODUCTION" \
+            --arg candidate "$CANDIDATE" \
+            --arg claims_url "$claims_url" \
+            --arg migrations_a "$MIGRATIONS_A" \
+            --arg migrations_b "$GITHUB_SHA" \
+            '{event_type: "release-candidate", client_payload: {production: $production, candidate: $candidate, claims_url: $claims_url, runs: 3, migrations_a: $migrations_a, migrations_b: $migrations_b}}' \
+            | tee payload.json
+          gh api "repos/$HARNESS_REPO/dispatches" --input payload.json
+          {
+            echo "Dispatched \`release-candidate\` to [$HARNESS_REPO]($GITHUB_SERVER_URL/$HARNESS_REPO/actions/workflows/release.yml)"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| production (a) | \`$PRODUCTION\` |"
+            echo "| candidate (b) | \`$CANDIDATE\` |"
+            echo "| images published | $PUBLISHED |"
+            echo "| claims | $claims_url |"
+            echo "| migrations | \`$MIGRATIONS_A\` to \`$GITHUB_SHA\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

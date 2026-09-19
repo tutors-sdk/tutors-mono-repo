@@ -43,7 +43,8 @@
     "check:bundle": "tsx scripts/checks/bundle-budget.ts",
     "check:load": "tsx scripts/checks/load-test.ts",
     "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
-    "check:generator-diff": "tsx scripts/checks/generator-diff.ts"
+    "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
+    "check:release-claims": "tsx scripts/checks/release-claims.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

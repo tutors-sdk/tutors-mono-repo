@@ -17,5 +17,9 @@
 /.github/ @tutors-sdk/maintainers
 /netlify.toml @tutors-sdk/maintainers
 
+# Release claims: what a release tells the release harness it meant to change.
+# A claim waives a difference the harness would otherwise fail on.
+/release/claims.yaml @tutors-sdk/maintainers
+
 # Security-sensitive files
 SECURITY.md @tutors-sdk/maintainers
