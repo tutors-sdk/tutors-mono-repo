@@ -159,6 +159,13 @@ jobs:
             org.opencontainers.image.title=tutors-${{ matrix.app }}
             org.opencontainers.image.licenses=MIT
 
+      # The commit time, not the build time: the Dockerfile (#282) pins the
+      # mtimes of the served files to it, so two builds of one commit answer
+      # the same ETag and Last-Modified. Unused until that lands.
+      - name: Commit time for reproducible file times
+        id: epoch
+        run: echo "value=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+
       # Gate first: build the amd64 image into the local daemon and scan it.
       # Nothing has been pushed at this point, so a failing scan publishes
       # nothing. BUILD_DATE changes on every run, which deliberately busts
@@ -175,6 +182,7 @@ jobs:
             GIT_SHA=${{ github.sha }}
             BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
             VERSION=${{ steps.meta.outputs.version }}
+            SOURCE_DATE_EPOCH=${{ steps.epoch.outputs.value }}
           push: false
           load: true
           tags: tutors-${{ matrix.app }}:scan
@@ -211,6 +219,7 @@ jobs:
             GIT_SHA=${{ github.sha }}
             BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
             VERSION=${{ steps.meta.outputs.version }}
+            SOURCE_DATE_EPOCH=${{ steps.epoch.outputs.value }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
