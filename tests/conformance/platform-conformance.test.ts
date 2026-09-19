@@ -59,6 +59,12 @@ describe("platform conformance (runway tier J)", () => {
     it.each<[string, (pod: Obj, container: Obj) => void]>([
       ["unpinned-image: Deployment/reader/app: quay.io/tutors-sdk/tutors-reader:latest", (_, c) => (c.image = "quay.io/tutors-sdk/tutors-reader:latest")],
       ["unpinned-image: Deployment/reader/app: quay.io/tutors-sdk/tutors-reader", (_, c) => (c.image = "quay.io/tutors-sdk/tutors-reader")],
+      ["unqualified-image: Deployment/reader/app: tutors/reader:16.2.0", (_, c) => (c.image = "tutors/reader:16.2.0")],
+      ["unqualified-image: Deployment/reader/app: tutors-app:16.2.0", (_, c) => (c.image = "tutors-app:16.2.0")],
+      [
+        "quay-nested-repository: Deployment/reader/app: quay.io/tutors-sdk/tutors/reader:16.2.0",
+        (_, c) => (c.image = "quay.io/tutors-sdk/tutors/reader:16.2.0")
+      ],
       [
         "image-tag-not-release: Deployment/reader/app: quay.io/tutors-sdk/tutors-reader:16.1.0 (expected tag 16.2.0)",
         (_, c) => (c.image = "quay.io/tutors-sdk/tutors-reader:16.1.0")
@@ -84,6 +90,20 @@ describe("platform conformance (runway tier J)", () => {
       const doc = breakIt((_, c) => (c.image = "quay.io/tutors-sdk/tutors-reader@sha256:abc"));
       expect(manifestPolicyFindings([doc], { expectedTag: "16.2.0" })).toEqual([]);
       expect(parseImage("localhost:5000/tutors/reader:1.0.0")).toEqual({ repository: "localhost:5000/tutors/reader", tag: "1.0.0", digest: undefined });
+    });
+
+    it("accepts other registries' nested paths and registries with a port", () => {
+      for (const image of ["ghcr.io/tutors-sdk/tutors/reader:16.2.0", "localhost:5000/tutors/reader:16.2.0"]) {
+        expect(manifestPolicyFindings([breakIt((_, c) => (c.image = image))], { expectedTag: "16.2.0" })).toEqual([]);
+      }
+    });
+
+    it("every overlay names its app's Quay repository", () => {
+      const names = overlayDirs().map((dir) => {
+        const kustomization = yaml.load(readText(join(dir, "kustomization.yaml"))) as { images?: { newName?: string }[] };
+        return kustomization.images?.map((image) => image.newName);
+      });
+      expect(names).toEqual(overlayDirs().map((dir) => [`quay.io/tutors-sdk/tutors-${toPosix(dir).split("/").pop()}`]));
     });
 
     it("every overlay pins its image to the release version in package.json", () => {
