@@ -8,9 +8,9 @@
 # skip: lo-tree mutation killers under packages/svelte/course, which the root
 #   vitest include does not run at all (see the architecture pass).
 # no-assertion: the best-practice axe test logs violations but never fails.
-# uncollected: test files no Vitest or Playwright config includes, so they run nowhere. The
-#   packages/svelte/course lo-tree tests cover a copy of decorateCourseTree that #228 removes;
-#   the create scaffolder test is a Deno test no workflow runs.
+# uncollected: test files no Vitest or Playwright config and no `deno test` workflow step
+#   includes, so they run nowhere. The packages/svelte/course lo-tree tests cover a copy of
+#   decorateCourseTree that #228 removes.
 
 documentation-only: tests/bdd/features/course/course-loading.feature
 documentation-only: tests/bdd/features/course/course-navigation.feature
@@ -38,7 +38,6 @@ documentation-only: tests/bdd/features/time/calendar-analytics.feature
 documentation-only: tests/bdd/features/time/lab-analytics.feature
 no-assertion: tests/e2e/accessibility.spec.ts :: course page passes landmark and navigation rules
 skip: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers
-uncollected: packages/jsr/create/test/scaffolder.test.ts
 uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-80-percent.test.ts
 uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-advanced.test.ts
 uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts

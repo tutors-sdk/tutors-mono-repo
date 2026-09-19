@@ -246,9 +246,38 @@ export function discoverRunners(root: string = REPO_ROOT): TestRunner[] {
     .map((file) => readRunner(file, readText(join(root, file))));
 }
 
-/** Test files no runner config collects: they look like coverage and run nowhere. */
+/** `deno test [flags] [paths]`, optionally after `cd <dir> &&` on the same line. */
+/** What `deno test <dir>` collects: `test.ts`, `*.test.ts` and `*_test.ts`, in any JS or TS flavour. */
+const DENO_MATCH = /(?:.*\/)?(?:[^/]*[._])?test\.[cm]?[jt]sx?$/;
+const DENO_TEST = /(?:\bcd\s+(\S+)\s*&&\s*)?\bdeno\s+test\b([^\n|;&]*)/;
+
+/**
+ * Deno has no runner config: a Deno test runs only if a workflow step calls
+ * `deno test` on its directory, so those steps are the runners.
+ */
+export function discoverDenoRunners(root: string = REPO_ROOT): TestRunner[] {
+  const runners: TestRunner[] = [];
+  for (const path of walk(join(root, ".github", "workflows"), (name) => /\.ya?ml$/.test(name)).sort()) {
+    const config = toPosix(path, root);
+    for (const line of readText(path).split(/\r?\n/)) {
+      const match = line.trim().startsWith("#") ? null : line.match(DENO_TEST);
+      if (!match) continue;
+      const cwd = (match[1] ?? "").replace(/^\.\/?/, "").replace(/\/$/, "");
+      const targets = match[2].split(/\s+/).filter((arg) => arg && !arg.startsWith("-"));
+      const include = (targets.length ? targets : ["."]).map((target) => {
+        const full = [cwd, target.replace(/^\.\/?/, "").replace(/\/$/, "")].filter(Boolean).join("/");
+        if (TEST_FILE.test(full)) return new RegExp(`^${escapeRegExp(full)}$`);
+        return new RegExp(`^${escapeRegExp(full ? `${full}/` : "")}${DENO_MATCH.source}`);
+      });
+      runners.push({ config, include, exclude: [] });
+    }
+  }
+  return runners;
+}
+
+/** Test files no runner config or `deno test` step collects: they look like coverage and run nowhere. */
 export function lintUncollectedTests(root: string = REPO_ROOT): string[] {
-  const runners = discoverRunners(root);
+  const runners = [...discoverRunners(root), ...discoverDenoRunners(root)];
   return findTestFiles(root)
     .map((path) => toPosix(path, root))
     .filter((file) => !runners.some((r) => r.include.some((p) => p.test(file)) && !r.exclude.some((p) => p.test(file))))

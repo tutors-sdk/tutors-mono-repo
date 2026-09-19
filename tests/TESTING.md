@@ -135,7 +135,7 @@ it can fail, then against the real repo.
 | L | `performance/` | A client bundle over its ceiling (`bundle-budgets.json`), a Lighthouse median below its floor (`lighthouse.json`), a k6 threshold crossed, memory growing after warm-up, a soak whose late p95 doubled. See [performance/README.md](./performance/README.md) |
 | M | `security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
 | N | `completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
-| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads; a test file no Vitest or Playwright config collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
+| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
 
 ### `mutation/`
 
