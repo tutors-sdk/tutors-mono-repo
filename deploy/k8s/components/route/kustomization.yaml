@@ -1,0 +1,50 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Opt-in OpenShift Route for one app: edge TLS, plain HTTP redirected. Apply it
+# one layer above the overlay, as deploy/k8s/variants/openshift/<app> does:
+#
+#   resources:
+#     - ../../../overlays/reader
+#   components:
+#     - ../../../components/route
+#
+# Not inside the overlay itself: a component runs before its own
+# kustomization's patches and namePrefix, so it would read the base ORIGIN and
+# the unprefixed Service name. `pnpm check:k8s` rejects that rendering.
+resources:
+  - route.yaml
+
+# The overlay states the public host once, in ORIGIN. Everything the Route
+# needs is copied from the rendered overlay; both sources are selected by kind,
+# so the overlay must render exactly one ConfigMap and one Service.
+replacements:
+  # https://reader.tutors.dev -> reader.tutors.dev
+  - source:
+      kind: ConfigMap
+      fieldPath: data.ORIGIN
+      options:
+        delimiter: "/"
+        index: 2
+    targets:
+      - select:
+          kind: Route
+        fieldPaths:
+          - spec.host
+  - source:
+      kind: Service
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Route
+        fieldPaths:
+          - metadata.name
+          - spec.to.name
+  - source:
+      kind: Service
+      fieldPath: metadata.labels
+    targets:
+      - select:
+          kind: Route
+        fieldPaths:
+          - metadata.labels

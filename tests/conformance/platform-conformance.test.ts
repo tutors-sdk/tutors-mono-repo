@@ -13,6 +13,7 @@ import {
   repoConfigCompletenessFindings,
   repoFrozenClockFindings
 } from "../../scripts/checks/conformance.ts";
+import { entryPointPolicyFindings, renderKustomization, variantDirs } from "../../scripts/checks/conformance.ts";
 import { REPO_ROOT, readText, toPosix } from "../../scripts/checks/lib/repo.ts";
 
 type Obj = Record<string, unknown>;
@@ -116,6 +117,106 @@ describe("platform conformance (runway tier J)", () => {
       });
       expect(tags).toEqual(overlayDirs().map((dir) => [toPosix(dir), [version]]));
     });
+  });
+
+  describe("entry point policies", () => {
+    /** What a variant renders for one app: ConfigMap, Service, and a Route and an Ingress in front of them. */
+    function compliantEntryPoints(): { route: Obj; ingress: Obj; docs: Obj[] } {
+      const route: Obj = {
+        apiVersion: "route.openshift.io/v1",
+        kind: "Route",
+        metadata: { name: "reader-tutors-app" },
+        spec: {
+          host: "reader.tutors.dev",
+          to: { kind: "Service", name: "reader-tutors-app" },
+          port: { targetPort: "http" },
+          tls: { termination: "edge", insecureEdgeTerminationPolicy: "Redirect" }
+        }
+      };
+      const ingress: Obj = {
+        apiVersion: "networking.k8s.io/v1",
+        kind: "Ingress",
+        metadata: { name: "reader-tutors-app" },
+        spec: {
+          ingressClassName: "nginx",
+          tls: [{ hosts: ["reader.tutors.dev"], secretName: "reader-tls" }],
+          rules: [
+            {
+              host: "reader.tutors.dev",
+              http: { paths: [{ path: "/", pathType: "Prefix", backend: { service: { name: "reader-tutors-app", port: { name: "http" } } } }] }
+            }
+          ]
+        }
+      };
+      const docs: Obj[] = [
+        { kind: "ConfigMap", metadata: { name: "reader-tutors-app-config" }, data: { ORIGIN: "https://reader.tutors.dev" } },
+        { kind: "Service", metadata: { name: "reader-tutors-app" }, spec: { ports: [{ name: "http", port: 80, targetPort: "http" }] } },
+        route,
+        ingress
+      ];
+      return { route, ingress, docs };
+    }
+
+    it("accept a Route and an Ingress on the ORIGIN host that target a rendered Service port", () => {
+      expect(entryPointPolicyFindings(compliantEntryPoints().docs)).toEqual([]);
+      expect(entryPointPolicyFindings([compliantDeployment()])).toEqual([]);
+    });
+
+    it.each<[string, (route: Obj, ingress: Obj) => void]>([
+      ["host-not-origin: Route/reader-tutors-app: tutors.dev (ORIGIN is https://reader.tutors.dev)", (route) => (route.host = "tutors.dev")],
+      ["entry-point-without-host: Route/reader-tutors-app", (route) => delete route.host],
+      // What a component applied inside the overlay renders: the backend misses the name prefix.
+      ["backend-service-not-rendered: Route/reader-tutors-app: tutors-app", (route) => ((route.to as Obj).name = "tutors-app")],
+      ["backend-port-not-on-service: Route/reader-tutors-app: reader-tutors-app:metrics", (route) => ((route.port as Obj).targetPort = "metrics")],
+      ["route-without-tls: Route/reader-tutors-app", (route) => delete route.tls],
+      ["route-insecure-not-redirected: Route/reader-tutors-app: Allow", (route) => ((route.tls as Obj).insecureEdgeTerminationPolicy = "Allow")],
+      ["route-insecure-not-redirected: Route/reader-tutors-app: unset", (route) => delete (route.tls as Obj).insecureEdgeTerminationPolicy],
+      ["host-not-origin: Ingress/reader-tutors-app: tutors.dev (ORIGIN is https://reader.tutors.dev)", (_, ingress) => ((ingress.rules as Obj[])[0].host = "tutors.dev")],
+      ["entry-point-without-host: Ingress/reader-tutors-app", (_, ingress) => delete (ingress.rules as Obj[])[0].host],
+      [
+        "backend-service-not-rendered: Ingress/reader-tutors-app: tutors-app",
+        (_, ingress) => ((ingress.rules as Obj[])[0].http = { paths: [{ backend: { service: { name: "tutors-app", port: { name: "http" } } } }] })
+      ],
+      ["ingress-without-class: Ingress/reader-tutors-app", (_, ingress) => delete ingress.ingressClassName],
+      [
+        "ingress-default-backend: Ingress/reader-tutors-app: answers for every host, not only ORIGIN",
+        (_, ingress) => (ingress.defaultBackend = { service: { name: "reader-tutors-app", port: { name: "http" } } })
+      ],
+      ["ingress-tls-host-mismatch: Ingress/reader-tutors-app: reader.tutors.dev not in tls hosts", (_, ingress) => ((ingress.tls as Obj[])[0].hosts = ["tutors.dev"])],
+      ["ingress-tls-without-secret: Ingress/reader-tutors-app", (_, ingress) => delete (ingress.tls as Obj[])[0].secretName]
+    ])("negative fixture: %s", (expected, mutate) => {
+      const { route, ingress, docs } = compliantEntryPoints();
+      mutate(route.spec as Obj, ingress.spec as Obj);
+      expect(entryPointPolicyFindings(docs)).toContain(expected);
+    });
+
+    it("a passthrough Route needs no redirect policy, and an Ingress needs no TLS block", () => {
+      const { route, ingress, docs } = compliantEntryPoints();
+      (route.spec as Obj).tls = { termination: "passthrough" };
+      delete (ingress.spec as Obj).tls;
+      expect(entryPointPolicyFindings(docs)).toEqual([]);
+    });
+
+    it("every app has a kind (Ingress) and an openshift (Route) variant of its overlay", () => {
+      const apps = overlayDirs().map((dir) => toPosix(dir, join(REPO_ROOT, "deploy/k8s/overlays")));
+      const expected = ["kind", "openshift"].flatMap((substrate) => apps.map((app) => `${substrate}/${app}`));
+      expect(variantDirs().map((dir) => toPosix(dir, join(REPO_ROOT, "deploy/k8s/variants")))).toEqual(expected);
+    });
+
+    it("every variant renders its overlay unchanged plus one entry point named and labelled like the Service", () => {
+      for (const dir of variantDirs()) {
+        const [substrate, app] = toPosix(dir, join(REPO_ROOT, "deploy/k8s/variants")).split("/");
+        const overlay = yaml.loadAll(renderKustomization(join(REPO_ROOT, "deploy/k8s/overlays", app))) as Obj[];
+        const variant = yaml.loadAll(renderKustomization(dir)) as Obj[];
+        const rendered = new Set(overlay.map((doc) => JSON.stringify(doc)));
+        const added = variant.filter((doc) => !rendered.has(JSON.stringify(doc)));
+        expect(variant.length, dir).toBe(overlay.length + 1);
+        expect(added.map((doc) => doc.kind), dir).toEqual([substrate === "openshift" ? "Route" : "Ingress"]);
+        const service = overlay.find((doc) => doc.kind === "Service")!.metadata as Obj;
+        expect(added[0].metadata, dir).toEqual({ name: service.name, labels: service.labels });
+        expect([...manifestPolicyFindings(variant), ...entryPointPolicyFindings(variant)], dir).toEqual([]);
+      }
+    }, 120_000);
   });
 
   describe("configuration completeness", () => {
