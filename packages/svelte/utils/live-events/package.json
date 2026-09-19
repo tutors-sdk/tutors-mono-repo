@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/live-events",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Tutors Live event contract: event types, service catalogue, rotating session token and the browser emitter",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

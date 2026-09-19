@@ -12,7 +12,16 @@
 
 /** Workspace directories per layer, lowest first. Keep in step with README.md. */
 const LAYERS = [
-  { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/svelte/utils/logger", "packages/svelte/utils/metrics"] },
+  {
+    name: "foundation",
+    paths: [
+      "packages/jsr/[^/]+",
+      "packages/svelte/utils/logger",
+      "packages/svelte/utils/metrics",
+      "packages/svelte/utils/live-events",
+      "packages/svelte/utils/live-store"
+    ]
+  },
   {
     name: "core",
     paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/utils/a11y", "packages/svelte/utils/i18n"]

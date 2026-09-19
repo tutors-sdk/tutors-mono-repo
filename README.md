@@ -44,7 +44,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|---|
 | `apps/reader` | `tutors-reader` | The course reader (the app behind tutors.dev) | 5173 |
 | `apps/catalogue` | `tutors-catalogue` | Course catalogue | 5175 |
-| `apps/live` | `tutors-live` | Live classroom / presence | 5174 |
+| `apps/live` | `tutors-live` | Live dashboard: presence, stats and heat maps, and the `/api/live/*` read API | 5174 |
 | `apps/time` | `tutors-time` | Student activity and time-tracking dashboard | 5176 |
 
 ### Packages
@@ -66,6 +66,8 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/svelte/utils/live-events` | `@tutors/live-events` | Tutors Live event contract, service catalogue, rotating session token and browser emitter |
+| `packages/svelte/utils/live-store` | `@tutors/live-store` | Tutors Live server side: bus, presence store, TimescaleDB warehouse, metrics and observation rules |
 
 **Core services.**
 
@@ -95,6 +97,14 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/svelte/ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
 | `packages/svelte/ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
 | `packages/svelte/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
+
+### Services
+
+Long-running processes that are not SvelteKit apps. They are pnpm workspaces under `services/` and are deployed as their own images.
+
+| Directory | Package | What it is |
+|---|---|---|
+| `services/live-ingest` | `@tutors/live-ingest` | Consumes `tutors.live.*` from the message bus into Valkey and TimescaleDB. See [services/live-ingest/README.md](services/live-ingest/README.md) |
 
 ## Getting Started
 

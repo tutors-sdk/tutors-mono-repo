@@ -19,3 +19,17 @@ data:
   PUBLIC_ANON_MODE: ""
   PUBLIC_PDF_KEY: ""
   LOG_LEVEL: "info"
+  # Tutors Live. Where the reader posts events; empty disables the emitter.
+  PUBLIC_LIVE_EVENTS_URL: ""
+  # Pipeline adapters: memory | redis, memory | valkey, memory | postgres.
+  # All empty means the memory pipeline, which needs no broker and no database.
+  LIVE_BUS: ""
+  LIVE_HOT_STORE: ""
+  LIVE_WAREHOUSE: ""
+  LIVE_REDIS_URL: ""
+  LIVE_DATABASE_URL: ""
+  LIVE_RETENTION_DAYS: "90"
+  # Whether the live app also runs the ingest consumer. Empty follows the bus.
+  LIVE_INGEST_IN_PROCESS: ""
+  # Term windows for the out-of-term observation, as JSON.
+  LIVE_TERMS: ""

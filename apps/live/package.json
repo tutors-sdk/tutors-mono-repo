@@ -12,7 +12,10 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pg": "^8.23.0",
+    "redis": "^6.2.1"
+  },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.1",
@@ -25,6 +28,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/live-store": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
     "@tutors/runes": "workspace:*",
