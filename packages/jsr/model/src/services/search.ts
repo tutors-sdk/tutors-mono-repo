@@ -294,7 +294,7 @@ function findNearestNextIndex(indices: number[], currIndex: number, contentLen: 
       return [i, indices[i]];
     }
   }
-  return [-1, -1]; //Something's up doc and it isn't good.
+  return [indices.length, contentLen]; // No separator at all: the content is a single line.
 }
 
 /**
