@@ -1,0 +1,11 @@
+# Paths graphify (https://github.com/safishamsi/graphify) skips when building
+# docs/knowledge-graph. .gitignore is honoured too; this only adds to it.
+
+# Vendored, minified pdf.js worker copied into each app's static/ dir.
+# ~3,300 nodes per copy would otherwise swamp the real code.
+*.min.js
+*.min.mjs
+
+# graphify's own output and cache
+graphify-out/
+docs/knowledge-graph/

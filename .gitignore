@@ -64,3 +64,5 @@ okf/
 deploy/k8s/**/secrets.yaml
 # Generator differential work area (scripts/checks/generator-diff.ts)
 .generator-diff/
+# graphify working output and cache (the committed report lives in docs/knowledge-graph/)
+graphify-out/
