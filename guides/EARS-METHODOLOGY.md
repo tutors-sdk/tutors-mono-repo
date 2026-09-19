@@ -51,7 +51,7 @@ Behaviour that depends on the current system state. The system must maintain the
 ```gherkin
 @ears-state-driven
 Scenario: View time spent on a course
-  While the student is authenticated and has accessed course materials
+  Given the student is authenticated and has accessed course materials
   Then the system shall display total time active for the course
 ```
 
@@ -67,7 +67,7 @@ Error handling, edge cases, and defensive behaviour. These cover what happens wh
 ```gherkin
 @ears-unwanted
 Scenario: Handle presence connection failure
-  If the WebSocket connection to the presence server fails
+  When the WebSocket connection to the presence server fails
   Then the system shall not crash
   And the system shall indicate that live presence is unavailable
 ```
@@ -84,11 +84,53 @@ Features that are configurable or depend on external conditions being met.
 ```gherkin
 @ears-optional
 Scenario: High contrast theme support
-  Where the student has selected a high contrast theme
+  Given the student has selected a high contrast theme
   Then the system shall apply sufficient contrast ratios to all text
 ```
 
 **When to use**: Theme selection, i18n locale support, optional analytics features, course-specific overrides.
+
+## EARS patterns use Gherkin keywords
+
+`While`, `Where` and `If` are EARS words, not Gherkin keywords. A Gherkin parser drops a line
+that starts with one, so the scenario would run, and pass, without its precondition. The
+pattern is carried by the `@ears-*` tag, and the sentence is written with the keyword Gherkin
+has for it:
+
+| EARS pattern | EARS wording | Gherkin step |
+|---|---|---|
+| State-driven | WHILE [state] | `Given [state]` |
+| Optional | WHERE [feature is enabled] | `Given [feature is enabled]` |
+| Unwanted | IF [condition] | `When [condition]` |
+
+Tier O (`tests/suite-health`) fails a feature file that has a `While`, `Where` or `If` step, or
+an `@ignore` tag, which the binder would otherwise skip without a word.
+
+## Executable features and specification prose
+
+A file under `tests/bdd/features/` is executable: its steps file under `tests/bdd/steps/` loads
+it with [`vitest-cucumber`](https://vitest-cucumber.miceli.click/), and the run fails when a
+scenario or step exists on one side only. Steps call product code, such as the model library,
+the time library or a service with a mocked Supabase client, and never assert on a fixture.
+
+```ts
+const feature = await loadFeature("tests/bdd/features/course/course-loading.feature");
+
+describeFeature(feature, ({ Background, Scenario }) => {
+  Scenario("Successfully load a course", ({ When, Then }) => {
+    When("the reader loads the course", () => { course = loadCourse(courseId, title, topics); });
+    Then("the course title should be {string}", (_ctx, expected: string) => expect(course.title).toBe(expected));
+  });
+});
+```
+
+The path passed to `loadFeature` is a literal relative to the repo root, because tier O reads
+it to tell an executable feature from a `documentation-only` one.
+
+A scenario that needs a browser, such as layout, focus order, an OAuth redirect or a service
+worker, cannot be driven from Node. It lives as prose in
+[`guides/specifications/`](./specifications/README.md), which names the tier that does cover
+the behaviour, or says that none does.
 
 ## Persona-Based Organisation
 
@@ -100,7 +142,6 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 - Lab step interaction
 - Live presence and community
 - Content search
-- Accessibility
 
 ### Instructor Persona (`tests/bdd/features/instructor/`)
 - Course authoring and structure
@@ -110,32 +151,39 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 - Whitelist and access control
 
 ### Developer Persona (`tests/bdd/features/developer/`)
-- Theme customisation and icon libraries
-- Authentication integration (GitHub OAuth)
-- Internationalisation (5 locales)
+- Theme customisation
+- Internationalisation (6 locales)
 
 ### Shared/Cross-Cutting (`tests/bdd/features/shared/`)
+- Authentication and activity tracking
 - Error handling and fallbacks
 - Offline resilience
-- Responsive layout
+- Theming
+
+Accessibility, the OAuth flow and responsive layout need a browser and are prose in
+[specifications/](./specifications/README.md). `course/`, `live/` and `time/` hold features that
+predate the EARS tags.
 
 ## EARS Tag Distribution
 
 | Tag | Student | Instructor | Developer | Shared | Total |
 |---|---|---|---|---|---|
-| `@ears-ubiquitous` | 8 | 4 | 0 | 4 | 16 |
-| `@ears-event-driven` | 10 | 7 | 5 | 0 | 22 |
-| `@ears-state-driven` | 5 | 10 | 4 | 2 | 21 |
-| `@ears-unwanted` | 2 | 2 | 3 | 6 | 13 |
-| `@ears-optional` | 2 | 0 | 4 | 2 | 8 |
+| `@ears-ubiquitous` | 4 | 2 | 0 | 0 | 6 |
+| `@ears-event-driven` | 12 | 4 | 4 | 0 | 20 |
+| `@ears-state-driven` | 5 | 13 | 3 | 0 | 21 |
+| `@ears-unwanted` | 1 | 1 | 0 | 5 | 7 |
+| `@ears-optional` | 0 | 0 | 2 | 0 | 2 |
+
+Executable scenarios only. The unwanted and optional counts fell furthest when the features were
+bound: most of those scenarios describe failure handling and options the product does not have.
 
 ## Adding New EARS-Tagged Tests
 
 1. Choose the persona whose perspective the feature serves
 2. Select the EARS pattern that best describes the requirement type
-3. Write the Gherkin scenario using the pattern's sentence structure
+3. Write the Gherkin scenario using the pattern's sentence structure and Gherkin's keywords
 4. Add the `@ears-*` tag to the scenario
-5. Create or extend the step definition file in the corresponding `steps/` directory
+5. Bind it in the steps file in the corresponding `steps/` directory, against product code; run `pnpm test:bdd` and watch it fail before the behaviour exists
 6. Validate EARS tags are correct using the `isValidEarsTag()` helper from `tests/bdd/support/ears-tags.ts`
 
 ## References

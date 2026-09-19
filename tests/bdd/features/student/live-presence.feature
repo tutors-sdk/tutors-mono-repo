@@ -4,39 +4,37 @@ Feature: Live Presence
   I want to see who is currently online in my course
   So that I can feel connected to my learning community
 
+  Background:
+    Given the course "web-dev-101" is published with 2 labs
+    And the student "Alice" is signed in
+
   @ears-event-driven
   Scenario: See online students count
-    When a student opens the live view for a course
-    Then the system shall display the number of students currently online
+    Given "Alice" has opened lab 1 of the course
+    When "Bob" and "Carol" view lab 1 of the course
+    Then the system shall display 3 students currently online
 
   @ears-event-driven
   Scenario: Receive real-time presence updates
-    Given a student is viewing the live page
-    When another student joins the course
-    Then the system shall update the online count in real time
-    And the new student shall appear in the online list
-
-  @ears-event-driven
-  Scenario: Student leaves course presence
-    Given 3 students are online in a course
-    When one student closes their browser
-    Then the system shall remove them from the online list
-    And the online count shall decrease to 2
-
-  @ears-unwanted
-  Scenario: Handle presence connection failure
-    If the WebSocket connection to the presence server fails
-    Then the system shall not crash
-    And the system shall indicate that live presence is unavailable
+    Given "Alice" has opened lab 1 of the course
+    When another student "Bob" joins the course at lab 1
+    Then the system shall update the online count to 2
+    And the online list shall be "Alice, Bob"
+    And when "Bob" moves on to lab 2 the online count shall stay at 2 and show "Bob" at "Lab 2"
 
   @ears-event-driven
   Scenario: Express sentiment
-    When a student sets their sentiment to a specific value
-    Then the system shall broadcast the sentiment to other course participants
-    And the sentiment shall be visible on the student's presence card
+    Given "Alice" has opened lab 1 of the course
+    When the student sets their sentiment to "confused"
+    And the student moves on to lab 2
+    Then the system shall store the sentiment "confused" for "alice"
+    And the system shall broadcast the sentiment "confused" to other course participants
+    And the sentiment "confused" shall be on the presence card of "Alice"
 
   @ears-unwanted
   Scenario: Private mode hides presence
-    If a student has disabled share presence
-    Then the system shall not broadcast their activity to others
+    Given the student has disabled share presence
+    When "Alice" opens lab 1 of the course
+    Then the system shall mark "alice" as "offline"
+    And the system shall not broadcast their activity to others
     And their name shall not appear in the online list

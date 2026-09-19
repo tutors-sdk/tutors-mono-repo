@@ -164,17 +164,54 @@ export function executableFeatureGlobs(root: string = REPO_ROOT): string[] {
   return globs;
 }
 
-export type FeatureFindingKind = "documentation-only" | "no-scenarios";
+/**
+ * Features a steps file binds inside Vitest with vitest-cucumber, which fails the
+ * run when the feature and its steps drift apart. The path must be a literal
+ * relative to the repo root, so this check can read it without running anything.
+ */
+export function boundFeaturePaths(root: string = REPO_ROOT): Set<string> {
+  const bound = new Set<string>();
+  for (const path of findTestFiles(root)) {
+    for (const match of readText(path).matchAll(/\bloadFeature\(\s*["'`]([^"'`$]+\.feature)["'`]/g)) {
+      bound.add(match[1].replace(/^\.\//, ""));
+    }
+  }
+  return bound;
+}
 
-export function lintFeatureFiles(root: string = REPO_ROOT): { kind: FeatureFindingKind; file: string }[] {
+/** EARS keywords are not Gherkin: a parser drops the line, and the scenario passes without its precondition. */
+const DROPPED_STEP = /^\s*(While|Where|If)\s+\S/;
+/** vitest-cucumber leaves a scenario tagged `@ignore` unbound without failing. */
+const IGNORE_TAG = /^\s*(@\S+\s+)*@ignore\b/;
+
+export type FeatureFindingKind = "documentation-only" | "no-scenarios" | "dropped-step" | "ignored-scenario";
+
+export interface FeatureFinding {
+  kind: FeatureFindingKind;
+  file: string;
+  /** The offending line, for findings about one line rather than the whole file. */
+  detail?: string;
+}
+
+export function formatFeatureFinding(finding: FeatureFinding): string {
+  return finding.detail ? `${finding.kind}: ${finding.file} :: ${finding.detail}` : `${finding.kind}: ${finding.file}`;
+}
+
+export function lintFeatureFiles(root: string = REPO_ROOT): FeatureFinding[] {
   const globs = executableFeatureGlobs(root).map(globToRegExp);
+  const bound = boundFeaturePaths(root);
   return walk(root, (name) => name.endsWith(".feature"))
     .map((path) => ({ path, file: toPosix(path, root) }))
     .filter(({ file }) => !file.includes("/fixtures/"))
-    .flatMap(({ path, file }) => {
-      if (!/^\s*Scenario( Outline)?:/m.test(readText(path))) return [{ kind: "no-scenarios" as const, file }];
-      if (!globs.some((glob) => glob.test(file))) return [{ kind: "documentation-only" as const, file }];
-      return [];
+    .flatMap(({ path, file }): FeatureFinding[] => {
+      const text = readText(path);
+      if (!/^\s*Scenario( Outline)?:/m.test(text)) return [{ kind: "no-scenarios", file }];
+      if (!bound.has(file) && !globs.some((glob) => glob.test(file))) return [{ kind: "documentation-only", file }];
+      return text.split(/\r?\n/).flatMap((line): FeatureFinding[] => {
+        if (DROPPED_STEP.test(line)) return [{ kind: "dropped-step", file, detail: line.trim() }];
+        if (IGNORE_TAG.test(line)) return [{ kind: "ignored-scenario", file, detail: line.trim() }];
+        return [];
+      });
     })
     .sort((a, b) => a.file.localeCompare(b.file));
 }
@@ -246,9 +283,38 @@ export function discoverRunners(root: string = REPO_ROOT): TestRunner[] {
     .map((file) => readRunner(file, readText(join(root, file))));
 }
 
-/** Test files no runner config collects: they look like coverage and run nowhere. */
+/** `deno test [flags] [paths]`, optionally after `cd <dir> &&` on the same line. */
+/** What `deno test <dir>` collects: `test.ts`, `*.test.ts` and `*_test.ts`, in any JS or TS flavour. */
+const DENO_MATCH = /(?:.*\/)?(?:[^/]*[._])?test\.[cm]?[jt]sx?$/;
+const DENO_TEST = /(?:\bcd\s+(\S+)\s*&&\s*)?\bdeno\s+test\b([^\n|;&]*)/;
+
+/**
+ * Deno has no runner config: a Deno test runs only if a workflow step calls
+ * `deno test` on its directory, so those steps are the runners.
+ */
+export function discoverDenoRunners(root: string = REPO_ROOT): TestRunner[] {
+  const runners: TestRunner[] = [];
+  for (const path of walk(join(root, ".github", "workflows"), (name) => /\.ya?ml$/.test(name)).sort()) {
+    const config = toPosix(path, root);
+    for (const line of readText(path).split(/\r?\n/)) {
+      const match = line.trim().startsWith("#") ? null : line.match(DENO_TEST);
+      if (!match) continue;
+      const cwd = (match[1] ?? "").replace(/^\.\/?/, "").replace(/\/$/, "");
+      const targets = match[2].split(/\s+/).filter((arg) => arg && !arg.startsWith("-"));
+      const include = (targets.length ? targets : ["."]).map((target) => {
+        const full = [cwd, target.replace(/^\.\/?/, "").replace(/\/$/, "")].filter(Boolean).join("/");
+        if (TEST_FILE.test(full)) return new RegExp(`^${escapeRegExp(full)}$`);
+        return new RegExp(`^${escapeRegExp(full ? `${full}/` : "")}${DENO_MATCH.source}`);
+      });
+      runners.push({ config, include, exclude: [] });
+    }
+  }
+  return runners;
+}
+
+/** Test files no runner config or `deno test` step collects: they look like coverage and run nowhere. */
 export function lintUncollectedTests(root: string = REPO_ROOT): string[] {
-  const runners = discoverRunners(root);
+  const runners = [...discoverRunners(root), ...discoverDenoRunners(root)];
   return findTestFiles(root)
     .map((path) => toPosix(path, root))
     .filter((file) => !runners.some((r) => r.include.some((p) => p.test(file)) && !r.exclude.some((p) => p.test(file))))
