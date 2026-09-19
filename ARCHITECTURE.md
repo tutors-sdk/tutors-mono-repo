@@ -673,6 +673,7 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 **Foundation (Layer 1)**:
 - `runes` - Reactive state management
 - `utils/logger` - Logging
+- `utils/runtime` - Server runtime seams: the clock (`now()`, frozen by `HARNESS_NOW` for the release harness) and the `/version` endpoint. No dependencies
 
 **Core (Layer 2)**:
 - `course` - Course data processing
