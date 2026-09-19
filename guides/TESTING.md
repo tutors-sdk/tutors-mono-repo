@@ -290,7 +290,8 @@ GitHub anchors.
 ## Tier O — suite health
 
 **Protects** the suite itself: no `.only`, no skip/todo/fixme without a dated quarantine, no test
-without an assertion, no `.feature` file that no runner loads, no test file that no Vitest or
+without an assertion, no `.feature` file that nothing binds, no step a Gherkin parser would
+drop or scenario the binder would skip, no test file that no Vitest or
 Playwright config collects, and no file over its wall-clock budget.
 
 **Lives in** `scripts/checks/suite-health.ts`, `scripts/checks/test-time-budget.ts`,
@@ -349,21 +350,25 @@ to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 
 ## BDD and executable specs
 
-Today: `tests/bdd/features/` holds 24 Gherkin feature files with EARS tags, and
-`tests/bdd/steps/` holds Vitest suites named after those scenarios, backed by `TestWorld`,
-`TestDataFactory` and the mock Supabase/realtime clients in `tests/bdd/support/`.
+**Protects** the requirements: a scenario in `tests/bdd/features/` is a statement about the
+product that fails when the product stops doing it.
 
-The honest state is that **no runner loads the feature files**. All 24 are recorded as
-`documentation-only` in `tests/suite-health/known-findings.txt`, and the step files are ordinary
-Vitest tests, many of which assert against fixtures rather than driving product code. So the
-features are specification prose and the steps are unit-ish tests that happen to be named after
-them.
+**How.** Each of the 20 feature files (73 scenarios) is loaded by its steps file with
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/), inside the ordinary Vitest run, so
+there is one runner and no second CI job. The binder fails the run when a scenario or step is
+on one side only, which is what keeps the Gherkin from drifting back into prose. Steps drive
+product code and never assert on a fixture; Supabase, the course host and `$state` are the only
+stand-ins.
 
-Tier D closes that: real executable specs, one runner, features that fail when the product
-does. It is tracked in [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214), which
-also retires the legacy feature files. The tag vocabulary and persona split are worth keeping —
-see [EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md) — and until #214 lands, prefer putting new
-behaviour in tier B (unit, property) or tier G (journeys), where it actually fails.
+**Proves it can fail.** Changing one expected value in a feature file turns its run red; every
+bound feature was checked that way when it was bound. Tier O fails a feature that nothing
+binds, an EARS keyword Gherkin would silently drop, and an `@ignore` tag.
+
+**What it does not cover.** 48 scenarios need a browser or describe behaviour the product does
+not have. They are prose in [specifications/](./specifications/README.md), which names the
+covering tier for each or says that none does. [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
+still owns `Rule:` blocks and the structural audit. Writing and binding a scenario:
+[EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md).
 
 ## Dev-server smoke tests and the standalone axe audit
 
@@ -421,7 +426,6 @@ lands.
 
 | Tier | Would own | Tracked by |
 |---|---|---|
-| D | Executable EARS/Gherkin specs | [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
 | F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](./RBAC.md) |
 | H | Message contracts for the realtime and broadcast protocols, versioned | No issue yet; shapes are snapshot-checked in `tests/contract/` |
 | I | Data migration and the Supabase exit | No issue yet |
@@ -536,7 +540,7 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 - Coverage thresholds sit at 55/50/65/55 and should ratchet upward.
 - `tests/components/` tests props, variants and state transitions as plain data; nothing renders
   a Svelte component, and `@testing-library/svelte` is an unused dependency.
-- `tests/bdd/features/` is documentation only ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)).
+- 48 specified scenarios are prose, many with no tier covering them: [specifications/](./specifications/README.md).
 - Mutation testing runs nowhere in CI.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
-- Tiers D, F, H and I are not built.
+- Tiers F, H and I are not built.

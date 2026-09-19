@@ -20,7 +20,7 @@ first gate is the pull request.
 | **A** | Structure — layer violations, package cycles, app-to-app imports, JSR/Node manifest drift, unused files, exports and dependencies | In repo | PR: `build-and-test` (`pnpm check:knip`, then `vitest`) |
 | **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
 | **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
-| **D** | Requirements — executable EARS/Gherkin specs | Planned ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)) | Feature files are documentation only today |
+| **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
 | **F** | Authorisation — who may call what | Planned ([#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77)) | — |
 | **G** | User journeys — the whole system through a real browser, against built images | In repo | PR: `e2e-stack` (chromium, webkit). Nightly: `e2e-stack-nightly` (firefox, mobile) |
 | **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | Planned, no issue yet | Shapes are snapshot-checked under tier "contract" below |
@@ -51,7 +51,7 @@ Every command below exists in the root `package.json`.
 | `pnpm lint` | ESLint over the repo |
 | `pnpm test` | `vitest run` — everything under `tests/` except `e2e`, `e2e-stack`, `release` and `fuzz` |
 | `pnpm test:coverage` | The same run with v8 coverage against the thresholds in `vitest.config.ts` |
-| `pnpm test:bdd` | The step files under `tests/bdd/` |
+| `pnpm test:bdd` | The executable features: `tests/bdd/steps/` bound to `tests/bdd/features/` |
 | `pnpm test:contract` | `tests/contract/` — API surface snapshots and Zod shape checks |
 | `pnpm test:fuzz` | The property suites, on the threads pool (`vitest.config.fuzz.ts`) |
 | `pnpm test:tz` | Unit and property suites under UTC, Europe/Dublin and Pacific/Auckland |

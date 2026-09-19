@@ -4,38 +4,32 @@ Feature: Course Loading
   So that I can access learning materials
 
   Background:
-    Given a published course "web-dev-101" exists
+    Given the generator has published the course "web-dev-101" titled "Web Development 101"
     And the course has 3 topics with 2 labs each
 
   Scenario: Successfully load a course
-    When I request the course "web-dev-101"
-    Then the course should load successfully
-    And the course title should be "Web Development 101"
+    When the reader loads the course
+    Then the course title should be "Web Development 101"
     And the course should have 3 topics
-
-  Scenario: Handle missing course gracefully
-    When I request the course "nonexistent-course"
-    Then I should see an error message
-    And the error should indicate the course was not found
+    And every learning object should be reachable by its route
 
   Scenario: Load a course with nested units
-    Given the course has topics with nested units
-    When I request the course "web-dev-101"
-    Then each topic should contain its units
-    And each unit should contain its learning objects
+    Given the first topic also holds a unit with 2 notes
+    When the reader loads the course
+    Then the first topic should list that unit
+    And each note in the unit should trace its breadcrumbs through the unit and the first topic
 
   Scenario Outline: Load different learning object types
-    Given a learning object of type "<type>" exists in the course
-    When I navigate to the learning object
-    Then the learning object should have type "<type>"
-    And the learning object should have a valid route
+    Given the first topic also holds a learning object of type "<type>"
+    When the reader loads the course
+    Then the first topic should hold a learning object of type "<type>"
+    And no route in the course should carry an unresolved course placeholder
 
     Examples:
-      | type     |
-      | lab      |
-      | talk     |
-      | video    |
-      | note     |
-      | web      |
-      | github   |
-      | archive  |
+      | type    |
+      | lab     |
+      | talk    |
+      | note    |
+      | web     |
+      | github  |
+      | archive |

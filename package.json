@@ -47,6 +47,7 @@
     "check:release-claims": "tsx scripts/checks/release-claims.ts"
   },
   "devDependencies": {
+    "@amiceli/vitest-cucumber": "7.0.0",
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
