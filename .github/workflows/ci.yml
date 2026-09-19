@@ -211,6 +211,9 @@ jobs:
       - name: Fixture that needs UID 1001 fails
         run: pnpm check:container --image tutors-smoke-fixture --env FIXTURE_FAULT=uid --startup-budget-ms 10000 --expect-fail
 
+      - name: Fixture that answers a different header on every response fails
+        run: pnpm check:container --image tutors-smoke-fixture --env FIXTURE_FAULT=nondeterministic --expect-fail
+
       - name: Fixture without security headers fails the tier M checks
         run: pnpm check:container --image tutors-smoke-fixture --app time --expect-fail
 

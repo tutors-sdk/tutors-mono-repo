@@ -14,11 +14,21 @@ docker build --build-arg APP_NAME=live -t tutors/live .
 docker build --build-arg APP_NAME=time -t tutors/time .
 ```
 
-Optional build args: `NODE_VERSION` (default `22`), and `VERSION`, `GIT_SHA`
-and `BUILD_DATE` for the OCI labels. The build needs BuildKit (default in
-Docker 23+). Base images are fully qualified (`docker.io/library/node`), so
-the same file builds under Podman/Buildah and Quay's builders; `NODE_IMAGE`
-overrides the base for a mirror.
+Optional build args: `NODE_VERSION` (default `22`), `VERSION`, `GIT_SHA` and
+`BUILD_DATE` for the OCI labels and `GET /version`, and `SOURCE_DATE_EPOCH` for
+reproducible static-file headers (see [Deterministic responses](#deterministic-responses)).
+The build needs BuildKit (default in Docker 23+). Base images are fully
+qualified (`docker.io/library/node`), so the same file builds under
+Podman/Buildah and Quay's builders; `NODE_IMAGE` overrides the base for a
+mirror.
+
+```bash
+docker build --build-arg APP_NAME=reader \
+  --build-arg GIT_SHA=$(git rev-parse HEAD) \
+  --build-arg BUILD_DATE=$(date -u +%FT%TZ) \
+  --build-arg SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+  -t tutors/reader .
+```
 
 ## Registry
 
@@ -73,6 +83,8 @@ needs no Supabase project. If a host port is taken, override it, for example
 | Liveness | `GET /healthz/live` returns `{"status":"ok"}` with no dependencies |
 | Readiness | `GET /healthz` also reports Supabase reachability |
 | Metrics | `GET /metrics` in Prometheus text format (request histogram/counter, in-flight gauge, Node process metrics) |
+| Build identity | `GET /version` returns `{"app","version","revision","built","clock"}`; the only route that answers the commit or build date |
+| Request id | `x-request-id` response header (echoes a well-formed incoming one); the only per-request value in any header besides `Date` |
 | Entrypoint | `node build/index.js` (SvelteKit adapter-node) |
 
 Environment variables the server reads at startup:
@@ -87,6 +99,41 @@ Environment variables the server reads at startup:
 | `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
+| `HARNESS_NOW` | **Release harness only.** An ISO 8601 instant that freezes the clock the server stamps into responses and records. Never set it in a deployment |
+
+`GIT_SHA` and `BUILD_DATE` are baked into the image from the build args of the
+same name; nobody sets them at runtime.
+
+## Deterministic responses
+
+The release harness runs two stacks of these images side by side and diffs
+what they answer, so anything that varies without a code change is noise in
+every comparison. The image keeps that to a known, short list:
+
+- **Clock.** Server code that stamps a time into a response or a stored record
+  (`/healthz` `timestamp`, the time app's `last_synced_at` and sync-interval
+  check) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
+  an ISO 8601 instant (`2026-09-16T09:05:00.000Z`) it answers that instant;
+  otherwise the system clock. Log timestamps, metrics, request durations and
+  everything Auth.js does with session expiry stay on the real clock: the seam
+  never patches `Date`, so a frozen clock cannot keep an expired session alive.
+  The image always runs with `NODE_ENV=production`, so the guard against
+  running frozen by accident is that nothing sets the variable: it is absent
+  from `deploy/k8s` and `compose.yaml` (a conformance test fails if it ever
+  appears there), an invalid value is ignored, the app logs a `warn` line at
+  startup while it is active, and `GET /version` reports `"clock": "frozen"`.
+- **Headers.** Two identical requests answer identical headers except `Date`
+  and `x-request-id` (the container smoke test checks this). Static files carry
+  `ETag: W/"<size>-<mtime>"` and `Last-Modified`; pass
+  `--build-arg SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)` and every file's
+  mtime is pinned to the commit time, so two builds of one commit agree.
+  Without it they differ per build. There is no CSP nonce and no per-process id.
+- **Build identity.** The commit and build date are answered by `GET /version`
+  only. With `GIT_SHA` given, SvelteKit's build name (`/_app/version.json`, and
+  the `__sveltekit_<hash>` global in each page) is the commit instead of the
+  build timestamp, so rebuilding a commit changes nothing. The release version
+  also appears in the footer (`Tutors v:16.2.2`, marked
+  `data-tutors-build="version"`) and in the `Service starting` log line.
 
 ## Metrics
 

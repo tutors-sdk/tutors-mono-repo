@@ -133,6 +133,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
+      '@tutors/runtime':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/runtime
       '@tutors/themes':
         specifier: workspace:*
         version: link:../../packages/svelte/themes
@@ -208,6 +211,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
+      '@tutors/runtime':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/runtime
       '@tutors/themes':
         specifier: workspace:*
         version: link:../../packages/svelte/themes
@@ -317,6 +323,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../../packages/svelte/runes
+      '@tutors/runtime':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/runtime
       '@tutors/themes':
         specifier: workspace:*
         version: link:../../packages/svelte/themes
@@ -417,6 +426,9 @@ importers:
       '@tutors/metrics':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/metrics
+      '@tutors/runtime':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/runtime
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
@@ -875,6 +887,8 @@ importers:
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.70.0)
+
+  packages/svelte/utils/runtime: {}
 
   packages/svelte/utils/tour:
     dependencies:

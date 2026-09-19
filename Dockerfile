@@ -53,6 +53,9 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 FROM deps AS build
 ARG APP_NAME=reader
 ENV SVELTEKIT_ADAPTER=node
+# Names the SvelteKit build (kit.version.name) so two builds of one commit are
+# byte-identical; without it SvelteKit falls back to the build timestamp.
+ARG GIT_SHA=unknown
 COPY . .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --offline --frozen-lockfile
@@ -60,6 +63,13 @@ RUN pnpm --filter "tutors-${APP_NAME}..." build
 # --legacy: this workspace uses symlinked (not injected) workspace packages.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm --filter "tutors-${APP_NAME}" deploy --prod --legacy --ignore-scripts /out
+# adapter-node serves static files with an ETag of size + mtime and a
+# Last-Modified header. Given SOURCE_DATE_EPOCH (the commit time), every mtime is
+# pinned to it, so two builds of one commit answer identical headers. Without
+# it, mtimes stay at build time: never pin to a constant, or a changed file of
+# the same size would keep its ETag across releases.
+ARG SOURCE_DATE_EPOCH
+RUN if [ -n "${SOURCE_DATE_EPOCH}" ]; then find /out/build -exec touch -h -d "@${SOURCE_DATE_EPOCH}" {} +; fi
 
 # ---------------------------------------------------------------------------
 # runtime: minimal image with only the server bundle and production deps.
@@ -95,6 +105,10 @@ WORKDIR /app
 COPY --from=build --chown=1001:0 /out/package.json ./package.json
 COPY --from=build --chown=1001:0 /out/node_modules ./node_modules
 COPY --from=build --chown=1001:0 /out/build ./build
+
+# Build identity, answered by GET /version and nowhere else.
+ENV GIT_SHA=${GIT_SHA} \
+    BUILD_DATE=${BUILD_DATE}
 
 USER 1001
 EXPOSE 3000
