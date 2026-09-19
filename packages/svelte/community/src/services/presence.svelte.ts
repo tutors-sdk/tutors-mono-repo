@@ -6,6 +6,16 @@ import { rune, tutorsId } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
+import {
+  sendCourseBroadcast as sendCourseBroadcastCore,
+  setBroadcastSupabase,
+  type CourseBroadcastMessage
+} from "./broadcast.ts";
+
+// Wire the real supabase into the pure broadcast module (anon mode leaves it null).
+if (PUBLIC_ANON_MODE !== "TRUE" && supabase) {
+  setBroadcastSupabase(supabase);
+}
 
 const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
 
@@ -80,6 +90,15 @@ export const presenceService: PresenceService = {
     }
 
     void upsertTutorsConnectLatestLo(loRecord);
+  },
+
+  sendCourseBroadcast(
+    courseId: string,
+    message: CourseBroadcastMessage,
+    senderName: string
+  ): boolean {
+    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return false;
+    return sendCourseBroadcastCore(courseId, message, senderName);
   }
 };
 
