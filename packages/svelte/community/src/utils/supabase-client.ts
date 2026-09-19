@@ -160,7 +160,8 @@ async function getNumOfLearningRecordsIncrements(fieldName: string, courseId: st
     log.error("Error fetching student interaction:", error);
     return 0;
   }
-  return student ? student[0].increment + 1 : 1;
+  // No record yet comes back as an empty array, not null: the first visit counts as 1.
+  return (student?.[0]?.increment ?? 0) + 1;
 }
 
 /**
