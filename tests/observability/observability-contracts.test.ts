@@ -1,7 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  APP_SERIES,
   alertParityFindings,
+  containerLogFindings,
+  metricsContractFindings,
+  requestCorrelationFindings,
   exposedSeries,
   failedRequestFindings,
   hookWiringFindings,
@@ -16,6 +20,7 @@ import {
   createLogger,
   createRequestLogger,
   logRequestError,
+  logServiceStart,
   setAppName,
   type LogEntry
 } from "../../packages/svelte/utils/logger/src/index.ts";
@@ -59,7 +64,7 @@ describe("observability contracts (runway tier K)", () => {
     });
 
     it("negative fixtures: rejects a bad level, a missing request id on a completion line and a non-JSON line", () => {
-      const completed = { timestamp: "2026-09-16T10:00:00.000Z", message: "request completed", requestId: "r1", method: "GET", path: "/", route: null, status: 200, duration_ms: 3 };
+      const completed = { timestamp: "2026-09-16T10:00:00.000Z", message: "request completed", requestId: "r1", method: "GET", path: "/", route: null, status: 200, duration_ms: 3, slow: false, loadError: false };
       const findings = logSchemaFindings([
         { timestamp: "2026-09-16T10:00:00.000Z", level: "fatal", message: "boom" },
         { ...completed, requestId: undefined, level: "info" },
@@ -71,8 +76,142 @@ describe("observability contracts (runway tier K)", () => {
       expect(findings).toContain("line 3: level a completion line with loadError must be logged at error");
       expect(findings.some((f) => f.startsWith("line 4: loadError"))).toBe(true);
       expect(logSchemaFindings([{ ...completed, level: "error", loadError: true }])).toEqual([]);
-      expect(parseLogStream('{"level":"info"}\nListening on http://0.0.0.0:3000\nServer ready\n').findings).toEqual([
-        "line 2: not JSON: Server ready"
+      // No plain-text line is tolerated any more, adapter-node's startup banner included.
+      expect(parseLogStream('{"level":"info"}\nListening on http://0.0.0.0:3000\n').findings).toEqual([
+        "line 2: not JSON: Listening on http://0.0.0.0:3000"
+      ]);
+    });
+  });
+
+  describe("container log contract", () => {
+    const core = {
+      timestamp: "2026-09-19T10:00:00.000Z",
+      level: "info",
+      event: "log",
+      message: "x",
+      app: "tutors-reader",
+      environment: "production",
+      hostname: "pod-1",
+      pid: 1,
+      requestId: null
+    };
+    const completed = {
+      ...core,
+      event: "request.completed",
+      message: "request completed",
+      requestId: "r1",
+      method: "GET",
+      path: "/",
+      route: "/",
+      status: 200,
+      duration_ms: 3,
+      slow: false,
+      loadError: false
+    };
+
+    it("what the structured logger writes for every lifecycle event satisfies it", async () => {
+      const entries: LogEntry[] = [];
+      const logger = createLogger({ level: "debug", structured: true, output: (entry) => entries.push(entry) });
+      setAppName("tutors-reader");
+      try {
+        logServiceStart({ version: "1.0.0", authMode: "anonymous" }, logger);
+        await createRequestLogger({ logger })({ event: makeEvent("/course/cs101"), resolve: async () => new Response("ok") });
+        logRequestError({ error: new Error("x"), event: makeEvent("/course/cs101"), status: 500, message: "Internal Error" }, logger);
+        logger.warn("free-form line", { anything: 1 });
+      } finally {
+        clearGlobalContext();
+      }
+      // Through JSON, as a container's stdout would carry it.
+      expect(containerLogFindings(entries.map((entry) => JSON.parse(JSON.stringify(entry))))).toEqual([]);
+    });
+
+    it("negative fixtures: a missing core key, reordered keys, an unknown event, a drifting field set and a wrong type", () => {
+      const withoutRequestId = Object.fromEntries(Object.entries(core).filter(([key]) => key !== "requestId"));
+      const withoutSlow = Object.fromEntries(Object.entries(completed).filter(([key]) => key !== "slow"));
+      const findings = containerLogFindings([
+        withoutRequestId,
+        { level: "info", ...core },
+        { ...core, event: "cache.evicted" },
+        withoutSlow,
+        { ...completed, userAgent: "curl" },
+        { ...completed, status: "200" },
+        completed
+      ]);
+      expect(findings).toHaveLength(6);
+      expect(findings[0]).toMatch(/^line 1: requestId /);
+      expect(findings[1]).toMatch(/^line 2: core keys are \[level, timestamp,/);
+      expect(findings[2]).toBe('line 3: event "cache.evicted" is not in the log contract (LOG_EVENT_FIELDS)');
+      expect(findings[3]).toMatch(/^line 4: request.completed carries \[method, path, route, status, duration_ms, loadError\]/);
+      expect(findings[4]).toMatch(/^line 5: request.completed carries .*userAgent\]/);
+      expect(findings[5]).toMatch(/^line 6: request.completed.status /);
+    });
+
+    it("negative fixtures: a response without the header, a changed id, a doubled header and an uncorrelated line", () => {
+      const lines = [{ requestId: "r1", path: "/" }, { requestId: "other", path: "/" }];
+      expect(requestCorrelationFindings("rid", "r1", null, lines, "/")).toEqual(["rid: response has no x-request-id header"]);
+      expect(requestCorrelationFindings("rid", "r1", "r1, r1", [], "/")).toEqual([
+        "rid: x-request-id was set more than once (r1, r1)",
+        "rid: response echoed r1, r1, the caller sent r1",
+        "rid: no log line for /"
+      ]);
+      expect(requestCorrelationFindings("rid", "r1", "r1", lines, "/")).toEqual(["rid: 1 of 2 line(s) for / do not carry request id r1"]);
+      expect(requestCorrelationFindings("rid", undefined, "not-a-uuid", [{ requestId: "not-a-uuid", path: "/" }], "/")).toEqual([
+        "rid: generated request id not-a-uuid is not a UUID"
+      ]);
+      expect(requestCorrelationFindings("rid", "r1", "r1", [lines[0]], "/")).toEqual([]);
+    });
+  });
+
+  describe("metrics contract", () => {
+    it("the registry exports exactly the pinned app-level series; everything else is process_ or nodejs_", async () => {
+      await metricsHandle({ event: makeEvent("/course/cs101") as never, resolve: async () => new Response("ok") });
+      const exposition = await metricsRegistry.metrics();
+      expect(metricsContractFindings(exposition, { requireAll: true })).toEqual([]);
+      const appLevel = [...exposedSeries(exposition)].filter((name) => !/^(process|nodejs)_/.test(name)).sort();
+      expect(appLevel).toEqual([...APP_SERIES].sort());
+    });
+
+    it("histogram buckets are fixed", async () => {
+      await metricsHandle({ event: makeEvent("/course/cs101") as never, resolve: async () => new Response("ok") });
+      const exposition = await metricsRegistry.metrics();
+      const bounds = [...new Set([...exposition.matchAll(/^http_request_duration_seconds_bucket\{[^}]*le="([^"]+)"/gm)].map((m) => m[1]))];
+      expect(bounds).toEqual(["0.01", "0.05", "0.1", "0.25", "0.5", "1", "2.5", "5", "10", "+Inf"]);
+    });
+
+    it("unmatched requests share one route label, so a scanner cannot mint series", async () => {
+      for (const path of ["/wp-admin", "/.env", "/x/y/z"]) {
+        const url = new URL(`http://localhost${path}`);
+        const event = { request: new Request(url), url, route: { id: null }, locals: {} };
+        await metricsHandle({ event: event as never, resolve: async () => new Response("no", { status: 404 }) });
+      }
+      const exposition = await metricsRegistry.metrics();
+      expect(exposition).toContain('http_requests_total{method="GET",route="unmatched",status_code="404"} 3');
+      expect(exposition).not.toMatch(/wp-admin|\.env/);
+    });
+
+    it("negative fixtures: an unprefixed series, an unpinned app series, a per-process label and a raw path as route", () => {
+      expect(
+        metricsContractFindings(
+          [
+            "# HELP cache_hits_total x",
+            "cache_hits_total 3",
+            "tutors_courses_loaded_total 1",
+            'http_requests_total{method="GET",route="/",status_code="200",pid="41"} 1',
+            'http_requests_total{method="GET",route="wp-admin",status_code="404"} 1',
+            'nodejs_gc_duration_seconds_count{kind="minor"} 4',
+            "process_start_time_seconds 1789829864"
+          ].join("\n"),
+          { requireAll: true }
+        )
+      ).toEqual([
+        "series cache_hits_total has neither an app prefix (http_, tutors_) nor a runtime prefix (process_, nodejs_)",
+        "series tutors_courses_loaded_total is not in the pinned app-level set (APP_SERIES)",
+        "series http_requests_total carries label pid, which is not in the contract",
+        'series http_requests_total has route="wp-admin", expected a route id or "unmatched"',
+        "series http_request_duration_seconds_bucket is missing",
+        "series http_request_duration_seconds_count is missing",
+        "series http_request_duration_seconds_sum is missing",
+        "series http_requests_in_flight is missing"
       ]);
     });
   });

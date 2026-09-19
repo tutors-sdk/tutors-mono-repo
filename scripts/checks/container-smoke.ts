@@ -10,7 +10,10 @@
  *   - /healthz/live answers 200 within the startup budget
  *   - /metrics serves every series the Grafana alert rules query
  *   - a request carrying x-request-id is echoed and logged with that id
- *   - every log line is JSON and matches the log schema
+ *   - every log line is JSON and matches the log schema and the log contract
+ *     (core keys in order, per-event field sets), including the lines of a 404
+ *   - a request without x-request-id gets a generated UUID, logged on its lines
+ *   - /metrics exports exactly the pinned app-level series plus process_/nodejs_
  *
  * With `--app <name>` it also checks tier M against the image: the response
  * header contract (tests/security/header-contract.json), no 5xx on the probed
@@ -21,7 +24,15 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { randomInt, randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { alertParityFindings, logSchemaFindings, parseLogStream, type LogLine } from "./observability.ts";
+import {
+  alertParityFindings,
+  containerLogFindings,
+  logSchemaFindings,
+  metricsContractFindings,
+  parseLogStream,
+  requestCorrelationFindings,
+  type LogLine
+} from "./observability.ts";
 import { REPO_ROOT, readBaseline, readText } from "./lib/repo.ts";
 import { describeRatchet, ratchet } from "./lib/ratchet.ts";
 import { cookieFindings, headerFindings, loadHeaderContract, parseInventory } from "./security.ts";
@@ -115,12 +126,23 @@ async function run(options: Options): Promise<string[]> {
       findings.push(`request-id: response did not echo x-request-id (got ${home.headers.get("x-request-id")})`);
     }
 
+    // No id from the caller, and a path no route matches: an error line and a completion line, one generated id.
+    const missingPath = `/smoke-missing-${randomUUID().slice(0, 8)}/x/y/z`;
+    const missing = await fetchWithTimeout(`${base}${missingPath}`, {}, 15_000);
+    const generatedId = missing.headers.get("x-request-id");
+    // The same with the caller's id. Unique paths, so every line about them belongs to exactly one request.
+    const tracedPath = `/smoke-traced-${randomUUID().slice(0, 8)}/x/y/z`;
+    const tracedId = `smoke-${randomUUID()}`;
+    const traced = await fetchWithTimeout(`${base}${tracedPath}`, { headers: { "x-request-id": tracedId } }, 15_000);
+
     const metrics = await fetchWithTimeout(`${base}/metrics`);
     if (metrics.status !== 200) {
       findings.push(`metrics: GET /metrics returned ${metrics.status}`);
     } else {
       const alerts = readText(join(REPO_ROOT, "observability/grafana/provisioning/alerting/alerts.yml"));
-      findings.push(...alertParityFindings(alerts, await metrics.text()).map((f) => `metrics: ${f}`));
+      const exposition = await metrics.text();
+      findings.push(...alertParityFindings(alerts, exposition).map((f) => `metrics: ${f}`));
+      findings.push(...metricsContractFindings(exposition).map((f) => `metrics: ${f}`));
     }
 
     if (options.app) findings.push(...(await securityFindings(options.app, base)));
@@ -131,7 +153,10 @@ async function run(options: Options): Promise<string[]> {
     const { lines, findings: parseFindings } = parseLogStream(`${logs.stdout}\n${logs.stderr}`);
     findings.push(...parseFindings.map((f) => `logs: ${f}`));
     findings.push(...logSchemaFindings(lines).map((f) => `logs: ${f}`));
+    findings.push(...containerLogFindings(lines).map((f) => `logs: ${f}`));
     const entries = lines as LogLine[];
+    findings.push(...requestCorrelationFindings("request-id", tracedId, traced.headers.get("x-request-id"), entries, tracedPath));
+    findings.push(...requestCorrelationFindings("request-id", undefined, generatedId, entries, missingPath));
     if (!entries.some((line) => line.message === "Service starting")) findings.push("logs: no \"Service starting\" line");
     if (!entries.some((line) => line.message === "request completed" && line.requestId === requestId)) {
       findings.push(`logs: no "request completed" line carrying request id ${requestId}`);
