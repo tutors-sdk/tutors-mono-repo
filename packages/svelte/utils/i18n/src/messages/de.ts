@@ -11,16 +11,16 @@ const de: Record<string, string> = {
   "nav.layout.codeStyle": "Code-Stil",
   "nav.layout.layout": "Anordnung",
   "nav.layout.language": "Sprache",
-  "nav.layout.tip": "Themen-Menu oeffnen",
+  "nav.layout.tip": "Themen-Menü öffnen",
   "nav.info.title": "Kursinfo",
-  "nav.info.tip": "Kursinfo oeffnen",
+  "nav.info.tip": "Kursinfo öffnen",
   "nav.toc.suffix": "Kursbaum",
-  "nav.toc.tip": "Kursbaum oeffnen",
+  "nav.toc.tip": "Kursbaum öffnen",
   "nav.calendar.label": "Aktuelle Woche",
-  "nav.calendar.tip": "Kalender fuer diesen Kurs anzeigen",
+  "nav.calendar.tip": "Kalender für diesen Kurs anzeigen",
   "nav.online.view": "Anzeigen",
   "nav.online.online": "Online",
-  "nav.llms.tip": "Eine Version dieses Kurses fuer LLMs",
+  "nav.llms.tip": "Eine Version dieses Kurses für LLMs",
   "nav.time.tip": "Dieser Kurs nutzt Tutors Time",
   "nav.edit.tip": "Diesen Kurs bearbeiten",
   "nav.context.collapseAll": "Alle einklappen",
@@ -32,7 +32,7 @@ const de: Record<string, string> = {
   "menu.anonName": "Anonymes Tutors-Profil",
   "menu.connect": "Verbinden",
   "menu.home": "Startseite",
-  "menu.sharePresence": "Praesenz teilen",
+  "menu.sharePresence": "Präsenz teilen",
   "menu.tutorsTime": "Tutors Time",
   "menu.educatorTime": "(Dozentenzeit)",
   "menu.tutorsLive": "Tutors Live",
@@ -46,7 +46,7 @@ const de: Record<string, string> = {
   "home.titleAn": "Ein",
   "home.openLearning": "Offenes Lernen",
   "home.webToolkit": "Web-Toolkit",
-  "home.description": "Open-Source-Komponenten und -Dienste zur Unterstuetzung der Erstellung von Lernerfahrungen mit Webstandards. Entwickelt an der",
+  "home.description": "Open-Source-Komponenten und -Dienste zur Unterstützung der Erstellung von Lernerfahrungen mit Webstandards. Entwickelt an der",
   "home.setu": "SETU",
   "home.location": ", Waterford, Irland.",
   "home.docs": "Doku",
@@ -59,13 +59,13 @@ const de: Record<string, string> = {
   "home.recentlyAccessed": "Zuletzt besucht",
   "home.values.title": "Die <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Werte</span> des Projekts",
   "home.developer.title": "Entwicklererfahrung",
-  "home.developer.description": "Die <b>Entwicklererfahrung</b> priorisiert die Spezifikation und Implementierung von <b>robusten, gut dokumentierten, lose gekoppelten Komponenten und Diensten</b>, integriert in ein <b>kohaerentes Toolkit</b>, das fuer Beitraege von <b>unterschiedlichen Faehigkeiten</b> offen ist.",
+  "home.developer.description": "Die <b>Entwicklererfahrung</b> priorisiert die Spezifikation und Implementierung von <b>robusten, gut dokumentierten, lose gekoppelten Komponenten und Diensten</b>, integriert in ein <b>kohärentes Toolkit</b>, das für Beiträge von <b>unterschiedlichen Fähigkeiten</b> offen ist.",
   "home.educator.title": "Erziehererfahrung",
-  "home.educator.description": "Die <b>Erziehererfahrung</b> priorisiert die Erstellung von <b>gefuehrten Wegen</b> durch ein Curriculum mittels der Erstellung von Lernmaterialien, die <b>autonom, strukturell ausgerichtet, zusammensetzbar, pruefbar, erweiterbar, versioniert</b> und <b>unabhaengig</b> sind.",
+  "home.educator.description": "Die <b>Erziehererfahrung</b> priorisiert die Erstellung von <b>geführten Wegen</b> durch ein Curriculum mittels der Erstellung von Lernmaterialien, die <b>autonom, strukturell ausgerichtet, zusammensetzbar, prüfbar, erweiterbar, versioniert</b> und <b>unabhängig</b> sind.",
   "home.learner.title": "Lernerfahrung",
-  "home.learner.description": "Die <b>Lernerfahrung</b> priorisiert Web-Interaktionen, die <b>ansprechend, kontextuell, verlinkbar, durchsuchbar, zugaenglich</b> und <b>responsiv</b> sind. Darueber hinaus sollte die Erfahrung ein Gefuehl von <b>Gemeinschaft</b> und <b>Verbindung</b> unter den Lernenden foerdern.",
-  "home.credits.title": "Ein vollstaendig <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Open Source</span> Projekt",
-  "home.credits.description": "Tutors ist ein Open-Source-Projekt, das kostenlos unter der MIT-Lizenz auf GitHub verfuegbar ist.",
+  "home.learner.description": "Die <b>Lernerfahrung</b> priorisiert Web-Interaktionen, die <b>ansprechend, kontextuell, verlinkbar, durchsuchbar, zugänglich</b> und <b>responsiv</b> sind. Darüber hinaus sollte die Erfahrung ein Gefühl von <b>Gemeinschaft</b> und <b>Verbindung</b> unter den Lernenden fördern.",
+  "home.credits.title": "Ein vollständig <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Open Source</span> Projekt",
+  "home.credits.description": "Tutors ist ein Open-Source-Projekt, das kostenlos unter der MIT-Lizenz auf GitHub verfügbar ist.",
   "home.credits.viewSource": "Quellcode anzeigen",
 
   // Course reader
@@ -74,42 +74,54 @@ const de: Record<string, string> = {
   "course.visitCard.lastAccessed": "Letzter Zugriff:",
   "course.visitCard.visits": "Besuche:",
   "course.visitCard.visitCourse": "Kurs besuchen",
-  "course.visitCard.delete": "Loeschen",
+  "course.visitCard.delete": "Löschen",
   "course.visitCard.star": "Kurs als Favorit markieren",
   "course.visitCard.unstar": "Favorit entfernen",
   "course.title.fallback": "Tutors",
 
   // Live page
   "live.onlineNow": "Jetzt online",
-  "live.latestActivity": "Letzte Aktivitaet",
+  "live.latestActivity": "Letzte Aktivität",
   "live.today": "Heute",
   "live.thisWeek": "Diese Woche",
   "live.thisMonth": "Dieser Monat",
   "live.thisYear": "Dieses Jahr",
-  "live.emptyOnline": "Derzeit keine Studierenden fuer diesen Kurs online.",
-  "live.emptyToday": "Heute noch keine Aktivitaet fuer diesen Kurs gespeichert.",
-  "live.emptyWeek": "Keine frueheren Aktivitaeten diese Woche fuer diesen Kurs.",
-  "live.emptyMonth": "Keine frueheren Aktivitaeten diesen Monat fuer diesen Kurs.",
-  "live.emptyYear": "Keine frueheren Aktivitaeten dieses Jahr fuer diesen Kurs.",
+  "live.emptyOnline": "Derzeit keine Studierenden für diesen Kurs online.",
+  "live.emptyToday": "Heute noch keine Aktivität für diesen Kurs gespeichert.",
+  "live.emptyWeek": "Keine früheren Aktivitäten diese Woche für diesen Kurs.",
+  "live.emptyMonth": "Keine früheren Aktivitäten diesen Monat für diesen Kurs.",
+  "live.emptyYear": "Keine früheren Aktivitäten dieses Jahr für diesen Kurs.",
   "live.catalogue.totals": "Gesamt:",
 
   // Auth
   "auth.signIn": "Tutors Anmeldung",
   "auth.signInWithGithub": "Mit GitHub anmelden",
+  "auth.terms": `Sie werden gleich mit Ihren Github-Zugangsdaten bei Tutors authentifiziert. **Für die meisten Kurse müssen Sie sich gar nicht anmelden. Wenn Sie möchten, können Sie daher zur Kursseite zurückkehren und den Kurs wie auf jeder öffentlichen Website fortsetzen.**
+
+Wenn Sie sich registrieren oder anmelden, benötigen Sie zuerst ein Github-Konto. Nach der Anmeldung steht Ihnen dann ein einfaches, praktisches Dashboard mit Schnelllinks zu allen Tutors-Kursen zur Verfügung, auf die Sie kürzlich zugegriffen haben.
+
+Für einige Kurse verlangt Tutors immer ein Konto, um Zugriff zu erhalten, und Sie landen dann hier. Nach der Anmeldung kann Tutors aufzeichnen, wie lange jede Ansicht aktiv ist, und diese Daten an den TutorsTime-Datenspeicher senden. Sie können diese Informationen über die Time-Funktion im Profilmenu einsehen. Diese Daten stehen Ihnen und der Lehrperson Ihres Kurses zur Verfügung, jedoch nicht anderen Studierenden. Es werden keine weiteren Daten erhoben, und diese Daten werden nirgendwohin ausser an den TutorsTime-Datenspeicher übermittelt.
+
+Die Live-Funktion, die im Profilmenu verfügbar ist, kann diese Daten ebenfalls nutzen, um ein Panel der derzeit online befindlichen Studierenden anzuzeigen. **Sie können diese Funktionen deaktivieren, indem Sie im Profilmenu die Option Präsenz teilen ausschalten.** Weitere Informationen zu TutorsTime finden Sie hier:
+
+- [Tutors Time FAQ](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
+- [Tutors Live FAQ](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
+
+Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finden Sie hier](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Name",
   "time.github": "Github",
   "time.total": "Gesamt",
   "time.median": "Kurs-Median",
-  "time.calendarByDay": "Kalenderaktivitaet nach Tag",
-  "time.labByStep": "Lab-Aktivitaet nach Schritt",
-  "time.labByLab": "Lab-Aktivitaet nach Lab",
-  "time.calendarByWeek": "Kalenderaktivitaet nach Woche",
+  "time.calendarByDay": "Kalenderaktivität nach Tag",
+  "time.labByStep": "Lab-Aktivität nach Schritt",
+  "time.labByLab": "Lab-Aktivität nach Lab",
+  "time.calendarByWeek": "Kalenderaktivität nach Woche",
 
   // Content
   "content.slideOf": "von",
-  "content.slideBack": "Eine Folie zurueck",
+  "content.slideBack": "Eine Folie zurück",
   "content.slideForward": "Eine Folie vor",
   "content.slideRotate": "Folie um 90 Grad drehen",
   "content.slideDownload": "Herunterladen",
@@ -118,7 +130,7 @@ const de: Record<string, string> = {
   "content.type": "Typ",
   "content.dateStarts": "Startdatum",
   "content.sentiment": "Kursbewertung",
-  "content.sentimentOpen": "Menu oeffnen zum Aendern.",
+  "content.sentimentOpen": "Menü öffnen zum Ändern.",
   "content.sentimentLabel": "Bewertung",
 
   // Footer
@@ -137,7 +149,7 @@ const de: Record<string, string> = {
   // Accessibility
   // Lecturer panel
   "lecturer.panel.title": "Dozenten-Panel",
-  "lecturer.panel.tip": "Dozenten-Panel oeffnen",
+  "lecturer.panel.tip": "Dozenten-Panel öffnen",
   "lecturer.locks.title": "Inhaltssperren",
   "lecturer.locks.lock": "Sperren",
   "lecturer.locks.unlock": "Entsperren",
@@ -149,44 +161,45 @@ const de: Record<string, string> = {
   "lecturer.enrollment.students": "Studierende",
   "lecturer.enrollment.empty": "Keine eingeschriebenen Benutzer",
   "lecturer.enrollment.placeholder": "GitHub-Benutzername",
-  "lecturer.enrollment.add": "Hinzufuegen",
+  "lecturer.enrollment.add": "Hinzufügen",
   "lecturer.access.title": "Zugang",
   "lecturer.access.authLevel": "Auth-Stufe",
-  "lecturer.access.owner": "Eigentuemer",
+  "lecturer.access.owner": "Eigentümer",
   "lecturer.access.lecturers": "Dozenten",
   "lecturer.control.title": "Kurssteuerung",
-  "lecturer.control.placeholder": "Kurssteuerungsfunktionen werden hier hinzugefuegt",
+  "lecturer.control.placeholder": "Kurssteuerungsfunktionen werden hier hinzugefügt",
   "lecturer.locked.overlay": "Dieser Inhalt ist gesperrt",
 
   "a11y.skipToContent": "Zum Inhalt springen",
   "a11y.mainNavigation": "Hauptnavigation",
-  "a11y.breadcrumbs": "Brotkruemelnavigation",
-  "a11y.secondaryNavigation": "Sekundaere Navigation",
+  "a11y.breadcrumbs": "Brotkrümelnavigation",
+  "a11y.secondaryNavigation": "Sekundäre Navigation",
   "a11y.sidebar": "Seitenleiste",
-  "a11y.footer": "Seitenfuss",
+  "a11y.footer": "Seitenfuß",
+  "a11y.tree.toggle": "Inhalt ein- oder ausblenden",
 
   // Guided tour
-  "tour.ariaLabel": "Gefuehrte Tour",
-  "tour.skip": "Ueberspringen",
-  "tour.prev": "Zurueck",
+  "tour.ariaLabel": "Geführte Tour",
+  "tour.skip": "Überspringen",
+  "tour.prev": "Zurück",
   "tour.next": "Weiter",
   "tour.finish": "Fertig",
-  "tour.menuLabel": "Gefuehrte Tour",
+  "tour.menuLabel": "Geführte Tour",
   "tour.startButton": "Tour starten",
   "tour.courseTitle.title": "Kurstitel",
   "tour.courseTitle.description": "Hier werden der Name und das Bild des aktuell angezeigten Kurses angezeigt.",
   "tour.search.title": "Suche",
-  "tour.search.description": "Finden Sie schnell Inhalte in diesem Kurs. Sie koennen auch jederzeit Strg+K (oder Cmd+K auf dem Mac) druecken.",
+  "tour.search.description": "Finden Sie schnell Inhalte in diesem Kurs. Sie können auch jederzeit Strg+K (oder Cmd+K auf dem Mac) drücken.",
   "tour.layout.title": "Design und Layout",
-  "tour.layout.description": "Passen Sie das Erscheinungsbild an: Wechseln Sie zwischen hellem und dunklem Modus, aendern Sie den Kartenstil, das Design und die Sprache.",
+  "tour.layout.description": "Passen Sie das Erscheinungsbild an: Wechseln Sie zwischen hellem und dunklem Modus, ändern Sie den Kartenstil, das Design und die Sprache.",
   "tour.profile.title": "Ihr Profil",
-  "tour.profile.description": "Melden Sie sich mit GitHub an, um Ihren Fortschritt zu verfolgen und Live-Praesenzfunktionen zu aktivieren.",
+  "tour.profile.description": "Melden Sie sich mit GitHub an, um Ihren Fortschritt zu verfolgen und Live-Präsenzfunktionen zu aktivieren.",
   "tour.toc.title": "Kursbaum",
-  "tour.toc.description": "Oeffnen Sie den vollstaendigen Kursbaum, um alle Themen zu sehen und direkt zu einem Abschnitt zu navigieren.",
+  "tour.toc.description": "Öffnen Sie den vollständigen Kursbaum, um alle Themen zu sehen und direkt zu einem Abschnitt zu navigieren.",
   "tour.calendar.title": "Kalender",
   "tour.calendar.description": "Sehen Sie den Kursplan und was diese Woche ansteht.",
   "tour.info.title": "Kursinformationen",
-  "tour.info.description": "Lesen Sie detaillierte Informationen ueber diesen Kurs, einschliesslich seiner Beschreibung und Ziele."
+  "tour.info.description": "Lesen Sie detaillierte Informationen über diesen Kurs, einschliesslich seiner Beschreibung und Ziele."
 };
 
 export default de;

@@ -18,7 +18,7 @@ function labSteps(page: Page) {
   return page.getByRole("navigation", { name: "Lab steps" }).filter({ visible: true }).first();
 }
 
-/** Anonymous student: home page, open the fixture course, topic, lab, move through steps. */
+/** Anonymous student: home page, open the fixture course, topic, lab, move through steps (math and a diagram on the second), open the Marp talk. */
 export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
   await page.goto(`${stack.reader}/`);
   await expect(page.getByRole("heading", { level: 1, name: /An Open Learning Web Toolkit/ })).toBeVisible();
@@ -44,10 +44,19 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
   await page.keyboard.press("ArrowRight");
   await expect(page).toHaveURL(new RegExp(`/${fixture.labPath}/${fixture.secondStep.id}$`));
   await expect(page.getByRole("article").getByRole("heading", { level: 1, name: fixture.secondStep.heading })).toBeVisible();
+  // KaTeX and Mermaid load on demand: the step's math has MathML, and its flowchart became an SVG labelled by its accTitle.
+  await expect(page.getByRole("article").getByRole("math")).toHaveCount(1);
+  await expect(page.getByRole("article").getByLabel(fixture.secondStepDiagram)).toBeVisible();
 
   // Pointer: jump back to the first step from the step navigation.
   await labSteps(page).getByRole("link", { name: fixture.firstStep.heading, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/${fixture.labPath}/${fixture.firstStep.id}$`));
+
+  // The topic's Marp talk: Marp Core loads on demand and renders the first slide.
+  await page.goto(`${stack.reader}/topic/${courseId}/${fixture.topicPath}`);
+  await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.talk.title}\\b`) }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/talk/${courseId}/${fixture.talk.path}$`));
+  await expect(page.getByRole("main").getByRole("heading", { name: fixture.talk.firstSlideHeading })).toBeVisible();
 }
 
 /** Anonymous student searches the course and gets a result linking to the matching note. */

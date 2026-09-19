@@ -24,13 +24,17 @@ export const fixture = {
   title: "Runway Fixture Course",
   topicTitle: "Topic 1",
   topicPath: "unit-1/topic-01",
+  /** The scaffolder's starter Marp deck for topic 1; its first slide has this heading. */
+  talk: { title: "Talk 1", path: "unit-1/topic-01/talk-01", firstSlideHeading: "Presentation Title" },
   labTitle: "Lab 1",
   labPath: "unit-1/topic-01/book-lab-01",
+  /** build.ts appends inline math and a Mermaid flowchart (with this accTitle) to the second step. */
+  secondStepDiagram: "Read then practise",
   firstStep: { id: "Setup", heading: "Lab 1" },
   secondStep: { id: "Step-01", heading: "Step 1" },
-  /** Appears in both notes' body; a result links to `<topic>/ <note>` (the generator keeps a leading space in titles). */
+  /** Appears in both notes' body; a result links to `<topic>/<note>`. */
   searchTerm: "reference material",
-  searchResultTitle: /Topic 1\/\s*Note 1/
+  searchResultTitle: /Topic 1\/Note 1/
 };
 
 // Playwright compiles specs to CommonJS, so __dirname rather than import.meta.
@@ -67,10 +71,26 @@ function key(testInfo: TestInfo, pageKey: string, finding: string): string {
 }
 
 /**
- * Run axe on the current page. Any serious or critical violation not in the
- * baseline fails the test (softly, so the journey still audits later pages).
+ * Moves the pointer off the page and waits for running animations and
+ * transitions to finish. After a click the pointer rests on whatever replaced
+ * the link, and a card's hover scale then changes colours and overlaps under
+ * axe's colour-contrast sampling, which made the audit flaky.
+ */
+async function settle(page: Page) {
+  await page.mouse.move(0, 0);
+  await page.evaluate(async () => {
+    const running = document.getAnimations().filter((animation) => animation.effect?.getTiming().iterations !== Infinity);
+    await Promise.race([Promise.all(running.map((animation) => animation.finished.catch(() => undefined))), new Promise((done) => setTimeout(done, 2_000))]);
+  });
+}
+
+/**
+ * Run axe on the current page once it has settled. Any serious or critical
+ * violation not in the baseline fails the test (softly, so the journey still
+ * audits later pages).
  */
 export async function auditAccessibility(page: Page, pageKey: string, testInfo: TestInfo) {
+  await settle(page);
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   const keys = [...new Set(serious.map((v) => key(testInfo, pageKey, v.id)))].sort();

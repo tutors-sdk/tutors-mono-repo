@@ -1691,14 +1691,14 @@ pnpm dev
 **Anonymous Mode** (no backend):
 
 ```bash
-# apps/reader/.env
+# .env (repository root)
 PUBLIC_ANON_MODE=TRUE
 ```
 
 **Full Mode** (with services):
 
 ```bash
-# apps/reader/.env
+# .env (repository root)
 PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=xxx
 PRIVATE_AUTH_GITHUB_ID=xxx

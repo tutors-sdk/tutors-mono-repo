@@ -151,6 +151,7 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "a11y.secondaryNavigation": "Nascleanúint thánaisteach",
   "a11y.sidebar": "Barra taoibh",
   "a11y.footer": "Buntásc láithreáin",
+  "a11y.tree.toggle": "Taispeáin nó folaigh an t-ábhar",
 
   // Guided tour
   "tour.ariaLabel": "Turas treoraithe",

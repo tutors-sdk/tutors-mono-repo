@@ -101,14 +101,15 @@ export class BaseLabModel implements LabModel {
     return row;
   }
 
+  /** UTC date of the record, the same day boundary as the calendar views' DATE ids, whatever the server's timezone. */
   private static getDateFromRecord(record: LearningRecord): string {
     const d = record.date_last_accessed;
     if (!d) return NO_DATE_KEY;
     try {
       const date = new Date(d);
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
+      const y = date.getUTCFullYear();
+      const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(date.getUTCDate()).padStart(2, "0");
       return `${y}-${m}-${day}`;
     } catch {
       return NO_DATE_KEY;
