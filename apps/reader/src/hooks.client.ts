@@ -1,4 +1,4 @@
-import type { HandleClientError } from "@sveltejs/kit";
+import { error, type HandleClientError } from "@sveltejs/kit";
 import { env } from "$env/dynamic/public";
 import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
@@ -9,8 +9,12 @@ import { createSupabaseErrorTransport } from "@tutors/community/utils/error-tran
 };
 
 import { initSupabase } from "@tutors/tutors-time-lib";
+import { setCourseNotFoundHandler } from "@tutors/course/course";
 
 initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+
+// A course that does not exist is a 404 page, not an unexpected error (a 500).
+setCourseNotFoundHandler((notFound) => error(404, notFound.message));
 
 setAppName("tutors-reader");
 addTransport(createSupabaseErrorTransport("tutors-reader"));
