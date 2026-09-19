@@ -20,10 +20,11 @@ Every edge is tagged `EXTRACTED` (found directly in the source), `INFERRED` (the
 
 ## Known limits of this snapshot
 
-- **Svelte markup is only partly parsed.** 157 `.svelte` files hit tree-sitter syntax errors. Their `<script>` symbols and imports are captured, but template-level usage is not. As a result, component-to-component edges are thinner than in reality.
+- **Svelte components are only partly parsed.** 157 `.svelte` files hit tree-sitter syntax errors. Some `<script>` symbols come through, but type imports and template usage mostly do not. For example, 16 components `import type { Lo }`, yet the graph shows no `.svelte` file depending on `Lo`. Read the component layer as under-connected: a missing edge from a `.svelte` file is not evidence of no dependency.
 - **SQL is not parsed.** The 3 migration files (`supabase/migrations/`, `packages/svelte/utils/rbac/sql/`) contributed nothing, because the optional `tree_sitter_sql` grammar was not installed.
 - **Vendored bundles are excluded.** [`.graphifyignore`](../../.graphifyignore) skips `*.min.js` and `*.min.mjs`. Without it, the three copies of `pdf.worker.min.mjs` added about 10,000 nodes and swamped the real code.
 - **Excluded or dropped files.** The `deploy/k8s/**/secrets.yaml.example` files are skipped by graphify's sensitive-file filter. Anything in `.gitignore` is excluded too.
+- **Name-matched `indirect_call` edges are often wrong.** graphify guesses these 119 `INFERRED` edges by matching names: a bare identifier gets linked to whatever function has the same name. They cluster on common variable names. The worst case is `lo()`, a 3-line fixture helper in `tests/unit/model/lo-tree.test.ts`. It picked up 33 such edges from every line that mentions a variable called `lo` (`<Context lo={data.lo}>`, `{#each group.los as lo}`, `rbacService.isLoVisibleToStudent(lo)`). So the report ranks it as a bridge across 14 communities, and its suggested question about `lo()` is an artifact. 62 of the 119 edges point at helpers inside test files, which nothing can import. The real cross-cutting hub is the `Lo`/`Course` type in `packages/jsr/model/src/types/learning-objects.ts`: counting only `EXTRACTED` edges, it is used directly by 16 to 17 communities, from the generator through the model lib to the Svelte services. Before relying on an `indirect_call` edge, check the cited `source_location`.
 - **Dangling edges.** 344 edges point at nodes outside the graph, mostly external npm and Deno packages. They were dropped when the graph was built.
 
 ## Regenerating
