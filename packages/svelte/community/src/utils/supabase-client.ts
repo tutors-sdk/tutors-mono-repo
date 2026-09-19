@@ -11,7 +11,7 @@ import type { Course, Lo } from "@tutors/tutors-model-lib";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
-import log from "@tutors/logger";
+import log, { withRequestId } from "@tutors/logger";
 
 export let supabase: SupabaseClient;
 
@@ -23,7 +23,8 @@ const supabaseConfigured = Boolean(env.PUBLIC_SUPABASE_URL && env.PUBLIC_SUPABAS
 
 if (env.PUBLIC_ANON_MODE !== "TRUE") {
   if (supabaseConfigured) {
-    supabase = createClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!);
+    // On the server, calls made while serving a request carry its x-request-id; in the browser this is plain fetch.
+    supabase = createClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, { global: { fetch: withRequestId() } });
   } else {
     log.warn("Supabase is not configured (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY missing); running without it");
   }

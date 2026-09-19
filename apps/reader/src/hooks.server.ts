@@ -1,16 +1,20 @@
 /* global APP_VERSION */
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
+import { building } from "$app/environment";
 import { SvelteKitAuth } from "@auth/sveltekit";
 import { env } from "$env/dynamic/private";
 import { env as publicEnv } from "$env/dynamic/public";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import log, { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 import { authMode } from "$lib/server/auth-mode";
 
 setAppName("tutors-reader");
+// From here on every stdout/stderr line of the running server is one JSON object: stray console
+// output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
+if (!building) installProcessLogging();
 
 const currentAuthMode = () =>
   authMode({ PUBLIC_ANON_MODE: publicEnv.PUBLIC_ANON_MODE, PRIVATE_AUTH_SECRET: env.PRIVATE_AUTH_SECRET });
