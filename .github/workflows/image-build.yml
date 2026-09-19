@@ -15,6 +15,13 @@ name: Container Image Build
 #                           release-dispatch.yml creates rc tags with the
 #                           workflow token, whose pushes start no workflow,
 #                           so it starts this one explicitly
+#   workflow_dispatch       backfill: run from main with release_tag=vX.Y.Z
+#     with release_tag      to publish a release tagged before this workflow
+#                           existed (its own copy of the file is missing, so
+#                           dispatching on the tag itself cannot work). Pushes
+#                           X.Y.Z, X.Y and sha-<short>, never latest; the
+#                           Trivy scan reports but does not stop it, because
+#                           the image is already what production runs
 #
 # Published images are linux/amd64 + linux/arm64. The amd64 image is scanned
 # with Trivy before anything is pushed; CRITICAL and HIGH findings with an
@@ -27,6 +34,11 @@ on:
     branches: [main, "rc/**"]
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Backfill only: an existing vX.Y.Z tag to build and publish (run from main). Leave empty when dispatching on a v* tag."
+        required: false
+        default: ""
   pull_request:
     branches: [main]
     # Only the paths that enter the build context (see .dockerignore) can
@@ -103,7 +115,9 @@ jobs:
   # Pushes to main, rc/** and v* tags, and dispatches on a v* tag: scan, publish multi-arch, sign, attest.
   publish:
     name: Publish ${{ matrix.app }}
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/v'))
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && (startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''))
     runs-on: ubuntu-latest
     # The arm64 half is built under QEMU emulation, which is slow.
     timeout-minutes: 180
@@ -111,16 +125,46 @@ jobs:
       contents: read
       id-token: write # keyless cosign signing (Fulcio certificate from the GitHub OIDC token)
     concurrency:
-      group: image-${{ github.ref }}-${{ matrix.app }}
+      group: image-${{ github.ref }}-${{ inputs.release_tag }}-${{ matrix.app }}
       cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
         app: [reader, catalogue, live, time]
     steps:
+      # The git ref being built: the event's own ref, or on a backfill the
+      # release tag named in the input, which must already exist.
+      - name: Resolve the ref to build
+        id: what
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"
+            echo "backfill=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::A backfill runs from main (got $GITHUB_REF)."
+            exit 1
+          fi
+          if ! printf '%s' "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::release_tag must be a release tag vX.Y.Z (got '$RELEASE_TAG')."
+            exit 1
+          fi
+          if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --silent 2>/dev/null; then
+            echo "::error::Tag $RELEASE_TAG does not exist."
+            exit 1
+          fi
+          echo "ref=refs/tags/$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "backfill=true" >> "$GITHUB_OUTPUT"
+          echo "Backfill of \`$RELEASE_TAG\` from main" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ steps.what.outputs.ref }}
           persist-credentials: false
 
       - name: Set up QEMU (arm64 emulation)
@@ -133,8 +177,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
-      # latest is handled by the explicit raw rule below (release tags only),
-      # so the action's automatic latest is switched off. The semver rules
+      # latest is handled by the explicit raw rule below (release tags only,
+      # never a backfill), so the action's automatic latest is switched off.
+      # A backfill reads the ref and sha from the checked-out tag (context
+      # git) instead of the event, which ran on main. The semver rules
       # only fire on v* tags; for a prerelease such as v16.3.0-rc.1 the
       # metadata action emits {{version}} (16.3.0-rc.1) and skips
       # {{major}}.{{minor}}. sha-<short> outranks the branch tags so that
@@ -146,12 +192,13 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.REGISTRY_IMAGE_PREFIX }}${{ matrix.app }}
+          context: ${{ steps.what.outputs.backfill == 'true' && 'git' || 'workflow' }}
           flavor: |
             latest=false
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+            type=raw,value=latest,enable=${{ steps.what.outputs.backfill != 'true' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
             type=sha,prefix=sha-,format=short,priority=650
             type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/rc/') }}
             type=raw,value=main,enable={{is_default_branch}}
@@ -164,7 +211,22 @@ jobs:
       # the same ETag and Last-Modified. Unused until that lands.
       - name: Commit time for reproducible file times
         id: epoch
-        run: echo "value=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "value=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # A backfill must publish exactly the tag it was asked for; stop before
+      # building if the git context resolved anything else.
+      - name: Check the backfill's version
+        if: steps.what.outputs.backfill == 'true'
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          if [ "$VERSION" != "${RELEASE_TAG#v}" ]; then
+            echo "::error::Resolved version '$VERSION' does not match $RELEASE_TAG."
+            exit 1
+          fi
 
       # Gate first: build the amd64 image into the local daemon and scan it.
       # Nothing has been pushed at this point, so a failing scan publishes
@@ -179,7 +241,7 @@ jobs:
           platforms: linux/amd64
           build-args: |
             APP_NAME=${{ matrix.app }}
-            GIT_SHA=${{ github.sha }}
+            GIT_SHA=${{ steps.epoch.outputs.sha }}
             BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
             VERSION=${{ steps.meta.outputs.version }}
             SOURCE_DATE_EPOCH=${{ steps.epoch.outputs.value }}
@@ -194,7 +256,7 @@ jobs:
         with:
           image-ref: tutors-${{ matrix.app }}:scan
           format: table
-          exit-code: "1"
+          exit-code: ${{ steps.what.outputs.backfill == 'true' && '0' || '1' }}
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
@@ -216,7 +278,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             APP_NAME=${{ matrix.app }}
-            GIT_SHA=${{ github.sha }}
+            GIT_SHA=${{ steps.epoch.outputs.sha }}
             BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
             VERSION=${{ steps.meta.outputs.version }}
             SOURCE_DATE_EPOCH=${{ steps.epoch.outputs.value }}

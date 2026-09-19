@@ -14,8 +14,39 @@ docker build --build-arg APP_NAME=live -t tutors/live .
 docker build --build-arg APP_NAME=time -t tutors/time .
 ```
 
-Optional build args: `NODE_VERSION` (default `22`), and `GIT_SHA`, `BUILD_DATE`
-and `VERSION` for the OCI labels. The build needs BuildKit (default in Docker 23+).
+Optional build args: `NODE_VERSION` (default `22`), and `VERSION`, `GIT_SHA`
+and `BUILD_DATE` for the OCI labels. The build needs BuildKit (default in
+Docker 23+). Base images are fully qualified (`docker.io/library/node`), so
+the same file builds under Podman/Buildah and Quay's builders; `NODE_IMAGE`
+overrides the base for a mirror.
+
+## Registry
+
+Published images live on Quay, one repository per app:
+
+| App | Image |
+| --- | --- |
+| reader | `quay.io/tutors-sdk/tutors-reader` |
+| catalogue | `quay.io/tutors-sdk/tutors-catalogue` |
+| live | `quay.io/tutors-sdk/tutors-live` |
+| time | `quay.io/tutors-sdk/tutors-time` |
+
+Quay repositories are exactly `quay.io/<org>/<repo>` with no nested path, which
+is why the app is part of the repository name rather than a path segment. The
+root `compose.yaml` builds `tutors/<app>:local` by default and takes the
+published names from two variables, so the same file builds, pushes or runs
+them:
+
+```bash
+export TUTORS_IMAGE_PREFIX=quay.io/tutors-sdk/tutors- TUTORS_TAG=16.2.2
+GIT_SHA=$(git rev-parse HEAD) BUILD_DATE=$(date -u +%FT%TZ) docker compose build
+docker compose push                                  # needs `docker login quay.io`
+docker compose pull && docker compose up --no-build  # run what was published
+```
+
+Every image carries `org.opencontainers.image.version`, `.revision`,
+`.created` and `.source`; Quay shows them on the tag page and the release
+harness reads `revision` and `version` to trace a report to a commit.
 
 ## Published images
 
@@ -31,10 +62,24 @@ builds all four apps from this Dockerfile and publishes them to
 | Push to an `rc/**` branch | `sha-<short>`, the branch name with `/` as `-` (`rc/16.2.0` gives `rc-16.2.0`) |
 | Release tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest`, `sha-<short>` |
 | Prerelease tag `vX.Y.Z-rc.N` | `X.Y.Z-rc.N`, `sha-<short>` |
+| Backfill: dispatched from `main` with `release_tag=vX.Y.Z` | `X.Y.Z`, `X.Y`, `sha-<short>` (never `latest`) |
 
 `latest` is the newest full release and `main` is the tip of the default
 branch. A prerelease tag never moves `latest` or `X.Y`. `sha-<short>` is the
 first seven characters of the commit.
+
+A release tagged before this workflow existed has no copy of it, so
+dispatching the workflow on that tag cannot publish it. Backfill it from
+`main` instead; the run checks out the tag and builds that tag's own
+Dockerfile:
+
+```bash
+gh workflow run image-build.yml --ref main -f release_tag=v16.2.2
+```
+
+A backfill publishes what production already runs, so its Trivy scan
+reports findings without stopping the push. Its signing identity ends in
+`@refs/heads/main`, not the tag.
 
 Every publishing run does the following, per app, in this order:
 
@@ -187,18 +232,21 @@ oc apply -k deploy/k8s/overlays/reader          # deploy
 ```
 
 Each overlay points at `quay.io/tutors-sdk/tutors-<app>`, which the image
-build workflow publishes. Image tags are pinned to the release version in the
-root `package.json` (never `latest`); the release checklist bumps them
-together, and the workflow publishes that tag from the `v<version>` git tag.
-To try an unreleased build, set `newTag` to `sha-<short>` locally. Fill in the
-ConfigMap values before applying. The reader overlay expects a
-`reader-tutors-app-oauth` Secret; copy `overlays/reader/secrets.yaml.example`
+build workflow publishes; to deploy from a mirror, change `images[].newName`.
+Image tags are pinned to the release version in the root `package.json`
+(never `latest`); the release checklist bumps them together, and the workflow
+publishes that tag from the `v<version>` git tag. To try an unreleased build,
+set `newTag` to `sha-<short>` locally. Fill in the ConfigMap values before
+applying. The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
+`overlays/reader/secrets.yaml.example`
 to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads
 an optional `<app>-tutors-app-secrets` Secret for `METRICS_TOKEN`
 (`base/secrets.yaml.example`); the time app's example adds `MOODLE_WS_TOKEN`.
 
 `pnpm check:k8s` renders every overlay and checks it against the policies in
-`scripts/checks/conformance.ts`: pinned images, requests and limits, probes,
+`scripts/checks/conformance.ts`: registry-qualified and pinned images (a short
+name such as `tutors/reader` is refused by CRI-O, and a nested Quay path cannot
+exist), requests and limits, probes,
 and a security context `restricted-v2` admits. CI also validates the rendered
 output with kubeconform. Every variable the apps read must appear both in
 `.env.example` and in these manifests, or the conformance tests fail.
