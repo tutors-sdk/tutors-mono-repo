@@ -268,7 +268,7 @@ export const loCompositeTypes: string[];
 export const loTypes: string[];
 
 // (from src/utils/markdown-utils.ts)
-export const markdownIt: MarkdownIt;
+export const markdownIt: MarkdownItInstance;
 
 // (from src/types/type-utils.ts)
 export const preOrder: Map<string, number>;
