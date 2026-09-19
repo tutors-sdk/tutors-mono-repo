@@ -27,4 +27,5 @@ Runs on http://localhost:5174
 - SvelteKit + Svelte 5
 - `@tutors/ui` components
 - `@tutors/course` for live presence tracking
+- `@tutors/runtime` for the server clock seam (`HARNESS_NOW`) and the `GET /version` endpoint
 - Tailwind CSS v4 + Skeleton UI

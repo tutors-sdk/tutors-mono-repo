@@ -14,6 +14,8 @@
  *     (core keys in order, per-event field sets), including the lines of a 404
  *   - a request without x-request-id gets a generated UUID, logged on its lines
  *   - /metrics exports exactly the pinned app-level series plus process_/nodejs_
+ *   - two identical requests answer identical headers, Date and x-request-id aside
+ *   - /version answers the documented shape, on the system clock
  *
  * With `--app <name>` it also checks tier M against the image: the response
  * header contract (tests/security/header-contract.json), no 5xx on the probed
@@ -145,6 +147,8 @@ async function run(options: Options): Promise<string[]> {
       findings.push(...metricsContractFindings(exposition).map((f) => `metrics: ${f}`));
     }
 
+    findings.push(...(await determinismFindings(base)));
+
     if (options.app) findings.push(...(await securityFindings(options.app, base)));
 
     // Give the logger a moment to flush the completion line.
@@ -171,7 +175,42 @@ async function run(options: Options): Promise<string[]> {
   }
 }
 
-const RESPONSE_GAPS = "tests/security/known-response-gaps.txt";
+/**
+ * Headers that legitimately differ between two identical requests. The release
+ * harness masks exactly these; anything else that varies is permanent noise in
+ * every release comparison.
+ */
+const VOLATILE_HEADERS = new Set(["date", "x-request-id"]);
+const VERSION_KEYS = ["app", "built", "clock", "revision", "version"];
+
+/** Same request twice gives the same headers, and build identity is answered by /version in the documented shape. */
+async function determinismFindings(base: string): Promise<string[]> {
+  const findings: string[] = [];
+  for (const path of ["/", "/favicon.png", "/healthz/live", "/version"]) {
+    const [first, second] = [await fetchWithTimeout(`${base}${path}`, {}, 15_000), await fetchWithTimeout(`${base}${path}`, {}, 15_000)];
+    await Promise.all([first.arrayBuffer(), second.arrayBuffer()]);
+    const names = new Set([...first.headers.keys(), ...second.headers.keys()]);
+    for (const name of [...names].filter((n) => !VOLATILE_HEADERS.has(n)).sort()) {
+      if (first.headers.get(name) !== second.headers.get(name)) {
+        findings.push(`determinism: GET ${path}: header ${name} differs between two identical requests (${first.headers.get(name)} / ${second.headers.get(name)})`);
+      }
+    }
+  }
+
+  const version = await fetchWithTimeout(`${base}/version`);
+  if (version.status !== 200) {
+    findings.push(`version: GET /version returned ${version.status}`);
+  } else {
+    const body = (await version.json()) as Record<string, unknown>;
+    const keys = Object.keys(body).sort();
+    if (keys.join() !== VERSION_KEYS.join()) findings.push(`version: GET /version keys are [${keys}], expected [${VERSION_KEYS}]`);
+    if (Object.values(body).some((value) => typeof value !== "string" || value === "")) findings.push("version: GET /version has a non-string or empty field");
+    if (body.clock !== "system") findings.push(`version: clock is "${body.clock}"; an image started without HARNESS_NOW must run on the system clock`);
+  }
+  return findings;
+}
+
+const RESPONSE_GAPS ="tests/security/known-response-gaps.txt";
 
 /** Tier M against the running image: header contract, cookie flags and CSRF on mutating routes. */
 async function securityFindings(app: string, base: string): Promise<string[]> {

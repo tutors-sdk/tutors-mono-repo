@@ -29,6 +29,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
+    "@tutors/runtime": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "ag-grid-community": "^36.1.0",

@@ -27,6 +27,7 @@ pnpm build
 - `@tutors/ui` for components
 - `@tutors/themes` for theming
 - `@tutors/i18n` for internationalization
+- `@tutors/runtime` for the server clock seam (`HARNESS_NOW`) and the `GET /version` endpoint
 - Skeleton UI for base components
 
 ## Architecture

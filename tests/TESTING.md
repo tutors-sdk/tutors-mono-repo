@@ -185,7 +185,7 @@ These run as their own CI jobs rather than under Vitest:
 pnpm check:k8s                                     # render every overlay and apply the manifest policies
 pnpm check:k8s --out rendered                      # also write the output for kubeconform
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
-pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
+pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract, identical headers on repeat requests (except Date and x-request-id), /version shape
 pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
 pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
 pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail

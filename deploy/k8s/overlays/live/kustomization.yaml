@@ -15,7 +15,7 @@ labels:
 
 images:
   - name: tutors-app
-    newName: registry.example.com/tutors/live
+    newName: quay.io/tutors-sdk/tutors-live
     newTag: "16.2.2"
 
 patches:

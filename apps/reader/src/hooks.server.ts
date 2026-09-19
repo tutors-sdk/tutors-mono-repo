@@ -9,6 +9,7 @@ import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
+import { announceClock } from "@tutors/runtime";
 import { authMode } from "$lib/server/auth-mode";
 
 setAppName("tutors-reader");
@@ -22,6 +23,7 @@ const currentAuthMode = () =>
 export const init: ServerInit = async () => {
   const mode = currentAuthMode();
   logServiceStart({ version: APP_VERSION, authMode: mode });
+  announceClock(log);
   if (mode === "unconfigured") {
     log.error("Authentication disabled: PRIVATE_AUTH_SECRET is not set. Set it, or set PUBLIC_ANON_MODE=TRUE.");
   }

@@ -20,7 +20,12 @@ export const PLATFORM_ENV: ReadonlySet<string> = new Set([
   "MODE", // Vite build flag
   "BASE_URL", // Vite build flag
   "HOSTNAME", // set by Kubernetes to the pod name
-  "NODE_ENV" // set in the Dockerfile runtime stage
+  "NODE_ENV", // set in the Dockerfile runtime stage
+  "GIT_SHA", // set in the Dockerfile runtime stage from the build arg; answered by GET /version
+  "BUILD_DATE", // set in the Dockerfile runtime stage from the build arg; answered by GET /version
+  // Set only by the release harness to freeze the server clock. Deliberately NOT in
+  // deploy/k8s: a manifest must never carry it (repoFrozenClockFindings enforces that).
+  "HARNESS_NOW"
 ]);
 
 const ENV_READ_PATTERNS = [
@@ -105,6 +110,23 @@ export function repoConfigCompletenessFindings(root: string = REPO_ROOT): string
   });
 }
 
+/**
+ * `HARNESS_NOW` freezes the server clock for the release harness. The image
+ * always runs with NODE_ENV=production, so the variable's absence is the only
+ * guard: no deployment manifest or compose file in this repo may mention it.
+ */
+export function frozenClockFindings(files: { file: string; text: string }[]): string[] {
+  return files.filter(({ text }) => /\bHARNESS_NOW\b/.test(text)).map(({ file }) => `frozen-clock-in-deployment: ${file}: HARNESS_NOW`);
+}
+
+export function repoFrozenClockFindings(root: string = REPO_ROOT): string[] {
+  const files = [
+    ...walk(join(root, "deploy"), (name) => /\.(ya?ml|json|env)(\.example)?$/.test(name)),
+    ...["compose.yaml", "observability/compose.yaml"].map((name) => join(root, name)).filter((path) => existsSync(path))
+  ];
+  return frozenClockFindings(files.map((path) => ({ file: toPosix(path, root), text: readText(path) })));
+}
+
 /* ---------------- manifest policy ---------------- */
 
 type Obj = Record<string, unknown>;
@@ -132,8 +154,23 @@ export function parseImage(image: string): { repository: string; tag?: string; d
 }
 
 /**
+ * Why a repository path cannot be pulled reliably, if it cannot. CRI-O (and so
+ * OpenShift) refuses or guesses at short names, so the registry host must be
+ * spelled out; and Quay repositories are exactly `quay.io/<org>/<repo>`, with
+ * no nested path segments.
+ */
+export function imageRepositoryFinding(repository: string): string | undefined {
+  const segments = repository.split("/");
+  const host = segments[0];
+  const qualified = segments.length > 1 && (host.includes(".") || host.includes(":") || host === "localhost");
+  if (!qualified) return "unqualified-image";
+  if (host === "quay.io" && segments.length !== 3) return "quay-nested-repository";
+  return undefined;
+}
+
+/**
  * Policies a workload must satisfy to run under OpenShift's `restricted-v2`
- * SCC and to be operable: pinned images, requests and limits, probes, and a
+ * SCC and to be operable: registry-qualified, pinned images, requests and limits, probes, and a
  * locked-down security context. Findings are `rule: Kind/name[/container]: detail`.
  */
 export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {}): string[] {
@@ -160,6 +197,8 @@ export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {})
     for (const container of containers) {
       const where = `${name}/${container.name}`;
       const image = parseImage(String(container.image ?? ""));
+      const repositoryFinding = imageRepositoryFinding(image.repository);
+      if (repositoryFinding) findings.push(`${repositoryFinding}: ${where}: ${container.image}`);
       if (!image.digest && (!image.tag || image.tag === "latest")) {
         findings.push(`unpinned-image: ${where}: ${container.image}`);
       } else if (options.expectedTag && !image.digest && image.tag !== options.expectedTag) {
