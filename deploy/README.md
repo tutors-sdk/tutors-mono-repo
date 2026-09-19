@@ -58,6 +58,106 @@ Every image carries `org.opencontainers.image.version`, `.revision`,
 `.created` and `.source`; Quay shows them on the tag page and the release
 harness reads `revision` and `version` to trace a report to a commit.
 
+## Published images
+
+The `Container Image Build` workflow (`.github/workflows/image-build.yml`)
+builds all four apps from this Dockerfile and publishes them to
+`quay.io/tutors-sdk/tutors-<app>` as multi-arch images (`linux/amd64` and
+`linux/arm64`, the arm64 half built under QEMU).
+
+| Event | Tags pushed |
+| --- | --- |
+| Pull request (touching the build context) | none; amd64 build and scan only |
+| Push to `main` | `sha-<short>`, `main` |
+| Push to an `rc/**` branch | `sha-<short>`, the branch name with `/` as `-` (`rc/16.2.0` gives `rc-16.2.0`) |
+| Release tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest`, `sha-<short>` |
+| Prerelease tag `vX.Y.Z-rc.N` | `X.Y.Z-rc.N`, `sha-<short>` |
+| Backfill: dispatched from `main` with `release_tag=vX.Y.Z` | `X.Y.Z`, `X.Y`, `sha-<short>` (never `latest`) |
+
+`latest` is the newest full release and `main` is the tip of the default
+branch. A prerelease tag never moves `latest` or `X.Y`. `sha-<short>` is the
+first seven characters of the commit.
+
+A release tagged before this workflow existed has no copy of it, so
+dispatching the workflow on that tag cannot publish it. Backfill it from
+`main` instead; the run checks out the tag and builds that tag's own
+Dockerfile:
+
+```bash
+gh workflow run image-build.yml --ref main -f release_tag=v16.2.2
+```
+
+A backfill publishes what production already runs, so its Trivy scan
+reports findings without stopping the push. Its signing identity ends in
+`@refs/heads/main`, not the tag.
+
+Every publishing run does the following, per app, in this order:
+
+1. Builds the `linux/amd64` image locally and scans it with Trivy. CRITICAL
+   and HIGH findings with an available fix fail the job, before anything has
+   been pushed.
+2. Builds `linux/amd64,linux/arm64` (the amd64 layers are the ones just
+   scanned) and pushes every tag to one multi-arch digest, with the
+   `GIT_SHA`, `BUILD_DATE` and `VERSION` build args set. `VERSION` is the
+   semver on a `v*` tag and `sha-<short>` otherwise.
+3. Signs that digest with cosign, keyless: the certificate is issued to the
+   workflow's GitHub OIDC identity, and no signing key exists to leak.
+4. Generates an SPDX JSON SBOM with syft and attaches it to the digest as a
+   signed in-toto attestation (`cosign attest --type spdxjson`). The SBOM is
+   also kept as a workflow artifact. It describes the amd64 image.
+
+Pull requests run only step 1, with no registry login and no OIDC token.
+
+Pushing needs two repository secrets holding a Quay.io robot account with
+write access to the four repositories: `QUAY_USERNAME` and `QUAY_PASSWORD`.
+Signatures and attestations are stored next to the image as OCI referrers,
+so the same robot account writes them.
+
+### Verifying an image
+
+With cosign 3 or later (tag or digest both work; cosign resolves the tag to
+its digest and checks the signature made over that digest):
+
+```bash
+cosign verify \
+  --certificate-identity-regexp '^https://github.com/tutors-sdk/tutors-mono-repo/\.github/workflows/image-build\.yml@' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  quay.io/tutors-sdk/tutors-reader:<tag>
+
+cosign verify-attestation --type spdxjson \
+  --certificate-identity-regexp '^https://github.com/tutors-sdk/tutors-mono-repo/\.github/workflows/image-build\.yml@' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  quay.io/tutors-sdk/tutors-reader:<tag>
+```
+
+Both print the verified payload as JSON and exit non-zero when nothing
+matches. To read the SBOM, decode the attestation payload:
+
+```bash
+cosign verify-attestation --type spdxjson ... quay.io/tutors-sdk/tutors-reader:<tag> \
+  | jq -r '.payload | @base64d | fromjson | .predicate' > sbom.spdx.json
+```
+
+The identity ends in the git ref that ran the workflow
+(`...image-build.yml@refs/tags/v16.3.0`, `@refs/heads/main`). To accept
+release builds only, tighten the end of the regexp to `@refs/tags/v.+$`.
+
+## Staging stack
+
+`deploy/staging/compose.yaml` runs the four published images on one host,
+with the same read-only, capability-dropped posture as the local stack. It
+builds nothing, so `IMAGE_TAG` selects exactly what to run (default `main`):
+
+```bash
+cd deploy/staging
+cp .env.example .env               # Supabase, OAuth, Moodle, origins
+IMAGE_TAG=16.3.0-rc.1 docker compose up -d
+docker compose pull && docker compose up -d   # roll forward
+```
+
+Set each `*_ORIGIN` to the URL users reach the app on; adapter-node uses it
+for absolute URLs and CSRF checks.
+
 ## Run locally
 
 A step-by-step walkthrough, including troubleshooting, is in
@@ -269,11 +369,13 @@ kubectl kustomize deploy/k8s/overlays/reader   # render
 oc apply -k deploy/k8s/overlays/reader          # deploy
 ```
 
-The overlays reference `quay.io/tutors-sdk/tutors-<app>`; to deploy from a
-mirror, change `images[].newName`. Fill in the ConfigMap values before
-applying. Image tags are pinned to the release version in the root
-`package.json` (never `latest`); the release checklist bumps them together.
-The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
+Each overlay points at `quay.io/tutors-sdk/tutors-<app>`, which the image
+build workflow publishes; to deploy from a mirror, change `images[].newName`.
+Image tags are pinned to the release version in the root `package.json`
+(never `latest`); the release checklist bumps them together, and the workflow
+publishes that tag from the `v<version>` git tag. To try an unreleased build,
+set `newTag` to `sha-<short>` locally. Fill in the ConfigMap values before
+applying. The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
 `overlays/reader/secrets.yaml.example`
 to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads
 an optional `<app>-tutors-app-secrets` Secret for `METRICS_TOKEN`
