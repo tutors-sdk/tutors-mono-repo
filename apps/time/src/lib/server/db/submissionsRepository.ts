@@ -1,5 +1,6 @@
 import { env } from "$env/dynamic/public";
 import { createClient } from "@supabase/supabase-js";
+import { now } from "@tutors/runtime";
 import type { MoodleAssignSubmission, MoodleModule } from "$lib/server/api/moodle";
 
 export interface AssignmentRow {
@@ -28,7 +29,7 @@ function toAssignmentRow(module: MoodleModule, courseId: string): AssignmentRow 
     url: module.url ?? null,
     due_date: toTimestamp(dueDate?.timestamp),
     opened_date: toTimestamp(openedDate?.timestamp),
-    last_synced_at: new Date().toISOString()
+    last_synced_at: now().toISOString()
   };
 }
 
@@ -79,7 +80,7 @@ function toSubmissionRow(
     timemodified: toTimestamp(submission?.timemodified),
     timestarted: toTimestamp(submission?.timestarted),
     grading_status: submission.gradingstatus ?? "",
-    last_synced_at: new Date().toISOString()
+    last_synced_at: now().toISOString()
   };
 }
 

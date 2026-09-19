@@ -1,4 +1,5 @@
 import { env } from "$env/dynamic/private";
+import { nowMs } from "@tutors/runtime";
 import { AssignmentsService, type MoodleModule } from "$lib/server/services/AssignmentsService";
 import { getLastSyncedAt, upsertAssignments, upsertSubmissions } from "$lib/server/db/submissionsRepository";
 
@@ -9,7 +10,7 @@ export class AssignmentsSyncService {
     const lastSynced = await getLastSyncedAt(courseId);
     if (lastSynced) {
       const intervalMs = Number(env.SYNC_INTERVAL_MINUTES) * 60 * 1000;
-      if (new Date(lastSynced) > new Date(Date.now() - intervalMs)) return;
+      if (new Date(lastSynced) > new Date(nowMs() - intervalMs)) return;
     }
 
     const assignments = await this.assignmentsService.fetchAssignments(moodleCourseId, moodleSectionId);
