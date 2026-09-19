@@ -5,11 +5,13 @@ import {
   configCompletenessFindings,
   dotenvKeys,
   envVarsRead,
+  frozenClockFindings,
   k8sEnvKeys,
   manifestPolicyFindings,
   overlayDirs,
   parseImage,
-  repoConfigCompletenessFindings
+  repoConfigCompletenessFindings,
+  repoFrozenClockFindings
 } from "../../scripts/checks/conformance.ts";
 import { REPO_ROOT, readText, toPosix } from "../../scripts/checks/lib/repo.ts";
 
@@ -144,6 +146,21 @@ describe("platform conformance (runway tier J)", () => {
 
     it("every env var the apps read is in .env.example and in the kustomize manifests", () => {
       expect(repoConfigCompletenessFindings()).toEqual([]);
+    });
+  });
+
+  describe("frozen clock (HARNESS_NOW)", () => {
+    it("negative fixture: a manifest that sets HARNESS_NOW is reported", () => {
+      expect(
+        frozenClockFindings([
+          { file: "deploy/k8s/base/configmap.yaml", text: "data:\n  HARNESS_NOW: 2026-09-16T09:05:00.000Z\n" },
+          { file: "deploy/k8s/base/service.yaml", text: "kind: Service\n" }
+        ])
+      ).toEqual(["frozen-clock-in-deployment: deploy/k8s/base/configmap.yaml: HARNESS_NOW"]);
+    });
+
+    it("no deployment manifest or compose file in the repo can freeze the clock", () => {
+      expect(repoFrozenClockFindings()).toEqual([]);
     });
   });
 });

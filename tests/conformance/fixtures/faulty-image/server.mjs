@@ -14,6 +14,11 @@ createServer((req, res) => {
   const requestId = req.headers["x-request-id"] ?? "generated";
   const url = new URL(req.url, "http://localhost");
   if (url.pathname === "/healthz/live") return res.writeHead(200, { "content-type": "application/json" }).end('{"status":"ok"}');
+  if (url.pathname === "/version") {
+    return res
+      .writeHead(200, { "content-type": "application/json" })
+      .end(JSON.stringify({ app: "tutors-fixture", version: "0.0.0", revision: "unknown", built: "unknown", clock: "system" }));
+  }
   if (url.pathname === "/metrics") {
     return res
       .writeHead(200, { "content-type": "text/plain" })
@@ -23,6 +28,8 @@ createServer((req, res) => {
       );
   }
   requests++;
-  res.writeHead(200, { "x-request-id": requestId }).end("ok");
+  // FIXTURE_FAULT=nondeterministic: a header that changes on every response, outside x-request-id.
+  const noise = fault === "nondeterministic" ? { "x-served-by": `worker-${requests}` } : {};
+  res.writeHead(200, { "x-request-id": requestId, ...noise }).end("ok");
   log("info", "request completed", { requestId, method: req.method, path: url.pathname, route: "/", status: 200, duration_ms: 1 });
 }).listen(3000, () => log("info", "Service starting"));
