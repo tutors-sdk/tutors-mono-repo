@@ -123,10 +123,10 @@ The repository has several test tiers. You are expected to run three things befo
 ```bash
 pnpm lint                        # ESLint
 pnpm test                        # vitest: unit, BDD steps, component, contract and the repo-level checks
-pnpm check                       # svelte-check on the reader
+pnpm check                       # svelte-check on the reader, catalogue and live apps
 ```
 
-The type check reports a handful of pre-existing errors that are tracked in [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235). New errors in files you touched are yours; the existing ones are not.
+The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
 
 Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), the browser journeys against built images (`pnpm test:e2e:stack`), accessibility (`pnpm test:a11y`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 

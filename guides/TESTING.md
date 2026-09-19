@@ -532,7 +532,7 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 
 ## Known gaps
 
-- Type errors are not a blocker yet ([#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53), [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235)).
+- `apps/time` is not type-checked in CI; it has type errors of its own to clear first ([#268](https://github.com/tutors-sdk/tutors-mono-repo/issues/268)).
 - Coverage thresholds sit at 55/50/65/55 and should ratchet upward.
 - `tests/components/` tests props, variants and state transitions as plain data; nothing renders
   a Svelte component, and `@testing-library/svelte` is an unused dependency.

@@ -18,7 +18,7 @@ import footnote from "markdown-it-footnote";
 import deflist from "markdown-it-deflist";
 import { addCopyButton } from "shiki-transformer-copy-button";
 import type { Course, Lab, Lo, Note } from "../types/index.ts";
-import { link_open, podcastPlayer, quote_close, quote_open, videoPlayer } from "./markdown-plugins.ts";
+import { link_open, type MarkdownItInstance, podcastPlayer, quote_close, quote_open, videoPlayer } from "./markdown-plugins.ts";
 
 const options = {
   // delay time from "copied" state back to normal state
@@ -33,7 +33,7 @@ export function initHighlighter(codeHighlighter: any) {
   customHighlighter = codeHighlighter;
 }
 
-export const markdownIt: MarkdownIt = new MarkdownIt({
+export const markdownIt: MarkdownItInstance = new MarkdownIt({
   html: true, // Enable HTML tags in source
   xhtmlOut: false, // Use '/' to close single tags (<br />).
   breaks: false, // Convert '\n' in paragraphs into <br>

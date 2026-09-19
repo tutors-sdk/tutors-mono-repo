@@ -145,7 +145,5 @@ Only what CI enforces today.
 | Push to `rc/**` | `rc-validation.yml` — its `RC Readiness Report` fails if any gate failed — and `release-testing.yml`, whose report blocks on artifact regression and smoke tests and only warns on the performance benchmark |
 | Nightly | Nothing. A red nightly is a bug to chase, not a merge block |
 
-Type checking is **not** a blocker: the three `check` steps in `build-and-test` carry
-`continue-on-error: true` while the pre-existing errors in
-[#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53) and
-[#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235) are worked through.
+Type checking **is** a blocker: the three `check` steps in `build-and-test` (`svelte-check` on the
+reader, catalogue and live apps) fail the job on any type error. `pnpm check` runs the same three locally.

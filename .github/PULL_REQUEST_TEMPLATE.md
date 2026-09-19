@@ -22,7 +22,7 @@ These three are the minimum bar for any PR that touches code. Docs-only PRs can 
 
 - [ ] `pnpm lint`
 - [ ] `pnpm test`
-- [ ] `pnpm check` — a handful of pre-existing type errors are tracked in #235; new errors in files you touched are yours
+- [ ] `pnpm check`
 
 Everything else runs in CI or nightly and is **not** expected of you locally: fuzz, mutation, contract, e2e, accessibility and release suites. If CI reports a failure in one of those, a maintainer will help you read it.
 
