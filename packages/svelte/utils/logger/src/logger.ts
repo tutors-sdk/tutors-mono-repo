@@ -1,5 +1,7 @@
 import type { LogLevel, LogEntry, Logger, LoggerOptions, RuntimeOptions, Transport } from "./types.ts";
 import { formatJson, formatPretty } from "./formatter.ts";
+import { currentRequestId } from "./context.ts";
+import { serializeError } from "./errors.ts";
 
 const globalTransports: Transport[] = [];
 
@@ -131,10 +133,7 @@ function normalizeArgs(args: unknown[]): {
   }
 
   if (typeof args[0] === "string" && args.length >= 2 && args[1] instanceof Error) {
-    return {
-      message: args[0],
-      context: { error: args[1].message, stack: args[1].stack },
-    };
+    return { message: args[0], context: { ...serializeError(args[1]) } };
   }
 
   if (typeof args[0] === "string" && args.length >= 2) {
@@ -145,10 +144,7 @@ function normalizeArgs(args: unknown[]): {
   }
 
   if (args[0] instanceof Error) {
-    return {
-      message: args[0].message,
-      context: { error: args[0].message, stack: args[0].stack },
-    };
+    return { message: args[0].message, context: { ...serializeError(args[0]) } };
   }
 
   return {
@@ -157,11 +153,48 @@ function normalizeArgs(args: unknown[]): {
   };
 }
 
+/**
+ * The keys every structured (server, production) entry starts with, in this
+ * order. Everything after them belongs to the entry's `event` kind. The
+ * contract is documented in deploy/README.md ("Log contract").
+ */
+export const CORE_LOG_KEYS = [
+  "timestamp",
+  "level",
+  "event",
+  "message",
+  "app",
+  "environment",
+  "hostname",
+  "pid",
+  "requestId",
+] as const;
+
+/** `event` of a line written through a plain `log.info(...)` call with no `event` in its context. */
+export const DEFAULT_LOG_EVENT = "log";
+
+const CORE_KEY_SET: ReadonlySet<string> = new Set(CORE_LOG_KEYS);
+
+type ConsoleMethod = "debug" | "info" | "warn" | "error";
+type ConsoleWriter = (line: string) => void;
+
+/**
+ * The console methods as they were before `installProcessLogging` wrapped
+ * them. The default output writes through these, so the logger's own lines
+ * are not captured a second time.
+ */
+let rawConsole: Partial<Record<ConsoleMethod, ConsoleWriter>> | null = null;
+
+export function setRawConsole(methods: Partial<Record<ConsoleMethod, ConsoleWriter>> | null): void {
+  rawConsole = methods;
+}
+
 export class TutorsLogger implements Logger {
   readonly level: LogLevel;
   private readonly threshold: number;
   private readonly context: Record<string, unknown>;
   private readonly runtime: Record<string, unknown>;
+  private readonly structured: boolean;
   private readonly outputFn: (entry: LogEntry) => void;
 
   constructor(options: LoggerOptions = {}) {
@@ -169,8 +202,10 @@ export class TutorsLogger implements Logger {
     this.level = options.level ?? resolveLogLevel({ dev });
     this.threshold = LOG_LEVEL_PRIORITY[this.level];
     this.context = options.context ?? {};
-    // Runtime fields only travel with the JSON output; the pretty dev format stays readable.
-    this.runtime = dev ? {} : runtimeContext({ dev });
+    // The fixed core key set is a server-side production contract. The pretty dev format
+    // stays readable, and browser entries keep their shape for the error transport.
+    this.structured = options.structured ?? (!dev && isServer());
+    this.runtime = dev && !this.structured ? {} : runtimeContext({ dev });
     this.outputFn = options.output ?? TutorsLogger.defaultOutput(dev);
   }
 
@@ -178,7 +213,10 @@ export class TutorsLogger implements Logger {
     const format = dev ? formatPretty : formatJson;
     return (entry: LogEntry) => {
       const method = CONSOLE_METHOD[entry.level as LogLevel];
-      console[method](format(entry));
+      const line = format(entry);
+      const raw = rawConsole?.[method];
+      if (raw) raw(line);
+      else console[method](line);
     };
   }
 
@@ -186,15 +224,35 @@ export class TutorsLogger implements Logger {
     if (LOG_LEVEL_PRIORITY[level] < this.threshold) return;
 
     const { message, context: callContext } = normalizeArgs(args);
-    const entry: LogEntry = {
+    const merged: Record<string, unknown> = {
       ...globalContext,
       ...this.runtime,
       ...this.context,
       ...callContext,
-      timestamp: new Date().toISOString(),
-      level,
-      message,
     };
+    const timestamp = new Date().toISOString();
+    let entry: LogEntry;
+    if (this.structured) {
+      // Core keys first, always present (null when unknown), always in the same order.
+      entry = {
+        timestamp,
+        level,
+        event: typeof merged.event === "string" && merged.event !== "" ? merged.event : DEFAULT_LOG_EVENT,
+        message,
+        app: merged.app ?? null,
+        environment: merged.environment ?? null,
+        hostname: merged.hostname ?? null,
+        pid: merged.pid ?? null,
+        requestId: merged.requestId ?? currentRequestId() ?? null,
+      };
+      for (const [key, value] of Object.entries(merged)) {
+        // `undefined` would vanish in JSON and change the key set; keep the key.
+        if (!CORE_KEY_SET.has(key)) entry[key] = value === undefined ? null : value;
+      }
+    } else {
+      const requestId = merged.requestId ?? currentRequestId();
+      entry = { ...merged, ...(requestId !== undefined ? { requestId } : {}), timestamp, level, message };
+    }
     this.outputFn(entry);
     for (const transport of globalTransports) {
       try { transport(entry); } catch { /* transport failures must never crash the app */ }
@@ -222,6 +280,7 @@ export class TutorsLogger implements Logger {
       level: this.level,
       context: { ...this.context, ...context },
       output: this.outputFn,
+      structured: this.structured,
     });
   }
 }
@@ -236,5 +295,5 @@ export const defaultLogger: Logger = new TutorsLogger();
  */
 export function logServiceStart(fields: Record<string, unknown> = {}, logger: Logger = defaultLogger): void {
   const node = typeof process !== "undefined" ? process.version : undefined;
-  logger.info("Service starting", { logLevel: logger.level, node, ...fields });
+  logger.info("Service starting", { event: "service.start", logLevel: logger.level, node: node ?? null, ...fields });
 }

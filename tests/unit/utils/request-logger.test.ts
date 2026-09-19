@@ -48,7 +48,7 @@ describe("request logger: completion line", () => {
       status: 201,
     });
     expect(typeof entries[0].duration_ms).toBe("number");
-    expect(entries[0]).not.toHaveProperty("slow");
+    expect(entries[0].slow).toBe(false);
   });
 
   it("logs 4xx at warn and 5xx at error", async () => {
@@ -102,21 +102,21 @@ describe("request logger: failures SvelteKit answers with a 200", () => {
     const { logger, entries } = capture();
     await createRequestLogger({ logger })({ event: makeEvent(), resolve: failingLoad(500, 500) });
     expect(entries[0]).toMatchObject({ level: "error", status: 500 });
-    expect(entries[0]).not.toHaveProperty("loadError");
+    expect(entries[0].loadError).toBe(false);
   });
 
   it("does not treat an unmatched route (404 through handleError) as a load error", async () => {
     const { logger, entries } = capture();
     await createRequestLogger({ logger })({ event: makeEvent({ routeId: null }), resolve: failingLoad(404, 404) });
     expect(entries[0]).toMatchObject({ level: "warn", status: 404 });
-    expect(entries[0]).not.toHaveProperty("loadError");
+    expect(entries[0].loadError).toBe(false);
   });
 
   it("keeps successful requests unmarked", async () => {
     const { logger, entries } = capture();
     await createRequestLogger({ logger })({ event: makeEvent(), resolve: respond(200) });
     expect(entries[0]).toMatchObject({ level: "info", status: 200 });
-    expect(entries[0]).not.toHaveProperty("loadError");
+    expect(entries[0].loadError).toBe(false);
   });
 });
 
@@ -276,8 +276,8 @@ describe("logRequestError", () => {
   it("serialises non-Error values", () => {
     const { logger, entries } = capture();
     logRequestError({ error: { code: "PGRST116", message: "row missing" }, event: makeEvent() }, logger);
-    expect(entries[0].error).toBe("[object Object]");
-    expect(entries[0].details).toEqual({ code: "PGRST116", message: "row missing" });
+    expect(entries[0].error).toBe('{"code":"PGRST116","message":"row missing"}');
+    expect(entries[0].stack).toBeNull();
   });
 
   it("works without an event", () => {
@@ -285,6 +285,6 @@ describe("logRequestError", () => {
     const id = logRequestError({ error: new Error("early") }, logger);
     expect(id).toBeUndefined();
     expect(entries[0].error).toBe("early");
-    expect(entries[0]).not.toHaveProperty("path");
+    expect(entries[0]).toMatchObject({ requestId: null, method: null, path: null, route: null });
   });
 });

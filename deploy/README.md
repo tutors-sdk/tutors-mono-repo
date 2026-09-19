@@ -167,6 +167,97 @@ components:
 The pod template also carries `prometheus.io/scrape` annotations for
 annotation-driven scrapers.
 
+### Metrics contract
+
+Series names and label sets are the same from one start of an image to the
+next under the same traffic. `scripts/checks/observability.ts`
+(`metricsContractFindings`) pins this, in tier K and against every built image
+in `pnpm check:container`.
+
+| Group | Names | Compare? |
+| --- | --- | --- |
+| App-level | exactly `http_request_duration_seconds_{bucket,sum,count}`, `http_requests_total`, `http_requests_in_flight`. New app metrics are named `http_*` or `tutors_*` and added to `APP_SERIES`. | Names, label sets and counter deltas are deterministic for the same traffic. `_bucket` and `_sum` values move with the machine. |
+| Process and runtime | everything else, always prefixed `process_` or `nodejs_` (the client library's default collectors: CPU, memory, fds, start time, heap spaces, GC, event loop lag and utilisation, active handles, `nodejs_version_info`) | Mask as a group with `^(process_\|nodejs_)`. Values describe the host and the moment; `nodejs_gc_duration_seconds{kind}` and `nodejs_active_*{type}` also gain label values as GC kinds and handle types first occur. |
+
+Labels on app-level series are `method`, `route`, `status_code` and, on the
+histogram, `le`. None carries a per-request or per-process value: there is no
+pid, instance or request id label (Prometheus adds `instance` itself when it
+scrapes). `route` is a SvelteKit route id or `unmatched`. Buckets are fixed at
+0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5 and 10 seconds. The Grafana alert rules
+in `observability/` query these names, so none of them is renamed lightly.
+
+Requests that adapter-node answers before SvelteKit runs (files under
+`/_app/immutable`, other static and prerendered files) are not counted, logged
+or given a request id.
+
+## Logs
+
+In a container every line on stdout and stderr is one JSON object, from the
+first line to the last. `installProcessLogging()` in each app's
+`hooks.server.ts` routes through `@tutors/logger` whatever would otherwise be
+plain text: `console.*` calls in dependencies (including adapter-node's
+`Listening on ...` banner), uncaught exceptions and unhandled rejections
+(logged with their stack, then exit code 1), and Node process warnings. A
+multi-line message or stack is one string inside its line. Dev builds keep the
+readable `[time] [app:level] message` format.
+
+### Log contract
+
+Every line starts with these keys, in this order, always present:
+
+| Key | Type | Notes |
+| --- | --- | --- |
+| `timestamp` | ISO 8601 string | **variable** |
+| `level` | `debug` \| `info` \| `warn` \| `error` | |
+| `event` | string | the line's kind, from the table below |
+| `message` | string | fixed text for every kind except `log` and `console` |
+| `app` | `tutors-<app>` | |
+| `environment` | `production` \| `development` | |
+| `hostname` | string or null | **variable**; the pod or container name (`HOSTNAME`) |
+| `pid` | number | **variable** |
+| `requestId` | string or null | **variable**; null outside a request |
+
+Then the fields of the line's `event`, again always all present and in this
+order (null where a value is unknown):
+
+| `event` | `message` | Fields after the core keys |
+| --- | --- | --- |
+| `service.start` | `Service starting` | `logLevel`, `node`, `version`, and in the reader `authMode` |
+| `request.completed` | `request completed` | `method`, `path`, `route` (string or null), `status`, `duration_ms` (**variable**), `slow` (boolean, **variable**: `duration_ms` ≥ 2000, which also raises `level` to `warn`), `loadError` (boolean) |
+| `request.error` | `Unhandled server error` | `method`, `path`, `route`, `status`, `reason`, `error`, `stack` (string or null). `warn` for a 404, otherwise `error` |
+| `request.failed` | `request failed` | `method`, `path`, `route`, `duration_ms`, `error`, `stack`. A hook threw outside SvelteKit's error handling |
+| `console` | the text that was printed | `consoleMethod` (`log`, `info`, `debug`, `warn`, `error`, `trace`) |
+| `process.uncaughtException`, `process.unhandledRejection` | `Uncaught exception`, `Unhandled promise rejection` | `error`, `stack`; the process then exits 1 |
+| `process.warning` | `Node process warning` | `warningName`, `error`, `stack` |
+| `log` | free text | whatever context the `log.info(...)` call site passed; an `Error` argument becomes `error` and `stack` |
+
+The fields whose value differs between two runs of one image under the same
+traffic are exactly `timestamp`, `hostname`, `pid`, `requestId`,
+`duration_ms`, `slow` and `stack` (frames name content-hashed build files).
+They are listed in code as `VARIABLE_LOG_FIELDS`, next to `CORE_LOG_KEYS` and
+`LOG_EVENT_FIELDS` in `packages/svelte/utils/logger/src`. Key names, key
+order, types, `event`, `message`, `level` (apart from the `slow` case) and
+line counts per event are stable. `pnpm check:container` checks the contract
+against real container output.
+
+Two kinds of output cannot be JSON and are outside the contract: anything
+printed before the server module loads (a Node flag error, a missing
+`build/index.js`), and V8's own fatal errors such as heap exhaustion, which
+the runtime writes natively as it aborts.
+
+### Request ids
+
+The one correlation header is `x-request-id`. The request logger, first in
+every app's hook sequence, takes the incoming value when it matches
+`^[A-Za-z0-9._:-]{1,128}$` (an ingress or upstream already traced the request)
+and otherwise generates a UUID. It stores the id on `event.locals.requestId`,
+sets it exactly once on the response, and runs the rest of the request inside
+an `AsyncLocalStorage` context, so every line logged while serving the request
+carries the id, including lines from workspace packages that know nothing
+about requests. Server-side Supabase calls made during a request forward the
+id in `x-request-id` (`withRequestId`). `/healthz` probes get the header but no
+log line.
+
 ## Kubernetes / OpenShift
 
 `deploy/k8s/base` holds a shared Deployment, Service, ConfigMap and
