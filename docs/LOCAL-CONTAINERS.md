@@ -61,7 +61,7 @@ docker compose ps          # shows (healthy) per service
 docker compose logs -f reader
 ```
 
-Logs are JSON lines, one per request, with the request id, route, status and duration.
+Every line is one JSON object: one per request, with the request id, route, status and duration, plus startup, errors and anything a dependency prints. The field contract is in [deploy/README.md](../deploy/README.md#logs).
 
 ## Metrics, Prometheus and Grafana
 

@@ -187,10 +187,15 @@ must reject.
 **Protects** the ability to debug production: every log line matches the schema, every line of a
 failed request carries the caller's request id, exactly one error line carries a stack, each app's
 hooks put the request logger first, and every metric a provisioned Grafana alert queries exists in
-`/metrics`.
+`/metrics`. It also pins the two contracts the release harness diffs against
+([deploy/README.md](../deploy/README.md), "Log contract" and "Metrics contract"): every container
+line is JSON that starts with the core keys in order and carries exactly its `event` kind's
+fields, a request's lines share the one `x-request-id` the response returns, and `/metrics`
+exports exactly the pinned app-level series with everything else under `process_` or `nodejs_`.
 
 **Lives in** `scripts/checks/observability.ts`, `tests/observability/observability-contracts.test.ts`,
-`observability/`, and the request logger in `packages/svelte/utils/logger`.
+`tests/unit/utils/logger-contract.test.ts`, `observability/`, and the logger in
+`packages/svelte/utils/logger` (`contract.ts` holds the contract as data).
 
 ```bash
 pnpm exec vitest run tests/observability
@@ -200,7 +205,10 @@ pnpm check:container --image tutors/reader:local     # the same contract against
 **Proves it can fail** with negative fixtures for a bad level, a completion line missing its
 request id, a non-JSON line, a load that throws inside a 200 `__data.json` response, an
 uncorrelated line, a silently swallowed failure, a double-logged failure, a logger that is not
-first, a bare `handleError`, and a renamed metric — which must name the alert it broke.
+first, a bare `handleError`, and a renamed metric — which must name the alert it broke. The
+contracts add: a missing or reordered core key, an unknown `event`, a drifting field set, a wrong
+type, a response without the header or with a changed id, an unprefixed series, an unpinned
+app-level series, a per-process label and a raw path used as a route label.
 
 ## Tier L — performance and capacity
 
