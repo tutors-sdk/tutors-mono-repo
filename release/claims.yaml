@@ -1,0 +1,24 @@
+# What this release meant to change, as the release harness will see it.
+#
+# The release harness (https://github.com/tutors-sdk/tutors-release-harness)
+# runs the production images beside this candidate's images and diffs what a
+# student can observe: DOM, screenshots, network, console, headers, axe,
+# metrics, logs and timing. A claim says "this difference is intended, and
+# here is the Rule or CHANGELOG entry that says so". Every difference must
+# match a claim or the release run fails; a claim that matches nothing is
+# reported as stale, so this file stays as honest as the changelog.
+#
+# An empty list is a statement too: nothing observable should differ between
+# production and this release.
+#
+#   - artefact: dom                  # dom | screenshot | network | console | headers
+#                                    # | axe | metrics | logs | timing | "*"
+#     scope: "reader:lab-step*"      # glob over the page key, its route, "<METHOD> <route>",
+#                                    # "<page key>/<header>" or "<app>/<series>"
+#     reason: "Rule 0031: lab steps shall show estimated reading time"
+#                                    # a Rule id or CHANGELOG entry; "see PR" and "approved" are rejected
+#     approvedBy: "a person"         # only for a broad claim (artefact "*", scope "*" or "**")
+#
+# Reset to `claims: []` when the next release branch is cut. Field reference:
+# release/README.md here, claims/README.md in the harness repository.
+claims: []

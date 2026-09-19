@@ -81,8 +81,9 @@ When `main` has accumulated enough changes for a release (or a time-based cadenc
 1. **Determine the version bump.** Review merged PRs since the last release. Apply semver rules.
 2. **Create the release branch:** `git checkout -b release/vX.Y.Z main`
 3. **Bump the version** in `package.json`, set the same version as `newTag` in each `deploy/k8s/overlays/*/kustomization.yaml`, and update `CHANGELOG.md`. The conformance tests fail until the overlay tags match, so the overlays always name the image being released. Reset `tests/generator/claims.yaml` to `claims: []` once the release's generator changes have shipped.
-4. **Tag the first RC:** `git tag vX.Y.Z-rc.1`
-5. **Deploy RC to staging** for validation.
+4. **Write the release's claims** in `release/claims.yaml`: the observable differences from production this release intends, each citing its Rule or CHANGELOG entry. Start from `claims: []` (see [Release Harness](#release-harness)).
+5. **Push the branch.** Once `package.json` carries the branch's version, every push is tagged as the next RC (`vX.Y.Z-rc.1`, then `-rc.2`, ...) by `release-dispatch.yml`. RC tags are not made by hand.
+6. **Deploy RC to staging** for validation.
 
 ```
 main ─────●─────●─────●──────────────●──── (development continues)
@@ -98,7 +99,7 @@ During the RC phase, the release branch accepts **only** bug fixes:
 
 - Fixes are developed on short-lived branches off `release/vX.Y.Z`.
 - Each fix is cherry-picked or merged back to `main` to prevent regression.
-- Each fix increments the RC number: `vX.Y.Z-rc.2`, `vX.Y.Z-rc.3`, etc.
+- Each push of fixes becomes the next RC (`vX.Y.Z-rc.2`, `vX.Y.Z-rc.3`, ...) and is judged by the release harness again. A fix that changes what a student sees needs its claim in `release/claims.yaml` in the same push.
 - No new features land on the release branch.
 
 ### 4. Final Release
@@ -162,6 +163,42 @@ The changelog documents what shipped and when. It is not a commit log; it is a c
 
 - Production deployment
 - Post-deploy smoke test
+
+### Release Harness
+
+The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a separate repository that runs the production images beside a candidate's images and fails on any observable difference the release did not claim. It lives apart from this repository so that the PR being judged cannot weaken its judge. Two workflows here feed it.
+
+**`release-dispatch.yml`**, on every push to `release/**`:
+
+1. **Candidate.** The version comes from the branch name (`release/16.3.0` and `release/v16.3.0` both work). The push is a candidate only when `package.json` carries that version; earlier pushes are skipped with a notice, and so is any push after `vX.Y.Z` itself has been tagged. The commit is tagged `vX.Y.Z-rc.N` with the next free `N`; re-running the workflow reuses the tag already on the commit.
+2. **Images.** A tag created by a workflow's own token does not trigger other workflows, so the `v*` tag trigger of `image-build.yml` never sees an RC tag. The job starts `image-build.yml` on the tag with `workflow_dispatch`, watches the run (a Trivy finding fails the candidate here) and then waits until `quay.io/tutors-sdk/tutors-{reader,catalogue,live}:X.Y.Z-rc.N` can be pulled anonymously. If `image-build.yml` is absent or has no `workflow_dispatch` trigger, the job warns and continues, and the harness builds the candidate from the git tag instead.
+3. **Dispatch.** A `repository_dispatch` of type `release-candidate` to `tutors-sdk/tutors-release-harness`, which runs its release, migration and upgrade modes. The result is in that repository's Actions tab, linked from this workflow's summary.
+
+| `client_payload` | Value |
+| --- | --- |
+| `production` | `images[].newTag` of `deploy/k8s/overlays/reader/kustomization.yaml` **on `main`**. The overlays name the deployed version; on the release branch they already name the candidate |
+| `candidate` | `X.Y.Z-rc.N` |
+| `claims_url` | `https://raw.githubusercontent.com/tutors-sdk/tutors-mono-repo/<sha>/release/claims.yaml`, pinned to the tagged commit |
+| `runs` | `3` |
+| `migrations_a` | `v<production>`, or `release/<production>` for a release that was never tagged |
+| `migrations_b` | the tagged commit's sha |
+
+**`release-claims.yml`**, on the same pushes and on release PRs, fails when `release/claims.yaml` is missing or is not a file the harness would accept (`pnpm check:release-claims`). The file format is in [release/README.md](../release/README.md); changes to it are owned by the maintainers through CODEOWNERS, because a claim waives a failure.
+
+#### Setup
+
+| What | Where | Value |
+| --- | --- | --- |
+| Secret `HARNESS_TOKEN` | this repository, Actions secrets | A fine-grained personal access token whose resource owner is `tutors-sdk`, with access to **only** `tutors-sdk/tutors-release-harness` and the repository permission **Contents: read and write** (Metadata: read is added automatically). That is the permission the [repository dispatch endpoint](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) requires; Actions: write is what `workflow_dispatch` needs and does not authorise a `repository_dispatch`. Give it an expiry and note the renewal date; an expired token fails the dispatch job with a 401 |
+| Secrets `QUAY_USERNAME`, `QUAY_PASSWORD` | this repository | Used by `image-build.yml`, not by the dispatch |
+| Variable `HARNESS_IMAGE_PREFIX` | the harness repository | **Open.** The harness expands a bare tag to `<prefix>/<app>:<tag>`, while `image-build.yml` publishes `quay.io/tutors-sdk/tutors-<app>:<tag>`, which no prefix can produce. Until one side changes, the harness fails to pull and builds both sides from their git tags (`v<tag>`), which is slower but compares the same code. The payload deliberately stays bare tags so that this fallback keeps working |
+| Quay repositories | quay.io | Public, so the harness and the wait step can pull without credentials |
+
+Everything else uses the workflow's own `GITHUB_TOKEN`: `contents: write` in the tagging job only, `actions: write` in the image job only, and nothing at all in the job that holds `HARNESS_TOKEN`.
+
+#### `rc/**` and `release/**`
+
+`rc-validation.yml` and `release-testing.yml` trigger on `rc/**` branches, which predate this document's branching model; releases since 16.0.0 have been cut as `release/X.Y.Z` branches and only one `rc/` branch (`rc/16.2.0`) was ever pushed. The harness dispatch follows the branches releases really use. Moving the two validation workflows to `release/**` is a separate change.
 
 ## Migration from Current Workflow
 
