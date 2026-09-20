@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 // Same core keys, in the same order, as @tutors/logger writes (deploy/README.md, "Log contract").
 const log = (level, event, message, { requestId = null, ...fields } = {}) =>
-  console.log(
+  process.stdout.write(
     JSON.stringify({
       timestamp: new Date().toISOString(),
       level,
@@ -17,7 +17,7 @@ const log = (level, event, message, { requestId = null, ...fields } = {}) =>
       pid: process.pid,
       requestId,
       ...fields
-    })
+    }) + "\n"
   );
 
 const fault = process.env.FIXTURE_FAULT ?? "";
