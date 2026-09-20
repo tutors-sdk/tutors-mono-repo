@@ -20,7 +20,7 @@ function audit(dir: string): Advisory[] {
   try {
     return parseAudit(result.stdout);
   } catch {
-    console.error(`pnpm audit in ${dir} did not return JSON:\n${result.stdout}\n${result.stderr}`);
+    process.stderr.write(`pnpm audit in ${dir} did not return JSON:\n${result.stdout}\n${result.stderr}\n`);
     process.exit(2);
   }
 }
@@ -33,16 +33,16 @@ const current = audit(REPO_ROOT);
 const baseline = baseDir ? audit(baseDir) : undefined;
 const { failures, warnings } = auditFindings(current, allowances, { today: new Date(), baseline });
 
-console.log(`${current.length} advisory(ies) reported${baseline ? `, ${baseline.length} on the base branch` : ""}.`);
+process.stdout.write(`${current.length} advisory(ies) reported${baseline ? `, ${baseline.length} on the base branch` : ""}.\n`);
 for (const line of warnings) {
-  console.log(`warning: ${line}`);
-  if (process.env.GITHUB_ACTIONS) console.log(`::warning file=tests/security/audit-allowlist.json::${line}`);
+  process.stdout.write(`warning: ${line}\n`);
+  if (process.env.GITHUB_ACTIONS) process.stdout.write(`::warning file=tests/security/audit-allowlist.json::${line}\n`);
 }
 for (const line of failures) {
-  console.log(`FAIL: ${line}`);
-  if (process.env.GITHUB_ACTIONS) console.log(`::error file=pnpm-lock.yaml::${line}`);
+  process.stdout.write(`FAIL: ${line}\n`);
+  if (process.env.GITHUB_ACTIONS) process.stdout.write(`::error file=pnpm-lock.yaml::${line}\n`);
 }
 if (failures.length > 0) {
-  console.error(`\n${failures.length} failure(s). Upgrade or override the package, or add a dated allowance with a reason.`);
+  process.stderr.write(`\n${failures.length} failure(s). Upgrade or override the package, or add a dated allowance with a reason.\n`);
   process.exit(1);
 }

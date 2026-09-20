@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as yaml from "npm:js-yaml@^4";
 import archiver from "npm:archiver@^7";
-import { log } from "./logger.ts";
+
 
 
 export function removeFirstLine(str: string): string {
@@ -77,7 +77,7 @@ export function readWholeFile(path: string): string {
     const array = fs.readFileSync(path).toString();
     return array;
   } else {
-    log.warn(`unable to locate ${path}`);
+    process.stderr.write(`unable to locate ${path}\n`);
   }
   return "";
 }
@@ -87,7 +87,7 @@ export function readFirstLineFromFile(path: string): string {
     const array = fs.readFileSync(path).toString().split("\n");
     return array[0].replace("\r", "");
   } else {
-    log.warn(`unable to locate ${path}`);
+    process.stderr.write(`unable to locate ${path}\n`);
   }
   return "";
 }
@@ -134,7 +134,8 @@ export function copyFolder(src: string, dest: string): void {
       fs.copyFileSync(src, dest);
     }
   } catch (error: unknown) {
-    log.error(`Error copying folder from ${src} to ${dest}:`, error);
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error copying folder from ${src} to ${dest}: ${message}\n`);
     throw error;
   }
 }
@@ -143,7 +144,8 @@ export function copyFile(src: string, dest: string): void {
   try {
     fs.cpSync(src, dest, { force: true });
   } catch (error: unknown) {
-    log.error(`Error copying file from ${src} to ${dest}:`, error);
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error copying file from ${src} to ${dest}: ${message}\n`);
     throw error;
   }
 }
@@ -158,7 +160,8 @@ export function copyFileToFolder(src: string, dest: string): void {
       });
     }
   } catch (error: unknown) {
-    log.error(`Error copying file from ${src} to folder ${dest}:`, error);
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error copying file from ${src} to folder ${dest}: ${message}\n`);
     throw error;
   }
 }

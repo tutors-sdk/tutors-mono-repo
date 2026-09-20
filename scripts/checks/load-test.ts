@@ -177,7 +177,7 @@ function parseArgs(argv: string[]): Options {
     else if (arg === "--expect-fail") options.expectFail = true;
   }
   if (!options.image) {
-    console.error("usage: load-test.ts --image <image> [--script reader.js] [--rate N] [--duration 30s] [--runs N] [--env K=V]... [--record file] [--baseline file] [--expect-fail]");
+    process.stderr.write("usage: load-test.ts --image <image> [--script reader.js] [--rate N] [--duration 30s] [--runs N] [--env K=V]... [--record file] [--baseline file] [--expect-fail]\n");
     process.exit(2);
   }
   return options;
@@ -252,13 +252,13 @@ async function main() {
     await waitHealthy(network, app);
 
     for (let run = 1; run <= options.runs; run++) {
-      console.log(`--- k6 run ${run}/${options.runs}: ${options.script} at ${options.rate} rps for ${options.duration}`);
+      process.stdout.write(`--- k6 run ${run}/${options.runs}: ${options.script} at ${options.rate} rps for ${options.duration}\n`);
       const { result, memory, exitCode } = await runK6(options, network, app, outDir, run);
       runs.push(result);
-      console.log(
+      process.stdout.write(
         `run ${run}: ${result.requests} requests, error rate ${(result.errorRate * 100).toFixed(2)}%, p95 ` +
           Object.entries(result.p95ByPage).map(([page, p95]) => `${page} ${p95.toFixed(1)} ms`).join(", ") +
-          (memory.length ? `, memory ${(Math.min(...memory) / 2 ** 20).toFixed(0)}-${(Math.max(...memory) / 2 ** 20).toFixed(0)} MiB` : "")
+          (memory.length ? `, memory ${(Math.min(...memory) / 2 ** 20).toFixed(0)}-${(Math.max(...memory) / 2 ** 20).toFixed(0)} MiB` : "") + "\n"
       );
       findings.push(...result.crossedThresholds.map((t) => `threshold: run ${run}: ${t}`));
       if (exitCode !== 0 && result.crossedThresholds.length === 0) findings.push(`k6: run ${run} exited with ${exitCode}`);
@@ -270,12 +270,12 @@ async function main() {
     if (options.record) {
       mkdirSync(resolve(options.record, ".."), { recursive: true });
       writeFileSync(resolve(options.record), JSON.stringify({ script: options.script, rate: options.rate, duration: options.duration, p95Ms: samples }, null, 2) + "\n");
-      console.log(`recorded samples to ${options.record}`);
+      process.stdout.write(`recorded samples to ${options.record}\n`);
     }
     if (options.baseline) {
       const baseline = JSON.parse(readText(resolve(options.baseline))).p95Ms as Samples;
       const compared = baselineFindings(baseline, samples);
-      compared.notes.forEach((note) => console.log(`baseline: ${note}`));
+      compared.notes.forEach((note) => process.stdout.write(`baseline: ${note}\n`));
       findings.push(...compared.findings);
     }
   } finally {
@@ -283,13 +283,13 @@ async function main() {
     spawnSync("docker", ["network", "rm", network], { stdio: "ignore" });
   }
 
-  findings.forEach((finding) => console.log(`finding: ${finding}`));
+  findings.forEach((finding) => process.stdout.write(`finding: ${finding}\n`));
   if (options.expectFail) {
     if (findings.length === 0) {
-      console.error("expected the load test to fail, but every threshold held. The thresholds have lost their teeth.");
+      process.stderr.write("expected the load test to fail, but every threshold held. The thresholds have lost their teeth.\n");
       process.exit(1);
     }
-    console.log(`failed as expected (${findings.length} finding(s)).`);
+    process.stdout.write(`failed as expected (${findings.length} finding(s)).\n`);
   } else if (findings.length > 0) {
     process.exit(1);
   }
@@ -297,7 +297,7 @@ async function main() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
-    console.error(error);
+    process.stderr.write(error + "\n");
     process.exit(1);
   });
 }
