@@ -79,9 +79,9 @@
       if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       cachedScene = await response.json();
       setupMessageHandler();
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      log.error("WhiteboardViewer failed to load scene:", error);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.error("WhiteboardViewer failed to load scene:", err);
       error = msg || "Failed to load whiteboard";
       loading = false;
     }
