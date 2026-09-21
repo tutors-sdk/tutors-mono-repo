@@ -32,7 +32,7 @@
     "@tutors/runtime": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
-    "ag-grid-community": "^36.1.0",
+    "ag-grid-community": "^36.2.0",
     "jheat.js": "^5.2.0",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
