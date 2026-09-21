@@ -56,7 +56,7 @@
   const cardShellClass = $derived(
     `card preset-filled-${themeService.getTypeColour(cardDetails.type)}-100-900 border-[1px] ` +
       `${styles.container} border-${themeService.getTypeColour(cardDetails.type)}-500 ` +
-      `m-2 ${styles.dimensions} transition-all hover:scale-[1.10]`
+      `m-2 ${styles.dimensions} overflow-hidden transition-all hover:scale-[1.10]`
   );
 </script>
 
