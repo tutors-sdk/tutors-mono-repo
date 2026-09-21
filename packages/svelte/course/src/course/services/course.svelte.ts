@@ -12,13 +12,13 @@ import type { CourseService, LabService, NotebookService } from "../types.ts";
 import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
 import log from "@tutors/logger";
 
-/** A course whose tutors.json is not there: the host answered 404, or could not be reached at all. */
+/** A course whose tutors.json is not there: the host answered 404. */
 export class CourseNotFoundError extends Error {
   constructor(
     readonly courseId: string,
     readonly courseUrl: string
   ) {
-    super(`Course ${courseId} not found at https://${courseUrl}/tutors.json`);
+    super("Fetch failed with status 404");
     this.name = "CourseNotFoundError";
   }
 }
@@ -27,14 +27,28 @@ let courseNotFound: (error: CourseNotFoundError) => never = (error) => {
   throw error;
 };
 
+let courseUnreachable: (cause: TypeError) => never = (cause) => {
+  throw cause;
+};
+
 /**
- * An app sets this to `(e) => error(404, e.message)` so a missing course renders as
- * "Page Not Found". The app has to supply it: SvelteKit recognises an expected error with
- * `instanceof`, and this package does not resolve the same copy of SvelteKit as the app does.
+ * An app sets this to `(e) => error(404, ...)` so a missing course renders as "Page Not Found".
+ * The app has to supply it: SvelteKit recognises an expected error with `instanceof`, and this
+ * package does not resolve the same copy of SvelteKit as the app does.
  * Left unset, a missing course is an unexpected error, which SvelteKit renders as a 500.
  */
 export function setCourseNotFoundHandler(handler: (error: CourseNotFoundError) => never): void {
   courseNotFound = handler;
+}
+
+/**
+ * A browser reports a host that does not exist, and a 404 sent without CORS headers (Netlify's,
+ * for an unknown site), as a TypeError with no status: the same TypeError as being offline. The
+ * service logs it and lets it propagate; an app that would rather show "Page Not Found" for it
+ * than an unexpected error sets this, as it does setCourseNotFoundHandler.
+ */
+export function setCourseUnreachableHandler(handler: (cause: TypeError) => never): void {
+  courseUnreachable = handler;
 }
 
 export const courseService: CourseService = {
@@ -62,16 +76,14 @@ export const courseService: CourseService = {
       const { courseId: normalizedCourseId, courseUrl } = determineCourseUrl(courseId);
       courseId = normalizedCourseId;
 
-      // A browser reports a host that does not exist, and a 404 sent without CORS headers
-      // (Netlify's, for an unknown site), as a TypeError with no status.
       const response = await fetchFunction(`${courseProtocol.value}${courseUrl}/tutors.json`).catch((cause: unknown) => {
-        if (cause instanceof TypeError) return undefined;
         log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);
         log.error(cause);
+        if (cause instanceof TypeError) courseUnreachable(cause);
         throw cause;
       });
-      if (!response || response.status === 404) {
-        log.warn(`Course not found: https://${courseUrl}/tutors.json`);
+      if (response.status === 404) {
+        log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);
         return courseNotFound(new CourseNotFoundError(courseId, courseUrl));
       }
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CourseNotFoundError, courseService, setCourseNotFoundHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
 vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
@@ -30,26 +30,44 @@ describe("courseService: a course that does not exist", () => {
     setCourseNotFoundHandler((error) => {
       throw error;
     });
+    setCourseUnreachableHandler((cause) => {
+      throw cause;
+    });
   });
 
-  it.each([
-    ["the host answers 404", answering(404)],
-    ["the host cannot be reached", unreachable]
-  ])("is a CourseNotFoundError when %s", async (_case, fetchFunction) => {
-    const failure = await failureOf(courseService.readCourse("no-such-course", fetchFunction));
+  it("is a CourseNotFoundError when the host answers 404", async () => {
+    const failure = await failureOf(courseService.readCourse("no-such-course", answering(404)));
     expect(failure).toBeInstanceOf(CourseNotFoundError);
-    expect((failure as CourseNotFoundError).message).toBe("Course no-such-course not found at https://no-such-course.netlify.app/tutors.json");
+    expect(failure).toMatchObject({ message: "Fetch failed with status 404", courseId: "no-such-course", courseUrl: "no-such-course.netlify.app" });
   });
 
-  it("hands the failure to the app's handler, so the app can raise its own 404", async () => {
+  it("lets the TypeError through when the host cannot be reached, so offline is not 'not found'", async () => {
+    const failure = await failureOf(courseService.readCourse("no-such-course", unreachable));
+    expect(failure).toBeInstanceOf(TypeError);
+    expect(failure).not.toBeInstanceOf(CourseNotFoundError);
+    expect((failure as Error).message).toBe("Failed to fetch");
+  });
+
+  it("hands a 404 to the app's handler, so the app can raise its own 404", async () => {
     const appError = { status: 404, body: { message: "from the app" } };
     const handler = vi.fn((): never => {
       throw appError;
     });
     setCourseNotFoundHandler(handler);
 
-    expect(await failureOf(courseService.readCourse("no-such-course", unreachable))).toBe(appError);
+    expect(await failureOf(courseService.readCourse("no-such-course", answering(404)))).toBe(appError);
     expect(handler).toHaveBeenCalledWith(expect.any(CourseNotFoundError));
+  });
+
+  it("hands an unreachable host to the app's handler, so the app can choose how to show it", async () => {
+    const appError = { status: 404, body: { message: "from the app" } };
+    const handler = vi.fn((): never => {
+      throw appError;
+    });
+    setCourseUnreachableHandler(handler);
+
+    expect(await failureOf(courseService.readCourse("no-such-course", unreachable))).toBe(appError);
+    expect(handler).toHaveBeenCalledWith(expect.any(TypeError));
   });
 
   it("does not cache the failure", async () => {
