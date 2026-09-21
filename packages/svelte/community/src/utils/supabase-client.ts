@@ -193,7 +193,7 @@ async function manageStudentCourseLo(courseId: string, studentId: string, loId: 
     }
   );
   if (error) {
-    log.error(error);
+    log.error("Failed to upsert learning record:", error);
     throw error;
   }
 }
