@@ -31,6 +31,15 @@ describe("release claims shape check", () => {
     expect(validateClaimsText("claims: [\n")[0]).toMatch(/not valid YAML/);
   });
 
+  it("accepts the whole harness vocabulary and the optional version", () => {
+    for (const artefact of ["focus", "persistence", "migration", "upgrade"]) {
+      const claim = ["claims:", `  - artefact: ${artefact}`, '    scope: "x"', '    reason: "CHANGELOG 16.4.0: an entry"'].join("\n");
+      expect(validateClaimsText(claim)).toEqual([]);
+    }
+    expect(validateClaimsText("version: 1\nclaims: []\n")).toEqual([]);
+    expect(validateClaimsText("version: 2\nclaims: []\n")).toEqual(["version must be 1 or absent"]);
+  });
+
   it("names the claim and the field at fault", () => {
     const errors = validateClaimsText(
       ["claims:", "  - artefact: pixels", '    scope: ""', '    reason: "see PR 12 for details"', "    approved: true"].join("\n")

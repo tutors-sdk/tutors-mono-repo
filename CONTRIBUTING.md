@@ -151,6 +151,41 @@ Optional longer description explaining the change.
 
 Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 
+### Changelog Entries
+
+`CHANGELOG.md` is written by hand at release time from the merged PRs (see [guides/Release-Strategy.md](guides/Release-Strategy.md#changelog-discipline)); no tool generates it. Each entry that changes something a student, lecturer or operator can observe **names the artefacts it expects to move**, in a trailing parenthesis, so the release author can turn the line into a claim for the [release harness](release/README.md) without guessing:
+
+```markdown
+- Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)
+- Presence is polled every 15 seconds instead of 10 (network) (PR #318)
+- Card summaries render markdown (dom, screenshot) (PR #263)
+```
+
+| Hint | Use it when the change moves |
+| --- | --- |
+| `dom` | the page's markup or text (the accessibility-tree snapshot) |
+| `screenshot` | how the page looks |
+| `network` | requests a page makes, or their responses |
+| `console` | what the browser console reports |
+| `headers` | HTTP response headers (CSP, cookies, cache control) |
+| `axe` | accessibility findings, better or worse |
+| `focus` | keyboard order |
+| `metrics` | a series on `/metrics` |
+| `logs` | the shape or volume of the server's log lines |
+| `timing` | response or load-time distributions |
+| `persistence` | what a page writes to Supabase |
+| `migration` | a contract migration, see [guides/MIGRATIONS.md](guides/MIGRATIONS.md) |
+
+Rules of thumb:
+
+- The hint is a parenthesis that contains only names from that list, separated by commas. It sits before the PR reference, so `(axe, dom) (PR #301)` reads as two parts and a script can tell them apart.
+- Name the page, route or series when you can, in backticks: ``Lab step: estimated reading time (dom) on `reader:lab-step` ``. It becomes the claim's `scope`.
+- No hint means "nothing observable should differ": internal refactors, tests, docs, dependency bumps that leave output alone. If the harness finds a difference under such an entry, the entry was incomplete; fix the entry, do not widen the claim.
+- The claim's `reason` is `CHANGELOG <version>: <the entry text>`, or a Rule reference such as `Rule 0031` where the change implements one. TODO(#214): the final Rule id format and a matching `@artefact:<name>` tag on a Rule follow that issue; this section only fixes the artefact vocabulary, which is the harness's.
+- The same words help in the commit subject and PR title (`fix(reader): raise nav contrast (axe, dom)`), so the entry is easy to write from them.
+
+Database changes follow their own rules: read [guides/MIGRATIONS.md](guides/MIGRATIONS.md) before adding a file under `supabase/migrations/`.
+
 ## Pull Request Process
 
 A [pull request template](.github/PULL_REQUEST_TEMPLATE.md) is filled in for you when you open a PR. It asks for the three local checks above and, for UI changes, a screenshot.
