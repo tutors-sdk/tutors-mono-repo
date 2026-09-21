@@ -28,6 +28,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { inspect } from "node:util";
 import { REPO_ROOT, readText, toPosix, walk } from "./lib/repo.ts";
 import { loadHeaderContract } from "./security.ts";
 
@@ -137,7 +138,7 @@ async function probeApp(app: string, appDir: string, paths: string[], startupBud
     }
     const results: { path: string; status: number }[] = [];
     for (const path of paths) results.push({ path, status: await get(`${base}${path}`) });
-    for (const r of results) console.log(`${app.padEnd(10)} GET ${r.path.padEnd(28)} ${r.status}`);
+    for (const r of results) process.stdout.write(`${app.padEnd(10)} GET ${r.path.padEnd(28)} ${r.status}\n`);
     return statusFindings(app, results);
   } finally {
     child.kill();
@@ -164,20 +165,20 @@ async function main(argv: string[]) {
     }
     const scan = scanServerBundle(app, serverDir);
     findings.push(...scan);
-    if (scan.length === 0) console.log(`${app.padEnd(10)} no CommonJS globals in ${toPosix(serverDir)}`);
+    if (scan.length === 0) process.stdout.write(`${app.padEnd(10)} no CommonJS globals in ${toPosix(serverDir)}\n`);
     findings.push(...(await probeApp(app, appDir, paths)));
   }
 
   for (const finding of findings) {
-    console.log(finding);
-    if (process.env.GITHUB_ACTIONS) console.log(`::error file=scripts/checks/server-smoke.ts::${finding}`);
+    process.stdout.write(`${finding}\n`);
+    if (process.env.GITHUB_ACTIONS) process.stdout.write(`::error file=scripts/checks/server-smoke.ts::${finding}\n`);
   }
   if (findings.length > 0) process.exit(1);
 }
 
 if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? "")) {
   main(process.argv.slice(2)).catch((error) => {
-    console.error(error);
+    process.stderr.write(`${inspect(error)}\n`);
     process.exit(1);
   });
 }

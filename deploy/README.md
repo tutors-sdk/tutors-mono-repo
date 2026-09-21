@@ -432,10 +432,50 @@ oc apply -k deploy/k8s/overlays/reader          # deploy
 
 Each overlay points at `quay.io/tutors-sdk/tutors-<app>`, which the image
 build workflow publishes; to deploy from a mirror, change `images[].newName`.
-Image tags are pinned to the release version in the root `package.json`
-(never `latest`); the release checklist bumps them together, and the workflow
-publishes that tag from the `v<version>` git tag. To try an unreleased build,
-set `newTag` to `sha-<short>` locally. Fill in the ConfigMap values before
+Each overlay pins its image by digest, with the release tag beside it:
+
+```yaml
+images:
+  - name: tutors-app
+    newName: quay.io/tutors-sdk/tutors-reader
+    newTag: "16.2.2"
+    digest: sha256:7567d5927767bd39b7991a586d594f6c310387471109a456d2cff49fa12488cb
+```
+
+Kustomize renders `quay.io/tutors-sdk/tutors-reader:16.2.2@sha256:7567...`: the
+container runtime pulls the digest and ignores the tag, so a tag pushed again
+cannot change what is deployed, and the tag stays for people and for
+`release-dispatch.yml`, which reads it as the production tag. The digest is the
+multi-arch index digest that the image build signs. Never `latest`, never a tag
+alone: `pnpm check:k8s` fails a rendered image without a digest.
+
+Because a release tag promotes the judged release candidate rather than
+rebuilding it (see [Promotion of the release candidate](#promotion-of-the-release-candidate)),
+the digest that `pnpm deploy:pin X.Y.Z` writes is the `X.Y.Z-rc.N` digest the
+release harness judged. Its signature names `image-build.yml` at the candidate's
+ref (`@refs/tags/vX.Y.Z-rc.N`), while an app that had to be rebuilt is signed at
+`@refs/tags/vX.Y.Z`; the pin verification (`deploy:pin` and
+`check:deploy-pins --registry`) accepts `image-build.yml` at any ref, so it
+passes for both.
+
+The overlays name what production runs, so they move when a release is
+deployed, not when it is cut. After the `v<version>` tag is pushed and the image
+build has published it:
+
+```bash
+pnpm deploy:pin 16.3.0            # resolve each tag's digest, verify its signature, rewrite the four overlays
+pnpm deploy:pin 16.3.0 --dry-run  # the same, changing nothing
+pnpm check:deploy-pins            # form of the pins: a digest and a release tag on every overlay, one release across all four
+pnpm check:deploy-pins --registry # and: each tag still resolves to its digest, and the digest is signed by image-build.yml
+```
+
+Open a pull request with the result. `.github/workflows/deploy.yml` runs the
+registry check on it and again on `main`, and once the rollout is confirmed it
+sets the release harness's `HARNESS_PRODUCTION_TAG` variable and dispatches its
+`deployed` event, see [Deploy and post-deploy](../guides/Release-Strategy.md#deploy-and-post-deploy).
+To try an unreleased build locally, render an overlay and swap the image on the
+command line (`kubectl kustomize` output piped through your own edit); do not
+commit it. Fill in the ConfigMap values before
 applying. The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
 `overlays/reader/secrets.yaml.example`
 to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads
