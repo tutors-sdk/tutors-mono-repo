@@ -39,6 +39,9 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
+const out = (line: string): void => void process.stdout.write(`${line}\n`);
+const err = (line: string): void => void process.stderr.write(`${line}\n`);
+
 export const APPS = ["reader", "catalogue", "live", "time"] as const;
 export const IMAGE_PREFIX = "quay.io/tutors-sdk/tutors-";
 export const REPOSITORY = "tutors-sdk/tutors-mono-repo";
@@ -373,8 +376,8 @@ function main(argv: string[]): number {
   const app = flag(args, "app");
   const refArg = flag(args, "ref");
   if ((command !== "plan" && command !== "apply") || !app || !(APPS as readonly string[]).includes(app) || !refArg) {
-    console.error(`usage: promote-image.ts plan|apply --app <${APPS.join("|")}> --ref <git ref> [--sha <commit>] [--backfill] [--require-promotion] [--dry-run]`);
-    console.error("       apply also needs --rc <X.Y.Z-rc.N> and --digest <sha256:...> from the plan's outputs");
+    err(`usage: promote-image.ts plan|apply --app <${APPS.join("|")}> --ref <git ref> [--sha <commit>] [--backfill] [--require-promotion] [--dry-run]`);
+    err("       apply also needs --rc <X.Y.Z-rc.N> and --digest <sha256:...> from the plan's outputs");
     return 2;
   }
   const ref = fullRef(refArg);
@@ -389,12 +392,12 @@ function main(argv: string[]): number {
   if (command === "plan") {
     const outcome = outcomeOf(plan, args.includes("--require-promotion"));
     if (dryRun) {
-      for (const line of describePlan(plan)) console.log(line);
-      if (plan.action === "rebuild") console.log(`  with --require-promotion this would FAIL: ${outcomeOf(plan, true).failure}`);
+      for (const line of describePlan(plan)) out(line);
+      if (plan.action === "rebuild") out(`  with --require-promotion this would FAIL: ${outcomeOf(plan, true).failure}`);
       return 0;
     }
-    for (const line of outcome.annotations) console.log(line);
-    for (const line of describePlan(plan, false)) console.log(line);
+    for (const line of outcome.annotations) out(line);
+    for (const line of describePlan(plan, false)) out(line);
     emit(output, [
       `promoted=${outcome.promoted}`,
       ...(plan.action === "promote" ? [`rc=${plan.rcVersion}`, `digest=${plan.digest}`, `tags=${plan.tags.join(" ")}`, `image=${plan.image}`] : [])
@@ -406,15 +409,15 @@ function main(argv: string[]): number {
   // apply: re-derive the plan from the same inputs and act on it only if it still promotes
   // the digest the scan looked at.
   if (plan.action !== "promote" || plan.digest !== flag(args, "digest") || plan.rcVersion !== flag(args, "rc")) {
-    console.error(`::error::${app}: the promotion no longer holds (the plan step promoted ${flag(args, "rc")} @ ${flag(args, "digest")}, now: ${describePlan(plan)[0]}). Nothing was retagged.`);
+    err(`::error::${app}: the promotion no longer holds (the plan step promoted ${flag(args, "rc")} @ ${flag(args, "digest")}, now: ${describePlan(plan)[0]}). Nothing was retagged.`);
     return 1;
   }
   if (dryRun) {
-    for (const line of describePlan(plan)) console.log(line);
+    for (const line of describePlan(plan)) out(line);
     return 0;
   }
   const problems = applyPromotion(plan, realPublisher);
-  for (const problem of problems) console.error(`::error::${problem}`);
+  for (const problem of problems) err(`::error::${problem}`);
   emit(summary, [
     problems.length > 0
       ? `**${app}: promotion failed after retagging** ${problems.join("; ")}`
