@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:bdd": "vitest run --config vitest.config.ts tests/bdd/",
+    "test:ears:audit": "tsx scripts/checks/ears-audit.ts --baseline tests/bdd/ears-audit-baseline.txt",
     "test:contract": "vitest run tests/contract/",
     "test:fuzz": "vitest run --config vitest.config.fuzz.ts",
     "test:tz": "tsx scripts/checks/tz-matrix.ts",

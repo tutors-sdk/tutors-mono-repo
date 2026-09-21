@@ -193,6 +193,44 @@ Rules for ids:
 3. Deleting a Rule adds its id to the retired list in the same commit.
 4. The audit fails on a Rule with no id, a malformed id, a duplicate, or a retired id in use.
 
+### The EARS audit
+
+`pnpm test:ears:audit` ([`scripts/checks/ears-audit.ts`](../scripts/checks/ears-audit.ts)) checks
+the shape of every feature under `tests/bdd/features`. It is TypeScript on `tsx`, like the other
+checks in `scripts/checks`, so it needs no second toolchain and shares their ratchet. It does not
+run the scenarios: `pnpm test:bdd` does that.
+
+| Code | A Rule fails when |
+|---|---|
+| `rule-id`, `rule-id-duplicate`, `rule-id-retired` | it has no `@rule-NNNN` tag, a malformed or second one, an id another Rule uses, or a retired id |
+| `shall-count` | its title does not contain exactly one "shall" |
+| `obligation-keyword` | it says should, must, will, would, may, might or could |
+| `vague-language` | it uses a word from the vague list (appropriate, quickly, handle, some, ...) |
+| `system-name` | the words before "shall" are not tutors, the reader, the catalogue, the live dashboard or the time dashboard |
+| `ears-form` | a When, While or Where title has no comma before the system, or an If title has no ", then" |
+| `ears-tag-missing`, `ears-tag-mismatch` | its `@ears-*` tag is missing, or is not the one its wording has: When is event-driven, While state-driven, If unwanted, Where optional, none ubiquitous |
+| `no-scenarios` | no scenario sits beneath it |
+| `dual-scenarios` | it is state-driven or optional and lacks a scenario tagged `@active` and one tagged `@inactive` |
+| `no-rule` | a feature has scenarios outside any Rule |
+| `unbound-feature`, `unbound-rule`, `rule-not-run` | no steps file loads the feature, no steps file binds the Rule title, or the binding is `Rule.skip` or `Rule.only` |
+
+The word lists and system names are the exported `DEFAULT_CONFIG`; `tests/bdd/ears-audit.config.json`
+may override `systems`, `wrongObligations` and `vagueTerms`.
+
+Step coverage is `vitest-cucumber`'s own strictness. It fails `pnpm test:bdd` when a Rule, scenario
+or step exists in the feature and not in the steps file, or the reverse, and when a Rule has no
+scenario. The audit adds the part it can see without running anything.
+
+Most features do not use `Rule:` yet, so the audit runs against a baseline,
+[`tests/bdd/ears-audit-baseline.txt`](../tests/bdd/ears-audit-baseline.txt): the violations that
+predate it. Only a violation that is not in the baseline fails. A baseline line whose violation is
+fixed also fails until it is deleted (`pnpm test:ears:audit --update-baseline` deletes it, and
+refuses to add one), so the file only shrinks. Migrating a feature to Rule blocks removes its
+`no-rule` line. `--strict` ignores the baseline.
+
+In GitHub Actions each new violation is an `::error file=...,line=...::` annotation on the
+feature file.
+
 ## Persona-Based Organisation
 
 BDD features are organised by user persona to ensure coverage from all stakeholder perspectives:
