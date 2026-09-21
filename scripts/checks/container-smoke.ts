@@ -63,7 +63,7 @@ function parseArgs(argv: string[]): Options {
     else if (arg === "--keep") options.keep = true;
   }
   if (!options.image) {
-    console.error("usage: container-smoke.ts --image <image> [--app <name>] [--env KEY=VALUE]... [--startup-budget-ms N] [--expect-fail] [--keep]");
+    process.stderr.write("usage: container-smoke.ts --image <image> [--app <name>] [--env KEY=VALUE]... [--startup-budget-ms N] [--expect-fail] [--keep]\n");
     process.exit(2);
   }
   return options;
@@ -122,7 +122,7 @@ async function run(options: Options): Promise<string[]> {
       findings.push(`healthz: /healthz/live did not answer 200 within ${options.startupBudgetMs} ms (uid ${uid}, read-only root)`);
       return findings;
     }
-    console.log(`live after ${Date.now() - started} ms as uid ${uid}`);
+    process.stdout.write(`live after ${Date.now() - started} ms as uid ${uid}\n`);
 
     const requestId = `smoke-${randomUUID()}`;
     const home = await fetchWithTimeout(`${base}/`, { headers: { "x-request-id": requestId } }, 15_000);
@@ -172,8 +172,8 @@ async function run(options: Options): Promise<string[]> {
     return findings;
   } finally {
     if (findings.length > 0 || options.keep) {
-      console.log("--- container logs ---");
-      console.log(spawnSync("docker", ["logs", "--tail", "50", name], { encoding: "utf8" }).stdout);
+      process.stdout.write("--- container logs ---\n");
+      process.stdout.write(spawnSync("docker", ["logs", "--tail", "50", name], { encoding: "utf8" }).stdout + "\n");
     }
     if (!options.keep) spawnSync("docker", ["rm", "--force", name], { stdio: "ignore" });
   }
@@ -265,22 +265,22 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   const findings = await run(options);
 
-  for (const finding of findings) console.log(`finding: ${finding}`);
+  for (const finding of findings) process.stdout.write(`finding: ${finding}\n`);
   if (options.expectFail) {
     if (findings.length === 0) {
-      console.error(`${options.image}: expected the smoke test to fail, but it passed. The check has lost its teeth.`);
+      process.stderr.write(`${options.image}: expected the smoke test to fail, but it passed. The check has lost its teeth.\n`);
       process.exit(1);
     }
-    console.log(`${options.image}: failed as expected (${findings.length} finding(s)).`);
+    process.stdout.write(`${options.image}: failed as expected (${findings.length} finding(s)).\n`);
   } else if (findings.length > 0) {
-    console.error(`${options.image}: ${findings.length} finding(s).`);
+    process.stderr.write(`${options.image}: ${findings.length} finding(s).\n`);
     process.exit(1);
   } else {
-    console.log(`${options.image}: ok`);
+    process.stdout.write(`${options.image}: ok\n`);
   }
 }
 
 main().catch((error) => {
-  console.error(error);
+  process.stderr.write(error + "\n");
   process.exit(1);
 });

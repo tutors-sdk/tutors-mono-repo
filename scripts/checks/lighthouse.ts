@@ -183,7 +183,7 @@ function parseArgs(argv: string[]): Options {
   }
   options.baseUrl ??= process.env.LIGHTHOUSE_BASE_URL;
   if (!options.image && !options.baseUrl) {
-    console.error("usage: lighthouse.ts (--image <image> | --base-url <url>) [--runs N] [--record file] [--baseline file]");
+    process.stderr.write("usage: lighthouse.ts (--image <image> | --base-url <url>) [--runs N] [--record file] [--baseline file]\n");
     process.exit(2);
   }
   return options;
@@ -242,7 +242,7 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   const config: LighthouseConfig = JSON.parse(readText(join(REPO_ROOT, CONFIG_FILE)));
   if (!existsSync(LIGHTHOUSE_CLI)) {
-    console.error("Lighthouse is not installed: pnpm --dir tests/performance/lighthouse install --ignore-workspace --frozen-lockfile");
+    process.stderr.write("Lighthouse is not installed: pnpm --dir tests/performance/lighthouse install --ignore-workspace --frozen-lockfile\n");
     process.exit(2);
   }
   const chrome = await chromiumPath();
@@ -266,7 +266,7 @@ async function main() {
         runsByPage[page.name].push(result);
         const scores = CATEGORIES.map((c) => `${c} ${result.scores[c]?.toFixed(2) ?? "-"}`).join(", ");
         const metrics = Object.entries(result.metrics).map(([m, v]) => `${m} ${v}`).join(", ");
-        console.log(`${page.name} run ${run}: ${result.runtimeError ?? `${scores}; ${metrics}`}`);
+        process.stdout.write(`${page.name} run ${run}: ${result.runtimeError ?? `${scores}; ${metrics}`}\n`);
       }
     }
   } finally {
@@ -279,20 +279,20 @@ async function main() {
   if (options.record) {
     mkdirSync(resolve(options.record, ".."), { recursive: true });
     writeFileSync(resolve(options.record), JSON.stringify({ preset: config.preset, runs, samples }, null, 2) + "\n");
-    console.log(`recorded samples to ${options.record}`);
+    process.stdout.write(`recorded samples to ${options.record}\n`);
   }
   if (options.baseline) {
     const compared = lighthouseBaselineFindings(JSON.parse(readText(resolve(options.baseline))).samples, samples);
-    compared.notes.forEach((note) => console.log(`baseline: ${note}`));
+    compared.notes.forEach((note) => process.stdout.write(`baseline: ${note}\n`));
     findings.push(...compared.findings);
   }
-  findings.forEach((finding) => console.log(`finding: ${finding}`));
+  findings.forEach((finding) => process.stdout.write(`finding: ${finding}\n`));
   if (findings.length > 0) process.exit(1);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
-    console.error(error);
+    process.stderr.write(error + "\n");
     process.exit(1);
   });
 }

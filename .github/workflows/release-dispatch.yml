@@ -196,7 +196,7 @@ jobs:
       - name: Wait for the registry to serve every image
         if: steps.build.outputs.published == 'true'
         run: |
-          for app in reader catalogue live; do
+          for app in reader catalogue live time; do
             image="$IMAGE_PREFIX$app:$CANDIDATE"
             for attempt in $(seq 1 20); do
               if docker buildx imagetools inspect "$image" > /dev/null 2>&1; then

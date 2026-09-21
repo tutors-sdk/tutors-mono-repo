@@ -390,6 +390,12 @@ jobs:
       - name: Check bundle budgets
         run: pnpm check:bundle
 
+      # The built server, run with Auth.js on: no CommonJS globals in the ES module
+      # bundle, and no 5xx on the routes in tests/security/header-contract.json
+      # (v16.2.0 answered 500 on /auth/<courseid>). Needs no Docker.
+      - name: Smoke test the built servers
+        run: pnpm check:server
+
       # Starts each built server with the commit above and a sentinel build date and looks for them
       # anywhere but GET /version: headers, pages, the error page, /_app/version.json and every built file.
       - name: Check build identity is answered by /version only

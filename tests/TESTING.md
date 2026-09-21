@@ -17,7 +17,7 @@ it can fail and when CI runs it are in the long form,
 | `contract/` | Contract | Vitest, with `__snapshots__/` | `pnpm test:contract` |
 | `e2e-stack/` | G | Playwright, `playwright.e2e-stack.config.ts` | `pnpm test:e2e:stack` |
 | `e2e/` | — | Playwright, `playwright-a11y.config.ts` | `pnpm test:a11y` |
-| `conformance/` | J | Vitest + `pnpm check:k8s`, `pnpm check:container` | `pnpm exec vitest run tests/conformance` |
+| `conformance/` | J | Vitest + `pnpm check:k8s`, `pnpm check:container`, `pnpm check:server` | `pnpm exec vitest run tests/conformance` |
 | `observability/` | K | Vitest | `pnpm exec vitest run tests/observability` |
 | `performance/` | L | Vitest + `check:bundle`, `check:load`, `check:lighthouse` | `pnpm exec vitest run tests/performance` |
 | `security/` | M | Vitest + `pnpm check:audit`, `check:container --app` | `pnpm exec vitest run tests/security` |
@@ -199,6 +199,7 @@ pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_
 pnpm check:build-identity                          # after building the apps with SVELTEKIT_ADAPTER=node and GIT_SHA: only GET /version answers the commit and build date
 pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
 pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail
+pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with Auth.js on, no Docker
 pnpm check:bundle                                  # after building the apps with SVELTEKIT_ADAPTER=node
 pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3
 pnpm check:lighthouse --image tutors/reader:ci

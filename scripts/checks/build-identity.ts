@@ -261,7 +261,8 @@ async function main(): Promise<number> {
         const samples = await crawl(base);
         findings.push(...versionFindings(samples.find((s) => s.path === "/version"), identity));
         findings.push(...samples.flatMap((sample) => identityLeaks(sample, identity)).map((f) => `identity: ${f}`));
-        console.log(`${app}: ${samples.length} responses checked`);
+        process.stdout.write(`${app}: ${samples.length} responses checked
+`);
       } catch (error) {
         findings.push(`crawl: ${error instanceof Error ? error.message : String(error)}\n${output()}`);
       } finally {
@@ -269,9 +270,11 @@ async function main(): Promise<number> {
       }
     }
     if (findings.length > 0) failed = true;
-    for (const finding of findings) console.error(`${app}: ${finding}`);
+    for (const finding of findings) process.stderr.write(`${app}: ${finding}
+`);
   }
-  console.log(failed ? "build identity: FAILED" : "build identity: only GET /version answers the commit and build date");
+  process.stdout.write(`${failed ? "build identity: FAILED" : "build identity: only GET /version answers the commit and build date"}
+`);
   return failed ? 1 : 0;
 }
 
@@ -279,7 +282,8 @@ if (resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1] ?? "")) 
   main().then(
     (code) => process.exit(code),
     (error) => {
-      console.error(error);
+      process.stderr.write(`${error instanceof Error ? (error.stack ?? error.message) : String(error)}
+`);
       process.exit(2);
     }
   );

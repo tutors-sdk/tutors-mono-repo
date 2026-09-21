@@ -31,7 +31,7 @@ interface ManifestEntry {
 type ViteManifest = Record<string, ManifestEntry>;
 
 async function buildReader(outputDir: string, label: string): Promise<void> {
-  console.log(`[reader-${label}] Building reader app...`);
+  process.stdout.write(`[reader-${label}] Building reader app...\n`);
 
   const build = new Deno.Command("pnpm", {
     args: ["--filter", "tutors-reader...", "build"],
@@ -40,7 +40,7 @@ async function buildReader(outputDir: string, label: string): Promise<void> {
   const result = await build.output();
   if (!result.success) {
     const stderr = new TextDecoder().decode(result.stderr);
-    console.error(`[reader-${label}] Build failed: ${stderr}`);
+    process.stderr.write(`[reader-${label}] Build failed: ${stderr}\n`);
     Deno.exit(1);
   }
 
@@ -49,7 +49,7 @@ async function buildReader(outputDir: string, label: string): Promise<void> {
   try {
     await Deno.stat(buildOutputDir);
   } catch {
-    console.error(`[reader-${label}] Build output not found at ${buildOutputDir}`);
+    process.stderr.write(`[reader-${label}] Build output not found at ${buildOutputDir}\n`);
     Deno.exit(1);
   }
 
@@ -58,7 +58,7 @@ async function buildReader(outputDir: string, label: string): Promise<void> {
   } catch { /* may not exist */ }
 
   await copyDir(buildOutputDir, outputDir);
-  console.log(`[reader-${label}] Build output copied to ${outputDir}`);
+  process.stdout.write(`[reader-${label}] Build output copied to ${outputDir}\n`);
 }
 
 async function copyDir(src: string, dest: string): Promise<void> {
@@ -187,15 +187,15 @@ async function compareChunkSizes(baselineDir: string, candidateDir: string, base
 }
 
 async function run() {
-  console.log("╔══════════════════════════════════════════════════════╗");
-  console.log("║          Reader Build Comparison                     ║");
-  console.log("╚══════════════════════════════════════════════════════╝\n");
+  process.stdout.write("╔══════════════════════════════════════════════════════╗\n");
+  process.stdout.write("║          Reader Build Comparison                     ║\n");
+  process.stdout.write("╚══════════════════════════════════════════════════════╝\n\n");
 
   // Build candidate from current working tree
   await buildReader(CANDIDATE_BUILD, "candidate");
 
   // Stash current changes, build baseline from main, restore
-  console.log("\n[reader-baseline] Stashing changes and checking out main...");
+  process.stdout.write("\n[reader-baseline] Stashing changes and checking out main...\n");
   const stash = new Deno.Command("git", { args: ["stash", "--include-untracked"] });
   const stashResult = await stash.output();
   const didStash = new TextDecoder().decode(stashResult.stdout).includes("Saved working directory");
@@ -204,7 +204,7 @@ async function run() {
     const checkout = new Deno.Command("git", { args: ["checkout", "main"] });
     const checkoutResult = await checkout.output();
     if (!checkoutResult.success) {
-      console.error("[reader-baseline] Failed to checkout main");
+      process.stderr.write("[reader-baseline] Failed to checkout main\n");
       Deno.exit(1);
     }
 
@@ -227,14 +227,14 @@ async function run() {
   }
 
   // Compare Vite manifests
-  console.log("\nComparing build manifests...");
+  process.stdout.write("\nComparing build manifests...\n");
   const baselineManifest = await findManifest(BASELINE_BUILD);
   const candidateManifest = await findManifest(CANDIDATE_BUILD);
 
   if (!baselineManifest || !candidateManifest) {
-    console.error("[reader] Could not find Vite manifest in one or both builds.");
-    if (!baselineManifest) console.error("  Missing: baseline");
-    if (!candidateManifest) console.error("  Missing: candidate");
+    process.stderr.write("[reader] Could not find Vite manifest in one or both builds.\n");
+    if (!baselineManifest) process.stderr.write("  Missing: baseline\n");
+    if (!candidateManifest) process.stderr.write("  Missing: candidate\n");
     Deno.exit(1);
   }
 
@@ -246,12 +246,12 @@ async function run() {
   const warnings = allResults.filter((r) => r.severity === "warning");
   const info = allResults.filter((r) => r.severity === "info");
 
-  console.log(`\n${"─".repeat(60)}`);
-  console.log(`Results: ${errors.length} errors, ${warnings.length} warnings, ${info.length} info`);
+  process.stdout.write(`\n${"─".repeat(60)}\n`);
+  process.stdout.write(`Results: ${errors.length} errors, ${warnings.length} warnings, ${info.length} info\n`);
 
   for (const r of allResults) {
     const icon = r.severity === "error" ? "✗" : r.severity === "warning" ? "⚠" : "ℹ";
-    console.log(`  ${icon} ${r.path}: ${r.message}`);
+    process.stdout.write(`  ${icon} ${r.path}: ${r.message}\n`);
   }
 
   if (args.report) {
@@ -260,13 +260,13 @@ async function run() {
       reportPath,
       JSON.stringify({ errors, warnings, info }, null, 2)
     );
-    console.log(`\nReport written to ${reportPath}`);
+    process.stdout.write(`\nReport written to ${reportPath}\n`);
   }
 
   if (warnings.length > 0) {
-    console.warn(`\n${warnings.length} size regressions or chunk changes to review.`);
+    process.stderr.write(`\n${warnings.length} size regressions or chunk changes to review.\n`);
   } else {
-    console.log("\nNo significant build differences detected.");
+    process.stdout.write("\nNo significant build differences detected.\n");
   }
 }
 
