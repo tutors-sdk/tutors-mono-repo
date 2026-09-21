@@ -9,12 +9,17 @@
  * bad file when the candidate is judged. This check mirrors that schema so the
  * release PR fails first, minutes after the push, instead of the harness run.
  * Keep the two in step: the artefact list and the reason rules are copied.
+ *
+ * One rule is this repository's own: a `reason` that starts "Rule 0031" must
+ * name a Rule id that a feature under tests/bdd/features defines at the ref being
+ * checked. Any other reason, such as a CHANGELOG entry, stays free text.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import yaml from "js-yaml";
 import { REPO_ROOT } from "./lib/repo.ts";
+import { rulesInWorkingTree } from "./lib/rules-index.ts";
 
 /** The harness's vocabulary (ARTEFACTS in src/types.ts there). The first nine are what a student can observe; the last four are its rehearsals and stubs. */
 export const ARTEFACTS = ["dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing", "persistence", "migration", "upgrade"] as const;
@@ -31,8 +36,17 @@ export function isBroad(claim: { artefact?: unknown; scope?: unknown }): boolean
   return claim.artefact === "*" || scope === "*" || scope === "**" || /^\*+\/?\*+$/.test(scope);
 }
 
-/** Every problem with a claims file's text; an empty list means the harness will accept it. */
-export function validateClaimsText(text: string): string[] {
+/** A reason that starts "Rule 0031" cites a Rule by id. Anything else is free text, such as a CHANGELOG entry. */
+const RULE_CITATION = /^Rule\s+(\d+)\b/i;
+
+/**
+ * Every problem with a claims file's text; an empty list means the harness will accept it.
+ *
+ * `ruleIds` are the Rule ids the release ref defines (the `@rule-NNNN` tags under
+ * tests/bdd/features). When given, a reason that cites a Rule must cite one of them.
+ * Without it the citation is not resolved, which is how the harness reads the file.
+ */
+export function validateClaimsText(text: string, ruleIds?: ReadonlySet<string>): string[] {
   let doc: unknown;
   try {
     doc = yaml.load(text);
@@ -61,6 +75,13 @@ export function validateClaimsText(text: string): string[] {
       errors.push(`${label}: reason is required and names a Rule id or a changelog entry`);
     } else if (RUBBER_STAMP.test(claim.reason.trim())) {
       errors.push(`${label}: a reason names a Rule or a changelog entry, not a rubber stamp`);
+    } else if (ruleIds) {
+      const cited = claim.reason.trim().match(RULE_CITATION)?.[1];
+      if (cited !== undefined && !/^\d{4}$/.test(cited)) {
+        errors.push(`${label}: Rule ids have four digits, as in "Rule 0031"; "${cited}" is not one`);
+      } else if (cited !== undefined && !ruleIds.has(cited)) {
+        errors.push(`${label}: reason cites Rule ${cited}, which no feature under tests/bdd/features defines; cite a Rule that exists in this release, or a CHANGELOG entry`);
+      }
     }
     if (claim.approvedBy !== undefined && (typeof claim.approvedBy !== "string" || claim.approvedBy === "")) {
       errors.push(`${label}: approvedBy must be a person's name or handle`);
@@ -77,7 +98,7 @@ function main(): void {
     process.stderr.write(`FAIL: ${arg} is missing. A release branch carries one; \`claims: []\` means nothing observable should differ.\n`);
     process.exit(1);
   }
-  const errors = validateClaimsText(readFileSync(file, "utf8"));
+  const errors = validateClaimsText(readFileSync(file, "utf8"), new Set(rulesInWorkingTree().keys()));
   if (errors.length > 0) {
     process.stderr.write(`FAIL: ${arg} is not a valid claims file:\n`);
     for (const error of errors) process.stderr.write(`  ${error}\n`);
