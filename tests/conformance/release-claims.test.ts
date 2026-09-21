@@ -3,7 +3,22 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
 import { rulesInWorkingTree } from "../../scripts/checks/lib/rules-index.ts";
-import { isBroad, parseArgs, validateClaimsText } from "../../scripts/checks/release-claims.ts";
+import { ARTEFACTS, isBroad, parseArgs, validateClaimsText } from "../../scripts/checks/release-claims.ts";
+
+/**
+ * A snapshot of ARTEFACTS in tutors-release-harness src/types.ts, as of harness 1.3.0 (contract 1.3.0;
+ * the vocabulary has been unchanged since 1.2.0, where `bus`, `image-manifest`, `sbom`, `vulns`,
+ * `runtime` and `startup` were added). It is copied, never fetched: the harness is not reachable at test
+ * time. When the harness changes its list, this fails on purpose: update this snapshot and ARTEFACTS in
+ * scripts/checks/release-claims.ts together, then the tables in release/README.md, CONTRIBUTING.md,
+ * CHANGELOG.md and release/claims.yaml.
+ */
+const HARNESS_ARTEFACTS = [
+  "dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing",
+  "persistence", "bus", "migration", "upgrade",
+  "image-manifest", "sbom", "vulns",
+  "runtime", "startup"
+] as const;
 
 describe("release claims shape check", () => {
   it("accepts the committed release/claims.yaml", () => {
@@ -32,12 +47,45 @@ describe("release claims shape check", () => {
   });
 
   it("accepts the whole harness vocabulary and the optional version", () => {
-    for (const artefact of ["focus", "persistence", "migration", "upgrade"]) {
+    for (const artefact of HARNESS_ARTEFACTS) {
       const claim = ["claims:", `  - artefact: ${artefact}`, '    scope: "x"', '    reason: "CHANGELOG 16.4.0: an entry"'].join("\n");
-      expect(validateClaimsText(claim)).toEqual([]);
+      expect(validateClaimsText(claim), artefact).toEqual([]);
     }
+    expect(validateClaimsText('claims:\n  - artefact: "*"\n    scope: "x"\n    reason: "CHANGELOG 16.4.0: an entry"\n    approvedBy: "a person"\n')).toEqual([]);
     expect(validateClaimsText("version: 1\nclaims: []\n")).toEqual([]);
     expect(validateClaimsText("version: 2\nclaims: []\n")).toEqual(["version must be 1 or absent"]);
+  });
+
+  it("accepts each artefact the harness added in contract 1.2.0, which the pre-check once refused", () => {
+    for (const artefact of ["sbom", "vulns", "image-manifest", "runtime", "startup", "bus"]) {
+      const claim = ["claims:", `  - artefact: ${artefact}`, '    scope: "reader/x"', '    reason: "CHANGELOG 16.4.0: an entry"'].join("\n");
+      expect(validateClaimsText(claim), artefact).toEqual([]);
+      const byRule = ["claims:", `  - artefact: ${artefact}`, '    scope: "reader/x"', '    rule: "0031"'].join("\n");
+      expect(validateClaimsText(byRule, new Set(["0031"])), artefact).toEqual([]);
+    }
+  });
+
+  it("rejects an unknown artefact and lists every valid name, in the harness's order", () => {
+    const [error, ...rest] = validateClaimsText('claims:\n  - artefact: pixels\n    scope: "x"\n    reason: "CHANGELOG 16.4.0: an entry"\n');
+    expect(rest).toEqual([]);
+    expect(error).toContain(`artefact must be one of ${HARNESS_ARTEFACTS.join(", ")} or "*"`);
+    expect(error).toContain("pixels");
+    // near misses of the new names are still unknown
+    for (const artefact of ["SBOM", "vuln", "image_manifest", "images"]) {
+      expect(validateClaimsText(`claims:\n  - artefact: ${artefact}\n    scope: "x"\n    reason: "CHANGELOG 16.4.0: an entry"\n`)).toHaveLength(1);
+    }
+  });
+
+  it("mirrors the harness's artefact list exactly (a snapshot; the harness is not fetched here)", () => {
+    expect([...ARTEFACTS]).toEqual([...HARNESS_ARTEFACTS]);
+    expect(new Set(ARTEFACTS).size).toBe(ARTEFACTS.length);
+  });
+
+  it("is the vocabulary that release/README.md, CONTRIBUTING.md, CHANGELOG.md and release/claims.yaml document", () => {
+    for (const file of ["release/README.md", "CONTRIBUTING.md", "CHANGELOG.md", "release/claims.yaml"]) {
+      const text = readFileSync(join(REPO_ROOT, file), "utf8");
+      for (const artefact of HARNESS_ARTEFACTS) expect(text, `${file} names ${artefact}`).toContain(artefact);
+    }
   });
 
   it("names the claim and the field at fault", () => {

@@ -17,7 +17,7 @@ claims:
 
 | Field | Meaning |
 | --- | --- |
-| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `migration`, `upgrade`, or `"*"` (the harness's vocabulary; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md)) |
+| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`, `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, or `"*"` (the harness's vocabulary as of harness 1.3.0, in its order; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md); `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` are read from the images and the running containers). `pnpm check:release-claims` accepts exactly this list, and a test fails if it drifts from the harness's |
 | `scope` | A glob over what changed: a page key (`reader:lab-step`), a route, `GET /api/presence`, `reader:*/content-security-policy`, `<app>/<series>` |
 | `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected. Optional when the claim has a `rule` |
 | `rule` | Optional, harness contract 1.3.0. The id of the Rule behind the change, in quotes: `rule: "0031"`. It must be a Rule the release defines (see [Rules the release defines](#rules-the-release-defines)) |
@@ -32,7 +32,7 @@ claims:
     rule: "0031"
 ```
 
-`pnpm check:release-claims` resolves both forms against the Rules in `tests/bdd/features` and fails on an id no feature defines. A claim whose `reason` starts "Rule 0031" and also has a `rule` must name the same Rule. A reason that names a CHANGELOG entry stays free text. The `rule` field needs a harness that speaks contract 1.3.0; an earlier harness rejects the claims file for an unknown field, so keep to `reason: "Rule 0031: ..."` until then.
+`pnpm check:release-claims` resolves both forms against the Rules in `tests/bdd/features` and fails on an id no feature defines. A claim whose `reason` starts "Rule 0031" and also has a `rule` must name the same Rule. A reason that names a CHANGELOG entry stays free text. The `rule` field needs a harness that speaks contract 1.3.0. An earlier harness (contract 1.2.0 or before) does not reject the key: its claims schema ignores unknown keys, so a claim with a `reason` and a `rule` passes and the `rule` is dropped. A claim with only a `rule` fails there because `reason` is then missing (it is required before 1.3.0). So keep to `reason: "Rule 0031: ..."` until the harness release path is 1.3.0 or later; a claim with only a `rule` needs 1.3.0.
 
 ## Writing claims from the changelog
 

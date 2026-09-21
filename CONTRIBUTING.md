@@ -174,7 +174,14 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `logs` | the shape or volume of the server's log lines |
 | `timing` | response or load-time distributions |
 | `persistence` | what a page writes to Supabase |
+| `bus` | messages on the live bus, per journey and topic |
 | `migration` | a contract migration, see [guides/MIGRATIONS.md](guides/MIGRATIONS.md) |
+| `upgrade` | what survives an upgrade from the production release (the upgrade rehearsal) |
+| `image-manifest` | an image's base, platform, user, ports, entrypoint, layers, size or labels |
+| `sbom` | the packages in an image: one added, removed or bumped |
+| `vulns` | the known vulnerabilities in an image, one per advisory |
+| `runtime` | how a container runs: user, privileges, read-only root filesystem, capabilities, writes outside `/tmp` |
+| `startup` | how a container starts: root, time to ready, boot |
 
 Rules of thumb:
 

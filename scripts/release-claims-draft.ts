@@ -9,7 +9,9 @@
  * "Rule <id>: <title>". With --rule the claim carries `rule: "<id>"` instead (the
  * field harness contract 1.3.0 reads, and validates against the rules.json that
  * `pnpm release:rules` writes) and no reason; use it once the harness accepts
- * the field, because an earlier harness rejects a claim with an unknown field.
+ * the field. An earlier harness (contract 1.2.0 or before) ignores the unknown `rule` key
+ * rather than rejecting it, so a claim that has only a `rule` fails there because its
+ * `reason` is missing: use --rule only once the harness release path is 1.3.0 or later.
  * The `artefact` and `scope` are left as TODO: only the
  * author knows which page or route the Rule changes. The draft is not a valid
  * claims file until every TODO is replaced (`pnpm check:release-claims`), and
@@ -25,7 +27,7 @@ const quote = (text: string) => JSON.stringify(text);
 function stub(rule: IndexedRule, note: string, asField: boolean): string[] {
   return [
     `  # ${note}: ${rule.file}:${rule.line}`,
-    "  - artefact: TODO # dom | screenshot | network | console | headers | axe | metrics | logs | timing | \"*\"",
+    "  - artefact: TODO # dom | screenshot | network | console | headers | axe | focus | metrics | logs | timing | persistence | bus | migration | upgrade | image-manifest | sbom | vulns | runtime | startup | \"*\"",
     "    scope: TODO # the page key, route or glob this Rule changes, e.g. \"reader:lab-step*\"",
     asField ? `    rule: ${quote(rule.id)} # ${rule.title}` : `    reason: ${quote(`Rule ${rule.id}: ${rule.title}`)}`
   ];
