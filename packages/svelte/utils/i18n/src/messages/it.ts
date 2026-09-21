@@ -59,13 +59,13 @@ const it: Record<string, string> = {
   "home.recentlyAccessed": "Accesso recente",
   "home.values.title": "I <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Valori</span> del progetto",
   "home.developer.title": "Esperienza dello sviluppatore",
-  "home.developer.description": "L'<b>Esperienza dello sviluppatore</b> da priorita alla specificazione e implementazione di <b>componenti e servizi robusti, ben documentati e a basso accoppiamento</b>, integrati in un <b>toolkit coerente</b> aperto ai contributi di <b>competenze diverse</b>.",
+  "home.developer.description": "L'<b>Esperienza dello sviluppatore</b> dà priorità alla specificazione e implementazione di <b>componenti e servizi robusti, ben documentati e a basso accoppiamento</b>, integrati in un <b>toolkit coerente</b> aperto ai contributi di <b>competenze diverse</b>.",
   "home.educator.title": "Esperienza dell'educatore",
-  "home.educator.description": "L'<b>Esperienza dell'educatore</b> da priorita alla creazione di <b>percorsi guidati</b> attraverso un curriculum mediante la creazione di materiali didattici che sono <b>autonomi, strutturalmente allineati, componibili, auditabili, estensibili, versionati</b> e <b>indipendenti</b>.",
+  "home.educator.description": "L'<b>Esperienza dell'educatore</b> dà priorità alla creazione di <b>percorsi guidati</b> attraverso un curriculum mediante la creazione di materiali didattici che sono <b>autonomi, strutturalmente allineati, componibili, auditabili, estensibili, versionati</b> e <b>indipendenti</b>.",
   "home.learner.title": "Esperienza del discente",
-  "home.learner.description": "L'<b>Esperienza del discente</b> da priorita alle interazioni web che sono <b>coinvolgenti, contestuali, collegabili, ricercabili, accessibili</b> e <b>responsive</b>. Inoltre, l'esperienza dovrebbe favorire un senso di <b>comunita</b> e <b>connessione</b> tra i discenti.",
+  "home.learner.description": "L'<b>Esperienza del discente</b> dà priorità alle interazioni web che sono <b>coinvolgenti, contestuali, collegabili, ricercabili, accessibili</b> e <b>responsive</b>. Inoltre, l'esperienza dovrebbe favorire un senso di <b>comunità</b> e <b>connessione</b> tra i discenti.",
   "home.credits.title": "Un progetto completamente <span class=\"font-bold !text-5xl inline-block bg-gradient-to-br from-primary-500 to-secondary-500 bg-clip-text text-transparent box-decoration-clone\">Open Source</span>",
-  "home.credits.description": "Tutors e un progetto open source disponibile gratuitamente su GitHub con licenza MIT.",
+  "home.credits.description": "Tutors è un progetto open source disponibile gratuitamente su GitHub con licenza MIT.",
   "home.credits.viewSource": "Visualizza il codice sorgente",
 
   // Course reader
@@ -81,21 +81,33 @@ const it: Record<string, string> = {
 
   // Live page
   "live.onlineNow": "Online adesso",
-  "live.latestActivity": "Ultima attivita",
+  "live.latestActivity": "Ultima attività",
   "live.today": "Oggi",
   "live.thisWeek": "Questa settimana",
   "live.thisMonth": "Questo mese",
   "live.thisYear": "Quest'anno",
   "live.emptyOnline": "Nessuno studente online per questo corso al momento.",
-  "live.emptyToday": "Nessuna attivita registrata oggi per questo corso.",
-  "live.emptyWeek": "Nessuna attivita precedente questa settimana per questo corso.",
-  "live.emptyMonth": "Nessuna attivita precedente questo mese per questo corso.",
-  "live.emptyYear": "Nessuna attivita precedente quest'anno per questo corso.",
+  "live.emptyToday": "Nessuna attività registrata oggi per questo corso.",
+  "live.emptyWeek": "Nessuna attività precedente questa settimana per questo corso.",
+  "live.emptyMonth": "Nessuna attività precedente questo mese per questo corso.",
+  "live.emptyYear": "Nessuna attività precedente quest'anno per questo corso.",
   "live.catalogue.totals": "Totali:",
 
   // Auth
   "auth.signIn": "Accesso Tutors",
   "auth.signInWithGithub": "Accedi con GitHub",
+  "auth.terms": `Stai per autenticarti su Tutors tramite le tue credenziali Github. **Per la maggior parte dei corsi non è necessario effettuare alcun accesso, quindi se preferisci puoi tornare alla pagina del corso e proseguire come faresti su qualsiasi sito web pubblico.**
+
+Se ti registri o accedi, avrai prima bisogno di un account Github. L'accesso renderà poi disponibile una dashboard semplice e comoda con link rapidi a tutti i corsi Tutors a cui hai avuto accesso di recente.
+
+Per alcuni corsi, Tutors richiederà sempre un account per ottenere l'accesso, e verrai portato qui. Una volta effettuato l'accesso, Tutors può registrare per quanto tempo ogni vista rimane attiva e inviare questi dati all'archivio dati TutorsTime. Puoi visualizzare queste informazioni tramite la funzione Time nel menu del profilo. Questi dati sono disponibili per te e per l'istruttore del tuo corso, ma non per gli altri studenti. Non vengono raccolti altri dati, né questi dati vengono trasmessi altrove oltre che all'archivio dati TutorsTime.
+
+La funzione Live, disponibile dal menu del profilo, può usare questi dati anche per mostrare un pannello degli studenti attualmente online. **Puoi disattivare queste funzioni disabilitando l'opzione Condividi presenza dal menu del profilo.** Per saperne di più su TutorsTime consulta:
+
+- [FAQ Tutors Time](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-time-faq.md)
+- [FAQ Tutors Live](https://github.com/tutors-sdk/tutors-faqs/blob/main/tutors-live-faq.md)
+
+Tutors è un'applicazione open source: il componente di raccolta dati [si trova qui](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
   "time.name": "Nome",
@@ -128,7 +140,7 @@ const it: Record<string, string> = {
   "footer.setuAlt": "South East Technological University",
 
   // Error page
-  "error.fallback": "Si e verificato un errore imprevisto",
+  "error.fallback": "Si è verificato un errore imprevisto",
   "error.goHome": "Home",
 
   // Not found
@@ -156,14 +168,15 @@ const it: Record<string, string> = {
   "lecturer.access.lecturers": "Docenti",
   "lecturer.control.title": "Controllo del corso",
   "lecturer.control.placeholder": "Le funzioni di controllo del corso verranno aggiunte qui",
-  "lecturer.locked.overlay": "Questo contenuto e bloccato",
+  "lecturer.locked.overlay": "Questo contenuto è bloccato",
 
   "a11y.skipToContent": "Vai al contenuto",
   "a11y.mainNavigation": "Navigazione principale",
   "a11y.breadcrumbs": "Breadcrumb",
   "a11y.secondaryNavigation": "Navigazione secondaria",
   "a11y.sidebar": "Barra laterale",
-  "a11y.footer": "Pie di pagina",
+  "a11y.footer": "Piè di pagina",
+  "a11y.tree.toggle": "Mostra o nascondi il contenuto",
 
   // Guided tour
   "tour.ariaLabel": "Tour guidato",
@@ -178,13 +191,13 @@ const it: Record<string, string> = {
   "tour.search.title": "Cerca",
   "tour.search.description": "Trova rapidamente i contenuti in questo corso. Puoi anche premere Ctrl+K (o Cmd+K su Mac) in qualsiasi momento.",
   "tour.layout.title": "Tema e layout",
-  "tour.layout.description": "Personalizza l'aspetto: passa dalla modalita chiara a quella scura, cambia lo stile delle schede, il tema e la lingua.",
+  "tour.layout.description": "Personalizza l'aspetto: passa dalla modalità chiara a quella scura, cambia lo stile delle schede, il tema e la lingua.",
   "tour.profile.title": "Il tuo profilo",
-  "tour.profile.description": "Accedi con GitHub per monitorare i tuoi progressi e attivare le funzionalita di presenza in tempo reale.",
+  "tour.profile.description": "Accedi con GitHub per monitorare i tuoi progressi e attivare le funzionalità di presenza in tempo reale.",
   "tour.toc.title": "Albero del corso",
   "tour.toc.description": "Apri l'albero completo del corso per vedere tutti gli argomenti e navigare direttamente a qualsiasi sezione.",
   "tour.calendar.title": "Calendario",
-  "tour.calendar.description": "Visualizza il programma del corso e scopri cosa e previsto per questa settimana.",
+  "tour.calendar.description": "Visualizza il programma del corso e scopri cosa è previsto per questa settimana.",
   "tour.info.title": "Informazioni sul corso",
   "tour.info.description": "Leggi informazioni dettagliate su questo corso, inclusa la descrizione e gli obiettivi."
 };

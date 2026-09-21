@@ -1,180 +1,226 @@
-# Tutors Testing Strategy
+# The `tests/` directory
 
-A comprehensive, multi-tier testing framework built around BDD-first principles and the EARS (Easy Approach to Requirements Syntax) methodology. Each tier serves a distinct purpose in the quality pipeline — from fast unit checks to full contract validation.
+A map from each directory to its tier, runner and command. Why each tier exists, how it proves
+it can fail and when CI runs it are in the long form,
+[../guides/TESTING.md](../guides/TESTING.md); the one-page summary is
+[../guides/TESTING-OVERVIEW.md](../guides/TESTING-OVERVIEW.md).
 
----
+## The map
 
-## Tier 1: TDD Unit Tests (`tests/unit/`)
+| Directory | Tier | Runner / config | Command |
+|---|---|---|---|
+| `unit/` | B | Vitest, `vitest.config.ts` | `pnpm exec vitest run tests/unit` |
+| `fuzz/` | B | Vitest, `vitest.config.fuzz.ts` (threads pool) | `pnpm test:fuzz` |
+| `generator/` | C | Vitest + Deno generator | `pnpm exec vitest run tests/generator`, `pnpm check:generator-diff` |
+| `bdd/` | D | Vitest collects `steps/**/*.steps.ts`, each of which loads its `features/**` file through `vitest-cucumber` | `pnpm test:bdd` |
+| `components/` | — | Vitest, no DOM environment | `pnpm exec vitest run tests/components` |
+| `contract/` | Contract | Vitest, with `__snapshots__/` | `pnpm test:contract` |
+| `e2e-stack/` | G | Playwright, `playwright.e2e-stack.config.ts` | `pnpm test:e2e:stack` |
+| `e2e/` | — | Playwright, `playwright-a11y.config.ts` | `pnpm test:a11y` |
+| `conformance/` | J | Vitest + `pnpm check:k8s`, `pnpm check:container`, `pnpm check:server` | `pnpm exec vitest run tests/conformance` |
+| `observability/` | K | Vitest | `pnpm exec vitest run tests/observability` |
+| `performance/` | L | Vitest + `check:bundle`, `check:load`, `check:lighthouse` | `pnpm exec vitest run tests/performance` |
+| `security/` | M | Vitest + `pnpm check:audit`, `check:container --app` | `pnpm exec vitest run tests/security` |
+| `completeness/` | N | Vitest | `pnpm exec vitest run tests/completeness` |
+| `architecture/` | A | Vitest + `pnpm check:knip` | `pnpm exec vitest run tests/architecture` |
+| `suite-health/` | O | Vitest + `pnpm check:test-time` | `pnpm exec vitest run tests/suite-health` |
+| `mutation/` | Mutation / schema | Stryker (`stryker.config.json`, `vitest.config.mutation.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation` |
+| `release/` | Release | Deno scripts | `deno run -A tests/release/scripts/run-release-tests.ts --mode=all` |
+| `support/` | — | Shared setup, stubs and arbitraries; not a suite | — |
 
-**Approach**: Pure function testing with Vitest. Each test file targets exported functions from a single source module, validating inputs, outputs, edge cases, and error paths in isolation — no DOM, no network, no framework coupling.
+`pnpm test` is `vitest run`, which collects `tests/**/*.test.ts` and `tests/**/*.steps.ts` and
+excludes `node_modules`, `tests/e2e/`, `tests/release/` and `tests/fuzz/`. Anything named
+`*.spec.ts` is therefore Playwright's, never Vitest's. `pnpm test:runway` is a shortcut for the
+seven repo-level directories: `architecture`, `suite-health`, `completeness`, `observability`,
+`conformance`, `security`, `performance`.
 
-**Importance**: Unit tests are the foundation of the testing pyramid. They run in milliseconds, catch regressions instantly, and serve as living documentation of each function's contract. For the Tutors monorepo, the JSR packages (`model`, `time`, `gen`) contain critical computation logic (calendar pivoting, median calculations, search indexing, LO tree traversal) that must be bulletproof — a bug in `median()` silently corrupts analytics for every instructor. Unit tests make these guarantees explicit and enforceable.
+## Notes per directory
 
-**Coverage targets**: Statements 90%, Branches 80%, Functions 75%, Lines 90%.
+### `unit/` (tier B)
 
----
+62 files grouped by the package under test — `model`, `time`, `gen`, `connect`, `community`,
+`rbac`, `themes`, `utils`, `reader`, `apps`. Pure functions, no DOM, no network. The JSR
+packages hold the computation that matters: calendar pivoting, medians, search indexing,
+learning-object tree traversal.
 
-## Tier 2: BDD Behavioral Tests (`tests/bdd/`)
+### `fuzz/` (tier B)
 
-**Approach**: Gherkin feature files describe system behaviour from the perspective of three user personas (student, instructor, developer). Each scenario is annotated with an EARS tag classifying the requirement type. Step definitions in TypeScript exercise the application logic through the `TestWorld` shared state, using mock services for external dependencies.
+Property-based tests with `fast-check`, against the real package code and never a copy. Courses
+come from the shared arbitrary in `support/arbitraries/course-tree.ts` — generator-shaped JSON
+with `{{COURSEURL}}` routes, nested composites, lab steps, Unicode and hidden learning objects —
+which the generator differential and the release harness reuse. Each property is a factory over
+the implementation it checks, and a negative fixture runs it against a deliberately broken
+wrapper to prove it can fail.
 
-**EARS Classification**:
-- `@ears-ubiquitous` — The system SHALL [behaviour]. Always-on requirements with no trigger.
-- `@ears-event-driven` — WHEN [event] the system SHALL [behaviour]. Triggered by user actions.
-- `@ears-state-driven` — WHILE [state] the system SHALL [behaviour]. Behaviour depends on current state.
-- `@ears-unwanted` — IF [condition] THEN the system SHALL [response]. Error handling and edge cases.
-- `@ears-optional` — WHERE [feature is enabled] the system SHALL [behaviour]. Configurable features.
+A dedicated config exists because fast-check v4 property generation crashes Vitest's default
+fork workers ([#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)).
 
-**Importance**: BDD tests bridge the gap between user intent and code. By writing scenarios in plain language first, we ensure features are specified before implementation and that every requirement is traceable to a test. The three-persona split (student, instructor, developer) ensures coverage from all stakeholder angles — a student navigating labs has fundamentally different needs from an instructor reviewing analytics or a developer configuring themes. EARS tags make requirement types explicit, so reviewers can quickly audit whether error paths (`@ears-unwanted`) and optional features (`@ears-optional`) have adequate coverage.
+- **Replay**: a failure prints `{ seed, path }`; rerun with `FUZZ_SEED=<seed> FUZZ_PATH=<path> pnpm test:fuzz`. `FUZZ_RUNS` raises the run count (RC validation uses 1000).
+- **Timezones**: `pnpm test:tz` runs the unit and property suites under UTC, Europe/Dublin and Pacific/Auckland and ratchets failures against `fuzz/known-timezone-failures.txt`. Set the zone through the script, not `TZ=... pnpm test` in Git Bash, which does not pass `TZ` to Node on Windows; the suite asserts the zone really applied.
+- **No network**: `support/no-network.ts` is a setup file for the root and fuzz configs. `fetch`, `http(s)`, `net` and `tls` connections to anything but loopback throw unless the file is allow-listed there with a reason or the test calls `allowNetwork("reason")`.
 
----
+### `generator/` (tier C)
 
-## Tier 3: Component Tests (`tests/components/`)
+`corpus/synthetic-course/` is the committed course the differential runs over: typical topics,
+panels, media, empty and hidden units, Unicode filenames. `corpus.yaml` pins the public courses
+the nightly regenerates at upstream HEAD. `claims.yaml` holds a claim for every intended
+difference — an unclaimed hunk fails the PR job, and a claim broad enough to hide unrelated
+change needs the `approve-broad-claim` label. `pnpm check:generator-diff --plant` is the
+self-test that a one-character template change is caught.
 
-**Approach**: Svelte 5 components tested with `@testing-library/svelte` in a `happy-dom` environment. Tests verify rendering, user interaction, accessibility attributes, and reactive state updates ($state, $derived) without a real browser.
+### `bdd/` (tier D)
 
-**Importance**: The Tutors UI has components across three packages — `ui-components` (learning objects, time views), `ui-navigators` (MainNavigator, SecondaryNavigator, Footer, TutorsShell), and `ui-primitives` (Icon, Menu, Sidebar, Image) — plus 8 reactive stores in `runes`. Component tests catch rendering regressions, broken event handlers, and accessibility violations at build time — problems that unit tests can't reach (they test functions, not markup) and E2E tests catch too late (they're slow and flaky). For a learning platform, accessibility is non-negotiable: component tests verify ARIA attributes, focus management, and keyboard navigation are correct before code reaches a browser.
+`features/` holds 20 Gherkin files, 73 scenarios, with EARS tags across the student,
+instructor, developer and shared personas. Every one is executable: its file under `steps/`
+loads it with `loadFeature("tests/bdd/features/…")` and binds each scenario with
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/), so the run fails when a scenario
+or a step exists in the feature and not in the steps, or the other way round.
 
----
+Steps call product code — the model and time libraries, the course, theme, i18n, connect,
+presence and catalogue services — and assert on what it returns, writes or broadcasts. The
+stand-ins are at the edges only: `support/supabase-recorder.ts` for Supabase and realtime,
+`support/runes-stub.ts` and `support/svelte-runes-shim.ts` for `$state` (the root config has no
+Svelte compiler), and a stand-in `fetch` for the course host. `support/course.ts` publishes a
+course as the generator would and loads it through the real `decorateCourseTree`.
 
-## Tier 4: Contract Tests (`tests/contract/`)
+Scenarios that need a browser, or describe behaviour the product does not have, are prose in
+[../guides/specifications/](../guides/specifications/README.md), each with the tier that covers
+it or a plain "nothing does". [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
+still owns the rest of the EARS plan: `Rule:` blocks and the structural audit. How to write and
+bind a scenario: [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md).
 
-**Approach**: Zod schemas define the expected shape of every external API surface — Supabase table rows (6 tables), RPC responses (2 RPCs), Supabase Realtime broadcast messages (LoRecord protocol), and generated course JSON structure. Tests validate that mock data conforming to these schemas is accepted, and that malformed data is rejected.
+### `components/`
 
-**Importance**: Tutors depends on two external services (Supabase, GitHub OAuth) plus its own course JSON format. When any of these change shape — a Supabase column renamed, a broadcast message field added, a course JSON property dropped — the app breaks silently at runtime. Contract tests make these API boundaries explicit and testable. A failing contract test tells you exactly which service changed and which field is affected, before the bug reaches users. This is especially critical for the `learning_records` and `calendar` tables, which drive all analytics features.
+Despite the name, nothing renders a Svelte component: the root Vitest config runs in Node with
+no DOM environment, and `@testing-library/svelte` is an unused dependency. These files model
+props, variants, state transitions and store logic as plain data. Rendering, events, focus and
+ARIA are covered by the axe audits inside the tier G journeys.
 
----
+### `contract/`
 
-## Tier 5: Fuzz Tests (`tests/fuzz/`)
+Two mechanisms:
 
-**Status**: Active via `pnpm test:fuzz` (`vitest.config.fuzz.ts`, threads pool). Uses a dedicated vitest config with `pool: "threads"` because fast-check v4 property generation crashes vitest's default fork pool workers. Runs in CI on every push/PR.
+- `model-lib-api.test.ts`, `gen-lib-api.test.ts`, `time-lib-api.test.ts` snapshot the export names of the three JSR packages into `__snapshots__/`. These are **separate** from the human-readable reports in `etc/*.api.md` generated by `pnpm api-report`. Changing a package's exports means regenerating both, in the same commit.
+- Zod schemas in `support/schemas.ts` describe the external shapes — six Supabase tables, two RPCs, the realtime `LoRecord` and whiteboard protocols and the generated course JSON — and the suites assert that conforming data is accepted and malformed data rejected. `support/schema-generators.ts` turns those schemas into fast-check arbitraries, and `bdd/support/schema-validated-fixtures.ts` parses fixtures through them so they cannot drift.
 
-**Approach**: Property-based testing with `fast-check`. Generators produce random but valid inputs (calendar entries, LO trees) and assert invariants that must hold for all inputs — totals are non-negative, medians are within range, tree traversals visit every node.
+### `e2e-stack/` (tier G)
 
-**Importance**: Fuzz tests find edge cases that humans miss. A hand-written test might check 5 calendar entries, but a fuzz test checks 10,000 random combinations — including empty arrays, single elements, duplicate dates, and extreme values. For the calendar analytics engine, fuzz testing is essential: the `buildPivotedRows` and `median` functions must handle any student count, any date range, and any activity distribution without crashing or producing nonsensical results.
+Named journeys against the **built container images** with a fixture course server, so GitHub
+and Netlify are not dependencies. Compose services, fixture course, port and URL overrides and
+the file-by-file map: [e2e-stack/README.md](./e2e-stack/README.md).
 
-**Runway tier B** (`course-model.fuzz.test.ts`, `calendar-time.fuzz.test.ts`): properties run against the real `packages/jsr/model` and `packages/jsr/time` code, never a local copy. Courses come from the shared arbitrary in `tests/support/arbitraries/course-tree.ts` (generator-shaped JSON with `{{COURSEURL}}` routes, nested composites, lab steps, Unicode, hidden los), which the generator differential and release harness reuse. Each property is a factory over the implementation it checks, and a negative fixture runs it against a deliberately broken wrapper to prove it can fail.
+```bash
+pnpm e2e:stack:fixture     # needs Deno
+pnpm e2e:stack:up
+pnpm test:e2e:stack --project=chromium --project=webkit
+pnpm test:e2e:stack:ratchet
+pnpm e2e:stack:down
+```
 
-- **Replay**: a failure prints `{ seed, path }`; rerun with `FUZZ_SEED=<seed> FUZZ_PATH=<path> pnpm test:fuzz`. `FUZZ_RUNS` raises the run count.
-- **Timezones**: `pnpm test:tz` runs the unit and property suites under UTC, Europe/Dublin and Pacific/Auckland and ratchets failures against `tests/fuzz/known-timezone-failures.txt`. Set the zone through the script, not `TZ=... pnpm test` in Git Bash, which does not pass `TZ` to Node on Windows; the suite asserts the zone really applied.
-- **No network**: `tests/support/no-network.ts` is a setup file for the root and fuzz configs. fetch, http(s), net and tls connections to anything but loopback throw unless the file is allow-listed there with a reason or calls `allowNetwork("reason")`.
+No retries: a journey that needs one is a finding. `journeys/negative.journey.spec.ts` holds
+`test.fail()` journeys that prove a journey can fail and pin known product bugs.
 
----
+### `e2e/`
 
-## Tier 6: E2E Tests (`apps/*/tests/e2e/`)
+One standalone axe audit (`accessibility.spec.ts`) over a course page, run by `pnpm test:a11y`
+against `localhost:5173`. It runs in no workflow, and one of its tests logs violations without
+asserting — baselined as `no-assertion` in tier O. The per-app Playwright smoke tests live
+outside this directory, in `apps/<app>/tests/e2e/smoke.spec.ts`, and run with
+`pnpm test:e2e:reader`, `:catalogue`, `:live` (or all three via `pnpm test:e2e`) against
+`vite dev`.
 
-**Approach**: Playwright tests running against the actual SvelteKit dev server. Tests simulate real user flows across the three apps (reader:5173, catalogue:5175, live:5174) in Chromium and Firefox.
+### The repo-level suites (tiers A, J, K, M, N, O and L)
 
-**Importance**: E2E tests are the final validation gate. They catch integration issues that no other tier can: SSR hydration mismatches, auth redirect loops, WebSocket connection failures, and cross-app navigation bugs. They're slow and expensive, so they run nightly and in RC validation — not on every commit.
-
----
-
-## Tier 7: Release Validation (`tests/release/`)
-
-**Approach**: Artifact regression testing, performance benchmarks, and smoke tests that compare generated output against known-good baselines using the `json-comparator`.
-
-**Importance**: Release validation ensures that a new build produces the same course JSON structure as the previous release. This is the last gate before deployment — it catches any change (intentional or not) to the generated output format that could break deployed courses.
-
----
-
-## Tier 8: Mutation Tests (`tests/mutation/`, `stryker.config.json`)
-
-**Approach**: StrykerJS with the Vitest test runner. Introduces small code changes (mutants) — flipping operators, removing conditionals, changing return values — into targeted source modules and checks whether the existing test suite catches each one. Focuses on high-value computation logic: `search.ts`, `lo-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`, `calendar-utils.ts`.
-
-**Importance**: Code coverage measures which lines were *executed*, but not whether assertions actually verified them. A file can show 100% line coverage with zero meaningful assertions — mutation testing exposes this. Each surviving mutant points to a specific test gap: a conditional that could be inverted, an operator that could be swapped, or a return value that could change — all without any test failing. For the Tutors analytics engine, where a wrong median or a flipped comparison silently corrupts instructor dashboards, mutation testing is the final proof that the test suite has real detection power.
-
-**Target score**: ≥85% mutation score. Build breaks below 60%.
-
-**When to run**: Nightly CI and RC validation — too slow for every commit.
-
-See `guides/MUTATION-TESTING.md` for full details.
-
----
-
-## Tier 9: Schema-Driven Tests (`tests/fuzz/schema-driven.fuzz.test.ts`, `tests/contract/support/schema-*`)
-
-**Status**: Active as part of `pnpm test:fuzz`. Schema support infrastructure (`schema-generators.ts`, `schema-snapshots.ts`, `schemas.ts`) is also used by contract tests.
-
-**Approach**: Bridges Zod schemas (from contract tests) to fast-check arbitraries for property-based testing. A `zodToArbitrary()` converter generates random-but-valid data from any Zod schema, enabling three capabilities: (1) round-trip validation — generated data always passes the originating schema, (2) schema snapshot regression — a `zodToJsonSchema()` converter creates JSON Schema snapshots that detect unintended drift, (3) boundary validation — `schema-validated-fixtures.ts` wraps BDD fixture factories with Zod `.parse()` calls so every fixture conforms to the canonical API shape.
-
-**Importance**: Hand-crafted test fixtures drift from real API shapes over time. A fixture missing a field that the API added, or using a string where the API now expects a number, means the test passes but the code would fail in production. Schema-driven generation eliminates this class of bugs by deriving test data directly from the Zod schemas that define the API contract. The snapshot comparison catches schema changes that would otherwise be invisible until a deploy breaks — someone renames a Supabase column and the snapshot test fails immediately, before any feature test has to discover the breakage.
-
----
-
-## Tier 10: Runway Checks (`tests/architecture/`, `tests/suite-health/`, `tests/completeness/`, `tests/observability/`, `tests/conformance/`, `tests/security/`)
-
-**Approach**: Checks over the repository itself rather than over one module, from the Tutors Testing Runway (tiers A, J, K, M, N and O). The logic lives in `scripts/checks/` as pure functions; each test file runs it against **negative fixtures** that prove the check can fail, then against the real repo. Run them alone with `pnpm test:runway`; they also run in the normal `vitest run`.
+Checks over the repository itself rather than over one module. The logic lives in
+`scripts/checks/` as pure functions; each suite runs it against **negative fixtures** that prove
+it can fail, then against the real repo.
 
 | Tier | Directory | What fails the build |
 |---|---|---|
-| A: Architecture | `tests/architecture/` | An import that goes up a layer (README "Architecture"), an app importing another app, a relative import into another workspace, a cycle across packages (`.dependency-cruiser.cjs`); `deno.json` and `package.json` disagreeing on name, version, exports or dependency majors; new unused files, exports or dependencies (`pnpm check:knip`, config in `knip.json`, runs as a CI step) |
-| O: Suite health | `tests/suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads; a test file no Vitest or Playwright config collects. Nightly: a no-retry run, and a test file over its time budget (`tests/suite-health/time-budgets.json`, `pnpm check:test-time`) |
-| N: Completeness | `tests/completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
-| K: Observability | `tests/observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
-| J: Conformance | `tests/conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
-| M: Security | `tests/security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path (known gaps in `known-response-gaps.txt`), a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
+| A | `architecture/` | An import that goes up a layer, an app importing another app, a relative import into another workspace, a cycle across packages (`.dependency-cruiser.cjs`); `deno.json` and `package.json` disagreeing on name, version, exports or dependency majors; new unused files, exports or dependencies (`pnpm check:knip`, config in `knip.json`) |
+| J | `conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
+| K | `observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
+| L | `performance/` | A client bundle over its ceiling (`bundle-budgets.json`), a Lighthouse median below its floor (`lighthouse.json`), a k6 threshold crossed, memory growing after warm-up, a soak whose late p95 doubled. See [performance/README.md](./performance/README.md) |
+| M | `security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
+| N | `completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
+| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file that no steps file binds and no cucumber config loads, or one with an EARS keyword Gherkin drops (`While`, `Where`, `If`) or an `@ignore` tag; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
 
-**Ratchets**: checks that found problems on day one hold them in a baseline beside the test (`known-violations.txt`, `known-manifest-drift.txt`, `known-findings.txt`, `known-gaps.txt`). A new problem fails. So does a baseline line that no longer occurs, so fixing something means deleting its line, and a baseline can only shrink.
+### `mutation/`
 
-**Quarantine**: a test may be skipped without a baseline entry if the line above names an issue and an expiry. After that date it fails again:
+`schema-snapshot.test.ts` is a Vitest suite: it snapshots the contract Zod schemas as JSON
+Schema, so a renamed Supabase column fails here rather than in production. Stryker itself is
+configured at the repo root (`stryker.config.json`, `vitest.config.mutation.ts`) over five
+modules, thresholds high 85 / low 75 / break 65, and runs only locally via `pnpm test:mutation`
+— no workflow runs it. See [../guides/MUTATION-TESTING.md](../guides/MUTATION-TESTING.md).
+
+### `release/`
+
+Deno scripts that compare the candidate CLI's output for the reference course against the last
+published CLI, compare reader builds, benchmark and smoke-test a deployed preview, with the
+comparators in `comparators/`. They run on pushes to `rc/**`. Gates and the go/no-go rule:
+[release/RELEASE-TESTING.md](./release/RELEASE-TESTING.md).
+
+### `support/`
+
+Not a suite. `no-network.ts` (setup file for the root and fuzz configs),
+`arbitraries/course-tree.ts` (the shared course arbitrary), `sveltekit-stubs.ts`,
+`vento-stub.ts`, `archiver-shim.ts`.
+
+## Ratchets and quarantine
+
+Checks that found problems on day one hold them in a baseline text file beside the suite:
+`architecture/known-violations.txt`, `architecture/known-manifest-drift.txt`,
+`architecture/known-knip.txt`, `completeness/known-gaps.txt`, `suite-health/known-findings.txt`,
+`security/known-response-gaps.txt`, `fuzz/known-timezone-failures.txt`,
+`e2e-stack/a11y-known-violations.txt`, `e2e-stack/reduced-motion-known.txt`.
+
+A new problem fails. So does a baseline line that no longer occurs, so fixing something means
+deleting its line, and a baseline can only shrink.
+
+A test may be skipped without a baseline entry if the line above names an issue and an expiry.
+After that date it fails again:
 
 ```ts
 // quarantine: #123 until 2026-10-01
 it.skip("flaky in webkit", () => { ... });
 ```
 
-**Outside Vitest** (they need Docker or kustomize, and run as their own CI jobs):
+## Checks that need Docker or kustomize
+
+These run as their own CI jobs rather than under Vitest:
 
 ```bash
-pnpm check:k8s                                  # render every overlay and apply the manifest policies
-pnpm check:k8s --out rendered                   # also write the output for kubeconform
+pnpm check:k8s                                     # render every overlay and apply the manifest policies
+pnpm check:k8s --out rendered                      # also write the output for kubeconform
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
-pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
+pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract, identical headers on repeat requests (except Date and x-request-id), /version shape
 pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
-pnpm check:audit                                # pnpm audit against tests/security/audit-allowlist.json
-pnpm check:audit --base-dir base                # PR mode: only advisories absent from base/pnpm-lock.yaml fail
-pnpm architecture-report                        # every dependency-cruiser violation, known ones included
+pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with Auth.js on (CI runs both for the reader)
+pnpm check:build-identity                          # after building the apps with SVELTEKIT_ADAPTER=node and GIT_SHA: only GET /version answers the commit and build date
+pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
+pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail
+pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with Auth.js on, no Docker
+pnpm check:bundle                                  # after building the apps with SVELTEKIT_ADAPTER=node
+pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3
+pnpm check:lighthouse --image tutors/reader:ci
+pnpm architecture-report                           # every dependency-cruiser violation, known ones included
 ```
 
-The container check proves it can fail against `tests/conformance/fixtures/faulty-image` (`FIXTURE_FAULT=readonly` or `uid`); CI runs kubeconform against `tests/conformance/fixtures/invalid-manifest.yaml` for the same reason.
+The container check proves it can fail against `conformance/fixtures/faulty-image`
+(`FIXTURE_FAULT=readonly` or `uid`); CI runs kubeconform against
+`conformance/fixtures/invalid-manifest.yaml` for the same reason.
 
----
+## File naming
 
-## Running Tests
-
-```bash
-# All unit + BDD + component tests
-pnpm vitest run
-
-# Specific tier
-pnpm vitest run tests/unit/
-pnpm vitest run tests/bdd/
-pnpm vitest run tests/components/
-pnpm vitest run tests/contract/
-
-# With coverage
-pnpm vitest run --coverage
-
-# E2E (requires dev server running)
-pnpm --filter reader exec playwright test
-
-# Mutation testing (slow — nightly/RC only)
-./tests/mutation/run-mutation-tests.sh
-./tests/mutation/run-mutation-tests.sh --module search
-
-# Schema snapshot regression
-pnpm vitest run tests/mutation/schema-snapshot.test.ts
-```
-
-## File Naming Conventions
-
-| Tier | Pattern | Example |
+| Pattern | Collected by | Example |
 |---|---|---|
-| Unit | `*.test.ts` | `search.test.ts` |
-| BDD Feature | `*.feature` | `course-discovery.feature` |
-| BDD Steps | `*.steps.ts` | `course-discovery.steps.ts` |
-| Component | `*.test.ts` | `Sidebar.test.ts` |
-| Contract | `*.contract.test.ts` | `learning-records.contract.test.ts` |
-| Fuzz | `*.fuzz.test.ts` | `calendar-model.fuzz.test.ts` |
-| Mutation | `stryker.config.json` | `stryker.config.json` |
-| Schema Snapshot | `*.test.ts` | `schema-snapshot.test.ts` |
+| `*.test.ts` | Vitest (root config) | `unit/time/calendar-utils.test.ts` |
+| `*.steps.ts` | Vitest (root config) | `bdd/steps/student/course-discovery.steps.ts` |
+| `*.contract.test.ts` | Vitest, under `contract/` | `contract/supabase/calendar.contract.test.ts` |
+| `*.fuzz.test.ts` | Vitest (fuzz config only) | `fuzz/course-model.fuzz.test.ts` |
+| `*.journey.spec.ts` | Playwright (`playwright.e2e-stack.config.ts`) | `e2e-stack/journeys/student.journey.spec.ts` |
+| `*.spec.ts` | Playwright only, never Vitest | `e2e/accessibility.spec.ts` |
+| `*.feature` | Vitest, through the steps file that loads it (tier D) | `bdd/features/student/lab-interaction.feature` |
+
+A new test file that no config collects fails tier O, so add the file to a directory an existing
+config already covers, or extend the config in the same commit.

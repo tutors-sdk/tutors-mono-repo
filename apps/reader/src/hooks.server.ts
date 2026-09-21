@@ -1,17 +1,32 @@
 /* global APP_VERSION */
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
+import { building } from "$app/environment";
 import { SvelteKitAuth } from "@auth/sveltekit";
 import { env } from "$env/dynamic/private";
+import { env as publicEnv } from "$env/dynamic/public";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import log, { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
+import { announceClock } from "@tutors/runtime";
+import { authMode } from "$lib/server/auth-mode";
 
 setAppName("tutors-reader");
+// From here on every stdout/stderr line of the running server is one JSON object: stray console
+// output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
+if (!building) installProcessLogging();
+
+const currentAuthMode = () =>
+  authMode({ PUBLIC_ANON_MODE: publicEnv.PUBLIC_ANON_MODE, PRIVATE_AUTH_SECRET: env.PRIVATE_AUTH_SECRET });
 
 export const init: ServerInit = async () => {
-  logServiceStart({ version: APP_VERSION });
+  const mode = currentAuthMode();
+  logServiceStart({ version: APP_VERSION, authMode: mode });
+  announceClock(log);
+  if (mode === "unconfigured") {
+    log.error("Authentication disabled: PRIVATE_AUTH_SECRET is not set. Set it, or set PUBLIC_ANON_MODE=TRUE.");
+  }
 };
 
 const { handle: authInitHandle } = SvelteKitAuth({
@@ -64,7 +79,7 @@ const { handle: authInitHandle } = SvelteKitAuth({
     // @auth/sveltekit turns off Auth.js's own CSRF token and relies on
     // SvelteKit's origin check, so "csrf-disabled" arrives on every auth request.
     warn: (code) => (code === "csrf-disabled" ? log.debug("Auth.js warning", { code }) : log.warn("Auth.js warning", { code })),
-    debug: (message, metadata) => log.debug(`Auth.js: ${message}`, { metadata })
+    debug: (message, metadata) => log.debug("Auth.js debug", { details: message, metadata })
   }
 });
 
@@ -86,7 +101,15 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(requestLogger, metricsHandle, localeHandle, securityHeaders, authInitHandle);
+// Without a secret Auth.js throws MissingSecret from the root layout on every
+// page, so anonymous and unconfigured deployments skip it and have no session.
+const authHandle: Handle = async (input) => {
+  if (currentAuthMode() === "enabled") return authInitHandle(input);
+  input.event.locals.auth = async () => null;
+  return input.resolve(input.event);
+};
+
+export const handle = sequence(requestLogger, metricsHandle, localeHandle, securityHeaders, authHandle);
 
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
   logRequestError({ error, event, status, message });

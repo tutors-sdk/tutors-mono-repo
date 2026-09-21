@@ -20,7 +20,12 @@ export const PLATFORM_ENV: ReadonlySet<string> = new Set([
   "MODE", // Vite build flag
   "BASE_URL", // Vite build flag
   "HOSTNAME", // set by Kubernetes to the pod name
-  "NODE_ENV" // set in the Dockerfile runtime stage
+  "NODE_ENV", // set in the Dockerfile runtime stage
+  "GIT_SHA", // set in the Dockerfile runtime stage from the build arg; answered by GET /version
+  "BUILD_DATE", // set in the Dockerfile runtime stage from the build arg; answered by GET /version
+  // Set only by the release harness to freeze the server clock. Deliberately NOT in
+  // deploy/k8s: a manifest must never carry it (repoFrozenClockFindings enforces that).
+  "HARNESS_NOW"
 ]);
 
 const ENV_READ_PATTERNS = [
@@ -105,6 +110,23 @@ export function repoConfigCompletenessFindings(root: string = REPO_ROOT): string
   });
 }
 
+/**
+ * `HARNESS_NOW` freezes the server clock for the release harness. The image
+ * always runs with NODE_ENV=production, so the variable's absence is the only
+ * guard: no deployment manifest or compose file in this repo may mention it.
+ */
+export function frozenClockFindings(files: { file: string; text: string }[]): string[] {
+  return files.filter(({ text }) => /\bHARNESS_NOW\b/.test(text)).map(({ file }) => `frozen-clock-in-deployment: ${file}: HARNESS_NOW`);
+}
+
+export function repoFrozenClockFindings(root: string = REPO_ROOT): string[] {
+  const files = [
+    ...walk(join(root, "deploy"), (name) => /\.(ya?ml|json|env)(\.example)?$/.test(name)),
+    ...["compose.yaml", "observability/compose.yaml"].map((name) => join(root, name)).filter((path) => existsSync(path))
+  ];
+  return frozenClockFindings(files.map((path) => ({ file: toPosix(path, root), text: readText(path) })));
+}
+
 /* ---------------- manifest policy ---------------- */
 
 type Obj = Record<string, unknown>;
@@ -120,6 +142,8 @@ function podSpecOf(doc: Obj): Obj | undefined {
 export interface PolicyOptions {
   /** When set, every image must carry exactly this tag (the release the manifests describe). */
   expectedTag?: string;
+  /** When set, every image must be pinned by digest, not by tag alone (how the deploy overlays render). */
+  requireDigest?: boolean;
 }
 
 /** Split `registry:5000/org/app:1.2.3@sha256:...` into repository, tag and digest. */
@@ -132,8 +156,23 @@ export function parseImage(image: string): { repository: string; tag?: string; d
 }
 
 /**
+ * Why a repository path cannot be pulled reliably, if it cannot. CRI-O (and so
+ * OpenShift) refuses or guesses at short names, so the registry host must be
+ * spelled out; and Quay repositories are exactly `quay.io/<org>/<repo>`, with
+ * no nested path segments.
+ */
+export function imageRepositoryFinding(repository: string): string | undefined {
+  const segments = repository.split("/");
+  const host = segments[0];
+  const qualified = segments.length > 1 && (host.includes(".") || host.includes(":") || host === "localhost");
+  if (!qualified) return "unqualified-image";
+  if (host === "quay.io" && segments.length !== 3) return "quay-nested-repository";
+  return undefined;
+}
+
+/**
  * Policies a workload must satisfy to run under OpenShift's `restricted-v2`
- * SCC and to be operable: pinned images, requests and limits, probes, and a
+ * SCC and to be operable: registry-qualified, pinned images, requests and limits, probes, and a
  * locked-down security context. Findings are `rule: Kind/name[/container]: detail`.
  */
 export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {}): string[] {
@@ -160,11 +199,14 @@ export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {})
     for (const container of containers) {
       const where = `${name}/${container.name}`;
       const image = parseImage(String(container.image ?? ""));
+      const repositoryFinding = imageRepositoryFinding(image.repository);
+      if (repositoryFinding) findings.push(`${repositoryFinding}: ${where}: ${container.image}`);
       if (!image.digest && (!image.tag || image.tag === "latest")) {
         findings.push(`unpinned-image: ${where}: ${container.image}`);
       } else if (options.expectedTag && !image.digest && image.tag !== options.expectedTag) {
         findings.push(`image-tag-not-release: ${where}: ${container.image} (expected tag ${options.expectedTag})`);
       }
+      if (options.requireDigest && !image.digest) findings.push(`image-not-digest-pinned: ${where}: ${container.image}`);
 
       const resources = (container.resources as Obj | undefined) ?? {};
       const requests = (resources.requests as Obj | undefined) ?? {};
@@ -194,6 +236,81 @@ export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {})
   return findings.sort();
 }
 
+/* ---------------- entry point policy ---------------- */
+
+const asList = (value: unknown): Obj[] => (Array.isArray(value) ? (value as Obj[]) : []);
+
+/**
+ * Policies for the external entry point (OpenShift Route or Ingress) of one
+ * rendered kustomization. adapter-node builds absolute URLs and checks form
+ * posts against `ORIGIN`, so the exposed host must be the `ORIGIN` host; the
+ * backend must be a Service port that is actually rendered (a component applied
+ * inside an overlay misses the name prefix); a Route must terminate TLS and
+ * redirect plain HTTP. Findings are `rule: Kind/name: detail`.
+ */
+export function entryPointPolicyFindings(docs: Obj[]): string[] {
+  const findings: string[] = [];
+  const objects = docs.filter((doc) => doc && typeof doc === "object");
+  const origins = objects
+    .filter((doc) => doc.kind === "ConfigMap")
+    .map((doc) => (doc.data as Obj | undefined)?.ORIGIN)
+    .filter((origin): origin is string => typeof origin === "string" && origin !== "");
+  const originHosts = new Set(origins.map((origin) => (URL.canParse(origin) ? new URL(origin).hostname : origin)));
+  const servicePorts = new Map<string, Set<string>>();
+  for (const doc of objects.filter((doc) => doc.kind === "Service")) {
+    const ports = asList((doc.spec as Obj | undefined)?.ports).flatMap((port) => [port.name, port.port, port.targetPort]);
+    servicePorts.set(String((doc.metadata as Obj | undefined)?.name), new Set(ports.filter((p) => p !== undefined).map(String)));
+  }
+
+  const checkHost = (name: string, host: unknown) => {
+    if (typeof host !== "string" || host === "") findings.push(`entry-point-without-host: ${name}`);
+    else if (!originHosts.has(host)) findings.push(`host-not-origin: ${name}: ${host} (ORIGIN is ${origins.join(", ") || "not set"})`);
+  };
+  const checkBackend = (name: string, service: unknown, port: unknown) => {
+    const ports = servicePorts.get(String(service));
+    if (!ports) findings.push(`backend-service-not-rendered: ${name}: ${service}`);
+    else if (port === undefined || !ports.has(String(port))) findings.push(`backend-port-not-on-service: ${name}: ${service}:${port}`);
+  };
+
+  for (const doc of objects) {
+    const name = `${doc.kind}/${(doc.metadata as Obj | undefined)?.name ?? "?"}`;
+    const spec = (doc.spec as Obj | undefined) ?? {};
+    if (doc.kind === "Route" && String(doc.apiVersion).startsWith("route.openshift.io/")) {
+      checkHost(name, spec.host);
+      const to = (spec.to as Obj | undefined) ?? {};
+      if (to.kind !== "Service") findings.push(`backend-service-not-rendered: ${name}: ${to.kind}/${to.name}`);
+      else checkBackend(name, to.name, (spec.port as Obj | undefined)?.targetPort);
+      const tls = spec.tls as Obj | undefined;
+      if (!tls?.termination) findings.push(`route-without-tls: ${name}`);
+      // Passthrough routes carry no plain-HTTP listener to redirect.
+      else if (tls.termination !== "passthrough" && tls.insecureEdgeTerminationPolicy !== "Redirect") {
+        findings.push(`route-insecure-not-redirected: ${name}: ${tls.insecureEdgeTerminationPolicy ?? "unset"}`);
+      }
+    }
+    if (doc.kind === "Ingress" && String(doc.apiVersion).startsWith("networking.k8s.io/")) {
+      if (!spec.ingressClassName) findings.push(`ingress-without-class: ${name}`);
+      const rules = asList(spec.rules);
+      if (rules.length === 0) findings.push(`entry-point-without-host: ${name}`);
+      if (spec.defaultBackend) findings.push(`ingress-default-backend: ${name}: answers for every host, not only ORIGIN`);
+      for (const rule of rules) {
+        checkHost(name, rule.host);
+        for (const path of asList((rule.http as Obj | undefined)?.paths)) {
+          const service = ((path.backend as Obj | undefined)?.service as Obj | undefined) ?? {};
+          const port = (service.port as Obj | undefined) ?? {};
+          checkBackend(name, service.name, port.name ?? port.number);
+        }
+      }
+      const ruleHosts = new Set(rules.map((rule) => rule.host));
+      for (const tls of asList(spec.tls)) {
+        const hosts = (tls.hosts as string[] | undefined) ?? [];
+        if (!tls.secretName) findings.push(`ingress-tls-without-secret: ${name}`);
+        for (const host of ruleHosts) if (!hosts.includes(host as string)) findings.push(`ingress-tls-host-mismatch: ${name}: ${host} not in tls hosts`);
+      }
+    }
+  }
+  return findings.sort();
+}
+
 /* ---------------- rendering ---------------- */
 
 /** Render one kustomization with whichever of `kustomize` or `kubectl kustomize` is installed. */
@@ -217,6 +334,20 @@ export function overlayDirs(root: string = REPO_ROOT): string[] {
   const overlays = join(root, "deploy/k8s/overlays");
   return readdirSync(overlays)
     .map((name) => join(overlays, name))
+    .filter((dir) => existsSync(join(dir, "kustomization.yaml")))
+    .sort();
+}
+
+/**
+ * Substrate variants: an overlay plus its entry point component, laid out as
+ * `deploy/k8s/variants/<substrate>/<app>`.
+ */
+export function variantDirs(root: string = REPO_ROOT): string[] {
+  const variants = join(root, "deploy/k8s/variants");
+  if (!existsSync(variants)) return [];
+  return readdirSync(variants, { withFileTypes: true })
+    .filter((substrate) => substrate.isDirectory())
+    .flatMap((substrate) => readdirSync(join(variants, substrate.name)).map((app) => join(variants, substrate.name, app)))
     .filter((dir) => existsSync(join(dir, "kustomization.yaml")))
     .sort();
 }

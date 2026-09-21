@@ -1,6 +1,6 @@
 {
   "name": "tutors-live",
-  "version": "16.2.0",
+  "version": "16.2.2",
   "license": "MIT",
   "description": "Tutors Live - Real-time student activity tracking",
   "private": true,
@@ -27,6 +27,7 @@
     "@tutors/course": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
+    "@tutors/runtime": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",

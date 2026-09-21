@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import adapterAuto from '@sveltejs/adapter-auto';
 import adapterNode from '@sveltejs/adapter-node';
 
@@ -5,6 +6,13 @@ import adapterNode from '@sveltejs/adapter-node';
 // for the container image. Anything else keeps adapter-auto, which detects the
 // hosting platform (Netlify) at build time.
 const adapter = process.env.SVELTEKIT_ADAPTER === 'node' ? adapterNode() : adapterAuto();
+// SvelteKit names each build after Date.now() unless told otherwise, which makes
+// two builds of one commit differ (/_app/version.json, the client bundle and the
+// __sveltekit_<hash> global in every page). The Dockerfile passes the commit, and the
+// build is named after a hash of it: the name is served in /_app/version.json and baked
+// into the client bundle, and the commit itself is answered by GET /version only.
+const gitSha = process.env.GIT_SHA && process.env.GIT_SHA !== 'unknown' ? process.env.GIT_SHA : undefined;
+const buildName = gitSha ? createHash('sha256').update(gitSha).digest('hex').slice(0, 16) : undefined;
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -17,7 +25,9 @@ const config = {
   },
 
   kit: {
-    adapter
+    adapter,
+    ...(buildName ? { version: { name: buildName } } : {}),
+    env: { dir: '../..' }
   }
 };
 

@@ -1,0 +1,9 @@
+# Fixture: a workflow whose `deno test` step is the only runner for packages/cli/test.
+name: CI
+on: [push]
+jobs:
+  cli-tests:
+    runs-on: ubuntu-latest
+    steps:
+      # - run: cd packages/cli && deno test bench/ --allow-all
+      - run: cd packages/cli && deno test test/ --allow-all

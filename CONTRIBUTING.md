@@ -52,7 +52,7 @@ Before starting work on a significant change, please open an issue or comment on
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
 pnpm install
-cp .env.example apps/reader/.env
+cp .env.example .env
 pnpm dev
 ```
 
@@ -61,7 +61,7 @@ Open **http://localhost:5173/course/reference-course**. You should see a rendere
 What just happened:
 
 - `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); a devcontainer that avoids the local install is tracked in [#236](https://github.com/tutors-sdk/tutors-mono-repo/issues/236).
-- The copied `.env` has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- The copied `.env` sits at the repository root and every app reads it: each app's Vite config sets `envDir` there, and its SvelteKit config sets `kit.env.dir` to match, so the `$env` modules resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
 - `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
 - `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.
 
@@ -69,13 +69,9 @@ If any step of this did not work as written, that is a bug in this document. Ple
 
 ### Running the other apps
 
-Each app reads its own `.env`, so copy the example once per app you want to run:
+All four apps read the same root `.env`, so the copy above is the only one needed:
 
 ```bash
-cp .env.example apps/catalogue/.env
-cp .env.example apps/live/.env
-cp .env.example apps/time/.env
-
 pnpm --filter tutors-catalogue dev   # http://localhost:5175
 pnpm --filter tutors-live dev        # http://localhost:5174
 pnpm --filter tutors-time dev        # http://localhost:5176
@@ -125,14 +121,14 @@ Types: `feature/`, `fix/`, `docs/`, `test/`, `refactor/`, `chore/`
 The repository has several test tiers. You are expected to run three things before opening a PR:
 
 ```bash
-pnpm lint    # ESLint
-pnpm test    # unit, BDD, contract and component tests (vitest)
-pnpm check   # svelte-check on the reader
+pnpm lint                        # ESLint
+pnpm test                        # vitest: unit, BDD steps, component, contract and the repo-level checks
+pnpm check                       # svelte-check on the reader, catalogue and live apps
 ```
 
-`pnpm check` currently reports a handful of pre-existing errors that are tracked in [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235). New errors in files you touched are yours; the existing ones are not.
+The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
 
-Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), end-to-end (`pnpm test:e2e`), accessibility (`pnpm test:a11y`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
+Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), the browser journeys against built images (`pnpm test:e2e:stack`), accessibility (`pnpm test:a11y`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 
 Useful while developing:
 
@@ -154,6 +150,48 @@ Optional longer description explaining the change.
 ```
 
 Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
+
+### Changelog Entries
+
+`CHANGELOG.md` is written by hand at release time from the merged PRs (see [guides/Release-Strategy.md](guides/Release-Strategy.md#changelog-discipline)); no tool generates it. Each entry that changes something a student, lecturer or operator can observe **names the artefacts it expects to move**, in a trailing parenthesis, so the release author can turn the line into a claim for the [release harness](release/README.md) without guessing:
+
+```markdown
+- Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)
+- Presence is polled every 15 seconds instead of 10 (network) (PR #318)
+- Card summaries render markdown (dom, screenshot) (PR #263)
+```
+
+| Hint | Use it when the change moves |
+| --- | --- |
+| `dom` | the page's markup or text (the accessibility-tree snapshot) |
+| `screenshot` | how the page looks |
+| `network` | requests a page makes, or their responses |
+| `console` | what the browser console reports |
+| `headers` | HTTP response headers (CSP, cookies, cache control) |
+| `axe` | accessibility findings, better or worse |
+| `focus` | keyboard order |
+| `metrics` | a series on `/metrics` |
+| `logs` | the shape or volume of the server's log lines |
+| `timing` | response or load-time distributions |
+| `persistence` | what a page writes to Supabase |
+| `bus` | messages on the live bus, per journey and topic |
+| `migration` | a contract migration, see [guides/MIGRATIONS.md](guides/MIGRATIONS.md) |
+| `upgrade` | what survives an upgrade from the production release (the upgrade rehearsal) |
+| `image-manifest` | an image's base, platform, user, ports, entrypoint, layers, size or labels |
+| `sbom` | the packages in an image: one added, removed or bumped |
+| `vulns` | the known vulnerabilities in an image, one per advisory |
+| `runtime` | how a container runs: user, privileges, read-only root filesystem, capabilities, writes outside `/tmp` |
+| `startup` | how a container starts: root, time to ready, boot |
+
+Rules of thumb:
+
+- The hint is a parenthesis that contains only names from that list, separated by commas. It sits before the PR reference, so `(axe, dom) (PR #301)` reads as two parts and a script can tell them apart.
+- Name the page, route or series when you can, in backticks: ``Lab step: estimated reading time (dom) on `reader:lab-step` ``. It becomes the claim's `scope`.
+- No hint means "nothing observable should differ": internal refactors, tests, docs, dependency bumps that leave output alone. If the harness finds a difference under such an entry, the entry was incomplete; fix the entry, do not widen the claim.
+- The claim's `reason` is `CHANGELOG <version>: <the entry text>`, or a Rule reference such as `Rule 0031` where the change implements one. TODO(#214): the final Rule id format and a matching `@artefact:<name>` tag on a Rule follow that issue; this section only fixes the artefact vocabulary, which is the harness's.
+- The same words help in the commit subject and PR title (`fix(reader): raise nav contrast (axe, dom)`), so the entry is easy to write from them.
+
+Database changes follow their own rules: read [guides/MIGRATIONS.md](guides/MIGRATIONS.md) before adding a file under `supabase/migrations/`.
 
 ## Pull Request Process
 

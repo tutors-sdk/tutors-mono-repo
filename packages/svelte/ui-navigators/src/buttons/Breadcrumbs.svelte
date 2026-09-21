@@ -58,6 +58,8 @@
               }}
               >{title(lo.title, truncated[i], i)}
             </span>
+            <!-- Below lg the visible title is hidden, so the link needs a name of its own. -->
+            <span class="sr-only lg:hidden">{lo.title}</span>
           </a>
         </li>
       {/each}

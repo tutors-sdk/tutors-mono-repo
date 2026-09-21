@@ -1,6 +1,6 @@
 {
   "name": "tutors-reader",
-  "version": "16.2.0",
+  "version": "16.2.2",
   "license": "MIT",
   "description": "Tutors - Clean modern course reader",
   "private": true,
@@ -38,6 +38,7 @@
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
+    "@tutors/runtime": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",

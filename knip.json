@@ -11,7 +11,8 @@
   ],
   "ignoreBinaries": [
     "svelte-kit",
-    "deno"
+    "deno",
+    "cosign"
   ],
   "vitest": false,
   "workspaces": {
@@ -20,6 +21,7 @@
         "scripts/**/*.ts",
         "tests/**/*.{test,steps,spec}.ts",
         "*.config.{ts,js,mjs,cjs}",
+        "vitest.aliases.ts",
         ".dependency-cruiser.cjs",
         "tests/release/scripts/*.ts",
         "tests/e2e-stack/fixture-course/build.ts"

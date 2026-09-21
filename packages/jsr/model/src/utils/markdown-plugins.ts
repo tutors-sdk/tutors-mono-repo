@@ -1,6 +1,10 @@
 // @ts-types="npm:@types/markdown-it@^14.1.2"
 import type MarkdownIt from "markdown-it";
 
+// The parser instance. markdown-it 15 (Node) default-exports a callable constant and
+// @types/markdown-it 14 (Deno/JSR) a class; InstanceType resolves to the instance under both.
+export type MarkdownItInstance = InstanceType<typeof MarkdownIt>;
+
 const VIDEO_TOKEN = "::video[";
 const VIDEO_CLOSE = "]::";
 const PODCAST_TOKEN = "::podcast[";
@@ -83,7 +87,7 @@ function renderPodcast(attrs: Record<string, string>): string {
 }
 
 // Custom video player plugin
-export function videoPlayer(md: MarkdownIt) {
+export function videoPlayer(md: MarkdownItInstance) {
   md.inline.ruler.before("text", "custom_video", (state: any, _silent: any) => {
     if (!state.src.startsWith(VIDEO_TOKEN, state.pos)) return false;
     const closeIdx = state.src.indexOf(VIDEO_CLOSE, state.pos + VIDEO_TOKEN.length);
@@ -103,7 +107,7 @@ export function videoPlayer(md: MarkdownIt) {
 }
 
 // Custom podcast player plugin
-export function podcastPlayer(md: MarkdownIt) {
+export function podcastPlayer(md: MarkdownItInstance) {
   md.inline.ruler.before("text", "custom_podcast", (state: any, _silent: any) => {
     if (!state.src.startsWith(PODCAST_TOKEN, state.pos)) return false;
     const closeIdx = state.src.indexOf(PODCAST_CLOSE, state.pos + PODCAST_TOKEN.length);

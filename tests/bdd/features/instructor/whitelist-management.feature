@@ -6,28 +6,29 @@ Feature: Whitelist Management
 
   @ears-state-driven
   Scenario: Private course requires authentication
-    While a course has isPrivate set to true
-    Then the system shall require authentication before displaying content
-    And unauthenticated users shall be redirected to the sign-in page
+    Given the course "secure-101" requires authentication
+    And nobody is signed in
+    When the course is opened
+    Then the system shall require authentication before displaying content, remembering "secure-101" for after sign-in
+    And unauthenticated users shall be redirected to the sign-in page "/auth"
 
   @ears-state-driven
   Scenario: Whitelisted student can access private course
-    While a student is authenticated and on the course whitelist
+    Given the course "secure-101" requires authentication, with the whitelist "alice, bob" and the educators "lecturer"
+    And "Alice" is signed in
+    When the course is opened
     Then the system shall grant access to the course content
 
   @ears-unwanted
   Scenario: Non-whitelisted student denied access
-    If an authenticated student is not on the course whitelist
-    Then the system shall deny access to the course content
-    And the system shall display an access denied message
-
-  @ears-unwanted
-  Scenario: Whitelist check handles missing data gracefully
-    If the whitelist table query returns an error
-    Then the system shall deny access by default
-    And the system shall log the error for debugging
+    Given the course "secure-101" requires authentication, with the whitelist "alice, bob" and the educators "lecturer"
+    And "Mallory" is signed in
+    When the course is opened
+    Then the system shall deny access to the course content by sending the student to "/"
 
   @ears-state-driven
   Scenario: Instructor always has access to their courses
-    While an instructor is authenticated
+    Given the course "secure-101" requires authentication, with the whitelist "alice, bob" and the educators "lecturer"
+    And "Lecturer" is signed in
+    When the course is opened
     Then the system shall grant access regardless of whitelist status

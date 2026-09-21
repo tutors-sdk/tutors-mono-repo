@@ -1,0 +1,12 @@
+{
+  "name": "@tutors/quiz",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Quiz services for Tutors: parses quiz definitions authored in course markdown",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./services/*": "./src/services/*"
+  }
+}

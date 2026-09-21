@@ -57,20 +57,20 @@ function main() {
     maxBuffer: 64 * 1024 * 1024
   });
   if (result.status !== 0) {
-    console.error(result.stderr || result.stdout);
+    process.stderr.write(result.stderr || result.stdout + "\n");
     process.exit(result.status ?? 1);
   }
   const current = flattenKnipReport(result.stdout);
   if (process.argv.includes("--print")) {
-    console.log(current.join("\n"));
+    process.stdout.write(current.join("\n") + "\n");
     return;
   }
   const outcome = ratchet(current, readBaseline(resolve(REPO_ROOT, BASELINE)));
   if (outcome.added.length === 0 && outcome.stale.length === 0) {
-    console.log(`knip: ${current.length} known finding(s), no new ones.`);
+    process.stdout.write(`knip: ${current.length} known finding(s), no new ones.\n`);
     return;
   }
-  console.error(describeRatchet("knip", BASELINE, outcome));
+  process.stderr.write(describeRatchet("knip", BASELINE, outcome) + "\n");
   process.exit(1);
 }
 

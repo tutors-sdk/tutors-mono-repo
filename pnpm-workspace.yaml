@@ -26,3 +26,5 @@ overrides:
   "@sveltejs/kit@<=2.70.1": ">=2.70.2 <3"
   fast-uri@<3.1.6: ">=3.1.6 <4"
   "@xmldom/xmldom@>=0.9.0 <0.9.12": ">=0.9.12 <0.10"
+  # GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh (mermaid > chevrotain > lodash-es).
+  lodash-es@<4.18.1: ">=4.18.1 <5"

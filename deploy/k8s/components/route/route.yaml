@@ -1,0 +1,23 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  # Name, labels, host and target Service are replaced from the rendered
+  # overlay (see kustomization.yaml).
+  name: tutors-app
+  labels:
+    app.kubernetes.io/part-of: tutors
+spec:
+  host: from-origin.invalid
+  to:
+    kind: Service
+    name: tutors-app
+    weight: 100
+  port:
+    targetPort: http
+  # The router terminates TLS with its default (or the cluster's wildcard)
+  # certificate and forwards plain HTTP to the pod, setting x-forwarded-proto
+  # and x-forwarded-host, which the base ConfigMap tells adapter-node to trust.
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

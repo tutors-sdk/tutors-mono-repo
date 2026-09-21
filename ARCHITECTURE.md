@@ -673,6 +673,7 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 **Foundation (Layer 1)**:
 - `runes` - Reactive state management
 - `utils/logger` - Logging
+- `utils/runtime` - Server runtime seams: the clock (`now()`, frozen by `HARNESS_NOW` for the release harness) and the `/version` endpoint. No dependencies
 
 **Core (Layer 2)**:
 - `course` - Course data processing
@@ -1595,7 +1596,7 @@ Applications (reader, catalogue, live, time)
 - `@tutors/runes` → model
 
 **Layer 2** (depends on runes + foundation):
-- `@tutors/course` → runes, logger, model
+- `@tutors/course` → runes, runtime, logger, model
 - `@tutors/a11y` → runes, course
 - `@tutors/i18n` → runes, course
 
@@ -1691,14 +1692,14 @@ pnpm dev
 **Anonymous Mode** (no backend):
 
 ```bash
-# apps/reader/.env
+# .env (repository root)
 PUBLIC_ANON_MODE=TRUE
 ```
 
 **Full Mode** (with services):
 
 ```bash
-# apps/reader/.env
+# .env (repository root)
 PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=xxx
 PRIVATE_AUTH_GITHUB_ID=xxx

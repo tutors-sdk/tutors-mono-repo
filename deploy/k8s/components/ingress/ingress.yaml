@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  # Name, labels, host and backend Service are replaced from the rendered
+  # overlay (see kustomization.yaml).
+  name: tutors-app
+  labels:
+    app.kubernetes.io/part-of: tutors
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: from-origin.invalid
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tutors-app
+                port:
+                  name: http

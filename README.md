@@ -14,13 +14,13 @@ Ten minutes from clone to a rendered course. Requires Node.js >= 22.12.0 and pnp
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
 pnpm install
-cp .env.example apps/reader/.env
+cp .env.example .env
 pnpm dev
 ```
 
 Then open **http://localhost:5173/course/reference-course**.
 
-That is it. `pnpm dev` builds the three UI packages in the right order and starts the reader. The copied `.env` has `PUBLIC_ANON_MODE=TRUE`, so no Supabase project, GitHub OAuth app or other backend is needed; the reader fetches the course straight from `https://reference-course.netlify.app/tutors.json`. Any published Tutors course works the same way: `http://localhost:5173/course/<course-id>`.
+That is it. `pnpm dev` builds the three UI packages in the right order and starts the reader. The copied `.env` sits at the repository root and all four apps read it. It has `PUBLIC_ANON_MODE=TRUE`, so no Supabase project, GitHub OAuth app or other backend is needed; the reader fetches the course straight from `https://reference-course.netlify.app/tutors.json`. Any published Tutors course works the same way: `http://localhost:5173/course/<course-id>`.
 
 New here? Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) next. It follows that URL through the code to the rendered cards, naming every file on the way. Then pick something from the [`good first issue`](https://github.com/tutors-sdk/tutors-mono-repo/labels/good%20first%20issue) list.
 
@@ -81,6 +81,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | Directory | Package | What it is |
 |---|---|---|
 | `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
+| `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
 | `packages/svelte/connect` | `@tutors/connect` | Authentication and user management |
 | `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
@@ -104,13 +105,9 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install for the reader. For the other apps, each one reads its own `.env`:
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` sets `envDir` to the root, and its `svelte.config.js` sets `kit.env.dir` to match so the `$env` modules resolve from the same file. There is nothing further to copy.
 
-```bash
-cp .env.example apps/catalogue/.env
-cp .env.example apps/live/.env
-cp .env.example apps/time/.env
-```
+Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 
 ### Development
 

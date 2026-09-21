@@ -22,7 +22,7 @@ import {
   removeLeadingHashes,
 } from "../utils/lr-utils.ts";
 import { type Archive, type Composite, type Course, isCompositeLo, type Lab, type Lo, type Notebook, type NotebookCell, type NotebookOutput, Podcast, preOrder, Properties, type Talk, Tutorial, type Whiteboard } from "@tutors/tutors-model-lib";
-import { readWholeFile, readYamlFile } from "../utils/file-utils.ts";
+import { getFileName, readWholeFile, readYamlFile } from "../utils/file-utils.ts";
 import type { LearningResource } from "../types/types.ts";
 
 let silentGlobal = false;
@@ -83,11 +83,13 @@ function buildLab(lo: Lo, lr: LearningResource): Lo {
     const wholeFile = readWholeFile(chapterName);
     const contents = frontMatter(wholeFile);
     let theTitle = contents.body.substring(0, contents.body.indexOf("\n"));
-    theTitle = theTitle.replace("\r", "");
-    theTitle = removeLeadingHashes(theTitle);
-    const shortTitle = chapterName.substring(
-      chapterName.indexOf(".") + 1,
-      chapterName.lastIndexOf("."),
+    theTitle = removeLeadingHashes(theTitle).trim();
+    // The step id sits between the first and last "." of the file name (01.Setup.md -> Setup).
+    // Take them from the file name, not the full path, which may contain dotted directories.
+    const fileName = getFileName(chapterName);
+    const shortTitle = fileName.substring(
+      fileName.indexOf(".") + 1,
+      fileName.lastIndexOf("."),
     );
     if (lab.title == "") lab.title = shortTitle;
     const labStep = {
@@ -276,7 +278,7 @@ function buildLo(
   keyFileName: string = "",
 ): Lo {
   let lo = buildDefaultLo(lr, keyFileName);
-  if (!silentGlobal) console.log(`${"-".repeat(level * 2)}: ${lo.id} : ${lo.title}`);
+  if (!silentGlobal) process.stdout.write(`${"-".repeat(level * 2)}: ${lo.id} : ${lo.title}\n`);
   if (isCompositeLo(lo)) {
     lo = buildCompositeLo(lo, lr, level);
   } else {

@@ -1,13 +1,19 @@
 /* global APP_VERSION */
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
-import { createRequestLogger, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+import { building } from "$app/environment";
+import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
+import { announceClock } from "@tutors/runtime";
 
 setAppName("tutors-catalogue");
+// From here on every stdout/stderr line of the running server is one JSON object: stray console
+// output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
+if (!building) installProcessLogging();
 
 export const init: ServerInit = async () => {
   logServiceStart({ version: APP_VERSION });
+  announceClock(log);
 };
 
 const securityHeaders: Handle = async ({ event, resolve }) => {

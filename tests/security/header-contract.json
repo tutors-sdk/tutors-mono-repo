@@ -27,7 +27,7 @@
     }
   },
   "apps": {
-    "reader": { "paths": ["/", "/runway-smoke-not-found", "/auth/csrf"] },
+    "reader": { "paths": ["/", "/runway-smoke-not-found", "/auth/csrf", "/auth", "/auth/runway-smoke-course"] },
     "catalogue": { "paths": ["/", "/runway-smoke-not-found"] },
     "live": { "paths": ["/", "/runway-smoke-not-found"] },
     "time": { "paths": ["/", "/runway-smoke-not-found"] }

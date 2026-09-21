@@ -1,7 +1,5 @@
 import { catalogueService } from "@tutors/community";
 
-export const ssr = false;
-
 export const load = async ({ fetch }) => {
   let catalogueEntries = await catalogueService.getCatalogue();
   catalogueEntries = catalogueEntries.filter((entry) => entry.visit_count >= 20).sort((a, b) => b.visit_count - a.visit_count);

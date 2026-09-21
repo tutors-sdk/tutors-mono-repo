@@ -15,8 +15,9 @@ labels:
 
 images:
   - name: tutors-app
-    newName: registry.example.com/tutors/catalogue
-    newTag: "16.2.0"
+    newName: quay.io/tutors-sdk/tutors-catalogue
+    newTag: "16.2.2"
+    digest: sha256:f6cdb7f6adaba1d227e2cf62260ec2fe7064c58114666774331da3530bf52187
 
 patches:
   - target:

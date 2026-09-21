@@ -11,6 +11,11 @@ export interface LoggerOptions {
   level?: LogLevel;
   context?: Record<string, unknown>;
   output?: (entry: LogEntry) => void;
+  /**
+   * Start every entry with the fixed core key set (`CORE_LOG_KEYS`), null when
+   * a value is unknown. Defaults to true on the server outside dev builds.
+   */
+  structured?: boolean;
 }
 
 export type Transport = (entry: LogEntry) => void;

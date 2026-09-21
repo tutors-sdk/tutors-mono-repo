@@ -71,8 +71,8 @@
           output += repr + "\n";
         }
       }
-    } catch (err: any) {
-      const msg = err?.message || String(err);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
       const cleaned = msg.replace(/PythonError: Traceback \(most recent call last\):\n\s+File "<exec>", line \d+, in <module>\n/, "");
       output += cleaned;
     } finally {

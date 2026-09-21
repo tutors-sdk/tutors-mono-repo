@@ -60,5 +60,11 @@ reports/mutation/
 # Generated OKF knowledge bundle
 okf/
 
+# Kubernetes secrets are created out of band; only the example is tracked
+deploy/k8s/**/secrets.yaml
+# Generator differential work area (scripts/checks/generator-diff.ts)
+.generator-diff/
+# graphify working output and cache (the committed report lives in docs/knowledge-graph/)
+graphify-out/
 # Local-only observability guides (contain production setup steps)
 observability/grafana/PRODUCTION-SETUP.md

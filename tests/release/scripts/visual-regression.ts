@@ -15,15 +15,15 @@ const args = parseArgs(Deno.args, {
 });
 
 async function run() {
-  console.log("Visual regression testing");
-  console.log(`  Production: ${args.production}`);
-  console.log(`  Preview:    ${args.preview}`);
-  console.log("");
-  console.log("This script requires Playwright to be installed.");
-  console.log("Run with: pnpm exec playwright install --with-deps chromium");
-  console.log("");
-  console.log("Visual regression comparison is a warning-only check.");
-  console.log("Implement Playwright screenshot comparison for full automation.");
+  process.stdout.write("Visual regression testing\n");
+  process.stdout.write(`  Production: ${args.production}\n`);
+  process.stdout.write(`  Preview:    ${args.preview}\n`);
+  process.stdout.write("\n");
+  process.stdout.write("This script requires Playwright to be installed.\n");
+  process.stdout.write("Run with: pnpm exec playwright install --with-deps chromium\n");
+  process.stdout.write("\n");
+  process.stdout.write("Visual regression comparison is a warning-only check.\n");
+  process.stdout.write("Implement Playwright screenshot comparison for full automation.\n");
 }
 
 await run();

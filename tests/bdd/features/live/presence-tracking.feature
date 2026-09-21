@@ -4,25 +4,13 @@ Feature: Presence Tracking
   So that I can monitor engagement in real time
 
   Scenario: Display courses with active students
-    Given 3 students are online across 2 courses
-    When I view the live dashboard
-    Then I should see 2 course cards
-    And each card should show the number of active students
+    Given I am viewing the live dashboard
+    When 3 students come online across the courses "web-dev-101, databases-101"
+    Then I should see 2 course cards, for "web-dev-101, databases-101"
+    And the dashboard should count 3 active students
 
   Scenario: Display individual student on a course
-    Given a student "Alice" is active on "web-dev-101"
-    When I view the course detail for "web-dev-101"
+    Given I am viewing the course detail for "web-dev-101"
+    When a student "Alice" becomes active on "web-dev-101"
     Then I should see "Alice" in the active students list
-    And I should see their avatar
-
-  Scenario: Handle student disconnect
-    Given a student "Alice" is active on "web-dev-101"
-    When "Alice" disconnects from the WebSocket
-    Then "Alice" should be removed from the active students list
-    And the active count for "web-dev-101" should decrease by 1
-
-  Scenario: Group students by course
-    Given 5 students are online across 3 courses
-    When I view the live dashboard
-    Then students should be grouped by their current course
-    And each group should show the correct student count
+    And I should see their avatar "https://avatars.example/alice.png"

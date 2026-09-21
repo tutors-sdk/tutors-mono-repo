@@ -1,14 +1,7 @@
 # knip findings that predate tier A's knip check (config: knip.json).
 # This file may only shrink: fix the finding and delete its line.
 
-# Workspace dependencies declared but never imported. The @tutors/course entries are
-# the package.json half of the course -> themes -> community -> course cycle pnpm warns
-# about; removing them clears the warning without touching code.
-dependencies: packages/svelte/community/package.json: @tutors/course
-dependencies: packages/svelte/connect/package.json: @tutors/course
-dependencies: packages/svelte/ui-components/package.json: @tutors/a11y
-dependencies: packages/svelte/utils/a11y/package.json: @tutors/course
-dependencies: packages/svelte/utils/i18n/package.json: @tutors/course
+# Workspace dependencies declared but never imported.
 devDependencies: apps/catalogue/package.json: @tutors/course
 devDependencies: apps/catalogue/package.json: @tutors/tutors-model-lib
 

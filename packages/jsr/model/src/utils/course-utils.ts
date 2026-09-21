@@ -102,7 +102,7 @@ export function createCompanions(course: Course) {
 export function createWalls(course: Course) {
   course.walls = [];
   course.wallMap = new Map<string, Lo[]>();
-  ["talk", "tutorial", "note", "lab", "notebook", "podcast", "web", "archive", "github"].forEach((type) => addWall(course, type as LoType));
+  ["talk", "tutorial", "note", "lab", "notebook", "podcast", "web", "archive", "github", "quiz"].forEach((type) => addWall(course, type as LoType));
   course.wallBar = {
     show: true,
     bar: [],
@@ -112,11 +112,27 @@ export function createWalls(course: Course) {
   });
 }
 
+/** Types whose plural neither the "s" nor the "es" rule produces. */
+const irregularPlurals: Record<string, string> = {
+  quiz: "quizzes",
+};
+
+/**
+ * Plural of a learning object type, for wall titles and tooltips. Without this
+ * a quiz wall is labelled "All quizs". Walls are also built for custom types
+ * drawn from course properties, so this handles any string, not just LoType.
+ */
+export function pluraliseLoType(type: string): string {
+  const irregular = irregularPlurals[type.toLowerCase()];
+  if (irregular) return irregular;
+  return /(s|x|z|ch|sh)$/i.test(type) ? `${type}es` : `${type}s`;
+}
+
 function createWallLink(type: string, course: Course): IconNav {
   return {
     link: `/wall/${type}/${course.courseId}`,
     type: type,
-    tip: `All ${type}s in the course`,
+    tip: `All ${pluraliseLoType(type)} in the course`,
     target: "",
   };
 }
@@ -174,7 +190,15 @@ export function loadPropertyFlags(course: Course) {
   });
 }
 
-export function initCalendar(course: Course) {
+/**
+ * Parse the course calendar and work out which week is current.
+ *
+ * @param course The course whose `calendar` property is read.
+ * @param today The instant to treat as "now", in epoch milliseconds. Defaults to the
+ *   system clock; the server passes its clock seam so the current week follows the
+ *   frozen instant the release harness sets (`HARNESS_NOW`).
+ */
+export function initCalendar(course: Course, today: number = Date.now()) {
   try {
     if (!course.calendar) return;
     const calendarObj = course.calendar;
@@ -210,7 +234,6 @@ export function initCalendar(course: Course) {
       }
     }
 
-    const today = Date.now();
     const currentWeek = weeks.find(
       (week, i) =>
         today > Date.parse(week.date) &&
@@ -222,7 +245,8 @@ export function initCalendar(course: Course) {
       weeks,
       currentWeek,
     };
-  } catch (e) {
-    console.error("Error loading calendar:", e);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error loading calendar: ${message}\n`);
   }
 }

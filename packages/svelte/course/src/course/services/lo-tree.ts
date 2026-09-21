@@ -1,7 +1,9 @@
 import { courseProtocol } from "@tutors/runes";
+import { nowMs } from "@tutors/runtime";
 import { themeService } from "@tutors/themes";
 import {
   allVideoLos,
+  convertLoSummaryToHtml,
   convertLoToHtml,
   createCompanions,
   createWalls,
@@ -60,8 +62,8 @@ export function decorateCourseTree(course: Course, courseId: string = "", course
   registerCompanionIcons(course);
   createWalls(course);
   // createToc(course);
-  initCalendar(course);
-
+  // The current week follows the server clock seam, so a frozen HARNESS_NOW freezes it too.
+  initCalendar(course, nowMs());
 }
 
 /**
@@ -83,7 +85,7 @@ function registerCompanionIcons(course: Course) {
   }
 }
 
-function decorateLoTree(course: Course, lo: Lo) {
+export function decorateLoTree(course: Course, lo: Lo) {
   // every Lo knows its parent
   lo.parentCourse = course;
   // recover icon from frontmatter if present
@@ -93,14 +95,23 @@ function decorateLoTree(course: Course, lo: Lo) {
   crumbs(lo, lo.breadCrumbs);
   if (lo.breadCrumbs?.length > 2) {
     if (lo.breadCrumbs[1].type === "unit" || lo.breadCrumbs[1].type === "side") {
-      lo.breadCrumbs[1].route = lo.breadCrumbs[1].route.replace("topic", "course");
+      // The generator routes a top-level unit or side to its parent page as /topic/<course id>,
+      // which is really the course page. Rewrite only that leading segment: this runs once per
+      // descendant, and a course id such as "web-topics-2026" must come through intact.
+      lo.breadCrumbs[1].route = lo.breadCrumbs[1].route.replace(/^\/topic(?=\/|$)/, "/course");
     }
   }
 
   // Convert contentMd to html
-  if (lo.type !== "lab" && lo.type !== "note" && lo.type !== "notebook") {
-    // Convert labs, notes & notebooks on demand as can be time consuming to convert all at once
+  if (lo.type !== "lab" && lo.type !== "note" && lo.type !== "notebook" && lo.type !== "quiz") {
+    // Convert labs, notes, notebooks & quizzes on demand as can be time consuming to convert all at once.
+    // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
     convertLoToHtml(course, lo);
+  } else {
+    // Only the body of those types waits for on demand conversion. The summary is a single
+    // line and its card is on screen as soon as the tree is built, so leaving it as markdown
+    // renders the source - "**bold**" and all - until the Lo itself is opened.
+    convertLoSummaryToHtml(lo);
   }
 
   if (isCompositeLo(lo)) {
