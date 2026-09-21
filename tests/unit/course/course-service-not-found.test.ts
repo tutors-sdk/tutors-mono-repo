@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
 import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
@@ -79,5 +80,51 @@ describe("courseService: a course that does not exist", () => {
     const failure = await failureOf(courseService.readCourse("broken-course", answering(500)));
     expect(failure).not.toBeInstanceOf(CourseNotFoundError);
     expect((failure as Error).message).toBe("Fetch failed with status 500");
+  });
+});
+
+describe("courseService: a failed fetch is logged with a fixed message", () => {
+  afterEach(() => {
+    setCourseNotFoundHandler((error) => {
+      throw error;
+    });
+    setCourseUnreachableHandler((cause) => {
+      throw cause;
+    });
+  });
+
+  /** Run `load` and return every entry the logger wrote meanwhile. */
+  async function logged(load: Promise<unknown>): Promise<LogEntry[]> {
+    const entries: LogEntry[] = [];
+    const transport = (entry: LogEntry) => void entries.push(entry);
+    addTransport(transport);
+    try {
+      await failureOf(load);
+    } finally {
+      removeTransport(transport);
+    }
+    return entries;
+  }
+
+  it("keeps the course and URL out of the message, so two courses give the same message and key set", async () => {
+    const a = await logged(courseService.readCourse("first-missing", answering(404)));
+    const b = await logged(courseService.readCourse("second-missing", answering(404)));
+
+    expect(a).toHaveLength(1);
+    expect(b).toHaveLength(1);
+    expect(a[0]!.message).toBe("Error fetching course");
+    expect(b[0]!.message).toBe(a[0]!.message);
+    expect(a[0]).toMatchObject({ courseId: "first-missing", url: "https://first-missing.netlify.app/tutors.json" });
+    expect(Object.keys(b[0]!)).toEqual(Object.keys(a[0]!));
+  });
+
+  it("has the same keys whether the fetch threw or the host answered", async () => {
+    const answered = await logged(courseService.readCourse("gone", answering(404)));
+    const threw = await logged(courseService.readCourse("offline", unreachable));
+
+    expect(threw).toHaveLength(1);
+    expect(threw[0]!.message).toBe("Error fetching course");
+    expect(threw[0]).toMatchObject({ error: "Failed to fetch" });
+    expect(Object.keys(threw[0]!).sort()).toEqual(Object.keys(answered[0]!).sort());
   });
 });

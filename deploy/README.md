@@ -340,6 +340,15 @@ order, types, `event`, `message`, `level` (apart from the `slow` case) and
 line counts per event are stable. `pnpm check:container` checks the contract
 against real container output.
 
+`message` is fixed text: a collector, and the release harness, group and diff
+lines by it, so anything that varies per request or per failure goes in a
+field, never into the message. Write `log.error("Error fetching course", { courseId, url })`,
+not `` log.error(`Error fetching ${url}`) ``, and never pass an `Error` or a
+variable as the first argument (its text becomes the message). The observability
+contract test (`log message stability`) fails on a log call in product code whose
+first argument is not a string literal. The `console` event is the one
+exception: it carries whatever a third-party library printed.
+
 Two kinds of output cannot be JSON and are outside the contract: anything
 printed before the server module loads (a Node flag error, a missing
 `build/index.js`), and V8's own fatal errors such as heap exhaustion, which
