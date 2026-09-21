@@ -177,14 +177,21 @@ The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a
 2. **Images.** A tag created by a workflow's own token does not trigger other workflows, so the `v*` tag trigger of `image-build.yml` never sees an RC tag. The job starts `image-build.yml` on the tag with `workflow_dispatch`, watches the run (a Trivy finding fails the candidate here) and then waits until `quay.io/tutors-sdk/tutors-{reader,catalogue,live,time}:X.Y.Z-rc.N` can be pulled anonymously. If `image-build.yml` is absent or has no `workflow_dispatch` trigger, the job warns and continues, and the harness builds the candidate from the git tag instead.
 3. **Dispatch.** A `repository_dispatch` of type `release-candidate` to `tutors-sdk/tutors-release-harness`, which runs its release, migration and upgrade modes. The result is in that repository's Actions tab, linked from this workflow's summary.
 
+Two more jobs feed the dispatch. `rules` runs beside `images`: it publishes `rules.json` (`pnpm release:rules --ref <sha>`) as an asset of a **prerelease named for the rc tag**, `https://github.com/tutors-sdk/tutors-mono-repo/releases/download/vX.Y.Z-rc.N/rules.json`, because the harness needs a URL it can fetch without credentials. The rc tag is immutable and the file is a function of the commit, so the URL never changes meaning; a prerelease made with `GITHUB_TOKEN` starts no workflow. The job is best-effort (`continue-on-error`): without it the dispatch goes out without `rules_url`, and only a claim that names a `rule` needs the file.
+
 | `client_payload` | Value |
 | --- | --- |
 | `production` | `images[].newTag` of `deploy/k8s/overlays/reader/kustomization.yaml` **on `main`**. The overlays name the deployed version and move only when a release is deployed, so during a release cycle this is still production, not the candidate |
 | `candidate` | `X.Y.Z-rc.N` |
 | `claims_url` | `https://raw.githubusercontent.com/tutors-sdk/tutors-mono-repo/<sha>/release/claims.yaml`, pinned to the tagged commit |
-| `runs` | `3` |
+| `runs` | `5`. The harness default moved from 3 to 5 (contract 1.3.0): three runs can never reach alpha 0.05 on timing, four is the least that can. `DEFAULT_RUNS` in `scripts/release-harness.ts` is the one constant; the workflow sends the same number and `tests/conformance/release-harness.test.ts` fails when they differ |
 | `migrations_a` | `v<production>`, or `release/<production>` for a release that was never tagged |
 | `migrations_b` | the tagged commit's sha |
+| `production_digests` | Optional. `{"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:...", "time": "sha256:..."}`: the `digest:` of each of the four overlays on `main`, read the way `newTag` is. Omitted, with a notice, when any overlay lacks a valid one |
+| `candidate_digests` | Optional. The same four apps, read from the registry once the images are served: `docker buildx imagetools inspect quay.io/tutors-sdk/tutors-<app>:X.Y.Z-rc.N --format '{{.Manifest.Digest}}'` (the manifest or index digest, the one `pnpm deploy:pin` reads). Omitted when the images were not published here or a digest cannot be read |
+| `rules_url` | Optional. The `rules.json` asset above. Omitted when the `rules` job fails |
+
+The payload has nine top-level properties; `repository_dispatch` accepts at most ten, so a tenth is the last. The three optional fields are harness contract 1.3.0. The harness that is on `main` today reads only the fields it names (`production`, `candidate`, `claims_url`, `runs`, `migrations_a`, `migrations_b`) and ignores the rest, so this payload is safe to send before harness 1.3.0 is released; until then the digests only appear in the run record and the harness resolves the bare tags as before. An older harness does run five journeys per side instead of three when it is sent `runs: 5`, which takes longer within the same job timeout.
 
 **`release-claims.yml`**, on the same pushes and on release PRs, fails when `release/claims.yaml` is missing or is not a file the harness would accept (`pnpm check:release-claims`). Its `migrations` job runs `pnpm check:migrations`, which fails when a migration added since `main` is destructive and unclaimed, or breaks the layout rules; see [MIGRATIONS.md](MIGRATIONS.md). The file format is in [release/README.md](../release/README.md); changes to it are owned by the maintainers through CODEOWNERS, because a claim waives a failure.
 
@@ -224,7 +231,7 @@ Prerelease tags, `main`, `rc/**` branches, pull requests and the backfill dispat
 | Variable `HARNESS_IMAGE_PREFIX` | the harness repository | **Open.** The harness expands a bare tag to `<prefix>/<app>:<tag>`, while `image-build.yml` publishes `quay.io/tutors-sdk/tutors-<app>:<tag>`, which no prefix can produce. Until one side changes, the harness fails to pull and builds both sides from their git tags (`v<tag>`), which is slower but compares the same code. The payload deliberately stays bare tags so that this fallback keeps working |
 | Quay repositories | quay.io | Public, so the harness and the wait step can pull without credentials |
 
-Everything else uses the workflow's own `GITHUB_TOKEN`: `contents: write` in the tagging job only, `actions: write` in the image job only, and nothing at all in the jobs that hold `HARNESS_TOKEN`. The token's Variables permission is wider than the candidate dispatch needs; `deploy.yml` and `release-dispatch.yml` share the secret on purpose, one credential to rotate. To split them, give `deploy.yml` its own secret and keep the other one Contents-only.
+Everything else uses the workflow's own `GITHUB_TOKEN`: `contents: write` in the tagging job only, `actions: write` in the image job only, `contents: write` in the `rules` job (the rc prerelease and its `rules.json`), and nothing at all in the jobs that hold `HARNESS_TOKEN`. The token's Variables permission is wider than the candidate dispatch needs; `deploy.yml` and `release-dispatch.yml` share the secret on purpose, one credential to rotate. To split them, give `deploy.yml` its own secret and keep the other one Contents-only.
 
 #### Deploy and post-deploy
 
@@ -249,14 +256,11 @@ Deploying a release, once `vX.Y.Z` is tagged and `image-build.yml` has published
 
 The order in step 4 is deliberate: a failure setting the variable stops the job before anything is dispatched, and both calls are idempotent, so re-running the job or dispatching `deploy.yml` by hand is safe. Add the maintainers as required reviewers of the `production` environment (Settings, Environments) so that the approval means "the rollout has finished"; until that is configured the job runs as soon as verify passes.
 
-`deploy.yml` sends `{"event_type": "deployed", "client_payload": {"production": "X.Y.Z", "digests": {"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:..."}}}`. Harness contract 1.1.0 reads no field of a `deployed` payload and ignores unknown ones, so today `production` and `digests` only appear in the run record.
+`deploy.yml` sends `{"event_type": "deployed", "client_payload": {"production": "X.Y.Z", "digests": {"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:...", "time": "sha256:..."}}}`. All four apps are sent: harness contract 1.3.0 stacks four apps and compares `digests` with the release record it kept, and reports an incomplete record when `time` is missing (a difference or a missing record is a warning there, never a failure). Contract 1.1.0 and 1.2.0 read no field of a `deployed` payload and ignore unknown ones, so with an older harness `production` and `digests` only appear in the run record.
 
 **Pinned digest equals judged digest.** Since the final tag promotes the last release candidate's image instead of rebuilding it (see [Final tag: the candidate ships](#final-tag-the-candidate-ships)), `X.Y.Z` resolves to the same digest as the `X.Y.Z-rc.N` image the harness judged. `pnpm deploy:pin X.Y.Z` therefore pins the judged digest: the digest the overlays name, the one `deploy.yml` sends in `digests`, and the one the harness compared are one and the same, for an app that was promoted. The signature check accepts both signing refs, `refs/tags/vX.Y.Z-rc.N` (a promoted image, signed at the candidate's ref) and `refs/tags/vX.Y.Z` (an image the run had to rebuild), in both `deploy:pin` and `check:deploy-pins --registry`.
 
-**What is not yet closed.** Two things need harness changes (contract 1.1.0: `release-candidate` takes bare tags, `deployed` takes nothing), so the equality is not yet enforced by the harness:
-
-- `release-candidate` should accept the digests of both sides, so the harness pulls exactly what `release-dispatch.yml` published and what the overlays pin: optional `production_digests` and `candidate_digests`, each `{"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:..."}`, turned into `--a` and `--b` references of the form `repo:tag@sha256:...`, which the CLI already accepts.
-- `deployed` should read `production` and `digests` and compare `digests` with the `provenance.b.images.*.digest` of the recorded release run, warning when they differ.
+**What closes it, and what is still open.** Harness contract 1.3.0 (the harness's PR #5, not yet released) enforces the equality, and the payloads above already carry what it reads: `release-candidate` takes `production_digests` and `candidate_digests` and pins `--a` and `--b` by digest (`repo:tag@sha256:...`; a tag that now resolves to another digest is exit 2, cannot judge), and `deployed` takes `production` and `digests` and compares them with the release record it kept when it judged the candidate, warning when they differ. Until a harness that speaks 1.3.0 is running, an older one ignores the fields and the equality is not enforced.
 
 An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
 
@@ -281,9 +285,9 @@ It takes each value from where the workflow does, so run it on the release branc
 | `candidate` | `--candidate`, else the `vX.Y.Z-rc.N` already on the commit, else the next free `N`. The version is `package.json` at the commit and must match a `release/X.Y.Z` branch name. Nothing is tagged: push the tag before a real gate, because the harness builds a candidate the registry lacks from its tag |
 | `migrations_b` | the commit (`--ref`, default `HEAD`) |
 | `claims_url` | the raw URL of `release/claims.yaml` at that commit; `--run` passes the file as read from that commit. The file is shape-checked first |
-| `runs` | `3` (`--runs`) |
+| `runs` | `5` (`--runs`) |
 
-`production_digests` (from the overlays' `digest`, once they carry one), `candidate_digests` (`--candidate-digest reader=sha256:...`) and `rules_url` (`--rules-url`) are added only when there is something to send. `release-dispatch.yml` still builds its payload with `gh api`, because its checkout is shallow and its tag is made through the API; `tests/conformance/release-harness.test.ts` holds the two to the same fields, order and rules.
+`production_digests` (from the `digest` of the reader, catalogue, live and time overlays, once they all carry one), `candidate_digests` (`--candidate-digest reader=sha256:...`) and `rules_url` (`--rules-url`) are added only when there is something to send. `release-dispatch.yml` still builds its payload with `gh api`, because its checkout is shallow and its tag is made through the API; `tests/conformance/release-harness.test.ts` holds the two to the same fields, order and rules.
 
 #### `rc/**` and `release/**`
 

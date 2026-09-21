@@ -7,7 +7,8 @@ name: Release Candidate Dispatch
 #                 wait until the registry serves them
 #   3. dispatch   ask tutors-sdk/tutors-release-harness to judge the candidate
 #                 beside the production tag (repository_dispatch,
-#                 event_type release-candidate)
+#                 event_type release-candidate), naming the images by digest and
+#                 the Rules the release defines
 #
 # Setup, the HARNESS_TOKEN secret and the payload are documented in
 # guides/Release-Strategy.md#release-harness.
@@ -23,6 +24,7 @@ name: Release Candidate Dispatch
 #     builds a missing tag from the git ref instead.
 #   - The production tag is read from the reader overlay on main. On the
 #     release branch the overlay already names the version being released.
+#     So are the production digests: the `digest:` of each overlay on main.
 
 on:
   push:
@@ -54,6 +56,7 @@ jobs:
       candidate: ${{ steps.tag.outputs.candidate }}
       production: ${{ steps.production.outputs.production }}
       migrations_a: ${{ steps.production.outputs.migrations_a }}
+      production_digests: ${{ steps.production_digests.outputs.production_digests }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -120,6 +123,29 @@ jobs:
           echo "production=$production" >> "$GITHUB_OUTPUT"
           echo "migrations_a=$migrations_a" >> "$GITHUB_OUTPUT"
 
+      # Optional payload field production_digests: the digest each overlay on main
+      # pins, read like newTag above. All four or none: a partial record would
+      # let the harness pin some apps by digest and judge the rest by tag.
+      - name: Read the production digests from main
+        id: production_digests
+        if: steps.version.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          digests='{}'
+          for app in reader catalogue live time; do
+            digest="$(gh api -H 'Accept: application/vnd.github.raw+json' \
+              "repos/$GITHUB_REPOSITORY/contents/deploy/k8s/overlays/$app/kustomization.yaml?ref=main" 2>/dev/null \
+              | sed -n 's/^[[:space:]]*digest:[[:space:]]*"\{0,1\}\(sha256:[0-9a-f]\{64\}\)"\{0,1\}[[:space:]]*\(#.*\)\{0,1\}$/\1/p' | head -n 1)" || digest=""
+            if [ -z "$digest" ]; then
+              echo "::notice::The $app overlay on main has no readable digest; production_digests is left out of the dispatch."
+              echo "production_digests=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            digests="$(jq -c --arg app "$app" --arg digest "$digest" '. + {($app): $digest}' <<< "$digests")"
+          done
+          echo "production_digests=$digests" >> "$GITHUB_OUTPUT"
+
       # Created through the API: no git credentials on disk, and a ref that
       # already exists is refused, so two runs cannot both take the same N.
       # A re-run of this workflow reuses the rc tag already on this commit.
@@ -156,6 +182,7 @@ jobs:
       contents: read
     outputs:
       published: ${{ steps.build.outputs.published }}
+      candidate_digests: ${{ steps.digests.outputs.candidate_digests }}
     env:
       GH_TOKEN: ${{ github.token }}
       CANDIDATE: ${{ needs.candidate.outputs.candidate }}
@@ -210,16 +237,97 @@ jobs:
             exit 1
           done
 
+      # Optional payload field candidate_digests: what the registry serves for
+      # each tag, so the harness pulls exactly these images and its release
+      # record keeps them. The digest of the tag's manifest (the index, for a
+      # multi-arch image), the same one `pnpm deploy:pin` reads. All four or
+      # none: the previous step has just seen every tag, so a miss here is odd
+      # and the harness is better off with the bare tags than with a partial set.
+      - name: Read the candidate's digests from the registry
+        id: digests
+        if: steps.build.outputs.published == 'true'
+        run: |
+          digests='{}'
+          for app in reader catalogue live time; do
+            image="$IMAGE_PREFIX$app:$CANDIDATE"
+            if ! digest="$(docker buildx imagetools inspect "$image" --format '{{.Manifest.Digest}}' 2>/dev/null)" \
+              || ! printf '%s' "$digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
+              echo "::warning::Could not read the digest of $image; candidate_digests is left out of the dispatch."
+              echo "candidate_digests=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "$image -> $digest"
+            digests="$(jq -c --arg app "$app" --arg digest "$digest" '. + {($app): $digest}' <<< "$digests")"
+          done
+          echo "candidate_digests=$digests" >> "$GITHUB_OUTPUT"
+
+  # Optional payload field rules_url: the Rules the release defines, as rules.json
+  # (pnpm release:rules). The harness needs a URL it can GET without credentials,
+  # so the file is an asset of a prerelease named for the rc tag:
+  # https://github.com/<repo>/releases/download/vX.Y.Z-rc.N/rules.json. The rc tag
+  # is immutable and the file is a function of the commit it names, so the URL
+  # never changes meaning. A prerelease made with GITHUB_TOKEN starts no workflow,
+  # and this job is best-effort: without a rules_url the dispatch still goes out
+  # and only a claim that names a `rule` needs the file.
+  rules:
+    name: Publish the candidate's Rules
+    needs: candidate
+    if: needs.candidate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      contents: write # create the rc prerelease and attach rules.json
+    outputs:
+      rules_url: ${{ steps.publish.outputs.rules_url }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CANDIDATE: ${{ needs.candidate.outputs.candidate }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter .
+
+      - name: Publish rules.json as an asset of the rc prerelease
+        id: publish
+        run: |
+          pnpm --silent release:rules --ref "$GITHUB_SHA" --out rules.json
+          tag="v$CANDIDATE"
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease \
+              --title "$tag" --notes "Release candidate $tag. The assets are inputs of the release harness; the candidate's images are published by image-build.yml."
+          fi
+          gh release upload "$tag" rules.json --repo "$GITHUB_REPOSITORY" --clobber
+          url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$tag/rules.json"
+          echo "rules_url=$url" >> "$GITHUB_OUTPUT"
+          echo "Rules: $url" >> "$GITHUB_STEP_SUMMARY"
+
   dispatch:
     name: Dispatch the release harness
-    needs: [candidate, images]
+    needs: [candidate, images, rules]
     if: needs.candidate.outputs.ready == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
       # client_payload is the contract of .github/workflows/release.yml in the
-      # harness: production, candidate, claims_url, runs, migrations_a, migrations_b.
+      # harness. Required: production, candidate. Sent always: claims_url, runs,
+      # migrations_a, migrations_b. Optional, sent when there is something to
+      # send (harness contract 1.3.0; an older harness ignores unknown fields):
+      # production_digests, candidate_digests, rules_url.
       - name: Send release-candidate
         env:
           GH_TOKEN: ${{ secrets.HARNESS_TOKEN }}
@@ -227,6 +335,9 @@ jobs:
           CANDIDATE: ${{ needs.candidate.outputs.candidate }}
           MIGRATIONS_A: ${{ needs.candidate.outputs.migrations_a }}
           PUBLISHED: ${{ needs.images.outputs.published }}
+          PRODUCTION_DIGESTS: ${{ needs.candidate.outputs.production_digests }}
+          CANDIDATE_DIGESTS: ${{ needs.images.outputs.candidate_digests }}
+          RULES_URL: ${{ needs.rules.outputs.rules_url }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "::error::The HARNESS_TOKEN secret is not set. See guides/Release-Strategy.md#release-harness."
@@ -239,8 +350,15 @@ jobs:
             --arg claims_url "$claims_url" \
             --arg migrations_a "$MIGRATIONS_A" \
             --arg migrations_b "$GITHUB_SHA" \
-            '{event_type: "release-candidate", client_payload: {production: $production, candidate: $candidate, claims_url: $claims_url, runs: 3, migrations_a: $migrations_a, migrations_b: $migrations_b}}' \
-            | tee payload.json
+            --argjson production_digests "${PRODUCTION_DIGESTS:-null}" \
+            --argjson candidate_digests "${CANDIDATE_DIGESTS:-null}" \
+            --arg rules_url "$RULES_URL" \
+            '{event_type: "release-candidate", client_payload: ({production: $production, candidate: $candidate, claims_url: $claims_url, runs: 5, migrations_a: $migrations_a, migrations_b: $migrations_b}
+              + (if $production_digests then {production_digests: $production_digests} else {} end)
+              + (if $candidate_digests then {candidate_digests: $candidate_digests} else {} end)
+              + (if $rules_url != "" then {rules_url: $rules_url} else {} end))}' \
+            > payload.json
+          jq . payload.json
           gh api "repos/$HARNESS_REPO/dispatches" --input payload.json
           {
             echo "Dispatched \`release-candidate\` to [$HARNESS_REPO]($GITHUB_SERVER_URL/$HARNESS_REPO/actions/workflows/release.yml)"
@@ -252,4 +370,8 @@ jobs:
             echo "| images published | $PUBLISHED |"
             echo "| claims | $claims_url |"
             echo "| migrations | \`$MIGRATIONS_A\` to \`$GITHUB_SHA\` |"
+            echo "| runs | $(jq -r .client_payload.runs payload.json) |"
+            echo "| production digests | $(jq -r 'if .client_payload.production_digests then "pinned" else "not sent" end' payload.json) |"
+            echo "| candidate digests | $(jq -r 'if .client_payload.candidate_digests then "pinned" else "not sent" end' payload.json) |"
+            echo "| rules | $(jq -r '.client_payload.rules_url // "not sent"' payload.json) |"
           } >> "$GITHUB_STEP_SUMMARY"
