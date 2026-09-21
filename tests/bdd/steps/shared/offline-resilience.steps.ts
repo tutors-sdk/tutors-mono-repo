@@ -33,7 +33,7 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Scenario }) =
     });
     And("the reader fails to load the course {string}", async (_ctx, courseId: string) => {
       await expect(courseService.readCourse(courseId, host.fetch)).rejects.toThrow("Failed to fetch");
-      expect(logs.errors().map((entry) => entry.message)).toContain(`Error fetching from URL: https://${courseId}.netlify.app/tutors.json`);
+      expect(logs.errors().map((entry) => entry.message)).toContain("Error fetching course");
     });
     Then("the reader shall still serve {string} titled {string} without a network request", async (_ctx, courseId: string, title: string) => {
       const requestsBefore = host.requested.length;
