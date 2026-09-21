@@ -1,0 +1,182 @@
+name: Deploy
+
+# The overlays under deploy/k8s/overlays name what production runs, by digest
+# (newTag beside digest, rendered as <name>:<tag>@<digest>; see deploy/README.md).
+# A release is deployed in three moves:
+#
+#   1. pin      pnpm deploy:pin X.Y.Z, after image-build.yml has published the
+#               vX.Y.Z tag, rewrites the four overlays; open a pull request.
+#   2. verify   this workflow, on that pull request and again on main: every
+#               overlay carries a release tag and a matching sha256 digest, each
+#               tag still resolves to its digest, and each digest is signed by
+#               image-build.yml (pnpm check:deploy-pins --registry).
+#   3. announce once the pins are on main and the rollout is confirmed, tell the
+#               release harness what is deployed: set HARNESS_PRODUCTION_TAG on
+#               the harness repository, then send it the repository_dispatch
+#               event "deployed", which starts its post-deploy comparison of
+#               production against the candidate it recorded.
+#
+# The announce job runs in the `production` environment. Rolling the overlays out
+# (oc apply -k, or a GitOps controller syncing main) happens outside this
+# repository, so add the maintainers as required reviewers of that environment:
+# the approval is the statement that the rollout has happened, and the harness is
+# told nothing before it. Without reviewers the job runs as soon as verify passes.
+#
+# Setup, the token's permissions and the payload are documented in
+# guides/Release-Strategy.md#deploy-and-post-deploy.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - deploy/k8s/overlays/*/kustomization.yaml
+      - scripts/checks/deploy-pins.ts
+      - scripts/checks/lib/registry.ts
+      - .github/workflows/deploy.yml
+  push:
+    branches: [main]
+    paths:
+      - deploy/k8s/overlays/*/kustomization.yaml
+  # Announce again without changing a pin: the harness dispatch failed, or the
+  # rollout was only confirmed later.
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  HARNESS_REPO: tutors-sdk/tutors-release-harness
+
+jobs:
+  verify:
+    name: Overlays are pinned to signed images
+    if: github.repository == 'tutors-sdk/tutors-mono-repo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.changed.outputs.changed }}
+      version: ${{ steps.pins.outputs.version }}
+      digests: ${{ steps.pins.outputs.digests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      # No dependency cache: what this job verifies decides what is deployed.
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      # The check needs tsx and js-yaml from the root package only.
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter .
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      # Form, then registry: the tag resolves to the pinned digest (docker buildx
+      # imagetools, anonymous) and the digest verifies against image-build.yml's
+      # signing identity (cosign, by digest). --json prints the pins to stdout
+      # only when every check passed.
+      - name: Check the pins against the registry
+        id: pins
+        run: |
+          pnpm --silent check:deploy-pins --registry --json > pins.json
+          jq . pins.json
+          echo "version=$(jq -r '.version' pins.json)" >> "$GITHUB_OUTPUT"
+          echo "digests=$(jq -c '{reader: .images.reader.digest, catalogue: .images.catalogue.digest, live: .images.live.digest}' pins.json)" >> "$GITHUB_OUTPUT"
+
+      # A push that touched an overlay for another reason (an ORIGIN, a patch) is
+      # not a deployment. Compare newTag and digest with the previous main tip.
+      - name: Did this push change a pin?
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" != "push" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          pins_of() { grep -E '^[[:space:]]+(newTag|digest):' | sed 's/[[:space:]]*$//' || true; }
+          now=""
+          before=""
+          for file in deploy/k8s/overlays/*/kustomization.yaml; do
+            now="$now$file"$'\n'"$(pins_of < "$file")"$'\n'
+            if ! previous="$(gh api -H 'Accept: application/vnd.github.raw+json' "repos/$GITHUB_REPOSITORY/contents/$file?ref=$BEFORE" 2>/dev/null)"; then
+              echo "::notice::Could not read $file at $BEFORE; treating the pins as changed."
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            before="$before$file"$'\n'"$(printf '%s\n' "$previous" | pins_of)"$'\n'
+          done
+          if [ "$now" = "$before" ]; then
+            echo "::notice::No newTag or digest changed in this push; nothing to announce."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  announce:
+    name: Tell the release harness
+    needs: verify
+    if: github.event_name != 'pull_request' && needs.verify.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    permissions: {}
+    steps:
+      # Order matters. The variable first: every harness run that starts after
+      # this point (the dispatch below, tonight's noise run) must already see the
+      # new production tag. Both calls are idempotent, so a re-run after a failure
+      # is safe. A failure here stops the job before anything is dispatched.
+      - name: Set HARNESS_PRODUCTION_TAG
+        env:
+          GH_TOKEN: ${{ secrets.HARNESS_TOKEN }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::The HARNESS_TOKEN secret is not set. See guides/Release-Strategy.md#deploy-and-post-deploy."
+            exit 1
+          fi
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::The verified overlays did not yield a release version (got '$VERSION')."
+            exit 1
+          fi
+          gh variable set HARNESS_PRODUCTION_TAG --repo "$HARNESS_REPO" --body "$VERSION"
+
+      # The harness reads no payload field for `deployed` (contract 1.1.0) and
+      # ignores unknown ones. `production` and `digests` are sent anyway, so the
+      # run record shows what was deployed and the harness can start comparing
+      # the deployed digests with the ones it recorded; see the guide.
+      - name: Send deployed
+        env:
+          GH_TOKEN: ${{ secrets.HARNESS_TOKEN }}
+          VERSION: ${{ needs.verify.outputs.version }}
+          DIGESTS: ${{ needs.verify.outputs.digests }}
+        run: |
+          jq -n \
+            --arg production "$VERSION" \
+            --argjson digests "$DIGESTS" \
+            '{event_type: "deployed", client_payload: {production: $production, digests: $digests}}' \
+            | tee payload.json
+          gh api "repos/$HARNESS_REPO/dispatches" --input payload.json
+          {
+            echo "Set \`HARNESS_PRODUCTION_TAG\` to \`$VERSION\` and dispatched \`deployed\` to [$HARNESS_REPO]($GITHUB_SERVER_URL/$HARNESS_REPO/actions/workflows/post-deploy.yml)"
+            echo ""
+            echo "| app | digest |"
+            echo "| --- | --- |"
+            printf '%s' "$DIGESTS" | jq -r 'to_entries[] | "| \(.key) | `\(.value)` |"'
+          } >> "$GITHUB_STEP_SUMMARY"
