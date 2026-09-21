@@ -222,7 +222,7 @@ describe("catalogueService.deleteCourses", () => {
 
     await catalogueService.deleteCourses(["c1"]);
 
-    expect(log.debug).toHaveBeenCalledWith("Successfully deleted 1 courses");
+    expect(log.debug).toHaveBeenCalledWith("Deleted courses", { count: 1 });
   });
 
   it("throws and logs when Supabase returns an error", async () => {

@@ -50,7 +50,7 @@ export function timeBudgetFindings(durations: FileDuration[], budgets: TimeBudge
 function main() {
   const reportPath = process.argv[2];
   if (!reportPath) {
-    console.error("usage: test-time-budget.ts <vitest-json-report>");
+    process.stderr.write("usage: test-time-budget.ts <vitest-json-report>\n");
     process.exit(2);
   }
   const report: VitestJsonReport = JSON.parse(readText(resolve(reportPath)));
@@ -58,9 +58,9 @@ function main() {
   const durations = fileDurations(report);
   const findings = timeBudgetFindings(durations, budgets);
   const slowest = [...durations].sort((a, b) => b.ms - a.ms).slice(0, 5);
-  console.log("slowest files:");
-  for (const { file, ms } of slowest) console.log(`  ${String(ms).padStart(6)} ms  ${file}`);
-  for (const finding of findings) console.log(finding);
+  process.stdout.write("slowest files:\n");
+  for (const { file, ms } of slowest) process.stdout.write(`  ${String(ms).padStart(6)} ms  ${file}\n`);
+  for (const finding of findings) process.stdout.write(finding + "\n");
   if (findings.length > 0) process.exit(1);
 }
 

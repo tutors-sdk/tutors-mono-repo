@@ -69,6 +69,7 @@ Every command below exists in the root `package.json`.
 | `pnpm check:knip` | Unused files, exports and dependencies |
 | `pnpm check:audit` | `pnpm audit` against `tests/security/audit-allowlist.json` |
 | `pnpm check:bundle` | Per-app client bundle ceilings |
+| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with Auth.js on |
 | `pnpm check:lighthouse` | Lighthouse floors on three reader pages |
 | `pnpm check:load` | k6 load or soak against a built image |
 | `pnpm check:k8s` | Render every overlay and apply the manifest policies |

@@ -41,11 +41,13 @@
     "check:knip": "tsx scripts/checks/knip.ts",
     "check:audit": "tsx scripts/checks/dependency-audit.ts",
     "check:bundle": "tsx scripts/checks/bundle-budget.ts",
+    "check:server": "tsx scripts/checks/server-smoke.ts",
     "check:load": "tsx scripts/checks/load-test.ts",
     "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
     "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
     "check:release-claims": "tsx scripts/checks/release-claims.ts",
-    "check:migrations": "tsx scripts/checks/migrations.ts"
+    "check:migrations": "tsx scripts/checks/migrations.ts",
+    "promote:image": "tsx scripts/promote-image.ts"
   },
   "devDependencies": {
     "@amiceli/vitest-cucumber": "7.0.0",

@@ -23,31 +23,31 @@ test.describe('Accessibility Audit', () => {
     const passed = results.passes.length;
     const score = passed + total > 0 ? Math.round((passed / (passed + total)) * 100) : 100;
 
-    console.log('');
-    console.log('═══════════════════════════════════════');
-    console.log('       ACCESSIBILITY AUDIT REPORT      ');
-    console.log('═══════════════════════════════════════');
-    console.log(`  Score:    ${score}% (${passed} passed, ${total} violations)`);
-    console.log(`  Critical: ${critical.length}`);
-    console.log(`  Serious:  ${serious.length}`);
-    console.log(`  Moderate: ${moderate.length}`);
-    console.log(`  Minor:    ${minor.length}`);
-    console.log('───────────────────────────────────────');
+    process.stdout.write('\n');
+    process.stdout.write('═══════════════════════════════════════\n');
+    process.stdout.write('       ACCESSIBILITY AUDIT REPORT      \n');
+    process.stdout.write('═══════════════════════════════════════\n');
+    process.stdout.write(`  Score:    ${score}% (${passed} passed, ${total} violations)\n`);
+    process.stdout.write(`  Critical: ${critical.length}\n`);
+    process.stdout.write(`  Serious:  ${serious.length}\n`);
+    process.stdout.write(`  Moderate: ${moderate.length}\n`);
+    process.stdout.write(`  Minor:    ${minor.length}\n`);
+    process.stdout.write('───────────────────────────────────────\n');
 
     for (const violation of results.violations) {
-      console.log(`  [${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}`);
-      console.log(`    Help: ${violation.helpUrl}`);
-      console.log(`    Affected: ${violation.nodes.length} element(s)`);
+      process.stdout.write(`  [${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}\n`);
+      process.stdout.write(`    Help: ${violation.helpUrl}\n`);
+      process.stdout.write(`    Affected: ${violation.nodes.length} element(s)\n`);
       for (const node of violation.nodes.slice(0, 3)) {
-        console.log(`      → ${node.target.join(' > ')}`);
+        process.stdout.write(`      → ${node.target.join(' > ')}\n`);
       }
       if (violation.nodes.length > 3) {
-        console.log(`      ... and ${violation.nodes.length - 3} more`);
+        process.stdout.write(`      ... and ${violation.nodes.length - 3} more\n`);
       }
-      console.log('');
+      process.stdout.write('\n');
     }
 
-    console.log('═══════════════════════════════════════');
+    process.stdout.write('═══════════════════════════════════════\n');
 
     expect(critical, `${critical.length} critical violation(s) found`).toHaveLength(0);
     expect(serious, `${serious.length} serious violation(s) found`).toHaveLength(0);
@@ -61,12 +61,12 @@ test.describe('Accessibility Audit', () => {
     const passed = results.passes.length;
     const total = results.violations.length;
 
-    console.log('');
-    console.log('── Best Practice Rules ──');
-    console.log(`  Passed: ${passed}, Violations: ${total}`);
+    process.stdout.write('\n');
+    process.stdout.write('── Best Practice Rules ──\n');
+    process.stdout.write(`  Passed: ${passed}, Violations: ${total}\n`);
 
     for (const violation of results.violations) {
-      console.log(`  [${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}`);
+      process.stdout.write(`  [${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}\n`);
     }
   });
 
@@ -83,12 +83,12 @@ test.describe('Accessibility Audit', () => {
     const critical = results.violations.filter(v => v.impact === 'critical');
     const serious = results.violations.filter(v => v.impact === 'serious');
 
-    console.log('');
-    console.log('── Dark Mode Audit ──');
-    console.log(`  Violations: ${results.violations.length} (${critical.length} critical, ${serious.length} serious)`);
+    process.stdout.write('\n');
+    process.stdout.write('── Dark Mode Audit ──\n');
+    process.stdout.write(`  Violations: ${results.violations.length} (${critical.length} critical, ${serious.length} serious)\n`);
 
     for (const violation of results.violations) {
-      console.log(`  [${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}`);
+      process.stdout.write(`  [${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}\n`);
     }
 
     expect(critical, 'Dark mode introduced critical violations').toHaveLength(0);

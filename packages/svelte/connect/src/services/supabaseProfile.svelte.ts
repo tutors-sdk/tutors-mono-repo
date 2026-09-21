@@ -39,7 +39,7 @@ export const supabaseProfile: ProfileStore = {
     if (id) {
       const { error } = await supabase.from("tutors-connect-profiles").upsert({ tutorId: tutorsId.value?.login, profile: this.courseVisits });
       if (error) {
-        log.error(error);
+        log.error("Failed to save profile:", error);
       }
     }
   },

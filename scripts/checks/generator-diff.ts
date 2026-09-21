@@ -99,12 +99,12 @@ function parseArgs(argv: string[]): Options {
     else if (arg === "--store") options.store = resolve(argv[++i]);
     else if (arg === "--fail-on-diff") options.failOnDiff = true;
     else {
-      console.error(`unknown argument ${arg}`);
+      process.stderr.write(`unknown argument ${arg}\n`);
       process.exit(2);
     }
   }
   if (options.nightly && !options.store) {
-    console.error("--nightly needs --store <dir>");
+    process.stderr.write("--nightly needs --store <dir>\n");
     process.exit(2);
   }
   return options;
@@ -114,7 +114,7 @@ const git = (args: string[], cwd = REPO_ROOT) =>
   execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 256 * 1024 * 1024 }).trim();
 
 const annotate = (level: "error" | "warning" | "notice", message: string) => {
-  if (process.env.GITHUB_ACTIONS) console.log(`::${level}::${message.replaceAll("\n", "%0A")}`);
+  if (process.env.GITHUB_ACTIONS) process.stdout.write(`::${level}::${message.replaceAll("\n", "%0A")}\n`);
 };
 
 /* ---------------- trees ---------------- */
@@ -255,7 +255,7 @@ function generatorsFor(entry: CorpusEntry, options: Options): GeneratorName[] {
 
 function runDifferential(options: Options): number {
   const baseCommit = options.plant ? git(["rev-parse", "HEAD"]) : git(["merge-base", options.base, "HEAD"]);
-  console.log(`base ${options.plant ? "HEAD" : options.base} -> ${baseCommit.slice(0, 12)}; candidate = working tree${options.plant ? " + planted changes" : ""}`);
+  process.stdout.write(`base ${options.plant ? "HEAD" : options.base} -> ${baseCommit.slice(0, 12)}; candidate = working tree${options.plant ? " + planted changes" : ""}\n`);
   const baseTree = materialiseBase(baseCommit);
   const candidateTree = materialiseCandidate(options.plant);
   rmSync(options.report, { recursive: true, force: true });
@@ -275,7 +275,7 @@ function runDifferential(options: Options): number {
         // Already broken at the base: this change cannot be compared, only required not to stay broken.
         const message = `base generation failed, nothing to compare: ${(error as Error).message}`;
         baseFailures.push(message);
-        console.warn(`WARN ${message}`);
+        process.stderr.write(`WARN ${message}\n`);
         annotate("warning", message.split("\n")[0]);
       }
       try {
@@ -283,12 +283,12 @@ function runDifferential(options: Options): number {
         saveSnapshot(join(options.report, "candidate"), entry.name, generator, candidate);
         const found = base ? diffSnapshots(entry.name, generator, base, candidate) : [];
         hunks.push(...found);
-        console.log(
-          `${entry.name}/${generator}: ${Object.keys(candidate).length} files, ${base ? `${found.length} hunk(s)` : "no base to diff"} in ${Math.round((Date.now() - started) / 1000)} s`
+        process.stdout.write(
+          `${entry.name}/${generator}: ${Object.keys(candidate).length} files, ${base ? `${found.length} hunk(s)` : "no base to diff"} in ${Math.round((Date.now() - started) / 1000)} s\n`
         );
       } catch (error) {
         failures.push((error as Error).message);
-        console.error(`FAIL ${(error as Error).message}`);
+        process.stderr.write(`FAIL ${(error as Error).message}\n`);
         annotate("error", (error as Error).message.split("\n")[0]);
       }
     }
@@ -299,20 +299,20 @@ function runDifferential(options: Options): number {
   const { claims, errors } = parseClaims(readFileSync(CLAIMS, "utf8"));
   const result = matchClaims(hunks, claims, { approveBroad: options.approveBroad });
   for (const error of errors) {
-    console.error(`claims.yaml: ${error}`);
+    process.stderr.write(`claims.yaml: ${error}\n`);
     annotate("error", `tests/generator/claims.yaml: ${error}`);
   }
-  for (const { hunk, claim } of result.claimed) console.log(`claimed   ${formatHunk(hunk)}  <- ${claim.reason}`);
+  for (const { hunk, claim } of result.claimed) process.stdout.write(`claimed   ${formatHunk(hunk)}  <- ${claim.reason}\n`);
   for (const hunk of result.unclaimed) {
-    console.log(`UNCLAIMED ${formatHunk(hunk)}`);
+    process.stdout.write(`UNCLAIMED ${formatHunk(hunk)}\n`);
     annotate("error", `Unclaimed generator output change: ${formatHunk(hunk)}`);
   }
   for (const claim of result.stale) {
-    console.log(`stale claim (matches nothing): ${claim.path}${claim.pointer ? `#${claim.pointer}` : ""} ${claim.reason}`);
+    process.stdout.write(`stale claim (matches nothing): ${claim.path}${claim.pointer ? `#${claim.pointer}` : ""} ${claim.reason}\n`);
     annotate("warning", `Stale generator claim: ${claim.path} (${claim.reason})`);
   }
   for (const claim of result.unapprovedBroad) {
-    console.log(`broad claim ignored until approved: ${claim.path} ${claim.reason}`);
+    process.stdout.write(`broad claim ignored until approved: ${claim.path} ${claim.reason}\n`);
     annotate("warning", `Broad generator claim needs the approve-broad-claim label: ${claim.path}`);
   }
 
@@ -324,11 +324,11 @@ function runDifferential(options: Options): number {
   writeSummary(baseCommit, result.unclaimed, result.claimed.length, result.stale.length, failures);
 
   const failed = failures.length > 0 || errors.length > 0 || result.unclaimed.length > 0;
-  console.log(
-    `\n${hunks.length} hunk(s): ${result.claimed.length} claimed, ${result.unclaimed.length} unclaimed; ${result.stale.length} stale claim(s); ${failures.length} generation failure(s).`
+  process.stdout.write(
+    `\n${hunks.length} hunk(s): ${result.claimed.length} claimed, ${result.unclaimed.length} unclaimed; ${result.stale.length} stale claim(s); ${failures.length} generation failure(s).\n`
   );
   if (result.unclaimed.length > 0) {
-    console.log("Claim intended changes in tests/generator/claims.yaml, citing the issue, PR or CHANGELOG entry.");
+    process.stdout.write("Claim intended changes in tests/generator/claims.yaml, citing the issue, PR or CHANGELOG entry.\n");
   }
   return failed ? 1 : 0;
 }
@@ -340,10 +340,10 @@ function reportPlant(hunks: Hunk[], failures: string[], options: Options): numbe
     const caught = hunks.filter((hunk) => hunk.generator === plant.generator && plant.expect.test(hunk.file));
     if (caught.length === 0) {
       ok = false;
-      console.error(`NOT CAUGHT: planted change in ${plant.file} produced no ${plant.generator} hunk. The differential has lost its teeth.`);
+      process.stderr.write(`NOT CAUGHT: planted change in ${plant.file} produced no ${plant.generator} hunk. The differential has lost its teeth.\n`);
       annotate("error", `Generator differential missed the planted change in ${plant.file}`);
     } else {
-      console.log(`caught: ${plant.file} -> ${caught.length} unclaimed hunk(s), e.g. ${formatHunk(caught[0])}`);
+      process.stdout.write(`caught: ${plant.file} -> ${caught.length} unclaimed hunk(s), e.g. ${formatHunk(caught[0])}\n`);
     }
   }
   return ok ? 0 : 1;
@@ -377,15 +377,15 @@ function runNightly(options: Options): number {
         saveSnapshot(current, entry.name, generator, snapshot);
         const before = loadSnapshot(previous, entry.name, generator);
         if (!before) {
-          console.log(`${entry.name}/${generator}: first snapshot at ${revision.slice(0, 12)}`);
+          process.stdout.write(`${entry.name}/${generator}: first snapshot at ${revision.slice(0, 12)}\n`);
           continue;
         }
         const found = diffSnapshots(entry.name, generator, before, snapshot);
         hunks.push(...found);
-        console.log(`${entry.name}/${generator}: ${found.length} hunk(s) since last night`);
+        process.stdout.write(`${entry.name}/${generator}: ${found.length} hunk(s) since last night\n`);
       } catch (error) {
         failures.push((error as Error).message);
-        console.error(`FAIL ${(error as Error).message}`);
+        process.stderr.write(`FAIL ${(error as Error).message}\n`);
         annotate("error", (error as Error).message.split("\n")[0]);
       }
     }
@@ -400,11 +400,11 @@ function runNightly(options: Options): number {
         upstreamBefore?.[name] !== upstreamNow[name] ? `upstream ${upstreamBefore?.[name]?.slice(0, 12) ?? "?"} -> ${upstreamNow[name].slice(0, 12)}` : undefined,
         previousMeta.generatorCommit !== generatorCommit ? `generator ${String(previousMeta.generatorCommit).slice(0, 12)} -> ${generatorCommit.slice(0, 12)}` : undefined
       ].filter(Boolean);
-      console.log(`${name}: ${cause.length ? cause.join("; ") : "no upstream or generator change"}`);
+      process.stdout.write(`${name}: ${cause.length ? cause.join("; ") : "no upstream or generator change"}\n`);
     }
   }
   for (const hunk of hunks) {
-    console.log(`changed   ${formatHunk(hunk)}`);
+    process.stdout.write(`changed   ${formatHunk(hunk)}\n`);
     annotate("warning", `Corpus output changed since last night: ${formatHunk(hunk)}`);
   }
   writeFileSync(join(current, "report.json"), JSON.stringify({ previous: previousMeta, current: meta, failures, hunks }, null, 2));
@@ -438,6 +438,6 @@ try {
   const options = parseArgs(process.argv.slice(2));
   process.exitCode = options.nightly ? runNightly(options) : runDifferential(options);
 } catch (error) {
-  console.error(error);
+  process.stderr.write(error + "\n");
   process.exitCode = 1;
 }

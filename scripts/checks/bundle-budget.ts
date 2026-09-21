@@ -141,23 +141,23 @@ function main(argv: string[]) {
       continue;
     }
     const measured = measureClientBundle(dir);
-    console.log(
+    process.stdout.write(
       `${app.padEnd(10)} js ${formatKb(measured.jsGzipBytes).padStart(10)}  css ${formatKb(measured.cssGzipBytes).padStart(9)}  ` +
-        `largest ${formatKb(measured.largestJsChunk?.gzipBytes ?? 0).padStart(9)} ${measured.largestJsChunk?.file ?? ""}`
+        `largest ${formatKb(measured.largestJsChunk?.gzipBytes ?? 0).padStart(9)} ${measured.largestJsChunk?.file ?? ""}\n`
     );
     proposal[app] = proposeBudget(measured, budgets.headroom);
     if (propose) continue;
     findings.push(...bundleBudgetFindings(app, measured, budgets.apps[app]));
-    if (budgets.apps[app]) slackNotes(app, measured, budgets.apps[app], budgets.headroom).forEach((note) => console.log(`note: ${note}`));
+    if (budgets.apps[app]) slackNotes(app, measured, budgets.apps[app], budgets.headroom).forEach((note) => process.stdout.write(`note: ${note}\n`));
   }
 
   if (propose) {
-    console.log(JSON.stringify({ headroom: budgets.headroom, apps: { ...budgets.apps, ...proposal } }, null, 2));
+    process.stdout.write(JSON.stringify({ headroom: budgets.headroom, apps: { ...budgets.apps, ...proposal } }, null, 2) + "\n");
     return;
   }
   for (const finding of findings) {
-    console.log(finding);
-    if (process.env.GITHUB_ACTIONS) console.log(`::error file=${BUDGETS_FILE}::${finding}`);
+    process.stdout.write(finding + "\n");
+    if (process.env.GITHUB_ACTIONS) process.stdout.write(`::error file=${BUDGETS_FILE}::${finding}\n`);
   }
   if (findings.length > 0) process.exit(1);
 }

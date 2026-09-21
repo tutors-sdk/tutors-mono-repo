@@ -371,7 +371,7 @@ function main(): void {
     existing = git(["ls-tree", "--name-only", base, `${MIGRATIONS_DIR}/`]).split("\n").filter(Boolean).map((p) => p.replace(`${MIGRATIONS_DIR}/`, ""));
     changes = changesSince(base);
   } else {
-    console.log(`No base to compare with${all ? " (--all)" : ""}: every migration is treated as new.`);
+    process.stdout.write(`No base to compare with${all ? " (--all)" : ""}: every migration is treated as new.` + "\n");
     changes = files.map((file) => ({ status: "A" as const, file }));
   }
 
@@ -383,14 +383,14 @@ function main(): void {
   const report = evaluate(added, claims);
   errors.push(...report.errors);
 
-  for (const line of report.warnings) console.log(`WARN: ${line}`);
-  for (const line of report.claimed) console.log(`CLAIMED: ${line}`);
+  for (const line of report.warnings) process.stdout.write(`WARN: ${line}` + "\n");
+  for (const line of report.claimed) process.stdout.write(`CLAIMED: ${line}` + "\n");
   if (errors.length > 0) {
-    console.error(`FAIL: ${MIGRATIONS_DIR} breaks the migration rules the release harness enforces:`);
-    for (const e of errors) console.error(`  ${e}`);
+    process.stderr.write(`FAIL: ${MIGRATIONS_DIR} breaks the migration rules the release harness enforces:` + "\n");
+    for (const e of errors) process.stderr.write(`  ${e}` + "\n");
     process.exit(1);
   }
-  console.log(`OK: ${added.length} added migration${added.length === 1 ? "" : "s"} checked (${files.length} in ${MIGRATIONS_DIR}${base ? `, base ${base.slice(0, 8)}` : ""}).`);
+  process.stdout.write(`OK: ${added.length} added migration${added.length === 1 ? "" : "s"} checked (${files.length} in ${MIGRATIONS_DIR}${base ? `, base ${base.slice(0, 8)}` : ""}).` + "\n");
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
