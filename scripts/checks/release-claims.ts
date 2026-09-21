@@ -24,7 +24,11 @@ import yaml from "js-yaml";
 import { REPO_ROOT } from "./lib/repo.ts";
 import { rulesAtRef, rulesInWorkingTree } from "./lib/rules-index.ts";
 
-export const ARTEFACTS = ["dom", "screenshot", "network", "console", "headers", "axe", "metrics", "logs", "timing"] as const;
+/** The harness's vocabulary (ARTEFACTS in src/types.ts there). The first nine are what a student can observe; the last four are its rehearsals and stubs. */
+export const ARTEFACTS = ["dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing", "persistence", "migration", "upgrade"] as const;
+
+/** The claims file format this check mirrors (CLAIMS_VERSION there); a file may name it as `version: 1`. */
+const CLAIMS_VERSION = 1;
 
 const FIELDS: ReadonlySet<string> = new Set(["artefact", "scope", "reason", "rule", "approvedBy"]);
 const RUBBER_STAMP = /^(see pr|approved|all|ok|misc)\b/i;
@@ -74,7 +78,8 @@ export function validateClaimsText(text: string, ruleIds?: ReadonlySet<string>):
 
   const errors: string[] = [];
   const root = doc as Record<string, unknown>;
-  for (const key of Object.keys(root)) if (key !== "claims") errors.push(`unknown top-level key \`${key}\``);
+  for (const key of Object.keys(root)) if (key !== "claims" && key !== "version") errors.push(`unknown top-level key \`${key}\``);
+  if (root.version !== undefined && root.version !== CLAIMS_VERSION) errors.push(`version must be ${CLAIMS_VERSION} or absent`);
   if (!Array.isArray(root.claims)) return [...errors, "`claims` must be a list (use `claims: []` for none)"];
 
   root.claims.forEach((raw: unknown, index: number) => {

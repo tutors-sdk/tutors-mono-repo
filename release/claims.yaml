@@ -11,8 +11,9 @@
 # An empty list is a statement too: nothing observable should differ between
 # production and this release.
 #
-#   - artefact: dom                  # dom | screenshot | network | console | headers
-#                                    # | axe | metrics | logs | timing | "*"
+#   - artefact: dom                  # dom | screenshot | network | console | headers | axe
+#                                    # | focus | metrics | logs | timing | persistence
+#                                    # | migration | upgrade | "*"
 #     scope: "reader:lab-step*"      # glob over the page key, its route, "<METHOD> <route>",
 #                                    # "<page key>/<header>" or "<app>/<series>"
 #     reason: "Rule 0031: lab steps shall show estimated reading time"
@@ -20,6 +21,9 @@
 #     rule: "0031"                   # optional (harness contract 1.3.0): the Rule by id, checked against
 #                                    # `pnpm release:rules`; then `reason` may be left out
 #     approvedBy: "a person"         # only for a broad claim (artefact "*", scope "*" or "**")
+#
+# Each CHANGELOG line names the artefacts it expects to move, e.g. "(axe, dom)":
+# one claim per artefact, reason "CHANGELOG <version>: <the entry>" (CONTRIBUTING.md).
 #
 # Reset to `claims: []` when the next release branch is cut. Field reference:
 # release/README.md here, claims/README.md in the harness repository.

@@ -1,4 +1,5 @@
 import { courseProtocol } from "@tutors/runes";
+import { nowMs } from "@tutors/runtime";
 import { themeService } from "@tutors/themes";
 import {
   allVideoLos,
@@ -61,8 +62,8 @@ export function decorateCourseTree(course: Course, courseId: string = "", course
   registerCompanionIcons(course);
   createWalls(course);
   // createToc(course);
-  initCalendar(course);
-
+  // The current week follows the server clock seam, so a frozen HARNESS_NOW freezes it too.
+  initCalendar(course, nowMs());
 }
 
 /**

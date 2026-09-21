@@ -17,7 +17,7 @@ claims:
 
 | Field | Meaning |
 | --- | --- |
-| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `metrics`, `logs`, `timing`, or `"*"` |
+| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `migration`, `upgrade`, or `"*"` (the harness's vocabulary; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md)) |
 | `scope` | A glob over what changed: a page key (`reader:lab-step`), a route, `GET /api/presence`, `reader:*/content-security-policy`, `<app>/<series>` |
 | `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected. Optional when the claim has a `rule` |
 | `rule` | Optional, harness contract 1.3.0. The id of the Rule behind the change, in quotes: `rule: "0031"`. It must be a Rule the release defines (see [Rules the release defines](#rules-the-release-defines)) |
@@ -33,6 +33,28 @@ claims:
 ```
 
 `pnpm check:release-claims` resolves both forms against the Rules in `tests/bdd/features` and fails on an id no feature defines. A claim whose `reason` starts "Rule 0031" and also has a `rule` must name the same Rule. A reason that names a CHANGELOG entry stays free text. The `rule` field needs a harness that speaks contract 1.3.0; an earlier harness rejects the claims file for an unknown field, so keep to `reason: "Rule 0031: ..."` until then.
+
+## Writing claims from the changelog
+
+A changelog entry names the artefacts it expects to move, so it turns into a claim in one line. The convention is in [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries):
+
+```markdown
+- Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)
+```
+
+becomes
+
+```yaml
+claims:
+  - artefact: axe
+    scope: "reader:*"
+    reason: "CHANGELOG 16.4.0: Nav bar: link contrast raised to 4.5:1 on the dark theme"
+  - artefact: dom
+    scope: "reader:*"
+    reason: "CHANGELOG 16.4.0: Nav bar: link contrast raised to 4.5:1 on the dark theme"
+```
+
+One claim per artefact in the hint; the scope is the page key, route, `<METHOD> <route>` or `<app>/<series>` the entry names (narrow it as far as the entry allows). A changelog entry with no artefact hint claims nothing: if the harness then finds a difference, the entry was incomplete, and that is the signal.
 
 Claim precisely. `claims: []` is valid and means nothing observable should differ from production, which is the right file for a release of internal changes only.
 

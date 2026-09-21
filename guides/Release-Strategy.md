@@ -143,6 +143,8 @@ Every release must have a corresponding `CHANGELOG.md` entry. Entries are writte
 
 The changelog documents what shipped and when. It is not a commit log; it is a curated summary for users and contributors.
 
+Entries that change something observable end with the artefacts they expect to move, `(axe, dom)`, so the release author can write the release harness claims from the changelog in one line each: [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries), [release/README.md](../release/README.md#writing-claims-from-the-changelog). The changelog is curated by hand, so the convention needs no tooling; if it is ever generated from Conventional Commits, the hint travels in the commit subject and the generator keeps it verbatim.
+
 ## CI/CD Integration
 
 ### PR Checks (on every PR to `main`)
@@ -172,7 +174,7 @@ The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a
 **`release-dispatch.yml`**, on every push to `release/**`:
 
 1. **Candidate.** The version comes from the branch name (`release/16.3.0` and `release/v16.3.0` both work). The push is a candidate only when `package.json` carries that version; earlier pushes are skipped with a notice, and so is any push after `vX.Y.Z` itself has been tagged. The commit is tagged `vX.Y.Z-rc.N` with the next free `N`; re-running the workflow reuses the tag already on the commit.
-2. **Images.** A tag created by a workflow's own token does not trigger other workflows, so the `v*` tag trigger of `image-build.yml` never sees an RC tag. The job starts `image-build.yml` on the tag with `workflow_dispatch`, watches the run (a Trivy finding fails the candidate here) and then waits until `quay.io/tutors-sdk/tutors-{reader,catalogue,live}:X.Y.Z-rc.N` can be pulled anonymously. If `image-build.yml` is absent or has no `workflow_dispatch` trigger, the job warns and continues, and the harness builds the candidate from the git tag instead.
+2. **Images.** A tag created by a workflow's own token does not trigger other workflows, so the `v*` tag trigger of `image-build.yml` never sees an RC tag. The job starts `image-build.yml` on the tag with `workflow_dispatch`, watches the run (a Trivy finding fails the candidate here) and then waits until `quay.io/tutors-sdk/tutors-{reader,catalogue,live,time}:X.Y.Z-rc.N` can be pulled anonymously. If `image-build.yml` is absent or has no `workflow_dispatch` trigger, the job warns and continues, and the harness builds the candidate from the git tag instead.
 3. **Dispatch.** A `repository_dispatch` of type `release-candidate` to `tutors-sdk/tutors-release-harness`, which runs its release, migration and upgrade modes. The result is in that repository's Actions tab, linked from this workflow's summary.
 
 | `client_payload` | Value |
@@ -184,7 +186,7 @@ The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a
 | `migrations_a` | `v<production>`, or `release/<production>` for a release that was never tagged |
 | `migrations_b` | the tagged commit's sha |
 
-**`release-claims.yml`**, on the same pushes and on release PRs, fails when `release/claims.yaml` is missing or is not a file the harness would accept (`pnpm check:release-claims`). The file format is in [release/README.md](../release/README.md); changes to it are owned by the maintainers through CODEOWNERS, because a claim waives a failure.
+**`release-claims.yml`**, on the same pushes and on release PRs, fails when `release/claims.yaml` is missing or is not a file the harness would accept (`pnpm check:release-claims`). Its `migrations` job runs `pnpm check:migrations`, which fails when a migration added since `main` is destructive and unclaimed, or breaks the layout rules; see [MIGRATIONS.md](MIGRATIONS.md). The file format is in [release/README.md](../release/README.md); changes to it are owned by the maintainers through CODEOWNERS, because a claim waives a failure.
 
 #### Final tag: the candidate ships
 
@@ -257,6 +259,31 @@ The order in step 4 is deliberate: a failure setting the variable stops the job 
 - `deployed` should read `production` and `digests` and compare `digests` with the `provenance.b.images.*.digest` of the recorded release run, warning when they differ.
 
 An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
+
+#### Running the harness locally
+
+Nothing about judging a candidate needs GitHub. `pnpm release:harness` builds the `release-candidate` payload above from your own clone, with git alone (no `gh api`, no network), and can hand it to the harness's `local gate`:
+
+```console
+pnpm release:harness                    # print the payload (the same as --print)
+pnpm release:harness --run              # run `pnpm harness local gate` with those values
+pnpm release:harness --deployed --run   # after a deploy: `local watch --once`, with HARNESS_PRODUCTION_TAG set
+```
+
+Clone the [harness](https://github.com/tutors-sdk/tutors-release-harness) beside this repository (or set `HARNESS_DIR`) and run `pnpm install` there; `pnpm harness doctor` in it says what else the machine needs. Arguments after `--` go to the harness (`pnpm release:harness --run -- --only release --dry-run`).
+
+It takes each value from where the workflow does, so run it on the release branch:
+
+| Field | Local source |
+| --- | --- |
+| `production` | the reader overlay on `origin/main` (or `main`; `--main-ref` names another), not on the release branch. `git fetch origin` first |
+| `migrations_a` | tag `v<production>`, else branch `release/<production>`, in your clone (`git fetch origin --tags`) |
+| `candidate` | `--candidate`, else the `vX.Y.Z-rc.N` already on the commit, else the next free `N`. The version is `package.json` at the commit and must match a `release/X.Y.Z` branch name. Nothing is tagged: push the tag before a real gate, because the harness builds a candidate the registry lacks from its tag |
+| `migrations_b` | the commit (`--ref`, default `HEAD`) |
+| `claims_url` | the raw URL of `release/claims.yaml` at that commit; `--run` passes the file as read from that commit. The file is shape-checked first |
+| `runs` | `3` (`--runs`) |
+
+`production_digests` (from the overlays' `digest`, once they carry one), `candidate_digests` (`--candidate-digest reader=sha256:...`) and `rules_url` (`--rules-url`) are added only when there is something to send. `release-dispatch.yml` still builds its payload with `gh api`, because its checkout is shallow and its tag is made through the API; `tests/conformance/release-harness.test.ts` holds the two to the same fields, order and rules.
 
 #### `rc/**` and `release/**`
 

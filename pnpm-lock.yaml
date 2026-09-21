@@ -566,6 +566,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
+      '@tutors/runtime':
+        specifier: workspace:*
+        version: link:../utils/runtime
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
