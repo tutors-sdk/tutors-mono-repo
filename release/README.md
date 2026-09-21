@@ -17,10 +17,32 @@ claims:
 
 | Field | Meaning |
 | --- | --- |
-| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `metrics`, `logs`, `timing`, or `"*"` |
+| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `migration`, `upgrade`, or `"*"` (the harness's vocabulary; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md)) |
 | `scope` | A glob over what changed: a page key (`reader:lab-step`), a route, `GET /api/presence`, `reader:*/content-security-policy`, `<app>/<series>` |
 | `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected |
 | `approvedBy` | Required on a broad claim (`artefact: "*"`, `scope: "*"` or `"**"`): a person, never a bot |
+
+## Writing claims from the changelog
+
+A changelog entry names the artefacts it expects to move, so it turns into a claim in one line. The convention is in [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries):
+
+```markdown
+- Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)
+```
+
+becomes
+
+```yaml
+claims:
+  - artefact: axe
+    scope: "reader:*"
+    reason: "CHANGELOG 16.4.0: Nav bar: link contrast raised to 4.5:1 on the dark theme"
+  - artefact: dom
+    scope: "reader:*"
+    reason: "CHANGELOG 16.4.0: Nav bar: link contrast raised to 4.5:1 on the dark theme"
+```
+
+One claim per artefact in the hint; the scope is the page key, route, `<METHOD> <route>` or `<app>/<series>` the entry names (narrow it as far as the entry allows). A changelog entry with no artefact hint claims nothing: if the harness then finds a difference, the entry was incomplete, and that is the signal.
 
 Claim precisely. `claims: []` is valid and means nothing observable should differ from production, which is the right file for a release of internal changes only.
 
