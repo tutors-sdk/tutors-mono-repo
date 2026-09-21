@@ -10,7 +10,7 @@ import { markdownService } from "../../markdown/index.ts";
 import { courseProtocol, currentCourse, currentLo, rune, isEducator } from "@tutors/runes";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
 import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
-import log from "@tutors/logger";
+import log, { serializeError } from "@tutors/logger";
 
 /** A course whose tutors.json is not there: the host answered 404. */
 export class CourseNotFoundError extends Error {
@@ -51,6 +51,19 @@ export function setCourseUnreachableHandler(handler: (cause: TypeError) => never
   courseUnreachable = handler;
 }
 
+/**
+ * One fixed message per failure, with what varies in fields: log collectors (and the release
+ * harness) group and diff lines by message, so the course and URL must not be baked into it.
+ * `error` and `stack` are always present so the line's key set does not depend on the cause.
+ */
+function logCourseFetchFailure(courseId: string, courseUrl: string, cause?: unknown): void {
+  log.error("Error fetching course", {
+    courseId,
+    url: `https://${courseUrl}/tutors.json`,
+    ...(cause === undefined ? { error: null, stack: null } : serializeError(cause))
+  });
+}
+
 export const courseService: CourseService = {
   /** Cache of loaded courses indexed by courseId */
   courses: new Map<string, Course>(),
@@ -77,13 +90,12 @@ export const courseService: CourseService = {
       courseId = normalizedCourseId;
 
       const response = await fetchFunction(`${courseProtocol.value}${courseUrl}/tutors.json`).catch((cause: unknown) => {
-        log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);
-        log.error(cause);
+        logCourseFetchFailure(courseId, courseUrl, cause);
         if (cause instanceof TypeError) courseUnreachable(cause);
         throw cause;
       });
       if (response.status === 404) {
-        log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);
+        logCourseFetchFailure(courseId, courseUrl);
         return courseNotFound(new CourseNotFoundError(courseId, courseUrl));
       }
 
@@ -98,8 +110,7 @@ export const courseService: CourseService = {
         decorateCourseTree(course, courseId, courseUrl);
         this.courses.set(courseId, course);
       } catch (error) {
-        log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);
-        log.error(error);
+        logCourseFetchFailure(courseId, courseUrl, error);
         throw error;
       }
     }

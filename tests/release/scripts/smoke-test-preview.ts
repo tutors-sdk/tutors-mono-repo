@@ -12,33 +12,33 @@ const args = parseArgs(Deno.args, {
 
 async function run() {
   const url = args.url;
-  console.log(`Running smoke tests against: ${url}`);
+  process.stdout.write(`Running smoke tests against: ${url}\n`);
 
-  console.log("\n1. Checking page loads...");
+  process.stdout.write("\n1. Checking page loads...\n");
   const response = await fetch(url);
   if (!response.ok) {
-    console.error(`FAIL: Page returned ${response.status}`);
+    process.stderr.write(`FAIL: Page returned ${response.status}\n`);
     Deno.exit(1);
   }
-  console.log(`   OK: ${response.status}`);
+  process.stdout.write(`   OK: ${response.status}\n`);
 
   const html = await response.text();
 
-  console.log("2. Checking HTML content...");
+  process.stdout.write("2. Checking HTML content...\n");
   if (!html.includes("<!DOCTYPE html>") && !html.includes("<!doctype html>")) {
-    console.error("FAIL: Response is not valid HTML");
+    process.stderr.write("FAIL: Response is not valid HTML\n");
     Deno.exit(1);
   }
-  console.log("   OK: Valid HTML document");
+  process.stdout.write("   OK: Valid HTML document\n");
 
-  console.log("3. Checking for SvelteKit markers...");
+  process.stdout.write("3. Checking for SvelteKit markers...\n");
   if (!html.includes("__sveltekit")) {
-    console.warn("   WARNING: No SvelteKit markers found (may be pre-rendered)");
+    process.stderr.write("   WARNING: No SvelteKit markers found (may be pre-rendered)\n");
   } else {
-    console.log("   OK: SvelteKit app detected");
+    process.stdout.write("   OK: SvelteKit app detected\n");
   }
 
-  console.log("\nAll smoke tests passed.");
+  process.stdout.write("\nAll smoke tests passed.\n");
 }
 
 await run();

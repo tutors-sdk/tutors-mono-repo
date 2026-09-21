@@ -71,7 +71,7 @@ function main(): void {
     const { from, to, asField } = parseArgs(process.argv.slice(2));
     process.stdout.write(draftClaims(from, to, gitIn(), { asField }));
   } catch (error) {
-    console.error(`FAIL: ${(error as Error).message.split("\n")[0]}`);
+    process.stderr.write(`FAIL: ${(error as Error).message.split("\n")[0]}\n`);
     process.exit(1);
   }
 }

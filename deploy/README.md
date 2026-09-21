@@ -70,7 +70,7 @@ builds all four apps from this Dockerfile and publishes them to
 | Pull request (touching the build context) | none; amd64 build and scan only |
 | Push to `main` | `sha-<short>`, `main` |
 | Push to an `rc/**` branch | `sha-<short>`, the branch name with `/` as `-` (`rc/16.2.0` gives `rc-16.2.0`) |
-| Release tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest`, `sha-<short>` |
+| Release tag `vX.Y.Z` | `X.Y.Z`, `X.Y`, `latest`, `sha-<short>`: **promoted** from the release candidate (the same digest, not rebuilt) when one matches, see below |
 | Prerelease tag `vX.Y.Z-rc.N` | `X.Y.Z-rc.N`, `sha-<short>` |
 | Backfill: dispatched from `main` with `release_tag=vX.Y.Z` | `X.Y.Z`, `X.Y`, `sha-<short>` (never `latest`) |
 
@@ -91,7 +91,42 @@ A backfill publishes what production already runs, so its Trivy scan
 reports findings without stopping the push. Its signing identity ends in
 `@refs/heads/main`, not the tag.
 
-Every publishing run does the following, per app, in this order:
+### Promotion of the release candidate
+
+The release harness judges the `X.Y.Z-rc.N` images, so a release tag ships
+those images instead of building new ones. On `vX.Y.Z`, per app,
+`scripts/promote-image.ts` looks up the highest `X.Y.Z-rc.N` in the app's
+repository and promotes it only when
+
+1. the git tree of `vX.Y.Z-rc.N` equals the git tree of the `vX.Y.Z` commit
+   (the commit may differ, a release branch merged to `main` has its own sha;
+   the tree may not),
+2. the image's `org.opencontainers.image.revision` label is the rc commit, and
+3. its cosign signature verifies, made by `image-build.yml` at
+   `refs/tags/vX.Y.Z-rc.N`.
+
+Promotion scans the candidate's digest with Trivy (same gate as a build), then
+retags that digest as `X.Y.Z`, `sha-<short>`, and after verifying them `X.Y` and
+`latest`, with `docker buildx imagetools create`. No image is built, so the
+digest, signature and SBOM attestation are the candidate's, and
+`pnpm deploy:pin X.Y.Z`, the harness's `HARNESS_PRODUCTION_TAG` and the digests
+sent with its `deployed` event equal the digest the harness judged. Do not add a
+commit between the last candidate and the release tag.
+
+When an app cannot be promoted the workflow rebuilds it as before and marks the
+run: a `::warning::` titled `REBUILT — this image is not the one the release
+harness judged`, the same line in the job summary, and `promoted=false` on the
+`Decide whether to promote the release candidate` step. A rebuilt image has a
+`version` label without `-rc` and a digest that differs from the candidate's;
+a promoted one reads `X.Y.Z-rc.N`. Dispatching the workflow on the release tag
+with `require_promotion=true` fails instead of rebuilding. Details and the
+decision table are in
+[Release-Strategy.md](../guides/Release-Strategy.md#final-tag-the-candidate-ships);
+`pnpm promote:image plan --app reader --ref vX.Y.Z --dry-run` shows what a tag
+would do.
+
+Every other publishing run, and a release tag that could not be promoted, does
+the following, per app, in this order:
 
 1. Builds the `linux/amd64` image locally and scans it with Trivy. CRITICAL
    and HIGH findings with an available fix fail the job, before anything has
@@ -139,8 +174,10 @@ cosign verify-attestation --type spdxjson ... quay.io/tutors-sdk/tutors-reader:<
 ```
 
 The identity ends in the git ref that ran the workflow
-(`...image-build.yml@refs/tags/v16.3.0`, `@refs/heads/main`). To accept
-release builds only, tighten the end of the regexp to `@refs/tags/v.+$`.
+(`...image-build.yml@refs/tags/v16.3.0`, `@refs/heads/main`). A promoted
+release is the candidate's image, so its identity names the candidate's tag
+(`@refs/tags/v16.3.0-rc.2`), not the release tag. To accept release and
+candidate builds only, tighten the end of the regexp to `@refs/tags/v.+$`.
 
 ## Staging stack
 
@@ -340,6 +377,15 @@ order, types, `event`, `message`, `level` (apart from the `slow` case) and
 line counts per event are stable. `pnpm check:container` checks the contract
 against real container output.
 
+`message` is fixed text: a collector, and the release harness, group and diff
+lines by it, so anything that varies per request or per failure goes in a
+field, never into the message. Write `log.error("Error fetching course", { courseId, url })`,
+not `` log.error(`Error fetching ${url}`) ``, and never pass an `Error` or a
+variable as the first argument (its text becomes the message). The observability
+contract test (`log message stability`) fails on a log call in product code whose
+first argument is not a string literal. The `console` event is the one
+exception: it carries whatever a third-party library printed.
+
 Two kinds of output cannot be JSON and are outside the contract: anything
 printed before the server module loads (a Node flag error, a missing
 `build/index.js`), and V8's own fatal errors such as heap exhaustion, which
@@ -371,10 +417,50 @@ oc apply -k deploy/k8s/overlays/reader          # deploy
 
 Each overlay points at `quay.io/tutors-sdk/tutors-<app>`, which the image
 build workflow publishes; to deploy from a mirror, change `images[].newName`.
-Image tags are pinned to the release version in the root `package.json`
-(never `latest`); the release checklist bumps them together, and the workflow
-publishes that tag from the `v<version>` git tag. To try an unreleased build,
-set `newTag` to `sha-<short>` locally. Fill in the ConfigMap values before
+Each overlay pins its image by digest, with the release tag beside it:
+
+```yaml
+images:
+  - name: tutors-app
+    newName: quay.io/tutors-sdk/tutors-reader
+    newTag: "16.2.2"
+    digest: sha256:7567d5927767bd39b7991a586d594f6c310387471109a456d2cff49fa12488cb
+```
+
+Kustomize renders `quay.io/tutors-sdk/tutors-reader:16.2.2@sha256:7567...`: the
+container runtime pulls the digest and ignores the tag, so a tag pushed again
+cannot change what is deployed, and the tag stays for people and for
+`release-dispatch.yml`, which reads it as the production tag. The digest is the
+multi-arch index digest that the image build signs. Never `latest`, never a tag
+alone: `pnpm check:k8s` fails a rendered image without a digest.
+
+Because a release tag promotes the judged release candidate rather than
+rebuilding it (see [Promotion of the release candidate](#promotion-of-the-release-candidate)),
+the digest that `pnpm deploy:pin X.Y.Z` writes is the `X.Y.Z-rc.N` digest the
+release harness judged. Its signature names `image-build.yml` at the candidate's
+ref (`@refs/tags/vX.Y.Z-rc.N`), while an app that had to be rebuilt is signed at
+`@refs/tags/vX.Y.Z`; the pin verification (`deploy:pin` and
+`check:deploy-pins --registry`) accepts `image-build.yml` at any ref, so it
+passes for both.
+
+The overlays name what production runs, so they move when a release is
+deployed, not when it is cut. After the `v<version>` tag is pushed and the image
+build has published it:
+
+```bash
+pnpm deploy:pin 16.3.0            # resolve each tag's digest, verify its signature, rewrite the four overlays
+pnpm deploy:pin 16.3.0 --dry-run  # the same, changing nothing
+pnpm check:deploy-pins            # form of the pins: a digest and a release tag on every overlay, one release across all four
+pnpm check:deploy-pins --registry # and: each tag still resolves to its digest, and the digest is signed by image-build.yml
+```
+
+Open a pull request with the result. `.github/workflows/deploy.yml` runs the
+registry check on it and again on `main`, and once the rollout is confirmed it
+sets the release harness's `HARNESS_PRODUCTION_TAG` variable and dispatches its
+`deployed` event, see [Deploy and post-deploy](../guides/Release-Strategy.md#deploy-and-post-deploy).
+To try an unreleased build locally, render an overlay and swap the image on the
+command line (`kubectl kustomize` output piped through your own edit); do not
+commit it. Fill in the ConfigMap values before
 applying. The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
 `overlays/reader/secrets.yaml.example`
 to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads

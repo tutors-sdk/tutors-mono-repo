@@ -373,10 +373,15 @@ export function parseArgs(argv: string[], env: Record<string, string | undefined
   return args;
 }
 
+const out = (line: string): void => void process.stdout.write(`${line}
+`);
+const err = (line: string): void => void process.stderr.write(`${line}
+`);
+
 function main(): void {
   const args = parseArgs(process.argv.slice(2));
   if (args.nextId) {
-    console.log(nextRuleId());
+    out(nextRuleId());
     return;
   }
 
@@ -389,32 +394,32 @@ function main(): void {
   if (args.updateBaseline) {
     if (!useBaseline) throw new Error(`${args.baseline} does not exist; the baseline is created by hand once and only ever shrinks.`);
     if (report.added.length > 0) {
-      console.error(`FAIL: refusing to update ${args.baseline}: ${report.added.length} violation(s) are not in it, and it only ever shrinks. Fix them.`);
-      report.added.forEach((v) => console.error(`  + ${baselineKey(v)}`));
+      err(`FAIL: refusing to update ${args.baseline}: ${report.added.length} violation(s) are not in it, and it only ever shrinks. Fix them.`);
+      report.added.forEach((v) => err(`  + ${baselineKey(v)}`));
       process.exit(1);
     }
     writeFileSync(baselineFile, shrinkBaseline(readFileSync(baselineFile, "utf8"), violations));
-    console.log(`Updated ${args.baseline}: removed ${report.stale.length} entr${report.stale.length === 1 ? "y" : "ies"}.`);
+    out(`Updated ${args.baseline}: removed ${report.stale.length} entr${report.stale.length === 1 ? "y" : "ies"}.`);
     return;
   }
 
   for (const v of report.added) {
-    if (args.github) console.log(annotation(v));
-    else console.error(`${v.file}:${v.line}: ${v.code}: ${v.message}`);
+    if (args.github) out(annotation(v));
+    else err(`${v.file}:${v.line}: ${v.code}: ${v.message}`);
   }
   if (report.stale.length > 0) {
     const message = describeRatchet("ears-audit", args.baseline, { added: [], stale: report.stale });
-    if (args.github) console.log(`::error file=${args.baseline}::${escapeData(message)}`);
-    else console.error(message);
+    if (args.github) out(`::error file=${args.baseline}::${escapeData(message)}`);
+    else err(message);
   }
 
   const rules = files.reduce((n, path) => n + parseGherkin(readText(path)).rules.length, 0);
   const summary = `${files.length} feature file(s), ${rules} Rule(s), ${report.added.length} new violation(s), ${report.baselined.length} baselined, ${report.stale.length} stale baseline entr${report.stale.length === 1 ? "y" : "ies"}.`;
   if (report.added.length > 0 || report.stale.length > 0) {
-    console.error(`FAIL: ${summary}`);
+    err(`FAIL: ${summary}`);
     process.exit(1);
   }
-  console.log(`OK: ${summary}`);
+  out(`OK: ${summary}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

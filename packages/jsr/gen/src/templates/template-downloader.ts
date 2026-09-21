@@ -54,7 +54,7 @@ async function downloadFile(filePath: string) {
   }
   catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Error downloading ${filePath}: ${errorMessage}`);
+    process.stderr.write(`Error downloading ${filePath}: ${errorMessage}\n`);
     throw error;
   }
 }
@@ -67,8 +67,9 @@ export async function downloadVentoTemplates(folder: string, srcVentoFolder: str
   try {
     destVentoDir = path.join(folder, 'vento');
     await Promise.all(filesToDownload.map(downloadFile));
-  } catch (error) {
-    console.error('Error downloading vento templates:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error downloading vento templates: ${message}\n`);
     throw error;
   }
 }

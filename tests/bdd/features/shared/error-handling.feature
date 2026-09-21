@@ -10,7 +10,7 @@ Feature: Error Handling
     When the reader loads the course "no-such-course"
     Then the load shall fail with the message "Fetch failed with status 404"
     And the reader shall have requested "https://no-such-course.netlify.app/tutors.json"
-    And the reader shall log the error "Error fetching from URL: https://no-such-course.netlify.app/tutors.json"
+    And the reader shall log the error "Error fetching course"
     And the reader shall not cache a course for "no-such-course"
 
   @ears-unwanted
@@ -18,7 +18,7 @@ Feature: Error Handling
     Given the network is unavailable
     When the reader loads the course "web-dev-101"
     Then the load shall fail with the message "Failed to fetch"
-    And the reader shall log the error "Error fetching from URL: https://web-dev-101.netlify.app/tutors.json"
+    And the reader shall log the error "Error fetching course"
     And the reader shall not cache a course for "web-dev-101"
     When the network is restored and the reader loads the course "web-dev-101" again
     Then the course title shall be "Web Development 101"
@@ -28,7 +28,7 @@ Feature: Error Handling
     Given the course host answers "broken-course" with "<body>"
     When the reader loads the course "broken-course"
     Then the load shall fail with an error
-    And the reader shall log the error "Error fetching from URL: https://broken-course.netlify.app/tutors.json"
+    And the reader shall log the error "Error fetching course"
     And the reader shall not cache a course for "broken-course"
 
     Examples:

@@ -14,17 +14,17 @@ async function ensureWorkDir() {
 }
 
 async function clone() {
-  console.log(`[fetch] Cloning reference course from ${REPO_URL}...`);
+  process.stdout.write(`[fetch] Cloning reference course from ${REPO_URL}...\n`);
   const cmd = new Deno.Command("git", {
     args: ["clone", "--depth=1", REPO_URL, LOCAL_PATH],
   });
   const result = await cmd.output();
   if (!result.success) {
     const stderr = new TextDecoder().decode(result.stderr);
-    console.error(`[fetch] Clone failed: ${stderr}`);
+    process.stderr.write(`[fetch] Clone failed: ${stderr}\n`);
     Deno.exit(1);
   }
-  console.log("[fetch] Reference course cloned.");
+  process.stdout.write("[fetch] Reference course cloned.\n");
 }
 
 async function run() {
@@ -33,17 +33,17 @@ async function run() {
   try {
     const stat = await Deno.stat(LOCAL_PATH);
     if (stat.isDirectory) {
-      console.log("[fetch] Reference course exists, pulling latest...");
+      process.stdout.write("[fetch] Reference course exists, pulling latest...\n");
       const pull = new Deno.Command("git", {
         args: ["-C", LOCAL_PATH, "pull", "--ff-only"],
       });
       const result = await pull.output();
       if (!result.success) {
-        console.warn("[fetch] Pull failed, re-cloning...");
+        process.stderr.write("[fetch] Pull failed, re-cloning...\n");
         await Deno.remove(LOCAL_PATH, { recursive: true });
         await clone();
       } else {
-        console.log("[fetch] Reference course updated.");
+        process.stdout.write("[fetch] Reference course updated.\n");
       }
     }
   } catch {

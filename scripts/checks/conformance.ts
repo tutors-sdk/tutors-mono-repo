@@ -142,6 +142,8 @@ function podSpecOf(doc: Obj): Obj | undefined {
 export interface PolicyOptions {
   /** When set, every image must carry exactly this tag (the release the manifests describe). */
   expectedTag?: string;
+  /** When set, every image must be pinned by digest, not by tag alone (how the deploy overlays render). */
+  requireDigest?: boolean;
 }
 
 /** Split `registry:5000/org/app:1.2.3@sha256:...` into repository, tag and digest. */
@@ -204,6 +206,7 @@ export function manifestPolicyFindings(docs: Obj[], options: PolicyOptions = {})
       } else if (options.expectedTag && !image.digest && image.tag !== options.expectedTag) {
         findings.push(`image-tag-not-release: ${where}: ${container.image} (expected tag ${options.expectedTag})`);
       }
+      if (options.requireDigest && !image.digest) findings.push(`image-not-digest-pinned: ${where}: ${container.image}`);
 
       const resources = (container.resources as Obj | undefined) ?? {};
       const requests = (resources.requests as Obj | undefined) ?? {};
