@@ -388,6 +388,12 @@ jobs:
       - name: Check bundle budgets
         run: pnpm check:bundle
 
+      # The built server, run with Auth.js on: no CommonJS globals in the ES module
+      # bundle, and no 5xx on the routes in tests/security/header-contract.json
+      # (v16.2.0 answered 500 on /auth/<courseid>). Needs no Docker.
+      - name: Smoke test the built servers
+        run: pnpm check:server
+
   # Runway tier C: on PRs that touch a generator, every difference in generated
   # output for the corpus must be claimed in tests/generator/claims.yaml. On
   # other PRs and on pushes the job succeeds without running, so the gate holds.

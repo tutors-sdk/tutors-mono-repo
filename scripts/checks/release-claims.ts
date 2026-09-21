@@ -69,17 +69,17 @@ function main(): void {
   const arg = process.argv[2] ?? "release/claims.yaml";
   const file = isAbsolute(arg) ? arg : join(REPO_ROOT, arg);
   if (!existsSync(file)) {
-    console.error(`FAIL: ${arg} is missing. A release branch carries one; \`claims: []\` means nothing observable should differ.`);
+    process.stderr.write(`FAIL: ${arg} is missing. A release branch carries one; \`claims: []\` means nothing observable should differ.\n`);
     process.exit(1);
   }
   const errors = validateClaimsText(readFileSync(file, "utf8"));
   if (errors.length > 0) {
-    console.error(`FAIL: ${arg} is not a valid claims file:`);
-    for (const error of errors) console.error(`  ${error}`);
+    process.stderr.write(`FAIL: ${arg} is not a valid claims file:\n`);
+    for (const error of errors) process.stderr.write(`  ${error}\n`);
     process.exit(1);
   }
   const count = ((yaml.load(readFileSync(file, "utf8")) as { claims: unknown[] }).claims ?? []).length;
-  console.log(`OK: ${arg} is valid (${count} claim${count === 1 ? "" : "s"}).`);
+  process.stdout.write(`OK: ${arg} is valid (${count} claim${count === 1 ? "" : "s"}).\n`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

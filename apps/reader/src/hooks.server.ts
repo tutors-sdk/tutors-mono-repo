@@ -79,7 +79,7 @@ const { handle: authInitHandle } = SvelteKitAuth({
     // @auth/sveltekit turns off Auth.js's own CSRF token and relies on
     // SvelteKit's origin check, so "csrf-disabled" arrives on every auth request.
     warn: (code) => (code === "csrf-disabled" ? log.debug("Auth.js warning", { code }) : log.warn("Auth.js warning", { code })),
-    debug: (message, metadata) => log.debug(`Auth.js: ${message}`, { metadata })
+    debug: (message, metadata) => log.debug("Auth.js debug", { details: message, metadata })
   }
 });
 
