@@ -231,6 +231,23 @@ refuses to add one), so the file only shrinks. Migrating a feature to Rule block
 In GitHub Actions each new violation is an `::error file=...,line=...::` annotation on the
 feature file.
 
+### Rules and the release harness
+
+A release claim names the Rule behind a change in its `reason`, as `Rule 0031: <title>` (see
+[release/README.md](../release/README.md)). Two tools tie that to the features:
+
+- `pnpm release:claims:draft --from <production tag> --to <release candidate ref>` compares the
+  Rules at the two git refs by id and prints a stub for each Rule that was added or whose block
+  (title, tags, scenarios or steps) changed. The `reason` is filled in; `artefact` and `scope`
+  are `TODO`, because only the author knows which page or route the Rule changes, so the draft is
+  not a valid claims file until they are replaced. A removed Rule is listed in a comment: it cannot
+  be cited by id. A Rule that only moved to another file is not reported. A Rule migrated from
+  plain scenarios shows as added even though nothing observable changed; delete its stub.
+- `pnpm check:release-claims` also resolves the citation. A `reason` that starts with "Rule" and a
+  number must name a Rule id that a feature under `tests/bdd/features` defines at the ref being
+  checked, and the number must have four digits. A free-text reason, such as a CHANGELOG entry,
+  is left alone.
+
 ## Persona-Based Organisation
 
 BDD features are organised by user persona to ensure coverage from all stakeholder perspectives:

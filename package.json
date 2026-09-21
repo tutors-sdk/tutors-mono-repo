@@ -45,7 +45,8 @@
     "check:load": "tsx scripts/checks/load-test.ts",
     "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
     "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
-    "check:release-claims": "tsx scripts/checks/release-claims.ts"
+    "check:release-claims": "tsx scripts/checks/release-claims.ts",
+    "release:claims:draft": "tsx scripts/release-claims-draft.ts"
   },
   "devDependencies": {
     "@amiceli/vitest-cucumber": "7.0.0",
