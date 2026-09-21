@@ -17,6 +17,7 @@ images:
   - name: tutors-app
     newName: quay.io/tutors-sdk/tutors-reader
     newTag: "16.2.2"
+    digest: sha256:7567d5927767bd39b7991a586d594f6c310387471109a456d2cff49fa12488cb
 
 patches:
   - target:

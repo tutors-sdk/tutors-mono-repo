@@ -38,6 +38,7 @@
 import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { COSIGN_IDENTITY, COSIGN_ISSUER } from "./checks/lib/registry.ts";
 
 const out = (line: string): void => void process.stdout.write(`${line}\n`);
 const err = (line: string): void => void process.stderr.write(`${line}\n`);
@@ -45,9 +46,9 @@ const err = (line: string): void => void process.stderr.write(`${line}\n`);
 export const APPS = ["reader", "catalogue", "live", "time"] as const;
 export const IMAGE_PREFIX = "quay.io/tutors-sdk/tutors-";
 export const REPOSITORY = "tutors-sdk/tutors-mono-repo";
-export const COSIGN_ISSUER = "https://token.actions.githubusercontent.com";
-/** The signer of every image, at any ref; what the release harness and deploy pins accept. */
-export const COSIGN_IDENTITY_REGEXP = "^https://github.com/tutors-sdk/tutors-mono-repo/\\.github/workflows/image-build\\.yml@";
+/** The signer of every image, at any ref, and its issuer: defined once in checks/lib/registry.ts, shared with the deploy pins. */
+export { COSIGN_ISSUER };
+export const COSIGN_IDENTITY_REGEXP = COSIGN_IDENTITY;
 
 /** The sentence the job summary carries for an image that shipped without being judged. */
 export const REBUILT_NOTICE = "REBUILT — this image is not the one the release harness judged";
