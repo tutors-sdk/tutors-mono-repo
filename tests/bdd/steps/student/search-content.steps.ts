@@ -9,7 +9,7 @@ const feature = await loadFeature("tests/bdd/features/student/search-content.fea
 
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-describeFeature(feature, ({ Background, Scenario }) => {
+describeFeature(feature, ({ Background, Rule }) => {
   let courseId: string;
   let title: string;
   let los: LoShape[];
@@ -35,95 +35,105 @@ describeFeature(feature, ({ Background, Scenario }) => {
     });
   });
 
-  Scenario("Search for a term in course content", ({ Given, And, When, Then }) => {
-    Given("the course has {number} labs whose only step includes the line {string}", addLabsWithLine);
-    And("the course has a note that includes the line {string}", (_ctx, line: string) => {
-      los.push(shape("note", "Reference", [], { contentMd: `# Reference\n\n${line}\n\nThe end.` }));
-    });
-    When("a student searches for {string}", search);
-    Then("the system shall return {number} results from {number} different learning objects", (_ctx, count: number, loCount: number) => {
-      expect(results).toHaveLength(count);
-      expect(new Set(results.map((result) => result.lab)).size).toBe(loCount);
-      expect(results.map((result) => result.lab.type)).toEqual(["step", "step", "step", "note"]);
-    });
-    And("the results shall show the matching lines {string}", (_ctx, expected: string) => {
-      expect(matchingLines()).toEqual(list(expected));
-    });
-  });
-
-  Scenario("Search finds content in fenced code blocks", ({ Given, When, Then, And }) => {
-    Given("a lab step contains a fenced {string} code block with {string}", (_ctx, language: string, code: string) => {
-      const contentMd = ["# Variables", "", "Declare a constant.", "", "```" + language, code, "```", "", "Done."].join("\n");
-      los.push(labShape("Lab 1", [{ title: "Variables", contentMd }]));
-    });
-    When("a student searches for {string}", search);
-    Then("the system shall return {number} result", (_ctx, count: number) => {
-      expect(results).toHaveLength(count);
-      expect(matchingLines()).toEqual(["const x = 42;"]);
-    });
-    And("the result shall indicate the match is within fenced code", () => {
-      expect(results[0].fenced).toBe(true);
-    });
-    And("the result shall include the code language {string}", (_ctx, language: string) => {
-      expect(results[0].language).toBe(language);
-    });
-    And("a search for {string} shall return {number} result outside fenced code", (_ctx, term: string, count: number) => {
-      const prose = searchHits(searchableLos(course), term);
-      expect(prose).toHaveLength(count);
-      expect(prose.map((result) => [result.fenced, result.language])).toEqual([[false, ""]]);
+  Rule("When a student searches a course, the reader shall list each matching line with the learning object it comes from.", ({ RuleScenario }) => {
+    RuleScenario("Search for a term in course content", ({ Given, And, When, Then }) => {
+      Given("the course has {number} labs whose only step includes the line {string}", addLabsWithLine);
+      And("the course has a note that includes the line {string}", (_ctx, line: string) => {
+        los.push(shape("note", "Reference", [], { contentMd: `# Reference\n\n${line}\n\nThe end.` }));
+      });
+      When("a student searches for {string}", search);
+      Then("the reader shall return {number} results from {number} different learning objects", (_ctx, count: number, loCount: number) => {
+        expect(results).toHaveLength(count);
+        expect(new Set(results.map((result) => result.lab)).size).toBe(loCount);
+        expect(results.map((result) => result.lab.type)).toEqual(["step", "step", "step", "note"]);
+      });
+      And("the results shall show the matching lines {string}", (_ctx, expected: string) => {
+        expect(matchingLines()).toEqual(list(expected));
+      });
     });
   });
 
-  Scenario("Search results are limited", ({ Given, When, Then, And }) => {
-    let labCount: number;
-    let stepCount: number;
-    Given("the course has {number} labs of {number} steps that each mention {string} once", (_ctx, labs: number, steps: number, term: string) => {
-      labCount = labs;
-      stepCount = steps;
-      for (let l = 1; l <= labs; l++) {
-        los.push(
-          labShape(
-            `Lab ${l}`,
-            Array.from({ length: steps }, (_, s) => ({ title: `Step ${s + 1}`, contentMd: `# Step ${s + 1}\n\nAssign the ${term} here.\n` }))
-          )
-        );
-      }
-    });
-    When("a student searches for {string}", search);
-    Then("the system shall return at most {number} results", (_ctx, limit: number) => {
-      // More matches exist than the limit allows, so the limit is what holds the count down.
-      expect(labCount * stepCount).toBeGreaterThan(limit);
-      expect(results).toHaveLength(limit);
-    });
-    And("the results shall be from across {number} different labs", (_ctx, count: number) => {
-      expect(new Set(results.map((result) => result.lab.parentLo)).size).toBe(count);
-    });
-  });
-
-  Scenario("Search with no results", ({ Given, When, Then }) => {
-    Given("the course has {number} labs whose only step includes the line {string}", addLabsWithLine);
-    When("a student searches for {string}", search);
-    Then("the system shall return an empty result set", () => {
-      expect(results).toEqual([]);
+  Rule("When a student searches for text in a fenced code block, the reader shall mark the result as fenced code and give its language.", ({ RuleScenario }) => {
+    RuleScenario("Search finds content in fenced code blocks", ({ Given, When, Then, And }) => {
+      Given("a lab step contains a fenced {string} code block with {string}", (_ctx, language: string, code: string) => {
+        const contentMd = ["# Variables", "", "Declare a constant.", "", "```" + language, code, "```", "", "Done."].join("\n");
+        los.push(labShape("Lab 1", [{ title: "Variables", contentMd }]));
+      });
+      When("a student searches for {string}", search);
+      Then("the reader shall return {number} result", (_ctx, count: number) => {
+        expect(results).toHaveLength(count);
+        expect(matchingLines()).toEqual(["const x = 42;"]);
+      });
+      And("the result shall indicate the match is within fenced code", () => {
+        expect(results[0].fenced).toBe(true);
+      });
+      And("the result shall include the code language {string}", (_ctx, language: string) => {
+        expect(results[0].language).toBe(language);
+      });
+      And("a search for {string} shall return {number} result outside fenced code", (_ctx, term: string, count: number) => {
+        const prose = searchHits(searchableLos(course), term);
+        expect(prose).toHaveLength(count);
+        expect(prose.map((result) => [result.fenced, result.language])).toEqual([[false, ""]]);
+      });
     });
   });
 
-  Scenario("Search result links navigate to content", ({ Given, When, Then, And }) => {
-    Given("the course has {number} labs whose only step includes the line {string}", addLabsWithLine);
-    When("a student searches for {string}", search);
-    Then("each result link shall be {string}", (_ctx, link: string) => {
-      expect(results.map((result) => result.link)).toEqual([link]);
+  Rule("When a student searches a course, the reader shall return at most 100 results.", ({ RuleScenario }) => {
+    RuleScenario("Search results are limited", ({ Given, When, Then, And }) => {
+      let labCount: number;
+      let stepCount: number;
+      Given("the course has {number} labs of {number} steps that each mention {string} once", (_ctx, labs: number, steps: number, term: string) => {
+        labCount = labs;
+        stepCount = steps;
+        for (let l = 1; l <= labs; l++) {
+          los.push(
+            labShape(
+              `Lab ${l}`,
+              Array.from({ length: steps }, (_, s) => ({ title: `Step ${s + 1}`, contentMd: `# Step ${s + 1}\n\nAssign the ${term} here.\n` }))
+            )
+          );
+        }
+      });
+      When("a student searches for {string}", search);
+      Then("the reader shall return at most {number} results", (_ctx, limit: number) => {
+        // More matches exist than the limit allows, so the limit is what holds the count down.
+        expect(labCount * stepCount).toBeGreaterThan(limit);
+        expect(results).toHaveLength(limit);
+      });
+      And("the results shall be from across {number} different labs", (_ctx, count: number) => {
+        expect(new Set(results.map((result) => result.lab.parentLo)).size).toBe(count);
+      });
     });
-    And("the link route shall not start with a hash character", () => {
-      for (const result of results) expect(result.link.startsWith("#")).toBe(false);
+  });
+
+  Rule("When a student searches for text that no learning object contains, the reader shall return an empty result set.", ({ RuleScenario }) => {
+    RuleScenario("Search with no results", ({ Given, When, Then }) => {
+      Given("the course has {number} labs whose only step includes the line {string}", addLabsWithLine);
+      When("a student searches for {string}", search);
+      Then("the reader shall return an empty result set", () => {
+        expect(results).toEqual([]);
+      });
     });
-    And("the link shall lead the reader to the step that matched", () => {
-      // The search page puts the leading slash back before it renders the link.
-      for (const result of results) {
-        const target = course.loIndex.get(`/${result.link}`);
-        expect(target?.type).toBe("step");
-        expect(target).toBe(result.lab);
-      }
+  });
+
+  Rule("When a student searches a course, the reader shall give each result a link that leads to the step that matched.", ({ RuleScenario }) => {
+    RuleScenario("Search result links navigate to content", ({ Given, When, Then, And }) => {
+      Given("the course has {number} labs whose only step includes the line {string}", addLabsWithLine);
+      When("a student searches for {string}", search);
+      Then("each result link shall be {string}", (_ctx, link: string) => {
+        expect(results.map((result) => result.link)).toEqual([link]);
+      });
+      And("the link route shall not start with a hash character", () => {
+        for (const result of results) expect(result.link.startsWith("#")).toBe(false);
+      });
+      And("the link shall lead the reader to the step that matched", () => {
+        // The search page puts the leading slash back before it renders the link.
+        for (const result of results) {
+          const target = course.loIndex.get(`/${result.link}`);
+          expect(target?.type).toBe("step");
+          expect(target).toBe(result.lab);
+        }
+      });
     });
   });
 });

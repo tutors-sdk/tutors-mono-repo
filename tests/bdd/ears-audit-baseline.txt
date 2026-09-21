@@ -2,8 +2,6 @@
 # This file may only shrink: a new violation is never added here, and a line whose violation is fixed
 # must be deleted (`pnpm test:ears:audit --update-baseline` does it). Migrating a feature to Rule blocks
 # removes its `no-rule` line.
-no-rule: tests/bdd/features/course/course-loading.feature
-no-rule: tests/bdd/features/course/course-navigation.feature
 no-rule: tests/bdd/features/developer/i18n-localisation.feature
 no-rule: tests/bdd/features/developer/theme-customisation.feature
 no-rule: tests/bdd/features/instructor/analytics-calendar.feature
@@ -12,13 +10,10 @@ no-rule: tests/bdd/features/instructor/course-authoring.feature
 no-rule: tests/bdd/features/instructor/student-engagement.feature
 no-rule: tests/bdd/features/instructor/whitelist-management.feature
 no-rule: tests/bdd/features/live/presence-tracking.feature
-no-rule: tests/bdd/features/shared/authentication.feature
 no-rule: tests/bdd/features/shared/error-handling.feature
 no-rule: tests/bdd/features/shared/offline-resilience.feature
 no-rule: tests/bdd/features/shared/theming.feature
-no-rule: tests/bdd/features/student/course-discovery.feature
 no-rule: tests/bdd/features/student/lab-interaction.feature
 no-rule: tests/bdd/features/student/learning-progress.feature
 no-rule: tests/bdd/features/student/live-presence.feature
-no-rule: tests/bdd/features/student/search-content.feature
 no-rule: tests/bdd/features/time/lab-analytics.feature

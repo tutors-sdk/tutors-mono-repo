@@ -278,12 +278,18 @@ bound: most of those scenarios describe failure handling and options the product
 
 ## Adding New EARS-Tagged Tests
 
-1. Choose the persona whose perspective the feature serves
-2. Select the EARS pattern that best describes the requirement type
-3. Write the Gherkin scenario using the pattern's sentence structure and Gherkin's keywords
-4. Add the `@ears-*` tag to the scenario
-5. Bind it in the steps file in the corresponding `steps/` directory, against product code; run `pnpm test:bdd` and watch it fail before the behaviour exists
-6. Validate EARS tags are correct using the `isValidEarsTag()` helper from `tests/bdd/support/ears-tags.ts`
+New behaviour is written as a Rule. The [`ears-gherkin-dev`](../.claude/skills/ears-gherkin-dev/SKILL.md) skill walks an AI assistant through the same steps.
+
+1. Choose the persona whose perspective the feature serves, and the system name for the Rule (tutors, the reader, the catalogue, the live dashboard, the time dashboard)
+2. Select the EARS pattern that best describes the requirement type and write it as a `Rule:` title with exactly one "shall"
+3. Take an id from `pnpm test:ears:audit --next-id` and put `@rule-NNNN` and the `@ears-*` tag on the lines above the Rule. For a state-driven or optional Rule, tag one scenario `@active` and one `@inactive`
+4. Write the scenarios beneath the Rule, using Gherkin's keywords, not While, Where or If
+5. Bind the Rule in the steps file with `Rule("<title>", ({ RuleScenario }) => ...)`, against product code; run `pnpm test:bdd` and watch it fail before the behaviour exists
+6. Implement, then run `pnpm test:bdd` until it passes and `pnpm test:ears:audit` until it reports nothing new
+
+Seed features already written this way (issue #214): course loading, course navigation, course
+discovery, authentication and content search. The other feature files still hold scenarios outside
+a Rule; the audit baseline lists them, and migrating one deletes its line.
 
 ## References
 
