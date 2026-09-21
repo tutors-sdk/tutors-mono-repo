@@ -5,6 +5,7 @@
   import { currentCourse, isEducator, locksLoaded } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
+  import { t } from "@tutors/i18n";
   import Podcast from "../content/Podcast.svelte";
 
   interface Props {
@@ -14,7 +15,7 @@
   let { los, type }: Props = $props();
 
   let visibleLos = $derived(
-    isEducator.value ? los : los.filter((lo) => !rbacService.isLoLocked(lo)),
+    los.filter((lo) => rbacService.isLoVisibleToStudent(lo)),
   );
   let panelVideos = $derived(visibleLos.filter((lo) => lo.type === "panelvideo"));
   let talkVideos = $derived(visibleLos.filter((lo) => lo.type !== "panelvideo"));
@@ -24,7 +25,8 @@
 </script>
 
 <SecondaryNavigator lo={currentCourse.value} parentCourse={currentCourse.value?.properties?.parent} />
-<div class="flex flex-wrap justify-center">
+<div class="ui-page">
+  <h1 class="ui-title mb-6 capitalize">{type} · {t("shell.resources")}</h1>
   {#key los}
     {#if type !== "video" && type !== "podcast"}
       <Cards {los} />

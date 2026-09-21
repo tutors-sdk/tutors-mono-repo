@@ -8,7 +8,7 @@
   import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
   import type { Lo, Composite } from "@tutors/tutors-model-lib";
 
-  let { showEducatorPanel = false } = $props();
+  let { showEducatorPanel = false, labelled = false } = $props();
 
   const course = $derived(currentCourse.value);
   const enrollment = $derived(course?.enrollment);
@@ -35,8 +35,9 @@
 </script>
 
 {#snippet menuSelector()}
-  <div class="hover:preset-tonal-secondary rounded-lg p-2">
-    <Icon type={showEducatorPanel ? "educator" : "info"} tip={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} height="25" />
+  <div class="nav-row">
+    <Icon type={showEducatorPanel ? "educator" : "info"} tip={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} height="20" />
+    {#if labelled}<span>{showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.title")}</span>{/if}
   </div>
 {/snippet}
 
@@ -47,7 +48,6 @@
         <Tabs.Trigger value="info">{t("nav.info.title")}</Tabs.Trigger>
         <Tabs.Trigger value="locks">{t("lecturer.locks.title")}</Tabs.Trigger>
         <Tabs.Trigger value="enrollment">{t("lecturer.enrollment.title")}</Tabs.Trigger>
-        <Tabs.Trigger value="control">{t("lecturer.control.title")}</Tabs.Trigger>
         <Tabs.Trigger value="access">{t("lecturer.access.title")}</Tabs.Trigger>
         <Tabs.Indicator />
       </Tabs.List>
@@ -76,6 +76,7 @@
                     <span class="truncate text-sm">{lo.title}</span>
                   </span>
                   <Switch
+                    aria-label={`Lock ${lo.title}`}
                     name="lock-{lo.route}"
                     checked={contentLocks.value.get(lo.route) ?? false}
                     onCheckedChange={(details) => rbacService.toggleContentLock(lo.route, details.checked)}
@@ -143,12 +144,6 @@
         </div>
       </Tabs.Content>
 
-      <Tabs.Content value="control">
-        <div class="space-y-2 p-2">
-          <p class="text-sm text-surface-500">{t("lecturer.control.placeholder")}</p>
-        </div>
-      </Tabs.Content>
-
       <Tabs.Content value="access">
         <div class="space-y-2 p-2 text-sm">
           <div><strong>{t("lecturer.access.authLevel")}:</strong> {course?.authLevel ?? 0}</div>
@@ -166,9 +161,6 @@
       </Tabs.Content>
     </Tabs>
   {:else}
-    <header class="flex justify-between">
-      <h2 class="h2">{t("nav.info.title")}</h2>
-    </header>
     <article>
       <div class="prose dark:prose-invert">
         {@html sanitizeHtml(currentCourse?.value?.contentHtml ?? "")}
@@ -177,4 +169,4 @@
   {/if}
 {/snippet}
 
-<Sidebar {menuSelector} {sidebarContent} width={showEducatorPanel ? "w-2xl" : "w-sm"} ariaLabel={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} />
+<Sidebar presentation={showEducatorPanel ? "drawer" : "dialog"} title={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.title")} {menuSelector} {sidebarContent} width={showEducatorPanel ? "w-2xl" : "w-xl"} ariaLabel={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} />

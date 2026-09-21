@@ -8,7 +8,7 @@
   {#snippet children(toast)}
     <Toast
       {toast}
-      class="border-surface-300 dark:border-surface-600 bg-surface-100 dark:bg-surface-900 rounded-xl border-[1px] p-4 shadow-lg"
+      class="ui-panel shadow-lg"
     >
       <div class="flex items-start gap-3">
         <div class="flex-1">
@@ -18,7 +18,7 @@
         <div class="flex items-center gap-2">
           {#if toast.meta?.actionUrl}
             <button
-              class="preset-filled-primary-500 rounded-lg px-3 py-1.5 text-xs font-medium"
+              class="ui-button ui-button-primary"
               onclick={() => {
                 toaster.dismiss(toast.id);
                 goto(toast.meta.actionUrl);
@@ -27,7 +27,7 @@
               {toast.meta.actionLabel ?? "Go"}
             </button>
           {/if}
-          <Toast.CloseTrigger class="text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 text-lg leading-none">
+          <Toast.CloseTrigger aria-label="Close notification" class="text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 text-lg leading-none">
             &times;
           </Toast.CloseTrigger>
         </div>

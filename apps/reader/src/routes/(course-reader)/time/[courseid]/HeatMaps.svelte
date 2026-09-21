@@ -14,14 +14,14 @@
     <!-- Row 1: Calendar and Lab activity heatmaps -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
       {#if studentCalendar.calendarByDay}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Calendar Activity</h2>
+        <div class="ui-panel min-w-0 w-full overflow-auto">
+          <h2 class="text-xl font-semibold mb-4">Calendar Activity</h2>
           <CalendarHeatmap calendarByDay={studentCalendar.calendarByDay} dates={studentCalendar.course?.dates ?? []} elementId="student-activity-heatmap" />
         </div>
       {/if}
       {#if studentCalendar.labsByDay}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Lab Activity</h2>
+        <div class="ui-panel min-w-0 w-full overflow-auto">
+          <h2 class="text-xl font-semibold mb-4">Lab Activity</h2>
           <CalendarHeatmap calendarByDay={studentCalendar.labsByDay} dates={studentCalendar.course?.dates ?? []} elementId="student-lab-heatmap" />
         </div>
       {/if}
@@ -30,14 +30,14 @@
     <!-- Row 2: Course and Lab median heatmaps -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
       {#if studentCalendar.course?.calendarModel?.medianByDay?.row}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Calendar Median Activity</h2>
+        <div class="ui-panel min-w-0 w-full overflow-auto">
+          <h2 class="text-xl font-semibold mb-4">Calendar Median Activity</h2>
           <CalendarHeatmap calendarByDay={studentCalendar.course?.calendarModel?.medianByDay?.row} dates={studentCalendar.course?.dates ?? []} elementId="course-median-heatmap" />
         </div>
       {/if}
       {#if studentCalendar.course?.labsMedianByDay}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Lab Median Activity</h2>
+        <div class="ui-panel min-w-0 w-full overflow-auto">
+          <h2 class="text-xl font-semibold mb-4">Lab Median Activity</h2>
           <CalendarHeatmap calendarByDay={studentCalendar.course?.labsMedianByDay} dates={studentCalendar.course?.dates ?? []} elementId="lab-median-heatmap" />
         </div>
       {/if}

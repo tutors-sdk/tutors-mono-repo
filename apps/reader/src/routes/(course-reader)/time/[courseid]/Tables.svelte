@@ -12,7 +12,7 @@
   let { studentCalendar }: Props = $props();
 </script>
 
-<div class="card p-4 flex flex-col min-w-0 shrink-0">
+<div class="ui-panel flex flex-col min-w-0 shrink-0">
   <div class="flex flex-col gap-6">
     {#if studentCalendar}
       <div class="flex flex-col gap-6">

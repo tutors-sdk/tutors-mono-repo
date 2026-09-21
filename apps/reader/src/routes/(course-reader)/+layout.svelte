@@ -10,8 +10,6 @@
   type Props = { children: Snippet };
   let { children }: Props = $props();
 
-  const hiddenRoutes = ["/lab/", "/note/", "/tutorial/"];
-  let hideNavigator = $derived(hiddenRoutes.some((r) => page.route.id?.includes(r)));
 
   tutorsConnectService.startTimer();
 
@@ -79,8 +77,8 @@
   <title>{currentCourse?.value?.title}</title>
 </svelte:head>
 
-<CourseShell {hideNavigator}>
-  <span id="content-panel" class="mt-[-60px] block pt-[60px]"></span>
+<CourseShell>
+  <span id="content-panel"></span>
 
   {@render children()}
 </CourseShell>

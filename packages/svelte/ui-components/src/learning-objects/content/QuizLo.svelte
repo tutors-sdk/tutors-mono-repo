@@ -15,14 +15,14 @@
   let proseHtml = $derived(convertMdToHtml(content.prose, currentCodeTheme.value));
 </script>
 
-<article class="prose dark:prose-invert mr-4 max-w-none overflow-x-auto">
+<article class="reading-panel prose dark:prose-invert max-w-none">
   {#key currentCodeTheme.value}
     {@html sanitizeHtml(proseHtml)}
   {/key}
 
   {#if quiz}
     <div class="not-prose">
-      <QuizTaker {quiz} fallbackTitle={lo.title} />
+      {#key lo.route}<QuizTaker {quiz} fallbackTitle={lo.title} />{/key}
     </div>
   {:else}
     <div class="border-error-500 bg-surface-100 dark:bg-surface-900 my-4 rounded-xl border p-4">

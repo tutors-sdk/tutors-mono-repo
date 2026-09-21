@@ -32,19 +32,20 @@
         <Icon icon="fluent:presence-available-24-regular" color="var(--color-error-500)" height="20" />
       {/if}
     </span>
-    <div class="mt-2 flex items-center">
-      <img class="w-12 rounded-full" src={tutorsId.value?.image} alt={tutorsId.value?.name} />
+    <div class="flex h-11 w-11 items-center">
+      <img class="h-11 w-11 rounded-full border border-[var(--ui-border)]" src={tutorsId.value?.image} alt={tutorsId.value?.name} />
     </div>
   </div>
 {/snippet}
 
 {#snippet menuContent()}
-  <ul class="space-y-2">
+  <p class="mb-3 px-3 text-sm font-semibold">{tutorsId.value?.name || tutorsId.value?.login}</p>
+  <ul class="space-y-1">
     {#if currentCourse.value}
       {#if tutorsId.value?.share === "true"}
-        <MenuItem text={t("menu.sharePresence")} type="online" onClick={shareStatusChange} />
+        <MenuItem text={`${t("menu.sharePresence")} · On`} type="online" onClick={shareStatusChange} />
       {:else}
-        <MenuItem text={t("menu.sharePresence")} type="offline" onClick={shareStatusChange} />
+        <MenuItem text={`${t("menu.sharePresence")} · Off`} type="offline" onClick={shareStatusChange} />
       {/if}
       {#if tutorsId.value?.share === "true"}
         {#if analyticsEnabled}

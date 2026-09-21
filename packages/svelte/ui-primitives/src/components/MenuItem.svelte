@@ -17,7 +17,7 @@
     <a
       href={link}
       class="group btn flex w-full justify-between {isActive ? '' : 'hover:preset-tonal'}"
-      style={isActive ? 'background-color: light-dark(rgb(229, 231, 235), rgb(55, 65, 81));' : ''}
+      style={isActive ? 'background-color: var(--ui-selected);' : ''}
       target={targetStr}
     >
       <div class="ml-2">{text}</div>
@@ -26,7 +26,7 @@
   {:else}
     <button
       class="group btn flex w-full justify-between {isActive ? '' : 'hover:preset-tonal'}"
-      style={isActive ? 'background-color: light-dark(rgb(229, 231, 235), rgb(55, 65, 81));' : ''}
+      style={isActive ? 'background-color: var(--ui-selected);' : ''}
       onclick={onClick}
     >
       <div class="ml-2">{text}</div>

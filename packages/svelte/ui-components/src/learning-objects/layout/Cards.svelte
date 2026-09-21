@@ -5,8 +5,6 @@
 
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { scale } from "svelte/transition";
-  import { scaleTransition } from "@tutors/ui-primitives/utils/animations";
   import { currentCourse, isEducator, contentLocks, locksLoaded } from "@tutors/runes";
   import { setShowHide } from "@tutors/tutors-model-lib";
   import { rbacService } from "@tutors/rbac";
@@ -50,13 +48,15 @@
 </script>
 
 {#if los.length > 0 && isLoaded && (isEducator.value || !currentCourse.value?.hasEnrollment || locksLoaded.value)}
-  <div transition:scale|local={scaleTransition} class="mx-auto mb-2 place-items-center overflow-hidden rounded-xl p-4" style="background-color: light-dark(var(--color-surface-100), var(--color-surface-900));">
-    <div class="mx-auto flex flex-wrap justify-center">
+  <div class="w-full">
+    <div class="ui-grid">
       {#key refresh}
         {#each los as lo}
+          {@const row = !currentCourse.value?.isPortfolio && lo.type !== "topic"}
           {#if !lo.hide && !(rbacService.isLoLocked(lo) && !isEducator.value)}
-            <div class="relative flex justify-center">
+            <div class="relative min-w-0" class:resource-row={row}>
               <Card
+                {row}
                 cardDetails={{
                   route: lo.route,
                   title: lo.title,
@@ -69,6 +69,7 @@
               />
               {#if isEducator.value && contentLocks.value.get(lo.route)}
                 <button
+                  aria-label="Unlock {lo.title}"
                   class="absolute top-2 right-2 z-20 rounded-lg bg-surface-200 p-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-surface-700"
                   onclick={() => rbacService.toggleContentLock(lo.route, !contentLocks.value.get(lo.route))}
                 >
@@ -82,3 +83,8 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .ui-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+  .resource-row { grid-column: 1 / -1; }
+</style>

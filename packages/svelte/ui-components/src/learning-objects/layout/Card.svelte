@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Iconify from "@iconify/svelte";
   import { LoRecord } from "@tutors/community";
-  import { cardStyles, type CardConfig, type CardDetails } from "@tutors/themes";
+  import { type CardConfig, type CardDetails } from "@tutors/themes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
   import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
-  import "../../_safelist.svelte";
+  import Image from "@tutors/ui-primitives/components/Image.svelte";
+  import { t } from "@tutors/i18n";
 
-  let { cardDetails, cardLayout } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig }>();
+  let { cardDetails, cardLayout, row = false } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; row?: boolean }>();
 
   function plainFromSummary(html: string | undefined): string {
     if (!html) return "";
@@ -33,132 +33,52 @@
     });
   });
 
-  const target = $derived(cardDetails.type === "web" && cardDetails.route.startsWith("http") ? "_blank" : "");
-  const route = $derived(cardDetails.type === "video" ? cardDetails.video! : cardDetails.route);
+  const target = $derived(["web", "github"].includes(cardDetails.type) && cardDetails.route.startsWith("http") ? "_blank" : "");
+  const route = $derived(cardDetails.type === "video" ? (cardDetails.video || cardDetails.route) : cardDetails.route);
   const hideVideoIcon = $derived(currentCourse.value?.areVideosHidden);
   const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
-  const style = $derived(cardLayout?.style ?? themeService.cardStyle.value);
-  const isPortrait = $derived(style === "portrait");
-  const isLandscape = $derived(style === "landscape");
-  const isCircular = $derived(style === "circular");
-
-  const styles = $derived({
-    heading: cardStyles.heading[layout][style],
-    dimensions: cardStyles.dimensions[layout][style],
-    image: cardStyles.image[layout][style],
-    icon: cardStyles.icon[layout][style],
-    iconHeight: cardStyles.iconHeight[layout][style],
-    text: cardStyles.text[layout][style],
-    avatar: cardStyles.avatar[layout][style],
-    container: cardStyles.container[layout][style]
-  });
-
-  const cardShellClass = $derived(
-    `card preset-filled-${themeService.getTypeColour(cardDetails.type)}-100-900 border-[1px] ` +
-      `${styles.container} border-${themeService.getTypeColour(cardDetails.type)}-500 ` +
-      `m-2 ${styles.dimensions} transition-all hover:scale-[1.10]`
-  );
 </script>
-
-{#snippet header(cardDetails: CardDetails)}
-  <header class="relative w-full p-3">
-    <div class="absolute top-3 right-1 flex items-center">
-      {#if cardDetails.video && cardDetails.type !== "video" && !hideVideoIcon}
-        <a href={cardDetails.video}>
-          <Icon type="video" height="30" />
-        </a>
-      {/if}
-      <Icon type={cardDetails.type} height={styles.iconHeight} />
-    </div>
-    <div class="line-clamp-2 pr-10 {styles.heading}">
-      {#if cardDetails.student}
-        <div class="flex items-center justify-between">
-          <span>
-            <img src={cardDetails.img} alt={cardDetails.student?.fullName ?? cardDetails.student?.id ?? ""} class="rounded-xl {styles.avatar}" />
-          </span>
-          <span>
-            <h6 class={styles.text}>&nbsp;{cardDetails.student.fullName ?? cardDetails.student.id}</h6>
-          </span>
-        </div>
-      {:else}
-        {cardDetails.title}
-      {/if}
-    </div>
-  </header>
-{/snippet}
-
-{#snippet figure(cardDetails: CardDetails)}
-  <figure class="flex items-center justify-center {isCircular ? 'h-full w-full min-h-0' : ''}">
-    {#if cardDetails.student}
-      <img src={cardDetails.student.avatar} alt={cardDetails.student.fullName} class="{styles.image} object-contain object-center {isCircular ? 'max-h-full max-w-full rounded-full' : 'rounded-xl'}" />
-    {:else if cardDetails.icon}
-      <Iconify icon={cardDetails.icon.type} color={cardDetails.icon.color} height={styles.icon} class={isCircular ? "h-auto max-h-full w-auto max-w-full" : ""} />
-    {:else}
-      <img src={cardDetails.img} alt={cardDetails.title} class="{styles.image} object-contain object-center {isCircular ? 'max-h-full max-w-full rounded-full' : ''}" />
-    {/if}
-  </figure>
-{/snippet}
-
-{#snippet content(cardDetails: CardDetails)}
-  <div class="flex flex-col justify-between p-4 {!isLandscape ? 'text-center' : ''}">
-    <div class="{styles.text} ">
-      {@html sanitizeHtml(cardDetails.summary ?? "")}
-    </div>
-    <div class="{styles.text} ">
-      {cardDetails.summaryEx}
-    </div>
-  </div>
-{/snippet}
-
-{#snippet portrait(cardDetails: CardDetails)}
-  <div class="card-header flex">
-    {@render header(cardDetails)}
-  </div>
-  <div class="card-body flex flex-1 items-center justify-center">
-    {@render figure(cardDetails)}
-  </div>
-  <div class="card-footer">
-    {@render content(cardDetails)}
-  </div>
-{/snippet}
-
-{#snippet circular(cardDetails: CardDetails)}
-  <div class="flex h-full flex-col items-center justify-center gap-1 px-8 py-6 text-center">
-    <div class="line-clamp-2 w-full shrink-0 text-balance {styles.heading}">
-      {cardDetails.title}
-    </div>
-    <div class="flex min-h-0 w-full flex-1 items-center justify-center">
-      {@render figure(cardDetails)}
-    </div>
-    <div class="shrink-0">
-      <Icon type={cardDetails.type} height={styles.iconHeight} />
-    </div>
-  </div>
-{/snippet}
-
-{#snippet landscape(cardDetails: CardDetails)}
-  <div class="ml-2 flex h-full w-1/3 items-center">
-    {@render figure(cardDetails)}
-  </div>
-  <div class="relative w-2/3">
-    {@render header(cardDetails)}
-    {@render content(cardDetails)}
-    <div class="absolute right-2 bottom-1 text-xs text-gray-400">{cardDetails.metric}</div>
-  </div>
-{/snippet}
 
 {#if cardDetails.student}
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
-  <a href={route} {target}>
-    <div class={cardShellClass}>
-      {#if isLandscape}
-        {@render landscape(cardDetails)}
-      {:else if isCircular}
-        {@render circular(cardDetails)}
-      {:else if isPortrait}
-        {@render portrait(cardDetails)}
-      {/if}
-    </div>
-  </a>
+  <article class="resource-card" class:row class:compact={layout === "compacted"}>
+    <a class="resource-link" href={route} {target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
+      <Image lo={cardDetails} />
+      <div class="resource-heading">
+        <h3>{cardDetails.title}</h3>
+        <span class="resource-type"><Icon type={cardDetails.type} height="16" /><span>{cardDetails.type}</span></span>
+      </div>
+      <span class="resource-arrow" aria-hidden="true">{cardDetails.type === "archive" ? "↓" : target ? "↗" : "→"}</span>
+    </a>
+    {#if cardDetails.summary || cardDetails.summaryEx}
+      <div class="resource-summary">{@html sanitizeHtml(cardDetails.summary ?? "")} {cardDetails.summaryEx ?? ""}</div>
+    {/if}
+    {#if cardDetails.video && cardDetails.type !== "video" && !hideVideoIcon}
+      <a class="companion-video" href={cardDetails.video} aria-label={`${t("shell.video")}: ${cardDetails.title}`}><Icon type="video" height="18" />{t("shell.video")}</a>
+    {/if}
+    {#if cardDetails.metric}<p class="resource-metric">{cardDetails.metric}</p>{/if}
+  </article>
 {/if}
+<style>
+  .resource-card { position: relative; height: 100%; min-width: 0; padding: var(--space-5); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); transition: border-color 150ms; }
+  .resource-card:has(.resource-link:hover) { border-color: var(--ui-brand); }
+  .resource-link { display: flex; align-items: center; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
+  .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+  .resource-link:focus-visible { outline: none; }
+  .resource-card:has(.resource-link:focus-visible) { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
+  .resource-heading { min-width: 0; flex: 1; }
+  h3 { font-size: var(--font-size-19); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+  .resource-type { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-caption); color: var(--ui-muted); text-transform: capitalize; }
+  .resource-arrow { color: var(--ui-brand); }
+  .resource-summary { margin-top: var(--space-4); font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
+  .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
+  .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
+  .row :global(.lo-artwork) { width: 56px; height: 56px; }
+  .row .resource-summary { margin-left: 72px; margin-top: var(--space-2); }
+  .compact { padding: var(--space-3); }
+  .compact h3 { font-size: var(--font-body); }
+  .compact :global(.lo-artwork) { width: 48px; height: 48px; }
+  @media (max-width: 767px) { .resource-card :global(.lo-artwork) { width: 56px; height: 56px; } }
+</style>

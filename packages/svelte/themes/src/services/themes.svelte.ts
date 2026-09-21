@@ -159,8 +159,9 @@ export const themeService: ThemeService = {
    */
   getIcon(type: string): IconType {
     const iconLib = themeService.themes.find((theme) => theme.name === this.currentTheme.value)?.icons;
-    if (iconLib && iconLib[type]) {
-      return iconLib[type];
+    const icon = iconLib?.[type] ?? FluentIconLib[type];
+    if (icon) {
+      return icon;
     } else {
       log.warn("No type found for icon", type);
       return FluentIconLib.tutors;
@@ -185,10 +186,7 @@ export const themeService: ThemeService = {
    */
   getTypeColour(type: string): string {
     const iconLib = themeService.themes.find((theme) => theme.name === this.currentTheme.value)?.icons;
-    if (iconLib && iconLib[type]) {
-      return iconLib[type].color;
-    }
-    return "primary";
+    return iconLib?.[type]?.color ?? FluentIconLib[type]?.color ?? "primary";
   },
 
   /**

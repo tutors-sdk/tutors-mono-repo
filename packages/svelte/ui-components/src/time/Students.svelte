@@ -3,7 +3,7 @@
   import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
 </script>
 
-<div class="flex flex-wrap justify-center">
+<div class="ui-grid">
   {#each liveService.studentsOnline.value as lo}
     {#if lo?.user}
       <StudentCard

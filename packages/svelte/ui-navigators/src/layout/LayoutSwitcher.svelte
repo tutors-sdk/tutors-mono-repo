@@ -1,25 +1,8 @@
 <script lang="ts">
-  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { themeService } from "@tutors/themes";
-  import { SegmentedControl } from "@skeletonlabs/skeleton-svelte";
+  import { t } from "@tutors/i18n";
+  const choices = ["compacted", "expanded"] as const;
 </script>
-
-<div class="mb-2 flex justify-center">
-  <SegmentedControl defaultValue={themeService.layout.value} onValueChange={(e) => themeService.setLayout(e.value!)}>
-    <SegmentedControl.Control>
-      <SegmentedControl.Indicator />
-      <SegmentedControl.Item value="compacted">
-        <SegmentedControl.ItemText>
-          <Icon type="compacted" />
-        </SegmentedControl.ItemText>
-        <SegmentedControl.ItemHiddenInput />
-      </SegmentedControl.Item>
-      <SegmentedControl.Item value="expanded">
-        <SegmentedControl.ItemText>
-          <Icon type="expanded" />
-        </SegmentedControl.ItemText>
-        <SegmentedControl.ItemHiddenInput />
-      </SegmentedControl.Item>
-    </SegmentedControl.Control>
-  </SegmentedControl>
-</div>
+<select class="select w-full" aria-label={t("nav.layout.layout")} value={themeService.layout.value} onchange={(event) => themeService.setLayout(event.currentTarget.value)}>
+  {#each choices as choice}<option value={choice}>{t(`shell.${choice}`)}</option>{/each}
+</select>

@@ -2,6 +2,7 @@
   import type { NotebookCell } from "@tutors/tutors-model-lib";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
 
+  import { t } from "@tutors/i18n";
   interface Props {
     cell: NotebookCell;
     index: number;
@@ -22,14 +23,12 @@
     {#if cell.outputsHtml}
       <div class="flex items-center border-t border-surface-200 dark:border-surface-700 px-3 py-1.5">
         <button
-          class="run-button flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors
-            {revealed
-              ? 'bg-surface-200 dark:bg-surface-700 text-surface-600 dark:text-surface-300'
-              : 'bg-success-100 dark:bg-success-900 text-success-700 dark:text-success-300 hover:bg-success-200 dark:hover:bg-success-800'}"
+          aria-expanded={revealed}
+          class="run-button ui-button"
           onclick={(e) => { e.stopPropagation(); onToggleOutput(); }}
         >
-          <span class="text-sm">{revealed ? "▾" : "▸"}</span>
-          {revealed ? "Hide Output" : "Run"}
+          <span class="text-sm" aria-hidden="true">{revealed ? "▾" : "▸"}</span>
+          {revealed ? t("shell.hideOutput") : t("shell.showOutput")}
         </button>
       </div>
       {#if revealed}

@@ -12,8 +12,8 @@
 
 {#if contentHtml}
   <div class="flex w-full items-center justify-center">
-    <p class="prose prose-sm prose-slate dark:prose-invert [&>*]:m-0 min-w-full text-xs">
+    <div class="prose prose-sm prose-slate dark:prose-invert [&>*]:m-0 min-w-full text-xs">
       {@html sanitizeHtml(contentHtml ?? "")}
-    </p>
+    </div>
   </div>
 {/if}

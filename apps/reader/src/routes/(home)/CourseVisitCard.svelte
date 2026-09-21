@@ -9,16 +9,16 @@
 
 <div
   transition:scale|local={scaleTransition}
-  class="to-accent-50 dark:to-accent-900 card card-hover border-surface-200 dark:border-surface-400 from-primary-50 dark:from-primary-900 m-2 border bg-linear-to-l p-2"
+  class="ui-panel"
 >
   <div class="flex justify-between">
     <section class="p-4">
-      <p class="line-clamp-1 font-bold">{courseVisit.title}</p>
-      <p class="line-clamp-1">{courseVisit.credits}</p>
-      <p class="line-clamp-1">
+      <p class="break-words font-bold">{courseVisit.title}</p>
+      <p class="break-words">{courseVisit.credits}</p>
+      <p class="break-words">
         {t("course.visitCard.lastAccessed")}
         {courseVisit.lastVisit?.slice(0, 10)}
-        {courseVisit.lastVisit.slice(11, 19)}
+        {courseVisit.lastVisit?.slice(11, 19)}
       </p>
       <p>{t("course.visitCard.visits")} {courseVisit.visits}</p>
     </section>
@@ -30,24 +30,24 @@
           height="96"
         />
       {:else}
-        <img class="h-20" src={courseVisit.image} alt={courseVisit.title} />
+        <img class="h-20 w-20 object-contain" src={courseVisit.image} alt={courseVisit.title} />
       {/if}
     </section>
   </div>
   <footer class="card-footer p-0">
-    <div class="flex w-full">
+    <div class="ui-actions">
       <a
-        class="variant-filled-primary btn hover:preset-tonal m-0 w-2/3 rounded-t-none rounded-br-none"
+        class="ui-button ui-button-primary"
         href={"/course/" + courseVisit.id}
         >{t("course.visitCard.visitCourse")}</a
       >
       <button
-        class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none"
+        class="ui-button"
         onclick={() => deleteCourse(courseVisit.id)}
         >{t("course.visitCard.delete")}</button
       >
       <button
-        class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none"
+        class="ui-button"
         aria-label={courseVisit.favourite
           ? t("course.visitCard.unstar")
           : t("course.visitCard.star")}

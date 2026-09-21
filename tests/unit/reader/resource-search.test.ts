@@ -1,0 +1,29 @@
+import { describe, expect, it } from 'vitest';
+import type { Lo } from '@tutors/tutors-model-lib';
+import { findResources } from '../../../apps/reader/src/lib/resource-search';
+
+const lo = (type: string, route: string, title: string, extra = {}): Lo => ({ type, route, title, ...extra } as Lo);
+describe('resource discovery', () => {
+  it('searches all metadata, groups steps and keeps the matching deep link without exposing hidden branches', () => {
+    const course = [
+      lo('unit', '/unit/a', 'Main lesson', { los: [
+        lo('lab', '/lab/a', 'First lab', { los: [
+          lo('step', '/lab/a/one', 'One', { contentMd: 'Arrays are useful.\nArrays again.' }),
+          lo('step', '/lab/a/two', 'Two', { contentMd: 'Arrays and objects' })
+        ] }),
+        lo('notebook', '/notebook/a', 'Python arrays'),
+        lo('web', 'https://example.org', 'Array reference'),
+        lo('archive', '/files/arrays.zip', 'Arrays download')
+      ] }),
+      lo('topic', '/topic/hidden', 'Secret arrays', { hide: true, los: [lo('note', '/note/hidden', 'Hidden arrays')] }),
+      lo('topic', '/topic/locked', 'Locked arrays', { locked: true, los: [lo('note', '/note/locked', 'Locked arrays')] })
+    ];
+    const visible = (item: Lo) => !item.hide && !(item as Lo & { locked?: boolean }).locked;
+    const results = findResources(course, 'ARRAY', '', visible);
+    expect(results.map(r => r.lo.type)).toEqual(['lab', 'notebook', 'web', 'archive']);
+    expect(results[0]).toMatchObject({ href: '/lab/a/one', excerpt: 'Arrays are useful.' });
+    expect(findResources(course, 'arrays', 'lab', visible)).toHaveLength(1);
+    expect(findResources(course, 'missing', '', visible)).toEqual([]);
+    expect(findResources(course, '', '', visible)).toHaveLength(4);
+  });
+});

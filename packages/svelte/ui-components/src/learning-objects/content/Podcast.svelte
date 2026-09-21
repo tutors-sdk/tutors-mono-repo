@@ -11,7 +11,7 @@
   let episodeId = lo.episode.id;
 </script>
 
-<div class="flex flex-col">
+<div class="ui-panel flex flex-col">
   <iframe
     title={lo.title}
     data-testid="embed-iframe"
@@ -25,9 +25,9 @@
   ></iframe>
 
   <div class="mt-4 flex flex-col gap-2">
-    <p class="text-center text-lg italic">{lo.title}</p>
+    <p class="text-lg font-semibold">{lo.title}</p>
     {#if !hideSummary}
-      <div class="text-center text-sm italic">
+      <div class="prose dark:prose-invert text-sm">
         {@html sanitizeHtml(lo.summary ?? "")}
       </div>
     {/if}

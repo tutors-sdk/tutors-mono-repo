@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { tourService } from "@tutors/tour";
+  import { tourService, findTourTarget } from "@tutors/tour";
   import { t } from "@tutors/i18n";
   import { prefersReducedMotion } from "@tutors/a11y";
   import { browser } from "$app/environment";
   import { afterNavigate } from "$app/navigation";
   import type { TourPlacement } from "@tutors/tour";
 
+  let tooltipHeight = $state(160);
   let targetRect = $state<DOMRect | null>(null);
   let nextButton: HTMLButtonElement | undefined = $state();
   let previousActiveElement: Element | null = null;
@@ -17,8 +18,7 @@
 
   function computeTooltipPosition(rect: DOMRect, placement: TourPlacement): TooltipPos {
     const gap = 12;
-    const tooltipWidth = 320;
-    const tooltipHeight = 160;
+    const tooltipWidth = Math.min(320, window.innerWidth - 32);
     let top: number;
     let left: number;
 
@@ -52,7 +52,7 @@
     if (!tourService.isOpen.value || !browser) return;
     const step = tourService.currentStep;
     if (!step) return;
-    const el = document.querySelector(step.target);
+    const el = findTourTarget(step.target);
     if (el) {
       targetRect = el.getBoundingClientRect();
     } else {
@@ -69,7 +69,7 @@
     const step = tourService.currentStep;
     if (!step || !browser) return;
 
-    const el = document.querySelector(step.target);
+    const el = findTourTarget(step.target);
     if (el) {
       el.scrollIntoView({ behavior: prefersReducedMotion.value ? "auto" : "smooth", block: "nearest" });
       requestAnimationFrame(() => {
@@ -103,7 +103,18 @@
   });
 
   function onKeydown(e: KeyboardEvent) {
-    if (e.key === "Escape") {
+    if (e.key === "Tab") {
+      const buttons = Array.from((e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("button:not([tabindex='-1'])"));
+      const first = buttons[0];
+      const last = buttons.at(-1);
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    } else if (e.key === "Escape") {
       e.preventDefault();
       tourService.skip();
     } else if (e.key === "ArrowRight") {
@@ -148,29 +159,30 @@
     ></button>
 
     <div
-      class="absolute z-10 w-80 rounded-xl bg-surface-100 dark:bg-surface-900 shadow-2xl"
+      bind:clientHeight={tooltipHeight}
+      class="tour-tooltip absolute z-10 w-80 max-w-[calc(100vw-32px)] rounded-[var(--radius-panel)] border border-[var(--ui-border)] bg-[var(--ui-surface)] shadow-2xl"
       style="top: {pos.top}; left: {pos.left}; transition: {prefersReducedMotion.value ? 'none' : 'top 0.3s ease, left 0.3s ease'};"
     >
       <div class="p-4">
         <div role="status" aria-live="polite">
           <h3 class="text-sm font-bold mb-1">{t(step.titleKey)}</h3>
-          <p class="text-sm text-surface-600 dark:text-surface-300 mb-4">{t(step.descriptionKey)}</p>
+          <p class="text-sm text-[var(--ui-muted)] mb-4">{t(step.descriptionKey)}</p>
         </div>
 
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-surface-400">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-xs text-[var(--ui-muted)]">
             {tourService.currentStepIndex.value + 1} / {tourService.totalSteps}
           </span>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <button
-              class="rounded-lg px-3 py-1.5 text-xs font-medium text-surface-500 hover:bg-surface-200 dark:hover:bg-surface-700"
+              class="ui-button"
               onclick={() => tourService.skip()}
             >
               {t("tour.skip")}
             </button>
             {#if !tourService.isFirstStep}
               <button
-                class="rounded-lg px-3 py-1.5 text-xs font-medium text-surface-500 hover:bg-surface-200 dark:hover:bg-surface-700"
+                class="ui-button"
                 onclick={() => tourService.prev()}
               >
                 {t("tour.prev")}
@@ -178,7 +190,7 @@
             {/if}
             <button
               bind:this={nextButton}
-              class="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600"
+              class="ui-button ui-button-primary"
               onclick={() => tourService.next()}
             >
               {tourService.isLastStep ? t("tour.finish") : t("tour.next")}
@@ -189,3 +201,7 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .tour-tooltip { max-height: calc(100dvh - 32px); overflow-y: auto; color: var(--ui-ink); }
+</style>

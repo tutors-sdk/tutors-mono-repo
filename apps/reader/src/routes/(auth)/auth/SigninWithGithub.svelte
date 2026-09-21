@@ -3,10 +3,10 @@
   import { Progress } from "@skeletonlabs/skeleton-svelte";
   import { tutorsConnectService } from "@tutors/connect";
   import TutorsTerms from "./TutorsTerms.svelte";
-  import { themeService } from "@tutors/themes";
   import { t } from "@tutors/i18n";
 
   let showProgress = $state(false);
+  let failed = $state(false);
   interface Props {
     redirect?: string;
   }
@@ -15,72 +15,19 @@
 
   async function handleSignInWithProgress() {
     showProgress = true;
-    tutorsConnectService.connect(redirect);
+    failed = false;
+    try { await tutorsConnectService.connect(redirect); }
+    catch { failed = true; showProgress = false; }
   }
 </script>
 
-<div class="bg-surface-100-800 mx-auto mb-2 place-items-center overflow-hidden rounded-xl p-4">
-  <div class="flex flex-wrap justify-center">
-    <div class="card w-4/5 border-y-8 bg-surface-50! dark:bg-surface-700! border-{themeService.getIcon('note').color}-500 m-2">
-      <header class="card-header flex flex-row items-center justify-between p-3">
-        <div class="flex-auto text-center text-black! dark:text-white!">{t("auth.signIn")}</div>
-      </header>
-      <footer class="card-footer">
-        {#if showProgress}
-          <div class="flex w-full place-items-center justify-center p-4">
-            <Progress value={null} />
-          </div>
-        {:else}
-          <div class="bg-surface-100-800 mx-auto mb-2 place-items-center overflow-hidden rounded-xl p-4">
-            <div class="flex flex-wrap justify-center">
-              <button
-                type="button"
-                class="btn w-full transform bg-primary-500 text-white transition-transform hover:scale-105 hover:bg-primary-600"
-                onclick={handleSignInWithProgress}
-              >
-                <span><Icon icon="mdi:github" /></span>
-                <span>{t("auth.signInWithGithub")}</span>
-              </button>
-            </div>
-          </div>
-        {/if}
-      </footer>
-    </div>
-    <div class="card w-4/5 border-y-8 bg-surface-50! dark:bg-surface-700! border-{themeService.getIcon('topic').color}-500 m-2">
-      <footer class="card-footer mt-4">
-        <article class="prose mx-auto w-[80%] max-w-none dark:prose-invert">
-          <TutorsTerms />
-        </article>
-      </footer>
-    </div>
-  </div>
+<div class="ui-page" style="max-width: 960px">
+  <p class="ui-eyebrow">{t("menu.profile")}</p>
+  <h1 class="ui-title mb-6">{t("auth.signIn")}</h1>
+  <section class="ui-panel mb-6">
+    {#if failed}<p role="alert">{t("shell.loadError")}</p>{/if}
+    <button class="ui-button ui-button-primary" disabled={showProgress} onclick={handleSignInWithProgress}><Icon icon="mdi:github" />{showProgress ? t("shell.loading") : t("auth.signInWithGithub")}</button>
+    {#if showProgress}<div role="status" class="mt-4"><Progress value={null} /></div>{/if}
+  </section>
+  <section class="ui-panel"><article class="prose dark:prose-invert max-w-none"><TutorsTerms /></article></section>
 </div>
-
-<style>
-  /*
-		Note: The `:global` modifier is used to apply the
-		animation to the progress bar because Svelte styles
-		are scoped by default.
-	*/
-  :global(.my-custom-animation) {
-    animation: my-custom-animation 2s ease-in-out infinite;
-  }
-  @keyframes my-custom-animation {
-    0% {
-      translate: -100%;
-    }
-    25% {
-      scale: 1;
-    }
-    50% {
-      scale: 0.25 1;
-      translate: 50%;
-    }
-    75% {
-      scale: 1;
-    }
-    100% {
-      translate: 200%;
-    }
-  }
-</style>

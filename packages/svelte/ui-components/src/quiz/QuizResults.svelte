@@ -14,12 +14,13 @@
 </script>
 
 <div class="space-y-6">
+  <p role="status" class="sr-only">You answered {score.correct} of {score.total} questions correctly. {score.percentage}%.</p>
   <div class="grid grid-cols-2 gap-4">
-    <div class="border-primary-500 bg-surface-100 dark:bg-surface-900 rounded-xl border p-4 text-center">
+    <div class="ui-panel text-center">
       <div class="text-primary-500 text-3xl font-bold">{score.correct}/{score.total}</div>
       <div class="text-surface-500 text-sm">Your Score</div>
     </div>
-    <div class="border-primary-500 bg-surface-100 dark:bg-surface-900 rounded-xl border p-4 text-center">
+    <div class="ui-panel text-center">
       <div
         class="text-3xl font-bold {score.percentage >= 70
           ? 'text-success-500'
@@ -35,7 +36,7 @@
 
   <div class="space-y-6">
     {#each quiz.questions as question, i (question.id)}
-      <div class="border-primary-500 bg-surface-100 dark:bg-surface-900 rounded-xl border p-4">
+      <div class="ui-panel">
         <QuizQuestion
           questionIndex={i}
           text={question.text}

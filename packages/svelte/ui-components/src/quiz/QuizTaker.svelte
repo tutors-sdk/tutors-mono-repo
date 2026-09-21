@@ -1,5 +1,7 @@
 <script lang="ts">
   import { isQuizComplete, type ParsedQuiz, type QuizAnswers } from "@tutors/quiz";
+  import { beforeNavigate } from "$app/navigation";
+  import { tick } from "svelte";
   import QuizQuestion from "./QuizQuestion.svelte";
   import QuizResults from "./QuizResults.svelte";
 
@@ -20,7 +22,15 @@
   let title = $derived(quiz.title ?? fallbackTitle);
   let currentQuestion = $derived(quiz.questions[currentIndex]);
   let allAnswered = $derived(isQuizComplete(quiz, answers));
-  let progress = $derived(((currentIndex + 1) / quiz.questions.length) * 100);
+  let answeredCount = $derived(Object.keys(answers).length);
+  let progress = $derived((answeredCount / quiz.questions.length) * 100);
+  let heading = $state<HTMLHeadingElement>();
+  beforeNavigate(({ cancel, willUnload }) => {
+    if (answeredCount && !submitted) {
+      if (willUnload || !window.confirm("Leave this quiz? Your answers will be lost.")) cancel();
+    }
+  });
+  async function submit() { submitted = true; await tick(); heading?.focus(); }
 
   function select(questionId: string, index: number) {
     if (submitted) return;
@@ -29,30 +39,32 @@
 
   function goTo(index: number) {
     currentIndex = Math.min(Math.max(index, 0), quiz.questions.length - 1);
+    tick().then(() => heading?.focus());
   }
 
-  function retake() {
+  async function retake() {
     answers = {};
     currentIndex = 0;
     submitted = false;
+    await tick(); heading?.focus();
   }
 
   function stepClass(index: number): string {
-    const base = "h-8 w-8 rounded-full text-xs font-medium transition-colors";
-    if (index === currentIndex) return `${base} bg-primary-500 text-white`;
+    const base = "ui-button min-w-11 text-sm";
+    if (index === currentIndex) return `${base} bg-[var(--ui-brand)] text-[var(--ui-on-brand)]`;
     if (answers[quiz.questions[index].id] !== undefined) {
-      return `${base} bg-primary-200 dark:bg-primary-800 text-primary-700 dark:text-primary-300`;
+      return `${base} bg-[var(--ui-selected)] text-[var(--ui-ink)]`;
     }
-    return `${base} bg-surface-200 dark:bg-surface-700 text-surface-500`;
+    return `${base} bg-[var(--ui-surface)] text-[var(--ui-muted)]`;
   }
 </script>
 
 {#if submitted}
   <div class="mt-4 space-y-4">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-bold">{title} — Results</h2>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h2 bind:this={heading} tabindex="-1" class="text-xl font-semibold">{title} — Results</h2>
       <button
-        class="border-surface-300 dark:border-surface-600 hover:bg-surface-200 dark:hover:bg-surface-800 rounded-lg border px-4 py-2 text-sm"
+        class="ui-button"
         onclick={retake}
       >
         Retake
@@ -62,8 +74,8 @@
   </div>
 {:else}
   <div class="mt-4 space-y-6">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-bold">{title}</h2>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h2 bind:this={heading} tabindex="-1" class="text-xl font-semibold">{title}</h2>
       <span class="text-surface-500 text-sm">
         Question {currentIndex + 1} of {quiz.questions.length}
       </span>
@@ -72,15 +84,16 @@
     <div
       class="bg-surface-200 dark:bg-surface-700 h-2 w-full rounded-full"
       role="progressbar"
-      aria-valuenow={currentIndex + 1}
-      aria-valuemin={1}
+      aria-valuenow={answeredCount}
+      aria-valuemin={0}
       aria-valuemax={quiz.questions.length}
-      aria-label="Quiz progress"
+      aria-label="Questions answered"
     >
-      <div class="bg-primary-500 h-2 rounded-full transition-all" style="width: {progress}%"></div>
+      <div class="bg-[var(--ui-brand)] h-2 rounded-full transition-all" style="width: {progress}%"></div>
     </div>
 
-    <div class="border-primary-500 bg-surface-100 dark:bg-surface-900 rounded-xl border p-6">
+    <p class="ui-muted text-sm" aria-live="polite">{answeredCount} of {quiz.questions.length} answered</p>
+    <div class="ui-panel">
       <QuizQuestion
         questionIndex={currentIndex}
         text={currentQuestion.text}
@@ -93,18 +106,18 @@
       />
     </div>
 
-    <div class="flex items-center justify-between">
+    <div class="flex flex-wrap items-center justify-between gap-4">
       <button
-        class="border-surface-300 dark:border-surface-600 hover:bg-surface-200 dark:hover:bg-surface-800 rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
+        class="ui-button disabled:opacity-50"
         onclick={() => goTo(currentIndex - 1)}
         disabled={currentIndex === 0}
       >
         Previous
       </button>
 
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         {#each quiz.questions as question, i (question.id)}
-          <button class={stepClass(i)} onclick={() => goTo(i)} aria-label="Go to question {i + 1}">
+          <button class={stepClass(i)} onclick={() => goTo(i)} aria-current={i === currentIndex ? "step" : undefined} aria-label="Go to question {i + 1}">
             {i + 1}
           </button>
         {/each}
@@ -112,14 +125,14 @@
 
       {#if currentIndex === quiz.questions.length - 1}
         <button
-          class="preset-filled-primary-500 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-          onclick={() => (submitted = true)}
+          class="ui-button ui-button-primary disabled:opacity-50"
+          onclick={submit}
           disabled={!allAnswered}
         >
           Submit
         </button>
       {:else}
-        <button class="preset-filled-primary-500 rounded-lg px-4 py-2 text-sm" onclick={() => goTo(currentIndex + 1)}>
+        <button class="ui-button ui-button-primary" onclick={() => goTo(currentIndex + 1)}>
           Next
         </button>
       {/if}

@@ -14,7 +14,7 @@
   };
 </script>
 
-<div class="flex flex-wrap justify-center pt-4">
+<div class="ui-grid pt-4">
   {#each los as lo}
     <StudentCard {lo} {cardLayout} />
   {:else}

@@ -37,13 +37,13 @@
 <div class="w-full">
   {#each units as unit}
     {#if hasVisibleLos(unit)}
-    <div class="relative mb-2 w-full overflow-hidden rounded-xl border-[1px] p-4" style="background-color: light-dark(var(--color-surface-100), var(--color-surface-900)); border-color: var(--color-primary-500);">
+    <div class="relative mb-8 w-full min-w-0">
       <div class="flex w-full justify-between pb-2">
         <h2 id={unit.id} class="p-2 text-xl font-semibold">
           {unit.title}
         </h2>
         <div class="flex items-center gap-2">
-          <Image lo={unit.parentTopic ? unit.parentTopic : unit.parentLo} miniImage={true} />
+          {#if unit.img || unit.icon}<Image lo={unit} miniImage />{/if}
         </div>
       </div>
       <Panels panels={unit.panels} />

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { onDestroy, onMount } from "svelte";
   import { afterNavigate } from "$app/navigation";
   import { prefersReducedMotion } from "@tutors/a11y";
   import type { LiveNotebook } from "@tutors/course/course";
@@ -16,6 +14,7 @@
   let { notebook }: Props = $props();
 
   let loaded = false;
+  let activeIndex = $state(0);
   let revealedOutputs = $state<Record<number, boolean>>({});
   let revealedSolutions = $state<Record<number, boolean>>({});
 
@@ -35,77 +34,11 @@
   }
 
   function handleCellClick(index: number) {
+    activeIndex = index;
     notebook.setActiveCell(index);
+    document.getElementById(`notebook-cell-${index}`)?.focus({ preventScroll: true });
     scrollToCell(index);
   }
-
-  function keypressInput(e: KeyboardEvent) {
-    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-      e.preventDefault();
-      const nextIndex = notebook.nextCell();
-      if (nextIndex !== notebook.activeCellIndex) {
-        notebook.setActiveCell(nextIndex);
-        scrollToCell(nextIndex);
-      }
-    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      const prevIndex = notebook.prevCell();
-      if (prevIndex !== notebook.activeCellIndex) {
-        notebook.setActiveCell(prevIndex);
-        scrollToCell(prevIndex);
-      }
-    }
-  }
-
-  // Event delegation for sidebar navigation
-  function handleSidebarClick(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    const button = target.closest("[data-cell-index]");
-    if (button) {
-      const index = parseInt(button.getAttribute("data-cell-index") ?? "0");
-      handleCellClick(index);
-    }
-  }
-
-  function handleSidebarKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleSidebarClick(e as any);
-    }
-  }
-
-  // Event delegation for mobile navigation
-  function handleMobileNavClick(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    const button = target.closest("[data-nav]");
-    if (button) {
-      const nav = button.getAttribute("data-nav");
-      if (nav === "prev") {
-        const prevIndex = notebook.prevCell();
-        notebook.setActiveCell(prevIndex);
-        scrollToCell(prevIndex);
-      } else if (nav === "next") {
-        const nextIndex = notebook.nextCell();
-        notebook.setActiveCell(nextIndex);
-        scrollToCell(nextIndex);
-      }
-    }
-  }
-
-  function handleMobileNavKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleMobileNavClick(e as any);
-    }
-  }
-
-  onMount(() => {
-    window.addEventListener("keydown", keypressInput);
-  });
-
-  onDestroy(() => {
-    browser ? window.removeEventListener("keydown", keypressInput) : null;
-  });
 
   afterNavigate(() => {
     if (!loaded) {
@@ -126,25 +59,21 @@
   />
 </svelte:head>
 
-<div class="notebook-content w-full pb-14">
-  <div class="max-w-l flex">
-    <!-- Sidebar navigation -->
-    <div class="mr-2 hidden h-auto w-72 lg:block">
-      <div
-        class="card sticky top-14 m-2 h-auto max-h-[80vh] overflow-y-auto rounded-xl border-[1px] py-4"
-        style="background-color: light-dark(var(--color-surface-100), var(--color-surface-950)); border-color: light-dark(var(--color-primary-100), var(--color-primary-500));"
-      >
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <nav class="nav-list" onclick={handleSidebarClick} onkeydown={handleSidebarKeydown}>
-          <ul>
-            {@html sanitizeHtml(notebook.navbarHtml ?? "")}
-          </ul>
-        </nav>
-      </div>
-    </div>
+<div class="notebook-content w-full">
+  <div class="grid min-w-0 gap-4">
+    <details class="ui-panel notebook-outline">
+      <summary class="cursor-pointer py-2 font-semibold">Notebook outline · {notebook.cells.length} cells</summary>
+      <nav aria-label="Notebook cells">
+        <ol class="grid gap-1">
+          {#each notebook.cells as cell, i}
+            <li><button class="notebook-step" aria-current={activeIndex === i ? 'step' : undefined} onclick={() => handleCellClick(i)}><span class="ui-muted">{i + 1}</span>{notebook.isSolutionCell(cell) ? 'Solution' : notebook.getCellLabel(cell, i)}<span class="ui-muted ml-auto text-xs">{cell.cellType}</span></button></li>
+          {/each}
+        </ol>
+      </nav>
+    </details>
 
     <!-- Main content area -->
-    <div class="min-h-screen flex-1 mr-4" use:copyCode>
+    <div class="min-w-0 flex-1 reading-panel" use:copyCode>
       <div id="notebook-panel" class="mt-[-60px] block pt-[60px]">
         {#key currentCodeTheme.value}
           {#each notebook.cells as cell, i}
@@ -152,12 +81,12 @@
               {cell}
               index={i}
               {notebook}
-              isActive={notebook.activeCellIndex === i}
+              isActive={activeIndex === i}
               outputRevealed={revealedOutputs[i] ?? false}
               solutionRevealed={revealedSolutions[i] ?? false}
               onToggleOutput={() => toggleOutput(i)}
               onToggleSolution={() => toggleSolution(i)}
-              onClick={() => handleCellClick(i)}
+              onClick={() => { activeIndex = i; notebook.setActiveCell(i); }}
               kernelLanguage={notebook.notebook.kernelLanguage}
             />
           {/each}
@@ -166,11 +95,17 @@
     </div>
   </div>
 
-  <!-- Mobile bottom navigation -->
-  <div class="fixed bottom-0 left-0 z-50 block w-full rounded-sm border lg:hidden" style="background-color: light-dark(var(--color-primary-50), var(--color-primary-900));">
-    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-    <nav class="flex items-center justify-between p-2" onclick={handleMobileNavClick} onkeydown={handleMobileNavKeydown}>
-      {@html sanitizeHtml(notebook.horizontalNavbarHtml ?? "")}
-    </nav>
-  </div>
+  <nav aria-label="Notebook cell navigation" class="ui-actions mt-4 justify-between">
+    <button class="ui-button" disabled={activeIndex <= 0} onclick={() => handleCellClick(activeIndex - 1)}>Previous cell</button>
+    <span class="ui-muted text-sm">Cell {activeIndex + 1} of {notebook.cells.length}</span>
+    <button class="ui-button" disabled={activeIndex >= notebook.cells.length - 1} onclick={() => handleCellClick(activeIndex + 1)}>Next cell</button>
+  </nav>
 </div>
+<style>
+  .notebook-content { max-width: calc(var(--reading-width, 720px) + 80px); margin-inline: auto; }
+  .notebook-outline { padding: var(--space-3) var(--space-4); }
+  .notebook-outline nav { max-height: 320px; overflow: auto; margin-top: var(--space-3); }
+  .notebook-step { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3); text-align: left; border-radius: var(--radius-control); font-size: var(--font-label); overflow-wrap: anywhere; }
+  .notebook-step:hover, .notebook-step[aria-current] { background: var(--ui-selected); }
+  .notebook-step[aria-current] { box-shadow: inset 3px 0 var(--ui-brand); }
+</style>

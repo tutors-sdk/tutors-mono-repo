@@ -4,10 +4,16 @@
   import CourseVisitCard from "./CourseVisitCard.svelte";
   import { t } from "@tutors/i18n";
 
+  let loaded = $state(false);
+  let failed = $state(false);
   let courseVisits: CourseVisit[] = $state([]);
-  onMount(async () => {
-    courseVisits = await tutorsConnectService.getCourseVisits();
-  });
+  async function loadCourses() {
+    failed = false;
+    try { courseVisits = await tutorsConnectService.getCourseVisits(); }
+    catch { failed = true; }
+    finally { loaded = true; }
+  }
+  onMount(loadCourses);
 
   function deleteCourse(id: string) {
     tutorsConnectService.deleteCourseVisit(id);
@@ -27,18 +33,22 @@
   }
 </script>
 
-<div class="container card mx-auto my-1 p-4">
-  <p class="p-4 text-2xl">{t("home.favourites")}</p>
-  <div class="mx-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+<div class="course-history">
+  {#if !loaded}<p role="status">{t("shell.loading")}</p>{/if}
+  {#if failed}<div role="alert" class="ui-empty">{t("shell.loadError")} <button class="ui-button" onclick={loadCourses}>{t("shell.retry")}</button></div>{/if}
+  <h2 class="mt-8 mb-4 text-xl font-semibold">{t("home.favourites")}</h2>
+  <div class="ui-grid">
     {#each courseVisits.filter((cv) => cv.favourite) as courseVisit (courseVisit.id)}
       <CourseVisitCard {courseVisit} {deleteCourse} {starUnstarCourse} />
     {/each}
   </div>
 
-  <p class="p-4 text-2xl">{t("home.recentlyAccessed")}</p>
-  <div class="mx-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+  {#if loaded && !courseVisits.some(cv => cv.favourite)}<p class="ui-empty">{t("shell.emptyFavourites")}</p>{/if}
+  <h2 class="mt-8 mb-4 text-xl font-semibold">{t("home.recentlyAccessed")}</h2>
+  <div class="ui-grid">
     {#each courseVisits.filter((cv) => !cv.favourite) as courseVisit (courseVisit.id)}
       <CourseVisitCard {courseVisit} {deleteCourse} {starUnstarCourse} />
     {/each}
   </div>
+  {#if loaded && !courseVisits.some(cv => !cv.favourite)}<p class="ui-empty">{t("shell.emptyCourses")}</p>{/if}
 </div>

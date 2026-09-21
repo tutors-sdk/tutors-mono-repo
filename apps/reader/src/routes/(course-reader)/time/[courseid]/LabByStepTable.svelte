@@ -20,8 +20,8 @@
 </script>
 
 {#if labsByStep}
-  <section class="card p-6">
-    <h2 class="text-2xl font-semibold mb-4">{t("time.labByStep")}</h2>
+  <section class="ui-panel">
+    <h2 class="text-xl font-semibold mb-4">{t("time.labByStep")}</h2>
     <div class="overflow-x-auto">
       <table class="w-full border-collapse" style="table-layout: fixed;">
         <thead>
@@ -45,7 +45,7 @@
               {labsByStep.full_name}
             </td>
             <td class="py-3 px-4" style="width: 120px;">
-              <a href="https://github.com/{studentid}" target="_blank" rel="noopener noreferrer" class="underline text-primary-600">
+              <a href="https://github.com/{studentid}" target="_blank" rel="noopener noreferrer" class="underline text-[var(--ui-brand)]">
                 {labsByStep.studentid}
               </a>
             </td>

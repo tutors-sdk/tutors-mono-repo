@@ -56,22 +56,8 @@ export const courseProtocol = {
   set value(v) { (_courseProtocol ??= rune("https://")).value = v; }
 };
 
-let _isEducator: ReturnType<typeof rune<boolean>> | null = null;
-let _contentLocks: ReturnType<typeof rune<Map<string, boolean>>> | null = null;
-let _locksLoaded: ReturnType<typeof rune<boolean>> | null = null;
-
-export const isEducator = {
-  get value() { return (_isEducator ??= rune(false)).value; },
-  set value(v) { (_isEducator ??= rune(false)).value = v; }
-};
-
-export const contentLocks = {
-  get value() { return (_contentLocks ??= rune<Map<string, boolean>>(new Map())).value; },
-  set value(v) { (_contentLocks ??= rune<Map<string, boolean>>(new Map())).value = v; }
-};
-
-export const locksLoaded = {
-  get value() { return (_locksLoaded ??= rune(false)).value; },
-  set value(v) { (_locksLoaded ??= rune(false)).value = v; }
-};
-
+// Access checks may first read these inside a derived expression. Create their
+// state here so that expression subscribes to subsequent permission updates.
+export const isEducator = rune(false);
+export const contentLocks = rune<Map<string, boolean>>(new Map());
+export const locksLoaded = rune(false);

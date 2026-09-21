@@ -1,112 +1,71 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ResultType } from "@tutors/tutors-model-lib";
-  import { isValid, searchHits, filterByType } from "@tutors/tutors-model-lib";
-  import type { Lo } from "@tutors/tutors-model-lib";
-  import type { Course } from "@tutors/tutors-model-lib";
-  import { convertMdToHtml } from "@tutors/tutors-model-lib";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
   import type { PageData } from "./$types";
   import { currentLo } from "@tutors/runes";
-  import { currentCodeTheme } from "@tutors/course/markdown";
+  import { rbacService } from "@tutors/rbac";
+  import { findResources } from "$lib/resource-search";
+  import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
-  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
-
-  interface Props {
-    data: PageData;
-  }
-
-  let { data }: Props = $props();
-
-  let course: Course;
-  let searchLos: Lo[] = [];
+  let { data }: { data: PageData } = $props();
   let searchTerm = $state("");
-  let searchResults: ResultType[] = $state([]);
-  let searchInputElement = $state<HTMLInputElement>();
-
-  onMount(async () => {
-    course = data.course;
-    currentLo.value = data.course;
-    const labs = filterByType(data.course.los, "lab");
-    labs.forEach((lab) => {
-      (lab as any)?.los?.forEach((step: any) => {
-        step.parentLo = lab;
-      });
-    });
-    const steps = filterByType(data.course.los, "step");
-    const notes = filterByType(data.course.los, "note");
-    const panelNotes = filterByType(data.course.los, "panelnote");
-    searchLos.push(...labs, ...steps, ...notes, ...panelNotes);
-    searchInputElement?.focus();
-  });
-
-  function transformResults(results: ResultType[]) {
-    results.forEach((result) => {
-      let resultStrs: string[] = [];
-      if (result.fenced) {
-        resultStrs.push(`~~~${result.language}`);
-      }
-      resultStrs.push(result.contentMd);
-      if (result.fenced) {
-        resultStrs.push("~~~");
-      }
-      result.html = convertMdToHtml(resultStrs.join("\n"), currentCodeTheme.value);
-      result.link = `/${result.link}`;
-    });
+  let searchInputElement: HTMLInputElement;
+  const query = $derived(page.url.searchParams.get("q") ?? "");
+  const type = $derived(page.url.searchParams.get("type") ?? "");
+  const all = $derived(findResources(data.course.los, "", "", lo => rbacService.isLoVisibleToStudent(lo)));
+  const types = $derived([...new Set(all.map(result => result.lo.type))]);
+  const results = $derived(findResources(data.course.los, query, type, lo => rbacService.isLoVisibleToStudent(lo)));
+  $effect(() => { searchTerm = query; currentLo.value = data.course; });
+  onMount(() => searchInputElement?.focus());
+  function search(filter = type, term = searchTerm) {
+    const url = new URL(page.url);
+    term.trim() ? url.searchParams.set("q", term.trim()) : url.searchParams.delete("q");
+    filter ? url.searchParams.set("type", filter) : url.searchParams.delete("type");
+    void goto(url, { keepFocus: true, noScroll: true });
   }
-
-  let lastSearchTerm = "";
-
-  function performSearch() {
-    if (isValid(searchTerm) && searchTerm !== lastSearchTerm) {
-      lastSearchTerm = searchTerm;
-      searchResults = searchHits(searchLos, searchTerm);
-      transformResults(searchResults);
-    }
-  }
-
-  // $effect(() => {
-  //   if (isValid(searchTerm) && searchTerm !== lastSearchTerm) {
-  //     lastSearchTerm = searchTerm;
-  //     searchResults = searchHits(searchLos, searchTerm);
-  //     transformResults(searchResults);
-  //   }
-  // });
 </script>
-
-<div class="card container mx-auto mb-4 p-4">
-  <label for="search" class="label"><span>{t("course.search.label")}</span></label>
-  <div class="flex items-center gap-2">
-    <button onclick={performSearch} aria-label={t("course.search.button")} class="hover:preset-tonal-secondary dark:hover:preset-tonal-tertiary flex items-center gap-2 rounded-lg p-3 text-sm font-bold">
-      <Icon type="search" tip={t("nav.search.tip")} />
-      <span class="hidden lg:block">{t("course.search.button")}</span>
-    </button>
-    <input
-      bind:value={searchTerm}
-      bind:this={searchInputElement}
-      type="text"
-      name="search"
-      id="search"
-      class="input flex-1 p-2"
-      data-autofocus
-      placeholder="..."
-      onkeydown={(e) => e.key === "Enter" && performSearch()}
-    />
+<SecondaryNavigator lo={data.course} />
+<div class="ui-page resource-library">
+  <p class="ui-eyebrow">{t("shell.resources")}</p>
+  <h1 class="ui-title">{t("shell.findResources")}</h1>
+  <p class="ui-muted">{t("shell.searchDescription")}</p>
+  <form class="search-form" onsubmit={(event) => { event.preventDefault(); search(); }}>
+    <label for="search">{t("course.search.label")}</label>
+    <div class="search-controls"><input bind:this={searchInputElement} bind:value={searchTerm} id="search" type="search" class="input" data-autofocus /><button class="ui-button ui-button-primary" type="submit"><Icon icon="lucide:search" />{t("course.search.button")}</button></div>
+  </form>
+  <div class="ui-actions type-filters" aria-label={t("content.type")}>
+    <button class="ui-button" aria-pressed={!type} onclick={() => search("")}>{t("shell.allTypes")}</button>
+    {#each types as item}<button class="ui-button" aria-pressed={type === item} onclick={() => search(item)}><Icon type={item} /><span class="capitalize">{item}</span></button>{/each}
   </div>
-  <div class="mt-2 flex flex-wrap justify-center">
-    {#each searchResults as result}
-      <div class="card m-1 w-full border p-4">
-        <div>
-          <div class="prose dark:prose-invert">
-            {@html sanitizeHtml(result.html ?? "")}
-          </div>
-          <div class="pt-4 text-right text-sm">
-            <a rel="noopener noreferrer" href={result.link} target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300">
-              {result.title}
-            </a>
-          </div>
-        </div>
+  {#if data.course.wallBar?.bar?.length}
+    <details class="resource-walls"><summary>{t("shell.resources")}</summary><div class="ui-actions">{#each data.course.wallBar.bar as wall}<a class="ui-button" href={wall.link}><Icon type={wall.type} />{wall.tip}</a>{/each}</div></details>
+  {/if}
+  <p class="result-count ui-muted" role="status" aria-live="polite">{results.length} {t("shell.resultCount")}{query ? ` · “${query}”` : ""}</p>
+  <div class="search-results">
+    {#each results as result (result.lo.route)}
+      <div>
+        <Card row cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}} />
+        {#if result.excerpt}<p class="search-excerpt">{result.excerpt}</p>{/if}
       </div>
+    {:else}
+      <div class="ui-empty"><p>{t("shell.noResults")}</p><button class="ui-button" onclick={() => search("", "")}>{t("shell.clearFilters")}</button></div>
     {/each}
   </div>
 </div>
+<style>
+  .resource-library { padding-top: 0; }
+  h1 { margin-block: var(--space-2); }
+  .search-form { margin-top: var(--space-8); }
+  label { display: block; font-size: var(--font-label); font-weight: var(--weight-medium); margin-bottom: var(--space-2); }
+  .search-controls { display: flex; gap: var(--space-3); }
+  input { min-width: 0; flex: 1; }
+  .type-filters { margin-block: var(--space-5); }
+  button[aria-pressed="true"] { background: var(--ui-selected); border-color: var(--ui-brand); box-shadow: inset 0 -2px var(--ui-brand); }
+  .result-count { margin-block: var(--space-6) var(--space-4); font-size: var(--font-label); }
+  .search-results { display: grid; gap: var(--space-4); }
+  .search-excerpt { padding: var(--space-4); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
+  summary { font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }
+</style>

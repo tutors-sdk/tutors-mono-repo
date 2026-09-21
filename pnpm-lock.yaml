@@ -432,6 +432,9 @@ importers:
       '@tutors/runtime':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/runtime
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../../packages/svelte/themes
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time

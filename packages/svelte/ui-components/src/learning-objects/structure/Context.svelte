@@ -1,43 +1,18 @@
 <script lang="ts">
   import type { Lo } from "@tutors/tutors-model-lib";
-  import { onMount, type Snippet } from "svelte";
-  import LoContextPanel from "../layout/LoContextPanel.svelte";
-  import { slideFromRight } from "@tutors/ui-primitives/utils/animations";
-  import { fly } from "svelte/transition";
+  import type { Snippet } from "svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
-
-  type Props = {
-    children: Snippet;
-    lo: Lo;
-  };
-  let { children, lo }: Props = $props();
-
-  // svelte-ignore non_reactive_update
-  let loContext = lo;
-  if (loContext) {
-    while (loContext.type !== "topic" && loContext.type !== "course") {
-      loContext = loContext.parentLo!;
-    }
-  }
-
-  let isLoaded = $state(false);
-  onMount(() => {
-    isLoaded = true;
-  });
+  import Image from "@tutors/ui-primitives/components/Image.svelte";
+  let { children, lo }: { children: Snippet; lo: Lo } = $props();
 </script>
-
 <SecondaryNavigator {lo} parentCourse={lo?.parentCourse?.properties?.parent} />
-<div class="mr-10 ml-10 flex justify-between">
-  <div class="w-full">
-    {@render children()}
-  </div>
-  {#if loContext && isLoaded}
-    <div in:fly={slideFromRight.in} out:fly={slideFromRight.out} class="mr-2 hidden h-auto w-72 lg:block">
-      <div class="sticky top-14 flex flex-col overflow-y-auto">
-        <div class="my-auto">
-          <LoContextPanel {loContext} />
-        </div>
-      </div>
-    </div>
+<div class="reader-content">
+  {#if lo.type !== "lab"}
+    <header class="reader-heading"><Image {lo} miniImage /><div><p class="ui-eyebrow">{lo.type}</p><h1 class="ui-title">{lo.title}</h1></div></header>
   {/if}
+  {@render children()}
 </div>
+<style>
+  .reader-content { padding-top: 0; }
+  .reader-heading { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-6); }
+</style>
