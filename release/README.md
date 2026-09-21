@@ -75,8 +75,16 @@ There is one entry per Rule that carries exactly one `@rule-NNNN` tag. Keys are 
 
 `pnpm check:release-claims --ref <ref>` checks the claims against the Rules at that ref instead of the working tree. To start a claims file from the Rules that changed, `pnpm release:claims:draft --from <production tag> --to <candidate ref>` prints a stub per added or changed Rule; add `--rule` for stubs that use the `rule` field.
 
+## The verdict on the pull request
+
+The harness never writes to a pull request, so `.github/workflows/release-harness-report.yml` posts what it found. After `release-dispatch.yml` sends a candidate to the harness, that workflow waits for the harness's run (up to 45 minutes), reads the `release-report` artifact and creates or updates **one** comment on the open release pull request, marked `<!-- tutors-release-harness-report -->`. A new candidate rewrites the same comment; it is never joined by another.
+
+The comment states the verdict and the harness's exit code (`PASS`; `WARN (advisory)`, exit 0, nothing blocked; `FAIL`, exit 1; `COULD NOT JUDGE`, exit 2, nothing was compared), the harness version, the images and digests it judged for production and the candidate (all four apps), how many differences were claimed, unclaimed and stale, the first ten unclaimed differences, and links to the run and the report artifact. **A claim you write in `claims.yaml` is what turns an unclaimed difference into a claimed one**: read the list, then either fix the difference or claim it with its Rule (`rule`) or CHANGELOG entry (`reason`) and push again.
+
+If the pull request does not exist yet when the run finishes, nothing is posted and the workflow's summary says so; open the pull request and start `release-harness-report.yml` again. What it needs from the harness (a `run-name` naming the candidate; the `release-report` artifact) and from `HARNESS_TOKEN` (Actions: read on the harness repository) is in [guides/Release-Strategy.md](../guides/Release-Strategy.md#the-harness-verdict-on-the-release-pr).
+
 ## When it is read
 
-Every push to a `release/**` branch whose `package.json` version matches the branch tags the next `vX.Y.Z-rc.N` and sends the harness the raw URL of this file at the tagged commit (`.github/workflows/release-dispatch.yml`). The file is checked for shape on the same push and on the release PR (`.github/workflows/release-claims.yml`, or `pnpm check:release-claims` locally). The flow is described in [guides/Release-Strategy.md](../guides/Release-Strategy.md#release-harness).
+Every push to a `release/**` branch whose `package.json` version matches the branch tags the next `vX.Y.Z-rc.N` and sends the harness the raw URL of this file at the tagged commit (`.github/workflows/release-dispatch.yml`), with the Rules the release defines (`rules_url`) and the digests of both sides' images. The file is checked for shape on the same push and on the release PR (`.github/workflows/release-claims.yml`, or `pnpm check:release-claims` locally). The flow is described in [guides/Release-Strategy.md](../guides/Release-Strategy.md#release-harness).
 
 Reset the list to `claims: []` when the next release branch is cut. `tests/generator/claims.yaml` is a different file: it claims changes to generated course output, not to the running apps.
