@@ -36,7 +36,7 @@ test.describe("anonymous student", () => {
     // The search page places focus itself; the layout's route-change focus must not take it back.
     await page.goto(`${stack.reader}/course/${stack.courseId}`);
     await page.getByRole("button", { name: "Search this course" }).click();
-    await expect(page.getByRole("textbox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
+    await expect(page.getByRole("searchbox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
   });
 
   test("following a link elsewhere moves keyboard focus to the main content", async ({ page }) => {

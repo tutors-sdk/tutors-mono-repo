@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import type { LiveLab } from "@tutors/course/course";
   import { currentCodeTheme, mermaidify, copyCode } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
@@ -6,7 +7,19 @@
   let { lab }: { lab: LiveLab } = $props();
   const previous = $derived(lab.prevStep());
   const next = $derived(lab.nextStep());
+
+  function navigateStep(event: KeyboardEvent) {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.closest("input, textarea, select, button, a, summary, [role='dialog']"))) return;
+    const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? next
+      : event.key === "ArrowLeft" || event.key === "ArrowUp" ? previous : "";
+    if (step) {
+      event.preventDefault();
+      void goto(`${lab.url}/${step}`);
+    }
+  }
 </script>
+<svelte:window onkeydown={navigateStep} />
 <svelte:head><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css" /></svelte:head>
 <div class="lab-content">
   <details class="mobile-steps ui-panel">

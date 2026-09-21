@@ -699,9 +699,6 @@ importers:
         specifier: ^6.3.289
         version: 6.3.289
     devDependencies:
-      '@iconify/svelte':
-        specifier: ^5.2.1
-        version: 5.2.2(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       '@skeletonlabs/skeleton':
         specifier: ^5.0.0
         version: 5.0.0(tailwindcss@4.3.3)

@@ -7,15 +7,18 @@ import { fixture, stack } from "./stack.ts";
  * decides what to capture: the specs run axe, the release harness will collect
  * DOM, network and screenshots at the same points.
  *
- * Selectors are roles and accessible names only. If a journey cannot find
- * something by role, that is an accessibility finding, not a reason to reach
- * for CSS.
+ * Selectors use roles and accessible names. Native summary controls have no
+ * implicit ARIA role in Playwright, so their visible label is used instead.
  */
 export type OnPage = (pageKey: string) => Promise<void>;
 
-/** The lab step navigation that is visible at this viewport (sidebar on desktop, bottom bar on mobile). */
-function labSteps(page: Page) {
-  return page.getByRole("navigation", { name: "Lab steps" }).filter({ visible: true }).first();
+/** The lab step list: sidebar on desktop, expandable navigation on mobile. */
+async function labSteps(page: Page) {
+  const sidebar = page.getByRole("list", { name: "Steps", exact: true });
+  if (await sidebar.isVisible()) return sidebar;
+  const mobile = page.getByRole("navigation", { name: "Steps", exact: true }).getByRole("list");
+  if (!(await mobile.isVisible())) await page.getByRole("main").getByText(/^Steps · \d+ \/ \d+$/).click();
+  return mobile;
 }
 
 /** Anonymous student: home page, open the fixture course, topic, lab, move through steps (math and a diagram on the second), open the Marp talk. */
@@ -25,22 +28,31 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
   await onPage("reader:home");
 
   await page.goto(`${stack.reader}/course/${courseId}`);
-  await expect(page.getByRole("banner").getByRole("heading", { name: fixture.title })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
   await expect(page).toHaveTitle(fixture.title);
   await onPage("reader:course");
 
   await page.getByRole("link", { name: new RegExp(`^${fixture.topicTitle}\\b`) }).click();
   await expect(page).toHaveURL(new RegExp(`/topic/${courseId}/${fixture.topicPath}$`));
-  await expect(page.getByRole("banner").getByRole("heading", { name: fixture.topicTitle })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.topicTitle })).toBeVisible();
   await onPage("reader:topic");
 
   await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.labTitle}\\b`) }).first().click();
   await expect(page).toHaveURL(new RegExp(`/lab/${courseId}/${fixture.labPath}`));
   await expect(page.getByRole("article").getByRole("heading", { level: 1, name: fixture.firstStep.heading })).toBeVisible();
-  await expect(labSteps(page)).toBeVisible();
+  await expect(await labSteps(page)).toBeVisible();
   await onPage("reader:lab-step");
 
-  // Keyboard: the lab advances on ArrowRight.
+  // The first step cannot go back, and focused links retain their own arrow keys.
+  await page.getByRole("main").focus();
+  const firstStepUrl = page.url();
+  await page.keyboard.press("ArrowLeft");
+  await expect(page).toHaveURL(firstStepUrl);
+  await (await labSteps(page)).getByRole("link", { name: new RegExp(`^(?:01 )?${fixture.firstStep.heading}$`) }).press("ArrowRight");
+  await expect(page).toHaveURL(firstStepUrl);
+
+  // Keyboard: the lab advances on ArrowRight when focus is on the reading area.
+  await page.getByRole("main").focus();
   await page.keyboard.press("ArrowRight");
   await expect(page).toHaveURL(new RegExp(`/${fixture.labPath}/${fixture.secondStep.id}$`));
   await expect(page.getByRole("article").getByRole("heading", { level: 1, name: fixture.secondStep.heading })).toBeVisible();
@@ -49,7 +61,7 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
   await expect(page.getByRole("article").getByLabel(fixture.secondStepDiagram)).toBeVisible();
 
   // Pointer: jump back to the first step from the step navigation.
-  await labSteps(page).getByRole("link", { name: fixture.firstStep.heading, exact: true }).click();
+  await (await labSteps(page)).getByRole("link", { name: new RegExp(`^(?:01 )?${fixture.firstStep.heading}$`) }).click();
   await expect(page).toHaveURL(new RegExp(`/${fixture.labPath}/${fixture.firstStep.id}$`));
 
   // The topic's Marp talk: Marp Core loads on demand and renders the first slide.
@@ -62,11 +74,11 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
 /** Anonymous student searches the course and gets a result linking to the matching note. */
 export async function anonymousStudentSearches(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
   await page.goto(`${stack.reader}/course/${courseId}`);
-  await expect(page.getByRole("banner").getByRole("heading", { name: fixture.title })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
 
   await page.getByRole("button", { name: "Search this course" }).click();
   await expect(page).toHaveURL(new RegExp(`/search/${courseId}$`));
-  const box = page.getByRole("textbox", { name: "Enter search term:" });
+  const box = page.getByRole("searchbox", { name: "Enter search term:" });
   await expect(box).toBeVisible();
   await onPage("reader:search");
 
@@ -81,7 +93,9 @@ export async function anonymousStudentSearches(page: Page, onPage: OnPage, cours
 export async function catalogueLoads(page: Page, onPage: OnPage) {
   await page.goto(`${stack.catalogue}/`);
   await expect(page).toHaveTitle(/Tutors Catalogue/);
-  await expect(page.getByRole("main")).toContainText("Totals");
+  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: "Tutors Catalogue" })).toBeVisible();
+  await expect(page.getByRole("main")).toContainText("0 modules · 0 students");
+  await expect(page.getByRole("main")).toContainText("No courses are available to display.");
   await onPage("catalogue:home");
 }
 
