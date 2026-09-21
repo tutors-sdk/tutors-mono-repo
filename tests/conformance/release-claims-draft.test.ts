@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { validateClaimsText } from "../../scripts/checks/release-claims.ts";
+import { ARTEFACTS, validateClaimsText } from "../../scripts/checks/release-claims.ts";
+import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
 import { diffRules, gitIn, indexRules, rulesAtRef } from "../../scripts/checks/lib/rules-index.ts";
 import { draftClaims, parseArgs, renderDraft } from "../../scripts/release-claims-draft.ts";
 
@@ -67,6 +68,15 @@ describe("release claims draft", () => {
     expect(draft.match(/scope: TODO/g)).toHaveLength(2);
     expect(draft).toContain("#   Rule 0002: The reader shall show a footer.");
     expect(draft).not.toContain("Rule 0004");
+  });
+
+  it("lists every artefact the pre-check accepts in the TODO hint, and the help says how an older harness treats `rule`", () => {
+    const draft = draftClaims("v1.0.0", "v1.1.0-rc.1", gitIn(dir));
+    const hint = draft.split(/\r?\n/).find((line) => line.includes("artefact: TODO")) ?? "";
+    for (const artefact of ARTEFACTS) expect(hint, artefact).toContain(artefact);
+    const source = readFileSync(join(REPO_ROOT, "scripts/release-claims-draft.ts"), "utf8");
+    expect(source).toContain("ignores the unknown `rule` key");
+    expect(source).not.toContain("rejects a claim with an unknown field");
   });
 
   it("is not a valid claims file until the author replaces every TODO, and its reasons resolve", () => {

@@ -24,8 +24,19 @@ import yaml from "js-yaml";
 import { REPO_ROOT } from "./lib/repo.ts";
 import { rulesAtRef, rulesInWorkingTree } from "./lib/rules-index.ts";
 
-/** The harness's vocabulary (ARTEFACTS in src/types.ts there). The first nine are what a student can observe; the last four are its rehearsals and stubs. */
-export const ARTEFACTS = ["dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing", "persistence", "migration", "upgrade"] as const;
+/**
+ * The harness's vocabulary (ARTEFACTS in src/types.ts there), in its order, as of harness 1.3.0. The first
+ * ten are what a student can observe; `persistence`, `bus`, `migration` and `upgrade` are its stubs and
+ * rehearsals; `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` (contract 1.2.0) are read from the
+ * images and the running containers. tests/conformance/release-claims.test.ts holds a snapshot of the
+ * harness list and fails when this one drifts from it.
+ */
+export const ARTEFACTS = [
+  "dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing",
+  "persistence", "bus", "migration", "upgrade",
+  "image-manifest", "sbom", "vulns",
+  "runtime", "startup"
+] as const;
 
 /** The claims file format this check mirrors (CLAIMS_VERSION there); a file may name it as `version: 1`. */
 const CLAIMS_VERSION = 1;
@@ -89,7 +100,7 @@ export function validateClaimsText(text: string, ruleIds?: ReadonlySet<string>):
     for (const key of Object.keys(claim)) if (!FIELDS.has(key)) errors.push(`${label}: unknown field \`${key}\``);
 
     if (claim.artefact !== "*" && !(ARTEFACTS as readonly unknown[]).includes(claim.artefact)) {
-      errors.push(`${label}: artefact must be one of ${ARTEFACTS.join(", ")} or "*"`);
+      errors.push(`${label}: artefact must be one of ${ARTEFACTS.join(", ")} or "*"${typeof claim.artefact === "string" ? ` (not "${claim.artefact}")` : ""}`);
     }
     if (typeof claim.scope !== "string" || claim.scope === "") errors.push(`${label}: scope is required`);
     const citedByField = validateRuleField(claim.rule, label, ruleIds, errors);

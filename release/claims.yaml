@@ -3,7 +3,8 @@
 # The release harness (https://github.com/tutors-sdk/tutors-release-harness)
 # runs the production images beside this candidate's images and diffs what a
 # student can observe: DOM, screenshots, network, console, headers, axe,
-# metrics, logs and timing. A claim says "this difference is intended, and
+# metrics, logs and timing, plus what the images and containers carry (image
+# manifest, SBOM, vulnerabilities, runtime settings, startup). A claim says "this difference is intended, and
 # here is the Rule or CHANGELOG entry that says so". Every difference must
 # match a claim or the release run fails; a claim that matches nothing is
 # reported as stale, so this file stays as honest as the changelog.
@@ -13,13 +14,15 @@
 #
 #   - artefact: dom                  # dom | screenshot | network | console | headers | axe
 #                                    # | focus | metrics | logs | timing | persistence
-#                                    # | migration | upgrade | "*"
+#                                    # | bus | migration | upgrade | image-manifest | sbom | vulns
+#                                    # | runtime | startup | "*"
 #     scope: "reader:lab-step*"      # glob over the page key, its route, "<METHOD> <route>",
 #                                    # "<page key>/<header>" or "<app>/<series>"
 #     reason: "Rule 0031: lab steps shall show estimated reading time"
 #                                    # a Rule id or CHANGELOG entry; "see PR" and "approved" are rejected
 #     rule: "0031"                   # optional (harness contract 1.3.0): the Rule by id, checked against
-#                                    # `pnpm release:rules`; then `reason` may be left out
+#                                    # `pnpm release:rules`; then `reason` may be left out. An older
+#                                    # harness ignores the key and still needs the `reason`
 #     approvedBy: "a person"         # only for a broad claim (artefact "*", scope "*" or "**")
 #
 # Each CHANGELOG line names the artefacts it expects to move, e.g. "(axe, dom)":
