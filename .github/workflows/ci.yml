@@ -384,9 +384,18 @@ jobs:
         run: pnpm --filter "tutors-reader..." --filter "tutors-catalogue..." --filter "tutors-live..." --filter "tutors-time..." build
         env:
           SVELTEKIT_ADAPTER: node
+          # As in the Dockerfile: the build is named after a hash of the commit.
+          GIT_SHA: ${{ github.sha }}
 
       - name: Check bundle budgets
         run: pnpm check:bundle
+
+      # Starts each built server with the commit above and a sentinel build date and looks for them
+      # anywhere but GET /version: headers, pages, the error page, /_app/version.json and every built file.
+      - name: Check build identity is answered by /version only
+        run: pnpm check:build-identity
+        env:
+          GIT_SHA: ${{ github.sha }}
 
   # Runway tier C: on PRs that touch a generator, every difference in generated
   # output for the corpus must be claimed in tests/generator/claims.yaml. On

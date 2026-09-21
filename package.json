@@ -37,6 +37,7 @@
     "architecture-report": "depcruise apps packages --config .dependency-cruiser.cjs --output-type err-long",
     "check:k8s": "tsx scripts/checks/k8s-conformance.ts",
     "check:container": "tsx scripts/checks/container-smoke.ts",
+    "check:build-identity": "tsx scripts/checks/build-identity.ts",
     "check:test-time": "tsx scripts/checks/test-time-budget.ts",
     "check:knip": "tsx scripts/checks/knip.ts",
     "check:audit": "tsx scripts/checks/dependency-audit.ts",
