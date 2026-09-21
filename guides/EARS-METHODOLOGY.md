@@ -132,6 +132,67 @@ worker, cannot be driven from Node. It lives as prose in
 [`guides/specifications/`](./specifications/README.md), which names the tier that does cover
 the behaviour, or says that none does.
 
+## Rules are the requirements
+
+Issue [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) moves EARS from a tag on
+a scenario to a `Rule:` block. A `Rule:` title is one EARS requirement, with exactly one
+"shall". The scenarios beneath it are the executable proof. The runner does not change:
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/) 7.0.0 binds `Rule:` blocks itself
+(`Rule("<title>", ({ RuleScenario, RuleScenarioOutline }) => ...)`), applies the feature
+`Background` to each Rule's scenarios, and fails the run when a Rule or a step is unbound or a
+Rule has no scenario. `pnpm test:bdd` stays the way features run.
+
+```gherkin
+@student
+Feature: Content Search
+
+  @rule-0007 @ears-event-driven
+  Rule: When a student searches a course, the reader shall list the learning objects whose text matches the search term.
+
+    Scenario: Search for a term in course content
+      ...
+```
+
+Rule titles are written in the pattern the `@ears-*` tag names, with an explicit system name
+in front of "shall":
+
+| Scope | System name |
+|---|---|
+| Cross-cutting | `tutors` |
+| `apps/reader` | `the reader` |
+| `apps/catalogue` | `the catalogue` |
+| `apps/live` | `the live dashboard` |
+| `apps/time` | `the time dashboard` |
+
+"The system shall" is not a system name.
+
+### Rule ids
+
+Every Rule carries one stable id, written as a tag on the line above `Rule:`:
+
+```
+@rule-0031
+```
+
+The id is the requirement's identity. The release harness cites it as the `reason` of a claim
+(`reason: "Rule 0031: lab steps shall show estimated reading time"`, see
+[release/README.md](../release/README.md)), and `grep -rn "@rule-0031" tests/bdd/features`
+finds it.
+
+| Choice | Why |
+|---|---|
+| Explicit tag `@rule-NNNN`, four digits | A derived id (`<file-number>.<rule-index>`) shifts when a Rule is inserted above another, and a released claim would then cite the wrong requirement. An explicit id never moves with its Rule. |
+| One counter for the whole repository | Ids are unique across all feature files, so a claim needs no file name, and a Rule can move to another file or persona directory without a new id. |
+| Not derived from a file number | Existing features live at `tests/bdd/features/<persona>/<name>.feature` and are not renamed or moved. The numbered file prefixes in the issue (`0001-course-loading.feature`) came with a rewrite into a new top-level `features/` directory. The features stay executable in `tests/bdd` instead, so the tag carries the number. |
+| Ids are never reused | A retired id stays in [`tests/bdd/ears-retired-rule-ids.txt`](../tests/bdd/ears-retired-rule-ids.txt). A claim in an old release still names the requirement it meant. |
+
+Rules for ids:
+
+1. Allocate the next id with `pnpm test:ears:audit --next-id`. It prints one more than the highest id in the features and the retired list.
+2. Changing a Rule's wording keeps its id. A different requirement gets a new id, and the old id is retired.
+3. Deleting a Rule adds its id to the retired list in the same commit.
+4. The audit fails on a Rule with no id, a malformed id, a duplicate, or a retired id in use.
+
 ## Persona-Based Organisation
 
 BDD features are organised by user persona to ensure coverage from all stakeholder perspectives:
