@@ -78,13 +78,24 @@ describe("release claims draft", () => {
     expect(validateClaimsText(filled, new Set(["0001", "0003"]))).toEqual([]);
   });
 
+  it("drafts the `rule` field form with --rule, and that draft resolves once the TODOs are filled in", () => {
+    const draft = draftClaims("v1.0.0", "v1.1.0-rc.1", gitIn(dir), { asField: true });
+    expect(draft).toContain('    rule: "0001" # The reader shall show a title.');
+    expect(draft).toContain('    rule: "0003" # When a student opens a lab, the reader shall show its reading time.');
+    expect(draft).not.toContain("    reason:");
+    const filled = draft.replaceAll("artefact: TODO", "artefact: dom").replaceAll("scope: TODO", 'scope: "reader:*"');
+    expect(validateClaimsText(filled, new Set(["0001", "0003"]))).toEqual([]);
+    expect(validateClaimsText(filled, new Set(["0001"]))).toEqual([expect.stringContaining("claims[0]: rule 0003 is not defined")]);
+  });
+
   it("writes an empty claims list when no Rule changed", () => {
     const same = rulesAtRef("v1.0.0", gitIn(dir));
     expect(renderDraft(diffRules(same, same), "a", "b")).toContain("claims: []");
   });
 
   it("needs both refs", () => {
-    expect(parseArgs(["--from", "v1", "--to", "rc"])).toEqual({ from: "v1", to: "rc" });
+    expect(parseArgs(["--from", "v1", "--to", "rc"])).toEqual({ from: "v1", to: "rc", asField: false });
+    expect(parseArgs(["--from", "v1", "--to", "rc", "--rule"])).toEqual({ from: "v1", to: "rc", asField: true });
     expect(() => parseArgs(["--from", "v1"])).toThrow(/usage/);
     expect(() => parseArgs(["--bogus"])).toThrow(/unknown argument/);
   });

@@ -19,8 +19,20 @@ claims:
 | --- | --- |
 | `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `migration`, `upgrade`, or `"*"` (the harness's vocabulary; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md)) |
 | `scope` | A glob over what changed: a page key (`reader:lab-step`), a route, `GET /api/presence`, `reader:*/content-security-policy`, `<app>/<series>` |
-| `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected |
+| `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected. Optional when the claim has a `rule` |
+| `rule` | Optional, harness contract 1.3.0. The id of the Rule behind the change, in quotes: `rule: "0031"`. It must be a Rule the release defines (see [Rules the release defines](#rules-the-release-defines)) |
 | `approvedBy` | Required on a broad claim (`artefact: "*"`, `scope: "*"` or `"**"`): a person, never a bot |
+
+A claim can name its Rule with the field instead of the reason:
+
+```yaml
+claims:
+  - artefact: dom
+    scope: "reader:lab-step*"
+    rule: "0031"
+```
+
+`pnpm check:release-claims` resolves both forms against the Rules in `tests/bdd/features` and fails on an id no feature defines. A claim whose `reason` starts "Rule 0031" and also has a `rule` must name the same Rule. A reason that names a CHANGELOG entry stays free text. The `rule` field needs a harness that speaks contract 1.3.0; an earlier harness rejects the claims file for an unknown field, so keep to `reason: "Rule 0031: ..."` until then.
 
 ## Writing claims from the changelog
 
@@ -45,6 +57,23 @@ claims:
 One claim per artefact in the hint; the scope is the page key, route, `<METHOD> <route>` or `<app>/<series>` the entry names (narrow it as far as the entry allows). A changelog entry with no artefact hint claims nothing: if the harness then finds a difference, the entry was incomplete, and that is the signal.
 
 Claim precisely. `claims: []` is valid and means nothing observable should differ from production, which is the right file for a release of internal changes only.
+
+## Rules the release defines
+
+`pnpm release:rules [--ref <git ref>] [--out <path>]` writes `rules.json` for the Rules at a git ref (default `HEAD`), read from git and not from the working tree:
+
+```json
+{
+  "version": 1,
+  "rules": {
+    "0031": { "title": "When a student opens a lab step, the reader shall ...", "digest": "698c90a5..." }
+  }
+}
+```
+
+There is one entry per Rule that carries exactly one `@rule-NNNN` tag. Keys are sorted by id and nothing else goes in the file (no time, no path), so the same ref gives the same bytes on every machine. The `digest` covers the Rule block (tags, title, scenarios, steps) with whitespace and comments ignored: it changes when the Rule's meaning changes and not when the file is reformatted or the Rule moves. The harness resolves a claim's `rule` against this file, from `--rules <file>` locally or the `rules_url` of the dispatch. Publish it for the candidate's commit (`pnpm release:rules --ref vX.Y.Z-rc.N --out rules.json`).
+
+`pnpm check:release-claims --ref <ref>` checks the claims against the Rules at that ref instead of the working tree. To start a claims file from the Rules that changed, `pnpm release:claims:draft --from <production tag> --to <candidate ref>` prints a stub per added or changed Rule; add `--rule` for stubs that use the `rule` field.
 
 ## When it is read
 

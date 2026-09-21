@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
 import { rulesInWorkingTree } from "../../scripts/checks/lib/rules-index.ts";
-import { isBroad, validateClaimsText } from "../../scripts/checks/release-claims.ts";
+import { isBroad, parseArgs, validateClaimsText } from "../../scripts/checks/release-claims.ts";
 
 describe("release claims shape check", () => {
   it("accepts the committed release/claims.yaml", () => {
@@ -74,6 +74,57 @@ describe("release claims shape check", () => {
       expect(validateClaimsText(claim("CHANGELOG 16.3.0: collapsed state for lab steps"), ids)).toEqual([]);
       expect(validateClaimsText(claim("Ruleset update in fix(reader): #270 CSP allows the new video host"), ids)).toEqual([]);
       expect(validateClaimsText(claim("Rule of thumb changed in fix(reader): #270"), ids)).toEqual([]);
+    });
+
+    describe("the rule field", () => {
+      const withRule = (fields: string) => `claims:\n  - artefact: dom\n    scope: "reader:lab-step*"\n${fields}`;
+
+      it("stands in for the reason when it names a Rule the release defines", () => {
+        expect(validateClaimsText(withRule('    rule: "0031"\n'), ids)).toEqual([]);
+        expect(validateClaimsText(withRule('    rule: "0031"\n    reason: "lab steps show the time to read"\n'), ids)).toEqual([]);
+      });
+
+      it("still lets a reason cite the same Rule in the old form, and agrees with it", () => {
+        expect(validateClaimsText(withRule('    rule: "0031"\n    reason: "Rule 0031: lab steps shall show estimated reading time"\n'), ids)).toEqual([]);
+        expect(validateClaimsText(withRule('    rule: "0031"\n    reason: "Rule 0044: presence polled every 15s"\n'), ids)).toEqual([
+          "claims[0]: rule is 0031 but reason cites Rule 0044; a claim is about one Rule"
+        ]);
+      });
+
+      it("must resolve in the Rules it is given", () => {
+        expect(validateClaimsText(withRule('    rule: "0099"\n'), ids)).toEqual([expect.stringContaining("claims[0]: rule 0099 is not defined by any feature")]);
+        expect(validateClaimsText(withRule('    rule: "0099"\n    reason: "a long enough reason"\n'), ids)).toEqual([expect.stringContaining("rule 0099 is not defined")]);
+        // no Rules to resolve against: only the form is checked, as with a citation in a reason
+        expect(validateClaimsText(withRule('    rule: "0099"\n'))).toEqual([]);
+      });
+
+      it("is a four-digit string, not a number or free text", () => {
+        const form = 'claims[0]: rule must be a four-digit Rule id in quotes, as in rule: "0031"';
+        expect(validateClaimsText(withRule("    rule: 31\n"), ids)).toEqual([form]);
+        expect(validateClaimsText(withRule("    rule: 0031\n"), ids)).toEqual([form]);
+        expect(validateClaimsText(withRule('    rule: "Rule 0031"\n'), ids)).toEqual([form]);
+        expect(validateClaimsText(withRule('    rule: ""\n'), ids)).toEqual([form]);
+      });
+
+      it("does not excuse a reason that is missing without a rule, or a rubber stamp beside one", () => {
+        expect(validateClaimsText(withRule(""), ids)).toEqual([expect.stringContaining("reason is required")]);
+        expect(validateClaimsText(withRule('    rule: "0031"\n    reason: "see PR 12 for details"\n'), ids)).toEqual([
+          "claims[0]: a reason names a Rule or a changelog entry, not a rubber stamp"
+        ]);
+      });
+
+      it("keeps a broad claim needing a person", () => {
+        const broad = 'claims:\n  - artefact: "*"\n    scope: "reader:*"\n    rule: "0031"\n';
+        expect(validateClaimsText(broad, ids)).toEqual(["claims[0]: a broad claim needs approvedBy (a person, never a bot)"]);
+      });
+    });
+
+    it("reads its arguments: a file, and the ref whose Rules to resolve against", () => {
+      expect(parseArgs([])).toEqual({ arg: "release/claims.yaml", ref: undefined });
+      expect(parseArgs(["other.yaml", "--ref", "release/16.3.0"])).toEqual({ arg: "other.yaml", ref: "release/16.3.0" });
+      expect(() => parseArgs(["--ref"])).toThrow(/--ref needs/);
+      expect(() => parseArgs(["--nope"])).toThrow(/unknown argument/);
+      expect(() => parseArgs(["a", "b"])).toThrow(/only one/);
     });
 
     it("does not resolve citations when no Rule ids are given, as before", () => {
