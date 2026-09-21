@@ -68,6 +68,16 @@
     }, 2000);
   }
 
+  // The iframe is recreated whenever the mode or room changes (see the {#key} below),
+  // so each fresh iframe announces itself with viewer-ready / editor-ready.
+  let viewerReady = false;
+
+  function postViewerScene() {
+    if (!viewerReady || !cachedScene || isEditing) return;
+    iframe?.contentWindow?.postMessage({ type: "load-scene", scene: cachedScene }, "*");
+    loading = false;
+  }
+
   async function loadScene() {
     if (!lo.excalidraw) {
       error = "No Excalidraw file associated with this whiteboard.";
@@ -78,7 +88,7 @@
       const response = await fetch(lo.excalidraw);
       if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       cachedScene = await response.json();
-      setupMessageHandler();
+      postViewerScene();
     } catch (e: any) {
       log.error("WhiteboardViewer failed to load scene:", e);
       error = e.message || "Failed to load whiteboard";
@@ -86,53 +96,58 @@
     }
   }
 
-  function setupMessageHandler() {
-    const handler = async (event: MessageEvent) => {
-      if (event.data?.type === "viewer-ready" && !isEditing) {
-        window.removeEventListener("message", handler);
-        iframe?.contentWindow?.postMessage({ type: "load-scene", scene: cachedScene }, "*");
-        loading = false;
-      } else if (event.data?.type === "editor-ready" && isEditing) {
-        window.removeEventListener("message", handler);
-        const roomId = getWhiteboardRoomId();
-        const savedScene = await loadSceneFromDb(roomId);
-        iframe?.contentWindow?.postMessage({
-          type: "init-editor",
-          supabaseUrl: env.PUBLIC_SUPABASE_URL,
-          supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
-          roomId,
-          user: {
-            name: tutorsId.value?.name || "Anonymous",
-            id: getUserId(),
-            avatar: tutorsId.value?.image || "",
-          },
-          initialScene: savedScene || cachedScene,
-        }, "*");
-        loading = false;
-      } else if (event.data?.type === "scene-changed" && isEditing) {
-        saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
-      }
-    };
-    window.addEventListener("message", handler);
+  // One listener for the lifetime of the component: scene-changed keeps arriving
+  // after editor-ready, so the handler must not remove itself.
+  async function handleMessage(event: MessageEvent) {
+    if (event.source !== iframe?.contentWindow) return;
+    const type = event.data?.type;
+    if (type === "viewer-ready" && !isEditing) {
+      viewerReady = true;
+      postViewerScene();
+    } else if (type === "editor-ready" && isEditing) {
+      const roomId = getWhiteboardRoomId();
+      const savedScene = await loadSceneFromDb(roomId);
+      iframe?.contentWindow?.postMessage({
+        type: "init-editor",
+        supabaseUrl: env.PUBLIC_SUPABASE_URL,
+        supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
+        roomId,
+        user: {
+          name: tutorsId.value?.name || "Anonymous",
+          id: getUserId(),
+          avatar: tutorsId.value?.image || "",
+        },
+        initialScene: savedScene || cachedScene,
+      }, "*");
+      loading = false;
+    } else if (type === "scene-changed" && isEditing) {
+      saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
+    }
   }
 
   function toggleEdit() {
     isEditing = !isEditing;
+    viewerReady = false;
     loading = true;
-    setupMessageHandler();
   }
 
   function toggleShared() {
     isShared = !isShared;
-    if (isEditing) {
-      loading = true;
-      setupMessageHandler();
-    }
+    if (isEditing) loading = true;
   }
 
   function toggleFullscreen() {
     isFullscreen = !isFullscreen;
   }
+
+  $effect(() => {
+    if (!browser) return;
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      if (saveTimer) clearTimeout(saveTimer);
+    };
+  });
 
   $effect(() => {
     if (browser && lo.excalidraw) {
@@ -202,13 +217,15 @@
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     {/if}
-    <iframe
-      bind:this={iframe}
-      src={isEditing ? "/excalidraw-editor.html" : "/excalidraw-viewer.html"}
-      title="Excalidraw Whiteboard"
-      class="w-full border-0 {isFullscreen ? 'flex-1' : 'rounded-b-lg'} {loading ? 'hidden' : ''}"
-      style={isFullscreen ? '' : isEditing ? 'height: 80vh;' : 'aspect-ratio: 16/9;'}
-      sandbox="allow-scripts allow-same-origin"
-    ></iframe>
+    {#key `${isEditing}:${isShared}`}
+      <iframe
+        bind:this={iframe}
+        src={isEditing ? "/excalidraw-editor.html" : "/excalidraw-viewer.html"}
+        title="Excalidraw Whiteboard"
+        class="w-full border-0 {isFullscreen ? 'flex-1' : 'rounded-b-lg'} {loading ? 'hidden' : ''}"
+        style={isFullscreen ? '' : isEditing ? 'height: 80vh;' : 'aspect-ratio: 16/9;'}
+        sandbox="allow-scripts allow-same-origin"
+      ></iframe>
+    {/key}
   </div>
 {/if}
