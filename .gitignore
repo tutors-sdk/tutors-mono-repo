@@ -66,3 +66,5 @@ deploy/k8s/**/secrets.yaml
 .generator-diff/
 # graphify working output and cache (the committed report lives in docs/knowledge-graph/)
 graphify-out/
+# Local-only observability guides (contain production setup steps)
+observability/grafana/PRODUCTION-SETUP.md
