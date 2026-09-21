@@ -48,6 +48,8 @@
     "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
     "check:release-claims": "tsx scripts/checks/release-claims.ts",
     "check:migrations": "tsx scripts/checks/migrations.ts",
+    "check:deploy-pins": "tsx scripts/checks/deploy-pins.ts",
+    "deploy:pin": "tsx scripts/deploy-pin.ts",
     "release:claims:draft": "tsx scripts/release-claims-draft.ts",
     "promote:image": "tsx scripts/promote-image.ts"
   },

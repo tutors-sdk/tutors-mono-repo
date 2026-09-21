@@ -80,7 +80,7 @@ When `main` has accumulated enough changes for a release (or a time-based cadenc
 
 1. **Determine the version bump.** Review merged PRs since the last release. Apply semver rules.
 2. **Create the release branch:** `git checkout -b release/vX.Y.Z main`
-3. **Bump the version** in `package.json`, set the same version as `newTag` in each `deploy/k8s/overlays/*/kustomization.yaml`, and update `CHANGELOG.md`. The conformance tests fail until the overlay tags match, so the overlays always name the image being released. Reset `tests/generator/claims.yaml` to `claims: []` once the release's generator changes have shipped.
+3. **Bump the version** in `package.json` and update `CHANGELOG.md`. Leave `deploy/k8s/overlays/*/kustomization.yaml` alone: the overlays name what production runs, by digest, and they move only when the release is deployed (see [Deploy and post-deploy](#deploy-and-post-deploy)). Reset `tests/generator/claims.yaml` to `claims: []` once the release's generator changes have shipped.
 4. **Write the release's claims** in `release/claims.yaml`: the observable differences from production this release intends, each citing its Rule or CHANGELOG entry. Start from `claims: []` (see [Release Harness](#release-harness)).
 5. **Push the branch.** Once `package.json` carries the branch's version, every push is tagged as the next RC (`vX.Y.Z-rc.1`, then `-rc.2`, ...) by `release-dispatch.yml`. RC tags are not made by hand.
 6. **Deploy RC to staging** for validation.
@@ -109,7 +109,7 @@ When the RC is validated and stable:
 1. **Tag the final release** on a commit whose git tree equals the last release candidate's: `git tag vX.Y.Z` on the release branch HEAD, which is the commit `vX.Y.Z-rc.N` already points at. **Do not add a commit between the last RC and the tag**, not even a changelog or version touch-up: the final tag ships the RC's images rather than rebuilding them, and it may only do so when the source is provably the same. A merge or fast-forward that leaves the files unchanged is fine, because the comparison is of trees, not commit ids. Check before tagging: `test "$(git rev-parse vX.Y.Z-rc.N^{tree})" = "$(git rev-parse HEAD^{tree})" && echo same`. What happens when they differ is under [Final tag: the candidate ships](#final-tag-the-candidate-ships).
 2. **Merge the release branch back to `main`** to capture any hardening fixes.
 3. **Create a GitHub Release** from the tag with release notes.
-4. **Deploy to production.**
+4. **Deploy to production.** Pin the overlays to the release's images by digest, roll them out, and tell the release harness what is now deployed: [Deploy and post-deploy](#deploy-and-post-deploy).
 5. **Retain the release branch.** It is not deleted. The tag is the canonical, immutable artifact, but the branch is kept as a recovery point: if an issue surfaces late, the release line is still there to branch a fix from without first having to locate the right commit on `main`.
 
    Two things follow from retaining it. A branch is mutable where a tag is not, so a retained release branch must not be pushed to after its release ships — once it moves it no longer records what was released. And retention is not a substitute for tagging: every release still gets a `vX.Y.Z` tag and a GitHub Release, which are what consumers and tooling read.
@@ -164,12 +164,12 @@ Entries that change something observable end with the artefacts they expect to m
 ### Release Checks (on final version tags)
 
 - Image promotion: the candidate's images are retagged as the release, not rebuilt (`image-build.yml`, see [Final tag: the candidate ships](#final-tag-the-candidate-ships))
-- Production deployment
+- Production deployment: `deploy.yml` verifies the digest pins, then updates the harness's production tag and starts its post-deploy comparison
 - Post-deploy smoke test
 
 ### Release Harness
 
-The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a separate repository that runs the production images beside a candidate's images and fails on any observable difference the release did not claim. It lives apart from this repository so that the PR being judged cannot weaken its judge. Two workflows here feed it.
+The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a separate repository that runs the production images beside a candidate's images and fails on any observable difference the release did not claim. It lives apart from this repository so that the PR being judged cannot weaken its judge. Three workflows here feed it; the third, `deploy.yml`, is described under [Deploy and post-deploy](#deploy-and-post-deploy).
 
 **`release-dispatch.yml`**, on every push to `release/**`:
 
@@ -179,7 +179,7 @@ The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a
 
 | `client_payload` | Value |
 | --- | --- |
-| `production` | `images[].newTag` of `deploy/k8s/overlays/reader/kustomization.yaml` **on `main`**. The overlays name the deployed version; on the release branch they already name the candidate |
+| `production` | `images[].newTag` of `deploy/k8s/overlays/reader/kustomization.yaml` **on `main`**. The overlays name the deployed version and move only when a release is deployed, so during a release cycle this is still production, not the candidate |
 | `candidate` | `X.Y.Z-rc.N` |
 | `claims_url` | `https://raw.githubusercontent.com/tutors-sdk/tutors-mono-repo/<sha>/release/claims.yaml`, pinned to the tagged commit |
 | `runs` | `3` |
@@ -219,12 +219,46 @@ Prerelease tags, `main`, `rc/**` branches, pull requests and the backfill dispat
 
 | What | Where | Value |
 | --- | --- | --- |
-| Secret `HARNESS_TOKEN` | this repository, Actions secrets | A fine-grained personal access token whose resource owner is `tutors-sdk`, with access to **only** `tutors-sdk/tutors-release-harness` and the repository permission **Contents: read and write** (Metadata: read is added automatically). That is the permission the [repository dispatch endpoint](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) requires; Actions: write is what `workflow_dispatch` needs and does not authorise a `repository_dispatch`. Give it an expiry and note the renewal date; an expired token fails the dispatch job with a 401 |
+| Secret `HARNESS_TOKEN` | this repository, Actions secrets | A fine-grained personal access token whose resource owner is `tutors-sdk`, with access to **only** `tutors-sdk/tutors-release-harness` and two repository permissions: **Contents: read and write**, which the [repository dispatch endpoint](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) requires (`release-dispatch.yml` and `deploy.yml`), and **Variables: read and write**, which [creating and updating a repository variable](https://docs.github.com/en/rest/actions/variables) requires (`deploy.yml` setting `HARNESS_PRODUCTION_TAG`). Metadata: read is added automatically. Actions: write is what `workflow_dispatch` needs and authorises neither call. A classic token needs the `repo` scope for both. Give it an expiry and note the renewal date; an expired token fails the dispatch job with a 401, and a token without Variables fails `deploy.yml` with a 403 before anything is dispatched |
 | Secrets `QUAY_USERNAME`, `QUAY_PASSWORD` | this repository | Used by `image-build.yml` (the push, and the retag on a final tag), not by the dispatch. The robot needs write access to the four repositories; retagging an existing digest needs no more than pushing did |
 | Variable `HARNESS_IMAGE_PREFIX` | the harness repository | **Open.** The harness expands a bare tag to `<prefix>/<app>:<tag>`, while `image-build.yml` publishes `quay.io/tutors-sdk/tutors-<app>:<tag>`, which no prefix can produce. Until one side changes, the harness fails to pull and builds both sides from their git tags (`v<tag>`), which is slower but compares the same code. The payload deliberately stays bare tags so that this fallback keeps working |
 | Quay repositories | quay.io | Public, so the harness and the wait step can pull without credentials |
 
-Everything else uses the workflow's own `GITHUB_TOKEN`: `contents: write` in the tagging job only, `actions: write` in the image job only, and nothing at all in the job that holds `HARNESS_TOKEN`.
+Everything else uses the workflow's own `GITHUB_TOKEN`: `contents: write` in the tagging job only, `actions: write` in the image job only, and nothing at all in the jobs that hold `HARNESS_TOKEN`. The token's Variables permission is wider than the candidate dispatch needs; `deploy.yml` and `release-dispatch.yml` share the secret on purpose, one credential to rotate. To split them, give `deploy.yml` its own secret and keep the other one Contents-only.
+
+#### Deploy and post-deploy
+
+The overlays under `deploy/k8s/overlays/` name what production runs, so that is where the harness's notion of "deployed" comes from. Each pins its image twice, side by side:
+
+```yaml
+images:
+  - name: tutors-app
+    newName: quay.io/tutors-sdk/tutors-reader
+    newTag: "16.2.2"        # for people, and read by release-dispatch.yml as the production tag
+    digest: sha256:7567...  # what the container runtime pulls
+```
+
+Kustomize renders that as `quay.io/tutors-sdk/tutors-reader:16.2.2@sha256:7567...`. The runtime pulls the digest and ignores the tag, so a tag pushed again cannot change what is deployed, while `git log` and `release-dispatch.yml` still read a version. The digest is the multi-arch index digest that `image-build.yml` signs with cosign.
+
+Deploying a release, once `vX.Y.Z` is tagged and `image-build.yml` has published it:
+
+1. **Pin.** `pnpm deploy:pin X.Y.Z` asks Quay for the digest of each `tutors-<app>:X.Y.Z`, checks that digest is signed by `image-build.yml` (`cosign verify`, by digest) and rewrites the four overlays together, or none of them. Open a pull request. Needs docker (buildx) and cosign 3 or later.
+2. **Verify.** `deploy.yml` runs on that pull request and again on `main` (`pnpm check:deploy-pins --registry`). It fails when an overlay has no digest or a malformed one, when the tag is not a release `X.Y.Z`, when the four overlays name different releases or share a digest, when a tag no longer resolves to its digest, or when a digest is not signed by `image-build.yml`. Without `--registry` the same form checks run in the unit tests (`tests/conformance/deploy-pins.test.ts`), and `pnpm check:k8s` fails any rendered image that is not digest-pinned.
+3. **Roll out.** `oc apply -k deploy/k8s/variants/openshift/<app>`, or a GitOps controller syncing `main`. This happens outside the repository.
+4. **Announce.** After a push to `main` that changed a pin, the `announce` job of `deploy.yml` waits for approval in the `production` environment, then sets `HARNESS_PRODUCTION_TAG` on `tutors-sdk/tutors-release-harness` to `X.Y.Z` (`gh variable set`), so nightly noise, the weekly mutants and the harness's CI compare against what is deployed, and sends `repository_dispatch` of type `deployed`. That runs the harness's `post-deploy.yml`: the reference-course journeys against production, compared with the candidate's recorded release run; a new difference opens a `rollback` issue there.
+
+The order in step 4 is deliberate: a failure setting the variable stops the job before anything is dispatched, and both calls are idempotent, so re-running the job or dispatching `deploy.yml` by hand is safe. Add the maintainers as required reviewers of the `production` environment (Settings, Environments) so that the approval means "the rollout has finished"; until that is configured the job runs as soon as verify passes.
+
+`deploy.yml` sends `{"event_type": "deployed", "client_payload": {"production": "X.Y.Z", "digests": {"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:..."}}}`. Harness contract 1.1.0 reads no field of a `deployed` payload and ignores unknown ones, so today `production` and `digests` only appear in the run record.
+
+**Pinned digest equals judged digest.** Since the final tag promotes the last release candidate's image instead of rebuilding it (see [Final tag: the candidate ships](#final-tag-the-candidate-ships)), `X.Y.Z` resolves to the same digest as the `X.Y.Z-rc.N` image the harness judged. `pnpm deploy:pin X.Y.Z` therefore pins the judged digest: the digest the overlays name, the one `deploy.yml` sends in `digests`, and the one the harness compared are one and the same, for an app that was promoted. The signature check accepts both signing refs, `refs/tags/vX.Y.Z-rc.N` (a promoted image, signed at the candidate's ref) and `refs/tags/vX.Y.Z` (an image the run had to rebuild), in both `deploy:pin` and `check:deploy-pins --registry`.
+
+**What is not yet closed.** Two things need harness changes (contract 1.1.0: `release-candidate` takes bare tags, `deployed` takes nothing), so the equality is not yet enforced by the harness:
+
+- `release-candidate` should accept the digests of both sides, so the harness pulls exactly what `release-dispatch.yml` published and what the overlays pin: optional `production_digests` and `candidate_digests`, each `{"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:..."}`, turned into `--a` and `--b` references of the form `repo:tag@sha256:...`, which the CLI already accepts.
+- `deployed` should read `production` and `digests` and compare `digests` with the `provenance.b.images.*.digest` of the recorded release run, warning when they differ.
+
+An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
 
 #### `rc/**` and `release/**`
 
