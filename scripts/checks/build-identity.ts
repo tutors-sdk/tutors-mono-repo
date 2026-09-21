@@ -60,6 +60,17 @@ export interface Sample {
 /** Elements that carry the version on purpose, so a comparison can mask them. */
 const VERSION_MARKER = /<(\w+)\b[^>]*\bdata-tutors-build="version"[^>]*>[\s\S]*?<\/\1>/g;
 
+/** `body` with the elements that carry the version on purpose cut out by position (no pattern substitution, so nothing is left half-removed). */
+function outsideMarkers(body: string): string {
+  let out = "";
+  let last = 0;
+  for (const marked of body.matchAll(VERSION_MARKER)) {
+    out += body.slice(last, marked.index);
+    last = marked.index + marked[0].length;
+  }
+  return out + body.slice(last);
+}
+
 /** A version number is only itself when it is not part of a longer one (`116.2.20`, `1.2.3.4`). */
 const versionPattern = (version: string): RegExp => new RegExp(`(?<![\\d.])${version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\d.])`);
 
@@ -87,7 +98,7 @@ export function identityLeaks(sample: Sample, identity: BuildIdentity): string[]
   for (const secret of found(sample.body, identity)) findings.push(`GET ${sample.path}: the ${sample.kind === "html" ? "page" : "body"} carries "${secret}"`);
   if (version.test(headerText)) findings.push(`GET ${sample.path}: a response header carries the release version ${identity.version}`);
   // Scripts and styles are compiled from the footer, which shows the version; only pages must mark it.
-  if (sample.kind !== "asset" && version.test(sample.body.replace(VERSION_MARKER, ""))) {
+  if (sample.kind !== "asset" && version.test(outsideMarkers(sample.body))) {
     findings.push(`GET ${sample.path}: the ${sample.kind === "html" ? "page" : "body"} carries the release version ${identity.version} outside data-tutors-build="version"`);
   }
   return findings;
@@ -96,7 +107,7 @@ export function identityLeaks(sample: Sample, identity: BuildIdentity): string[]
 /** Same-origin URLs a page links to: scripts, stylesheets, preloads, the manifest and icons. */
 export function linkedAssets(html: string): string[] {
   const found = new Set<string>();
-  for (const [, tag] of html.matchAll(/<(?:script|link)\b([^>]*)>/g)) {
+  for (const [, tag] of html.matchAll(/<(?:script|link)\b([^>]*)>/gi)) {
     const url = /\b(?:src|href)="([^"]+)"/.exec(tag)?.[1];
     const rel = /\brel="([^"]+)"/.exec(tag)?.[1] ?? "";
     if (!url || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(url)) continue;
