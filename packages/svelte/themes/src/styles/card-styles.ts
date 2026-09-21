@@ -28,12 +28,12 @@ export const cardStyles: CardStyleConfig = {
   },
   dimensions: {
     expanded: {
-      portrait: "w-56 h-[21rem]",
+      portrait: "w-56 min-h-[21rem]",
       landscape: "w-[26rem] h-44",
       circular: "w-60 h-60"
     },
     compacted: {
-      portrait: "w-36 h-[14rem]",
+      portrait: "w-36 min-h-[14rem]",
       landscape: "w-[20rem] h-32",
       circular: "w-48 h-48"
     }
@@ -76,12 +76,12 @@ export const cardStyles: CardStyleConfig = {
   },
   text: {
     expanded: {
-      portrait: "prose line-clamp-3 leading-6 dark:prose-invert",
+      portrait: "prose leading-6 dark:prose-invert",
       landscape: "prose line-clamp-3 leading-6 dark:prose-invert",
       circular: "prose line-clamp-3 leading-6 dark:prose-invert"
     },
     compacted: {
-      portrait: "line-clamp-2 text-xs",
+      portrait: "text-xs",
       landscape: "line-clamp-2 text-xs",
       circular: "line-clamp-2 text-xs"
     }
