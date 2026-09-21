@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:bdd": "vitest run --config vitest.config.ts tests/bdd/",
+    "test:ears:audit": "tsx scripts/checks/ears-audit.ts --baseline tests/bdd/ears-audit-baseline.txt",
     "test:contract": "vitest run tests/contract/",
     "test:fuzz": "vitest run --config vitest.config.fuzz.ts",
     "test:tz": "tsx scripts/checks/tz-matrix.ts",
@@ -47,6 +48,7 @@
     "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
     "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
     "check:release-claims": "tsx scripts/checks/release-claims.ts",
+    "release:claims:draft": "tsx scripts/release-claims-draft.ts",
     "promote:image": "tsx scripts/promote-image.ts"
   },
   "devDependencies": {

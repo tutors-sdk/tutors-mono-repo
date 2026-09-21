@@ -474,6 +474,38 @@ jobs:
           path: .generator-diff/report/
           retention-days: 14
 
+  # EARS audit (issue #214): the structure of the Rule blocks in tests/bdd/features. It reports
+  # inline on the diff (::error annotations) but does not block yet, and it is deliberately not
+  # in ci-success's needs. Behaviour is checked by `vitest run` in build-and-test, which runs
+  # tests/bdd through vitest-cucumber.
+  # TODO(#214): once the seed features are migrated and this job is green on main, drop
+  # continue-on-error and add ears-audit to the needs of ci-success so it becomes required.
+  ears-audit:
+    name: EARS audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit Rule blocks (new violations only; the baseline can only shrink)
+        run: pnpm test:ears:audit
+
   # Deno tests have no runner config, so this step is what collects them:
   # tier O (scripts/checks/suite-health.ts) reads `deno test` steps as runners.
   cli-tests:
