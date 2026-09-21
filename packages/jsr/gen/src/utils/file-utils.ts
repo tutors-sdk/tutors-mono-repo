@@ -4,6 +4,7 @@ import * as yaml from "npm:js-yaml@^4";
 import archiver from "npm:archiver@^7";
 
 
+
 export function removeFirstLine(str: string): string {
   return str.split("\n").slice(1).join("\n");
 }
@@ -76,7 +77,7 @@ export function readWholeFile(path: string): string {
     const array = fs.readFileSync(path).toString();
     return array;
   } else {
-    console.log("unable to locate " + path);
+    process.stderr.write(`unable to locate ${path}\n`);
   }
   return "";
 }
@@ -86,7 +87,7 @@ export function readFirstLineFromFile(path: string): string {
     const array = fs.readFileSync(path).toString().split("\n");
     return array[0].replace("\r", "");
   } else {
-    console.log("unable to locate " + path);
+    process.stderr.write(`unable to locate ${path}\n`);
   }
   return "";
 }
@@ -132,18 +133,20 @@ export function copyFolder(src: string, dest: string): void {
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(src, dest);
     }
-  } catch (err) {
-    console.error(`Error copying folder from ${src} to ${dest}:`, err);
-    throw err;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error copying folder from ${src} to ${dest}: ${message}\n`);
+    throw error;
   }
 }
 
 export function copyFile(src: string, dest: string): void {
   try {
     fs.cpSync(src, dest, { force: true });
-  } catch (err) {
-    console.error(`Error copying file from ${src} to ${dest}:`, err);
-    throw err;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error copying file from ${src} to ${dest}: ${message}\n`);
+    throw error;
   }
 }
 
@@ -156,9 +159,10 @@ export function copyFileToFolder(src: string, dest: string): void {
         force: true,
       });
     }
-  } catch (err) {
-    console.error(`Error copying file from ${src} to folder ${dest}:`, err);
-    throw err;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error copying file from ${src} to folder ${dest}: ${message}\n`);
+    throw error;
   }
 }
 
@@ -166,18 +170,12 @@ export function readYamlFile(yamlFilePath: string): any {
   let yamlData = null;
   try {
     yamlData = yaml.load(fs.readFileSync(yamlFilePath, "utf8"));
-  } catch (err: any) {
-    console.log(`Tutors encountered an error reading ${yamlFilePath}:`);
-    console.log(
-      "--------------------------------------------------------------",
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Tutors encountered an error reading ${yamlFilePath}: ${message}. Review this file and try again.`,
+      { cause: error },
     );
-    console.log(err.mark.buffer);
-    console.log(
-      "--------------------------------------------------------------",
-    );
-    console.log(err.message);
-    console.log("Review this file and try again....");
-    throw err;
   }
   return yamlData;
 }
