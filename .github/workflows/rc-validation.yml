@@ -172,7 +172,7 @@ jobs:
       - name: Verify build outputs exist
         run: |
           echo "Checking build outputs..."
-          for app in apps/reader apps/catalogue apps/live; do
+          for app in apps/reader apps/catalogue apps/live apps/time; do
             if [ -d "$app/.svelte-kit" ]; then
               echo "OK: $app built successfully"
             else
