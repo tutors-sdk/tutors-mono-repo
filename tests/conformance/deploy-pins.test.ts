@@ -4,7 +4,9 @@ import yaml from "js-yaml";
 import { describe, expect, it } from "vitest";
 import { renderKustomization } from "../../scripts/checks/conformance.ts";
 import { overlayPinFindings, pinOverlayText, readOverlays, registryPinFindings, type Overlay, type Pin } from "../../scripts/checks/deploy-pins.ts";
+import { COSIGN_IDENTITY } from "../../scripts/checks/lib/registry.ts";
 import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
+import { COSIGN_IDENTITY_REGEXP, identityAt } from "../../scripts/promote-image.ts";
 
 const DIGESTS = {
   reader: `sha256:${"1".repeat(64)}`,
@@ -161,6 +163,25 @@ describe("deploy overlays are pinned to what production runs, by digest", () => 
       expect(registryPinFindings(pins, registry(inRegistry, ["reader"]))).toEqual([
         `unsigned-digest: overlays/reader: ${image("reader")}@${DIGESTS.reader} (no matching signatures)`
       ]);
+    });
+  });
+
+  describe("signing identity", () => {
+    const signer = new RegExp(COSIGN_IDENTITY);
+
+    it("accepts image-build.yml at the final tag ref (a rebuilt image) and at the rc tag ref (a promoted image)", () => {
+      expect(signer.test(identityAt("refs/tags/v16.3.0"))).toBe(true);
+      expect(signer.test(identityAt("refs/tags/v16.3.0-rc.2"))).toBe(true);
+    });
+
+    it("rejects other workflows and other repositories", () => {
+      const at = "@refs/tags/v16.3.0";
+      expect(signer.test(`https://github.com/tutors-sdk/tutors-mono-repo/.github/workflows/other.yml${at}`)).toBe(false);
+      expect(signer.test(`https://github.com/someone-else/tutors-mono-repo/.github/workflows/image-build.yml${at}`)).toBe(false);
+    });
+
+    it("is the one identity that promote-image.ts verifies with, defined once", () => {
+      expect(COSIGN_IDENTITY_REGEXP).toBe(COSIGN_IDENTITY);
     });
   });
 

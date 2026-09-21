@@ -106,7 +106,7 @@ During the RC phase, the release branch accepts **only** bug fixes:
 
 When the RC is validated and stable:
 
-1. **Tag the final release:** `git tag vX.Y.Z` on the release branch HEAD.
+1. **Tag the final release** on a commit whose git tree equals the last release candidate's: `git tag vX.Y.Z` on the release branch HEAD, which is the commit `vX.Y.Z-rc.N` already points at. **Do not add a commit between the last RC and the tag**, not even a changelog or version touch-up: the final tag ships the RC's images rather than rebuilding them, and it may only do so when the source is provably the same. A merge or fast-forward that leaves the files unchanged is fine, because the comparison is of trees, not commit ids. Check before tagging: `test "$(git rev-parse vX.Y.Z-rc.N^{tree})" = "$(git rev-parse HEAD^{tree})" && echo same`. What happens when they differ is under [Final tag: the candidate ships](#final-tag-the-candidate-ships).
 2. **Merge the release branch back to `main`** to capture any hardening fixes.
 3. **Create a GitHub Release** from the tag with release notes.
 4. **Deploy to production.** Pin the overlays to the release's images by digest, roll them out, and tell the release harness what is now deployed: [Deploy and post-deploy](#deploy-and-post-deploy).
@@ -120,7 +120,7 @@ Critical production bugs that cannot wait for the next release cycle:
 
 1. Branch from the latest release tag: `git checkout -b fix/critical-issue vX.Y.Z`
 2. Fix, test, and open a PR against `main`.
-3. If a production patch is needed immediately, cut a patch release: tag `vX.Y.Z+1` from the fix branch.
+3. If a production patch is needed immediately, cut a patch release: tag `vX.Y.Z+1` from the fix branch. A tag with no release candidate behind it cannot be promoted, so its images are rebuilt and the run says so (see [Final tag: the candidate ships](#final-tag-the-candidate-ships)). To ship a judged image, run the hotfix through a `release/X.Y.Z+1` branch instead, so it gets a candidate.
 4. Merge the fix to `main`.
 
 ## Changelog Discipline
@@ -161,6 +161,7 @@ The changelog documents what shipped and when. It is not a commit log; it is a c
 
 ### Release Checks (on final version tags)
 
+- Image promotion: the candidate's images are retagged as the release, not rebuilt (`image-build.yml`, see [Final tag: the candidate ships](#final-tag-the-candidate-ships))
 - Production deployment: `deploy.yml` verifies the digest pins, then updates the harness's production tag and starts its post-deploy comparison
 - Post-deploy smoke test
 
@@ -185,12 +186,39 @@ The [release harness](https://github.com/tutors-sdk/tutors-release-harness) is a
 
 **`release-claims.yml`**, on the same pushes and on release PRs, fails when `release/claims.yaml` is missing or is not a file the harness would accept (`pnpm check:release-claims`). The file format is in [release/README.md](../release/README.md); changes to it are owned by the maintainers through CODEOWNERS, because a claim waives a failure.
 
+#### Final tag: the candidate ships
+
+The harness judges the `X.Y.Z-rc.N` images, so the final tag must ship those images. A final tag `vX.Y.Z` therefore does not build: for each of the four apps `image-build.yml` runs `scripts/promote-image.ts`, which **promotes** the candidate, meaning it points `X.Y.Z`, `X.Y`, `latest` and `sha-<short of the final commit>` at the candidate's existing digest (`docker buildx imagetools create`). Nothing is rebuilt, so the digest, the cosign signature and the SBOM attestation, which are attached by digest, are the ones the harness judged.
+
+An app is promoted only when all four hold:
+
+| Check | Why |
+| --- | --- |
+| The registry has `X.Y.Z-rc.N` for the app; the **highest N** is used | The last candidate is the one the harness judged last |
+| The git tree of `vX.Y.Z-rc.N` equals the git tree of the final tag's commit | Same source. Commit ids may differ (a release branch merged to `main` has its own sha); trees may not |
+| The image's `org.opencontainers.image.revision` label is the commit `vX.Y.Z-rc.N` points at | The image was built from that tag |
+| `cosign verify` of the digest succeeds for `image-build.yml` at `refs/tags/vX.Y.Z-rc.N` on that commit | It is the image that workflow built and signed |
+
+Then Trivy scans the promoted digest with the same gate as a build (CRITICAL and HIGH with a fix fail the run) before any tag moves: the scan at RC time cannot know about a vulnerability with a fix published since, and the release must not ship one that a rebuild would have been stopped for. If that fails, the fix is a new candidate, which the harness judges again. `X.Y.Z` and `sha-<short>` are retagged first and checked (every tag resolves to the promoted digest, `cosign verify` and the SBOM attestation lookup succeed on `X.Y.Z`); only then do `X.Y` and `latest` move, so a failure leaves `latest` on the previous release.
+
+Once an image is promoted, the digest named by the overlays' `digest:` (`pnpm deploy:pin`), `HARNESS_PRODUCTION_TAG`, and the `digests` that `deploy.yml` sends with the harness's `deployed` event are the candidate's digest, so the harness can compare what is deployed with what it judged. The signing certificate's identity is still `image-build.yml`, at the candidate's ref (`@refs/tags/vX.Y.Z-rc.N`); the harness's identity regexp ends in `@` and accepts it. A promoted image's `org.opencontainers.image.version` label reads `X.Y.Z-rc.N` and its revision is the candidate's commit: that is how to recognise a promoted image from a shell (`docker buildx imagetools inspect --format '{{json .}}' quay.io/tutors-sdk/tutors-reader:X.Y.Z`).
+
+**When an app cannot be promoted** (no candidate, different tree, revision or signature mismatch, or the registry or git could not be read) the run does not fail silently or promote on a guess. By default it falls back to the old behaviour for that app, and says so loudly:
+
+- a `::warning::` annotation titled `REBUILT — this image is not the one the release harness judged`, with the reason;
+- the same line in the job summary, per app;
+- `promoted=false` as the `Decide whether to promote the release candidate` step's output (a matrix job cannot carry one job output per app, so read it from the step, the summary or the annotation).
+
+**A REBUILT image** is one whose `version` label is `X.Y.Z` (no `-rc`), whose revision is the final tag's commit and whose digest differs from the candidate's. The harness never compared it; treat it as unjudged. To get a judged release, cut another candidate from the commit you want to ship (a new RC is a new image, judged again) and tag the final on that commit. A push of the tag cannot carry an input, so it always takes the default fallback; use the tree check under [Final Release](#4-final-release) before tagging to be sure it will promote. `require_promotion=true` is for a manual dispatch on the tag (`gh workflow run image-build.yml --ref vX.Y.Z -f require_promotion=true`), which fails before anything is built or pushed instead of rebuilding.
+
+Prerelease tags, `main`, `rc/**` branches, pull requests and the backfill dispatch are unchanged and never promote. Preview a decision with `pnpm promote:image plan --app reader --ref vX.Y.Z --dry-run`; it reads git and the registry and changes nothing.
+
 #### Setup
 
 | What | Where | Value |
 | --- | --- | --- |
 | Secret `HARNESS_TOKEN` | this repository, Actions secrets | A fine-grained personal access token whose resource owner is `tutors-sdk`, with access to **only** `tutors-sdk/tutors-release-harness` and two repository permissions: **Contents: read and write**, which the [repository dispatch endpoint](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) requires (`release-dispatch.yml` and `deploy.yml`), and **Variables: read and write**, which [creating and updating a repository variable](https://docs.github.com/en/rest/actions/variables) requires (`deploy.yml` setting `HARNESS_PRODUCTION_TAG`). Metadata: read is added automatically. Actions: write is what `workflow_dispatch` needs and authorises neither call. A classic token needs the `repo` scope for both. Give it an expiry and note the renewal date; an expired token fails the dispatch job with a 401, and a token without Variables fails `deploy.yml` with a 403 before anything is dispatched |
-| Secrets `QUAY_USERNAME`, `QUAY_PASSWORD` | this repository | Used by `image-build.yml`, not by the dispatch |
+| Secrets `QUAY_USERNAME`, `QUAY_PASSWORD` | this repository | Used by `image-build.yml` (the push, and the retag on a final tag), not by the dispatch. The robot needs write access to the four repositories; retagging an existing digest needs no more than pushing did |
 | Variable `HARNESS_IMAGE_PREFIX` | the harness repository | **Open.** The harness expands a bare tag to `<prefix>/<app>:<tag>`, while `image-build.yml` publishes `quay.io/tutors-sdk/tutors-<app>:<tag>`, which no prefix can produce. Until one side changes, the harness fails to pull and builds both sides from their git tags (`v<tag>`), which is slower but compares the same code. The payload deliberately stays bare tags so that this fallback keeps working |
 | Quay repositories | quay.io | Public, so the harness and the wait step can pull without credentials |
 
@@ -221,12 +249,14 @@ The order in step 4 is deliberate: a failure setting the variable stops the job 
 
 `deploy.yml` sends `{"event_type": "deployed", "client_payload": {"production": "X.Y.Z", "digests": {"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:..."}}}`. Harness contract 1.1.0 reads no field of a `deployed` payload and ignores unknown ones, so today `production` and `digests` only appear in the run record.
 
-**What is not yet closed.** The digest the harness compared and the digest deployed are not yet forced to be the same, for two reasons that need harness changes (contract 1.1.0: `release-candidate` takes bare tags, `deployed` takes nothing):
+**Pinned digest equals judged digest.** Since the final tag promotes the last release candidate's image instead of rebuilding it (see [Final tag: the candidate ships](#final-tag-the-candidate-ships)), `X.Y.Z` resolves to the same digest as the `X.Y.Z-rc.N` image the harness judged. `pnpm deploy:pin X.Y.Z` therefore pins the judged digest: the digest the overlays name, the one `deploy.yml` sends in `digests`, and the one the harness compared are one and the same, for an app that was promoted. The signature check accepts both signing refs, `refs/tags/vX.Y.Z-rc.N` (a promoted image, signed at the candidate's ref) and `refs/tags/vX.Y.Z` (an image the run had to rebuild), in both `deploy:pin` and `check:deploy-pins --registry`.
+
+**What is not yet closed.** Two things need harness changes (contract 1.1.0: `release-candidate` takes bare tags, `deployed` takes nothing), so the equality is not yet enforced by the harness:
 
 - `release-candidate` should accept the digests of both sides, so the harness pulls exactly what `release-dispatch.yml` published and what the overlays pin: optional `production_digests` and `candidate_digests`, each `{"reader": "sha256:...", "catalogue": "sha256:...", "live": "sha256:..."}`, turned into `--a` and `--b` references of the form `repo:tag@sha256:...`, which the CLI already accepts.
 - `deployed` should read `production` and `digests` and compare `digests` with the `provenance.b.images.*.digest` of the recorded release run, warning when they differ.
 
-That comparison only holds if the release image is the candidate image. `image-build.yml` builds `X.Y.Z` from the `vX.Y.Z` tag afresh, so its digest differs from the `X.Y.Z-rc.N` image the harness judged (different `VERSION` and `BUILD_DATE`). Promoting the last release candidate's digest to `X.Y.Z` with a retag, instead of rebuilding, would make the two equal; that is a change to `image-build.yml`, not to the overlays. Until then `post-deploy` is the check that what is deployed behaves like what was judged.
+An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
 
 #### `rc/**` and `release/**`
 

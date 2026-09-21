@@ -31,18 +31,18 @@ for (const dir of [...overlayDirs(), ...variantDirs()]) {
   const findings = [...manifestPolicyFindings(docs, { requireDigest: true }), ...entryPointPolicyFindings(docs)];
   const label = toPosix(dir);
   if (findings.length === 0) {
-    console.log(`ok   ${label}`);
+    process.stdout.write(`ok   ${label}\n`);
     continue;
   }
   failures += findings.length;
-  console.log(`FAIL ${label}`);
+  process.stdout.write(`FAIL ${label}\n`);
   for (const finding of findings) {
-    console.log(`     ${finding}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::error file=${label}/kustomization.yaml::${finding}`);
+    process.stdout.write(`     ${finding}\n`);
+    if (process.env.GITHUB_ACTIONS) process.stdout.write(`::error file=${label}/kustomization.yaml::${finding}\n`);
   }
 }
 
 if (failures > 0) {
-  console.error(`\n${failures} policy finding(s). Policies and their reasons: scripts/checks/conformance.ts`);
+  process.stderr.write(`\n${failures} policy finding(s). Policies and their reasons: scripts/checks/conformance.ts\n`);
   process.exit(1);
 }

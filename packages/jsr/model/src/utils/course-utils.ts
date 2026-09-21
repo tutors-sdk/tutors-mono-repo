@@ -238,7 +238,8 @@ export function initCalendar(course: Course) {
       weeks,
       currentWeek,
     };
-  } catch (e) {
-    console.error("Error loading calendar:", e);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error loading calendar: ${message}\n`);
   }
 }

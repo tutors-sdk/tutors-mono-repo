@@ -12,9 +12,10 @@ import {
   logSchemaFindings,
   parseLogStream,
   promqlMetricNames,
+  unstableLogMessageFindings,
   type LogLine
 } from "../../scripts/checks/observability.ts";
-import { REPO_ROOT, readText } from "../../scripts/checks/lib/repo.ts";
+import { REPO_ROOT, readText, toPosix, walk } from "../../scripts/checks/lib/repo.ts";
 import {
   clearGlobalContext,
   createLogger,
@@ -289,6 +290,48 @@ describe("observability contracts (runway tier K)", () => {
       const aliased = `const requestLogger = createRequestLogger(); export const handle = sequence(requestLogger, metricsHandle);
         export const handleError = (i) => { logRequestError(i); }; setAppName("tutors-live");`;
       expect(hookWiringFindings("live", aliased)).toEqual([]);
+    });
+  });
+
+  describe("log message stability", () => {
+    /** Product source that runs on the server: apps and workspace packages, minus the logger itself and tests. */
+    const SOURCES = [join(REPO_ROOT, "apps"), join(REPO_ROOT, "packages/svelte")]
+      .flatMap((root) => walk(root, (name) => name.endsWith(".ts") && !name.endsWith(".d.ts") && !name.endsWith(".test.ts")))
+      .filter((file) => !toPosix(file).startsWith("packages/svelte/utils/logger/"));
+
+    /** Known variable messages, each with the reason it is not a finding. Keep this empty if you can. */
+    const ALLOWED: Record<string, string> = {
+      "packages/svelte/utils/runtime/src/clock.ts": "the only substitution is the constant env var name HARNESS_NOW, so the message never varies"
+    };
+
+    it("every log call in product code has a fixed, literal message", () => {
+      expect(SOURCES.length).toBeGreaterThan(100); // the scan really walked the workspace
+      const findings = SOURCES.flatMap((file) => {
+        const path = toPosix(file);
+        return unstableLogMessageFindings(readText(file), path)
+          .filter(() => !(path in ALLOWED))
+          .map((finding) => `${path} ${finding}`);
+      });
+      expect(findings).toEqual([]);
+    });
+
+    it("negative fixtures: flags interpolation, concatenation and an error or variable passed as the message", () => {
+      const source = [
+        "log.error(`Error fetching ${url}`);",
+        'log.warn("Fetched " + name);',
+        "log.error(error);",
+        "logger.info(err.message, { a: 1 });",
+        'log.error("Error fetching course", { url, ...serializeError(cause) });',
+        "log.info(`static text`);",
+        "console.error(`not the logger ${x}`);",
+        "other.error(`not the logger ${x}`);"
+      ].join("\n");
+      expect(unstableLogMessageFindings(source)).toEqual([
+        "line 1: log.error(`Error fetching ${url}`)",
+        'line 2: log.warn("Fetched " + name)',
+        "line 3: log.error(error)",
+        "line 4: logger.info(err.message, { a: 1 })"
+      ]);
     });
   });
 
