@@ -25,10 +25,10 @@
  *   migrations_b  the ref's commit sha
  *   claims_url    the raw URL of release/claims.yaml at that sha (--run passes the file itself,
  *                 read from that sha)
- *   runs          3 (--runs)
+ *   runs          5 (--runs)
  *
  * Optional fields, sent only when there is something to send: production_digests (from the
- * overlays' `digest`, once they carry one), candidate_digests (--candidate-digest app=sha256:...),
+ * overlays' `digest` of reader, catalogue, live and time, once they carry one), candidate_digests (--candidate-digest app=sha256:...),
  * rules_url (--rules-url). A local gate takes the rules from --rules <file>.
  *
  * Nothing here talks to a network or to GitHub, and nothing is tagged, pushed or dispatched.
@@ -44,8 +44,8 @@ import yaml from "js-yaml";
 import { validateClaimsText } from "./checks/release-claims.ts";
 import { REPO_ROOT } from "./checks/lib/repo.ts";
 
-/** Apps whose overlays pin an image; the harness compares these three. */
-export const APPS = ["reader", "catalogue", "live"] as const;
+/** Apps whose overlays pin an image; the harness stacks these four (the `time` app since contract 1.3.0). */
+export const APPS = ["reader", "catalogue", "live", "time"] as const;
 type App = (typeof APPS)[number];
 
 /** Same expression release-dispatch.yml checks the production tag against. */
@@ -54,7 +54,12 @@ const RELEASE_VERSION = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const OVERLAY = (app: string): string => `deploy/k8s/overlays/${app}/kustomization.yaml`;
 const CLAIMS_FILE = "release/claims.yaml";
-export const DEFAULT_RUNS = 3;
+/**
+ * Journey repetitions per side. Three can never reach alpha 0.05 on timing (four is the least that can), so the
+ * harness default moved 3 -> 5 in contract 1.3.0. release-dispatch.yml sends the same number; the conformance test
+ * in tests/conformance/release-harness.test.ts holds the two together.
+ */
+export const DEFAULT_RUNS = 5;
 export const DEFAULT_REPOSITORY = "tutors-sdk/tutors-mono-repo";
 
 type Env = Record<string, string | undefined>;
@@ -151,7 +156,7 @@ export function readOverlayPin(repo: string, ref: string, app: string): OverlayP
 export interface Production {
   /** The deployed version, from the reader overlay. */
   tag: string;
-  /** The digests of the three apps, only when every overlay pins one. */
+  /** The digests of the four apps, only when every overlay pins one. */
   digests?: Digests;
   notes: string[];
 }

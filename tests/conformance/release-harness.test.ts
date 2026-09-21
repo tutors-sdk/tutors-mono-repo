@@ -7,6 +7,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { REPO_ROOT, readText } from "../../scripts/checks/lib/repo.ts";
 import {
   APPS,
+  DEFAULT_RUNS,
   ReleaseHarnessError,
   UsageError,
   VERSION_PATTERN,
@@ -90,7 +91,7 @@ class FakeRepo {
  */
 function releaseCycle(options: { digests?: boolean; tagProduction?: boolean } = {}): { repo: FakeRepo; sha: string } {
   const repo = new FakeRepo();
-  const digests = options.digests ? { reader: DIGEST(1), catalogue: DIGEST(2), live: DIGEST(3) } : undefined;
+  const digests = options.digests ? { reader: DIGEST(1), catalogue: DIGEST(2), live: DIGEST(3), time: DIGEST(4) } : undefined;
   repo.pkg("16.2.2").overlays("16.2.2", digests).claims();
   repo.commit("16.2.2");
   if (options.tagProduction !== false) repo.git("tag", "v16.2.2");
@@ -120,7 +121,7 @@ describe("release-harness: the release-candidate dispatch, from git alone", () =
         production: "16.2.2",
         candidate: "16.3.0-rc.1",
         claims_url: `https://raw.githubusercontent.com/tutors-sdk/tutors-mono-repo/${cycle.sha}/release/claims.yaml`,
-        runs: 3,
+        runs: 5,
         migrations_a: "v16.2.2",
         migrations_b: cycle.sha
       }
@@ -228,19 +229,19 @@ describe("release-harness: digests and the optional 1.3.0 fields", () => {
   it("adds production_digests once the overlays on main pin every app", () => {
     const { repo } = releaseCycle({ digests: true });
     const { dispatch } = buildReleaseDispatch(repo.dir);
-    expect(dispatch.client_payload.production_digests).toEqual({ reader: DIGEST(1), catalogue: DIGEST(2), live: DIGEST(3) });
+    expect(dispatch.client_payload.production_digests).toEqual({ reader: DIGEST(1), catalogue: DIGEST(2), live: DIGEST(3), time: DIGEST(4) });
     expect(Object.keys(dispatch.client_payload).slice(-1)).toEqual(["production_digests"]);
   });
 
   it("leaves them out, without failing, when there is no digest yet or only some", () => {
     const { repo } = releaseCycle({ digests: true });
     repo.git("checkout", "-q", "main");
-    repo.overlay("live", "16.2.2").commit("live loses its digest");
+    repo.overlay("time", "16.2.2").commit("time loses its digest");
     repo.git("update-ref", "refs/remotes/origin/main", "HEAD");
     repo.git("checkout", "-q", "release/16.3.0");
     const built = buildReleaseDispatch(repo.dir);
     expect(built.dispatch.client_payload).not.toHaveProperty("production_digests");
-    expect(built.notes.join("\n")).toMatch(/No valid digest for live/);
+    expect(built.notes.join("\n")).toMatch(/No valid digest for time/);
   });
 
   it("ignores a malformed digest and does not send digests for an overridden production tag", () => {
@@ -274,7 +275,7 @@ describe("release-harness: the deployed dispatch", () => {
     const pinned = releaseCycle({ digests: true });
     expect(buildDeployedDispatch(pinned.repo.dir).dispatch).toEqual({
       event_type: "deployed",
-      client_payload: { production: "16.2.2", digests: { reader: DIGEST(1), catalogue: DIGEST(2), live: DIGEST(3) } }
+      client_payload: { production: "16.2.2", digests: { reader: DIGEST(1), catalogue: DIGEST(2), live: DIGEST(3), time: DIGEST(4) } }
     });
     const unpinned = releaseCycle();
     const built = buildDeployedDispatch(unpinned.repo.dir);
@@ -289,13 +290,13 @@ describe("release-harness: running the harness", () => {
       production: "16.2.2",
       candidate: "16.3.0-rc.1",
       claimsFile: "/tmp/claims.yaml",
-      runs: 3,
+      runs: 5,
       migrationsA: "v16.2.2",
       migrationsB: "abc123",
       rulesFile: "/tmp/rules.json"
     }, ["--only", "release"]);
     expect(invocation.argv).toEqual([
-      "harness", "local", "gate", "--a", "16.2.2", "--b", "16.3.0-rc.1", "--claims", "/tmp/claims.yaml", "--runs", "3",
+      "harness", "local", "gate", "--a", "16.2.2", "--b", "16.3.0-rc.1", "--claims", "/tmp/claims.yaml", "--runs", "5",
       "--migrations-a", "v16.2.2", "--migrations-b", "abc123", "--rules", "/tmp/rules.json", "--only", "release"
     ]);
     expect(invocation.env).toEqual({ HARNESS_PRODUCTION_TAG: "16.2.2" });
@@ -326,9 +327,9 @@ describe("release-harness: running the harness", () => {
 
 describe("release-harness: command line", () => {
   it("defaults to --print and forwards everything after `--` to the harness", () => {
-    const parsed = parseCli(["--runs", "5", "--candidate-digest", `reader=${DIGEST(4)}`, "--", "--only", "release"]);
+    const parsed = parseCli(["--runs", "7", "--candidate-digest", `reader=${DIGEST(4)}`, "--", "--only", "release"]);
     expect(parsed).toMatchObject({ mode: "gate", print: true, run: false, passthrough: ["--only", "release"] });
-    expect(parsed.release.runs).toBe(5);
+    expect(parsed.release.runs).toBe(7);
     expect(parsed.release.candidateDigests).toEqual({ reader: DIGEST(4) });
     expect(parseCli(["--run"])).toMatchObject({ print: false, run: true });
     expect(parseCli(["--deployed", "--print", "--run"])).toMatchObject({ mode: "deployed", print: true, run: true });
@@ -350,16 +351,42 @@ describe("release-harness: command line", () => {
  */
 describe("release-harness: parity with release-dispatch.yml", () => {
   const workflow = readText(join(REPO_ROOT, ".github/workflows/release-dispatch.yml"));
-  const jqObject = /'\{event_type: "release-candidate", client_payload: \{([^}]*)\}\}'/.exec(workflow)?.[1] ?? "";
+  const program = /'(\{event_type: "release-candidate"[\s\S]*?)' \\\r?\n\s+> payload\.json/.exec(workflow)?.[1] ?? "";
+  // the fields always sent, then the ones sent only when there is something to send, each `(if $x then {key: $x} else {} end)`
+  const required = [...(/client_payload: \(\{([^}]*)\}/.exec(program)?.[1] ?? "").matchAll(/(\w+): /g)].map((m) => m[1]);
+  const optional = [...program.matchAll(/\(if \$\w+ [^{]*then \{(\w+): /g)].map((m) => m[1]);
 
   it("sends exactly the fields the script builds, in the same order, with the same defaults", () => {
-    expect(jqObject).not.toBe("");
-    const workflowKeys = [...jqObject.matchAll(/(\w+): /g)].map((m) => m[1]);
-    const { repo } = releaseCycle();
-    const built = buildReleaseDispatch(repo.dir).dispatch;
-    expect(Object.keys(built.client_payload)).toEqual(workflowKeys);
+    expect(program).not.toBe("");
+    const { repo } = releaseCycle({ digests: true });
+    const built = buildReleaseDispatch(repo.dir, { candidateDigests: { reader: DIGEST(5) }, rulesUrl: "https://example.test/rules.json" }).dispatch;
+    expect(required).toEqual(["production", "candidate", "claims_url", "runs", "migrations_a", "migrations_b"]);
+    expect(optional).toEqual(["production_digests", "candidate_digests", "rules_url"]);
+    expect(Object.keys(built.client_payload)).toEqual([...required, ...optional]);
     expect(built.event_type).toBe("release-candidate");
-    expect(/runs: (\d+)/.exec(jqObject)?.[1]).toBe(String(built.client_payload.runs));
+  });
+
+  it("holds the run count to the script's default, which is the harness's", () => {
+    expect(DEFAULT_RUNS).toBe(5);
+    expect(/runs: (\d+)/.exec(program)?.[1]).toBe(String(DEFAULT_RUNS));
+    expect(buildReleaseDispatch(releaseCycle().repo.dir).dispatch.client_payload.runs).toBe(DEFAULT_RUNS);
+  });
+
+  it("reads the digests of the same four apps as the script, from the overlays and the registry", () => {
+    const loops = [...workflow.matchAll(/for app in ([a-z ]+); do/g)].map((m) => m[1]);
+    expect(loops).toHaveLength(3); // wait for the images, read the production digests, read the candidate digests
+    for (const loop of loops) expect(loop).toBe(APPS.join(" "));
+    expect(workflow).toContain("deploy/k8s/overlays/$app/kustomization.yaml?ref=main");
+    expect(workflow).toContain("docker buildx imagetools inspect \"$image\" --format '{{.Manifest.Digest}}'");
+  });
+
+  it("sends the optional fields only when there is a value", () => {
+    expect(program).toContain("$production_digests then");
+    expect(program).toContain("$candidate_digests then");
+    expect(program).toContain('$rules_url != "" then');
+    // an unset output is an empty string, which --argjson would refuse: it must default to null
+    expect(workflow).toContain('--argjson production_digests "${PRODUCTION_DIGESTS:-null}"');
+    expect(workflow).toContain('--argjson candidate_digests "${CANDIDATE_DIGESTS:-null}"');
   });
 
   it("builds the claims URL, the migration refs and the production tag the way the workflow does", () => {
@@ -384,5 +411,19 @@ describe("release-harness: parity with release-dispatch.yml", () => {
     expect(workflow).toContain("release/claims.yaml");
     const doc = yaml.load(workflow) as { on: { push: { branches: string[] } } };
     expect(doc.on.push.branches).toEqual(["release/**"]);
+  });
+
+  it("publishes rules.json for the pushed commit at a credential-free URL named for the rc tag", () => {
+    expect(workflow).toContain('pnpm --silent release:rules --ref "$GITHUB_SHA" --out rules.json');
+    expect(workflow).toContain('releases/download/$tag/rules.json');
+    expect(workflow).toContain("--prerelease");
+  });
+});
+
+describe("release-harness: parity with deploy.yml", () => {
+  it("sends the digest of every app the script knows in `digests`", () => {
+    const deploy = readText(join(REPO_ROOT, ".github/workflows/deploy.yml"));
+    const object = /digests=\$\(jq -c '\{([^}]*)\}' pins\.json\)/.exec(deploy)?.[1] ?? "";
+    expect([...object.matchAll(/(\w+): \.images\./g)].map((m) => m[1])).toEqual([...APPS]);
   });
 });
