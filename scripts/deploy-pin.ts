@@ -22,7 +22,7 @@ import { REPO_ROOT } from "./checks/lib/repo.ts";
 const args = process.argv.slice(2);
 const version = args.find((arg) => !arg.startsWith("-"))?.replace(/^v/, "");
 if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
-  console.error("usage: pnpm deploy:pin <X.Y.Z> [--dry-run]   (a release; not a release candidate)");
+  process.stderr.write("usage: pnpm deploy:pin <X.Y.Z> [--dry-run]   (a release; not a release candidate)\n");
   process.exit(2);
 }
 const dryRun = args.includes("--dry-run");
@@ -34,7 +34,7 @@ let failed = false;
 for (const { app, file, images } of overlays) {
   const image = images[0]?.newName;
   if (typeof image !== "string") {
-    console.error(`FAIL ${app}: ${file} has no images[0].newName to pin`);
+    process.stderr.write(`FAIL ${app}: ${file} has no images[0].newName to pin\n`);
     failed = true;
     continue;
   }
@@ -44,19 +44,19 @@ for (const { app, file, images } of overlays) {
     if (unsigned) throw new Error(`not signed by image-build.yml: ${unsigned}`);
     const path = join(REPO_ROOT, file);
     rewrites.push({ file: path, text: pinOverlayText(readFileSync(path, "utf8"), version, digest) });
-    console.log(`ok   ${app.padEnd(10)} ${image}:${version}@${digest}`);
+    process.stdout.write(`ok   ${app.padEnd(10)} ${image}:${version}@${digest}\n`);
   } catch (error) {
-    console.error(`FAIL ${app}: ${image}:${version}: ${(error as Error).message.split("\n")[0]}`);
+    process.stderr.write(`FAIL ${app}: ${image}:${version}: ${(error as Error).message.split("\n")[0]}\n`);
     failed = true;
   }
 }
 
 if (failed) {
-  console.error("\nNothing was written. Is the vX.Y.Z tag pushed, and has image-build.yml finished for all four apps?");
+  process.stderr.write("\nNothing was written. Is the vX.Y.Z tag pushed, and has image-build.yml finished for all four apps?\n");
   process.exit(1);
 }
 if (dryRun) {
-  console.log("\n--dry-run: nothing was written.");
+  process.stdout.write("\n--dry-run: nothing was written.\n");
   process.exit(0);
 }
 // All four resolved and verified: write together, so a failure cannot leave a mixed pin.
@@ -65,8 +65,8 @@ for (const { file, text } of rewrites) writeFileSync(file, text);
 const packageVersion: string = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")).version;
 const { findings } = overlayPinFindings(readOverlays(), { packageVersion });
 if (findings.length > 0) {
-  console.error("\nThe rewritten overlays fail the pin check:");
-  for (const finding of findings) console.error(`  ${finding}`);
+  process.stderr.write("\nThe rewritten overlays fail the pin check:\n");
+  for (const finding of findings) process.stderr.write(`  ${finding}\n`);
   process.exit(1);
 }
-console.log(`\nPinned ${overlays.length} overlays to ${version}. Next: pnpm check:k8s, commit, open a pull request.`);
+process.stdout.write(`\nPinned ${overlays.length} overlays to ${version}. Next: pnpm check:k8s, commit, open a pull request.\n`);

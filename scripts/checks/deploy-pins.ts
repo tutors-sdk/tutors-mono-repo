@@ -190,20 +190,20 @@ function main(): void {
     findings.push(...registryPinFindings(pins, { resolve: resolveDigest, verify: verifySignature }));
   }
   if (findings.length > 0) {
-    console.error("FAIL: the overlays are not pinned to what production runs:");
+    process.stderr.write("FAIL: the overlays are not pinned to what production runs:\n");
     for (const finding of findings) {
-      console.error(`  ${finding}`);
-      if (process.env.GITHUB_ACTIONS) console.error(`::error file=deploy/k8s/${finding.split(": ")[1]}/kustomization.yaml::${finding}`);
+      process.stderr.write(`  ${finding}\n`);
+      if (process.env.GITHUB_ACTIONS) process.stderr.write(`::error file=deploy/k8s/${finding.split(": ")[1]}/kustomization.yaml::${finding}\n`);
     }
     process.exit(1);
   }
   if (args.includes("--json")) {
     const images = Object.fromEntries(pins.map(({ app, image, tag, digest }) => [app, { image, tag, digest }]));
-    console.log(JSON.stringify({ version: pins[0].tag, images }, null, 2));
+    process.stdout.write(`${JSON.stringify({ version: pins[0].tag, images }, null, 2)}\n`);
     return;
   }
-  console.log(`OK: ${pins.length} overlays pinned to ${pins[0].tag} by digest${args.includes("--registry") ? ", each resolved and verified in the registry" : ""}.`);
-  for (const pin of pins) console.log(`  ${pin.app.padEnd(10)} ${pin.digest}`);
+  process.stdout.write(`OK: ${pins.length} overlays pinned to ${pins[0].tag} by digest${args.includes("--registry") ? ", each resolved and verified in the registry" : ""}.\n`);
+  for (const pin of pins) process.stdout.write(`  ${pin.app.padEnd(10)} ${pin.digest}\n`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
