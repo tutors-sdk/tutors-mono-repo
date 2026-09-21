@@ -246,7 +246,11 @@ A release claim names the Rule behind a change in its `reason`, as `Rule 0031: <
 - `pnpm check:release-claims` also resolves the citation. A `reason` that starts with "Rule" and a
   number must name a Rule id that a feature under `tests/bdd/features` defines at the ref being
   checked, and the number must have four digits. A free-text reason, such as a CHANGELOG entry,
-  is left alone.
+  is left alone. A claim may instead carry `rule: "0031"` (harness contract 1.3.0), which is
+  resolved the same way, and then needs no `reason`. `--ref <ref>` resolves against the Rules at
+  that ref rather than the working tree.
+- `pnpm release:rules [--ref <ref>] [--out <path>]` writes `rules.json`, the id, title and digest of
+  every Rule at a ref, which the harness resolves a `rule` against ([release/README.md](../release/README.md#rules-the-release-defines)).
 
 ## Persona-Based Organisation
 

@@ -3,9 +3,14 @@
  * and the release candidate, as release/claims.yaml stubs.
  *
  *   pnpm release:claims:draft --from v16.2.2 --to release/16.3.0
+ *   pnpm release:claims:draft --from v16.2.2 --to release/16.3.0 --rule
  *
  * Each added or changed Rule becomes one claim with its `reason` filled in as
- * "Rule <id>: <title>". The `artefact` and `scope` are left as TODO: only the
+ * "Rule <id>: <title>". With --rule the claim carries `rule: "<id>"` instead (the
+ * field harness contract 1.3.0 reads, and validates against the rules.json that
+ * `pnpm release:rules` writes) and no reason; use it once the harness accepts
+ * the field, because an earlier harness rejects a claim with an unknown field.
+ * The `artefact` and `scope` are left as TODO: only the
  * author knows which page or route the Rule changes. The draft is not a valid
  * claims file until every TODO is replaced (`pnpm check:release-claims`), and
  * that is on purpose. A removed Rule is listed as a comment: it cannot be cited
@@ -17,22 +22,23 @@ import { diffRules, gitIn, rulesAtRef, type GitRunner, type IndexedRule, type Ru
 /** A double-quoted YAML scalar. JSON string syntax is valid YAML. */
 const quote = (text: string) => JSON.stringify(text);
 
-function stub(rule: IndexedRule, note: string): string[] {
+function stub(rule: IndexedRule, note: string, asField: boolean): string[] {
   return [
     `  # ${note}: ${rule.file}:${rule.line}`,
     "  - artefact: TODO # dom | screenshot | network | console | headers | axe | metrics | logs | timing | \"*\"",
     "    scope: TODO # the page key, route or glob this Rule changes, e.g. \"reader:lab-step*\"",
-    `    reason: ${quote(`Rule ${rule.id}: ${rule.title}`)}`
+    asField ? `    rule: ${quote(rule.id)} # ${rule.title}` : `    reason: ${quote(`Rule ${rule.id}: ${rule.title}`)}`
   ];
 }
 
-export function renderDraft(diff: RuleDiff, from: string, to: string): string {
+export function renderDraft(diff: RuleDiff, from: string, to: string, options: { asField?: boolean } = {}): string {
+  const asField = options.asField === true;
   const out = [
     `# Draft claims for ${from}..${to}: ${diff.added.length} Rule(s) added, ${diff.changed.length} changed, ${diff.removed.length} removed.`,
     "# Replace every TODO, and delete a stub whose Rule changes nothing observable.",
     "# A Rule can be observable in several artefacts: copy the stub once per artefact and scope."
   ];
-  const stubs = [...diff.added.map((rule) => stub(rule, "added")), ...diff.changed.map((rule) => stub(rule, "changed"))];
+  const stubs = [...diff.added.map((rule) => stub(rule, "added", asField)), ...diff.changed.map((rule) => stub(rule, "changed", asField))];
   out.push(stubs.length > 0 ? "claims:" : "claims: []");
   for (const lines of stubs) out.push(...lines);
   if (diff.removed.length > 0) {
@@ -42,26 +48,28 @@ export function renderDraft(diff: RuleDiff, from: string, to: string): string {
   return out.join("\n") + "\n";
 }
 
-export function draftClaims(from: string, to: string, git: GitRunner = gitIn()): string {
-  return renderDraft(diffRules(rulesAtRef(from, git), rulesAtRef(to, git)), from, to);
+export function draftClaims(from: string, to: string, git: GitRunner = gitIn(), options: { asField?: boolean } = {}): string {
+  return renderDraft(diffRules(rulesAtRef(from, git), rulesAtRef(to, git)), from, to, options);
 }
 
-export function parseArgs(argv: string[]): { from: string; to: string } {
+export function parseArgs(argv: string[]): { from: string; to: string; asField: boolean } {
   let from: string | undefined;
   let to: string | undefined;
+  let asField = false;
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--from") from = argv[++i];
     else if (argv[i] === "--to") to = argv[++i];
+    else if (argv[i] === "--rule") asField = true;
     else throw new Error(`unknown argument ${argv[i]}`);
   }
-  if (!from || !to) throw new Error("usage: pnpm release:claims:draft --from <production tag> --to <release candidate ref>");
-  return { from, to };
+  if (!from || !to) throw new Error("usage: pnpm release:claims:draft --from <production tag> --to <release candidate ref> [--rule]");
+  return { from, to, asField };
 }
 
 function main(): void {
   try {
-    const { from, to } = parseArgs(process.argv.slice(2));
-    process.stdout.write(draftClaims(from, to));
+    const { from, to, asField } = parseArgs(process.argv.slice(2));
+    process.stdout.write(draftClaims(from, to, gitIn(), { asField }));
   } catch (error) {
     console.error(`FAIL: ${(error as Error).message.split("\n")[0]}`);
     process.exit(1);

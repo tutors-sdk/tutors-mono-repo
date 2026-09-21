@@ -17,6 +17,8 @@
 #                                    # "<page key>/<header>" or "<app>/<series>"
 #     reason: "Rule 0031: lab steps shall show estimated reading time"
 #                                    # a Rule id or CHANGELOG entry; "see PR" and "approved" are rejected
+#     rule: "0031"                   # optional (harness contract 1.3.0): the Rule by id, checked against
+#                                    # `pnpm release:rules`; then `reason` may be left out
 #     approvedBy: "a person"         # only for a broad claim (artefact "*", scope "*" or "**")
 #
 # Reset to `claims: []` when the next release branch is cut. Field reference:
