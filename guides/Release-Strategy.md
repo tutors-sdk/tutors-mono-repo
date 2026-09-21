@@ -260,6 +260,31 @@ The order in step 4 is deliberate: a failure setting the variable stops the job 
 
 An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
 
+#### Running the harness locally
+
+Nothing about judging a candidate needs GitHub. `pnpm release:harness` builds the `release-candidate` payload above from your own clone, with git alone (no `gh api`, no network), and can hand it to the harness's `local gate`:
+
+```console
+pnpm release:harness                    # print the payload (the same as --print)
+pnpm release:harness --run              # run `pnpm harness local gate` with those values
+pnpm release:harness --deployed --run   # after a deploy: `local watch --once`, with HARNESS_PRODUCTION_TAG set
+```
+
+Clone the [harness](https://github.com/tutors-sdk/tutors-release-harness) beside this repository (or set `HARNESS_DIR`) and run `pnpm install` there; `pnpm harness doctor` in it says what else the machine needs. Arguments after `--` go to the harness (`pnpm release:harness --run -- --only release --dry-run`).
+
+It takes each value from where the workflow does, so run it on the release branch:
+
+| Field | Local source |
+| --- | --- |
+| `production` | the reader overlay on `origin/main` (or `main`; `--main-ref` names another), not on the release branch. `git fetch origin` first |
+| `migrations_a` | tag `v<production>`, else branch `release/<production>`, in your clone (`git fetch origin --tags`) |
+| `candidate` | `--candidate`, else the `vX.Y.Z-rc.N` already on the commit, else the next free `N`. The version is `package.json` at the commit and must match a `release/X.Y.Z` branch name. Nothing is tagged: push the tag before a real gate, because the harness builds a candidate the registry lacks from its tag |
+| `migrations_b` | the commit (`--ref`, default `HEAD`) |
+| `claims_url` | the raw URL of `release/claims.yaml` at that commit; `--run` passes the file as read from that commit. The file is shape-checked first |
+| `runs` | `3` (`--runs`) |
+
+`production_digests` (from the overlays' `digest`, once they carry one), `candidate_digests` (`--candidate-digest reader=sha256:...`) and `rules_url` (`--rules-url`) are added only when there is something to send. `release-dispatch.yml` still builds its payload with `gh api`, because its checkout is shallow and its tag is made through the API; `tests/conformance/release-harness.test.ts` holds the two to the same fields, order and rules.
+
 #### `rc/**` and `release/**`
 
 `rc-validation.yml` and `release-testing.yml` trigger on `rc/**` branches, which predate this document's branching model; releases since 16.0.0 have been cut as `release/X.Y.Z` branches and only one `rc/` branch (`rc/16.2.0`) was ever pushed. The harness dispatch follows the branches releases really use. Moving the two validation workflows to `release/**` is a separate change.
