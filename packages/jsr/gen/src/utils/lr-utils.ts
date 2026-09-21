@@ -229,18 +229,12 @@ export function readYaml(lr: LearningResource): any {
   if (yamlfilePath) {
     try {
       yamlData = yaml.load(fs.readFileSync(yamlfilePath, "utf8"));
-    } catch (err: any) {
-      console.log(`Tutors encountered an error reading properties.yaml:`);
-      console.log(
-        "--------------------------------------------------------------",
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Tutors encountered an error reading properties.yaml: ${message}. Review this file and try again.`,
+        { cause: error },
       );
-      console.log(err.mark.buffer);
-      console.log(
-        "--------------------------------------------------------------",
-      );
-      console.log(err.message);
-      console.log("Review this file and try again....");
-      throw err;
     }
   }
   return yamlData;

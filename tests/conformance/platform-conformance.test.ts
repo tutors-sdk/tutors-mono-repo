@@ -109,14 +109,19 @@ describe("platform conformance (runway tier J)", () => {
       expect(names).toEqual(overlayDirs().map((dir) => [`quay.io/tutors-sdk/tutors-${toPosix(dir).split("/").pop()}`]));
     });
 
-    it("every overlay pins its image to the release version in package.json", () => {
-      const version = JSON.parse(readText(join(REPO_ROOT, "package.json"))).version;
-      const tags = overlayDirs().map((dir) => {
-        const kustomization = yaml.load(readText(join(dir, "kustomization.yaml"))) as { images?: { newTag?: string }[] };
-        return [toPosix(dir), kustomization.images?.map((image) => String(image.newTag))];
-      });
-      expect(tags).toEqual(overlayDirs().map((dir) => [toPosix(dir), [version]]));
+    it("requires a digest when asked, and names the image that lacks one", () => {
+      const tagOnly = breakIt((_, c) => (c.image = "quay.io/tutors-sdk/tutors-reader:16.2.0"));
+      expect(manifestPolicyFindings([tagOnly], { requireDigest: true })).toEqual([
+        "image-not-digest-pinned: Deployment/reader/app: quay.io/tutors-sdk/tutors-reader:16.2.0"
+      ]);
+      expect(manifestPolicyFindings([tagOnly])).toEqual([]);
+      const pinned = breakIt((_, c) => (c.image = `quay.io/tutors-sdk/tutors-reader:16.2.0@sha256:${"a".repeat(64)}`));
+      expect(manifestPolicyFindings([pinned], { requireDigest: true })).toEqual([]);
     });
+
+    // What the overlays' pins must look like (one release, a digest beside each tag) is
+    // in deploy-pins.test.ts: they name what production runs, which lags package.json
+    // between cutting a release and deploying it.
   });
 
   describe("entry point policies", () => {

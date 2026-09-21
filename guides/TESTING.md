@@ -445,9 +445,10 @@ exist.
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
 | `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
 | `e2e-stack` | Build reader, catalogue and live images, build the fixture course, bring the stack up, run the journeys on chromium and webkit, then the baseline stale-line check; uploads the report and compose logs on failure |
-| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` |
+| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` and `pnpm check:server` |
 | `generator-diff` | Only when the PR touches `packages/jsr/{gen,tutors,tutors-lite,model}`, `deno.json(.lock)`, `tests/generator/` or `scripts/checks/generator-*`: the planted-change self-test, then every difference must be claimed |
-| `CI success` | Needs all eight; a skipped or cancelled job counts as a failure. The one required check |
+| `ears-audit` | `pnpm test:ears:audit`: the structure of the `Rule:` blocks in `tests/bdd/features` (one shall, system name, EARS tag, unique id, a scenario per Rule). Only violations outside `tests/bdd/ears-audit-baseline.txt` fail. `continue-on-error` and not in `CI success` needs until the seed features are migrated ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)) |
+| `CI success` | Needs all eight (not `ears-audit`); a skipped or cancelled job counts as a failure. The one required check |
 
 `codeql.yml` and `zizmor.yml` also run on every PR (CodeQL for JavaScript/TypeScript, zizmor over
 the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
