@@ -488,6 +488,11 @@ preview, then a report that blocks on 6a and 6c and warns on 6b.
 would accept. The same validator runs over the committed file in every PR through
 `tests/conformance/release-claims.test.ts`.
 
+Its second job runs `pnpm check:migrations` (`scripts/checks/migrations.ts`): the migrations added
+since `main` may not be destructive unless a `migration` claim covers them, and the layout rules
+(names, order, merged files immutable) hold. Rules and rationale: [MIGRATIONS.md](MIGRATIONS.md).
+The rules are unit-tested in `tests/conformance/migrations.test.ts`.
+
 ### `release-dispatch.yml` — push to `release/**`
 
 Not a test tier: it tags the pushed commit `vX.Y.Z-rc.N`, publishes that tag's images and
