@@ -9,11 +9,23 @@
 
 <div
   transition:scale|local={scaleTransition}
-  class="ui-panel"
+  style:--resource-accent={courseVisit.icon?.color ?? "var(--ui-brand)"}
+  class="course-visit-card"
 >
-  <div class="flex justify-between">
-    <section class="p-4">
-      <p class="break-words font-bold">{courseVisit.title}</p>
+  <section class="course-visit-content">
+    <div class="course-visit-artwork" aria-hidden="true">
+      {#if courseVisit.icon}
+        <Iconify
+          icon={courseVisit.icon.type}
+          color={courseVisit.icon.color}
+          height="72"
+        />
+      {:else}
+        <img src={courseVisit.img} alt="" />
+      {/if}
+    </div>
+    <div class="course-visit-details">
+      <p class="course-visit-title">{courseVisit.title}</p>
       <p class="break-words">{courseVisit.credits}</p>
       <p class="break-words">
         {t("course.visitCard.lastAccessed")}
@@ -21,20 +33,9 @@
         {courseVisit.lastVisit?.slice(11, 19)}
       </p>
       <p>{t("course.visitCard.visits")} {courseVisit.visits}</p>
-    </section>
-    <section class="content-center">
-      {#if courseVisit.icon}
-        <Iconify
-          icon={courseVisit.icon.type}
-          color={courseVisit.icon.color}
-          height="96"
-        />
-      {:else}
-        <img class="h-20 w-20 object-contain" src={courseVisit.image} alt={courseVisit.title} />
-      {/if}
-    </section>
-  </div>
-  <footer class="card-footer p-0">
+    </div>
+  </section>
+  <footer class="course-visit-footer">
     <div class="ui-actions">
       <a
         class="ui-button ui-button-primary"
@@ -62,3 +63,27 @@
     </div>
   </footer>
 </div>
+
+<style>
+  .course-visit-card {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--resource-accent);
+    border-radius: var(--radius-panel);
+    background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface));
+  }
+
+  .course-visit-content { display: flex; min-width: 0; flex-direction: column; gap: var(--space-4); }
+  .course-visit-artwork { display: grid; min-height: 88px; place-items: center; }
+  .course-visit-artwork img { width: 88px; height: 88px; object-fit: contain; }
+  .course-visit-details { min-width: 0; }
+  .course-visit-title { overflow-wrap: anywhere; font-weight: var(--weight-semibold); }
+  .course-visit-footer { margin-top: auto; }
+  .course-visit-footer .ui-actions { align-items: stretch; }
+  .course-visit-footer .ui-actions > :first-child { flex: 1 1 auto; }
+</style>
