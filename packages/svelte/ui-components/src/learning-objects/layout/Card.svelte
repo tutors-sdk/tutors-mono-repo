@@ -58,11 +58,9 @@
   const hideVideoIcon = $derived(currentCourse.value?.areVideosHidden);
   const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
   const cardColour = $derived.by(() => {
-    const c = legacyCardColours[cardDetails.type] ?? { border: "#37919b", background: "#37919b" };
-    // Pastel type backgrounds wash out on a dark surface; solid types (border === background)
-    // already read fine mixed with either surface, so only pastels get a darkened dark-mode tint.
-    const background = c.background === c.border ? c.background : `light-dark(${c.background}, color-mix(in srgb, ${c.background} 35%, black))`;
-    return { border: c.border, background };
+    const c = legacyCardColours[cardDetails.type] ?? legacyCardColours.course;
+    // Pastel backgrounds would wash out on a dark surface, so dark mode darkens them first.
+    return { border: c.border, background: `light-dark(${c.background}, color-mix(in srgb, ${c.background} 35%, black))` };
   });
 </script>
 
