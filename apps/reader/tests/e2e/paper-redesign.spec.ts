@@ -320,6 +320,9 @@ test('online users opens a centred dialog, closes the account menu and restores 
   }, resources);
   const profile = page.locator('[data-tour="profile"] .paper-menu-trigger');
   await expect(profile.locator('.online-count')).toHaveText('1');
+  await expect(profile.locator('.presence-chip')).toHaveCSS('width', '22px');
+  await expect(profile.locator('.presence-chip')).toHaveCSS('height', '22px');
+  await expect(profile.locator('.online-count')).toHaveCSS('height', '22px');
   await expect(profile.locator('.online-count')).toHaveCSS('color', 'rgb(255, 255, 255)');
   await profile.click();
   await page.getByRole('button', { name: 'View 1 Online', exact: true }).click();
@@ -328,6 +331,9 @@ test('online users opens a centred dialog, closes the account menu and restores 
   await expect(profile).toHaveAttribute('aria-expanded', 'false');
   await expect(online).toHaveAttribute('data-presentation', 'dialog');
   await expect(online).toContainText('UI Preview');
+  const card = await online.locator('.activity-card').boundingBox();
+  const grid = await online.locator('.online-grid').boundingBox();
+  expect(card!.width).toBeLessThan(grid!.width * 0.6);
   await page.screenshot({ path: testInfo.outputPath('online-desktop.png') });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await online.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
