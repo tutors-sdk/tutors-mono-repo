@@ -1,7 +1,7 @@
 <script lang="ts">
   import Iconify from "@iconify/svelte";
   import type { LoEvent } from "@tutors/community";
-  import type { CardConfig } from "@tutors/themes";
+  import { themeService, type CardConfig } from "@tutors/themes";
   import Icon from "./Icon.svelte";
   let { lo, cardLayout, showCourseTitle = false }: { lo: LoEvent; cardLayout?: CardConfig; showCourseTitle?: boolean } = $props();
   const student = $derived(lo.user!);
@@ -9,7 +9,7 @@
   const sentiment = $derived(student.sentiment ?? "neutral");
 </script>
 
-<article class="activity-card" class:compact={cardLayout?.layout === 'compacted'}>
+<article style:--resource-accent={`var(--color-${themeService.getIcon(lo.type).color}-500, var(--ui-brand))`} class="activity-card" class:compact={cardLayout?.layout === 'compacted'}>
   <header>
     <img src={student.avatar} alt="" class="avatar" />
     {#if student.id}<a href="https://github.com/{student.id}" target="_blank" rel="noopener noreferrer">{student.fullName ?? student.id}</a>
@@ -23,11 +23,11 @@
       {#if showCourseTitle}<p>{lo.title}</p>{/if}
     </div>
     {#if lo.img}<img src={lo.img} alt="" class="resource-art" />
-    {:else if lo.icon}<Iconify icon={lo.icon.type} color={lo.icon.color} height="48" />{/if}
+    {:else if lo.icon}<Iconify icon={lo.icon.type} color={lo.icon.color} height="96" />{/if}
   </a>
 </article>
 <style>
-  .activity-card { width: 100%; min-width: 0; border: 1px solid var(--ui-border); border-radius: var(--radius-card); background: var(--ui-surface); }
+  .activity-card { width: 100%; min-width: 0; border: 1px solid var(--resource-accent); border-radius: var(--radius-card); background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface)); }
   header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--ui-border); }
   header > a, header > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: var(--font-label); font-weight: var(--weight-medium); }
   .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
@@ -36,6 +36,6 @@
   .resource-type { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-small); color: var(--ui-muted); }
   h3 { font-weight: var(--weight-semibold); margin-top: var(--space-2); overflow-wrap: anywhere; }
   p { margin-top: var(--space-2); color: var(--ui-muted); font-size: var(--font-label); overflow-wrap: anywhere; }
-  .resource-art { width: 64px; height: 64px; object-fit: contain; }
+  .resource-art { width: 96px; height: 96px; object-fit: contain; }
   .compact .activity-resource { padding-block: var(--space-3); }
 </style>

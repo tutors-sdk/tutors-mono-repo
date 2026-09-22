@@ -26,7 +26,7 @@ const en = {
   "shell.learn": "Learn",
   "shell.overview": "Course overview",
   "shell.resources": "Resources",
-  "shell.links": "Course links",
+  "shell.links": "Companions",
   "shell.tools": "Course tools",
   "shell.moreTools": "More course tools",
   "shell.calendar": "Calendar",

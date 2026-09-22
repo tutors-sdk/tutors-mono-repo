@@ -58,7 +58,7 @@
         <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`}><Icon type="tutorsTime" />Tutors Time ↗</a>
       {/if}
       {#if course.hasWhiteboard}<WhiteboardButton labelled />{/if}
-      {#if tutorsId.value?.login && tutorsId.value.share === "true"}<div class="nav-row"><CourseSentimentButton /><span>{t("content.sentiment")}</span></div>{/if}
+      {#if tutorsId.value?.login && tutorsId.value.share === "true"}<CourseSentimentButton />{/if}
     {/if}
     </div>
     {#if currentLo.value?.parentTopic && !lab}

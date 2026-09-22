@@ -241,3 +241,37 @@ test('course header exposes info on desktop and a direct course tree on mobile',
   await info.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(navigation.getByRole('button', { name: 'Open course info', exact: true })).toBeFocused();
 });
+
+test('larger tinted cards, wide labs and mobile menus keep the Paper layout', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/topic/reference-course/topic-01-typical');
+  await expect(page.locator('.shell-navigation').getByText('Companions', { exact: true })).toBeVisible();
+  const lab = page.locator('.resource-card').filter({ has: page.locator('.resource-type', { hasText: /^lab$/ }) }).first();
+  const talk = page.locator('.resource-card').filter({ has: page.locator('.resource-type', { hasText: /^talk$/ }) }).first();
+  await expect(lab).toBeVisible();
+  await expect(talk).toBeVisible();
+  expect(await lab.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await talk.evaluate(el => getComputedStyle(el).backgroundColor));
+  expect((await lab.locator('.lo-artwork').boundingBox())!.width).toBeGreaterThanOrEqual(80);
+  await page.screenshot({ path: testInfo.outputPath('tinted-resource-cards.png') });
+  await lab.locator('.resource-link').click();
+  const panel = page.locator('.lab-content .reading-panel');
+  const prose = panel.locator('article');
+  await expect(panel).toBeVisible();
+  expect(Math.abs((await panel.boundingBox())!.width - (await page.locator('.lab-content').boundingBox())!.width)).toBeLessThan(2);
+  expect((await prose.boundingBox())!.width).toBeGreaterThan(720);
+  expect((await prose.boundingBox())!.width).toBeLessThan(1000);
+  await page.screenshot({ path: testInfo.outputPath('wide-lab.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
+  const preferences = page.getByRole('dialog', { name: 'Preferences', exact: true });
+  await expect(preferences).toBeVisible();
+  // Hit testing catches the course-title row painting over the portalled menu.
+  expect(await preferences.evaluate(el => {
+    const box = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + 20));
+  })).toBe(true);
+  await preferences.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
+  await page.screenshot({ path: testInfo.outputPath('mobile-menu-above-course-tree.png') });
+  await page.keyboard.press('Escape');
+  expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+});

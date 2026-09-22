@@ -38,6 +38,8 @@
   </div>
 </div>
 <style>
+  .reading-panel { width: 100%; max-width: none; }
+  .reading-panel > .prose { max-width: min(80ch, calc(var(--reading-width) + 8ch)); margin-inline: auto; }
   .reading-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); font-size: var(--font-meta); color: var(--ui-muted); margin-bottom: var(--space-6); }
   .step-pager { display: flex; justify-content: space-between; gap: var(--space-4); border-top: 1px solid var(--ui-border); margin-top: var(--space-8); padding-top: var(--space-6); }
   .step-pager a { max-width: 48%; flex-wrap: wrap; text-align: left; }

@@ -17,8 +17,7 @@
 <style>
   :global(.paper-menu-trigger) { display: flex; align-items: center; justify-content: center; align-self: stretch; border-radius: 0; }
   :global(.paper-menu-trigger[data-state="open"]) { box-shadow: inset 0 -2px var(--ui-brand); }
-  :global(.paper-popover-positioner) { z-index: 10000; }
-  :global(.paper-popover) { max-width: calc(100vw - 24px); max-height: min(680px, calc(100dvh - 100px)); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-4); border: 1px solid var(--ui-border); border-radius: 0 0 var(--radius-panel) var(--radius-panel); border-top: 0; background: var(--ui-surface); color: var(--ui-ink); box-shadow: 0 12px 32px #0000001a; outline: none; }
+  :global(.paper-popover) { z-index: 10000; max-width: calc(100vw - 24px); max-height: min(680px, calc(100dvh - 100px)); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-4); border: 1px solid var(--ui-border); border-radius: 0 0 var(--radius-panel) var(--radius-panel); border-top: 0; background: var(--ui-surface); color: var(--ui-ink); box-shadow: 0 12px 32px #0000001a; outline: none; }
   :global(.paper-popover .option > :is(button, a)) { min-height: 44px; border-radius: var(--radius-control); font-size: var(--font-label); color: var(--ui-ink); }
   :global(.paper-popover .option > :is(button, a):hover) { background: var(--ui-selected); }
   :global(.paper-popover[data-state="open"]) { animation: popover-enter 150ms ease-out; }

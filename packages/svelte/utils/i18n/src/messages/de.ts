@@ -26,7 +26,7 @@ const de: Record<string, string> = {
   "shell.learn": "Lernen",
   "shell.overview": "Kursübersicht",
   "shell.resources": "Ressourcen",
-  "shell.links": "Kurslinks",
+  "shell.links": "Begleiter",
   "shell.tools": "Kurswerkzeuge",
   "shell.moreTools": "Weitere Werkzeuge",
   "shell.calendar": "Kalender",
