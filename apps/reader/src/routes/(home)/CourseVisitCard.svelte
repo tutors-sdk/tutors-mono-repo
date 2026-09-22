@@ -5,11 +5,16 @@
   import { t } from "@tutors/i18n";
 
   let { courseVisit, deleteCourse, starUnstarCourse } = $props();
+
+  const accentFor = (color?: string) => {
+    const allowed = ["primary", "secondary", "tertiary", "success", "warning", "error", "surface"];
+    return allowed.includes(color ?? "") ? `var(--color-${color}-500, var(--ui-brand))` : "var(--ui-brand)";
+  };
 </script>
 
 <div
   transition:scale|local={scaleTransition}
-  style:--resource-accent={courseVisit.icon?.color ?? "var(--ui-brand)"}
+  style:--resource-accent={accentFor(courseVisit.icon?.color)}
   class="course-visit-card"
 >
   <section class="course-visit-content">
@@ -21,7 +26,11 @@
           height="72"
         />
       {:else}
-        <img src={courseVisit.img} alt="" />
+        {#if courseVisit.img}
+          <img src={courseVisit.img} alt="" />
+        {:else}
+          <Iconify icon="fluent:book-24-regular" color="var(--ui-brand)" height="72" />
+        {/if}
       {/if}
     </div>
     <div class="course-visit-details">
