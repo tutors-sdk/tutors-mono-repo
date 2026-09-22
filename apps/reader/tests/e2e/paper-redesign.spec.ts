@@ -325,7 +325,14 @@ test('online users opens a centred dialog, closes the account menu and restores 
   await expect(profile.locator('.online-count')).toHaveCSS('height', '22px');
   await expect(profile.locator('.online-count')).toHaveCSS('color', 'rgb(255, 255, 255)');
   await profile.click();
-  await page.getByRole('button', { name: 'View 1 Online', exact: true }).click();
+  const viewOnline = page.getByRole('button', { name: 'View 1 Online', exact: true });
+  const share = page.getByRole('button', { name: 'Share Presence · On', exact: true });
+  expect((await viewOnline.locator('.ml-2').boundingBox())!.x).toBe((await share.locator('.ml-2').boundingBox())!.x);
+  for (const property of ['padding-left', 'padding-right', 'height']) {
+    expect(await viewOnline.evaluate((el, prop) => getComputedStyle(el).getPropertyValue(prop), property))
+      .toBe(await share.evaluate((el, prop) => getComputedStyle(el).getPropertyValue(prop), property));
+  }
+  await viewOnline.click();
   const online = page.getByRole('dialog', { name: 'View 1 Online', exact: true });
   await expect(online).toBeVisible();
   await expect(profile).toHaveAttribute('aria-expanded', 'false');

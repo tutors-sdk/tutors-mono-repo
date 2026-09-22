@@ -3,7 +3,7 @@
   import Icon from "./Icon.svelte";
   import { t } from "@tutors/i18n";
 
-  let { position = "right", presentation = "drawer", width = "w-sm", menuSelector, sidebarContent, ariaLabel = "", title = ariaLabel, eyebrow = "", description = "", finalFocusEl = undefined, open = $bindable(false) } = $props();
+  let { position = "right", presentation = "drawer", width = "w-sm", menuSelector, sidebarContent, triggerClass = "", ariaLabel = "", title = ariaLabel, eyebrow = "", description = "", finalFocusEl = undefined, open = $bindable(false) } = $props();
 
   function closeOnNavigation(event: MouseEvent) {
     // Let SvelteKit handle the anchor before removing it from the dialog.
@@ -12,7 +12,7 @@
 </script>
 
 <Dialog {open} {finalFocusEl} onOpenChange={(details) => open = details.open}>
-  <Dialog.Trigger aria-label={ariaLabel || undefined}>{@render menuSelector()}</Dialog.Trigger>
+  <Dialog.Trigger class={triggerClass} aria-label={ariaLabel || undefined}>{@render menuSelector()}</Dialog.Trigger>
   <!-- Mount nested dialogs only when opened so a parent cannot mark them aria-hidden beforehand. -->
   {#if open}
   <Portal>
