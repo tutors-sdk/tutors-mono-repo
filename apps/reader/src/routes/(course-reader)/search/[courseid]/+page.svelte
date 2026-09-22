@@ -47,7 +47,7 @@
   <div class="search-results">
     {#each results as result (result.lo.route)}
       <div>
-        <Card row cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}} />
+        <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}} />
         {#if result.excerpt}<p class="search-excerpt">{result.excerpt}</p>{/if}
       </div>
     {:else}

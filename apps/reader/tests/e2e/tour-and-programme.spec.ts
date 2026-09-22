@@ -90,3 +90,30 @@ test('course-tree counts and chevrons stay aligned when branches expand', async 
   }
   await page.screenshot({ path: testInfo.outputPath('tree-count-alignment.png') });
 });
+
+test('topic units keep resource cards in a grid with compact centred artwork', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/topic/setu-hdip-comp-sci-2024-comp-sys/topic-03-week3');
+  const cards = page.locator('.main-group .resource-card');
+  await expect(cards).toHaveCount(7);
+  const first = (await cards.nth(0).boundingBox())!;
+  const second = (await cards.nth(1).boundingBox())!;
+  expect(first.width).toBeLessThan(400);
+  expect(second.y).toBe(first.y);
+  expect(second.x).toBeGreaterThan(first.x + first.width);
+  const artwork = (await cards.first().locator('.lo-artwork').boundingBox())!;
+  const heading = (await cards.first().locator('.resource-heading').boundingBox())!;
+  expect(artwork.y + artwork.height).toBeLessThanOrEqual(heading.y);
+  expect(Math.abs(artwork.x + artwork.width / 2 - first.x - first.width / 2)).toBeLessThan(1);
+  expect(artwork.height).toBeLessThanOrEqual(96);
+  await expect(page.locator('.main-group .panel-stack iframe')).toHaveCount(2);
+  await cards.first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath('topic-card-grid-desktop.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileFirst = (await cards.nth(0).boundingBox())!;
+  const mobileSecond = (await cards.nth(1).boundingBox())!;
+  expect(mobileSecond.y).toBeGreaterThan(mobileFirst.y + mobileFirst.height);
+  expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await cards.first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath('topic-card-grid-mobile.png') });
+});

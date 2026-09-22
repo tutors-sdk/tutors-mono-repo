@@ -52,11 +52,9 @@
     <div class="ui-grid">
       {#key refresh}
         {#each los as lo}
-          {@const row = !currentCourse.value?.isPortfolio && lo.type !== "topic"}
           {#if !lo.hide && !(rbacService.isLoLocked(lo) && !isEducator.value)}
-            <div class="relative min-w-0" class:resource-row={row}>
+            <div class="relative min-w-0">
               <Card
-                {row}
                 cardDetails={{
                   route: lo.route,
                   title: lo.title,
@@ -86,5 +84,4 @@
 
 <style>
   .ui-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
-  .resource-row { grid-column: 1 / -1; }
 </style>

@@ -9,7 +9,7 @@
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import { t } from "@tutors/i18n";
 
-  let { cardDetails, cardLayout, row = false } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; row?: boolean }>();
+  let { cardDetails, cardLayout } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig }>();
 
   function plainFromSummary(html: string | undefined): string {
     if (!html) return "";
@@ -42,7 +42,7 @@
 {#if cardDetails.student}
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
-  <article style:--resource-accent={`var(--color-${themeService.getIcon(cardDetails.type).color}-500, var(--ui-brand))`} class="resource-card" class:row class:compact={layout === "compacted"}>
+  <article style:--resource-accent={`var(--color-${themeService.getIcon(cardDetails.type).color}-500, var(--ui-brand))`} class="resource-card" class:compact={layout === "compacted"}>
     <a class="resource-link" href={route} {target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
       <Image lo={cardDetails} />
       <div class="resource-heading">
@@ -63,7 +63,7 @@
 <style>
   .resource-card { position: relative; height: 100%; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-radius: var(--radius-panel); transition: border-color 150ms; }
   .resource-card:has(.resource-link:hover) { background: color-mix(in srgb, var(--resource-accent) 11%, var(--ui-surface)); }
-  .resource-link { display: flex; align-items: center; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
+  .resource-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); color: var(--ui-ink); text-decoration: none; }
   .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
   .resource-link:focus-visible { outline: none; }
   .resource-card:has(.resource-link:focus-visible) { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
@@ -75,10 +75,8 @@
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
   .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
-  .resource-card :global(.lo-artwork) { width: 104px; height: 104px; }
+  .resource-card :global(.lo-artwork) { grid-column: 1 / -1; justify-self: center; width: 96px; height: 96px; }
   .resource-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
-  .row :global(.lo-artwork) { width: 80px; height: 80px; }
-  .row .resource-summary { margin-left: 96px; margin-top: var(--space-2); }
   .compact { padding: var(--space-3); }
   .compact h3 { font-size: var(--font-body); }
   .compact :global(.lo-artwork) { width: 64px; height: 64px; }

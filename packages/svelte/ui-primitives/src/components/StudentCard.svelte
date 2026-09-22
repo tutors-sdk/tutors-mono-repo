@@ -17,7 +17,7 @@
     <Icon type={sentiment} tip={`Sentiment — ${sentiment}.`} height="24" />
   </header>
   <a class="activity-resource" href={route} target={lo.type === 'web' ? '_blank' : undefined} rel={lo.type === 'web' ? 'noopener noreferrer' : undefined}>
-    <div class="min-w-0 flex-1">
+    <div class="activity-heading min-w-0">
       <span class="resource-type"><Icon type={lo.type} height="18" />{lo.type}</span>
       <h3>{showCourseTitle ? lo.courseTitle : lo.title}</h3>
       {#if showCourseTitle}<p>{lo.title}</p>{/if}
@@ -31,8 +31,9 @@
   header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--ui-border); }
   header > a, header > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: var(--font-label); font-weight: var(--weight-medium); }
   .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-  .activity-resource { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); border-radius: 0 0 var(--radius-card) var(--radius-card); color: var(--ui-ink); text-decoration: none; }
+  .activity-resource { display: flex; flex-direction: column-reverse; align-items: center; gap: var(--space-3); padding: var(--space-4); border-radius: 0 0 var(--radius-card) var(--radius-card); color: var(--ui-ink); text-decoration: none; }
   .activity-resource:hover { background: var(--ui-selected); }
+  .activity-heading { width: 100%; }
   .resource-type { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-small); color: var(--ui-muted); }
   h3 { font-weight: var(--weight-semibold); margin-top: var(--space-2); overflow-wrap: anywhere; }
   p { margin-top: var(--space-2); color: var(--ui-muted); font-size: var(--font-label); overflow-wrap: anywhere; }
