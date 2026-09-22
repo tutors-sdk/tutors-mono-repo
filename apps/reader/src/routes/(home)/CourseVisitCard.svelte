@@ -76,6 +76,7 @@
 <style>
   .course-visit-card {
     display: flex;
+    width: 100%;
     min-width: 0;
     height: 100%;
     flex-direction: column;
