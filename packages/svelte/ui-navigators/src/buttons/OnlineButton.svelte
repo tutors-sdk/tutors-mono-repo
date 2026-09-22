@@ -2,16 +2,19 @@
   import { presenceService } from "@tutors/community";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
+  let { onOpen }: { onOpen?: () => void } = $props();
+  let open = $state(false);
+  $effect(() => { if (open) onOpen?.(); });
+  const label = $derived(`${t("nav.online.view")} ${presenceService.studentsOnline.value.length} ${t("nav.online.online")}`);
 </script>
 
 {#snippet menuSelector()}
-  <div class="ml-6">
-    {t("nav.online.view")} <span class="badge bg-error-500 text-white">{presenceService.studentsOnline.value.length}</span> {t("nav.online.online")}
-  </div>
+  <span class="online-trigger">{label}<Icon type="listOnline" height="20" /></span>
 {/snippet}
 {#snippet sidebarContent()}
-  <div class="flex flex-wrap justify-center">
+  <div class="ui-grid">
     {#each presenceService.studentsOnline.value as lo}
       {#if lo?.user?.fullName !== "Anon"}
         <StudentCard
@@ -27,4 +30,7 @@
   </div>
 {/snippet}
 
-<Sidebar position="right" {menuSelector} {sidebarContent} ariaLabel={t("nav.online.view") + " " + t("nav.online.online")} />
+<Sidebar bind:open presentation="dialog" width="w-3xl" {menuSelector} {sidebarContent} ariaLabel={label} title={label} finalFocusEl={() => document.querySelector<HTMLElement>('[data-tour="profile"] .paper-menu-trigger')} />
+<style>
+  .online-trigger { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; padding: var(--space-3); font-size: var(--font-label); color: var(--ui-ink); text-align: left; }
+</style>

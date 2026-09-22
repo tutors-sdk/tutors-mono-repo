@@ -19,7 +19,6 @@ let _adobeLoaded: ReturnType<typeof rune<boolean>> | null = null;
 let _animationDelay: ReturnType<typeof rune<number>> | null = null;
 let _currentLo: ReturnType<typeof rune<Lo | null>> | null = null;
 let _currentCourse: ReturnType<typeof rune<Course | null>> | null = null;
-let _tutorsId: ReturnType<typeof rune<TutorsId | null>> | null = null;
 let _courseProtocol: ReturnType<typeof rune<string>> | null = null;
 export const currentLabStepIndex = {
   get value() { return (_currentLabStepIndex ??= rune(0)).value; },
@@ -46,10 +45,8 @@ export const currentCourse = {
   set value(v) { (_currentCourse ??= rune<Course | null>(null)).value = v; }
 };
 
-export const tutorsId = {
-  get value() { return (_tutorsId ??= rune<TutorsId | null>(null)).value; },
-  set value(v) { (_tutorsId ??= rune<TutorsId | null>(null)).value = v; }
-};
+// Initialize before conditional rendering so the profile subscribes to sign-in changes.
+export const tutorsId = rune<TutorsId | null>(null);
 
 export const courseProtocol = {
   get value() { return (_courseProtocol ??= rune("https://")).value; },

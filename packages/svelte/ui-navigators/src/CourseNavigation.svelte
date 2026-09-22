@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { currentCourse, currentLo, isEducator, tutorsId } from "@tutors/runes";
+  import { currentCourse, currentLo, currentLabStepIndex, isEducator, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import { analyticsEnabled } from "@tutors/connect";
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
@@ -23,10 +23,10 @@
   {#if lab && !lab.lab.pdf}
     <a class="nav-row" href={parentTopic?.route ?? lab.lab.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? lab.lab.parentLo?.title ?? course?.title}</a>
     <h2>{lab.lab.title}</h2>
-    <p class="ui-muted text-sm">{t("shell.steps")} · {lab.index + 1} / {lab.steps.length}</p>
+    <p class="ui-muted text-sm">{t("shell.steps")} · {currentLabStepIndex.value + 1} / {lab.steps.length}</p>
     <ol class="steps" aria-label={t("shell.steps")}>
       {#each lab.lab.los as step, i}
-        <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={lab.index === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}</a></li>
+        <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={currentLabStepIndex.value === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}</a></li>
       {/each}
     </ol>
     <hr />

@@ -9,6 +9,8 @@
   import { analyticsEnabled } from "@tutors/connect";
   import { t } from "@tutors/i18n";
 
+  let menuOpen = $state(false);
+
   function logout() {
     tutorsConnectService.disconnect("/");
   }
@@ -20,8 +22,8 @@
 
 {#snippet menuSelector()}
   <div class="relative">
-    {#if presenceService.studentsOnline.value.length && tutorsId.value?.share}
-      <span class="variant-filled-error badge-icon text-error-500 absolute -top-1 -right-2 z-10 font-bold">
+    {#if presenceService.studentsOnline.value.length && tutorsId.value?.share === "true"}
+      <span class="online-count">
         {presenceService.studentsOnline.value.length}
       </span>
     {/if}
@@ -55,7 +57,7 @@
         <MenuItem link="https://live.tutors.dev/{currentCourse.value?.courseId}" text={t("menu.tutorsLive")} type="live" targetStr="_blank" />
 
         <li class="option hover:preset-tonal p-0!">
-          <OnlineButton />
+          <OnlineButton onOpen={() => menuOpen = false} />
         </li>
 
         <hr />
@@ -68,5 +70,10 @@
 {/snippet}
 
 <div data-tour="profile">
-  <Menu {menuSelector} {menuContent} ariaLabel={t("menu.profile")} />
+  <Menu bind:open={menuOpen} {menuSelector} {menuContent} ariaLabel={t("menu.profile")} />
 </div>
+
+<style>
+  .option :global([data-scope="dialog"][data-part="trigger"]) { width: 100%; }
+  .online-count { position: absolute; top: -5px; right: -5px; z-index: 1; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding-inline: 4px; border: 2px solid var(--ui-surface); border-radius: 999px; background: var(--color-error-600); color: white; font-size: 12px; font-weight: var(--weight-bold); line-height: 1; font-variant-numeric: tabular-nums; }
+</style>

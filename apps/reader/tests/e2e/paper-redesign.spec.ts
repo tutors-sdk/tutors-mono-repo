@@ -275,3 +275,64 @@ test('larger tinted cards, wide labs and mobile menus keep the Paper layout', as
   await page.keyboard.press('Escape');
   expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
 });
+
+test('lab sidebar follows pager, step links, keyboard and browser history', async ({ page }) => {
+  await page.goto('/lab/reference-course/topic-01-typical/unit-1/book-a');
+  const sidebar = page.locator('.shell-navigation');
+  const active = sidebar.locator('.steps [aria-current="step"]');
+  await expect(active).toHaveText('01 Objectives');
+  await page.getByRole('link', { name: 'Next → Text', exact: true }).click();
+  await expect(active).toHaveText('02 Text');
+  await expect(sidebar.getByText('Steps · 2 / 10', { exact: true })).toBeVisible();
+  await sidebar.getByRole('link', { name: '04 Links and Code Blocks', exact: true }).click();
+  await expect(active).toHaveText('04 Links and Code Blocks');
+  await page.locator('#main-content').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(active).toHaveText('05 Images');
+  await page.goBack();
+  await expect(active).toHaveText('04 Links and Code Blocks');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Course navigation', exact: true }).click();
+  const navigation = page.getByRole('dialog', { name: 'Course navigation', exact: true });
+  await expect(navigation.locator('.steps [aria-current="step"]')).toHaveText('04 Links and Code Blocks');
+  await navigation.getByRole('link', { name: '02 Text', exact: true }).click();
+  await expect(navigation).not.toBeVisible();
+  await page.getByRole('button', { name: 'Course navigation', exact: true }).click();
+  await expect(navigation.locator('.steps [aria-current="step"]')).toHaveText('02 Text');
+});
+
+
+test('online users opens a centred dialog, closes the account menu and restores focus', async ({ page }, testInfo) => {
+  const resources: string[] = [];
+  page.on('request', request => resources.push(request.url()));
+  await page.goto(course);
+  await expect(page.getByRole('heading', { name: 'Reference Course', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
+  await page.keyboard.press('Escape');
+  // Seed this browser's UI stores only; no sign-in or presence writes are made.
+  await page.evaluate(async (resources) => {
+    const runesUrl = resources.find(url => url.includes('/runes/src/index.svelte.ts'))!;
+    const presenceUrl = resources.find(url => url.includes('/community/src/services/presence.svelte.ts'))!;
+    const { tutorsId } = await import(runesUrl);
+    const { presenceService } = await import(presenceUrl);
+    tutorsId.value = { login: 'ui-preview', name: 'UI Preview', share: 'true', sentiment: 'neutral' };
+    presenceService.studentsOnline.value = [{ title: 'Objectives', type: 'lab', loRoute: '/lab/reference-course/topic-01-typical/unit-1/book-a', courseTitle: 'Reference Course', user: { id: 'ui-preview', fullName: 'UI Preview', sentiment: 'neutral' } }];
+  }, resources);
+  const profile = page.locator('[data-tour="profile"] .paper-menu-trigger');
+  await expect(profile.locator('.online-count')).toHaveText('1');
+  await expect(profile.locator('.online-count')).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await profile.click();
+  await page.getByRole('button', { name: 'View 1 Online', exact: true }).click();
+  const online = page.getByRole('dialog', { name: 'View 1 Online', exact: true });
+  await expect(online).toBeVisible();
+  await expect(profile).toHaveAttribute('aria-expanded', 'false');
+  await expect(online).toHaveAttribute('data-presentation', 'dialog');
+  await expect(online).toContainText('UI Preview');
+  await page.screenshot({ path: testInfo.outputPath('online-desktop.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await online.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+  await expect(online).toHaveCSS('height', '844px');
+  await page.screenshot({ path: testInfo.outputPath('online-mobile.png') });
+  await online.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(profile).toBeFocused();
+});
