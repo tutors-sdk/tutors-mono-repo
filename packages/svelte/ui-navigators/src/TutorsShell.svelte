@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { page } from "$app/state";
+  import { afterNavigate } from "$app/navigation";
   import Footer from "./footers/Footer.svelte";
   import MainNavigator from "./MainNavigator.svelte";
   import CourseNavigation from "./CourseNavigation.svelte";
@@ -9,6 +10,11 @@
   import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
 
   let { children, hideNavigator = false, showConnect = true }: { children: Snippet; hideNavigator?: boolean; showConnect?: boolean } = $props();
+
+  afterNavigate(({ to }) => {
+    if (to?.url.hash) return;
+    document.querySelector<HTMLElement>(".shell-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
 </script>
 
 <ToastProvider />
