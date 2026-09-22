@@ -13,6 +13,8 @@
 
 <Dialog {open} onOpenChange={(details) => open = details.open}>
   <Dialog.Trigger aria-label={ariaLabel || undefined}>{@render menuSelector()}</Dialog.Trigger>
+  <!-- Mount nested dialogs only when opened so a parent cannot mark them aria-hidden beforehand. -->
+  {#if open}
   <Portal>
     <Dialog.Backdrop class="drawer-backdrop" />
     <Dialog.Positioner class="drawer-positioner" data-position={position} data-presentation={presentation}>
@@ -31,6 +33,7 @@
       </Dialog.Content>
     </Dialog.Positioner>
   </Portal>
+  {/if}
 </Dialog>
 
 <style>

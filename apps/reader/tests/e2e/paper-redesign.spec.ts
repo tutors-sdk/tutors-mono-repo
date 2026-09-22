@@ -15,7 +15,7 @@ test('Paper shell keeps course, lab, search and mobile navigation connected', as
   await expect(page).toHaveURL(/\/book-a\/01$/);
   await page.locator('#main-content').focus();
   await page.keyboard.press('ArrowRight');
-  await expect(page).toHaveURL(/\/book-a\/01$/);
+  await expect(page).toHaveURL(/\/book-a\/02$/);
   await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
   await page.getByRole('button', { name: 'Dark', exact: true }).click();
   await page.keyboard.press('Escape');
@@ -115,7 +115,6 @@ test('manual notes, course tree and creator use working accessible controls', as
   await expect(contents).toHaveAttribute('open');
   await expect(page.locator('button.copy').first()).toHaveAccessibleName('Copy code');
   await expect(page.locator('.prose .header-anchor').first()).toHaveCSS('text-decoration-line', 'none');
-  await page.locator('.shell-navigation').getByText('More course tools', { exact: true }).click();
   await page.getByRole('button', { name: 'Open course tree', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('link', { name: 'Course Properties', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Expand all', exact: true }).click();
@@ -195,4 +194,50 @@ test('notebook navigation, saved output and slide controls remain usable', async
   await slides.focus();
   await page.keyboard.press('ArrowRight');
   await expect(slides).toContainText('3 of 11');
+});
+
+test('course header exposes info on desktop and a direct course tree on mobile', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(course);
+  const header = page.locator('.shell-header');
+  const title = header.locator('[data-tour="course-title"]');
+  await expect(title).toHaveText('Reference Course');
+  await expect(title).toHaveCSS('font-size', '24px');
+  await header.getByRole('button', { name: 'Open course info', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Course Info', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  const sidebar = page.locator('.shell-navigation');
+  await expect(sidebar.getByRole('button', { name: 'Open course info', exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole('link', { name: 'Edit this course', exact: true })).toBeVisible();
+  await expect(sidebar.getByText('More course tools', { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('course-header-desktop.png') });
+
+  for (const theme of ['tutors', 'dyslexia']) {
+    await header.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Theme', exact: true }).selectOption(theme);
+    await page.keyboard.press('Escape');
+    for (const width of [320, 390, 768]) {
+      await page.setViewportSize({ width, height: 844 });
+      await expect(title).toBeVisible();
+      await expect(header.getByRole('button', { name: 'Open course info', exact: true })).toBeHidden();
+      expect(await header.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      const treeButton = header.getByRole('button', { name: 'Open course tree', exact: true });
+      await expect(treeButton).toContainText('Course Tree');
+      await treeButton.click();
+      await expect(page.getByRole('dialog')).toHaveCount(1);
+      await expect(page.getByRole('dialog', { name: 'Course Tree', exact: true })).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(treeButton).toBeFocused();
+      await page.screenshot({ path: testInfo.outputPath(`course-header-${width}-${theme}.png`) });
+    }
+    await page.screenshot({ path: testInfo.outputPath(`course-header-mobile-${theme}.png`) });
+  }
+  await header.getByRole('button', { name: 'Course navigation', exact: true }).click();
+  const navigation = page.getByRole('dialog', { name: 'Course navigation', exact: true });
+  await expect(navigation.getByRole('link', { name: 'Edit this course', exact: true })).toBeVisible();
+  await navigation.getByRole('button', { name: 'Open course info', exact: true }).click();
+  const info = page.getByRole('dialog', { name: 'Course Info', exact: true });
+  await expect(info).toBeVisible();
+  await info.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(navigation.getByRole('button', { name: 'Open course info', exact: true })).toBeFocused();
 });

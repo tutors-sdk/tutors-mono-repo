@@ -39,7 +39,8 @@ test('course-tree tour highlights the visible sidebar control without covering i
   await preferencesButton.click();
   await page.getByRole('button', { name: 'Start Tour', exact: true }).click();
   await expect(tour).toBeVisible();
-  for (let step = 0; step < 2; step++) await tour.getByRole('button', { name: 'Next', exact: true }).click();
+  for (let step = 0; step < 4; step++) await tour.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(tour.getByRole('heading', { name: 'Course Tree', exact: true })).toBeVisible();
   await expect(tour.getByRole('button', { name: 'Done', exact: true })).toBeVisible();
   expect(await page.locator('.tour-tooltip').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await page.keyboard.press('Escape');
@@ -50,6 +51,7 @@ test('programme courses use regular cards in a responsive grid', async ({ page }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/course/wit-hdip-comp-sci-2023');
   await expect(page.getByRole('heading', { name: 'Higher Diploma in Computer Science 2023', exact: true })).toBeVisible();
+  await expect(page.locator('.shell-navigation').getByText('Course tools', { exact: true })).toBeHidden();
   const cards = page.locator('.main-group .resource-card');
   await expect(cards).toHaveCount(24);
   await expect(page.locator('.main-group .resource-card.row')).toHaveCount(0);

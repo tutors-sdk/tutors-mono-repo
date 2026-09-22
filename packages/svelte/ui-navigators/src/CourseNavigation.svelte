@@ -12,7 +12,7 @@
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
   import CourseSentimentButton from "./buttons/CourseSentimentButton.svelte";
-  let { showConnect = true } = $props();
+  let { showConnect = true, mobile = false } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
   const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
@@ -38,32 +38,29 @@
       <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
     {/if}
     {#if showConnect}<CalendarButton labelled />{/if}
-    {#if course.companions?.show}
+    {#if course.companions?.show && course.companions.bar.length > 0}
       <p class="nav-section">{t("shell.links")}</p>
       {#each course.companions.bar as item}
         <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
       {/each}
     {/if}
+    <div class="tool-section">
     <p class="nav-section">{t("shell.tools")}</p>
-    <InfoButton showEducatorPanel={isEducator.value} labelled />
-    {#if !course.isPortfolio}<TocButton labelled />{/if}
-    <details>
-      <summary class="nav-row">{t("shell.moreTools")}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary>
-      <div class="tool-list">
-        {#if course.properties.github}<EditCoursButton labelled />{/if}
-        {#if showConnect}
-          {#if course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
-          {#if analyticsEnabled && tutorsId.value?.share === "true"}
-            <a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>
-          {/if}
-          {#if course.authLevel! > 0 && tutorsId.value?.share === "true"}
-            <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`}><Icon type="tutorsTime" />Tutors Time ↗</a>
-          {/if}
-          {#if course.hasWhiteboard}<WhiteboardButton labelled />{/if}
-          {#if tutorsId.value?.login && tutorsId.value.share === "true"}<div class="nav-row"><CourseSentimentButton /><span>{t("content.sentiment")}</span></div>{/if}
-        {/if}
-      </div>
-    </details>
+    {#if mobile}<InfoButton showEducatorPanel={isEducator.value} labelled />{/if}
+    {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
+    {#if course.properties.github}<EditCoursButton labelled />{/if}
+    {#if showConnect}
+      {#if course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
+      {#if analyticsEnabled && tutorsId.value?.share === "true"}
+        <a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>
+      {/if}
+      {#if course.authLevel! > 0 && tutorsId.value?.share === "true"}
+        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`}><Icon type="tutorsTime" />Tutors Time ↗</a>
+      {/if}
+      {#if course.hasWhiteboard}<WhiteboardButton labelled />{/if}
+      {#if tutorsId.value?.login && tutorsId.value.share === "true"}<div class="nav-row"><CourseSentimentButton /><span>{t("content.sentiment")}</span></div>{/if}
+    {/if}
+    </div>
     {#if currentLo.value?.parentTopic && !lab}
       <details><summary class="nav-row">{currentLo.value.parentTopic.title}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary><LoContextTree lo={currentLo.value.parentTopic} expandAll={false} /></details>
     {/if}
@@ -81,14 +78,15 @@
   .course-navigation { display: flex; flex-direction: column; height: 100%; min-height: 0; font-size: var(--font-label); }
   .navigation-scroll { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: var(--space-1); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6) var(--space-4); }
   .nav-section { margin: var(--space-6) var(--space-3) var(--space-2); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); font-size: var(--font-small); font-weight: var(--weight-semibold); }
-  .nav-section:first-child { margin-top: 0; }
+  .navigation-scroll > .nav-section:first-child { margin-top: 0; }
+  .tool-section { display: contents; }
+  .tool-section:not(:has(:global(.nav-row))) { display: none; }
   .course-navigation :global(.nav-row) { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-3); border-radius: var(--radius-control); color: var(--ui-ink); text-decoration: none; overflow-wrap: anywhere; }
   .course-navigation :global(.nav-row:hover), .course-navigation :global(.nav-row[aria-current]) { background: var(--ui-selected); }
   .course-navigation :global(.nav-row[aria-current]) { box-shadow: inset 3px 0 var(--ui-brand); font-weight: var(--weight-semibold); }
   .nav-row > span:not(.external):not(.step-number) { min-width: 0; }
   .external { margin-left: auto; color: var(--ui-muted); }
 
-  .tool-list { display: flex; flex-direction: column; gap: var(--space-1); padding-block: var(--space-2); }
   h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); margin-block: var(--space-5) var(--space-2); overflow-wrap: anywhere; }
   .steps { display: grid; gap: var(--space-1); margin-block: var(--space-5); }
   .steps .nav-row { align-items: baseline; }
