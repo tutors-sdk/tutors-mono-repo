@@ -72,12 +72,9 @@
     <a class="resource-link" href={route} {target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
-        <span class="resource-meta">
-          <span class="resource-type" title={cardDetails.type}>
-            <Icon type={cardDetails.type} height="20" />
-            <span class="visually-hidden">{cardDetails.type}</span>
-          </span>
-          <span class="resource-arrow" aria-hidden="true">{cardDetails.type === "archive" ? "↓" : target ? "↗" : "→"}</span>
+        <span class="resource-type" title={cardDetails.type}>
+          <Icon type={cardDetails.type} height="20" />
+          <span class="visually-hidden">{cardDetails.type}</span>
         </span>
       </div>
       <Image lo={cardDetails} />
@@ -99,11 +96,9 @@
   .resource-link:focus-visible { outline: none; }
   .resource-card:has(.resource-link:focus-visible) { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
   .resource-heading { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-  .resource-meta { display: inline-flex; flex-shrink: 0; align-items: center; gap: var(--space-3); color: var(--ui-brand); }
   h3 { font-size: var(--font-size-19); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
-  .resource-type { display: inline-flex; align-items: center; color: var(--resource-accent); }
+  .resource-type { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--resource-accent); }
   .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .resource-arrow { color: var(--ui-brand); font-size: var(--font-heading); line-height: 1; }
   .resource-summary { margin-top: var(--space-4); font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
