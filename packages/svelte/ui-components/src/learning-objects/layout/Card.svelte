@@ -12,15 +12,15 @@
   let { cardDetails, cardLayout } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig }>();
 
   const legacyCardColours: Record<string, { border: string; background: string }> = {
-    course: { border: "#37919b", background: "#37919b" },
+    course: { border: "#37919b", background: "#d3ecee" },
     topic: { border: "#53a878", background: "#d9eee0" },
     talk: { border: "#cb9d00", background: "#f4ecce" },
     paneltalk: { border: "#cb9d00", background: "#f4ecce" },
-    reference: { border: "#37919b", background: "#37919b" },
-    lab: { border: "#d00034", background: "#fac5c8" },
-    archive: { border: "#d00034", background: "#fac5c8" },
-    panelvideo: { border: "#ff0032", background: "#ff0032" },
-    video: { border: "#ff0032", background: "#ff0032" },
+    reference: { border: "#37919b", background: "#d3ecee" },
+    lab: { border: "#d00034", background: "#fcd6d8" },
+    archive: { border: "#d00034", background: "#fcd6d8" },
+    panelvideo: { border: "#ff0032", background: "#ffd6dd" },
+    video: { border: "#ff0032", background: "#ffd6dd" },
     github: { border: "#cb9d00", background: "#f4ecce" },
     web: { border: "#008c8f", background: "#d6e9e9" },
     note: { border: "#53a878", background: "#d9eee0" },
