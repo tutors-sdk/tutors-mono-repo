@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Lo } from '@tutors/tutors-model-lib';
-import { findResources } from '../../../apps/reader/src/lib/resource-search';
+import { findResources, highlightParts } from '../../../apps/reader/src/lib/resource-search';
 
 const lo = (type: string, route: string, title: string, extra = {}): Lo => ({ type, route, title, ...extra } as Lo);
 describe('resource discovery', () => {
@@ -25,5 +25,18 @@ describe('resource discovery', () => {
     expect(findResources(course, 'arrays', 'lab', visible)).toHaveLength(1);
     expect(findResources(course, 'missing', '', visible)).toEqual([]);
     expect(findResources(course, '', '', visible)).toHaveLength(4);
+    const md = [lo('note', '/note/md', 'Md', { contentMd: '## Options for **grep** and `sed`' })];
+    expect(findResources(md, 'grep', '', () => true)[0].excerpt).toBe('Options for grep and sed');
+  });
+
+  it('marks every case-insensitive match in an excerpt, keeping the original casing', () => {
+    expect(highlightParts('Arrays and arrays.', 'ARRAY')).toEqual([
+      { text: 'Array', match: true },
+      { text: 's and ', match: false },
+      { text: 'array', match: true },
+      { text: 's.', match: false }
+    ]);
+    expect(highlightParts('No hit here', 'x(')).toEqual([{ text: 'No hit here', match: false }]);
+    expect(highlightParts('Plain', '  ')).toEqual([{ text: 'Plain', match: false }]);
   });
 });

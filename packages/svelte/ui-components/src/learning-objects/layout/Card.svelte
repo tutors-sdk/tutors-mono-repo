@@ -8,8 +8,9 @@
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import { t } from "@tutors/i18n";
+  import type { Snippet } from "svelte";
 
-  let { cardDetails, cardLayout } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig }>();
+  let { cardDetails, cardLayout, children } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; children?: Snippet }>();
 
   const legacyCardColours: Record<string, { border: string; background: string }> = {
     course: { border: "#37919b", background: "#d3ecee" },
@@ -82,6 +83,7 @@
     {#if cardDetails.summary || cardDetails.summaryEx}
       <div class="resource-summary">{@html sanitizeHtml(cardDetails.summary ?? "")} {cardDetails.summaryEx ?? ""}</div>
     {/if}
+    {@render children?.()}
     {#if cardDetails.video && cardDetails.type !== "video" && !hideVideoIcon}
       <a class="companion-video" href={cardDetails.video} aria-label={`${t("shell.video")}: ${cardDetails.title}`}><Icon type="video" height="18" />{t("shell.video")}</a>
     {/if}

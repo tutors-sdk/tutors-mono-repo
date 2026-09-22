@@ -5,7 +5,7 @@
   import type { PageData } from "./$types";
   import { currentLo } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
-  import { findResources } from "$lib/resource-search";
+  import { findResources, highlightParts } from "$lib/resource-search";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
@@ -44,11 +44,12 @@
     <details class="resource-walls"><summary>{t("shell.resources")}</summary><div class="ui-actions">{#each data.course.wallBar.bar as wall}<a class="ui-button" href={wall.link}><Icon type={wall.type} />{wall.tip}</a>{/each}</div></details>
   {/if}
   <p class="result-count ui-muted" role="status" aria-live="polite">{results.length} {t("shell.resultCount")}{query ? ` · “${query}”` : ""}</p>
-  <div class="search-results">
+  <div class="ui-grid search-results">
     {#each results as result (result.lo.route)}
-      <div>
-        <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}} />
-        {#if result.excerpt}<p class="search-excerpt">{result.excerpt}</p>{/if}
+      <div class="min-w-0">
+        <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}}>
+          {#if result.excerpt}<p class="search-excerpt">{#each highlightParts(result.excerpt, query) as part}{#if part.match}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</p>{/if}
+        </Card>
       </div>
     {:else}
       <div class="ui-empty"><p>{t("shell.noResults")}</p><button class="ui-button" onclick={() => search("", "")}>{t("shell.clearFilters")}</button></div>
@@ -65,7 +66,9 @@
   .type-filters { margin-block: var(--space-5); }
   button[aria-pressed="true"] { background: var(--ui-selected); border-color: var(--ui-brand); box-shadow: inset 0 -2px var(--ui-brand); }
   .result-count { margin-block: var(--space-6) var(--space-4); font-size: var(--font-label); }
-  .search-results { display: grid; gap: var(--space-4); }
-  .search-excerpt { padding: var(--space-4); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .search-results { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+  .ui-empty { grid-column: 1 / -1; }
+  .search-excerpt { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid color-mix(in srgb, var(--ui-ink) 12%, transparent); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
+  mark { padding-inline: 2px; border-radius: var(--radius-small); background: color-mix(in srgb, var(--ui-warning) 28%, transparent); color: var(--ui-ink); font-weight: var(--weight-semibold); }
   summary { font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }
 </style>
