@@ -73,7 +73,7 @@
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
         <span class="resource-type" title={cardDetails.type}>
-          <Icon type={cardDetails.type} height="20" />
+          <Icon type={cardDetails.type} height="26" />
           <span class="visually-hidden">{cardDetails.type}</span>
         </span>
       </div>
@@ -103,10 +103,10 @@
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
   .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
-  .resource-card :global(.lo-artwork) { grid-column: 1 / -1; justify-self: center; width: 112px; height: 112px; }
+  .resource-card :global(.lo-artwork) { grid-column: 1 / -1; justify-self: center; width: 132px; height: 132px; }
   .resource-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
   .compact { padding: var(--space-3); }
   .compact h3 { font-size: var(--font-body); }
-  .compact :global(.lo-artwork) { width: 88px; height: 88px; }
-  @media (max-width: 767px) { .resource-card :global(.lo-artwork) { width: 96px; height: 96px; } }
+  .compact :global(.lo-artwork) { width: 104px; height: 104px; }
+  @media (max-width: 767px) { .resource-card :global(.lo-artwork) { width: 116px; height: 116px; } }
 </style>

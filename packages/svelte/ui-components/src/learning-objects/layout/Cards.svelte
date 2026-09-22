@@ -83,5 +83,5 @@
 {/if}
 
 <style>
-  .ui-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+  .ui-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
 </style>
