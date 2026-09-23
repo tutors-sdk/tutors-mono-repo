@@ -67,7 +67,7 @@
 {#if cardDetails.student}
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
-  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:compact={layout === "compacted"}>
+  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card ui-lift" class:compact={layout === "compacted"}>
     <a class="resource-link" href={route} {target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
@@ -89,7 +89,7 @@
   </article>
 {/if}
 <style>
-  .resource-card { position: relative; height: 100%; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms; }
+  .resource-card { position: relative; height: 100%; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
   .resource-card:has(.resource-link:hover) { background: color-mix(in srgb, var(--resource-background) 86%, var(--ui-surface)); }
   .resource-link { display: grid; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
   .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }

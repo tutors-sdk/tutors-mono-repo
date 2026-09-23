@@ -15,7 +15,7 @@
 <div
   transition:scale|local={scaleTransition}
   style:--resource-accent={accentFor(courseVisit.icon?.color)}
-  class="course-visit-card"
+  class="course-visit-card ui-lift"
 >
   <section class="course-visit-content">
     <div class="course-visit-artwork" aria-hidden="true">

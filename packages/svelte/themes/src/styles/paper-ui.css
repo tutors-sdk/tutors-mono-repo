@@ -9,6 +9,8 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 :where(button, .btn, .btn-icon, summary) { min-height: 44px; }
 :where(button, a) { transition: background-color 150ms, border-color 150ms, color 150ms; }
 :where(button, a):disabled { color: var(--ui-disabled-ink); cursor: not-allowed; }
+/* Tailwind's reset leaves buttons on the arrow cursor; every enabled control shows the hand. */
+:where(button, [role="button"], [role="tab"], [role="option"], [role="menuitem"], [role="treeitem"], summary, select, label:has(> input:is([type="checkbox"], [type="radio"])), input:is([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"]), [data-scope="switch"][data-part="root"], .ui-button):not(:disabled, [aria-disabled="true"]) { cursor: pointer; }
 :where(.card) { background: var(--ui-surface); border-radius: var(--radius-card); }
 :where(.input, .select, textarea) { background: var(--ui-surface); color: var(--ui-ink); border: 1px solid var(--ui-control-border); border-radius: var(--radius-control); }
 :where(.table-wrap) { max-width: 100%; overflow-x: auto; }
@@ -31,6 +33,10 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .ui-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .ui-section-heading { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: space-between; align-items: baseline; margin-block: var(--space-8) var(--space-4); }
 .ui-section-heading h2, .ui-section-title { font-size: var(--font-section); font-weight: var(--weight-semibold); line-height: var(--leading-heading); }
+/* Cards zoom slightly on hover or keyboard focus; reduced motion keeps them still. */
+.ui-lift { transition: transform 180ms ease-out; }
+.ui-lift:is(:hover, :focus-within) { transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) { .ui-lift { transition: none; } .ui-lift:is(:hover, :focus-within) { transform: none; } }
 .ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); width: 100%; }
 .prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
 .prose :where(pre, table) { max-width: 100%; overflow-x: auto; }

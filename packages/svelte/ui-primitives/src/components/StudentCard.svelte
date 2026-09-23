@@ -9,7 +9,7 @@
   const sentiment = $derived(student.sentiment ?? "neutral");
 </script>
 
-<article style:--resource-accent={`var(--color-${themeService.getIcon(lo.type).color}-500, var(--ui-brand))`} class="activity-card" class:compact={cardLayout?.layout === 'compacted'}>
+<article style:--resource-accent={`var(--color-${themeService.getIcon(lo.type).color}-500, var(--ui-brand))`} class="activity-card ui-lift" class:compact={cardLayout?.layout === 'compacted'}>
   <header>
     <img src={student.avatar} alt="" class="avatar" />
     {#if student.id}<a href="https://github.com/{student.id}" target="_blank" rel="noopener noreferrer">{student.fullName ?? student.id}</a>
