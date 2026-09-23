@@ -26,8 +26,10 @@
         // 40px = the 24px spacer track between main and side plus its extra 16px gap.
         const available = Math.max(1, Math.min(6, Math.floor((node.clientWidth - 40 + 16) / (220 + 16))));
         const most = (selector: string) => Math.max(1, ...[...node.querySelectorAll(selector)].map(grid => grid.children.length));
-        const main = available === 1 ? 1 : Math.min(available - 1, most(".main-group .card-grid"));
-        const side = available === 1 ? 1 : Math.min(available - main, most(".side-groups .card-grid"));
+        // Embedded players (podcasts, videos) need two columns of width to play without scrolling.
+        const sideMin = available >= 4 && node.querySelector(".side-groups iframe") ? 2 : 1;
+        const main = available === 1 ? 1 : Math.min(available - sideMin, most(".main-group .card-grid"));
+        const side = available === 1 ? 1 : Math.min(available - main, Math.max(sideMin, most(".side-groups .card-grid")));
         node.dataset.stacked = String(available === 1);
         node.style.setProperty("--main-columns", String(main));
         node.style.setProperty("--side-columns", String(side));

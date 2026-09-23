@@ -79,7 +79,7 @@
       <Image lo={cardDetails} />
     </a>
     {#if cardDetails.summary || cardDetails.summaryEx}
-      <div class="resource-summary">{@html sanitizeHtml(cardDetails.summary ?? "")} {cardDetails.summaryEx ?? ""}</div>
+      <div class="resource-summary" title={plainFromSummary(cardDetails.summary)}>{@html sanitizeHtml(cardDetails.summary ?? "")} {cardDetails.summaryEx ?? ""}</div>
     {/if}
     {@render children?.()}
     {#if cardDetails.video && cardDetails.type !== "video" && !hideVideoIcon}
@@ -97,10 +97,11 @@
   .resource-link:focus-visible { outline: none; }
   .resource-card:has(.resource-link:focus-visible) { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
   .resource-heading { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-  h3 { font-size: var(--font-size-19); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+  /* Titles and summaries clamp (2 and 3 lines) so one long summary cannot stretch every card on the page. */
+  h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--font-size-19); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
   .resource-type { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--resource-accent); }
   .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .resource-summary { margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .resource-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
   .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
