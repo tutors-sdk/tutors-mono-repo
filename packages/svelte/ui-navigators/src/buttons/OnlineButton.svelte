@@ -11,7 +11,7 @@
 </script>
 
 {#snippet menuSelector()}
-  <div class="ml-2">{label}</div><Icon type="listOnline" />
+  <span class="menu-label">{label}</span><Icon type="listOnline" />
 {/snippet}
 {#snippet sidebarContent()}
   <div class="online-grid">
@@ -30,7 +30,7 @@
   </div>
 {/snippet}
 
-<Sidebar triggerClass="group btn flex w-full justify-between hover:preset-tonal" bind:open presentation="dialog" width="w-3xl" {menuSelector} {sidebarContent} ariaLabel={label} title={label} finalFocusEl={() => document.querySelector<HTMLElement>('[data-tour="profile"] .paper-menu-trigger')} />
+<Sidebar triggerClass="menu-row" bind:open presentation="dialog" width="w-3xl" {menuSelector} {sidebarContent} ariaLabel={label} title={label} finalFocusEl={() => document.querySelector<HTMLElement>('[data-tour="profile"] .paper-menu-trigger')} />
 <style>
   .online-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: var(--space-4); }
 </style>

@@ -14,8 +14,8 @@
 </script>
 
 <fieldset class="space-y-4" {disabled}>
-  <legend class="text-lg font-medium"><span class="ui-muted">{questionIndex + 1}.</span> {@html inline(text)}</legend>
-  {#if questionType === 'true-false'}<p class="ui-muted text-sm">True / False</p>{/if}
+  <legend class="quiz-legend"><span class="ui-muted">{questionIndex + 1}.</span> {@html inline(text)}</legend>
+  {#if questionType === 'true-false'}<p class="ui-muted quiz-kind">True / False</p>{/if}
   <div class="grid gap-3">
     {#each options as option, i}
       <label class="quiz-option" class:selected={i === selectedIndex} class:correct={showCorrect && i === correctIndex}>
@@ -29,6 +29,8 @@
 </fieldset>
 
 <style>
+  .quiz-legend { font-size: var(--font-reading); font-weight: var(--weight-medium); }
+  .quiz-kind { font-size: var(--font-label); }
   .quiz-option { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-4); min-height: 44px; border: 1px solid var(--ui-control-border); border-radius: var(--radius-control); cursor: pointer; }
   .quiz-option > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .quiz-option.selected { background: var(--ui-selected); border-color: var(--ui-brand); }

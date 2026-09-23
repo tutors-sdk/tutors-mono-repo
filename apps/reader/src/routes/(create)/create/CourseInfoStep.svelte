@@ -50,8 +50,8 @@
   }}
 >
   <div>
-    <label class="label mb-1 font-semibold" for="courseName"
-      >Course Name <span class="text-error-500">*</span></label
+    <label class="ui-label" for="courseName"
+      >Course Name <span class="text-[var(--ui-danger)]">*</span></label
     >
     <input
       id="courseName"
@@ -64,7 +64,7 @@
     <p class="mt-1 text-sm ui-muted">This becomes the main heading and title of your course.</p>
   </div>
   <div>
-    <label class="label mb-1 font-semibold" for="lecturerName">Your Name</label>
+    <label class="ui-label" for="lecturerName">Your Name</label>
     <input
       id="lecturerName"
       class="input w-full"
@@ -84,14 +84,14 @@
       onclick={() => fileInput.click()}>Import course.json</button
     >
     {#if importError}
-      <p role="alert" class="mt-2 text-sm text-error-500">{importError}</p>
+      <p role="alert" class="mt-2 text-sm text-[var(--ui-danger)]">{importError}</p>
     {/if}
   </div>
 
   <div class="flex justify-between">
     <button class="ui-button" type="button" onclick={onexit}>Exit</button>
     <button
-      class="ui-button ui-button-primary disabled:opacity-50"
+      class="ui-button ui-button-primary"
       type="submit"
       disabled={courseName.trim().length === 0}>Next &rarr;</button
     >

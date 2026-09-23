@@ -168,6 +168,10 @@ La función Live, disponible desde el menú de perfil, también puede usar estos
 Tutors es una aplicación de código abierto; el componente de recopilación de datos [está aquí](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
+  "time.title": "Tu actividad registrada",
+  "time.description": "El tiempo que pasas en cada página de este curso. El tiempo registrado es independiente de la finalización.",
+  "time.signedOut": "Inicia sesión con GitHub para ver el tiempo registrado en este curso.",
+  "time.noRecords": "Todavía no hay actividad registrada para este curso.",
   "time.name": "Nombre",
   "time.github": "Github",
   "time.total": "Total",

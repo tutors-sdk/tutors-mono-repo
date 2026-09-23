@@ -29,9 +29,9 @@
     {/if}
     <span class="presence-chip" class:offline={tutorsId.value?.share !== "true"}>
       {#if tutorsId.value?.share === "true"}
-        <Icon icon="lucide:check" color="white" height="14" />
+        <Icon icon="lucide:check" color="var(--ui-on-brand)" height="14" />
       {:else}
-        <Icon icon="lucide:minus" color="white" height="14" />
+        <Icon icon="lucide:minus" color="var(--ui-on-brand)" height="14" />
       {/if}
     </span>
     <div class="flex h-11 w-11 items-center">
@@ -41,7 +41,7 @@
 {/snippet}
 
 {#snippet menuContent()}
-  <p class="mb-3 px-3 text-sm font-semibold">{tutorsId.value?.name || tutorsId.value?.login}</p>
+  <p class="menu-name">{tutorsId.value?.name || tutorsId.value?.login}</p>
   <ul class="space-y-1">
     {#if currentCourse.value}
       {#if tutorsId.value?.share === "true"}
@@ -56,7 +56,7 @@
         {/if}
         <MenuItem link="https://live.tutors.dev/{currentCourse.value?.courseId}" text={t("menu.tutorsLive")} type="live" targetStr="_blank" />
 
-        <li class="option hover:preset-tonal p-0!">
+        <li class="option p-0!">
           <OnlineButton onOpen={() => menuOpen = false} />
         </li>
 
@@ -75,8 +75,8 @@
 
 <style>
   .option :global([data-scope="dialog"][data-part="trigger"]) { width: 100%; }
-  .online-count, .presence-chip { position: absolute; right: -5px; z-index: 1; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding-inline: 4px; border: 2px solid var(--ui-surface); border-radius: 999px; color: white; font-size: 12px; font-weight: var(--weight-bold); line-height: 1; font-variant-numeric: tabular-nums; }
-  .online-count { top: -5px; background: var(--color-error-600); }
+  .online-count, .presence-chip { position: absolute; right: -5px; z-index: 1; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding-inline: 4px; border: 2px solid var(--ui-surface); border-radius: 999px; color: var(--ui-on-brand); font-size: var(--font-caption); font-weight: var(--weight-bold); line-height: 1; font-variant-numeric: tabular-nums; }
+  .online-count { top: -5px; background: var(--ui-danger); }
   .presence-chip { bottom: -5px; width: 22px; padding: 0; background: var(--ui-brand); }
-  .presence-chip.offline { background: var(--color-error-600); }
+  .presence-chip.offline { background: var(--ui-danger); }
 </style>

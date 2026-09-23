@@ -24,8 +24,3 @@
     href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css"
   />
 </svelte:head>
-
-<style>
-  .reading-panel { width: 100%; max-width: none; }
-  .reading-panel > .prose { max-width: min(80ch, calc(var(--reading-width) + 8ch)); margin-inline: auto; }
-</style>

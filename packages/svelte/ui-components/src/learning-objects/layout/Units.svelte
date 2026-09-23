@@ -39,7 +39,7 @@
     {#if hasVisibleLos(unit)}
     <div class="relative mb-8 w-full min-w-0">
       <div class="flex w-full justify-between pb-2">
-        <h2 id={unit.id} class="p-2 text-xl font-semibold">
+        <h2 id={unit.id} class="ui-section-title p-2">
           {unit.title}
         </h2>
         <div class="flex items-center gap-2">

@@ -327,7 +327,7 @@ test('online users opens a centred dialog, closes the account menu and restores 
   await profile.click();
   const viewOnline = page.getByRole('button', { name: 'View 1 Online', exact: true });
   const share = page.getByRole('button', { name: 'Share Presence · On', exact: true });
-  expect((await viewOnline.locator('.ml-2').boundingBox())!.x).toBe((await share.locator('.ml-2').boundingBox())!.x);
+  expect((await viewOnline.locator('.menu-label').boundingBox())!.x).toBe((await share.locator('.menu-label').boundingBox())!.x);
   for (const property of ['padding-left', 'padding-right', 'height']) {
     expect(await viewOnline.evaluate((el, prop) => getComputedStyle(el).getPropertyValue(prop), property))
       .toBe(await share.evaluate((el, prop) => getComputedStyle(el).getPropertyValue(prop), property));

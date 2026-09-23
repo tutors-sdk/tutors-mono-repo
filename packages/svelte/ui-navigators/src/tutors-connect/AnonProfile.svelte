@@ -19,7 +19,7 @@
 {/snippet}
 
 {#snippet menuContent()}
-  <p class="mb-3 px-3 text-sm font-semibold">{t("menu.anonName")}</p>
+  <p class="menu-name">{t("menu.anonName")}</p>
   <ul class="space-y-1">
     {#if env.PUBLIC_ANON_MODE !== "TRUE"}
       <MenuItem link="/auth{redirect}" text={t("menu.connect")} type="github" />

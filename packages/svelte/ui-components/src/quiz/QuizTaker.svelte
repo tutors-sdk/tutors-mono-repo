@@ -49,20 +49,12 @@
     await tick(); heading?.focus();
   }
 
-  function stepClass(index: number): string {
-    const base = "ui-button min-w-11 text-sm";
-    if (index === currentIndex) return `${base} bg-[var(--ui-brand)] text-[var(--ui-on-brand)]`;
-    if (answers[quiz.questions[index].id] !== undefined) {
-      return `${base} bg-[var(--ui-selected)] text-[var(--ui-ink)]`;
-    }
-    return `${base} bg-[var(--ui-surface)] text-[var(--ui-muted)]`;
-  }
 </script>
 
 {#if submitted}
   <div class="mt-4 space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 bind:this={heading} tabindex="-1" class="text-xl font-semibold">{title} — Results</h2>
+      <h2 bind:this={heading} tabindex="-1" class="ui-section-title">{title} — Results</h2>
       <button
         class="ui-button"
         onclick={retake}
@@ -75,24 +67,24 @@
 {:else}
   <div class="mt-4 space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 bind:this={heading} tabindex="-1" class="text-xl font-semibold">{title}</h2>
-      <span class="text-surface-500 text-sm">
+      <h2 bind:this={heading} tabindex="-1" class="ui-section-title">{title}</h2>
+      <span class="ui-muted quiz-meta">
         Question {currentIndex + 1} of {quiz.questions.length}
       </span>
     </div>
 
     <div
-      class="bg-surface-200 dark:bg-surface-700 h-2 w-full rounded-full"
+      class="quiz-progress"
       role="progressbar"
       aria-valuenow={answeredCount}
       aria-valuemin={0}
       aria-valuemax={quiz.questions.length}
       aria-label="Questions answered"
     >
-      <div class="bg-[var(--ui-brand)] h-2 rounded-full transition-all" style="width: {progress}%"></div>
+      <div style="width: {progress}%"></div>
     </div>
 
-    <p class="ui-muted text-sm" aria-live="polite">{answeredCount} of {quiz.questions.length} answered</p>
+    <p class="ui-muted quiz-meta" aria-live="polite">{answeredCount} of {quiz.questions.length} answered</p>
     <div class="ui-panel">
       <QuizQuestion
         questionIndex={currentIndex}
@@ -108,7 +100,7 @@
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <button
-        class="ui-button disabled:opacity-50"
+        class="ui-button"
         onclick={() => goTo(currentIndex - 1)}
         disabled={currentIndex === 0}
       >
@@ -117,7 +109,7 @@
 
       <div class="flex flex-wrap gap-2">
         {#each quiz.questions as question, i (question.id)}
-          <button class={stepClass(i)} onclick={() => goTo(i)} aria-current={i === currentIndex ? "step" : undefined} aria-label="Go to question {i + 1}">
+          <button class="ui-button quiz-step" class:answered={answers[question.id] !== undefined} onclick={() => goTo(i)} aria-current={i === currentIndex ? "step" : undefined} aria-label="Go to question {i + 1}">
             {i + 1}
           </button>
         {/each}
@@ -125,7 +117,7 @@
 
       {#if currentIndex === quiz.questions.length - 1}
         <button
-          class="ui-button ui-button-primary disabled:opacity-50"
+          class="ui-button ui-button-primary"
           onclick={submit}
           disabled={!allAnswered}
         >
@@ -139,3 +131,11 @@
     </div>
   </div>
 {/if}
+<style>
+  .quiz-meta { font-size: var(--font-label); }
+  .quiz-progress { height: 8px; width: 100%; border-radius: 999px; background: var(--ui-raised); }
+  .quiz-progress > div { height: 100%; border-radius: inherit; background: var(--ui-brand); transition: width 150ms; }
+  .quiz-step { min-width: 44px; font-size: var(--font-label); }
+  .quiz-step:not(.answered):not([aria-current]) { color: var(--ui-muted); }
+  @media (prefers-reduced-motion: reduce) { .quiz-progress > div { transition: none; } }
+</style>

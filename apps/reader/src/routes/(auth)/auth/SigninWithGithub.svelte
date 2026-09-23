@@ -22,7 +22,7 @@
 </script>
 
 <div class="ui-page" style="max-width: 960px">
-  <p class="ui-eyebrow">{t("menu.profile")}</p>
+  <p class="ui-eyebrow">Tutors</p>
   <h1 class="ui-title mb-6">{t("auth.signIn")}</h1>
   <section class="ui-panel mb-6">
     {#if failed}<p role="alert">{t("shell.loadError")}</p>{/if}

@@ -25,16 +25,16 @@
 
 <div class="space-y-6 text-center">
   {#if !downloaded}
-    <p class="text-lg font-semibold">Your course is ready!</p>
+    <p class="ui-section-title">Your course is ready!</p>
     <p class="ui-muted">
-      Click below to download your editable course as a <code class="code">.zip</code> of Markdown source.
+      Click below to download your editable course as a <code>.zip</code> of Markdown source.
     </p>
     <button
       class="ui-button ui-button-primary"
       onclick={ondownload}>Download {courseId}.zip</button
     >
   {:else}
-    <p class="text-lg font-semibold text-success-600 dark:text-success-400">Downloaded!</p>
+    <p class="ui-section-title text-[var(--ui-success)]">Downloaded!</p>
     <div
       class="ui-panel prose prose-sm dark:prose-invert max-w-none text-left"
     >

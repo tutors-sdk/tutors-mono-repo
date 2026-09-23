@@ -165,7 +165,7 @@
     >
       <div class="p-4">
         <div role="status" aria-live="polite">
-          <h3 class="text-sm font-bold mb-1">{t(step.titleKey)}</h3>
+          <h3 class="text-[length:var(--font-label)] font-semibold mb-1">{t(step.titleKey)}</h3>
           <p class="text-sm text-[var(--ui-muted)] mb-4">{t(step.descriptionKey)}</p>
         </div>
 

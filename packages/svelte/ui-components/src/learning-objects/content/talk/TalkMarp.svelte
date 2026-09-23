@@ -116,12 +116,12 @@
       <Progress value={null} />
     </div>
   {:else if error}
-    <div class="flex items-center justify-center p-8 text-sm text-red-500">
+    <div class="ui-empty flex flex-wrap items-center justify-center gap-3" role="alert">
       {error}
       <button class="ui-button" onclick={loadSlides}>Retry</button>
     </div>
   {:else if totalSlides === 0}
-    <div class="flex items-center justify-center p-8 text-sm opacity-60">
+    <div class="ui-empty flex items-center justify-center">
       No slides found in this presentation.
     </div>
   {:else}
@@ -141,8 +141,9 @@
     width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;
+    /* Slides keep their authored white stage in both appearances. */
     background: white;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-small);
   }
   .marp-viewport:fullscreen {
     display: flex;

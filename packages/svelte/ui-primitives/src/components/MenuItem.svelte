@@ -16,20 +16,18 @@
   {#if link}
     <a
       href={link}
-      class="group btn flex w-full justify-between {isActive ? '' : 'hover:preset-tonal'}"
       style={isActive ? 'background-color: var(--ui-selected);' : ''}
       target={targetStr}
     >
-      <div class="ml-2">{text}</div>
+      <span class="menu-label">{text}</span>
       <Icon {type} />
     </a>
   {:else}
     <button
-      class="group btn flex w-full justify-between {isActive ? '' : 'hover:preset-tonal'}"
       style={isActive ? 'background-color: var(--ui-selected);' : ''}
       onclick={onClick}
     >
-      <div class="ml-2">{text}</div>
+      <span class="menu-label">{text}</span>
       <Icon {type} />
     </button>
   {/if}

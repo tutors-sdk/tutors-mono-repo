@@ -15,7 +15,7 @@
   <iframe
     title={lo.title}
     data-testid="embed-iframe"
-    style="border-radius:12px"
+    style="border-radius: var(--radius-card)"
     src="https://open.spotify.com/embed/episode/{episodeId}?utm_source=generator?utm_source=generator"
     width="100%"
     height="152"
@@ -25,7 +25,7 @@
   ></iframe>
 
   <div class="mt-4 flex flex-col gap-2">
-    <p class="text-lg font-semibold">{lo.title}</p>
+    <p class="ui-section-title">{lo.title}</p>
     {#if !hideSummary}
       <div class="prose dark:prose-invert text-sm">
         {@html sanitizeHtml(lo.summary ?? "")}

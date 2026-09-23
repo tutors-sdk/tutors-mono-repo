@@ -66,7 +66,7 @@
       <nav aria-label="Notebook cells">
         <ol class="grid gap-1">
           {#each notebook.cells as cell, i}
-            <li><button class="notebook-step" aria-current={activeIndex === i ? 'step' : undefined} onclick={() => handleCellClick(i)}><span class="ui-muted">{i + 1}</span>{notebook.isSolutionCell(cell) ? 'Solution' : notebook.getCellLabel(cell, i)}<span class="ui-muted ml-auto text-xs">{cell.cellType}</span></button></li>
+            <li><button class="notebook-step" aria-current={activeIndex === i ? 'step' : undefined} onclick={() => handleCellClick(i)}><span class="ui-muted">{i + 1}</span>{notebook.isSolutionCell(cell) ? 'Solution' : notebook.getCellLabel(cell, i)}<span class="ui-muted cell-type">{cell.cellType}</span></button></li>
           {/each}
         </ol>
       </nav>
@@ -74,7 +74,7 @@
 
     <!-- Main content area -->
     <div class="min-w-0 flex-1 reading-panel" use:copyCode>
-      <div id="notebook-panel" class="mt-[-60px] block pt-[60px]">
+      <div id="notebook-panel" class="notebook-cells mt-[-60px] block pt-[60px]">
         {#key currentCodeTheme.value}
           {#each notebook.cells as cell, i}
             <NotebookCell
@@ -97,12 +97,14 @@
 
   <nav aria-label="Notebook cell navigation" class="ui-actions mt-4 justify-between">
     <button class="ui-button" disabled={activeIndex <= 0} onclick={() => handleCellClick(activeIndex - 1)}>Previous cell</button>
-    <span class="ui-muted text-sm">Cell {activeIndex + 1} of {notebook.cells.length}</span>
+    <span class="ui-muted cell-count">Cell {activeIndex + 1} of {notebook.cells.length}</span>
     <button class="ui-button" disabled={activeIndex >= notebook.cells.length - 1} onclick={() => handleCellClick(activeIndex + 1)}>Next cell</button>
   </nav>
 </div>
 <style>
-  .notebook-content { max-width: calc(var(--reading-width, 720px) + 80px); margin-inline: auto; }
+  .notebook-cells { max-width: min(80ch, calc(var(--reading-width) + 8ch)); margin-inline: auto; }
+  .cell-count { font-size: var(--font-label); }
+  .cell-type { margin-left: auto; font-size: var(--font-caption); }
   .notebook-outline { padding: var(--space-3) var(--space-4); }
   .notebook-outline nav { max-height: 320px; overflow: auto; margin-top: var(--space-3); }
   .notebook-step { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3); text-align: left; border-radius: var(--radius-control); font-size: var(--font-label); overflow-wrap: anywhere; }

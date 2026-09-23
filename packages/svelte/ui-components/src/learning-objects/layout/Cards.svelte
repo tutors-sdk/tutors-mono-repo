@@ -68,7 +68,7 @@
               {#if isEducator.value && contentLocks.value.get(lo.route)}
                 <button
                   aria-label="Unlock {lo.title}"
-                  class="absolute top-2 right-2 z-20 rounded-lg bg-surface-200 p-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-surface-700"
+                  class="absolute top-2 right-2 z-20 rounded-[var(--radius-control)] bg-[var(--ui-raised)] p-1 opacity-70 transition-opacity hover:opacity-100"
                   onclick={() => rbacService.toggleContentLock(lo.route, !contentLocks.value.get(lo.route))}
                 >
                   <Icon type="lock" height="20" />

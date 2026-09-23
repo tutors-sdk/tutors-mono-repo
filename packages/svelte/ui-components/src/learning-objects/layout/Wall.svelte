@@ -26,18 +26,15 @@
 
 <SecondaryNavigator lo={currentCourse.value} parentCourse={currentCourse.value?.properties?.parent} />
 <div class="ui-page">
-  <h1 class="ui-title mb-6 capitalize">{type} · {t("shell.resources")}</h1>
+  <p class="ui-eyebrow">{t("shell.resources")}</p>
+  <h1 class="ui-title wall-title capitalize">{type}</h1>
   {#key los}
     {#if type !== "video" && type !== "podcast"}
       <Cards {los} />
     {:else if locksReady}
       {#if type === "podcast"}
-        <div class="grid grid-cols-1 gap-6 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {#each visibleLos as lo}
-            <div class="flex justify-center">
-              <Podcast {lo} hideSummary={true} />
-            </div>
-          {/each}
+        <div class="ui-grid">
+          {#each visibleLos as lo}<Podcast {lo} hideSummary={true} />{/each}
         </div>
       {:else}
         <div class="flex flex-wrap justify-center">
@@ -58,3 +55,6 @@
     {/if}
   {/key}
 </div>
+<style>
+  .wall-title { margin-block: var(--space-2) var(--space-6); }
+</style>

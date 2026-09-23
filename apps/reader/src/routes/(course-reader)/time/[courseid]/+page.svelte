@@ -49,13 +49,26 @@
 
 <SecondaryNavigator lo={data?.lo} parentCourse={data.lo?.parentCourse?.properties?.parent} />
 <div class="ui-page">
-  <h1 class="ui-title mb-6">{t("shell.myTime")}</h1>
-  {#if isLoading}<p role="status">{t("shell.loading")}</p>{/if}
-  {#if failed}<div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => retry++}>{t("shell.retry")}</button></div>{/if}
-  <div class="ui-panel mb-6 overflow-x-auto">
-    <HeatMaps {studentCalendar} />
-  </div>
-  <div class="ui-panel overflow-x-auto">
-    <Tables {studentCalendar} />
+  <p class="ui-eyebrow">{t("shell.myTime")}</p>
+  <h1 class="ui-title time-title">{t("time.title")}</h1>
+  <p class="ui-muted">{t("time.description")}</p>
+  <div class="time-body">
+    {#if !tutorsId.value?.login}
+      <div class="ui-empty ui-actions justify-between"><p>{t("time.signedOut")}</p><a class="ui-button ui-button-primary" href="/auth/{currentCourse.value?.courseId ?? ''}">{t("auth.signInWithGithub")}</a></div>
+    {:else if isLoading}
+      <p role="status">{t("shell.loading")}</p>
+    {:else if failed}
+      <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => retry++}>{t("shell.retry")}</button></div>
+    {:else if studentCalendar}
+      <div class="overflow-x-auto"><HeatMaps {studentCalendar} /></div>
+      <div class="overflow-x-auto"><Tables {studentCalendar} /></div>
+    {:else}
+      <p class="ui-empty">{t("time.noRecords")}</p>
+    {/if}
   </div>
 </div>
+
+<style>
+  .time-title { margin-block: var(--space-2); }
+  .time-body { display: grid; gap: var(--space-6); margin-top: var(--space-8); }
+</style>

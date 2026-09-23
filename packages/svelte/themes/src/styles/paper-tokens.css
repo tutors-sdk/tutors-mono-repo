@@ -124,6 +124,7 @@
   --ui-info: light-dark(var(--info), var(--dark-info));
   --ui-warning: light-dark(var(--warning), var(--dark-warning));
   --ui-danger: light-dark(var(--danger), var(--dark-danger));
+  --ui-success: light-dark(var(--type-success-light), var(--type-success-dark));
   --ui-raised: light-dark(var(--light-raised), var(--dark-raised));
 }
 

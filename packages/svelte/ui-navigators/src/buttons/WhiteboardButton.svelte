@@ -77,7 +77,7 @@
 {#if showEditor}
   <dialog bind:this={overlayEl} class="course-whiteboard" aria-label="Course whiteboard" onclose={closeEditor}>
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] px-4 py-3" style="z-index: 1;">
-      <span class="text-lg font-semibold">Course whiteboard · Shared</span>
+      <span class="ui-section-title">Course whiteboard · Shared</span>
       <button
         class="ui-button"
         onclick={closeEditor}
@@ -89,7 +89,7 @@
     <div class="relative flex-1">
       {#if loading}
         <div class="absolute inset-0 flex items-center justify-center">
-          <span class="loading loading-spinner loading-lg"></span>
+          <p role="status" class="ui-muted">{t("shell.loading")}</p>
         </div>
       {/if}
       <iframe

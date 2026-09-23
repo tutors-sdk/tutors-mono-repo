@@ -63,17 +63,17 @@
       <Tabs.Content value="locks">
         <div class="space-y-1 p-2">
           {#if lockGroups.length === 0 || lockGroups.every((g) => g.los.length === 0)}
-            <p class="text-sm text-surface-500">{t("lecturer.locks.empty")}</p>
+            <p class="ui-muted info-text">{t("lecturer.locks.empty")}</p>
           {:else}
             {#each lockGroups as group}
               {#if group.title}
-                <h4 class="mt-2 mb-1 text-xs font-semibold uppercase text-surface-500">{group.title}</h4>
+                <h4 class="ui-eyebrow mt-2 mb-1">{group.title}</h4>
               {/if}
               {#each group.los as lo}
-                <div class="flex items-center justify-between rounded-lg p-2 hover:preset-tonal">
+                <div class="info-row flex items-center justify-between">
                   <span class="flex items-center gap-2 overflow-hidden">
                     <Icon type={lo.type} height="20" />
-                    <span class="truncate text-sm">{lo.title}</span>
+                    <span class="truncate info-text">{lo.title}</span>
                   </span>
                   <Switch
                     aria-label={`Lock ${lo.title}`}
@@ -97,10 +97,10 @@
         <div class="space-y-3 p-2">
           {#if enrollment?.educators && enrollment.educators.length > 0}
             <div>
-              <h4 class="mb-1 text-sm font-medium">Educators</h4>
+              <h4 class="info-heading">Educators</h4>
               <ul class="space-y-1">
                 {#each enrollment.educators as user}
-                  <li class="flex items-center gap-2 rounded-lg p-2 text-sm hover:preset-tonal">
+                  <li class="info-row info-text flex items-center gap-2">
                     <Icon type="github" height="16" />
                     {user}
                   </li>
@@ -110,11 +110,11 @@
           {/if}
 
           {#if enrollment?.whitelist && enrollment.whitelist.length > 0}
-            <div class="border-t pt-2">
-              <h4 class="mb-1 text-sm font-medium">{t("lecturer.enrollment.whitelist")}</h4>
+            <div class="info-divider">
+              <h4 class="info-heading">{t("lecturer.enrollment.whitelist")}</h4>
               <ul class="space-y-1">
                 {#each enrollment.whitelist as user}
-                  <li class="flex items-center gap-2 rounded-lg p-2 text-sm hover:preset-tonal">
+                  <li class="info-row info-text flex items-center gap-2">
                     <Icon type="github" height="16" />
                     {user}
                   </li>
@@ -124,14 +124,14 @@
           {/if}
 
           {#if enrollment?.students && enrollment.students.length > 0}
-            <div class="border-t pt-2">
-              <h4 class="mb-1 text-sm font-medium">Students</h4>
+            <div class="info-divider">
+              <h4 class="info-heading">Students</h4>
               <ul class="space-y-1">
                 {#each enrollment.students as student}
-                  <li class="flex items-center gap-2 rounded-lg p-2 text-sm hover:preset-tonal">
+                  <li class="info-row info-text flex items-center gap-2">
                     <Icon type="github" height="16" />
                     <span>{student.name}</span>
-                    <span class="text-surface-500">({student.id})</span>
+                    <span class="ui-muted">({student.id})</span>
                   </li>
                 {/each}
               </ul>
@@ -139,7 +139,7 @@
           {/if}
 
           {#if !enrollment}
-            <p class="text-sm text-surface-500">No enrollment file detected.</p>
+            <p class="ui-muted info-text">No enrollment file detected.</p>
           {/if}
         </div>
       </Tabs.Content>
@@ -170,3 +170,10 @@
 {/snippet}
 
 <Sidebar presentation={showEducatorPanel ? "drawer" : "dialog"} title={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.title")} {menuSelector} {sidebarContent} width={showEducatorPanel ? "w-2xl" : "w-xl"} ariaLabel={showEducatorPanel ? t("lecturer.panel.tip") : t("nav.info.tip")} />
+<style>
+  .info-text { font-size: var(--font-label); }
+  .info-heading { margin-bottom: var(--space-1); font-size: var(--font-label); font-weight: var(--weight-medium); }
+  .info-row { padding: var(--space-2); border-radius: var(--radius-control); }
+  .info-row:hover { background: var(--ui-selected); }
+  .info-divider { padding-top: var(--space-2); border-top: 1px solid var(--ui-border); }
+</style>

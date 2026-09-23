@@ -30,7 +30,7 @@
 <section class="flex min-h-[60vh] flex-col items-center justify-center p-8 text-center" role="alert" aria-live="assertive">
   <h1 class="ui-eyebrow">{status}</h1>
   <h2 class="mt-4 ui-title">{info.heading}</h2>
-  <p class="text-surface-500 mt-3 max-w-md text-lg">{info.guidance}</p>
+  <p class="ui-muted error-guidance mt-3 max-w-md">{info.guidance}</p>
 
   <nav class="mt-8 flex flex-wrap items-center justify-center gap-4" aria-label="Error recovery options">
     <a href="/" class="ui-button ui-button-primary">Go Home</a>
@@ -44,3 +44,7 @@
     </a>
   </nav>
 </section>
+
+<style>
+  .error-guidance { font-size: var(--font-reading); }
+</style>

@@ -37,7 +37,7 @@
   }}
 >
   <div>
-    <label class="label mb-1 font-semibold" for="unitCount">Number of Units</label>
+    <label class="ui-label" for="unitCount">Number of Units</label>
     <input id="unitCount" class="input w-full" type="number" required
       min="1" max="12" bind:value={unitCount} />
     <p class="mt-1 text-sm ui-muted">
@@ -45,7 +45,7 @@
     </p>
   </div>
   <div>
-    <label class="label mb-1 font-semibold" for="topicsPerUnit">Topics per Unit</label>
+    <label class="ui-label" for="topicsPerUnit">Topics per Unit</label>
     <input
       id="topicsPerUnit"
       class="input w-full"
@@ -61,24 +61,24 @@
   </div>
   <div class="flex flex-col gap-3">
     <label class="flex min-h-11 items-center gap-3">
-      <input type="checkbox" class="checkbox" bind:checked={includeSide} />
-      <span class="font-semibold">Include a Side unit</span>
+      <input type="checkbox" bind:checked={includeSide} />
+      <span class="font-medium">Include a Side unit</span>
     </label>
     <label class="flex min-h-11 items-center gap-3">
-      <input type="checkbox" class="checkbox" bind:checked={includeNotes} />
-      <span class="font-semibold">Include a note in each topic</span>
+      <input type="checkbox" bind:checked={includeNotes} />
+      <span class="font-medium">Include a note in each topic</span>
     </label>
     <label class="flex min-h-11 items-center gap-3">
-      <input type="checkbox" class="checkbox" bind:checked={includeLabs} />
-      <span class="font-semibold">Include a lab in each topic</span>
+      <input type="checkbox" bind:checked={includeLabs} />
+      <span class="font-medium">Include a lab in each topic</span>
     </label>
     <label class="flex min-h-11 items-center gap-3">
-      <input type="checkbox" class="checkbox" bind:checked={includeCalendar} />
-      <span class="font-semibold">Include a calendar</span>
+      <input type="checkbox" bind:checked={includeCalendar} />
+      <span class="font-medium">Include a calendar</span>
     </label>
     <label class="flex min-h-11 items-center gap-3">
-      <input type="checkbox" class="checkbox" bind:checked={includeEnrollment} />
-      <span class="font-semibold">Include an enrollment list</span>
+      <input type="checkbox" bind:checked={includeEnrollment} />
+      <span class="font-medium">Include an enrollment list</span>
     </label>
   </div>
   <p class="text-sm ui-muted">
@@ -87,20 +87,20 @@
     course private.
   </p>
 
-  <div class="border-t border-surface-300 pt-4 dark:border-surface-600">
-    <p class="mb-3 font-semibold">Repository files</p>
+  <div class="border-t border-[var(--ui-border)] pt-4">
+    <h3 class="ui-section-title mb-3">Repository files</h3>
     <div class="flex flex-col gap-3">
       <label class="flex min-h-11 items-center gap-3">
-        <input type="checkbox" class="checkbox" bind:checked={includeGitignore} />
-        <span class="font-semibold">Include a .gitignore</span>
+        <input type="checkbox" bind:checked={includeGitignore} />
+        <span class="font-medium">Include a .gitignore</span>
       </label>
       <label class="flex min-h-11 items-center gap-3">
-        <input type="checkbox" class="checkbox" bind:checked={includeReadme} />
-        <span class="font-semibold">Include a README</span>
+        <input type="checkbox" bind:checked={includeReadme} />
+        <span class="font-medium">Include a README</span>
       </label>
       {#if includeReadme}
         <div>
-          <label class="label mb-1 text-sm font-semibold" for="readmeDescription">README description</label>
+          <label class="ui-label" for="readmeDescription">README description</label>
           <textarea
             id="readmeDescription"
             class="input w-full resize-y"

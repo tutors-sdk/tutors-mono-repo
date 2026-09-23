@@ -168,6 +168,10 @@ Die Live-Funktion, die im Profilmenu verfügbar ist, kann diese Daten ebenfalls 
 Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finden Sie hier](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
+  "time.title": "Deine erfasste Aktivität",
+  "time.description": "Die Zeit, die du auf jeder Seite dieses Kurses verbringst. Erfasste Zeit ist unabhängig vom Abschluss.",
+  "time.signedOut": "Melde dich mit GitHub an, um die in diesem Kurs erfasste Zeit zu sehen.",
+  "time.noRecords": "Für diesen Kurs wurde noch keine Aktivität erfasst.",
   "time.name": "Name",
   "time.github": "Github",
   "time.total": "Gesamt",

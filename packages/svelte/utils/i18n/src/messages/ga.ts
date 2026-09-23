@@ -166,6 +166,10 @@ Féadfaidh an ghné Beo, ar fáil ón roghchlár próifíle, na sonraí seo a ú
 Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin sonraí [anseo](https://github.com/tutors-sdk/tutors/blob/development/src/lib/services/analytics.ts).`,
 
   // Time tables
+  "time.title": "Do ghníomhaíocht taifeadta",
+  "time.description": "An t-am a chaitheann tú ar gach leathanach den chúrsa seo. Tá an t-am taifeadta ar leith ó chríochnú an chúrsa.",
+  "time.signedOut": "Sínigh isteach le GitHub chun an t-am atá taifeadta agat sa chúrsa seo a fheiceáil.",
+  "time.noRecords": "Níl aon ghníomhaíocht taifeadta don chúrsa seo fós.",
   "time.name": "Ainm",
   "time.github": "Github",
   "time.total": "Iomlán",

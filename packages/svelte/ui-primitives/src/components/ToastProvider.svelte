@@ -12,8 +12,8 @@
     >
       <div class="flex items-start gap-3">
         <div class="flex-1">
-          <Toast.Title class="text-sm font-bold">{toast.title}</Toast.Title>
-          <Toast.Description class="text-surface-500 mt-1 text-sm">{toast.description}</Toast.Description>
+          <Toast.Title class="text-[length:var(--font-label)] font-semibold">{toast.title}</Toast.Title>
+          <Toast.Description class="ui-muted mt-1 text-[length:var(--font-label)]">{toast.description}</Toast.Description>
         </div>
         <div class="flex items-center gap-2">
           {#if toast.meta?.actionUrl}
@@ -27,7 +27,7 @@
               {toast.meta.actionLabel ?? "Go"}
             </button>
           {/if}
-          <Toast.CloseTrigger aria-label="Close notification" class="text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 text-lg leading-none">
+          <Toast.CloseTrigger aria-label="Close notification" class="ui-muted hover:text-[var(--ui-ink)] text-[length:var(--font-section)] leading-none">
             &times;
           </Toast.CloseTrigger>
         </div>

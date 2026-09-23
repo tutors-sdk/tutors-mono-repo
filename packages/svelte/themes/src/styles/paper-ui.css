@@ -1,5 +1,6 @@
 @import "./theme-overrides.css";
 /* Shared application chrome. Authored media and code themes retain their colours. */
+html { background: var(--ui-canvas); }
 body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui-font-family); font-size: var(--font-body); line-height: var(--ui-line-height); letter-spacing: var(--ui-letter-spacing); word-spacing: var(--ui-word-spacing); }
 :where(button, input, select, textarea) { font-family: inherit; letter-spacing: inherit; word-spacing: inherit; }
 :where(pre, code, kbd, samp, .cm-editor) { letter-spacing: normal; word-spacing: normal; }
@@ -23,20 +24,22 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .ui-eyebrow { font-size: var(--font-small); font-weight: var(--weight-bold); letter-spacing: var(--ui-label-spacing); text-transform: var(--ui-label-transform); color: var(--ui-brand); }
 .ui-title { font-size: var(--font-title); font-weight: var(--weight-semibold); line-height: 1.25; overflow-wrap: anywhere; }
 .ui-muted { color: var(--ui-muted); }
+.ui-label { display: block; margin-bottom: var(--space-2); font-size: var(--font-label); font-weight: var(--weight-medium); }
 .ui-page { padding: var(--space-8) var(--space-10); max-width: 1600px; margin-inline: auto; }
 .ui-panel { padding: var(--space-6); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-surface); }
 .ui-empty { padding: var(--space-8); border: 1px dashed var(--ui-border); border-radius: var(--radius-card); color: var(--ui-muted); }
 .ui-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .ui-section-heading { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: space-between; align-items: baseline; margin-block: var(--space-8) var(--space-4); }
-.ui-section-heading h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); }
+.ui-section-heading h2, .ui-section-title { font-size: var(--font-section); font-weight: var(--weight-semibold); line-height: var(--leading-heading); }
 .ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); width: 100%; }
 .prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
 .prose :where(pre, table) { max-width: 100%; overflow-x: auto; }
 .prose table { display: block; }
 .prose :where(img, iframe, video) { max-width: 100%; }
 .reader-content { min-width: 0; padding: var(--space-8) var(--space-10); }
-.reading-panel { min-width: 0; max-width: calc(var(--reading-width) + 2 * var(--space-10)); margin-inline: auto; padding: var(--space-8) var(--space-10); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); }
-.reading-panel > .prose { width: 100%; max-width: var(--reading-width); font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
+/* Reading panels span the content column; the text inside stays at a readable measure. */
+.reading-panel { width: 100%; min-width: 0; padding: var(--space-8) var(--space-10); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); }
+.reading-panel > .prose { width: 100%; max-width: min(80ch, calc(var(--reading-width) + 8ch)); margin-inline: auto; font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
 @media (max-width: 767px) { .ui-page, .reader-content { padding: var(--space-5) var(--space-4); } .reading-panel { padding: var(--space-5) var(--space-4); } .ui-title { font-size: var(--font-heading); } }
 @media (prefers-reduced-motion: reduce) { :where(button, a) { transition: none; } }
 
@@ -61,8 +64,9 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .media-viewer:fullscreen { overflow: auto; border-radius: 0; background: var(--ui-surface); }
 .media-viewer:fullscreen canvas { max-height: calc(100dvh - 120px); object-fit: contain; }
 .prose hr { margin-block: var(--space-6); border-color: var(--ui-border); }
-.ui-button[aria-current="step"] { background: var(--ui-selected); border-color: var(--ui-brand); box-shadow: inset 0 -2px var(--ui-brand); }
-.ui-button:disabled { color: var(--ui-disabled-ink); cursor: not-allowed; }
+.ui-button:is([aria-current="step"], [aria-pressed="true"]) { background: var(--ui-selected); border-color: var(--ui-brand); box-shadow: inset 0 -2px var(--ui-brand); }
+/* Paper F3: disabled controls use neutral fill and text, never a faded brand. */
+.ui-button:disabled { background: var(--ui-raised); border-color: var(--ui-border); color: var(--ui-disabled-ink); box-shadow: none; cursor: not-allowed; }
 
 .prose { line-height: var(--ui-reading-leading); }
 .prose p { margin-block: var(--ui-paragraph-spacing); }

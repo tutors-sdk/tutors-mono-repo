@@ -13,7 +13,7 @@
 </script>
 
 <div class="flex">
-  <div class="flex-shrink-0 w-14 pt-3 text-right pr-2 font-mono text-xs text-surface-400 select-none">
+  <div class="flex-shrink-0 w-14 pt-3 text-right pr-2 font-mono text-xs ui-muted select-none">
     [{cell.executionCount ?? " "}]:
   </div>
   <div class="flex-1 min-w-0 overflow-x-auto">
@@ -21,7 +21,7 @@
       {@html sanitizeHtml(cell.sourceHtml ?? "")}
     </div>
     {#if cell.outputsHtml}
-      <div class="flex items-center border-t border-surface-200 dark:border-surface-700 px-3 py-1.5">
+      <div class="flex items-center border-t border-[var(--ui-border)] px-3 py-1.5">
         <button
           aria-expanded={revealed}
           class="run-button ui-button"
@@ -32,7 +32,7 @@
         </button>
       </div>
       {#if revealed}
-        <div class="notebook-outputs border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 p-3">
+        <div class="notebook-outputs border-t border-[var(--ui-border)] bg-[var(--ui-raised)] p-3">
           {@html sanitizeHtml(cell.outputsHtml ?? "")}
         </div>
       {/if}

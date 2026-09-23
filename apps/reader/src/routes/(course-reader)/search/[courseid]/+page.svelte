@@ -64,11 +64,10 @@
   .search-controls { display: flex; gap: var(--space-3); }
   input { min-width: 0; flex: 1; }
   .type-filters { margin-block: var(--space-5); }
-  button[aria-pressed="true"] { background: var(--ui-selected); border-color: var(--ui-brand); box-shadow: inset 0 -2px var(--ui-brand); }
   .result-count { margin-block: var(--space-6) var(--space-4); font-size: var(--font-label); }
   .search-results { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
   .ui-empty { grid-column: 1 / -1; }
-  .search-excerpt { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid color-mix(in srgb, var(--ui-ink) 12%, transparent); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .search-excerpt { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
   mark { padding-inline: 2px; border-radius: var(--radius-small); background: color-mix(in srgb, var(--ui-warning) 28%, transparent); color: var(--ui-ink); font-weight: var(--weight-semibold); }
   summary { font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }
 </style>

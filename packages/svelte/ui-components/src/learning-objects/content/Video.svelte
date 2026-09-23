@@ -43,7 +43,7 @@
       <div class="relative mx-auto w-full max-w-5xl" style="aspect-ratio: 16/9;">
         <iframe
           title={lo.title}
-          class="absolute inset-0 h-full w-full border border-[#464646] box-border"
+          class="absolute inset-0 h-full w-full border border-[var(--ui-border)] box-border"
           src={videoConfig.url}
           allow="autoplay"
           allowfullscreen
@@ -57,7 +57,7 @@
       </div>
     {/if}
     <br />
-    <p class="mt-4 text-lg font-semibold">{lo.title}</p>
+    <p class="ui-section-title mt-4">{lo.title}</p>
     <div class="prose dark:prose-invert text-sm">
       {@html sanitizeHtml(lo.summary ?? "")}
     </div>
