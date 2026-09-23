@@ -7,16 +7,16 @@
   const dates = $derived(studentCalendar.course?.dates ?? []);
   // Each of the student's maps sits beside the matching course median so the two read as a pair.
   const maps = $derived([
-    { title: t("time.calendarActivity"), values: studentCalendar.calendarByDay },
-    { title: t("time.calendarMedian"), values: studentCalendar.course?.calendarModel?.medianByDay?.row },
-    { title: t("time.labActivity"), values: studentCalendar.labsByDay },
-    { title: t("time.labMedian"), values: studentCalendar.course?.labsMedianByDay }
+    { id: "student-activity-heatmap", title: t("time.calendarActivity"), values: studentCalendar.calendarByDay },
+    { id: "course-median-heatmap", title: t("time.calendarMedian"), values: studentCalendar.course?.calendarModel?.medianByDay?.row },
+    { id: "student-lab-heatmap", title: t("time.labActivity"), values: studentCalendar.labsByDay },
+    { id: "lab-median-heatmap", title: t("time.labMedian"), values: studentCalendar.course?.labsMedianByDay }
   ].filter(map => map.values));
 </script>
 
 {#if dates.length && maps.length}
   <div class="heatmaps">
-    {#each maps as map}<Heatmap title={map.title} values={map.values!} {dates} />{/each}
+    {#each maps as map}<Heatmap id={map.id} title={map.title} values={map.values!} {dates} />{/each}
   </div>
 {/if}
 

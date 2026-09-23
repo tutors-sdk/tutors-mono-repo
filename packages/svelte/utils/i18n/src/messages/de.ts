@@ -185,7 +185,6 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "time.labActivity": "Laboraktivität",
   "time.calendarMedian": "Median-Kalenderaktivität des Kurses",
   "time.labMedian": "Median-Laboraktivität des Kurses",
-  "time.minutes": "Min.",
 
   // Content
   "content.slideOf": "von",

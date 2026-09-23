@@ -183,7 +183,6 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "time.labActivity": "Gníomhaíocht saotharlainne",
   "time.calendarMedian": "Gníomhaíocht féilire airmheánach an chúrsa",
   "time.labMedian": "Gníomhaíocht saotharlainne airmheánach an chúrsa",
-  "time.minutes": "nóim.",
 
   // Content
   "content.slideOf": "as",

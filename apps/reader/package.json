@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
-    "dompurify": "^3.4.14"
+    "dompurify": "^3.4.14",
+    "jheat.js": "^5.2.0"
   },
   "devDependencies": {
     "@auth/sveltekit": "^1.11.3",

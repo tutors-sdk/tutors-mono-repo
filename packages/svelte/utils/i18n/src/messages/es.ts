@@ -185,7 +185,6 @@ Tutors es una aplicación de código abierto; el componente de recopilación de 
   "time.labActivity": "Actividad de laboratorio",
   "time.calendarMedian": "Actividad mediana del calendario del curso",
   "time.labMedian": "Actividad mediana de laboratorio del curso",
-  "time.minutes": "min",
 
   // Content
   "content.slideOf": "de",

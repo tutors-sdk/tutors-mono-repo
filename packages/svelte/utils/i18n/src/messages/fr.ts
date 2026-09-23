@@ -185,7 +185,6 @@ Tutors est une application open source - le composant de collecte des données [
   "time.labActivity": "Activité des labs",
   "time.calendarMedian": "Activité médiane du calendrier du cours",
   "time.labMedian": "Activité médiane des labs du cours",
-  "time.minutes": "min",
 
   // Content
   "content.slideOf": "de",

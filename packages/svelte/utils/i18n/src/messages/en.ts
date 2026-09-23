@@ -185,7 +185,6 @@ Tutors is an open source application - the data collection component [is here](h
   "time.labActivity": "Lab activity",
   "time.calendarMedian": "Course median calendar activity",
   "time.labMedian": "Course median lab activity",
-  "time.minutes": "min",
 
   // Content
   "content.slideOf": "of",

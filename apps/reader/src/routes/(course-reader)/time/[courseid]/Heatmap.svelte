@@ -1,63 +1,95 @@
 <script lang="ts">
-  import { t, locale } from "@tutors/i18n";
-  import { formatDateShort } from "@tutors/tutors-time-lib";
-  import { heatColor, minutesOf } from "./heat";
+  import { onMount } from "svelte";
+  import { minutesOf } from "./heat";
 
-  /** Minutes per day keyed by date (YYYY-MM-DD) across the course's dates. */
-  let { title, values, dates }: { title: string; values: Record<string, unknown>; dates: string[] } = $props();
+  /** Minutes per day keyed by date (YYYY-MM-DD); Heat.js fills in the days between, so quiet days show as empty. */
+  let { title, values, dates, id }: { title: string; values: Record<string, unknown>; dates: string[]; id: string } = $props();
+  let container: HTMLDivElement;
 
-  const iso = (day: Date) => `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-  const inCourse = $derived(new Set(dates));
-
-  /** Monday-first weeks from the first to the last course date. */
-  const weeks = $derived.by(() => {
-    const sorted = [...dates].sort();
-    if (!sorted.length) return [];
-    const day = new Date(`${sorted[0]}T12:00:00`);
-    day.setDate(day.getDate() - ((day.getDay() + 6) % 7));
-    const result: string[][] = [];
-    while (iso(day) <= sorted[sorted.length - 1]) {
-      const week: string[] = [];
-      for (let i = 0; i < 7; i++, day.setDate(day.getDate() + 1)) week.push(iso(day));
-      result.push(week);
-    }
-    return result;
-  });
-
-  const monthName = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString(locale.value, { month: "short" });
-  /** Label a week when it holds the first of a month, or when it opens the grid. */
-  const monthLabel = (week: string[], index: number) => {
-    const first = week.find(date => date.endsWith("-01"));
-    return first ? monthName(first) : index === 0 ? monthName(week[0]) : "";
+  type Heat = {
+    render: (element: HTMLElement, options: object) => void;
+    updateDate: (id: string, date: Date, count: number, type?: string, refresh?: boolean) => void;
+    refresh: (id: string) => void;
+    destroy: (id: string) => void;
   };
-  const weekday = (offset: number) => new Date(2024, 0, 1 + offset).toLocaleDateString(locale.value, { weekday: "short" });
+
+  onMount(() => {
+    let heat: Heat | undefined;
+    (async () => {
+      await import("jheat.js");
+      await import("jheat.js/dist/heat.js.css");
+      heat = (window as unknown as { $heat?: Heat }).$heat;
+      if (!heat || !container.isConnected) return;
+      // Only the months the course runs in, so the map isn't mostly empty year.
+      const months = [...new Set(dates.map(date => Number(date.slice(5, 7))))].sort((a, b) => a - b);
+      const view = { monthsToShow: months };
+      heat.render(container, {
+        defaultView: "map",
+        defaultYear: Number(dates[dates.length - 1]?.slice(0, 4)) || undefined,
+        sideMenu: { enabled: false },
+        title: { showText: false, showSectionText: true, showTitleDropDownButton: true, showYearSelector: true, showRefreshButton: false, showExportButton: false, showImportButton: false, showClearButton: false, showConfigurationButton: false },
+        guide: { enabled: false },
+        yearlyStatistics: { enabled: false },
+        useLocalStorageForData: false,
+        showOnlyDataForYearsAvailable: true,
+        views: { map: view, line: view, chart: view },
+        // The same bands as the tables; the day-color classes are tinted from the design tokens below.
+        colorRanges: [[1, "1–29 min"], [30, "30–89 min"], [90, "90–199 min"], [200, "200+ min"]].map(([minimum, name], index) => ({ id: String(index + 1), name, tooltipText: name, minimum, cssClassName: `day-color-${index + 1}` }))
+      });
+      for (const date of dates) heat.updateDate(id, new Date(`${date}T12:00:00`), minutesOf(values[date]), "Unknown", false);
+      heat.refresh(id);
+    })();
+    return () => {
+      try { heat?.destroy(id); } catch { /* Heat.js throws if Svelte has already removed the element */ }
+    };
+  });
 </script>
 
 <section class="ui-panel heatmap-panel">
   <h2 class="ui-section-title">{title}</h2>
-  <div class="heatmap" style:--weeks={weeks.length}>
-    <span></span>
-    <div class="months" aria-hidden="true">{#each weeks as week, index}<span>{monthLabel(week, index)}</span>{/each}</div>
-    <div class="weekdays" aria-hidden="true">{#each [0, 2, 4] as offset}<span style:grid-row={offset + 1}>{weekday(offset)}</span>{/each}</div>
-    <div class="days" role="img" aria-label={title}>
-      {#each weeks as week}
-        {#each week as date}
-          {@const minutes = minutesOf(values[date])}
-          <span class:outside={!inCourse.has(date)} style:background-color={heatColor(minutes) || null} title={`${formatDateShort(date)} · ${minutes} ${t("time.minutes")}`}></span>
-        {/each}
-      {/each}
-    </div>
-  </div>
+  <div class="heatmap-host"><div bind:this={container} {id} role="img" aria-label={title}></div></div>
 </section>
 
 <style>
   .heatmap-panel { min-width: 0; }
-  .heatmap { display: grid; grid-template-columns: auto minmax(0, calc(var(--weeks) * 28px)); justify-content: start; gap: var(--space-2) var(--space-3); margin-top: var(--space-4); overflow-x: auto; }
-  .months, .days { display: grid; grid-template-columns: repeat(var(--weeks), minmax(10px, 1fr)); gap: 3px; }
-  .months { font-size: var(--font-caption); color: var(--ui-muted); white-space: nowrap; }
-  .weekdays { display: grid; grid-template-rows: repeat(7, 1fr); gap: 3px; font-size: var(--font-caption); color: var(--ui-muted); line-height: 1; align-items: center; }
-  .days { grid-template-rows: repeat(7, auto); grid-auto-flow: column; }
-  .days span { aspect-ratio: 1; border-radius: 3px; background: var(--ui-canvas); box-shadow: inset 0 0 0 1px var(--ui-border); }
-  .days span[style] { box-shadow: none; }
-  .days .outside { visibility: hidden; }
+  .heatmap-host { min-height: 200px; margin-top: var(--space-3); overflow-x: auto; }
+  .heatmap-host :global(div.heat-js) { max-width: none; border: 0; }
+  /* Heat.js themes itself with :root variables (its tooltip lives on <body>); html:root outranks its stylesheet. */
+  :global(html:root) {
+    --heat-js-default-font: var(--font-interface), system-ui, sans-serif;
+    --heat-js-container-background-color: transparent;
+    --heat-js-container-border-color: var(--ui-border);
+    --heat-js-color-white: var(--ui-muted);
+    --heat-js-color-snow-white: var(--ui-ink);
+    --heat-js-color-black: var(--ui-raised);
+    --heat-js-color-black-dark: var(--ui-surface);
+    --heat-js-title-background-color: transparent;
+    --heat-js-years-background-color: transparent;
+    --heat-js-day-background-color: var(--ui-canvas);
+    --heat-js-button-background-color: var(--ui-surface);
+    --heat-js-button-background-color-hover: var(--ui-selected);
+    --heat-js-button-background-color-active: var(--ui-selected);
+    --heat-js-button-text-color: var(--ui-ink);
+    --heat-js-button-text-color-hover: var(--ui-brand);
+    --heat-js-button-text-color-active: var(--ui-brand);
+    --heat-js-button-color-disabled: var(--ui-disabled-ink);
+    --heat-js-tooltip-background-color: var(--ui-surface);
+    --heat-js-tooltip-text-color: var(--ui-ink);
+    --heat-js-border-radius: var(--radius-control);
+    --heat-js-border-control-radius: var(--radius-control);
+    --heat-js-border-radius-day: 4px;
+    --heat-js-scroll-bar-thumb-color: var(--ui-border);
+    --heat-js-day-color-1-background-color: color-mix(in srgb, var(--ui-success) 30%, var(--ui-surface));
+    --heat-js-day-color-1-border-color: transparent;
+    --heat-js-day-color-1-text-color: var(--ui-ink);
+    --heat-js-day-color-2-background-color: color-mix(in srgb, var(--ui-success) 50%, var(--ui-surface));
+    --heat-js-day-color-2-border-color: transparent;
+    --heat-js-day-color-2-text-color: var(--ui-ink);
+    --heat-js-day-color-3-background-color: color-mix(in srgb, var(--ui-success) 72%, var(--ui-surface));
+    --heat-js-day-color-3-border-color: transparent;
+    --heat-js-day-color-3-text-color: var(--ui-ink);
+    --heat-js-day-color-4-background-color: color-mix(in srgb, var(--ui-danger) 55%, var(--ui-surface));
+    --heat-js-day-color-4-border-color: transparent;
+    --heat-js-day-color-4-text-color: var(--ui-ink);
+  }
 </style>
