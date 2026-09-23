@@ -52,8 +52,20 @@
 
 <style>
   .heatmap-panel { min-width: 0; }
-  .heatmap-host { min-height: 200px; margin-top: var(--space-3); overflow-x: auto; }
+  /* No overflow here: Heat.js scrolls its own map, and clipping would cut off its dropdown menus. */
+  .heatmap-host { min-height: 200px; margin-top: var(--space-3); }
   .heatmap-host :global(div.heat-js) { max-width: none; border: 0; }
+  /* The view picker reads as a compact select; its menus match the app's popovers. */
+  .heatmap-host :global(div.heat-js div.title-bar div.title) { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); border: 1px solid var(--ui-border); border-radius: var(--radius-control); font-size: var(--font-meta); font-weight: var(--weight-medium); color: var(--ui-ink); }
+  .heatmap-host :global(div.heat-js div.title-bar div.title div.titles-menu-container) { top: 100%; left: 0; }
+  .heatmap-host :global(div.heat-js div.title-bar div.title div.down-arrow) { margin: 0; border-left-width: 4px; border-right-width: 4px; border-top-width: 6px; }
+  .heatmap-host :global(div.heat-js div.title-bar div.title span.section-text) { display: none; }
+  .heatmap-host :global(div.heat-js div.title-bar div.title span.section-text-name) { margin: 0; font-weight: var(--weight-medium); }
+  .heatmap-host :global(div.heat-js div.title-bar div.title div.titles-menu-container div.titles-menu), .heatmap-host :global(div.heat-js div.title-bar div.year-text div.years-menu-container div.years-menu) { padding: var(--space-2); border-radius: var(--radius-panel); box-shadow: 0 12px 32px #0000001a; }
+  .heatmap-host :global(div.heat-js div.title-bar div.title div.titles-menu-container div.titles-menu div.title-menu-header) { padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--font-caption) !important; font-weight: var(--weight-semibold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ui-muted); }
+  .heatmap-host :global(div.heat-js div.title-bar div.title div.titles-menu-container div.titles-menu div.title-menu-item) { margin: 0; padding-left: var(--space-3); border-radius: var(--radius-control); color: var(--ui-ink); }
+  .heatmap-host :global(div.heat-js div.title-bar div.title div.titles-menu-container div.titles-menu div.title-menu-item::before) { display: none; }
+  .heatmap-host :global(div.heat-js div.title-bar div.year-text div.years-menu-container div.years-menu div.year-menu-item) { border-radius: var(--radius-control); color: var(--ui-ink); }
   /* Heat.js themes itself with :root variables (its tooltip lives on <body>); html:root outranks its stylesheet. */
   :global(html:root) {
     --heat-js-default-font: var(--font-interface), system-ui, sans-serif;
@@ -63,8 +75,20 @@
     --heat-js-color-snow-white: var(--ui-ink);
     --heat-js-color-black: var(--ui-raised);
     --heat-js-color-black-dark: var(--ui-surface);
-    --heat-js-title-background-color: transparent;
-    --heat-js-years-background-color: transparent;
+    --heat-js-border-size: 1px;
+    --heat-js-left-border: 1px;
+    --heat-js-title-background-color: var(--ui-surface);
+    --heat-js-title-border-color: var(--ui-border);
+    --heat-js-title-text-color: var(--ui-ink);
+    --heat-js-title-background-color-hover: var(--ui-selected);
+    --heat-js-title-text-color-hover: var(--ui-brand);
+    --heat-js-title-opener-text-color-hover: var(--ui-brand);
+    --heat-js-years-background-color: var(--ui-surface);
+    --heat-js-years-border-color: var(--ui-border);
+    --heat-js-years-text-color: var(--ui-ink);
+    --heat-js-years-background-color-hover: var(--ui-selected);
+    --heat-js-years-text-color-hover: var(--ui-brand);
+    --heat-js-years-current-color: var(--ui-brand);
     --heat-js-day-background-color: var(--ui-canvas);
     --heat-js-button-background-color: var(--ui-surface);
     --heat-js-button-background-color-hover: var(--ui-selected);
