@@ -1,11 +1,11 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { fitsViewport } from "./support";
+import { course, fitsViewport } from "./support";
 
 // Proves tests/bdd/features/ui/resource-cards.feature: one test per scenario, titled and tagged to match.
 
 const typicalTopic = "/topic/reference-course/topic-01-typical";
-const programme = "/course/wit-hdip-comp-sci-2023";
-const weeklyTopic = "/topic/setu-hdip-comp-sci-2024-comp-sys/topic-03-week3";
+// Public pages only: real institution courses can require sign-in, which CI does not have.
+const cardPages = [course, typicalTopic];
 
 const cardOfType = (page: Page, type: string) => page.locator(".resource-card").filter({ has: page.locator(`.resource-type[title="${type}"]`) }).first();
 const boxes = (cards: Locator) => cards.evaluateAll(all => all.slice(0, 2).map(card => card.getBoundingClientRect().toJSON() as DOMRect));
@@ -43,7 +43,7 @@ test("Cards in a grid share the tallest height", { tag: "@rule-0030" }, async ({
 
 test("Phone viewport stacks cards in one column", { tag: "@rule-0031" }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const url of [programme, weeklyTopic]) {
+  for (const url of cardPages) {
     await page.goto(url);
     const cards = page.locator(".main-group .resource-card");
     await expect(cards.nth(1)).toBeVisible();
@@ -55,7 +55,7 @@ test("Phone viewport stacks cards in one column", { tag: "@rule-0031" }, async (
 
 test("Desktop viewport sets cards side by side", { tag: "@rule-0031" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  for (const url of [programme, weeklyTopic]) {
+  for (const url of cardPages) {
     await page.goto(url);
     const cards = page.locator(".main-group .resource-card");
     await expect(cards.nth(1)).toBeVisible();

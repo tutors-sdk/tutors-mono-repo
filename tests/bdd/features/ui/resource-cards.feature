@@ -29,13 +29,13 @@ Feature: Resource cards
     @active
     Scenario: Phone viewport stacks cards in one column
       Given the viewport is 390 pixels wide
-      When a student opens a programme course and a topic
+      When a student opens the course home and a topic
       Then each card starts below the one before it
 
     @inactive
     Scenario: Desktop viewport sets cards side by side
       Given the viewport is 1440 pixels wide
-      When a student opens a programme course and a topic
+      When a student opens the course home and a topic
       Then the first two cards share a row and each is narrower than 400 pixels
 
   @rule-0032 @ears-event-driven
