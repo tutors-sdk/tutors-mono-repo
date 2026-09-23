@@ -72,7 +72,7 @@
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
         <span class="resource-type" title={cardDetails.type}>
-          <Icon type={cardDetails.type} height="26" />
+          <Icon icon={themeService.getIcon(cardDetails.type).type} color="var(--resource-accent)" height="26" />
           <span class="visually-hidden">{cardDetails.type}</span>
         </span>
       </div>
