@@ -35,6 +35,8 @@ const ga = {
   "shell.preferences": "Sainroghanna",
   "shell.steps": "Céimeanna",
   "shell.fullWidth": "Leithead iomlán",
+  "shell.standardWidth": "Caighdeánach",
+  "shell.contentWidth": "Leithead an ábhair",
   "shell.startHere": "Tosaigh anseo",
   "shell.openTopic": "Oscail topaic",
   "shell.topics": "Topaicí an chúrsa",

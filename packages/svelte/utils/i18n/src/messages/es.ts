@@ -35,6 +35,8 @@ const es: Record<string, string> = {
   "shell.preferences": "Preferencias",
   "shell.steps": "Pasos",
   "shell.fullWidth": "Ancho completo",
+  "shell.standardWidth": "Estándar",
+  "shell.contentWidth": "Ancho del contenido",
   "shell.startHere": "Empieza aquí",
   "shell.openTopic": "Abrir tema",
   "shell.topics": "Temas del curso",

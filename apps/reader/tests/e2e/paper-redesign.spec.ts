@@ -267,7 +267,8 @@ test('larger tinted cards, wide labs and mobile menus keep the Paper layout', as
   await expect.poll(async () => (await prose.boundingBox())!.width).toBeGreaterThan(1000);
   await page.reload();
   await expect(fullWidth).toHaveAttribute('aria-pressed', 'true');
-  await fullWidth.click();
+  await page.getByRole('button', { name: 'Standard', exact: true }).click();
+  await expect(fullWidth).toHaveAttribute('aria-pressed', 'false');
   await expect.poll(async () => (await prose.boundingBox())!.width).toBeLessThan(1000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();

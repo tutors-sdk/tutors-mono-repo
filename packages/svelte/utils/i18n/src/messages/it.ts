@@ -35,6 +35,8 @@ const it: Record<string, string> = {
   "shell.preferences": "Preferenze",
   "shell.steps": "Passaggi",
   "shell.fullWidth": "Larghezza piena",
+  "shell.standardWidth": "Standard",
+  "shell.contentWidth": "Larghezza del contenuto",
   "shell.startHere": "Inizia qui",
   "shell.openTopic": "Apri argomento",
   "shell.topics": "Argomenti del corso",
