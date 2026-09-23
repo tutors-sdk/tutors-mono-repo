@@ -66,6 +66,8 @@ test('every theme reaches chrome, controls and reading content in both appearanc
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
     await expect(preferences).toBeVisible();
+    // The popover moves focus in and starts listening for Escape on the next frame; wait for that, as a person would.
+    await expect.poll(() => preferences.evaluate(el => el.contains(document.activeElement))).toBe(true);
     expect(await preferences.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
     await page.keyboard.press('Escape');
     await expect(preferences).not.toBeVisible();

@@ -246,8 +246,8 @@ test('larger tinted cards, wide labs and mobile menus keep the Paper layout', as
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/topic/reference-course/topic-01-typical');
   await expect(page.locator('.shell-navigation').getByText('Companions', { exact: true })).toBeVisible();
-  const lab = page.locator('.resource-card').filter({ has: page.locator('.resource-type', { hasText: /^lab$/ }) }).first();
-  const talk = page.locator('.resource-card').filter({ has: page.locator('.resource-type', { hasText: /^talk$/ }) }).first();
+  const lab = page.locator('.resource-card').filter({ has: page.locator('.resource-type[title="lab"]') }).first();
+  const talk = page.locator('.resource-card').filter({ has: page.locator('.resource-type[title="talk"]') }).first();
   await expect(lab).toBeVisible();
   await expect(talk).toBeVisible();
   expect(await lab.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await talk.evaluate(el => getComputedStyle(el).backgroundColor));
@@ -265,8 +265,9 @@ test('larger tinted cards, wide labs and mobile menus keep the Paper layout', as
   await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
   const preferences = page.getByRole('dialog', { name: 'Preferences', exact: true });
   await expect(preferences).toBeVisible();
-  // Hit testing catches the course-title row painting over the portalled menu.
-  expect(await preferences.evaluate(el => {
+  // Hit testing catches the course-title row painting over the portalled menu. Poll: the popover is
+  // positioned a frame after it becomes visible, and until then it sits over the header.
+  await expect.poll(() => preferences.evaluate(el => {
     const box = el.getBoundingClientRect();
     return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + 20));
   })).toBe(true);

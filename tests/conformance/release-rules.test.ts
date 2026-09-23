@@ -179,5 +179,6 @@ describe("release rules.json for this repository", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+    // Spawns a tsx child process; under a full parallel run that alone can pass the 5s default.
+  }, 30_000);
 });
