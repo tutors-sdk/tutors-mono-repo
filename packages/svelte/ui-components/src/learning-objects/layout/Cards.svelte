@@ -49,7 +49,7 @@
 
 {#if los.length > 0 && isLoaded && (isEducator.value || !currentCourse.value?.hasEnrollment || locksLoaded.value)}
   <div class="w-full">
-    <div class="ui-grid">
+    <div class="ui-grid card-grid">
       {#key refresh}
         {#each los as lo}
           {#if !lo.hide && !(rbacService.isLoLocked(lo) && !isEducator.value)}
@@ -81,7 +81,3 @@
     </div>
   </div>
 {/if}
-
-<style>
-  .ui-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
-</style>

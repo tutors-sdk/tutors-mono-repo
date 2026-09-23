@@ -84,6 +84,7 @@
     gap: var(--space-5);
     padding: var(--space-5);
     border: 1px solid var(--resource-accent);
+    border-block-width: 8px;
     border-radius: var(--radius-panel);
     background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface));
   }

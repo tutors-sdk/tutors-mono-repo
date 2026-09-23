@@ -89,7 +89,8 @@
   </article>
 {/if}
 <style>
-  .resource-card { position: relative; height: 100%; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
+  /* The type colour bands the top and bottom edges, like the original playing cards. */
+  .resource-card { position: relative; height: 100%; min-height: var(--card-height, auto); min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 8px; border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
   .resource-card:has(.resource-link:hover) { background: color-mix(in srgb, var(--resource-background) 86%, var(--ui-surface)); }
   .resource-link { display: grid; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
   .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
@@ -99,7 +100,7 @@
   h3 { font-size: var(--font-size-19); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
   .resource-type { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--resource-accent); }
   .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .resource-summary { margin-top: var(--space-4); font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .resource-summary { margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
   .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }

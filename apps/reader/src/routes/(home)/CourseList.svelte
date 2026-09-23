@@ -37,7 +37,7 @@
   {#if !loaded}<p role="status">{t("shell.loading")}</p>{/if}
   {#if failed}<div role="alert" class="ui-empty">{t("shell.loadError")} <button class="ui-button" onclick={loadCourses}>{t("shell.retry")}</button></div>{/if}
   <h2 class="ui-section-title mt-8 mb-4">{t("home.favourites")}</h2>
-  <div class="ui-grid">
+  <div class="ui-grid card-grid">
     {#each courseVisits.filter((cv) => cv.favourite) as courseVisit (courseVisit.id)}
       <CourseVisitCard {courseVisit} {deleteCourse} {starUnstarCourse} />
     {/each}
@@ -45,7 +45,7 @@
 
   {#if loaded && !courseVisits.some(cv => cv.favourite)}<p class="ui-empty">{t("shell.emptyFavourites")}</p>{/if}
   <h2 class="ui-section-title mt-8 mb-4">{t("home.recentlyAccessed")}</h2>
-  <div class="ui-grid">
+  <div class="ui-grid card-grid">
     {#each courseVisits.filter((cv) => !cv.favourite) as courseVisit (courseVisit.id)}
       <CourseVisitCard {courseVisit} {deleteCourse} {starUnstarCourse} />
     {/each}

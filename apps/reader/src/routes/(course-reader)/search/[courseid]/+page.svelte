@@ -44,7 +44,7 @@
     <details class="resource-walls"><summary>{t("shell.resources")}</summary><div class="ui-actions">{#each data.course.wallBar.bar as wall}<a class="ui-button" href={wall.link}><Icon type={wall.type} />{wall.tip}</a>{/each}</div></details>
   {/if}
   <p class="result-count ui-muted" role="status" aria-live="polite">{results.length} {t("shell.resultCount")}{query ? ` · “${query}”` : ""}</p>
-  <div class="ui-grid search-results">
+  <div class="ui-grid card-grid search-results">
     {#each results as result (result.lo.route)}
       <div class="min-w-0">
         <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}}>
@@ -65,7 +65,6 @@
   input { min-width: 0; flex: 1; }
   .type-filters { margin-block: var(--space-5); }
   .result-count { margin-block: var(--space-6) var(--space-4); font-size: var(--font-label); }
-  .search-results { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
   .ui-empty { grid-column: 1 / -1; }
   .search-excerpt { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
   mark { padding-inline: 2px; border-radius: var(--radius-small); background: color-mix(in srgb, var(--ui-warning) 28%, transparent); color: var(--ui-ink); font-weight: var(--weight-semibold); }

@@ -37,6 +37,10 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .ui-lift { transition: transform 180ms ease-out; }
 .ui-lift:is(:hover, :focus-within) { transform: scale(1.02); }
 @media (prefers-reduced-motion: reduce) { .ui-lift { transition: none; } .ui-lift:is(:hover, :focus-within) { transform: none; } }
+/* Resource cards share one portrait geometry everywhere (course, topic, side units, walls, search). */
+/* Flexible columns from a 220px minimum, so cards fill narrow columns beside side units too;
+   every row takes the height of the grid's tallest card. */
+.ui-grid.card-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); grid-auto-rows: 1fr; }
 .ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); width: 100%; }
 .prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
 .prose :where(pre, table) { max-width: 100%; overflow-x: auto; }
@@ -45,7 +49,7 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .reader-content { min-width: 0; padding: var(--space-8) var(--space-10); }
 /* Reading panels span the content column; the text inside stays at a readable measure. */
 .reading-panel { width: 100%; min-width: 0; padding: var(--space-8) var(--space-10); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); }
-.reading-panel > .prose { width: 100%; max-width: min(80ch, calc(var(--reading-width) + 8ch)); margin-inline: auto; font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
+.reading-panel > .prose { width: 100%; max-width: min(88ch, calc(var(--reading-width) + 16ch)); margin-inline: auto; font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
 @media (max-width: 767px) { .ui-page, .reader-content { padding: var(--space-5) var(--space-4); } .reading-panel { padding: var(--space-5) var(--space-4); } .ui-title { font-size: var(--font-heading); } }
 @media (prefers-reduced-motion: reduce) { :where(button, a) { transition: none; } }
 
