@@ -58,6 +58,8 @@ export interface ThemeService {
   layout: { value: LayoutType };
   lightMode: any;
   cardStyle: { value: CardStyleType };
+  /** Lab and note text fills the reading panel instead of keeping a comfortable line length */
+  fullWidthReading: { value: boolean };
   /** Tracks if festive snow animation is active */
   isSnowing: boolean;
 
@@ -68,6 +70,7 @@ export interface ThemeService {
   setLayout(layout: string): void;
   toggleLayout(): void;
   setCardStyle(style: string): void;
+  setFullWidthReading(full: boolean): void;
   getIcon(type: string): IconType;
   addIcon(type: string, icon: IconType): void;
   getTypeColour(type: string): string;

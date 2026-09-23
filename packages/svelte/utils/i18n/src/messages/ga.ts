@@ -34,6 +34,7 @@ const ga = {
   "shell.whiteboard": "Clár bán",
   "shell.preferences": "Sainroghanna",
   "shell.steps": "Céimeanna",
+  "shell.fullWidth": "Leithead iomlán",
   "shell.startHere": "Tosaigh anseo",
   "shell.openTopic": "Oscail topaic",
   "shell.topics": "Topaicí an chúrsa",

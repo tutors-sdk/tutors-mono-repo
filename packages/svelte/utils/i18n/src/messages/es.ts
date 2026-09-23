@@ -34,6 +34,7 @@ const es: Record<string, string> = {
   "shell.whiteboard": "Pizarra",
   "shell.preferences": "Preferencias",
   "shell.steps": "Pasos",
+  "shell.fullWidth": "Ancho completo",
   "shell.startHere": "Empieza aquí",
   "shell.openTopic": "Abrir tema",
   "shell.topics": "Temas del curso",

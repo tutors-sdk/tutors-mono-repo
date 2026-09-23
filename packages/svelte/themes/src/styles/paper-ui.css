@@ -48,8 +48,10 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .prose :where(img, iframe, video) { max-width: 100%; }
 .reader-content { min-width: 0; padding: var(--space-8) var(--space-10); }
 /* Reading panels span the content column; the text inside stays at a readable measure. */
-.reading-panel { width: 100%; min-width: 0; padding: var(--space-8) var(--space-10); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); }
+.reading-panel { container-type: inline-size; width: 100%; min-width: 0; padding: var(--space-8) var(--space-10); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); }
 .reading-panel > .prose { width: 100%; max-width: min(88ch, calc(var(--reading-width) + 16ch)); margin-inline: auto; font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
+/* Panels that offer the full-width toggle drop the comfortable line length when the reader turns it on. */
+:root[data-full-width-reading] .reading-panel:has(.width-toggle) > .prose { max-width: none; }
 @media (max-width: 767px) { .ui-page, .reader-content { padding: var(--space-5) var(--space-4); } .reading-panel { padding: var(--space-5) var(--space-4); } .ui-title { font-size: var(--font-heading); } }
 @media (prefers-reduced-motion: reduce) { :where(button, a) { transition: none; } }
 

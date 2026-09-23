@@ -261,6 +261,14 @@ test('larger tinted cards, wide labs and mobile menus keep the Paper layout', as
   expect((await prose.boundingBox())!.width).toBeGreaterThan(720);
   expect((await prose.boundingBox())!.width).toBeLessThan(1000);
   await page.screenshot({ path: testInfo.outputPath('wide-lab.png') });
+  const fullWidth = page.getByRole('button', { name: 'Full width', exact: true });
+  await fullWidth.click();
+  await expect(fullWidth).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(async () => (await prose.boundingBox())!.width).toBeGreaterThan(1000);
+  await page.reload();
+  await expect(fullWidth).toHaveAttribute('aria-pressed', 'true');
+  await fullWidth.click();
+  await expect.poll(async () => (await prose.boundingBox())!.width).toBeLessThan(1000);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Open Theme Menu', exact: true }).click();
   const preferences = page.getByRole('dialog', { name: 'Preferences', exact: true });

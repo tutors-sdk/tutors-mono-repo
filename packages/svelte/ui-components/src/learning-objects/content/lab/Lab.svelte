@@ -4,6 +4,7 @@
   import { currentCodeTheme, mermaidify, copyCode } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { t } from "@tutors/i18n";
+  import WidthToggle from "../WidthToggle.svelte";
   let { lab }: { lab: LiveLab } = $props();
   const previous = $derived(lab.prevStep());
   const next = $derived(lab.nextStep());
@@ -27,7 +28,7 @@
     <nav aria-label={t("shell.steps")}><ul>{@html sanitizeHtml(lab.navbarHtml ?? "")}</ul></nav>
   </details>
   <div class="reading-panel">
-    <div class="reading-meta"><span class="ui-eyebrow">{lab.lab.title}</span><span>{t("shell.steps")} {lab.index + 1} / {lab.steps.length}</span></div>
+    <div class="reading-meta"><span class="ui-eyebrow">{lab.lab.title}</span><span class="reading-tools">{t("shell.steps")} {lab.index + 1} / {lab.steps.length}<WidthToggle /></span></div>
     <article class="prose dark:prose-invert prose-pre:overflow-x-auto" use:mermaidify={lab.content} use:copyCode>
       {#key currentCodeTheme.value}<div id="lab-panel">{@html sanitizeHtml(lab.content ?? "")}</div>{/key}
     </article>
@@ -39,6 +40,7 @@
 </div>
 <style>
   .reading-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); font-size: var(--font-meta); color: var(--ui-muted); margin-bottom: var(--space-6); }
+  .reading-tools { display: flex; align-items: center; gap: var(--space-3); }
   .step-pager { display: flex; justify-content: space-between; gap: var(--space-4); border-top: 1px solid var(--ui-border); margin-top: var(--space-8); padding-top: var(--space-6); }
   .step-pager a { max-width: 48%; flex-wrap: wrap; text-align: left; }
   .step-pager span { width: 100%; font-size: var(--font-caption); overflow-wrap: anywhere; }

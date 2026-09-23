@@ -34,6 +34,7 @@ const it: Record<string, string> = {
   "shell.whiteboard": "Lavagna",
   "shell.preferences": "Preferenze",
   "shell.steps": "Passaggi",
+  "shell.fullWidth": "Larghezza piena",
   "shell.startHere": "Inizia qui",
   "shell.openTopic": "Apri argomento",
   "shell.topics": "Argomenti del corso",

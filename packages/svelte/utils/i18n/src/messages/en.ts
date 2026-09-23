@@ -34,6 +34,7 @@ const en = {
   "shell.whiteboard": "Whiteboard",
   "shell.preferences": "Preferences",
   "shell.steps": "Steps",
+  "shell.fullWidth": "Full width",
   "shell.startHere": "Start here",
   "shell.openTopic": "Open topic",
   "shell.topics": "Course topics",

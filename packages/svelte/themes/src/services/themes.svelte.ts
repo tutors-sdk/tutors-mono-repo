@@ -38,6 +38,9 @@ export const themeService: ThemeService = {
   /** Current card style */
   cardStyle: rune<CardStyleType>("portrait"),
 
+  /** Lab and note text fills the reading panel */
+  fullWidthReading: rune<boolean>(false),
+
   /** Current light move layout */
   lightMode: rune<string>("light"),
 
@@ -64,6 +67,7 @@ export const themeService: ThemeService = {
     }
     this.setLayout(localStorage.layout);
     this.setCardStyle(localStorage.cardStyle);
+    this.setFullWidthReading(localStorage.fullWidthReading === "true");
   },
 
   /**
@@ -138,6 +142,16 @@ export const themeService: ThemeService = {
     }
     this.cardStyle.value = style;
     localStorage.cardStyle = style;
+  },
+
+  /**
+   * Sets and persists whether lab and note text fills the reading panel
+   * @param full - true to drop the comfortable line length
+   */
+  setFullWidthReading(full: boolean): void {
+    this.fullWidthReading.value = full;
+    localStorage.fullWidthReading = String(full);
+    document.documentElement.toggleAttribute("data-full-width-reading", full);
   },
 
   /**
