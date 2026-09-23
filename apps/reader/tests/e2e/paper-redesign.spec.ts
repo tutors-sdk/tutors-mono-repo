@@ -158,7 +158,7 @@ test('quiz answers survive question navigation and reset after a retake', async 
   await page.getByRole('button', { name: 'Previous', exact: true }).click();
   await expect(page.getByRole('radio').first()).toBeChecked();
   page.once('dialog', dialog => dialog.dismiss());
-  await page.locator('.shell-navigation').getByRole('link', { name: 'Course overview', exact: true }).click();
+  await page.locator('.shell-navigation').getByRole('link', { name: 'Course home', exact: true }).click();
   await expect(page).toHaveURL(/\/quiz\//);
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await page.getByRole('radio').first().check();

@@ -24,7 +24,7 @@ const en = {
   "shell.navigation": "Course navigation",
   "shell.myCourses": "My courses",
   "shell.learn": "Learn",
-  "shell.overview": "Course overview",
+  "shell.overview": "Course home",
   "shell.resources": "Resources",
   "shell.links": "Companions",
   "shell.tools": "Course tools",

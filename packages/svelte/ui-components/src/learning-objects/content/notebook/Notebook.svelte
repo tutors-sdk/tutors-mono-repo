@@ -102,7 +102,7 @@
   </nav>
 </div>
 <style>
-  .notebook-cells { max-width: min(80ch, calc(var(--reading-width) + 8ch)); margin-inline: auto; }
+  .notebook-cells { max-width: min(88ch, calc(var(--reading-width) + 16ch)); margin-inline: auto; }
   .cell-count { font-size: var(--font-label); }
   .cell-type { margin-left: auto; font-size: var(--font-caption); }
   .notebook-outline { padding: var(--space-3) var(--space-4); }

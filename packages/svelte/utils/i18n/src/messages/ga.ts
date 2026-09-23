@@ -24,7 +24,7 @@ const ga = {
   "shell.navigation": "Nascleanúint an chúrsa",
   "shell.myCourses": "Mo chúrsaí",
   "shell.learn": "Foghlaim",
-  "shell.overview": "Forbhreathnú an chúrsa",
+  "shell.overview": "Baile an chúrsa",
   "shell.resources": "Acmhainní",
   "shell.links": "Compánaigh",
   "shell.tools": "Uirlisí an chúrsa",
