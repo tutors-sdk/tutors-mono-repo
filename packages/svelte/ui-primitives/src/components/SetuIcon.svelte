@@ -6,6 +6,6 @@
   <img src="https://www.setu.ie/img/logos/setu-logo.svg" alt={t("footer.setuAlt")} class="h-4" />
 </a>
 <style>
-  /* White SETU logo on the neutral ink plate, the same in both appearances. */
-  .setu-plate { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-3); border-radius: var(--radius-control); background: var(--code-surface); }
+  /* SETU brand slate behind the white logo, the same in both appearances. */
+  .setu-plate { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-3); border-radius: var(--radius-control); background: #435465; }
 </style>
