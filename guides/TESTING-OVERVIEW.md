@@ -57,13 +57,13 @@ Every command below exists in the root `package.json`.
 | `pnpm test:tz` | Unit and property suites under UTC, Europe/Dublin and Pacific/Auckland |
 | `pnpm test:runway` | The repo-level suites: architecture, suite-health, completeness, observability, conformance, security, performance |
 | `pnpm test:mutation` | Stryker over the five targeted modules |
-| `pnpm test:e2e` | The three per-app Playwright smoke configs in sequence, each against `vite dev`. Local only — no workflow runs them |
-| `pnpm test:e2e:reader` / `:catalogue` / `:live` | One app's smoke config |
+| `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
+| `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
+| `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |
 | `pnpm e2e:stack:fixture` | Builds the fixture course (needs Deno) |
 | `pnpm e2e:stack:up` / `:down` | The tier G compose stack |
 | `pnpm test:e2e:stack` | The journeys against the running stack |
 | `pnpm test:e2e:stack:ratchet` | Fails on stale lines in the journey baselines |
-| `pnpm test:a11y` | `tests/e2e/accessibility.spec.ts` against `localhost:5173` |
 | `pnpm api-report` / `api-report:check` | Regenerate / verify `etc/*.api.md` |
 | `pnpm architecture-report` | Every dependency-cruiser violation, baselined ones included |
 | `pnpm check:knip` | Unused files, exports and dependencies |
@@ -93,7 +93,7 @@ Before opening a PR the expected local run is `pnpm lint` and `pnpm test`; see
 | A difference in generated course output | `tests/generator/corpus/`, claimed in `tests/generator/claims.yaml` | C |
 | A rule about the repository — config, manifests, docs, logs, headers | A pure function in `scripts/checks/`, a suite in `tests/<area>/` with negative fixtures | A, J, K, M, N, O |
 | A ceiling or floor — bundle size, Lighthouse, latency | The JSON beside the suite in `tests/performance/` | L |
-| Props, state or variant logic for a component | `tests/components/` — these are logic tests, not renders | — |
+| Something a student sees or does in the reader | A `@ui` Rule in `tests/bdd/features/ui/`, proved by a Playwright test in `apps/reader/tests/e2e/` | UI contract |
 
 New repo-level checks are written as a pure function plus a suite that runs it against a
 deliberately broken fixture first, then against the real repo.

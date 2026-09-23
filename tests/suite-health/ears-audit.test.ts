@@ -11,8 +11,10 @@ import {
   evaluate,
   findFeatureFiles,
   indexSteps,
+  indexUiTests,
   loadConfig,
   nextRuleId,
+  orphanUiTests,
   parseArgs,
   shrinkBaseline,
   type Violation
@@ -177,10 +179,41 @@ describe("EARS audit: binding", () => {
   });
 });
 
+describe("EARS audit: browser-proved (@ui) features", () => {
+  const uiFeature = "tests/bdd/features/ui/ui.feature";
+  const doc = parseGherkin(readText(resolve(ROOT, uiFeature)));
+  const uiTests = indexUiTests(ROOT);
+
+  it("reads Playwright tests' titles, tags, modifiers and lines under apps/<app>/tests/e2e", () => {
+    expect(uiTests.map((t) => [t.title, t.tags, t.modifier ?? "", t.line])).toEqual([
+      ["proved in a browser", ["@rule-0920"], "", 3],
+      ["skipped in a browser", ["@smoke", "@rule-0922"], "skip", 4],
+      ["renamed since the scenario was written", ["@rule-0920"], "", 5],
+      ["cites a Rule that is not in a @ui feature", ["@rule-0999"], "", 6],
+      ["carries no Rule id", ["@smoke"], "", 7]
+    ]);
+    expect(uiTests[0].file).toBe("apps/reader/tests/e2e/ui.spec.ts");
+  });
+
+  it("binds each scenario to a test with its title and Rule id, and needs no steps file", () => {
+    expect(auditDocument(uiFeature, doc, { steps: indexSteps(ROOT), uiTests }).map((v) => [v.code, v.subject])).toEqual([
+      ["unproved-scenario", "@rule-0921"],
+      ["rule-not-run", "@rule-0922"]
+    ]);
+  });
+
+  it("flags a test whose title is not a scenario of the Rule it cites, or that cites an unknown Rule", () => {
+    expect(orphanUiTests([{ file: uiFeature, doc }], uiTests).map((v) => v.subject)).toEqual([
+      "@rule-0920 renamed since the scenario was written",
+      "@rule-0999 cites a Rule that is not in a @ui feature"
+    ]);
+  });
+});
+
 describe("EARS audit: the whole fixture root", () => {
   it("audits every feature under tests/bdd/features and raises each violation code", () => {
     const files = findFeatureFiles(ROOT);
-    expect(files.map((f) => f.split(/[\\/]/).pop())).toEqual(["bad.feature", "binding.feature", "good.feature", "legacy.feature", "unbound.feature"]);
+    expect(files.map((f) => f.split(/[\\/]/).pop())).toEqual(["bad.feature", "binding.feature", "good.feature", "legacy.feature", "unbound.feature", "ui.feature"]);
     const codes = new Set(auditFiles(files, ROOT).map((v) => v.code));
     expect([...codes].sort()).toEqual(
       [
@@ -191,6 +224,7 @@ describe("EARS audit: the whole fixture root", () => {
         "no-rule",
         "no-scenarios",
         "obligation-keyword",
+        "orphan-ui-test",
         "rule-id",
         "rule-id-duplicate",
         "rule-not-run",
@@ -198,6 +232,7 @@ describe("EARS audit: the whole fixture root", () => {
         "system-name",
         "unbound-feature",
         "unbound-rule",
+        "unproved-scenario",
         "vague-language"
       ].sort()
     );

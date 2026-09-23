@@ -14,6 +14,12 @@
  * half it can see without running anything: a feature no steps file loads, and
  * a Rule title no steps file binds.
  *
+ * A feature tagged `@ui` states behaviour that needs a browser. Its scenarios are
+ * proved by Playwright tests under apps/<app>/tests/e2e instead of a steps file:
+ * each scenario needs a test with the same title tagged with its Rule id
+ * (`test("<scenario>", { tag: "@rule-0031" }, ...)`), and a test that cites a
+ * Rule id must be one of that Rule's scenarios.
+ *
  * Written in TypeScript so it runs where the other checks run (`tsx`, no new
  * toolchain) and shares the ratchet with them.
  */
@@ -29,6 +35,10 @@ export const STEPS_DIR = "tests/bdd/steps";
 export const BASELINE_FILE = "tests/bdd/ears-audit-baseline.txt";
 export const RETIRED_FILE = "tests/bdd/ears-retired-rule-ids.txt";
 export const CONFIG_FILE = "tests/bdd/ears-audit.config.json";
+/** Feature tag for Rules proved by Playwright tests rather than vitest-cucumber steps. */
+export const UI_TAG = "@ui";
+/** Where those Playwright tests live: apps/<app>/tests/e2e. */
+export const UI_TESTS_DIR = "apps";
 
 export type EarsPattern = "ubiquitous" | "event-driven" | "state-driven" | "unwanted" | "optional";
 const PATTERNS: readonly EarsPattern[] = ["ubiquitous", "event-driven", "state-driven", "unwanted", "optional"];
@@ -103,7 +113,9 @@ export type ViolationCode =
   | "dual-scenarios"
   | "unbound-feature"
   | "unbound-rule"
-  | "rule-not-run";
+  | "rule-not-run"
+  | "unproved-scenario"
+  | "orphan-ui-test";
 
 export interface Violation {
   code: ViolationCode;
@@ -212,11 +224,44 @@ export function indexSteps(root: string = REPO_ROOT): StepsIndex {
   return { byFeature };
 }
 
+export interface UiTest {
+  /** Repo-relative spec path. */
+  file: string;
+  line: number;
+  title: string;
+  tags: string[];
+  /** `skip`, `fixme`, `fail` or `only` when the test is declared with one. */
+  modifier: string | undefined;
+}
+
+/** Playwright tests that declare tags: `test("title", { tag: ... }, ...)` in apps/<app>/tests/e2e. */
+export function indexUiTests(root: string = REPO_ROOT): UiTest[] {
+  const tests: UiTest[] = [];
+  const specs = walk(join(root, UI_TESTS_DIR), (name) => name.endsWith(".spec.ts")).filter((path) => /[\\/]tests[\\/]e2e[\\/]/.test(path));
+  for (const path of specs) {
+    const text = readText(path);
+    for (const match of text.matchAll(/\btest(?:\.(skip|fixme|fail|only))?\(\s*(["'`])((?:\\.|(?!\2)[^\\])*)\2\s*,\s*\{\s*tag:\s*(\[[^\]]*\]|["'`][^"'`]*["'`])/g)) {
+      tests.push({
+        file: toPosix(path, root),
+        line: text.slice(0, match.index).split("\n").length,
+        title: match[3].replace(/\\(.)/g, "$1"),
+        tags: match[4].match(/@[\w-]+/g) ?? [],
+        modifier: match[1]
+      });
+    }
+  }
+  return tests;
+}
+
+const isUiFeature = (doc: GherkinDocument) => doc.featureTags.includes(UI_TAG);
+
 export interface AuditOptions {
   config?: AuditConfig;
   retired?: ReadonlySet<string>;
   /** When absent, binding is not checked (used by unit tests on bare fixtures). */
   steps?: StepsIndex;
+  /** Playwright tests that prove `@ui` features. When absent, their binding is not checked. */
+  uiTests?: UiTest[];
 }
 
 /** Violations in one feature file, given its repo-relative path and text. */
@@ -236,7 +281,9 @@ export function auditDocument(file: string, doc: GherkinDocument, options: Audit
   }
   for (const rule of doc.rules) out.push(...auditRule(rule, { file, config, retired }));
 
-  if (options.steps) {
+  if (isUiFeature(doc)) {
+    if (options.uiTests) out.push(...auditUiBinding(file, doc, options.uiTests));
+  } else if (options.steps) {
     const stepsTexts = options.steps.byFeature.get(file);
     if (!stepsTexts) {
       out.push({ code: "unbound-feature", file, line: doc.featureLine || 1, subject: "", message: "No steps file under tests/bdd/steps loads this feature with loadFeature(\"<literal path>\")." });
@@ -252,6 +299,46 @@ export function auditDocument(file: string, doc: GherkinDocument, options: Audit
     }
   }
   return out;
+}
+
+/** Each scenario of a `@ui` feature needs a Playwright test with its title, tagged with its Rule id, that runs. */
+function auditUiBinding(file: string, doc: GherkinDocument, uiTests: UiTest[]): Violation[] {
+  const out: Violation[] = [];
+  for (const rule of doc.rules) {
+    const id = ruleId(rule);
+    if (!id) continue;
+    const subject = `@rule-${id}`;
+    for (const scenario of rule.scenarios) {
+      const test = uiTests.find((t) => t.title === scenario.title && t.tags.includes(subject));
+      if (!test) {
+        out.push({ code: "unproved-scenario", file, line: scenario.line, subject, message: `No Playwright test proves "${scenario.title}": expected test("${scenario.title}", { tag: "${subject}" }, ...) under ${UI_TESTS_DIR}/<app>/tests/e2e.` });
+      } else if (test.modifier === "skip" || test.modifier === "fixme") {
+        out.push({ code: "rule-not-run", file, line: scenario.line, subject, message: `test.${test.modifier}(...) at ${test.file}:${test.line} turns this scenario off.` });
+      }
+    }
+  }
+  return out;
+}
+
+/** Playwright tests that cite a Rule id which is not a `@ui` Rule, or whose title is not one of that Rule's scenarios. */
+export function orphanUiTests(docs: { file: string; doc: GherkinDocument }[], uiTests: UiTest[]): Violation[] {
+  const scenarios = new Map<string, Set<string>>();
+  for (const { doc } of docs.filter(({ doc }) => isUiFeature(doc))) {
+    for (const rule of doc.rules) if (ruleId(rule)) scenarios.set(`@rule-${ruleId(rule)}`, new Set(rule.scenarios.map((s) => s.title)));
+  }
+  return uiTests.flatMap((test) =>
+    test.tags
+      .filter((tag) => RULE_ID_TAG.test(tag) && !scenarios.get(tag)?.has(test.title))
+      .map((tag) => ({
+        code: "orphan-ui-test" as const,
+        file: test.file,
+        line: test.line,
+        subject: `${tag} ${test.title}`,
+        message: scenarios.has(tag)
+          ? `"${test.title}" is not a scenario of ${tag}; rename the test to the scenario it proves, or add the scenario to the Rule.`
+          : `${tag} is not a Rule in a ${UI_TAG} feature under ${FEATURES_DIR}.`
+      }))
+  );
 }
 
 /** Duplicate ids across every audited file. Reported on every Rule that shares an id. */
@@ -290,9 +377,12 @@ export function auditFiles(files: string[], root: string = REPO_ROOT, options: A
   const config = options.config ?? loadConfig(root);
   const retired = options.retired ?? readRetired(root);
   const steps = options.steps ?? indexSteps(root);
+  const uiTests = options.uiTests ?? indexUiTests(root);
   const docs = files.map((path) => ({ file: toPosix(path, root), doc: parseGherkin(readText(path)) }));
-  const violations = docs.flatMap(({ file, doc }) => auditDocument(file, doc, { config, retired, steps }));
-  return [...violations, ...duplicateIds(docs)].sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.code.localeCompare(b.code));
+  const violations = docs.flatMap(({ file, doc }) => auditDocument(file, doc, { config, retired, steps, uiTests }));
+  // Citations are checked against every feature, so auditing a subset does not orphan the rest.
+  const allDocs = findFeatureFiles(root).map((path) => ({ file: toPosix(path, root), doc: parseGherkin(readText(path)) }));
+  return [...violations, ...duplicateIds(docs), ...orphanUiTests(allDocs, uiTests)].sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.code.localeCompare(b.code));
 }
 
 /** The next free Rule id: one more than the highest used or retired. */

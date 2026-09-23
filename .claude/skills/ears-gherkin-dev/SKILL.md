@@ -63,8 +63,13 @@ Do them in order. Do not write application code before step 6.
 - Do not weaken a Rule or delete a scenario to make a run green. If a scenario is wrong, say why.
 - `While`, `Where` and `If` are not Gherkin keywords. Use them in the Rule title, never at the
   start of a step; the suite-health tier fails a step that starts with one.
-- Behaviour that needs a browser (layout, focus, OAuth redirects) cannot be driven from these
-  steps. Write it as prose under `guides/specifications/` and say which tier covers it.
+- Behaviour that needs a browser (layout, focus, colour, keyboard, dialogs) is a `@ui` Rule in
+  `tests/bdd/features/ui/`, proved by Playwright instead of steps: each scenario is a
+  `test("<scenario title>", { tag: "@rule-NNNN" }, ...)` in `apps/reader/tests/e2e/`, and the audit
+  fails on a scenario with no test (`unproved-scenario`) or a test with no scenario
+  (`orphan-ui-test`). Steps 4 and 5 become: write the test, run `pnpm test:e2e:reader
+  --project=chromium -g @rule-NNNN`, and see it fail on the missing behaviour. Behaviour no test
+  can drive yet (a real OAuth sign-in) stays prose under `guides/specifications/`.
 - Commit the Rule, scenarios and steps with the implementation, so a reviewer sees the
   requirement change beside the code that satisfies it.
 
@@ -74,6 +79,7 @@ Do them in order. Do not write application code before step 6.
 |---|---|
 | `pnpm test:ears:audit --next-id` | Next free Rule id |
 | `pnpm test:bdd` | Run every feature through vitest-cucumber |
+| `pnpm test:e2e:reader --project=chromium -g @rule-NNNN` | Run the Playwright tests proving one `@ui` Rule |
 | `pnpm exec vitest run tests/bdd/steps/<persona>/<name>.steps.ts` | One feature |
 | `pnpm test:ears:audit` | Audit against the baseline (what CI runs) |
 | `pnpm test:ears:audit --strict path/to/x.feature` | Audit a feature with no baseline |
