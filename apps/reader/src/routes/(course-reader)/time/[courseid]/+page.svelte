@@ -60,8 +60,8 @@
     {:else if failed}
       <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => retry++}>{t("shell.retry")}</button></div>
     {:else if studentCalendar}
-      <div class="overflow-x-auto"><HeatMaps {studentCalendar} /></div>
-      <div class="overflow-x-auto"><Tables {studentCalendar} /></div>
+      <HeatMaps {studentCalendar} />
+      <Tables {studentCalendar} />
     {:else}
       <p class="ui-empty">{t("time.noRecords")}</p>
     {/if}
@@ -70,5 +70,5 @@
 
 <style>
   .time-title { margin-block: var(--space-2); }
-  .time-body { display: grid; gap: var(--space-6); margin-top: var(--space-8); }
+  .time-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); margin-top: var(--space-8); }
 </style>
