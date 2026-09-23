@@ -30,5 +30,6 @@
 </div>
 <style>
   .panel-stack { display: grid; gap: var(--space-4); min-width: 0; }
-  .panel-stack:not(:empty) { margin-bottom: var(--space-4); }
+  /* :empty never matches (template whitespace), so key the spacing on actual panels. */
+  .panel-stack:has(> *) { margin-bottom: var(--space-4); }
 </style>
