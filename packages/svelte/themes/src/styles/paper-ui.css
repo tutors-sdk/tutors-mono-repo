@@ -89,3 +89,5 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .prose { line-height: var(--ui-reading-leading); }
 .prose p { margin-block: var(--ui-paragraph-spacing); }
 .prose em, .resource-summary em { font-style: var(--ui-emphasis-style, italic); font-weight: var(--ui-emphasis-weight, inherit); }
+/* Search words on a page opened from a search result (CSS Custom Highlight API, set in resource-search.ts). */
+::highlight(search) { background-color: color-mix(in srgb, var(--ui-warning) 32%, transparent); color: inherit; }

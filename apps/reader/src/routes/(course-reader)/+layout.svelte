@@ -6,6 +6,7 @@
   import { currentCourse, isEducator, contentLocks, locksLoaded, tutorsId } from "@tutors/runes";
   import { rbacService, isLoRouteLocked } from "@tutors/rbac";
   import { afterNavigate, goto } from "$app/navigation";
+  import { revealMatches } from "@tutors/ui-navigators/search/resource-search";
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
@@ -69,7 +70,14 @@
     const main = document.getElementById("main-content");
     const active = document.activeElement;
     const placedByPage = active instanceof HTMLElement && active.hasAttribute("data-autofocus") && !!main?.contains(active);
-    if (!placedByPage) main?.focus();
+    if (!placedByPage) main?.focus({ preventScroll: true });
+    // Arriving from a search result (?highlight=words): highlight the words and scroll to the first match once
+    // the page has rendered (an empty value clears the last page's highlight). Rule 0058.
+    const words = page.url.searchParams.get("highlight") ?? "";
+    if (main) {
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      requestAnimationFrame(() => revealMatches(main, words, behavior));
+    }
   });
 </script>
 

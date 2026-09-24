@@ -6,7 +6,7 @@
   import { rbacService } from "@tutors/rbac";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
-  import { findResources, highlightParts } from "../search/resource-search";
+  import { findResources, highlightParts, withHighlight } from "../search/resource-search";
 
   /** A command-palette search: opens over the page (button, Cmd/Ctrl+K or "/"), results update as you type. */
   let dialog: HTMLDialogElement;
@@ -43,9 +43,10 @@
     dialog.close();
   }
 
+  // The link carries the words, so the page scrolls to and highlights the match (+layout.svelte).
   function choose(href: string) {
     close();
-    void goto(href);
+    void goto(withHighlight(href, query));
   }
 
   function onKey(event: KeyboardEvent) {
@@ -113,7 +114,7 @@
           class="search-result"
           role="option"
           aria-selected={index === active}
-          href={result.href}
+          href={withHighlight(result.href, query)}
           tabindex="-1"
           onclick={(event) => { event.preventDefault(); choose(result.href); }}
           onmousemove={() => (active = index)}

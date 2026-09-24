@@ -5,7 +5,7 @@
   import type { PageData } from "./$types";
   import { currentLo } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
-  import { findResources, highlightParts } from "@tutors/ui-navigators/search/resource-search";
+  import { findResources, highlightParts, withHighlight } from "@tutors/ui-navigators/search/resource-search";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
@@ -47,7 +47,7 @@
   <div class="ui-grid card-grid search-results">
     {#each results as result (result.lo.route)}
       <div class="min-w-0">
-        <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{style: "landscape"}}>
+        <Card cardDetails={{...result.lo, route: withHighlight(result.href, query)}} cardLayout={{style: "landscape"}}>
           {#if result.excerpt}<p class="search-excerpt">{#each highlightParts(result.excerpt, query) as part}{#if part.match}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</p>{/if}
         </Card>
       </div>
