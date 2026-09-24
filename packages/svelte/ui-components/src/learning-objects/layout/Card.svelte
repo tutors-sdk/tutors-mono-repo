@@ -56,7 +56,6 @@
   const target = $derived(["web", "github"].includes(cardDetails.type) && cardDetails.route.startsWith("http") ? "_blank" : "");
   const route = $derived(cardDetails.type === "video" ? (cardDetails.video || cardDetails.route) : cardDetails.route);
   const hideVideoIcon = $derived(currentCourse.value?.areVideosHidden);
-  const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
   const cardColour = $derived.by(() => {
     const c = legacyCardColours[cardDetails.type] ?? legacyCardColours.course;
     // Pastel backgrounds would wash out on a dark surface, so dark mode darkens them first.
@@ -67,7 +66,7 @@
 {#if cardDetails.student}
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
-  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card ui-lift" class:compact={layout === "compacted"}>
+  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card ui-lift">
     <a class="resource-link" href={route} {target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
@@ -90,7 +89,8 @@
 {/if}
 <style>
   /* The type colour bands the top and bottom edges, like the original playing cards. */
-  .resource-card { position: relative; height: 100%; min-height: var(--card-height, auto); min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 8px; border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
+  /* The grid row is a fixed --card-height, so clip rather than let a long summary spill into the row below. */
+  .resource-card { position: relative; height: 100%; overflow: hidden; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 8px; border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
   .resource-card:has(.resource-link:hover) { background: color-mix(in srgb, var(--resource-background) 86%, var(--ui-surface)); }
   .resource-link { display: grid; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
   .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
@@ -105,10 +105,10 @@
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
   .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
-  .resource-card :global(.lo-artwork) { grid-column: 1 / -1; justify-self: center; width: 132px; height: 132px; }
+  /* One size, no per-breakpoint variants: the card is the same fixed box everywhere, so a smaller
+     artwork inside it would only add dead space. Tuned in paper-tokens.css. */
+  /* min() so raising --card-artwork past the card's content box (--card-width less border and padding)
+     clamps instead of overflowing and knocking the artwork off centre. */
+  .resource-card :global(.lo-artwork) { grid-column: 1 / -1; justify-self: center; width: min(var(--card-artwork), 100%); height: var(--card-artwork); }
   .resource-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
-  .compact { padding: var(--space-3); }
-  .compact h3 { font-size: var(--font-body); }
-  .compact :global(.lo-artwork) { width: 104px; height: 104px; }
-  @media (max-width: 767px) { .resource-card :global(.lo-artwork) { width: 116px; height: 116px; } }
 </style>

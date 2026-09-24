@@ -6,14 +6,7 @@
 <div class="ui-grid">
   {#each liveService.studentsOnline.value as lo}
     {#if lo?.user}
-      <StudentCard
-        {lo}
-        showCourseTitle={true}
-        cardLayout={{
-          layout: "expanded",
-          style: "landscape"
-        }}
-      />
+      <StudentCard {lo} showCourseTitle={true} />
     {/if}
   {/each}
 </div>

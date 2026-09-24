@@ -21,10 +21,7 @@
         img: courseRecord?.img,
         icon: courseRecord?.icon
       }}
-      cardLayout={{
-        layout: "compacted",
-        style: "landscape"
-      }}
+      cardLayout={{ style: "landscape" }}
     />
   {:else}<p class="ui-empty">No courses are available to display.</p>
   {/each}

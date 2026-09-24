@@ -47,7 +47,7 @@
   <div class="ui-grid card-grid search-results">
     {#each results as result (result.lo.route)}
       <div class="min-w-0">
-        <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{layout: "expanded", style: "landscape"}}>
+        <Card cardDetails={{...result.lo, route: result.href}} cardLayout={{style: "landscape"}}>
           {#if result.excerpt}<p class="search-excerpt">{#each highlightParts(result.excerpt, query) as part}{#if part.match}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</p>{/if}
         </Card>
       </div>
@@ -65,8 +65,10 @@
   input { min-width: 0; flex: 1; }
   .type-filters { margin-block: var(--space-5); }
   .result-count { margin-block: var(--space-6) var(--space-4); font-size: var(--font-label); }
-  .ui-empty { grid-column: 1 / -1; }
-  .search-excerpt { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
+  /* Width comes from .ui-grid.card-grid > .ui-empty in paper-ui.css; the card grid is flex, not grid. */
+  /* Result cards are the same fixed box as every other card, so the excerpt clamps like the summary
+     above it rather than pushing the card taller than its neighbours in the row. */
+  .search-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
   mark { padding-inline: 2px; border-radius: var(--radius-small); background: color-mix(in srgb, var(--ui-warning) 28%, transparent); color: var(--ui-ink); font-weight: var(--weight-semibold); }
   summary { font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }
 </style>

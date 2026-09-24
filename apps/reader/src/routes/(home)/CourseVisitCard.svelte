@@ -18,23 +18,23 @@
   class="course-visit-card ui-lift"
 >
   <section class="course-visit-content">
+    <p class="course-visit-title">{courseVisit.title}</p>
     <div class="course-visit-artwork" aria-hidden="true">
       {#if courseVisit.icon}
         <Iconify
           icon={courseVisit.icon.type}
           color={courseVisit.icon.color}
-          height="72"
+          height="128"
         />
       {:else}
-        {#if courseVisit.img}
-          <img src={courseVisit.img} alt="" />
+        {#if courseVisit.image}
+          <img src={courseVisit.image} alt="" />
         {:else}
-          <Iconify icon="fluent:book-24-regular" color="var(--ui-brand)" height="72" />
+          <Iconify icon="fluent:book-24-regular" color="var(--ui-brand)" height="128" />
         {/if}
       {/if}
     </div>
     <div class="course-visit-details">
-      <p class="course-visit-title">{courseVisit.title}</p>
       <p class="break-words">{courseVisit.credits}</p>
       <p class="break-words">
         {t("course.visitCard.lastAccessed")}
@@ -89,11 +89,15 @@
     background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface));
   }
 
+  /* Title, then artwork, then the detail lines: the course name is what the eye is looking for, so it
+     leads rather than sitting below the picture. */
   .course-visit-content { display: flex; min-width: 0; flex-direction: column; gap: var(--space-4); }
-  .course-visit-artwork { display: grid; min-height: 88px; place-items: center; }
-  .course-visit-artwork img { width: 88px; height: 88px; object-fit: contain; }
-  .course-visit-details { min-width: 0; }
-  .course-visit-title { overflow-wrap: anywhere; font-weight: var(--weight-semibold); }
+  .course-visit-title { overflow-wrap: anywhere; font-size: var(--font-section); font-weight: var(--weight-semibold); line-height: var(--leading-heading); }
+  .course-visit-artwork { display: grid; min-height: 128px; place-items: center; }
+  .course-visit-artwork img { width: 128px; height: 128px; object-fit: contain; }
+  /* Credits, last visit and visit count are supporting detail, so they drop to label size and the muted
+     ink rather than competing with the title above the artwork. */
+  .course-visit-details { min-width: 0; font-size: var(--font-label); line-height: var(--leading-ui); color: var(--ui-muted); }
   .course-visit-footer { margin-top: auto; }
   .course-visit-footer .ui-actions { align-items: stretch; }
   .course-visit-footer .ui-actions > :first-child { flex: 1 1 auto; }

@@ -37,9 +37,9 @@
 <div class="w-full">
   {#each units as unit}
     {#if hasVisibleLos(unit)}
-    <div class="relative mb-8 w-full min-w-0">
-      <div class="flex w-full justify-between pb-2">
-        <h2 id={unit.id} class="ui-section-title p-2">
+    <div class="unit-panel ui-panel relative w-full min-w-0">
+      <div class="flex w-full items-center justify-between pb-4">
+        <h2 id={unit.id} class="ui-section-title">
           {unit.title}
         </h2>
         <div class="flex items-center gap-2">
@@ -54,3 +54,12 @@
     {/if}
   {/each}
 </div>
+<style>
+  /* A unit is a group of cards, so it reads as one block on the page canvas: the ui-panel border and
+     radius, tinted like the course page's start panel so the grouping is visible behind the cards.
+     The padding is part of the geometry - Composite.svelte subtracts it when working out how many
+     card columns fit either side of a topic with side units. */
+  /* Units sit the same distance apart as the cards inside them, so the page reads as one rhythm. */
+  .unit-panel { background: var(--ui-selected); border-color: var(--ui-control-border); margin-bottom: var(--space-4); }
+  .unit-panel:last-child { margin-bottom: 0; }
+</style>

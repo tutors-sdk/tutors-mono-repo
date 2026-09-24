@@ -8,11 +8,11 @@ Feature: Preferences and themes
   in apps/reader/tests/e2e. `pnpm test:ears:audit` fails if a scenario has no such test.
 
   @rule-0037 @ears-ubiquitous
-  Rule: The reader shall offer theme, appearance, density and language choices in a Preferences menu drawn above every other page element.
+  Rule: The reader shall offer theme, appearance and language choices in a Preferences menu drawn above every other page element.
 
     Scenario: Preferences menu offers its choices above the page
       When a student opens Preferences
-      Then it offers 7 themes, Light and Dark, 2 densities and 6 languages, and no card style
+      Then it offers 7 themes, Light and Dark and 6 languages, and no density or card style
       And on a phone its first row is not covered by the header
 
   @rule-0038 @ears-event-driven

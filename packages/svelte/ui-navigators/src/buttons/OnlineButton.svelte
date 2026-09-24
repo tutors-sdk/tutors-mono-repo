@@ -14,17 +14,13 @@
   <span class="menu-label">{label}</span><Icon type="listOnline" />
 {/snippet}
 {#snippet sidebarContent()}
-  <div class="online-grid">
+  <div class="ui-grid card-grid online-grid">
     {#each presenceService.studentsOnline.value as lo}
       {#if lo?.user?.fullName !== "Anon"}
-        <StudentCard
-          {lo}
-          showCourseTitle={true}
-          cardLayout={{
-            layout: "compacted",
-            style: "landscape"
-          }}
-        />
+        <!-- Wrapped like the topic grid: the card grid sizes the wrapper, the card fills it. -->
+        <div class="min-w-0">
+          <StudentCard {lo} showCourseTitle={true} />
+        </div>
       {/if}
     {/each}
   </div>
@@ -32,5 +28,7 @@
 
 <Sidebar triggerClass="menu-row" bind:open presentation="dialog" width="w-3xl" {menuSelector} {sidebarContent} ariaLabel={label} title={label} finalFocusEl={() => document.querySelector<HTMLElement>('[data-tour="profile"] .paper-menu-trigger')} />
 <style>
-  .online-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: var(--space-4); }
+  /* Geometry comes from .ui-grid.card-grid in paper-ui.css: online students are the same fixed card as
+     everywhere else, wrapped and centred. Only the top gap is local to the dialog. */
+  .online-grid { margin-top: var(--space-2); }
 </style>

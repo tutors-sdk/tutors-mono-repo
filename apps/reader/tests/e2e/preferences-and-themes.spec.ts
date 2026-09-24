@@ -14,8 +14,9 @@ test("Preferences menu offers its choices above the page", { tag: "@rule-0037" }
   await expect(preferences.getByRole("combobox", { name: "Theme", exact: true }).locator("option")).toHaveCount(7);
   await expect(preferences.getByRole("button", { name: "Light", exact: true })).toBeVisible();
   await expect(preferences.getByRole("button", { name: "Dark", exact: true })).toBeVisible();
-  await expect(preferences.getByRole("combobox", { name: "Density" }).locator("option")).toHaveCount(2);
   await expect(preferences.getByRole("combobox", { name: "Language" }).locator("option")).toHaveCount(6);
+  // Cards have one fixed geometry, so neither a density nor a card-style choice is offered.
+  await expect(preferences.getByRole("combobox", { name: "Density" })).toHaveCount(0);
   await expect(preferences.getByRole("combobox", { name: "Card Style" })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await preferences.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);

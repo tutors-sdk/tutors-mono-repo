@@ -4,8 +4,6 @@ const en = {
   "shell.portrait": "Portrait",
   "shell.landscape": "Landscape",
   "shell.circular": "Circular",
-  "shell.compacted": "Compact",
-  "shell.expanded": "Expanded",
 
   // Paper application chrome
   "shell.parentCourse": "Parent course",
@@ -70,7 +68,6 @@ const en = {
   "nav.layout.cardStyle": "Card Style",
   "nav.layout.theme": "Theme",
   "nav.layout.codeStyle": "Code Style",
-  "nav.layout.layout": "Density",
   "nav.layout.language": "Language",
   "nav.layout.tip": "Open Theme Menu",
   "nav.info.title": "Course Info",
@@ -258,7 +255,7 @@ Tutors is an open source application - the data collection component [is here](h
   "tour.search.title": "Search",
   "tour.search.description": "Quickly find content in this course. You can also press Ctrl+K (or Cmd+K on Mac) anytime.",
   "tour.layout.title": "Theme & Layout",
-  "tour.layout.description": "Customize the appearance: switch between light and dark mode, adjust the theme, code style, density, and language.",
+  "tour.layout.description": "Customize the appearance: switch between light and dark mode, adjust the theme, code style, and language.",
   "tour.profile.title": "Your Profile",
   "tour.profile.description": "Sign in with GitHub to track your progress and enable live presence features.",
   "tour.toc.title": "Course Tree",

@@ -126,6 +126,22 @@
   --ui-danger: light-dark(var(--danger), var(--dark-danger));
   --ui-success: light-dark(var(--type-success-light), var(--type-success-dark));
   --ui-raised: light-dark(var(--light-raised), var(--dark-raised));
+  /* Resource card geometry: a fixed size, not a floor. Cards never stretch, so a row holds as many
+     as fit and the leftover space is split either side (justify-content: center in paper-ui.css).
+     The card is the same box at every viewport, so the artwork is one value too, not a set of
+     per-breakpoint ones. Height is sized for the worst case - 2-line title, the artwork,
+     3-line summary, padding and the 8px type bands - so nothing clips; shorter cards carry the slack
+     at the bottom. The three are coupled: shrinking --card-height without shrinking --card-artwork
+     (or tightening the line-clamps in Card.svelte) clips the summary. Heads up if you go tight - the
+     dyslexia theme's larger label font and leading cost roughly 27px more than the default. */
+  --card-width: 220px;
+  --card-height: 340px;
+  --card-artwork: 180px;
+  /* A topic's side column holds a single column of cards and is never wider than one: --card-width plus
+     the unit panel's padding and border, plus this slack so the card is not wall to wall and side content
+     that is not a card (a podcast player) has some room. Raise it if a side embed looks cramped - the
+     main group gives up the width. Applied in Composite.svelte's layoutCards. */
+  --side-slack: 80px;
 }
 
 /* Preserve theme selection and its icon library; the Tutors palette uses Paper's type tones. */

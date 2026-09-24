@@ -19,16 +19,12 @@ export type Theme = {
   icons: IconLib; // Theme icons
 };
 
-/** Layout type for card display */
-export type LayoutType = "expanded" | "compacted";
-
 /** Card style type for display options */
 export type CardStyleType = "portrait" | "landscape" | "circular";
 
 /** Card configuration - to be able to override the ambient settings */
 export type CardConfig = {
   style: CardStyleType;
-  layout: LayoutType;
 };
 
 /**
@@ -55,7 +51,6 @@ export interface ThemeService {
   themes: Theme[];
   /** current theme */
   currentTheme: any;
-  layout: { value: LayoutType };
   lightMode: any;
   cardStyle: { value: CardStyleType };
   /** Lab and note text fills the reading panel instead of keeping a comfortable line length */
@@ -67,8 +62,6 @@ export interface ThemeService {
   setDisplayMode(mode: string): void;
   toggleDisplayMode(): void;
   setTheme(theme: string): void;
-  setLayout(layout: string): void;
-  toggleLayout(): void;
   setCardStyle(style: string): void;
   setFullWidthReading(full: boolean): void;
   getIcon(type: string): IconType;

@@ -4,8 +4,6 @@ const ga = {
   "shell.portrait": "Portráid",
   "shell.landscape": "Tírdhreach",
   "shell.circular": "Ciorclach",
-  "shell.compacted": "Dlúth",
-  "shell.expanded": "Leathnaithe",
 
   // Paper application chrome
   "shell.parentCourse": "Máthairchúrsa",
@@ -70,7 +68,6 @@ const ga = {
   "nav.layout.cardStyle": "Stíl Chártaí",
   "nav.layout.theme": "Téama",
   "nav.layout.codeStyle": "Stíl Chóid",
-  "nav.layout.layout": "Dlús",
   "nav.layout.language": "Teanga",
   "nav.layout.tip": "Oscail Roghchlár Téama",
   "nav.info.title": "Eolas faoin gCúrsa",
@@ -233,7 +230,7 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "tour.search.title": "Cuardach",
   "tour.search.description": "Aimsigh ábhar go tapa sa chúrsa seo. Is féidir leat Ctrl+K (nó Cmd+K ar Mac) a bhrú am ar bith freisin.",
   "tour.layout.title": "Téama agus Leagan Amach",
-  "tour.layout.description": "Saincheap an chuma: athraigh idir mód éadrom agus dorcha, coigeartaigh an téama, stíl an chóid, an dlús agus an teanga.",
+  "tour.layout.description": "Saincheap an chuma: athraigh idir mód éadrom agus dorcha, coigeartaigh an téama, stíl an chóid agus an teanga.",
   "tour.profile.title": "Do Phróifíl",
   "tour.profile.description": "Sínigh isteach le GitHub chun do dhul chun cinn a rianú agus gnéithe láithreachta beo a chumasú.",
   "tour.toc.title": "Crann Cúrsa",

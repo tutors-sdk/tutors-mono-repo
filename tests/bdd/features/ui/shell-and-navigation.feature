@@ -29,7 +29,7 @@ Feature: Reader shell and navigation
     Scenario: Course home leads to the first topic
       When a student opens the Reference Course
       Then the heading "Reference Course" and "9 · Author's order" are shown
-      And following "Open topic →" and then the first lab card opens the lab's first step
+      And following the first topic card and then the first lab card opens the lab's first step
 
   @rule-0022 @ears-event-driven
   Rule: When a student opens a course that has a parent course, the reader shall show the parent course's title in the breadcrumb trail.

@@ -13,13 +13,7 @@
   <div class="ui-grid">
     {#each students as lo}
       {#if lo?.user?.fullName !== "Anon"}
-        <StudentCard
-          {lo}
-          cardLayout={{
-            layout: "expanded",
-            style: "landscape"
-          }}
-        />
+        <StudentCard {lo} />
       {/if}
     {/each}
   </div>

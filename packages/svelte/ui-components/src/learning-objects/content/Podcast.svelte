@@ -11,7 +11,9 @@
   let episodeId = lo.episode.id;
 </script>
 
-<div class="ui-panel flex flex-col">
+<!-- No panel of its own: a podcast sits on the unit panel behind it, so its own surface, padding and
+     border would only be chrome on chrome. The player carries its own rounded block. -->
+<div class="flex flex-col">
   <iframe
     title={lo.title}
     data-testid="embed-iframe"

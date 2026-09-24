@@ -13,30 +13,33 @@
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   let { composite }: { composite: Composite } = $props();
   const visible = $derived((composite.type === "course" ? filterByType(composite.los, "topic") : (composite?.units?.standardLos ?? [])).filter(lo => rbacService.isLoVisibleToStudent(lo)));
-  const firstTopic = $derived(visible.find(lo => lo.type === "topic"));
 
   /**
-   * Lays out cards across unit and side grids: every card takes the height of the tallest one, and beside side
-   * units the page is split into equal columns (220px minimum). Main units take the columns they can fill, side
-   * units the rest; when both have fewer cards than columns, the columns widen so the page stays full.
+   * Sizes the two regions of a topic with side units. The side column holds a single column of cards and
+   * is never wider than one (plus --side-slack), so every other spare pixel in the row goes to the main
+   * group. Below the width that still leaves room for a card beside it the two stack. Off a with-sides
+   * page there is nothing to do.
    */
   function layoutCards(node: HTMLElement) {
+    // Units are panels (Units.svelte), so their padding and border are width the cards inside cannot
+    // use. Measured rather than assumed, and only for a region that actually holds one.
+    const insetOf = (region: string) => {
+      const panel = node.querySelector(`${region} .unit-panel`);
+      if (!panel) return 0;
+      const style = getComputedStyle(panel);
+      return ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"].reduce((total, edge) => total + parseFloat(style[edge as never]), 0);
+    };
     const measure = () => {
       if (node.classList.contains("with-sides")) {
-        // 40px = the 24px spacer track between main and side plus its extra 16px gap.
-        const available = Math.max(1, Math.min(6, Math.floor((node.clientWidth - 40 + 16) / (220 + 16))));
-        const most = (selector: string) => Math.max(1, ...[...node.querySelectorAll(selector)].map(grid => grid.children.length));
-        // Embedded players (podcasts, videos) need two columns of width to play without scrolling.
-        const sideMin = available >= 4 && node.querySelector(".side-groups iframe") ? 2 : 1;
-        const main = available === 1 ? 1 : Math.min(available - sideMin, most(".main-group .card-grid"));
-        const side = available === 1 ? 1 : Math.min(available - main, Math.max(sideMin, most(".side-groups .card-grid")));
-        node.dataset.stacked = String(available === 1);
-        node.style.setProperty("--main-columns", String(main));
-        node.style.setProperty("--side-columns", String(side));
+        const style = getComputedStyle(node);
+        // Tuned in paper-tokens.css, declared in px so a bare parse is enough.
+        const cardWidth = parseFloat(style.getPropertyValue("--card-width")) || 200;
+        const sideWidth = cardWidth + insetOf(".side-groups") + (parseFloat(style.getPropertyValue("--side-slack")) || 0);
+        // The spacer track between the groups plus the gap either side of it.
+        const between = parseFloat(style.getPropertyValue("--space-6")) + 2 * (parseFloat(style.columnGap) || 0);
+        node.style.setProperty("--side-width", `${sideWidth}px`);
+        node.dataset.stacked = String(node.clientWidth - sideWidth - between - insetOf(".main-group") < cardWidth);
       }
-      node.style.removeProperty("--card-height");
-      const tallest = Math.max(0, ...[...node.querySelectorAll<HTMLElement>(".resource-card")].map(card => card.offsetHeight));
-      if (tallest) node.style.setProperty("--card-height", `${tallest}px`);
     };
     const schedule = () => requestAnimationFrame(measure);
     const resized = new ResizeObserver(schedule);
@@ -53,16 +56,9 @@
       <div><p class="ui-eyebrow">{composite.type === "course" ? t("shell.overview") : composite.type}</p><h1 class="ui-title">{composite.title}</h1><div class="ui-muted summary">{@html sanitizeHtml(composite.summary ?? "")}</div></div>
       <Image lo={composite} />
     </header>
-    {#if firstTopic && composite.type === "course"}
+    {#if composite.type === "course" && currentCourse.value?.courseCalendar?.currentWeek}
       <div class="course-start">
-        <section class="ui-panel start-panel">
-          <Image lo={firstTopic} miniImage />
-          <div><p class="ui-eyebrow">{t("shell.startHere")}</p><h2>{firstTopic.title}</h2><div class="ui-muted text-sm">{@html sanitizeHtml(firstTopic.summary ?? "")}</div></div>
-          <a class="ui-button ui-button-primary" href={firstTopic.route}>{t("shell.openTopic")} →</a>
-        </section>
-        {#if currentCourse.value?.courseCalendar?.currentWeek}
-          <section class="ui-panel"><p class="ui-eyebrow">{t("nav.calendar.label")}</p><h2>{currentCourse.value.courseCalendar.currentWeek.title}</h2><CalendarButton /></section>
-        {/if}
+        <section class="ui-panel"><p class="ui-eyebrow">{t("nav.calendar.label")}</p><h2>{currentCourse.value.courseCalendar.currentWeek.title}</h2><CalendarButton /></section>
       </div>
     {/if}
     <div class="composite-columns" class:with-sides={composite.units?.sides?.length > 0} use:layoutCards>
@@ -84,21 +80,20 @@
   .composite-heading > div { min-width: 0; }
   h1 { margin-top: var(--space-2); }
   .summary { margin-top: var(--space-2); }
+  /* Holds the current-week callout on a course page. A flex row rather than a bare section because the
+     row used to carry a "start here" panel beside it; keeping it means a second callout can go back in. */
   .course-start { display: flex; gap: var(--space-5); margin-top: var(--space-6); }
-  .start-panel { display: flex; align-items: center; flex: 1; gap: var(--space-5); background: var(--ui-selected); border-color: var(--ui-control-border); }
-  .start-panel > div { flex: 1; min-width: 0; }
   h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); }
   .composite-columns { margin-top: var(--space-6); }
   .main-group, .side-groups { min-width: 0; }
-  /* Main and side units share one set of equal, flexible columns (220px minimum, 16px gaps, like the card grid),
-     with a 24px spacer track between the groups; every card is the same size. */
-  .with-sides { --main-columns: 1; --side-columns: 1; display: grid; grid-template-columns: repeat(var(--main-columns), minmax(0, 1fr)) var(--space-6) repeat(var(--side-columns), minmax(0, 1fr)); gap: var(--space-4); }
-  .with-sides > .main-group { grid-column: 1 / span var(--main-columns); }
-  .with-sides > .main-group :global(.ui-grid.card-grid) { grid-template-columns: repeat(var(--main-columns), minmax(0, 1fr)); }
-  .with-sides > .side-groups { grid-column: span var(--side-columns) / -1; }
-  .with-sides > .side-groups :global(.ui-grid.card-grid) { grid-template-columns: repeat(var(--side-columns, 1), minmax(0, 1fr)); }
+  /* The side column is pinned to one card's width (--side-width, set by layoutCards from --card-width plus
+     the unit panel's padding and border) and never grows; the main group takes the rest, with a 24px spacer
+     track between them. The card grids inside wrap and centre their own cards. */
+  .with-sides { --side-width: auto; display: grid; grid-template-columns: minmax(0, 1fr) var(--space-6) var(--side-width); gap: var(--space-4); }
+  .with-sides > .main-group { grid-column: 1; }
+  .with-sides > .side-groups { grid-column: 3; }
   .with-sides:global([data-stacked="true"]) { grid-template-columns: minmax(0, 1fr); }
   .with-sides:global([data-stacked="true"]) > :is(.main-group, .side-groups) { grid-column: auto; }
-  @media (max-width: 1279px) { .course-start { flex-wrap: wrap; } .start-panel { flex-wrap: wrap; } }
-  @media (max-width: 767px) { .composite-heading > :global(.lo-artwork) { display: none; } .course-start > section { width: 100%; } .start-panel > a { width: 100%; } }
+  @media (max-width: 1279px) { .course-start { flex-wrap: wrap; } }
+  @media (max-width: 767px) { .composite-heading > :global(.lo-artwork) { display: none; } .course-start > section { width: 100%; } }
 </style>

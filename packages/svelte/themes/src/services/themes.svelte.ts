@@ -4,7 +4,7 @@
  * Supports multiple icon sets and persists user preferences.
  */
 
-import type { CardStyleType, LayoutType, Theme, ThemeService } from "../types.ts";
+import type { CardStyleType, Theme, ThemeService } from "../types.ts";
 import { FluentIconLib } from "../icons/fluent-icons.ts";
 import { HeroIconLib } from "../icons/hero-icons.ts";
 import { EasterIcons } from "../icons/easter-icons.ts";
@@ -31,9 +31,6 @@ export const themeService: ThemeService = {
     { name: "cerberus", icons: FluentIconLib },
     { name: "easter", icons: EasterIcons }
   ] as Theme[],
-
-  /** Current display layout */
-  layout: rune<LayoutType>("expanded"),
 
   /** Current card style */
   cardStyle: rune<CardStyleType>("portrait"),
@@ -65,7 +62,6 @@ export const themeService: ThemeService = {
       this.setDisplayMode(localStorage.modeCurrent);
       this.setTheme(localStorage.theme);
     }
-    this.setLayout(localStorage.layout);
     this.setCardStyle(localStorage.cardStyle);
     this.setFullWidthReading(localStorage.fullWidthReading === "true");
   },
@@ -121,18 +117,6 @@ export const themeService: ThemeService = {
   },
 
   /**
-   * Sets and persists the current display layout
-   * @param layout - Layout name to set
-   */
-  setLayout(layout: LayoutType): void {
-    if (!layout) {
-      layout = "expanded";
-    }
-    this.layout.value = layout;
-    localStorage.layout = layout;
-  },
-
-  /**
    * Sets and persists the current card style
    * @param style - Card style to set (portrait/landscape)
    */
@@ -152,17 +136,6 @@ export const themeService: ThemeService = {
     this.fullWidthReading.value = full;
     localStorage.fullWidthReading = String(full);
     document.documentElement.toggleAttribute("data-full-width-reading", full);
-  },
-
-  /**
-   * Toggles the layout between expanded & compact
-   */
-  toggleLayout(): void {
-    if (this.layout.value === "expanded") {
-      this.setLayout("compacted");
-    } else {
-      this.setLayout("expanded");
-    }
   },
 
   /**

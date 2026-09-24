@@ -27,7 +27,9 @@ test("Course home leads to the first topic", { tag: "@rule-0021" }, async ({ pag
   await page.goto(course);
   await expect(page.getByRole("heading", { name: "Reference Course", exact: true })).toBeVisible();
   await expect(page.getByText("9 · Author’s order")).toBeVisible();
-  await page.getByRole("link", { name: "Open topic →", exact: true }).click();
+  // The course page reaches its first topic through the topic card itself; there is no separate
+  // "start here" callout duplicating that link.
+  await page.locator('.resource-link[href="/topic/reference-course/topic-01-typical"]').click();
   await page.locator(`.resource-link[href="${lab}"]`).click();
   await expect(page.getByRole("heading", { name: "Objectives", exact: true })).toBeVisible();
 });

@@ -24,7 +24,6 @@ export function startWithNoStoredPreferences(themeService: ThemeService): void {
 export function startLaterSession(themeService: ThemeService): void {
   themeService.currentTheme.value = "tutors";
   themeService.lightMode.value = "light";
-  themeService.layout.value = "expanded";
   themeService.cardStyle.value = "portrait";
   freshDocument();
   themeService.initDisplay();

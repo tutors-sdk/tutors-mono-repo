@@ -5,7 +5,6 @@
   import AppearanceSwitcher from "./layout/AppearanceSwitcher.svelte";
   import ThemeSwitcher from "./layout/ThemeSwitcher.svelte";
   import CodeThemeSwitcher from "./layout/CodeThemeSwitcher.svelte";
-  import LayoutSwitcher from "./layout/LayoutSwitcher.svelte";
   import { t } from "@tutors/i18n";
   import { currentCourse } from "@tutors/runes";
   import { tourService } from "@tutors/tour";
@@ -28,7 +27,6 @@
       <div class="preference-field"><span>{t("nav.layout.codeStyle")}</span><div class="preference-control"><CodeThemeSwitcher /></div></div>
     </section>
     <section aria-label={t("shell.contentLanguage")}>
-      <div class="preference-field"><span>{t("nav.layout.layout")}</span><div class="preference-control"><LayoutSwitcher /></div></div>
       <div class="preference-field"><span>{t("nav.layout.language")}</span><div class="preference-control"><LanguageSwitcher /></div></div>
     </section>
     {#if currentCourse.value}<button class="tour-button" onclick={() => { open = false; setTimeout(() => tourService.start(), 150); }}>{t("tour.startButton")}<span aria-hidden="true">→</span></button>{/if}

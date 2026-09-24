@@ -7,16 +7,11 @@
     emptyMessage: string;
   }
   let { los, emptyMessage }: Props = $props();
-
-  const cardLayout = {
-    layout: "expanded" as const,
-    style: "landscape" as const
-  };
 </script>
 
 <div class="ui-grid pt-4">
   {#each los as lo}
-    <StudentCard {lo} {cardLayout} />
+    <StudentCard {lo} />
   {:else}
     <p class="text-surface-600-300-token text-sm">{emptyMessage}</p>
   {/each}

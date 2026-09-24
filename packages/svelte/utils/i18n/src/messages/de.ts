@@ -4,8 +4,6 @@ const de: Record<string, string> = {
   "shell.portrait": "Hochformat",
   "shell.landscape": "Querformat",
   "shell.circular": "Kreisförmig",
-  "shell.compacted": "Kompakt",
-  "shell.expanded": "Erweitert",
 
   // Paper application chrome
   "shell.parentCourse": "Übergeordneter Kurs",
@@ -70,7 +68,6 @@ const de: Record<string, string> = {
   "nav.layout.cardStyle": "Kartenstil",
   "nav.layout.theme": "Thema",
   "nav.layout.codeStyle": "Code-Stil",
-  "nav.layout.layout": "Dichte",
   "nav.layout.language": "Sprache",
   "nav.layout.tip": "Themen-Menü öffnen",
   "nav.info.title": "Kursinfo",
@@ -258,7 +255,7 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "tour.search.title": "Suche",
   "tour.search.description": "Finden Sie schnell Inhalte in diesem Kurs. Sie können auch jederzeit Strg+K (oder Cmd+K auf dem Mac) drücken.",
   "tour.layout.title": "Design und Layout",
-  "tour.layout.description": "Passen Sie das Erscheinungsbild an: Wechseln Sie zwischen hellem und dunklem Modus, passen Sie das Design, den Code-Stil, die Dichte und die Sprache an.",
+  "tour.layout.description": "Passen Sie das Erscheinungsbild an: Wechseln Sie zwischen hellem und dunklem Modus, passen Sie das Design, den Code-Stil und die Sprache an.",
   "tour.profile.title": "Ihr Profil",
   "tour.profile.description": "Melden Sie sich mit GitHub an, um Ihren Fortschritt zu verfolgen und Live-Präsenzfunktionen zu aktivieren.",
   "tour.toc.title": "Kursbaum",
