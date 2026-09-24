@@ -38,8 +38,8 @@
         // Tuned in paper-tokens.css, declared in px so a bare parse is enough.
         const cardWidth = parseFloat(style.getPropertyValue("--card-width")) || 200;
         const sideWidth = cardWidth + insetOf(".side-groups") + (parseFloat(style.getPropertyValue("--side-slack")) || 0);
-        // The spacer track between the groups plus the gap either side of it.
-        const between = parseFloat(style.getPropertyValue("--space-6")) + 2 * (parseFloat(style.columnGap) || 0);
+        // The gap between the groups: the same 16px that separates the unit panels.
+        const between = parseFloat(style.columnGap) || 0;
         node.style.setProperty("--side-width", `${sideWidth}px`);
         node.dataset.stacked = String(node.clientWidth - sideWidth - between - insetOf(".main-group") < cardWidth);
       }
@@ -87,11 +87,11 @@
      it lines up with the top of the side column instead of starting 32px below it. */
   .main-group :global(.ui-section-heading) { margin-top: 0; }
   /* The side column is pinned to one card's width (--side-width, set by layoutCards from --card-width plus
-     the unit panel's padding and border) and never grows; the main group takes the rest, with a 24px spacer
-     track between them. The card grids inside wrap and centre their own cards. */
-  .with-sides { --side-width: auto; display: grid; grid-template-columns: minmax(0, 1fr) var(--space-6) var(--side-width); gap: var(--space-4); }
+     the unit panel's padding and border) and never grows; the main group takes the rest, 16px away - the gap
+     between the unit panels. The card grids inside wrap and centre their own cards. */
+  .with-sides { --side-width: auto; display: grid; grid-template-columns: minmax(0, 1fr) var(--side-width); gap: var(--space-4); }
   .with-sides > .main-group { grid-column: 1; }
-  .with-sides > .side-groups { grid-column: 3; }
+  .with-sides > .side-groups { grid-column: 2; }
   .with-sides:global([data-stacked="true"]) { grid-template-columns: minmax(0, 1fr); }
   .with-sides:global([data-stacked="true"]) > :is(.main-group, .side-groups) { grid-column: auto; }
   @media (max-width: 767px) { .composite-heading > :global(.lo-artwork) { display: none; } }
