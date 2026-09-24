@@ -55,11 +55,11 @@
   {/each}
 </div>
 <style>
-  /* A unit is a group of cards, so it reads as one block on the page canvas: the ui-panel border and
-     radius, tinted like the course page's start panel so the grouping is visible behind the cards.
+  /* A unit is a group of cards, so it reads as one block on the page canvas: a standard ui-panel (white
+     surface, hairline border), the same as every other panel, so the tinted cards carry the colour.
      The padding is part of the geometry - Composite.svelte subtracts it when working out how many
      card columns fit either side of a topic with side units. */
   /* Units sit the same distance apart as the cards inside them, so the page reads as one rhythm. */
-  .unit-panel { background: var(--ui-selected); border-color: var(--ui-control-border); margin-bottom: var(--space-4); }
+  .unit-panel { margin-bottom: var(--space-4); }
   .unit-panel:last-child { margin-bottom: 0; }
 </style>

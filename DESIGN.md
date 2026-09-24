@@ -162,8 +162,10 @@ spacing:
   sidebar-width: 248px
   reading-width: 720px
   reading-measure: 88ch
-  card-min-width: 220px
-  card-artwork: 132px
+  card-width: 220px
+  card-height: 340px
+  card-artwork: 180px
+  card-artwork-min: 80px
   touch-target: 44px
   breakpoint-navigation: 1024px
   breakpoint-phone: 768px
@@ -230,6 +232,7 @@ components:
     rounded: "{rounded.xl}"
     padding: 20px
     width: 220px
+    height: 340px
   resource-card-summary:
     textColor: "{colors.on-surface-muted}"
     typography: "{typography.body-sm}"
@@ -363,12 +366,13 @@ main column.
   "Course Tree" button.
 - **Page:** content pads 32px top and 40px sides (20px/16px on phones) up to 1600px wide.
   Pages open with an eyebrow, title and muted summary, and artwork on the right where it helps.
-- **Card grids:** flexible columns with a 220px minimum and 16px gaps. Every card in a grid
-  takes the height of the tallest card. Below 768px cards stack in one column.
+- **Card grids:** every resource card is one fixed 220×340px box. Rows wrap and centre, so a
+  short final row sits centred under the full one, and on a phone the cards stack in one column.
+  Cards sit inside their unit, and a unit is a standard white panel with a hairline, 16px apart.
 - **Main and side units:** when a page has side units (such as a podcast or a reference
-  sidebar), main and side share one set of equal columns with a 24px spacer track between them.
-  The main group takes the columns it can fill, side units take the rest, and embeds get at
-  least two columns. Both groups start level at the top.
+  sidebar), the side column is one card wide (plus its panel padding and 80px of slack for
+  embeds) and the main group takes the rest, with a 24px spacer track between them. When the
+  main group can no longer fit a card, the two stack. Both start level at the top.
 - **Reading:** labs and notes sit in one reading panel spanning the content column, with text
   held to min(88ch, 720px + 16ch) and centred. The "Standard / Full width" switch lets text
   fill the panel, and the choice persists. It hides when the panel is no wider than the
@@ -415,7 +419,9 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Header actions:** icon plus label (Search, Preferences), 44px, no border, selected-grey on
   hover. Search and Preferences share one style exactly.
 - **Resource cards:** portrait. The title (19px, two lines) and type icon share the top row,
-  132px artwork is centred below, and the centred summary (three lines) sits under it. The fill
+  the artwork is centred below, and the centred summary (three lines) sits under it. The artwork
+  takes whatever height the text leaves, from 180px down to 80px, so the summary never touches
+  the bottom band and 20px of padding is always kept. The fill
   is the type tint, and the 8px bands and the icon take the type accent. The whole card is one
   link. It scales to 102% on hover or keyboard focus over 180ms, and not at all under reduced
   motion. A companion video link sits beneath the summary.

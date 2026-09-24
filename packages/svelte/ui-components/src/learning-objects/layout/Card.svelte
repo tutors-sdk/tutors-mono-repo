@@ -89,26 +89,26 @@
 {/if}
 <style>
   /* The type colour bands the top and bottom edges, like the original playing cards. */
-  /* The grid row is a fixed --card-height, so clip rather than let a long summary spill into the row below. */
-  .resource-card { position: relative; height: 100%; overflow: hidden; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 8px; border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
+  /* The card is a fixed --card-height, laid out as a column: the artwork gives up height (see below) so the
+     title, summary and the bottom padding always fit, and nothing is clipped against the colour band. */
+  .resource-card { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 8px; border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
   .resource-card:has(.resource-link:hover) { background: color-mix(in srgb, var(--resource-background) 86%, var(--ui-surface)); }
-  .resource-link { display: grid; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
+  .resource-link { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
   .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
   .resource-link:focus-visible { outline: none; }
   .resource-card:has(.resource-link:focus-visible) { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
-  .resource-heading { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+  .resource-heading { display: flex; flex: none; min-width: 0; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
   /* Titles and summaries clamp (2 and 3 lines) so one long summary cannot stretch every card on the page. */
   h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--font-size-19); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
   .resource-type { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--resource-accent); }
   .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  .resource-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .resource-summary { flex: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
   .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
-  /* One size, no per-breakpoint variants: the card is the same fixed box everywhere, so a smaller
-     artwork inside it would only add dead space. Tuned in paper-tokens.css. */
-  /* min() so raising --card-artwork past the card's content box (--card-width less border and padding)
-     clamps instead of overflowing and knocking the artwork off centre. */
-  .resource-card :global(.lo-artwork) { grid-column: 1 / -1; justify-self: center; width: min(var(--card-artwork), 100%); height: var(--card-artwork); }
+  /* The artwork takes whatever height the title and summary leave, up to --card-artwork (tuned in
+     paper-tokens.css) and never below 80px: a one-line title gets the full picture, a two-line title with
+     a three-line summary gets a smaller one, and the text keeps its padding either way. */
+  .resource-card :global(.lo-artwork) { flex: 1 1 0; align-self: center; width: min(var(--card-artwork), 100%); height: auto; min-height: 80px; max-height: var(--card-artwork); }
   .resource-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
 </style>
