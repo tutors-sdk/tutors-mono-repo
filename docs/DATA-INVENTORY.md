@@ -185,6 +185,9 @@ Client/server error aggregation for observability. Authoritative columns from `s
 **Consent required:** No — but retention should be time-bounded given free-text/URL fields may capture personal data
 **Deletion impact:** Removes error records attributable to the user
 
+### Legacy tables (unused)
+`students`, `studentsinteraction`, `course`, `learningobject`, `users` and `"tutors-connect_moodle"` predate Tutors Connect and are not read or written by any current app, nor are the 19 functions over them (`get_lab_data`, `get_topic_data`, `get_learner_records` and others). They may still hold student data from earlier deployments. Since `supabase/migrations/20260924_enable_rls_public_tables.sql` they have RLS on with no policy, so the anon key cannot reach them; only `service_role` or a direct Postgres role can. Export anything worth keeping before a later contract migration drops them.
+
 ## Ephemeral Data (Not Persisted)
 
 ### Supabase Realtime Presence
