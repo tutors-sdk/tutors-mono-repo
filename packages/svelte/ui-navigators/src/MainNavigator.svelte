@@ -65,6 +65,15 @@
     .mobile-tree :global(.nav-row) { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); font-size: var(--font-label); font-weight: var(--weight-medium); }
   }
   @media (min-width: 768px) and (max-width: 1023px) { .course-heading { padding-inline: var(--space-6); } }
-  @media (max-width: 767px) { .brand { font-size: var(--font-section); gap: var(--space-2); } .header-actions { gap: 0; } .main-navigation { --nav-gutter: var(--space-2); gap: var(--space-1); } }
+  /* Phones: a compact header (about 100px, from 134px) so the page keeps the screen - a 56px bar and a course
+     row padded 4px around its 44px Course Tree button. Touch targets stay 44px. */
+  @media (max-width: 767px) {
+    .brand { font-size: var(--font-section); gap: var(--space-2); }
+    .header-actions { gap: 0; min-height: 56px; }
+    .main-navigation { --nav-gutter: var(--space-2); gap: var(--space-1); }
+    .course-heading { padding-block: var(--space-1); }
+    .course-title { font-size: var(--font-size-17); }
+    .mobile-tree :global(.nav-row) { min-height: 44px; padding-block: 0; }
+  }
   .mobile-course-navigation { height: 100%; }
 </style>

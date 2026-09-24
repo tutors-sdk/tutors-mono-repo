@@ -366,7 +366,10 @@ main column.
 - **Shell:** the header spans the top (surface fill, bottom hairline). The sidebar holds course
   navigation, companions, course tools or a lab's steps. Below 1024px the sidebar disappears
   and its contents open as a dialog from a "Course navigation" button in the header, next to a
-  "Course Tree" button.
+  "Course Tree" button. On phones (below 768px) the header is compact - a 56px bar over a course row, about
+  116px in all - and floats over the page: it slides away as the reader scrolls down and back
+  on any scroll up, staying put near the top, while one of its menus is open, or when focus
+  moves into it.
 - **Page:** content pads 32px top and 40px sides (24px sides on tablets, 20px/16px on phones) up to
   1600px wide. The header's course title and the breadcrumbs sit on the same gutter.
   Pages open with an eyebrow, title and muted summary, and artwork on the right where it helps.
