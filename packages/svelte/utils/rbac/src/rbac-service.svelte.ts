@@ -13,8 +13,11 @@ import { getLocksForCourse, upsertLock } from "./lock-store.ts";
  */
 export const SHOW_LOCKED_KEY = "@settings/show-locked";
 
+/** Drops trailing slashes. A loop, not /\/+$/, which backtracks polynomially on long runs of "/" (CodeQL js/polynomial-redos). */
 function normalizeRoute(route: string): string {
-  return route.replace(/\/+$/, "");
+  let end = route.length;
+  while (end > 0 && route[end - 1] === "/") end--;
+  return route.slice(0, end);
 }
 
 function isRouteLocked(route: string, locks: Map<string, boolean>): boolean {

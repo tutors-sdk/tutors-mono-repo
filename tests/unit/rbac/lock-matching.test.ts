@@ -237,3 +237,14 @@ describe("show locked content to students (the lecturer's setting)", () => {
     expect(rbacService.isLoCardVisible({ ...topic, hide: true } as Lo)).toBe(false);
   });
 });
+
+describe("route normalisation", () => {
+  it("ignores any number of trailing slashes on either side, and a long run of them stays fast", () => {
+    const locks = new Map([["/topic/cs101/topic-01///", true]]);
+    expect(isLoRouteLocked("/topic/cs101/topic-01", locks)).toBe(true);
+    expect(isLoRouteLocked("/lab/cs101/topic-01/book-a//", locks)).toBe(true);
+    const start = performance.now();
+    expect(isLoRouteLocked(`/topic/cs101${"/".repeat(50_000)}x`, locks)).toBe(false);
+    expect(performance.now() - start).toBeLessThan(500);
+  });
+});
