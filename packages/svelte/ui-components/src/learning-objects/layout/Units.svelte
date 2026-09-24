@@ -1,21 +1,14 @@
-<script lang="ts">
+<script lang="ts" module>
   import type { Composite, Lo } from "@tutors/tutors-model-lib";
-  import Panels from "./Panels.svelte";
-  import Cards from "./Cards.svelte";
-  import Image from "@tutors/ui-primitives/components/Image.svelte";
   import { isEducator } from "@tutors/runes";
   import { rbacService } from "@tutors/rbac";
-
-  interface Props {
-    units: Composite[];
-  }
-  let { units }: Props = $props();
 
   function isVisibleLo(lo: Lo): boolean {
     return !lo.hide && !rbacService.isLoLocked(lo);
   }
 
-  function hasVisibleLos(unit: Composite): boolean {
+  /** Whether this viewer sees anything in the unit: lecturers see every unit, students only what is not hidden or locked. */
+  export function hasVisibleLos(unit: Composite): boolean {
     if (isEducator.value) return true;
 
     const standardLos: Lo[] = unit.units?.standardLos ?? [];
@@ -32,6 +25,17 @@
     ];
     return panelLos.some(isVisibleLo);
   }
+</script>
+
+<script lang="ts">
+  import Panels from "./Panels.svelte";
+  import Cards from "./Cards.svelte";
+  import Image from "@tutors/ui-primitives/components/Image.svelte";
+
+  interface Props {
+    units: Composite[];
+  }
+  let { units }: Props = $props();
 </script>
 
 <div class="w-full">

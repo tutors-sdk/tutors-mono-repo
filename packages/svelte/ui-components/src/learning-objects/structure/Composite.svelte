@@ -2,7 +2,7 @@
   import { filterByType } from "@tutors/tutors-model-lib";
   import type { Composite } from "@tutors/tutors-model-lib";
   import Panels from "../layout/Panels.svelte";
-  import Units from "../layout/Units.svelte";
+  import Units, { hasVisibleLos } from "../layout/Units.svelte";
   import Cards from "../layout/Cards.svelte";
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
@@ -12,6 +12,8 @@
   import { t } from "@tutors/i18n";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   let { composite }: { composite: Composite } = $props();
+  // Side units the viewer can see: when a student can see none (all hidden or locked), no side column is reserved.
+  const sides = $derived((composite?.units?.sides ?? []).filter(hasVisibleLos));
   const visible = $derived((composite.type === "course" ? filterByType(composite.los, "topic") : (composite?.units?.standardLos ?? [])).filter(lo => rbacService.isLoVisibleToStudent(lo)));
 
   /**
@@ -61,7 +63,7 @@
         <section class="ui-panel"><p class="ui-eyebrow">{t("nav.calendar.label")}</p><h2>{currentCourse.value.courseCalendar.currentWeek.title}</h2><CalendarButton /></section>
       </div>
     {/if}
-    <div class="composite-columns" class:with-sides={composite.units?.sides?.length > 0} use:layoutCards>
+    <div class="composite-columns" class:with-sides={sides.length > 0} use:layoutCards>
       <div class="main-group">
         <Panels panels={composite.panels} />
         {#if visible.length}
@@ -70,7 +72,7 @@
         <Units units={composite.units.units} />
         <Cards los={composite.units.standardLos} />
       </div>
-      {#if composite.units?.sides?.length}<aside class="side-groups"><Units units={composite.units.sides} /></aside>{/if}
+      {#if sides.length}<aside class="side-groups"><Units units={sides} /></aside>{/if}
     </div>
   </div>
 {/if}
