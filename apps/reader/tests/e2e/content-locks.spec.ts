@@ -29,6 +29,24 @@ test("Locked resource is left out of the course tree", { tag: "@rule-0052" }, as
   await expect(tree.getByRole("link", { name: "Simple", exact: true })).toHaveCount(0);
 });
 
+test("Locked resource is left out of search results", { tag: "@rule-0052" }, async ({ page }) => {
+  // "breadcrumbs" appears only in a talk inside the Simple topic.
+  await openCourseAsStudent(page, [simple]);
+  await page.locator('[data-tour="search"]').click();
+  const dialog = page.getByRole("dialog", { name: "Search this course" });
+  await dialog.getByRole("combobox").fill("breadcrumbs");
+  await expect(dialog.getByText("No resources match your search.")).toBeVisible();
+  await expect(dialog.getByRole("option")).toHaveCount(0);
+  await dialog.getByRole("link", { name: /Open full search/ }).click();
+  await expect(page).toHaveURL(/\/search\/reference-course\?q=breadcrumbs/);
+  await expect(page.locator(".search-results .resource-card")).toHaveCount(0);
+  // A lecturer sees locked content, so their search finds it.
+  await signInAs(page, "lecturer");
+  await page.locator('[data-tour="search"]').click();
+  await dialog.getByRole("combobox").fill("breadcrumbs");
+  await expect(dialog.getByRole("option")).toHaveCount(1);
+});
+
 test("Locked resource is left out of the LLM export", { tag: "@rule-0052" }, async ({ page }) => {
   await openCourseAsStudent(page, [simple]);
   await page.locator(".shell-navigation").getByRole("link", { name: /version of this course for LLMs/ }).click();

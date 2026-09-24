@@ -8,7 +8,7 @@ Feature: Content locks
   in apps/reader/tests/e2e. `pnpm test:ears:audit` fails if a scenario has no such test.
 
   @rule-0052 @ears-state-driven
-  Rule: While a resource is locked, the reader shall leave it out of a student's cards, course tree and LLM export.
+  Rule: While a resource is locked, the reader shall leave it out of a student's cards, course tree, search results and LLM export.
 
     @active
     Scenario: Locked resource is hidden from a student's cards
@@ -21,6 +21,13 @@ Feature: Content locks
       Given the lecturer has locked a topic of an enrolled course
       When a student opens the course tree
       Then that topic is not in the tree
+
+    @active
+    Scenario: Locked resource is left out of search results
+      Given the lecturer has locked a topic of an enrolled course
+      When a student searches for a word that only that topic's talk contains
+      Then neither the search dialog nor the search page lists it
+      And a lecturer's search still finds it
 
     @active
     Scenario: Locked resource is left out of the LLM export
