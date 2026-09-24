@@ -7,9 +7,9 @@
   const courseId = $derived(($page.params.courseid as string) ?? "");
 </script>
 
-<div class="flex h-[calc(100vh-4rem)] min-h-0">
+<div class="flex flex-col lg:flex-row h-[calc(100dvh-76px)] min-h-0">
   <Navigation {courseId} />
-  <div class="flex-1 min-w-0 min-h-0 flex flex-col overflow-auto p-2">
+  <div class="flex-1 min-w-0 min-h-0 flex flex-col overflow-auto p-4 lg:p-8">
     {@render children()}
   </div>
 </div>

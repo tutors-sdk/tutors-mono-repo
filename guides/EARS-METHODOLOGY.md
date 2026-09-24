@@ -127,10 +127,48 @@ describeFeature(feature, ({ Background, Scenario }) => {
 The path passed to `loadFeature` is a literal relative to the repo root, because tier O reads
 it to tell an executable feature from a `documentation-only` one.
 
-A scenario that needs a browser, such as layout, focus order, an OAuth redirect or a service
-worker, cannot be driven from Node. It lives as prose in
+A scenario that needs a browser, such as layout, focus order, colour or a dialog, cannot be
+driven from Node. It is a `@ui` Rule instead, proved by Playwright; see
+[Browser-proved Rules](#browser-proved-rules) below. Behaviour that no test can drive yet,
+such as a real OAuth sign-in or a service worker, lives as prose in
 [`guides/specifications/`](./specifications/README.md), which names the tier that does cover
 the behaviour, or says that none does.
+
+### Browser-proved Rules
+
+A feature tagged `@ui` (the files in `tests/bdd/features/ui/`) holds Rules about what a person
+sees and does in the reader. They are written, tagged and audited like every other Rule, and
+share the one id space, but their scenarios are proved by Playwright rather than by a steps
+file:
+
+```gherkin
+@ui @reader
+Feature: Resource cards
+
+  @rule-0032 @ears-event-driven
+  Rule: When a pointer rests on a card, the reader shall enlarge the card to 102 percent of its size.
+
+    Scenario: Hovering a card enlarges it
+      When a student points at a resource card
+      Then the card is scaled to 1.02
+```
+
+```ts
+// apps/reader/tests/e2e/resource-cards.spec.ts
+test("Hovering a card enlarges it", { tag: "@rule-0032" }, async ({ page }) => { ... });
+```
+
+The binding is the scenario title and the Rule id, both checked by `pnpm test:ears:audit`:
+
+- every scenario needs a test with its exact title, tagged with its Rule id (`unproved-scenario`);
+- a test that cites a Rule id must be a scenario of that `@ui` Rule (`orphan-ui-test`), so a
+  renamed scenario or a stale test fails;
+- `test.skip` or `test.fixme` on a proving test turns the scenario off (`rule-not-run`).
+
+Every test under `apps/reader/tests/e2e/` proves a scenario: a behaviour worth a browser test is
+worth a Rule. The tests run on every pull request (`ui-contract` in `ci.yml`, Chromium) and on
+release candidates in Chromium, Firefox and WebKit. Run one Rule's tests with
+`pnpm test:e2e:reader --project=chromium -g @rule-0032`.
 
 ## Rules are the requirements
 
@@ -280,7 +318,8 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 - Offline resilience
 - Theming
 
-Accessibility, the OAuth flow and responsive layout need a browser and are prose in
+Reader layout, navigation, themes and accessibility need a browser and are `@ui` Rules in
+`features/ui/`, proved by Playwright. The OAuth flow is still prose in
 [specifications/](./specifications/README.md). `course/`, `live/` and `time/` hold features that
 predate the EARS tags.
 

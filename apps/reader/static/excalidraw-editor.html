@@ -62,6 +62,7 @@
       const [collaborators, setCollaborators] = useState(new Map());
 
       useEffect(() => {
+        if (!config.supabaseUrl || !config.supabaseAnonKey) return;
         const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
         const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
         const channelName = `wb:${config.roomId}`;

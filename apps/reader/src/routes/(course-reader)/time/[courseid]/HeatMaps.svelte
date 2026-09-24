@@ -1,46 +1,26 @@
 <script lang="ts">
-  import CalendarHeatmap from "./CalendarHeatmap.svelte";
   import type { TutorsTimeStudent } from "@tutors/tutors-time-lib";
+  import { t } from "@tutors/i18n";
+  import Heatmap from "./Heatmap.svelte";
 
-  interface Props {
-    studentCalendar: TutorsTimeStudent | null;
-  }
-
-  let { studentCalendar }: Props = $props();
+  let { studentCalendar }: { studentCalendar: TutorsTimeStudent } = $props();
+  const dates = $derived(studentCalendar.course?.dates ?? []);
+  // Each of the student's maps sits beside the matching course median so the two read as a pair.
+  const maps = $derived([
+    { id: "student-activity-heatmap", title: t("time.calendarActivity"), values: studentCalendar.calendarByDay },
+    { id: "course-median-heatmap", title: t("time.calendarMedian"), values: studentCalendar.course?.calendarModel?.medianByDay?.row },
+    { id: "student-lab-heatmap", title: t("time.labActivity"), values: studentCalendar.labsByDay },
+    { id: "lab-median-heatmap", title: t("time.labMedian"), values: studentCalendar.course?.labsMedianByDay }
+  ].filter(map => map.values));
 </script>
 
-{#if studentCalendar && (studentCalendar.course?.dates?.length ?? 0) > 0}
-  <section class="shrink-0 py-4 min-w-0 space-y-6 -mx-2 px-2 w-[calc(100%+1rem)]">
-    <!-- Row 1: Calendar and Lab activity heatmaps -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-      {#if studentCalendar.calendarByDay}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Calendar Activity</h2>
-          <CalendarHeatmap calendarByDay={studentCalendar.calendarByDay} dates={studentCalendar.course?.dates ?? []} elementId="student-activity-heatmap" />
-        </div>
-      {/if}
-      {#if studentCalendar.labsByDay}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Lab Activity</h2>
-          <CalendarHeatmap calendarByDay={studentCalendar.labsByDay} dates={studentCalendar.course?.dates ?? []} elementId="student-lab-heatmap" />
-        </div>
-      {/if}
-    </div>
-
-    <!-- Row 2: Course and Lab median heatmaps -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-      {#if studentCalendar.course?.calendarModel?.medianByDay?.row}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Calendar Median Activity</h2>
-          <CalendarHeatmap calendarByDay={studentCalendar.course?.calendarModel?.medianByDay?.row} dates={studentCalendar.course?.dates ?? []} elementId="course-median-heatmap" />
-        </div>
-      {/if}
-      {#if studentCalendar.course?.labsMedianByDay}
-        <div class="min-w-0 w-full overflow-hidden">
-          <h2 class="text-2xl font-semibold mb-4">Lab Median Activity</h2>
-          <CalendarHeatmap calendarByDay={studentCalendar.course?.labsMedianByDay} dates={studentCalendar.course?.dates ?? []} elementId="lab-median-heatmap" />
-        </div>
-      {/if}
-    </div>
-  </section>
+{#if dates.length && maps.length}
+  <div class="heatmaps">
+    {#each maps as map}<Heatmap id={map.id} title={map.title} values={map.values!} {dates} />{/each}
+  </div>
 {/if}
+
+<style>
+  .heatmaps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+  @media (max-width: 1023px) { .heatmaps { grid-template-columns: minmax(0, 1fr); } }
+</style>

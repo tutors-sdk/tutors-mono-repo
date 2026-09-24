@@ -3,7 +3,10 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import yaml from "js-yaml";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+// These tests shell out to git and tsx; under a full parallel run that alone can pass the 5s default.
+vi.setConfig({ testTimeout: 30_000 });
 import { REPO_ROOT, readText } from "../../scripts/checks/lib/repo.ts";
 import {
   APPS,

@@ -2,7 +2,10 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+// These tests shell out to git and tsx; under a full parallel run that alone can pass the 5s default.
+vi.setConfig({ testTimeout: 30_000 });
 import { validateClaimsText } from "../../scripts/checks/release-claims.ts";
 import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
 import { gitIn } from "../../scripts/checks/lib/rules-index.ts";

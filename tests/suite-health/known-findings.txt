@@ -12,7 +12,6 @@
 #   includes, so they run nowhere. The packages/svelte/course lo-tree tests cover a copy of
 #   decorateCourseTree that #228 removes.
 
-no-assertion: tests/e2e/accessibility.spec.ts :: course page passes landmark and navigation rules
 skip: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers
 uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-80-percent.test.ts
 uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-advanced.test.ts

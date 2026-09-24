@@ -11,29 +11,40 @@
   }
   let { lo, orientation = "landscape" }: Props = $props();
 
-  const useMozilla = $derived(currentCourse.value?.defaultPdfReader === "mozilla");
+  let readerOverride = $state<string | null>(null);
+  const useMozilla = $derived((readerOverride ?? currentCourse.value?.defaultPdfReader) === "mozilla");
   const isMarp = $derived(isMarpContent(lo));
 </script>
 
+{#if !isMarp}
+  <div class="ui-actions mb-4">
+    <label class="ui-actions text-sm">PDF reader
+      <select class="select" value={useMozilla ? "mozilla" : "adobe"} onchange={(event) => readerOverride = event.currentTarget.value}>
+        <option value="adobe">Adobe</option><option value="mozilla">Browser reader</option>
+      </select>
+    </label>
+    <a class="ui-button ml-auto" href={lo.pdf} target="_blank" rel="noopener noreferrer">Open original ↗</a>
+  </div>
+{/if}
 {#if isMarp && browser}
   {#await import("./TalkMarp.svelte")}
-    <div class="mt-72 mb-72 flex flex-col items-center justify-center">
-      <span class="loading loading-spinner loading-lg"></span>
+    <div class="flex min-h-64 items-center justify-center">
+      <p role="status" class="ui-muted">Loading presentation…</p>
     </div>
   {:then { default: TalkMarp }}
     <TalkMarp {lo} />
   {/await}
 {:else if useMozilla && browser}
   {#await import("./TalkMozilla.svelte")}
-    <div class="mt-72 mb-72 flex flex-col items-center justify-center">
-      <span class="loading loading-spinner loading-lg"></span>
+    <div class="flex min-h-64 items-center justify-center">
+      <p role="status" class="ui-muted">Loading presentation…</p>
     </div>
   {:then { default: TalkMozilla }}
     <TalkMozilla {lo} />
   {/await}
 {:else if useMozilla && !browser}
-  <div class="mt-72 mb-72 flex flex-col items-center justify-center">
-    <span class="loading loading-spinner loading-lg"></span>
+  <div class="flex min-h-64 items-center justify-center">
+    <p role="status" class="ui-muted">Loading presentation…</p>
   </div>
 {:else}
   <TalkAdobe {lo} {orientation} />
