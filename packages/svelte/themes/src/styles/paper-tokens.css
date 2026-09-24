@@ -157,8 +157,10 @@
   --radius-base: var(--radius-control);
   --radius-container: var(--radius-card);
   --color-primary-500: light-dark(var(--type-primary-light), var(--type-primary-dark));
-  --color-secondary-500: light-dark(var(--type-secondary-light), var(--type-secondary-dark));
-  --color-tertiary-500: light-dark(var(--type-tertiary-light), var(--type-tertiary-dark));
+  /* Type icons (topic = secondary, unit = tertiary) keep the Tutors resource colours the cards use - topic
+     green and talk gold, as in the original Tutors theme - not Paper's purple and mauve type tones. */
+  --color-secondary-500: light-dark(#53A878, var(--type-success-dark));
+  --color-tertiary-500: light-dark(#CB9D00, var(--type-warning-dark));
   --color-success-500: light-dark(var(--type-success-light), var(--type-success-dark));
   --color-warning-500: light-dark(var(--type-warning-light), var(--type-warning-dark));
   --color-error-500: light-dark(var(--type-error-light), var(--type-error-dark));
