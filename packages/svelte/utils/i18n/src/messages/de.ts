@@ -220,6 +220,8 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "lecturer.locks.locked": "Gesperrt",
   "lecturer.locks.unlocked": "Entsperrt",
   "lecturer.locks.empty": "Keine sperrbaren Inhalte gefunden",
+  "lecturer.locks.showToStudents": "Gesperrte Inhalte für Studierende anzeigen",
+  "lecturer.locks.showToStudentsHelp": "Studierende sehen gesperrte Inhalte ausgegraut und können sie nicht öffnen. Wenn aus, sind gesperrte Inhalte für Studierende, im Kursbaum und in der LLM-Version ausgeblendet.",
   "lecturer.enrollment.title": "Einschreibung",
   "lecturer.enrollment.whitelist": "Whitelist",
   "lecturer.enrollment.students": "Studierende",

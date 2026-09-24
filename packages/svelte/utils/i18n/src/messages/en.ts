@@ -220,6 +220,8 @@ Tutors is an open source application - the data collection component [is here](h
   "lecturer.locks.locked": "Locked",
   "lecturer.locks.unlocked": "Unlocked",
   "lecturer.locks.empty": "No lockable content found",
+  "lecturer.locks.showToStudents": "Show locked content to students",
+  "lecturer.locks.showToStudentsHelp": "Students see locked items greyed out and cannot open them. When off, locked items are hidden from students, the course tree and the LLM version.",
   "lecturer.enrollment.title": "Enrollment",
   "lecturer.enrollment.whitelist": "Whitelist",
   "lecturer.enrollment.students": "Students",

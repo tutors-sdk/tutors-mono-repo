@@ -45,3 +45,22 @@ export async function signInAs(page: Page, role: "student" | "lecturer", locked:
     locksLoaded.value = true;
   }, { role, locked });
 }
+
+/**
+ * Locks routes on the loaded course the way the reader stores them without Supabase (localStorage, keyed by
+ * course), marks the course as enrolled (locks only apply to enrolled courses) and reloads the locks.
+ * `showLocked` turns on the lecturer's "show locked content to students" setting. Nothing leaves the browser.
+ */
+export async function seedEnrolledLocks(page: Page, locked: string[], showLocked = false): Promise<void> {
+  await page.evaluate(async ({ locked, showLocked }) => {
+    const modules = performance.getEntriesByType("resource").map(entry => entry.name);
+    const { currentCourse } = await import(modules.find(url => url.includes("/runes/src/index.svelte.ts"))!);
+    const { rbacService, SHOW_LOCKED_KEY } = await import(modules.find(url => url.includes("/rbac/src/rbac-service.svelte.ts"))!);
+    const course = currentCourse.value;
+    const entries = Object.fromEntries(locked.map(route => [route, true]));
+    if (showLocked) entries[SHOW_LOCKED_KEY] = true;
+    localStorage.setItem(`tutors-locks-${course.courseId}`, JSON.stringify(entries));
+    course.hasEnrollment = true;
+    await rbacService.loadContentLocks(course.courseId);
+  }, { locked, showLocked });
+}

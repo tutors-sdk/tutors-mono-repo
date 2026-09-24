@@ -6,6 +6,13 @@ import type { Role, Permission } from "./types.ts";
 import { roleHasPermission } from "./permissions.ts";
 import { getLocksForCourse, upsertLock } from "./lock-store.ts";
 
+/**
+ * The lecturer's per-course "show locked content to students" setting. It is stored as a reserved row in the
+ * locks table, so every visitor's browser already reads it with the course's locks and lecturers can already
+ * write it. It is not a route: route matching below never treats it as a lock.
+ */
+export const SHOW_LOCKED_KEY = "@settings/show-locked";
+
 function normalizeRoute(route: string): string {
   return route.replace(/\/+$/, "");
 }
@@ -159,10 +166,29 @@ function createRbacService() {
   }
 
   function hasActiveLocks(): boolean {
-    for (const locked of contentLocks.value.values()) {
-      if (locked) return true;
+    for (const [route, locked] of contentLocks.value) {
+      if (locked && route !== SHOW_LOCKED_KEY) return true;
     }
     return false;
+  }
+
+  /** Whether the lecturer chose to show locked content to students (greyed out) rather than hide it. */
+  function showLockedToStudents(): boolean {
+    return contentLocks.value.get(SHOW_LOCKED_KEY) === true;
+  }
+
+  function setShowLockedToStudents(show: boolean): Promise<boolean> {
+    return toggleContentLock(SHOW_LOCKED_KEY, show);
+  }
+
+  /**
+   * Whether a resource gets a card for this viewer. Hidden resources never do. A locked one does for a
+   * lecturer (greyed, with Unlock), and for a student only when the lecturer shows locked content (greyed,
+   * no link); otherwise it is left out, as it is from the course tree and the LLM export.
+   */
+  function isLoCardVisible(lo: Lo): boolean {
+    if (lo.hide) return false;
+    return isEducator.value || !isLoLocked(lo) || showLockedToStudents();
   }
 
   function checkLecturerStatus(course?: { enrollment?: { educators?: string[] } }): void {
@@ -205,6 +231,9 @@ function createRbacService() {
     isLoLocked,
     isLoVisibleToStudent,
     hasActiveLocks,
+    showLockedToStudents,
+    setShowLockedToStudents,
+    isLoCardVisible,
     checkLecturerStatus,
     clear
   };

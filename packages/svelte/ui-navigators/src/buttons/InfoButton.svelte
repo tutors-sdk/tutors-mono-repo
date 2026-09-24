@@ -62,6 +62,24 @@
 
       <Tabs.Content value="locks">
         <div class="space-y-1 p-2">
+          <!-- Course-wide: whether students see locked items greyed out, or not at all (the default). -->
+          <div class="lock-setting">
+            <span class="lock-setting-text">
+              <span class="lock-setting-label">{t("lecturer.locks.showToStudents")}</span>
+              <span class="ui-muted">{t("lecturer.locks.showToStudentsHelp")}</span>
+            </span>
+            <Switch
+              aria-label={t("lecturer.locks.showToStudents")}
+              name="show-locked-to-students"
+              checked={rbacService.showLockedToStudents()}
+              onCheckedChange={(details) => rbacService.setShowLockedToStudents(details.checked)}
+            >
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <Switch.HiddenInput />
+            </Switch>
+          </div>
           {#if lockGroups.length === 0 || lockGroups.every((g) => g.los.length === 0)}
             <p class="ui-muted info-text">{t("lecturer.locks.empty")}</p>
           {:else}
@@ -176,4 +194,7 @@
   .info-row { padding: var(--space-2); border-radius: var(--radius-control); }
   .info-row:hover { background: var(--ui-selected); }
   .info-divider { padding-top: var(--space-2); border-top: 1px solid var(--ui-border); }
+  .lock-setting { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-border); border-radius: var(--radius-card); background: var(--ui-canvas); }
+  .lock-setting-text { display: grid; gap: var(--space-1); font-size: var(--font-meta); }
+  .lock-setting-label { font-size: var(--font-label); font-weight: var(--weight-medium); color: var(--ui-ink); }
 </style>

@@ -11,9 +11,9 @@
   export function hasVisibleLos(unit: Composite): boolean {
     if (isEducator.value) return true;
 
-    // Locked cards still show, greyed out (Cards.svelte); panels (embeds) are left out when locked.
+    // Cards follow rbacService.isLoCardVisible (locked ones may show greyed); panels (embeds) are left out when locked.
     const standardLos: Lo[] = unit.units?.standardLos ?? [];
-    if (standardLos.some((lo) => !lo.hide)) return true;
+    if (standardLos.some((lo) => rbacService.isLoCardVisible(lo))) return true;
 
     // Panel LOs are excluded from standardLos — check them or panel-only units stay hidden
     const panels = unit.panels;

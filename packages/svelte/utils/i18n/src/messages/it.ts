@@ -220,6 +220,8 @@ Tutors è un'applicazione open source: il componente di raccolta dati [si trova 
   "lecturer.locks.locked": "Bloccato",
   "lecturer.locks.unlocked": "Sbloccato",
   "lecturer.locks.empty": "Nessun contenuto bloccabile trovato",
+  "lecturer.locks.showToStudents": "Mostra i contenuti bloccati agli studenti",
+  "lecturer.locks.showToStudentsHelp": "Gli studenti vedono i contenuti bloccati in grigio e non possono aprirli. Se disattivato, sono nascosti agli studenti, nell'albero del corso e nella versione per LLM.",
   "lecturer.enrollment.title": "Iscrizione",
   "lecturer.enrollment.whitelist": "Lista bianca",
   "lecturer.enrollment.students": "Studenti",

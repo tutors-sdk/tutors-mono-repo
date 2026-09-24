@@ -238,7 +238,9 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "tour.calendar.title": "Féilire",
   "tour.calendar.description": "Féach ar sceideal an chúrsa agus féach cad atá le teacht an tseachtain seo.",
   "tour.info.title": "Eolas faoin gCúrsa",
-  "tour.info.description": "Léigh eolas mionsonraithe faoin gcúrsa seo, lena n-áirítear a thuairisc agus a chuspóirí."
+  "tour.info.description": "Léigh eolas mionsonraithe faoin gcúrsa seo, lena n-áirítear a thuairisc agus a chuspóirí.",
+  "lecturer.locks.showToStudents": "Taispeáin ábhar faoi ghlas do mhic léinn",
+  "lecturer.locks.showToStudentsHelp": "Feiceann mic léinn míreanna faoi ghlas liathaithe agus ní féidir leo iad a oscailt. Nuair atá sé múchta, bíonn siad i bhfolach ó mhic léinn, ón gcrann cúrsa agus ón leagan LLM."
 } as const;
 
 export default ga;

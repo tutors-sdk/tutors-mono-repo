@@ -51,8 +51,9 @@
     <div class="ui-grid card-grid">
       {#key refresh}
         {#each los as lo}
-          <!-- Locked resources stay in place, greyed out (Rules 0052, 0053); only hidden ones are left out. -->
-          {#if !lo.hide}
+          <!-- Locked resources: greyed for lecturers (Rule 0053); for students hidden (0052) unless the lecturer
+               shows locked content (0054). -->
+          {#if rbacService.isLoCardVisible(lo)}
             <div class="min-w-0">
               <Card
                 cardDetails={{
