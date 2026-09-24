@@ -4,7 +4,6 @@
   import type { Lo } from "@tutors/tutors-model-lib";
 
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
-  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse, isEducator, contentLocks, locksLoaded } from "@tutors/runes";
   import { setShowHide } from "@tutors/tutors-model-lib";
   import { rbacService } from "@tutors/rbac";
@@ -52,8 +51,9 @@
     <div class="ui-grid card-grid">
       {#key refresh}
         {#each los as lo}
-          {#if !lo.hide && !(rbacService.isLoLocked(lo) && !isEducator.value)}
-            <div class="relative min-w-0">
+          <!-- Locked resources stay in place, greyed out (Rules 0052, 0053); only hidden ones are left out. -->
+          {#if !lo.hide}
+            <div class="min-w-0">
               <Card
                 cardDetails={{
                   route: lo.route,
@@ -64,16 +64,10 @@
                   icon: lo.icon,
                   video: lo.video
                 }}
+                locked={rbacService.isLoLocked(lo)}
+                lecturer={isEducator.value}
+                onUnlock={isEducator.value && contentLocks.value.get(lo.route) ? () => rbacService.toggleContentLock(lo.route, false) : undefined}
               />
-              {#if isEducator.value && contentLocks.value.get(lo.route)}
-                <button
-                  aria-label="Unlock {lo.title}"
-                  class="absolute top-2 right-2 z-20 rounded-[var(--radius-control)] bg-[var(--ui-raised)] p-1 opacity-70 transition-opacity hover:opacity-100"
-                  onclick={() => rbacService.toggleContentLock(lo.route, !contentLocks.value.get(lo.route))}
-                >
-                  <Icon type="lock" height="20" />
-                </button>
-              {/if}
             </div>
           {/if}
         {/each}

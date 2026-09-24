@@ -7,14 +7,14 @@
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import CalendarButton from "@tutors/ui-navigators/buttons/CalendarButton.svelte";
-  import { rbacService } from "@tutors/rbac";
   import { currentCourse } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   let { composite }: { composite: Composite } = $props();
   // Side units the viewer can see: when a student can see none (all hidden or locked), no side column is reserved.
   const sides = $derived((composite?.units?.sides ?? []).filter(hasVisibleLos));
-  const visible = $derived((composite.type === "course" ? filterByType(composite.los, "topic") : (composite?.units?.standardLos ?? [])).filter(lo => rbacService.isLoVisibleToStudent(lo)));
+  // What the cards show: everything not hidden, locked resources included (greyed out).
+  const visible = $derived((composite.type === "course" ? filterByType(composite.los, "topic") : (composite?.units?.standardLos ?? [])).filter(lo => !lo.hide));
 
   /**
    * Sizes the two regions of a topic with side units. The side column holds a single column of cards and

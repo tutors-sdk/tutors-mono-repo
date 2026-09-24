@@ -30,3 +30,18 @@ export async function seedOneOnline(page: Page): Promise<void> {
     presenceService.studentsOnline.value = [{ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }];
   }, modules);
 }
+
+/**
+ * Signs this browser in as a student or a lecturer, and optionally locks routes, by seeding the UI stores the
+ * dev server has loaded. Locks save only to this browser (no Supabase in dev or CI); nothing is written anywhere.
+ */
+export async function signInAs(page: Page, role: "student" | "lecturer", locked: string[] = []): Promise<void> {
+  await page.evaluate(async ({ role, locked }) => {
+    const runes = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/runes/src/index.svelte.ts"))!;
+    const { tutorsId, isEducator, contentLocks, locksLoaded } = await import(runes);
+    tutorsId.value = { login: `ui-${role}`, name: `UI ${role}`, share: "false", sentiment: "neutral" };
+    isEducator.value = role === "lecturer";
+    if (locked.length) contentLocks.value = new Map(locked.map(route => [route, true]));
+    locksLoaded.value = true;
+  }, { role, locked });
+}

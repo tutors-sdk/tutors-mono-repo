@@ -10,7 +10,11 @@
   import { t } from "@tutors/i18n";
   import type { Snippet } from "svelte";
 
-  let { cardDetails, cardLayout, children } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; children?: Snippet }>();
+  /**
+   * `locked` greys the card out. A student gets no link and a "Locked" label; a `lecturer` keeps the link and,
+   * when `onUnlock` is given (the lock is on this resource, not inherited), an Unlock button.
+   */
+  let { cardDetails, cardLayout, children, locked = false, lecturer = false, onUnlock } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; children?: Snippet; locked?: boolean; lecturer?: boolean; onUnlock?: () => void }>();
 
   const legacyCardColours: Record<string, { border: string; background: string }> = {
     course: { border: "#37919b", background: "#d3ecee" },
@@ -66,8 +70,10 @@
 {#if cardDetails.student}
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
-  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card ui-lift">
-    <a class="resource-link" href={route} {target} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
+  {@const openable = !locked || lecturer}
+  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
+    <div class="resource-body">
+    <svelte:element this={openable ? "a" : "div"} class="resource-link" href={openable ? route : undefined} target={openable && target ? target : undefined} rel={openable && target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
         <span class="resource-type" title={cardDetails.type}>
@@ -76,15 +82,23 @@
         </span>
       </div>
       <Image lo={cardDetails} />
-    </a>
+    </svelte:element>
     {#if cardDetails.summary || cardDetails.summaryEx}
       <div class="resource-summary" title={plainFromSummary(cardDetails.summary)}>{@html sanitizeHtml(cardDetails.summary ?? "")} {cardDetails.summaryEx ?? ""}</div>
     {/if}
     {@render children?.()}
-    {#if cardDetails.video && cardDetails.type !== "video" && !hideVideoIcon}
+    {#if openable && cardDetails.video && cardDetails.type !== "video" && !hideVideoIcon}
       <a class="companion-video" href={cardDetails.video} aria-label={`${t("shell.video")}: ${cardDetails.title}`}><Icon type="video" height="18" />{t("shell.video")}</a>
     {/if}
     {#if cardDetails.metric}<p class="resource-metric">{cardDetails.metric}</p>{/if}
+    </div>
+    {#if locked}
+      {#if onUnlock}
+        <button class="lock-badge" aria-label={`${t("lecturer.locks.unlock")} ${cardDetails.title}`} onclick={onUnlock}><Icon type="unlock" height="18" />{t("lecturer.locks.unlock")}</button>
+      {:else}
+        <span class="lock-badge"><Icon type="lock" height="18" />{t("lecturer.locks.locked")}</span>
+      {/if}
+    {/if}
   </article>
 {/if}
 <style>
@@ -92,6 +106,14 @@
   /* The card is a fixed --card-height, laid out as a column: the artwork gives up height (see below) so the
      title, summary and the bottom padding always fit, and nothing is clipped against the colour band. */
   .resource-card { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; min-width: 0; padding: var(--space-5); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 8px; border-radius: var(--radius-panel); transition: background-color 150ms, border-color 150ms, transform 180ms ease-out; }
+  .resource-body { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; }
+  /* Locked: the whole card greys out (bands and icon too) and its content fades; the badge sits over the
+     artwork, neutral so the greyscale leaves it legible. */
+  .locked { filter: grayscale(1); }
+  .locked .resource-body { opacity: 0.5; }
+  .lock-badge { position: absolute; top: 50%; left: 50%; z-index: 2; display: inline-flex; align-items: center; gap: var(--space-2); min-height: 36px; padding: var(--space-1) var(--space-4); transform: translate(-50%, -50%); border: 1px solid var(--ui-border); border-radius: 999px; background: var(--ui-surface); color: var(--ui-ink); font-size: var(--font-label); font-weight: var(--weight-medium); white-space: nowrap; box-shadow: 0 4px 12px #0000001a; }
+  button.lock-badge { min-height: 44px; }
+  button.lock-badge:hover { background: var(--ui-selected); }
   .resource-card:has(.resource-link:hover) { background: color-mix(in srgb, var(--resource-background) 86%, var(--ui-surface)); }
   .resource-link { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; gap: var(--space-4); color: var(--ui-ink); text-decoration: none; }
   .resource-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
