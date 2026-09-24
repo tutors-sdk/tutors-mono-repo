@@ -33,10 +33,10 @@ test.describe("anonymous student", () => {
   });
 
   test("opening search puts keyboard focus in the search box", async ({ page }) => {
-    // The search page places focus itself; the layout's route-change focus must not take it back.
+    // Search opens as a dialog over the page, with focus in its search box.
     await page.goto(`${stack.reader}/course/${stack.courseId}`);
     await page.getByRole("button", { name: "Search this course" }).click();
-    await expect(page.getByRole("searchbox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
+    await expect(page.getByRole("dialog", { name: "Search this course" }).getByRole("combobox", { name: "Enter search term:" })).toBeFocused({ timeout: 5_000 });
   });
 
   test("following a link elsewhere moves keyboard focus to the main content", async ({ page }) => {

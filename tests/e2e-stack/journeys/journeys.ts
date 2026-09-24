@@ -71,19 +71,24 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
   await expect(page.getByRole("main").getByRole("heading", { name: fixture.talk.firstSlideHeading })).toBeVisible();
 }
 
-/** Anonymous student searches the course and gets a result linking to the matching note. */
+/**
+ * Anonymous student searches the course: the header opens the search dialog, which lists the matching
+ * note as they type, and "Open full search" carries the query to the search page's result cards.
+ */
 export async function anonymousStudentSearches(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
   await page.goto(`${stack.reader}/course/${courseId}`);
   await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
 
   await page.getByRole("button", { name: "Search this course" }).click();
-  await expect(page).toHaveURL(new RegExp(`/search/${courseId}$`));
-  const box = page.getByRole("searchbox", { name: "Enter search term:" });
-  await expect(box).toBeVisible();
+  const dialog = page.getByRole("dialog", { name: "Search this course" });
+  const box = dialog.getByRole("combobox", { name: "Enter search term:" });
+  await expect(box).toBeFocused();
   await onPage("reader:search");
 
   await box.fill(fixture.searchTerm);
-  await box.press("Enter");
+  await expect(dialog.getByRole("option", { name: new RegExp(fixture.searchResultTitle) }).first()).toBeVisible();
+  await dialog.getByRole("link", { name: /Open full search/ }).click();
+  await expect(page).toHaveURL(new RegExp(`/search/${courseId}\\?q=`));
   const results = page.getByRole("main").getByRole("link", { name: fixture.searchResultTitle });
   await expect(results.first()).toBeVisible();
   await onPage("reader:search-results");
