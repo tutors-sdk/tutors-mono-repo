@@ -62,6 +62,9 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
 .prose :where(pre, table) { max-width: 100%; overflow-x: auto; }
 .prose table { display: block; }
+/* Table cells break only between words: the prose's overflow-wrap: anywhere would let a column shrink on a
+   phone until "Option" splits into "Opti / on". A table wider than its panel scrolls sideways instead. */
+.prose :where(th, td) { overflow-wrap: normal; word-break: normal; }
 .prose :where(img, iframe, video) { max-width: 100%; }
 .reader-content { min-width: 0; padding: var(--space-8) var(--space-10); }
 /* Reading panels span the content column; the text inside stays at a readable measure. */

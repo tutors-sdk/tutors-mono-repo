@@ -438,6 +438,8 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Reading panel:** 32×40px padding (20×16px on phones). A meta row carries the lab title as
   an eyebrow on the left, and the step count and the content-width switch on the right.
   Previous and next step links sit at the bottom, separated by a hairline.
+  Tables in lab and note text keep words whole (text wraps only between words) and scroll
+  sideways inside the panel when they are wider than it; the page itself never scrolls sideways.
 - **Segmented switch:** used for Light/Dark and Standard/Full width. Options sit in a canvas
   track with a hairline and 2px inset. The selected option is raised onto the surface with teal
   text. Icons precede the labels.
