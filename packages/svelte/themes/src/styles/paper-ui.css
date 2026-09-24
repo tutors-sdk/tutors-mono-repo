@@ -47,10 +47,17 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
    cannot make one row taller than the next. Content past the box clips (see Card.svelte). */
 /* Full-width messages (empty states) break the line rather than sitting in it. */
 .ui-grid.card-grid > .ui-empty { flex-basis: 100%; height: auto; }
-/* Phones (below 768px, where cards are one column - Rule 0031): a 220px card would stand alone in the middle
-   of its row, so each card takes the row instead and lays out as a compact row, artwork beside the text
-   (Card.svelte, Rule 0059). Height follows the content. */
-@media (max-width: 767px) { .ui-grid.card-grid > * { flex: 1 1 100%; width: 100%; height: auto; } }
+/* Phones (below 768px): a 220px card would stand alone in the middle of its row, so cards fill the grid
+   instead. From 390px (iPhone 14/15/16 and up) the same portrait card sits two to a row (Rule 0031) - no
+   wider than the desktop card, centred, on a landscape phone - at the compact box from paper-tokens.css
+   (Card.svelte tightens its type and padding); never three or four, which makes each card too small to read.
+   Below 390px (iPhone mini and SE) two would be too narrow, so one compact card fills the row (Rule 0059). */
+@media (max-width: 767px) {
+  .ui-grid.card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, var(--card-width))); justify-content: center; gap: var(--space-3); }
+  .ui-grid.card-grid > * { width: auto; }
+  .ui-grid.card-grid > .ui-empty { grid-column: 1 / -1; }
+}
+@media (max-width: 389px) { .ui-grid.card-grid { grid-template-columns: minmax(0, 1fr); } }
 .ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); width: 100%; }
 .prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
 .prose :where(pre, table) { max-width: 100%; overflow-x: auto; }

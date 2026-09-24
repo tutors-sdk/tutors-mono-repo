@@ -128,8 +128,8 @@
   --ui-raised: light-dark(var(--light-raised), var(--dark-raised));
   /* Resource card geometry: a fixed size, not a floor. Cards never stretch, so a row holds as many
      as fit and the leftover space is split either side (justify-content: center in paper-ui.css).
-     The card is the same box at every viewport from 768px up, so the artwork is one value too, not a set
-     of per-breakpoint ones; below that, cards are full-width rows (paper-ui.css, Card.svelte). Height is sized for the worst case - 2-line title, the artwork,
+     From 768px up the card is the same box at every viewport, so the artwork is one value too; phones
+     get one shorter box with smaller artwork (below), two or more cards a row. Height is sized for the worst case - 2-line title, the artwork,
      3-line summary, padding and the 8px type bands - so nothing clips; shorter cards carry the slack
      at the bottom. The three are coupled: shrinking --card-height without shrinking --card-artwork
      (or tightening the line-clamps in Card.svelte) clips the summary. Heads up if you go tight - the
@@ -143,6 +143,15 @@
      main group gives up the width. Applied in Composite.svelte's layoutCards. */
   --side-slack: 80px;
 }
+/* Phones: cards share the row two across (paper-ui.css), about 150-220px wide, or have it to themselves
+   below 390px - either way a compact box: shorter, with smaller artwork. Sized like the desktop box, for the
+   worst case: 2-line title, 64px artwork, 2-line summary and a companion-video link, at the tighter phone
+   type in Card.svelte. */
+@media (max-width: 767px) { :root { --card-height: 264px; --card-artwork: 104px; } }
+/* Below 390px a card has the whole row, so its title and summary rarely wrap: a shorter box with 96px
+   artwork. ponytail: a two-line title, two-line summary and a companion-video link together would clip
+   about 12px; raise this if a course does that. */
+@media (max-width: 389px) { :root { --card-height: 232px; --card-artwork: 96px; } }
 
 /* Preserve theme selection and its icon library; the Tutors palette uses Paper's type tones. */
 [data-theme="tutors"] {

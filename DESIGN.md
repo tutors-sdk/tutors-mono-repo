@@ -167,7 +167,8 @@ spacing:
   card-height: 340px
   card-artwork: 180px
   card-artwork-min: 80px
-  card-artwork-phone: 64px
+  card-phone: 264px tall, 104px artwork, two a row from 390px
+  card-small-phone: 232px tall, 96px artwork, one a row below 390px
   touch-target: 44px
   breakpoint-navigation: 1024px
   breakpoint-phone: 768px
@@ -371,8 +372,10 @@ main column.
   Pages open with an eyebrow, title and muted summary, and artwork on the right where it helps.
 - **Card grids:** from 768px up, every resource card is one fixed 220×340px box. Rows wrap and
   centre, so a short final row sits centred under the full one; a 768px tablet holds three a row.
-  Below 768px each card is a full-width row instead: 64px artwork on the left, the title (17px)
-  and a two-line summary beside it, with 6px type bands. Unit panels pad 16px on phones.
+  Below 768px the same portrait card is compact - 12px padding, 6px type bands, a 16px title, a
+  20px type icon and a two-line summary - and fills the grid: two a row from 390px (iPhone
+  14/15/16; no wider than 220px each on a landscape phone), one a row below 390px (iPhone mini,
+  SE). Unit panels pad 16px on phones.
   Cards sit inside their unit, and a unit is a standard white panel with a hairline, 16px apart.
 - **Main and side units:** when a page has side units (such as a podcast or a reference
   sidebar), the side column is one card wide (plus its panel padding and 80px of slack for
@@ -484,7 +487,8 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 ## Motion
 
 Motion confirms, never decorates. Colour changes on buttons and links take 150ms. Cards scale
-to 102% over 180ms ease-out. Popovers fade in. With `prefers-reduced-motion: reduce`, all of
+to 102% over 180ms ease-out. Popovers fade in. Drawers slide in from the edge they belong to
+(the course navigation from the left) over 220ms; centred dialogs fade up 8px. With `prefers-reduced-motion: reduce`, all of
 these switch off.
 
 ## Accessibility contract

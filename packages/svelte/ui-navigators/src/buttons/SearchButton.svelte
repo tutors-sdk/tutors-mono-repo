@@ -81,23 +81,26 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 <dialog bind:this={dialog} class="search-palette" aria-label={t("nav.search.tip")} onclose={() => (open = false)} onclick={(event) => event.target === dialog && close()}>
   {#if open}
-    <div class="search-field">
-      <Icon icon="lucide:search" height="20" />
-      <input
-        bind:this={input}
-        bind:value={query}
-        type="search"
-        role="combobox"
-        aria-expanded="true"
-        aria-controls="search-results"
-        aria-activedescendant={results.length ? `search-option-${active}` : undefined}
-        aria-label={t("course.search.label")}
-        placeholder={t("search.placeholder")}
-        autocomplete="off"
-        spellcheck="false"
-        onkeydown={onKey}
-      />
-      <button class="search-close" onclick={close} aria-label={t("shell.close")}><kbd>esc</kbd><Icon icon="lucide:x" height="20" /></button>
+    <div class="search-top">
+      <div class="search-field">
+        <Icon icon="lucide:search" height="20" />
+        <input
+          bind:this={input}
+          bind:value={query}
+          type="search"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="search-results"
+          aria-activedescendant={results.length ? `search-option-${active}` : undefined}
+          aria-label={t("course.search.label")}
+          placeholder={t("search.placeholder")}
+          autocomplete="off"
+          spellcheck="false"
+          onkeydown={onKey}
+        />
+        <button class="search-close" onclick={close} aria-label={t("shell.close")}><kbd>esc</kbd><Icon icon="lucide:x" height="20" /></button>
+      </div>
+      <button class="search-done" onclick={close}>{t("shell.close")}</button>
     </div>
     <div class="search-types" role="group" aria-label={t("content.type")}>
       <button class="type-chip" aria-pressed={!kind} onclick={() => (kind = "")}>{t("shell.allTypes")}</button>
@@ -153,7 +156,8 @@
   .search-palette::backdrop { background: color-mix(in srgb, black 35%, transparent); backdrop-filter: blur(2px); }
   /* The field is a rounded control; focus shows as the standard teal ring (3px, 3px offset) around it,
      so the input itself draws none. */
-  .search-field { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) var(--space-4) 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-control-border); border-radius: var(--radius-control); background: var(--ui-surface); color: var(--ui-muted); }
+  .search-top { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-4) var(--space-4) 0; }
+  .search-field { display: flex; flex: 1; min-width: 0; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-control-border); border-radius: var(--radius-control); background: var(--ui-surface); color: var(--ui-muted); }
   .search-field:focus-within { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
   .search-field input, .search-field input:focus { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; box-shadow: none; background: transparent; color: var(--ui-ink); font-size: var(--font-reading); }
   .search-field input::-webkit-search-cancel-button { display: none; }
@@ -176,10 +180,15 @@
   .search-keys { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
   .search-keys kbd { min-width: 20px; height: 20px; }
   .search-footer a { color: var(--ui-brand); font-weight: var(--weight-medium); }
-  /* Phones: the palette is the whole screen (the results get every line the keyboard leaves), and the type
-     chips are one row that scrolls sideways instead of five rows that push the results down. */
+  .search-done { display: none; }
+  /* Phones: the palette is the whole screen (the results get every line the keyboard leaves), so there is no
+     backdrop to tap away: a plain "Close" text button sits beside the field, the platform's search pattern,
+     in place of the in-field esc/✕. The type chips are one row that scrolls sideways instead of five rows
+     that push the results down. */
   @media (max-width: 639px) {
     .search-palette { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; }
+    .search-close { display: none; }
+    .search-done { display: inline-flex; flex: none; align-items: center; min-height: 44px; padding: 0 var(--space-1); color: var(--ui-brand); font-size: var(--font-control); font-weight: var(--weight-medium); }
     .search-types { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
     .type-chip { flex: none; }
     .search-keys, .result-type { display: none; }
