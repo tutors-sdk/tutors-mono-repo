@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { currentCourse, isEducator, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import TutorsIcon from "@tutors/ui-primitives/components/TutorsIcon.svelte";
@@ -14,14 +13,8 @@
   import AnonProfile from "./tutors-connect/AnonProfile.svelte";
 
   let { showConnect = true } = $props();
-  function searchShortcut(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k" && currentCourse.value && !currentCourse.value.isPortfolio) {
-      event.preventDefault();
-      void goto(`/search/${currentCourse.value.courseId}`);
-    }
-  }
+  // Cmd/Ctrl+K and "/" open the search dialog (SearchButton).
 </script>
-<svelte:window onkeydown={searchShortcut} />
 {#snippet menuSelector()}<span class="menu-toggle"><Icon icon="lucide:menu" height="22" /></span>{/snippet}
 {#snippet sidebarContent()}<div class="mobile-course-navigation"><CourseNavigation {showConnect} mobile /></div>{/snippet}
 <nav class="main-navigation" aria-label={t("a11y.mainNavigation")}>

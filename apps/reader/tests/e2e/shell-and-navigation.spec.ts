@@ -50,6 +50,33 @@ test("Search lists each matching resource once", { tag: "@rule-0023" }, async ({
   expect(new Set(links).size).toBe(links.length);
 });
 
+test("Search dialog finds and opens a resource", { tag: "@rule-0055" }, async ({ page }) => {
+  await page.goto(course);
+  await page.locator('[data-tour="search"]').click();
+  const dialog = page.getByRole("dialog", { name: "Search this course" }).or(page.locator(".search-palette[open]"));
+  await expect(dialog).toBeVisible();
+  const options = dialog.getByRole("option");
+  await expect(options.first()).toContainText("Simple");
+  await dialog.getByRole("combobox").fill("lab");
+  await expect(options.first()).toContainText(/lab/i);
+  await dialog.getByRole("combobox").press("ArrowDown");
+  await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
+  const href = await options.nth(1).getAttribute("href");
+  await dialog.getByRole("combobox").press("Enter");
+  await expect(dialog).toBeHidden();
+  await expect(page).toHaveURL(href!);
+});
+
+test("Keyboard shortcut opens search", { tag: "@rule-0055" }, async ({ page }) => {
+  await page.goto(course);
+  await expect(page.getByRole("heading", { name: "Reference Course", exact: true })).toBeVisible();
+  await page.keyboard.press("Control+k");
+  const input = page.locator(".search-palette[open]").getByRole("combobox");
+  await expect(input).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".search-palette[open]")).toHaveCount(0);
+});
+
 test("Phone header opens the course tree and navigation", { tag: "@rule-0024" }, async ({ page }) => {
   await page.goto(course);
   const header = page.locator(".shell-header");

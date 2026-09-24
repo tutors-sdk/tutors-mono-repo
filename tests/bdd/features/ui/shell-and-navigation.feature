@@ -46,6 +46,20 @@ Feature: Reader shell and navigation
       Then the address holds the query
       And the results are resource cards with no link repeated
 
+  @rule-0055 @ears-event-driven
+  Rule: When a student opens search from the header or with Ctrl+K, the reader shall show a search dialog that lists matching resources as the student types and opens the one the student chooses.
+
+    Scenario: Search dialog finds and opens a resource
+      When a student selects Search in the header
+      Then a search dialog opens listing the course's topics
+      When the student types "lab", moves down a result and presses Enter
+      Then the dialog closes and the chosen resource opens
+
+    Scenario: Keyboard shortcut opens search
+      When a student presses Ctrl+K on a course page
+      Then the search dialog opens with the search box focused
+      And Escape closes it
+
   @rule-0024 @ears-state-driven
   Rule: While the viewport is narrower than 768 pixels, the reader shall open the course tree and course navigation from buttons in the header.
 
