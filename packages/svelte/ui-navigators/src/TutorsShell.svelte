@@ -11,6 +11,22 @@
 
   let { children, hideNavigator = false, showConnect = true }: { children: Snippet; hideNavigator?: boolean; showConnect?: boolean } = $props();
 
+  // Phones tuck the header away while the reader scrolls down and bring it back on any scroll up, so the
+  // page gets the whole screen (CSS below; only phones move it). Near the top, with a header menu open, or
+  // when focus moves into the header, it stays in view.
+  let header: HTMLElement | undefined = $state();
+  let headerHeight = $state(0);
+  let tucked = $state(false);
+  let lastTop = 0;
+  function onScroll(event: Event) {
+    const top = (event.currentTarget as HTMLElement).scrollTop;
+    const delta = top - lastTop;
+    lastTop = top;
+    if (top <= headerHeight || header?.querySelector('[aria-expanded="true"]')) tucked = false;
+    else if (delta > 4) tucked = true;
+    else if (delta < -4) tucked = false;
+  }
+
   afterNavigate(({ to }) => {
     if (to?.url.hash) return;
     document.querySelector<HTMLElement>(".shell-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -18,13 +34,13 @@
 </script>
 
 <ToastProvider />
-<div class="tutors-shell" class:without-navigation={hideNavigator}>
+<div class="tutors-shell" class:without-navigation={hideNavigator} style:--header-height={`${headerHeight}px`}>
   <a href="#main-content" class="skip-link">{t("a11y.skipToContent")}</a>
   {#if !hideNavigator}
-    <header class="shell-header"><MainNavigator {showConnect} /></header>
+    <header class="shell-header" class:tucked bind:this={header} bind:offsetHeight={headerHeight} onfocusin={() => (tucked = false)}><MainNavigator {showConnect} /></header>
     <aside class="shell-navigation" aria-label={t("shell.navigation")}><CourseNavigation {showConnect} /></aside>
   {/if}
-  <main id="main-content" tabindex="-1" class="shell-main" data-route={page.url.pathname}>
+  <main id="main-content" tabindex="-1" class="shell-main" data-route={page.url.pathname} onscroll={onScroll}>
     {@render children()}
     {#if !hideNavigator}<footer aria-label={t("a11y.footer")}><Footer /></footer>{/if}
   </main>
@@ -42,4 +58,13 @@
   .skip-link:focus { top: var(--space-4); }
   /* Paper --breakpoint-navigation: 1024px (custom properties cannot be used in media queries). */
   @media (max-width: 1023px) { .tutors-shell { grid-template-columns: minmax(0, 1fr); } .shell-navigation { display: none; } }
+  /* Phones: the header floats over the top of the page (which starts below it) so it can slide away without
+     the page jumping. Rule 0062. */
+  @media (max-width: 767px) {
+    .tutors-shell:not(.without-navigation) { position: relative; grid-template-rows: minmax(0, 1fr); }
+    .shell-header { position: absolute; inset: 0 0 auto; transition: transform 200ms ease-out; }
+    .shell-header.tucked { transform: translateY(-100%); }
+    .tutors-shell:not(.without-navigation) .shell-main { padding-top: var(--header-height); scroll-padding-top: calc(var(--header-height) + var(--space-6)); }
+  }
+  @media (max-width: 767px) and (prefers-reduced-motion: reduce) { .shell-header { transition: none; } }
 </style>

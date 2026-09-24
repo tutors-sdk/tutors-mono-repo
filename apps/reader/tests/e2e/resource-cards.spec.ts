@@ -41,14 +41,20 @@ test("Cards in a grid share the tallest height", { tag: "@rule-0030" }, async ({
   })).toBe(true);
 });
 
-test("Phone viewport stacks cards in one column", { tag: "@rule-0031" }, async ({ page }) => {
+test("Phone viewport sets cards two to a row", { tag: "@rule-0031" }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const url of cardPages) {
     await page.goto(url);
-    const cards = page.locator(".main-group .resource-card");
-    await expect(cards.nth(1)).toBeVisible();
-    const [first, second] = await boxes(cards);
-    expect(second.y, url).toBeGreaterThan(first.y + first.height);
+    // A grid with a third card; each card sits in its own wrapper, the grid's direct child.
+    const grid = page.locator(".main-group .card-grid").filter({ has: page.locator(":nth-child(3) > .resource-card") }).first();
+    const cards = grid.locator(".resource-card");
+    await expect(cards.nth(2)).toBeVisible();
+    const gridBox = (await grid.boundingBox())!;
+    const [first, second, third] = await cards.evaluateAll(all => all.slice(0, 3).map(card => card.getBoundingClientRect().toJSON() as DOMRect));
+    expect(second.y, url).toBe(first.y);
+    expect(first.x, url).toBeCloseTo(gridBox.x, 0);
+    expect(second.x + second.width, url).toBeCloseTo(gridBox.x + gridBox.width, 0);
+    expect(third.y, url).toBeGreaterThan(first.y + first.height);
     expect(await fitsViewport(page), url).toBe(true);
   }
 });
@@ -64,6 +70,30 @@ test("Desktop viewport sets cards side by side", { tag: "@rule-0031" }, async ({
     expect(second.y, url).toBe(first.y);
     expect(second.x, url).toBeGreaterThan(first.x + first.width);
   }
+});
+
+test("Small phone viewport gives each card its own row", { tag: "@rule-0059" }, async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  for (const url of cardPages) {
+    await page.goto(url);
+    const grid = page.locator(".main-group .card-grid").first();
+    const cards = grid.locator(".resource-card");
+    await expect(cards.nth(1)).toBeVisible();
+    const gridBox = (await grid.boundingBox())!;
+    const [first, second] = await boxes(cards);
+    expect(first.width, url).toBeCloseTo(gridBox.width, 0);
+    expect(second.y, url).toBeGreaterThan(first.y + first.height);
+    expect(await fitsViewport(page), url).toBe(true);
+  }
+});
+
+test("Standard phone viewport keeps two cards a row", { tag: "@rule-0059" }, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(course);
+  const cards = page.locator(".main-group .resource-card");
+  await expect(cards.nth(1)).toBeVisible();
+  const [first, second] = await boxes(cards);
+  expect(second.y).toBe(first.y);
 });
 
 test("Hovering a card enlarges it", { tag: "@rule-0032" }, async ({ page }) => {

@@ -24,19 +24,35 @@ Feature: Resource cards
       Then every card in the grid has the same height
 
   @rule-0031 @ears-state-driven
-  Rule: While the viewport is narrower than 768 pixels, the reader shall show resource cards in a single column.
+  Rule: While the viewport is from 390 to 767 pixels wide, the reader shall show resource cards two to a row, filling the width of their grid.
 
     @active
-    Scenario: Phone viewport stacks cards in one column
+    Scenario: Phone viewport sets cards two to a row
       Given the viewport is 390 pixels wide
       When a student opens the course home and a topic
-      Then each card starts below the one before it
+      Then the first two cards share a row and together fill the width of their grid
+      And the third card starts below them
 
     @inactive
     Scenario: Desktop viewport sets cards side by side
       Given the viewport is 1440 pixels wide
       When a student opens the course home and a topic
       Then the first two cards share a row and each is narrower than 400 pixels
+
+  @rule-0059 @ears-state-driven
+  Rule: While the viewport is narrower than 390 pixels, the reader shall show resource cards one to a row, each as wide as its grid.
+
+    @active
+    Scenario: Small phone viewport gives each card its own row
+      Given the viewport is 375 pixels wide
+      When a student opens the course home and a topic
+      Then each card is as wide as its grid and starts below the one before it
+
+    @inactive
+    Scenario: Standard phone viewport keeps two cards a row
+      Given the viewport is 390 pixels wide
+      When a student opens the course home
+      Then the first two cards share a row
 
   @rule-0032 @ears-event-driven
   Rule: When a pointer rests on a card, the reader shall enlarge the card to 102 percent of its size.

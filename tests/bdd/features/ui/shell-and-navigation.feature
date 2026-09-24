@@ -106,3 +106,19 @@ Feature: Reader shell and navigation
     Scenario: Unknown course shows Page Not Found
       When a student opens "/course/nonexistent-course-id-12345"
       Then the page shows "404", "Page Not Found" and a "Go Home" link
+
+  @rule-0062 @ears-state-driven
+  Rule: While the viewport is narrower than 768 pixels, the reader shall slide the header out of view as a student scrolls down a page and back into view as the student scrolls up.
+
+    @active
+    Scenario: Phone header hides on scroll down and returns on scroll up
+      Given the viewport is 390 pixels wide
+      When a student scrolls down the course home
+      Then the header is out of view
+      And when the student scrolls up a little the header is back in view
+
+    @inactive
+    Scenario: Desktop header stays while scrolling
+      Given the viewport is 1440 pixels wide
+      When a student scrolls down the course home
+      Then the header stays in view

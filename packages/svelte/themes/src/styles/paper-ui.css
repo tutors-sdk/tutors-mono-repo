@@ -47,10 +47,24 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
    cannot make one row taller than the next. Content past the box clips (see Card.svelte). */
 /* Full-width messages (empty states) break the line rather than sitting in it. */
 .ui-grid.card-grid > .ui-empty { flex-basis: 100%; height: auto; }
+/* Phones (below 768px): a 220px card would stand alone in the middle of its row, so cards fill the grid
+   instead. From 390px (iPhone 14/15/16 and up) the same portrait card sits two to a row (Rule 0031) - no
+   wider than the desktop card, centred, on a landscape phone - at the compact box from paper-tokens.css
+   (Card.svelte tightens its type and padding); never three or four, which makes each card too small to read.
+   Below 390px (iPhone mini and SE) two would be too narrow, so one compact card fills the row (Rule 0059). */
+@media (max-width: 767px) {
+  .ui-grid.card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, var(--card-width))); justify-content: center; gap: var(--space-3); }
+  .ui-grid.card-grid > * { width: auto; }
+  .ui-grid.card-grid > .ui-empty { grid-column: 1 / -1; }
+}
+@media (max-width: 389px) { .ui-grid.card-grid { grid-template-columns: minmax(0, 1fr); } }
 .ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); width: 100%; }
 .prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
 .prose :where(pre, table) { max-width: 100%; overflow-x: auto; }
 .prose table { display: block; }
+/* Table cells break only between words: the prose's overflow-wrap: anywhere would let a column shrink on a
+   phone until "Option" splits into "Opti / on". A table wider than its panel scrolls sideways instead. */
+.prose :where(th, td) { overflow-wrap: normal; word-break: normal; }
 .prose :where(img, iframe, video) { max-width: 100%; }
 .reader-content { min-width: 0; padding: var(--space-8) var(--space-10); }
 /* Reading panels span the content column; the text inside stays at a readable measure. */
@@ -58,13 +72,19 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .reading-panel > .prose { width: 100%; max-width: min(88ch, calc(var(--reading-width) + 16ch)); margin-inline: auto; font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
 /* Panels that offer the full-width toggle drop the comfortable line length when the reader turns it on. */
 :root[data-full-width-reading] .reading-panel:has(.width-toggle) > .prose { max-width: none; }
-@media (max-width: 767px) { .ui-page, .reader-content { padding: var(--space-5) var(--space-4); } .reading-panel { padding: var(--space-5) var(--space-4); } .ui-title { font-size: var(--font-heading); } }
+/* Tablets: 24px gutters, so a 768px portrait screen holds three cards a row (3 x 220 + 2 x 16 = 692px) rather
+   than two with a card's width of empty space beside them. */
+@media (min-width: 768px) and (max-width: 1023px) { .ui-page, .reader-content { padding-inline: var(--space-6); } .reading-panel { padding-inline: var(--space-6); } }
+@media (max-width: 767px) { .ui-page, .reader-content { padding: var(--space-5) var(--space-4); } .reading-panel { padding: var(--space-5) var(--space-4); } .ui-panel { padding: var(--space-4); } .ui-title { font-size: var(--font-heading); } }
 @media (prefers-reduced-motion: reduce) { :where(button, a) { transition: none; } }
 
 .header-action { display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 44px; padding: var(--space-3); border-radius: var(--radius-control); font-size: var(--font-label); font-weight: var(--weight-medium); color: var(--ui-ink); }
 .header-action:hover, .header-action[aria-pressed="true"] { background: var(--ui-selected); }
 /* Shared native forms and Skeleton controls use the same application tokens. */
 :where(.input, .select) { min-height: 44px; padding: var(--space-2) var(--space-3); }
+/* A select draws no arrow of its own (appearance: none), so it gets one: a chevron in the muted ink, drawn
+   from two gradients so it follows light and dark. The Preferences menu draws its own. */
+select.select { padding-right: var(--space-10); background-image: linear-gradient(45deg, transparent 50%, var(--ui-muted) 50%), linear-gradient(135deg, var(--ui-muted) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 15px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
 :where(input[type="checkbox"], input[type="radio"]) { accent-color: var(--ui-brand); }
 [data-scope="tabs"][data-part="list"] { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-bottom: var(--space-3); border-bottom: 1px solid var(--ui-border); }
 [data-scope="tabs"][data-part="trigger"] { min-height: 44px; padding: var(--space-2) var(--space-4); border-radius: var(--radius-control); color: var(--ui-muted); }
@@ -78,6 +98,12 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 .prose > :is(h1,h2,h3):first-child { margin-top: 0; }
 .prose details.table-of-contents { padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-border); border-radius: var(--radius-control); background: var(--ui-canvas); font-size: var(--font-body); }
 .prose details.table-of-contents summary { cursor: pointer; padding-block: var(--space-2); font-weight: var(--weight-medium); }
+/* Disclosures (a lab's steps on narrow screens, a notebook's outline, a note's contents): the summary is a
+   full-width, 44px row with a chevron that turns when open, in place of the browser's triangle. */
+.ui-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; list-style: none; }
+.ui-disclosure > summary::-webkit-details-marker { display: none; }
+.ui-disclosure > summary::after { content: ""; flex: none; width: 8px; height: 8px; margin: 0 var(--space-1) 4px; border: solid var(--ui-muted); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform 150ms ease-out; }
+.ui-disclosure[open] > summary::after { margin-bottom: 0; margin-top: 4px; transform: rotate(-135deg); }
 .prose details.table-of-contents ul { margin-block: var(--space-2); }
 .media-viewer:fullscreen { overflow: auto; border-radius: 0; background: var(--ui-surface); }
 .media-viewer:fullscreen canvas { max-height: calc(100dvh - 120px); object-fit: contain; }

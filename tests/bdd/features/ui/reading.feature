@@ -45,3 +45,11 @@ Feature: Reading labs and notes
       When a student opens a note with headings and code
       Then "On this page" is closed until the student opens it
       And the first code block has a button named "Copy code"
+
+  @rule-0061 @ears-ubiquitous
+  Rule: The reader shall keep words whole in lab and note tables, scrolling a table sideways within its panel when it is wider than the panel.
+
+    Scenario: Phone tables keep words whole and scroll when too wide
+      Given a student reads a lab step with tables at 390 pixels
+      Then every table heading word sits on one line
+      And a table wider than the panel scrolls within it while the page does not scroll sideways

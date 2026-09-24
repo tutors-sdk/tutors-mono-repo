@@ -133,4 +133,16 @@
      a three-line summary gets a smaller one, and the text keeps its padding either way. */
   .resource-card :global(.lo-artwork) { flex: 1 1 0; align-self: center; width: min(var(--card-artwork), 100%); height: auto; min-height: 80px; max-height: var(--card-artwork); }
   .resource-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
+  /* Phones: the compact card (two a row, or one below 390px - paper-ui.css) - tighter padding, bands and
+     type, a smaller type icon and a two-line summary, so the compact box in paper-tokens.css never clips. */
+  @media (max-width: 767px) {
+    .resource-card { padding: var(--space-3); border-block-width: 6px; }
+    .resource-link { gap: var(--space-3); }
+    .resource-heading { gap: var(--space-2); }
+    h3 { font-size: var(--font-body); }
+    .resource-type :global(svg) { width: 20px; height: 20px; }
+    .resource-card :global(.lo-artwork) { min-height: 64px; }
+    .resource-summary { margin-top: var(--space-2); font-size: var(--font-meta); -webkit-line-clamp: 2; }
+    .companion-video { margin-top: 0; }
+  }
 </style>

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { course, fitsViewport, lab, seedOneOnline } from "./support";
 
 // Proves tests/bdd/features/ui/shell-and-navigation.feature: one test per scenario, titled and tagged to match.
@@ -169,4 +169,28 @@ test("Unknown course shows Page Not Found", { tag: "@rule-0028" }, async ({ page
   await expect(alert).toContainText("404");
   await expect(alert).toContainText("Page Not Found");
   await expect(alert.getByRole("link", { name: "Go Home" })).toHaveAttribute("href", "/");
+});
+
+async function scrollMain(page: Page, top: number) {
+  await page.locator(".shell-main").evaluate((main, to) => main.scrollTo({ top: to }), top);
+}
+
+test("Phone header hides on scroll down and returns on scroll up", { tag: "@rule-0062" }, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(course);
+  const header = page.locator(".shell-header");
+  await expect(page.locator(".main-group .resource-card").nth(3)).toBeVisible();
+  for (const top of [200, 400, 700]) await scrollMain(page, top);
+  await expect.poll(async () => (await header.boundingBox())!.y + (await header.boundingBox())!.height).toBeLessThanOrEqual(0);
+  await scrollMain(page, 600);
+  await expect.poll(async () => (await header.boundingBox())!.y).toBe(0);
+});
+
+test("Desktop header stays while scrolling", { tag: "@rule-0062" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(course);
+  await expect(page.locator(".main-group .resource-card").first()).toBeVisible();
+  for (const top of [200, 400, 700]) await scrollMain(page, top);
+  await page.waitForTimeout(300);
+  expect((await page.locator(".shell-header").boundingBox())!.y).toBe(0);
 });

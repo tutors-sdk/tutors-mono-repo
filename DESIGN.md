@@ -157,6 +157,7 @@ spacing:
   5xl: 64px
   gutter: 16px
   page-margin: 40px
+  page-margin-tablet: 24px
   page-margin-phone: 16px
   page-max-width: 1600px
   sidebar-width: 248px
@@ -166,6 +167,8 @@ spacing:
   card-height: 340px
   card-artwork: 180px
   card-artwork-min: 80px
+  card-phone: 264px tall, 104px artwork, two a row from 390px
+  card-small-phone: 232px tall, 96px artwork, one a row below 390px
   touch-target: 44px
   breakpoint-navigation: 1024px
   breakpoint-phone: 768px
@@ -363,11 +366,19 @@ main column.
 - **Shell:** the header spans the top (surface fill, bottom hairline). The sidebar holds course
   navigation, companions, course tools or a lab's steps. Below 1024px the sidebar disappears
   and its contents open as a dialog from a "Course navigation" button in the header, next to a
-  "Course Tree" button.
-- **Page:** content pads 32px top and 40px sides (20px/16px on phones) up to 1600px wide.
+  "Course Tree" button. On phones (below 768px) the header is compact - a 56px bar over a course row, about
+  116px in all - and floats over the page: it slides away as the reader scrolls down and back
+  on any scroll up, staying put near the top, while one of its menus is open, or when focus
+  moves into it.
+- **Page:** content pads 32px top and 40px sides (24px sides on tablets, 20px/16px on phones) up to
+  1600px wide. The header's course title and the breadcrumbs sit on the same gutter.
   Pages open with an eyebrow, title and muted summary, and artwork on the right where it helps.
-- **Card grids:** every resource card is one fixed 220×340px box. Rows wrap and centre, so a
-  short final row sits centred under the full one, and on a phone the cards stack in one column.
+- **Card grids:** from 768px up, every resource card is one fixed 220×340px box. Rows wrap and
+  centre, so a short final row sits centred under the full one; a 768px tablet holds three a row.
+  Below 768px the same portrait card is compact - 12px padding, 6px type bands, a 16px title, a
+  20px type icon and a two-line summary - and fills the grid: two a row from 390px (iPhone
+  14/15/16; no wider than 220px each on a landscape phone), one a row below 390px (iPhone mini,
+  SE). Unit panels pad 16px on phones.
   Cards sit inside their unit, and a unit is a standard white panel with a hairline, 16px apart.
 - **Main and side units:** when a page has side units (such as a podcast or a reference
   sidebar), the side column is one card wide (plus its panel padding and 80px of slack for
@@ -430,6 +441,8 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Reading panel:** 32×40px padding (20×16px on phones). A meta row carries the lab title as
   an eyebrow on the left, and the step count and the content-width switch on the right.
   Previous and next step links sit at the bottom, separated by a hairline.
+  Tables in lab and note text keep words whole (text wraps only between words) and scroll
+  sideways inside the panel when they are wider than it; the page itself never scrolls sideways.
 - **Segmented switch:** used for Light/Dark and Standard/Full width. Options sit in a canvas
   track with a hairline and 2px inset. The selected option is raised onto the surface with teal
   text. Icons precede the labels.
@@ -438,8 +451,15 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Menus and popovers:** surface, hairline, 16px radius (flush to the header when anchored to
   it), 16px padding, shadow. Rows are 44px with 8px radius and selected-grey hover.
   Section headings are 12px uppercase muted labels.
-- **Dialogs:** course tree, course info, calendar and online students. On phones they fill the
-  screen; on desktop they are centred. Closing one returns focus to the control that opened it.
+- **Dialogs:** course tree, course info, calendar, online students and search. On phones they
+  fill the screen; on desktop they are centred. Closing one returns focus to the control that
+  opened it. The search dialog's type chips are one sideways-scrolling row on phones.
+- **Keyboard hints:** shortcut hints (the ⌘K / Ctrl K beside Search, the key legend in the search
+  dialog) show only on a wide screen with a mouse or trackpad. On touch screens the dialog's
+  esc hint becomes a close button.
+- **Disclosures:** a lab's steps on narrow screens, a notebook's outline and a note's contents
+  open from a full-width 44px summary row with a chevron that turns, not the browser's triangle.
+- **Selects:** 44px, 8px radius, with a muted chevron drawn in the field.
 - **Breadcrumbs:** "My courses / parent course title / course / page", muted with teal links.
   The current page is plain ink.
 - **Tables (My time, calendar):** a sticky row label, vertical column headers, 36px rows of
@@ -472,7 +492,8 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 ## Motion
 
 Motion confirms, never decorates. Colour changes on buttons and links take 150ms. Cards scale
-to 102% over 180ms ease-out. Popovers fade in. With `prefers-reduced-motion: reduce`, all of
+to 102% over 180ms ease-out. Popovers fade in. Drawers slide in from the edge they belong to
+(the course navigation from the left) over 220ms; centred dialogs fade up 8px. With `prefers-reduced-motion: reduce`, all of
 these switch off.
 
 ## Accessibility contract

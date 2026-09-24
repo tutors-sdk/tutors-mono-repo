@@ -61,8 +61,8 @@
 
 <div class="notebook-content w-full">
   <div class="grid min-w-0 gap-4">
-    <details class="ui-panel notebook-outline">
-      <summary class="cursor-pointer py-2 font-semibold">Notebook outline · {notebook.cells.length} cells</summary>
+    <details class="ui-panel ui-disclosure notebook-outline">
+      <summary class="font-semibold">Notebook outline · {notebook.cells.length} cells</summary>
       <nav aria-label="Notebook cells">
         <ol class="grid gap-1">
           {#each notebook.cells as cell, i}
