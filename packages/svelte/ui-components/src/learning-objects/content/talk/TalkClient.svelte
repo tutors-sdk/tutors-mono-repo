@@ -18,8 +18,9 @@
 
 {#if !isMarp}
   <div class="ui-actions mb-4">
-    <label class="ui-actions text-sm">PDF reader
-      <select class="select" value={useMozilla ? "mozilla" : "adobe"} onchange={(event) => readerOverride = event.currentTarget.value}>
+    <!-- On phones the label is read, not shown, so the picker and "Open original" share one row. -->
+    <label class="ui-actions text-sm"><span class="sr-only sm:not-sr-only">PDF reader</span>
+      <select class="select w-auto" value={useMozilla ? "mozilla" : "adobe"} onchange={(event) => readerOverride = event.currentTarget.value}>
         <option value="adobe">Adobe</option><option value="mozilla">Browser reader</option>
       </select>
     </label>

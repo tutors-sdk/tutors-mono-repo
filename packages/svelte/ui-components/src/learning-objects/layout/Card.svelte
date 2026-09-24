@@ -133,4 +133,17 @@
      a three-line summary gets a smaller one, and the text keeps its padding either way. */
   .resource-card :global(.lo-artwork) { flex: 1 1 0; align-self: center; width: min(var(--card-artwork), 100%); height: auto; min-height: 80px; max-height: var(--card-artwork); }
   .resource-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
+  /* Phones (see .card-grid in paper-ui.css): the card fills the row as a compact row, artwork on the left and
+     the heading, summary and extras beside it. The link's box dissolves into the grid (its ::after still
+     covers the card), so the artwork and the heading can sit in different columns. */
+  @media (max-width: 767px) {
+    .resource-card { padding: var(--space-4); border-block-width: 6px; }
+    .resource-body { display: grid; grid-template-columns: 64px minmax(0, 1fr); grid-auto-rows: min-content; column-gap: var(--space-4); align-content: center; }
+    .resource-link { display: contents; }
+    .resource-body > *, .resource-heading { grid-column: 2; }
+    .resource-card :global(.lo-artwork) { grid-column: 1; grid-row: 1 / span 4; align-self: center; width: 64px; height: 64px; min-height: 0; max-height: none; }
+    h3 { font-size: var(--font-size-17); }
+    .resource-summary { margin-top: var(--space-1); text-align: start; -webkit-line-clamp: 2; }
+    .companion-video { margin-top: 0; }
+  }
 </style>

@@ -10,7 +10,7 @@
     lo: Lo;
   }
   let { lo }: Props = $props();
-  const content = $derived((lo.contentHtml ?? "").replace(/<div class="table-of-contents">([\s\S]*?)<\/div>/g, '<details class="table-of-contents"><summary>On this page</summary>$1</details>'));
+  const content = $derived((lo.contentHtml ?? "").replace(/<div class="table-of-contents">([\s\S]*?)<\/div>/g, '<details class="table-of-contents ui-disclosure"><summary>On this page</summary>$1</details>'));
 </script>
 
 <div class="reading-panel"><div class="reading-tools"><WidthToggle /></div><article class="prose dark:prose-invert max-w-none overflow-x-auto" use:mermaidify use:copyCode>

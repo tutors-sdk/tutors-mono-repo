@@ -128,8 +128,8 @@
   --ui-raised: light-dark(var(--light-raised), var(--dark-raised));
   /* Resource card geometry: a fixed size, not a floor. Cards never stretch, so a row holds as many
      as fit and the leftover space is split either side (justify-content: center in paper-ui.css).
-     The card is the same box at every viewport, so the artwork is one value too, not a set of
-     per-breakpoint ones. Height is sized for the worst case - 2-line title, the artwork,
+     The card is the same box at every viewport from 768px up, so the artwork is one value too, not a set
+     of per-breakpoint ones; below that, cards are full-width rows (paper-ui.css, Card.svelte). Height is sized for the worst case - 2-line title, the artwork,
      3-line summary, padding and the 8px type bands - so nothing clips; shorter cards carry the slack
      at the bottom. The three are coupled: shrinking --card-height without shrinking --card-artwork
      (or tightening the line-clamps in Card.svelte) clips the summary. Heads up if you go tight - the

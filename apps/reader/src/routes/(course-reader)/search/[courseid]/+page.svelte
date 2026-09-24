@@ -41,7 +41,7 @@
     {#each types as item}<button class="ui-button" aria-pressed={type === item} onclick={() => search(item)}><Icon type={item} /><span class="capitalize">{item}</span></button>{/each}
   </div>
   {#if data.course.wallBar?.bar?.length}
-    <details class="resource-walls"><summary>{t("shell.resources")}</summary><div class="ui-actions">{#each data.course.wallBar.bar as wall}<a class="ui-button" href={wall.link}><Icon type={wall.type} />{wall.tip}</a>{/each}</div></details>
+    <details class="resource-walls ui-disclosure"><summary>{t("shell.resources")}</summary><div class="ui-actions">{#each data.course.wallBar.bar as wall}<a class="ui-button" href={wall.link}><Icon type={wall.type} />{wall.tip}</a>{/each}</div></details>
   {/if}
   <p class="result-count ui-muted" role="status" aria-live="polite">{results.length} {t("shell.resultCount")}{query ? ` · “${query}”` : ""}</p>
   <div class="ui-grid card-grid search-results">
@@ -64,11 +64,17 @@
   .search-controls { display: flex; gap: var(--space-3); }
   input { min-width: 0; flex: 1; }
   .type-filters { margin-block: var(--space-5); }
+  /* Phones: one row of types that scrolls sideways, bleeding to the screen edges, rather than seven rows. */
+  @media (max-width: 639px) {
+    .type-filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--space-4)); padding-inline: var(--space-4); }
+    .type-filters > * { flex: none; }
+  }
   .result-count { margin-block: var(--space-6) var(--space-4); font-size: var(--font-label); }
   /* Width comes from .ui-grid.card-grid > .ui-empty in paper-ui.css; the card grid is flex, not grid. */
   /* Result cards are the same fixed box as every other card, so the excerpt clamps like the summary
      above it rather than pushing the card taller than its neighbours in the row. */
   .search-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
   mark { padding-inline: 2px; border-radius: var(--radius-small); background: color-mix(in srgb, var(--ui-warning) 28%, transparent); color: var(--ui-ink); font-weight: var(--weight-semibold); }
-  summary { font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }
+  /* A small inline toggle: the chevron sits after the label, not at the far edge. */
+  .resource-walls > summary { justify-content: flex-start; width: fit-content; font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }
 </style>

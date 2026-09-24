@@ -75,7 +75,7 @@
 <button class="header-action" data-tour="search" onclick={show} aria-label={t("nav.search.tip")} aria-haspopup="dialog" aria-expanded={open}>
   <Icon icon="lucide:search" height="20" />
   <span class="hidden md:block">{t("nav.search")}</span>
-  <kbd class="hidden lg:inline-block" aria-hidden="true">{shortcut}</kbd>
+  <kbd class="shortcut-hint" aria-hidden="true">{shortcut}</kbd>
 </button>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
@@ -97,7 +97,7 @@
         spellcheck="false"
         onkeydown={onKey}
       />
-      <kbd>esc</kbd>
+      <button class="search-close" onclick={close} aria-label={t("shell.close")}><kbd>esc</kbd><Icon icon="lucide:x" height="20" /></button>
     </div>
     <div class="search-types" role="group" aria-label={t("content.type")}>
       <button class="type-chip" aria-pressed={!kind} onclick={() => (kind = "")}>{t("shell.allTypes")}</button>
@@ -140,6 +140,14 @@
 <style>
   kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 var(--space-1); border: 1px solid var(--ui-border); border-radius: var(--radius-small); background: var(--ui-canvas); color: var(--ui-muted); font-family: inherit; font-size: var(--font-caption); line-height: 1; }
   .header-action kbd { margin-left: var(--space-1); }
+  /* Keyboard hints are for keyboards: the header's hint shows only on a wide screen with a mouse or trackpad,
+     and on touch screens the palette's esc hint becomes a close button and the key legend goes. */
+  .shortcut-hint { display: none; }
+  @media (min-width: 1024px) and (hover: hover) and (pointer: fine) { .shortcut-hint { display: inline-flex; } }
+  .search-close { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) 0; border-radius: var(--radius-control); color: var(--ui-muted); }
+  .search-close:hover { color: var(--ui-ink); }
+  .search-close :global(svg) { display: none; }
+  @media (hover: none), (pointer: coarse) { .search-close kbd, .search-keys { display: none; } .search-close :global(svg) { display: block; } }
   .search-palette { width: min(640px, calc(100vw - 32px)); max-height: min(620px, calc(100dvh - 96px)); margin: 12vh auto auto; padding: 0; overflow: hidden; border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-surface); color: var(--ui-ink); box-shadow: 0 24px 64px #00000033; }
   .search-palette[open] { display: flex; flex-direction: column; }
   .search-palette::backdrop { background: color-mix(in srgb, black 35%, transparent); backdrop-filter: blur(2px); }
@@ -168,5 +176,12 @@
   .search-keys { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
   .search-keys kbd { min-width: 20px; height: 20px; }
   .search-footer a { color: var(--ui-brand); font-weight: var(--weight-medium); }
-  @media (max-width: 639px) { .search-palette { margin-top: var(--space-4); } .search-keys { display: none; } .result-type { display: none; } }
+  /* Phones: the palette is the whole screen (the results get every line the keyboard leaves), and the type
+     chips are one row that scrolls sideways instead of five rows that push the results down. */
+  @media (max-width: 639px) {
+    .search-palette { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; border-radius: 0; }
+    .search-types { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .type-chip { flex: none; }
+    .search-keys, .result-type { display: none; }
+  }
 </style>

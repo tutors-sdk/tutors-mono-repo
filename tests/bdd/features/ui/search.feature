@@ -29,3 +29,19 @@ Feature: Searching a course
       When a student searches for a phrase that appears far down a note and opens the result
       Then the note opens scrolled to that phrase
       And the search words are highlighted on the page
+
+  @rule-0060 @ears-optional
+  Rule: Where the device has no mouse or trackpad, the reader shall show no keyboard shortcut hints.
+
+    @active
+    Scenario: Touch screens show no keyboard hints
+      Given a touch phone
+      When a student opens the course home and the search dialog
+      Then no keyboard shortcut hint is visible
+      And the search dialog closes from its Close button
+
+    @inactive
+    Scenario: Desktop header shows the search shortcut
+      Given a desktop with a mouse
+      When a student opens the course home
+      Then the search button shows its keyboard shortcut

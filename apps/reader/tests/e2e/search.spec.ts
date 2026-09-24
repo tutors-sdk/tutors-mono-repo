@@ -46,3 +46,21 @@ test("Opening a result scrolls to the highlighted match", { tag: "@rule-0058" },
     return box.top >= 0 && box.bottom <= innerHeight ? "match on screen" : `match at ${Math.round(box.top)}px`;
   })).toBe("match on screen");
 });
+
+test.describe("on a touch phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test("Touch screens show no keyboard hints", { tag: "@rule-0060" }, async ({ page }) => {
+    const { dialog } = await openSearch(page);
+    await expect(dialog).toBeVisible();
+    await expect(page.locator("kbd:visible")).toHaveCount(0);
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(dialog).toBeHidden();
+  });
+});
+
+test("Desktop header shows the search shortcut", { tag: "@rule-0060" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(course);
+  await expect(page.locator('[data-tour="search"] kbd')).toHaveText(/^(Ctrl K|⌘K)$/);
+});

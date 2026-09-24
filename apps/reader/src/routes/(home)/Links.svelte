@@ -3,7 +3,7 @@
   import { t } from "@tutors/i18n";
 </script>
 
-<div class="ui-actions mt-6">
+<div class="ui-actions home-links mt-6">
   <a
     class="ui-button"
     href="/create"
@@ -43,3 +43,7 @@
     <Icon type="tutorsTime" /> {t("home.live")}
   </a>
 </div>
+<style>
+  /* Phones: an even two-column grid rather than rows of ragged widths. */
+  @media (max-width: 639px) { .home-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>

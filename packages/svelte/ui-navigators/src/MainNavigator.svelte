@@ -52,9 +52,11 @@
   @media (max-width: 1023px) {
     .mobile-menu { display: block; }
     .brand { width: auto; }
-    .main-navigation { flex-wrap: wrap; gap: 0 var(--space-3); padding: 0 var(--space-4); }
+    .main-navigation { --nav-gutter: var(--space-4); flex-wrap: wrap; gap: 0 var(--space-3); padding: 0 var(--nav-gutter); }
     .header-actions { min-height: 64px; }
-    .course-heading { order: 1; flex-basis: 100%; padding-block: var(--space-2) var(--space-3); border-top: 1px solid var(--ui-border); }
+    /* The course row runs edge to edge (so its divider does too) and puts the title on the page gutter
+       (16px; 24px on tablets, below), whatever padding the bar above it has. */
+    .course-heading { order: 1; flex-basis: calc(100% + 2 * var(--nav-gutter)); margin-inline: calc(-1 * var(--nav-gutter)); padding: var(--space-2) var(--space-4) var(--space-3); border-top: 1px solid var(--ui-border); }
     .course-title { flex: 1; font-size: var(--font-section); }
     .course-info, .without-course { display: none; }
     .mobile-tree { display: block; max-width: 50%; }
@@ -62,6 +64,7 @@
     .mobile-tree :global(button:hover) { background: var(--ui-selected); }
     .mobile-tree :global(.nav-row) { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); font-size: var(--font-label); font-weight: var(--weight-medium); }
   }
-  @media (max-width: 767px) { .brand { font-size: var(--font-section); gap: var(--space-2); } .header-actions { gap: 0; } .main-navigation { gap: var(--space-1); padding-inline: var(--space-2); } }
+  @media (min-width: 768px) and (max-width: 1023px) { .course-heading { padding-inline: var(--space-6); } }
+  @media (max-width: 767px) { .brand { font-size: var(--font-section); gap: var(--space-2); } .header-actions { gap: 0; } .main-navigation { --nav-gutter: var(--space-2); gap: var(--space-1); } }
   .mobile-course-navigation { height: 100%; }
 </style>

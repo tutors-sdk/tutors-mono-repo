@@ -18,12 +18,8 @@ test("Cards show title, artwork and type colour", { tag: "@rule-0029" }, async (
   await expect(lab).toBeVisible();
   expect(await lab.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(await talk.evaluate(el => getComputedStyle(el).backgroundColor));
   for (const card of [lab, talk]) {
-    const cardBox = (await card.boundingBox())!;
-    const heading = (await card.locator(".resource-heading").boundingBox())!;
-    const artwork = (await card.locator(".lo-artwork").boundingBox())!;
-    expect(heading.y + heading.height).toBeLessThanOrEqual(artwork.y);
-    expect(artwork.width).toBeGreaterThanOrEqual(80);
-    expect(Math.abs(artwork.x + artwork.width / 2 - cardBox.x - cardBox.width / 2)).toBeLessThan(1);
+    await expect(card.locator(".resource-heading")).toBeVisible();
+    expect((await card.locator(".lo-artwork").boundingBox())!.width).toBeGreaterThanOrEqual(64);
     const icon = card.locator(".resource-type svg");
     await expect(icon).toBeVisible();
     expect(await icon.evaluate(el => getComputedStyle(el).color)).toBe(await card.evaluate(el => getComputedStyle(el).borderTopColor));
@@ -64,6 +60,33 @@ test("Desktop viewport sets cards side by side", { tag: "@rule-0031" }, async ({
     expect(second.y, url).toBe(first.y);
     expect(second.x, url).toBeGreaterThan(first.x + first.width);
   }
+});
+
+test("Phone cards fill the width with artwork beside the text", { tag: "@rule-0059" }, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const url of cardPages) {
+    await page.goto(url);
+    const grid = page.locator(".main-group .card-grid").first();
+    const card = grid.locator(".resource-card").first();
+    await expect(card).toBeVisible();
+    expect((await card.boundingBox())!.width, url).toBeCloseTo((await grid.boundingBox())!.width, 0);
+    const artwork = (await card.locator(".lo-artwork").boundingBox())!;
+    const heading = (await card.locator(".resource-heading").boundingBox())!;
+    expect(artwork.x + artwork.width, url).toBeLessThanOrEqual(heading.x);
+  }
+});
+
+test("Desktop cards keep their fixed width", { tag: "@rule-0059" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(typicalTopic);
+  const card = cardOfType(page, "lab");
+  await expect(card).toBeVisible();
+  const cardBox = (await card.boundingBox())!;
+  const heading = (await card.locator(".resource-heading").boundingBox())!;
+  const artwork = (await card.locator(".lo-artwork").boundingBox())!;
+  expect(cardBox.width).toBeCloseTo(220, 0);
+  expect(heading.y + heading.height).toBeLessThanOrEqual(artwork.y);
+  expect(Math.abs(artwork.x + artwork.width / 2 - cardBox.x - cardBox.width / 2)).toBeLessThan(1);
 });
 
 test("Hovering a card enlarges it", { tag: "@rule-0032" }, async ({ page }) => {
