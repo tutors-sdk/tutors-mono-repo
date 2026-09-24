@@ -35,8 +35,6 @@ const fr: Record<string, string> = {
   "shell.fullWidth": "Pleine largeur",
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Largeur du contenu",
-  "shell.startHere": "Commencer ici",
-  "shell.openTopic": "Ouvrir le sujet",
   "shell.topics": "Sujets du cours",
   "shell.authoredOrder": "Ordre de l’auteur",
   "shell.previous": "Précédent",

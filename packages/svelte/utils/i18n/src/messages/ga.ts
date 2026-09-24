@@ -35,8 +35,6 @@ const ga = {
   "shell.fullWidth": "Leithead iomlán",
   "shell.standardWidth": "Caighdeánach",
   "shell.contentWidth": "Leithead an ábhair",
-  "shell.startHere": "Tosaigh anseo",
-  "shell.openTopic": "Oscail topaic",
   "shell.topics": "Topaicí an chúrsa",
   "shell.authoredOrder": "Ord an údair",
   "shell.previous": "Roimhe",

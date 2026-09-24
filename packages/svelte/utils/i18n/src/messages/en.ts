@@ -35,8 +35,6 @@ const en = {
   "shell.fullWidth": "Full width",
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Content width",
-  "shell.startHere": "Start here",
-  "shell.openTopic": "Open topic",
   "shell.topics": "Course topics",
   "shell.authoredOrder": "Author’s order",
   "shell.previous": "Previous",
