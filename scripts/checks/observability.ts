@@ -253,6 +253,42 @@ export function metricsContractFindings(exposition: string, options: { requireAl
   return [...new Set(findings)];
 }
 
+/* ---------------- log message stability ---------------- */
+
+const LOG_RECEIVERS = new Set(["log", "logger"]);
+const LOG_LEVEL_METHODS = new Set(["debug", "info", "warn", "error"]);
+
+/**
+ * `log.<level>(...)` calls whose message is not a plain string literal. A
+ * message is what a collector groups and diffs lines by, so text that varies
+ * per request (an interpolated course id, an `Error`'s own message passed as
+ * the first argument) turns one kind of line into many. Variable data belongs
+ * in the context object: `log.error("Error fetching course", { courseId })`.
+ * Returns `line N: <call>` for each offender.
+ */
+export function unstableLogMessageFindings(source: string, fileName = "source.ts"): string[] {
+  const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
+  const findings: string[] = [];
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      LOG_RECEIVERS.has(node.expression.expression.text) &&
+      LOG_LEVEL_METHODS.has(node.expression.name.text)
+    ) {
+      const first = node.arguments[0];
+      if (first && !ts.isStringLiteral(first) && !ts.isNoSubstitutionTemplateLiteral(first)) {
+        const { line } = file.getLineAndCharacterOfPosition(node.getStart(file));
+        findings.push(`line ${line + 1}: ${node.getText(file).split("\n")[0].slice(0, 80)}`);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return findings;
+}
+
 /* ---------------- request correlation ---------------- */
 
 /**

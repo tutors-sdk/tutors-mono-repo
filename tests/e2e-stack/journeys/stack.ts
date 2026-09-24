@@ -34,7 +34,7 @@ export const fixture = {
   secondStep: { id: "Step-01", heading: "Step 1" },
   /** Appears in both notes' body; a result links to `<topic>/<note>`. */
   searchTerm: "reference material",
-  searchResultTitle: /Topic 1\/Note 1/
+  searchResultTitle: /^Note 1\b/
 };
 
 // Playwright compiles specs to CommonJS, so __dirname rather than import.meta.

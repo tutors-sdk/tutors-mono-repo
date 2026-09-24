@@ -384,9 +384,24 @@ jobs:
         run: pnpm --filter "tutors-reader..." --filter "tutors-catalogue..." --filter "tutors-live..." --filter "tutors-time..." build
         env:
           SVELTEKIT_ADAPTER: node
+          # As in the Dockerfile: the build is named after a hash of the commit.
+          GIT_SHA: ${{ github.sha }}
 
       - name: Check bundle budgets
         run: pnpm check:bundle
+
+      # The built server, run with Auth.js on: no CommonJS globals in the ES module
+      # bundle, and no 5xx on the routes in tests/security/header-contract.json
+      # (v16.2.0 answered 500 on /auth/<courseid>). Needs no Docker.
+      - name: Smoke test the built servers
+        run: pnpm check:server
+
+      # Starts each built server with the commit above and a sentinel build date and looks for them
+      # anywhere but GET /version: headers, pages, the error page, /_app/version.json and every built file.
+      - name: Check build identity is answered by /version only
+        run: pnpm check:build-identity
+        env:
+          GIT_SHA: ${{ github.sha }}
 
   # Runway tier C: on PRs that touch a generator, every difference in generated
   # output for the corpus must be claimed in tests/generator/claims.yaml. On
@@ -459,6 +474,74 @@ jobs:
           path: .generator-diff/report/
           retention-days: 14
 
+  # EARS audit (issue #214): the structure of the Rule blocks in tests/bdd/features, and their
+  # binding: a steps file for Node-level Rules, a Playwright test per scenario for @ui Rules. It is
+  # required: the ratchet fails only on violations the baseline does not list, and the baseline
+  # (seed features not yet migrated to Rules) can only shrink. Behaviour is checked by `vitest run`
+  # in build-and-test (tests/bdd through vitest-cucumber) and by ui-contract (the @ui Rules).
+  ears-audit:
+    name: EARS audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit Rule blocks (new violations only; the baseline can only shrink)
+        run: pnpm test:ears:audit
+
+  # The reader's @ui Rules (tests/bdd/features/ui): every scenario is a Playwright test in
+  # apps/reader/tests/e2e, run against the dev server. Release candidates add Firefox and WebKit.
+  ui-contract:
+    name: UI contract (reader, Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prove every @ui scenario
+        run: pnpm test:e2e:reader --project=chromium
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ui-contract-report
+          path: apps/reader/playwright-report/
+          retention-days: 14
+
   # Deno tests have no runner config, so this step is what collects them:
   # tier O (scripts/checks/suite-health.ts) reads `deno test` steps as runners.
   cli-tests:
@@ -484,7 +567,7 @@ jobs:
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff, cli-tests]
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff, cli-tests, ears-audit, ui-contract]
     runs-on: ubuntu-latest
     steps:
       - name: Every job succeeded

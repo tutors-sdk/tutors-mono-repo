@@ -86,13 +86,13 @@
     <p class="text-lg">Loading assignments...</p>
   </div>
 {:else if error}
-  <div class="card preset-filled-error-500 p-4">
+  <div class="ui-panel border-[var(--ui-danger)] p-4">
     <p class="font-bold">Error loading data</p>
     <p class="text-sm">{error}</p>
   </div>
 {:else if rows.length === 0}
   <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-surface-600">No assignments available</p>
+    <p class="text-lg text-[var(--ui-muted)]">No assignments available</p>
   </div>
 {:else}
   <div class="table-wrap overflow-x-auto">
@@ -131,7 +131,7 @@
       </tfoot>
     </table>
   </div>
-  <p class="mt-4 text-sm text-surface-600">
+  <p class="mt-4 text-sm text-[var(--ui-muted)]">
     Showing {rows.length} {rows.length === 1 ? "assignment" : "assignments"}
   </p>
 {/if}

@@ -17,11 +17,13 @@
   let isFullscreen = $state(false);
   let isEditing = $state(false);
   let isShared = $state(false);
-  let cachedScene: any = null;
+  let cachedScene: any = $state(null);
+  let saveStatus = $state("");
+  const anonymousId = `anon-${Math.random().toString(36).slice(2, 8)}`;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   function getUserId(): string {
-    return tutorsId.value?.login || `anon-${Math.random().toString(36).slice(2, 8)}`;
+    return tutorsId.value?.login || anonymousId;
   }
 
   function getWhiteboardRoomId(): string {
@@ -51,19 +53,22 @@
   }
 
   function saveSceneToDb(roomId: string, elements: any[]) {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) { saveStatus = "Edits are not saved in this session."; return; }
     if (saveTimer) clearTimeout(saveTimer);
+    saveStatus = "Saving…";
     saveTimer = setTimeout(async () => {
       try {
-        await supabase.from("whiteboard_scenes").upsert({
+        const { error: saveError } = await supabase.from("whiteboard_scenes").upsert({
           room_id: roomId,
           elements,
           app_state: { viewBackgroundColor: "#ffffff" },
           files: {},
           updated_at: new Date().toISOString(),
         });
+        if (saveError) throw saveError;
+        saveStatus = "Drawing changes saved";
       } catch {
-        // best-effort persistence
+        saveStatus = "Changes could not be saved. Keep this whiteboard open and export your work.";
       }
     }, 2000);
   }
@@ -74,11 +79,12 @@
 
   function postViewerScene() {
     if (!viewerReady || !cachedScene || isEditing) return;
-    iframe?.contentWindow?.postMessage({ type: "load-scene", scene: cachedScene }, "*");
+    iframe?.contentWindow?.postMessage({ type: "load-scene", scene: cachedScene }, window.location.origin);
     loading = false;
   }
 
   async function loadScene() {
+    error = ""; loading = true; cachedScene = null;
     if (!lo.excalidraw) {
       error = "No Excalidraw file associated with this whiteboard.";
       loading = false;
@@ -89,17 +95,19 @@
       if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
       cachedScene = await response.json();
       postViewerScene();
-    } catch (e: any) {
-      log.error("WhiteboardViewer failed to load scene:", e);
-      error = e.message || "Failed to load whiteboard";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.error("WhiteboardViewer failed to load scene:", err);
+      error = msg || "Failed to load whiteboard";
       loading = false;
     }
   }
 
   // One listener for the lifetime of the component: scene-changed keeps arriving
-  // after editor-ready, so the handler must not remove itself.
+  // after editor-ready, so the handler must not remove itself. Only this component's
+  // own iframe, on this origin, is listened to, and replies go to this origin only.
   async function handleMessage(event: MessageEvent) {
-    if (event.source !== iframe?.contentWindow) return;
+    if (event.source !== iframe?.contentWindow || event.origin !== window.location.origin) return;
     const type = event.data?.type;
     if (type === "viewer-ready" && !isEditing) {
       viewerReady = true;
@@ -118,7 +126,7 @@
           avatar: tutorsId.value?.image || "",
         },
         initialScene: savedScene || cachedScene,
-      }, "*");
+      }, window.location.origin);
       loading = false;
     } else if (type === "scene-changed" && isEditing) {
       saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
@@ -128,6 +136,7 @@
   function toggleEdit() {
     isEditing = !isEditing;
     viewerReady = false;
+    saveStatus = "";
     loading = true;
   }
 
@@ -156,76 +165,26 @@
   });
 </script>
 
+<svelte:window onkeydown={(event) => { if (event.key === 'Escape') isFullscreen = false; }} />
 {#if error}
-  <div class="flex items-center justify-center rounded-lg bg-error/10 p-8">
-    <p class="text-error">{error}</p>
-  </div>
+  <div class="ui-empty" role="alert"><p>{error}</p><button class="ui-button mt-4" onclick={loadScene}>Retry</button></div>
 {:else}
-  <div class="{isFullscreen ? 'fixed inset-0 z-50 flex flex-col bg-base-100' : ''}">
-    <div class="flex items-center gap-2 rounded-t-lg bg-surface-200 px-4 py-2">
-      <button
-        class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors {isEditing ? 'bg-primary-500 text-white' : 'bg-surface-300 hover:bg-surface-400'}"
-        onclick={toggleEdit}
-        aria-label={isEditing ? "Switch to view mode" : "Switch to edit mode"}
-        title={isEditing ? "View mode" : "Edit mode"}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          {#if isEditing}
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
-          {:else}
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>
-          {/if}
-        </svg>
-        {isEditing ? "Editing" : "Edit"}
-      </button>
-      {#if isEditing}
-        <button
-          class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors {isShared ? 'bg-success-500 text-white' : 'bg-surface-300 hover:bg-surface-400'}"
-          onclick={toggleShared}
-          aria-label={isShared ? "Switch to personal whiteboard" : "Switch to shared whiteboard"}
-          title={isShared ? "Shared: all users collaborate" : "Personal: only you can see edits"}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            {#if isShared}
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-            {:else}
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            {/if}
-          </svg>
-          {isShared ? "Shared" : "Personal"}
-        </button>
-      {/if}
-      <div class="flex-1"></div>
-      <button
-        class="flex items-center gap-1.5 rounded-lg bg-surface-300 px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-surface-400"
-        onclick={toggleFullscreen}
-        aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-        title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          {#if isFullscreen}
-            <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>
-          {:else}
-            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-          {/if}
-        </svg>
-        {isFullscreen ? "Minimize" : "Fullscreen"}
-      </button>
+  <div class="ui-panel whiteboard" class:expanded={isFullscreen}>
+    <div class="ui-actions mb-4">
+      <button class="ui-button" class:ui-button-primary={isEditing} onclick={toggleEdit} aria-pressed={isEditing}>{isEditing ? "View whiteboard" : "Edit whiteboard"}</button>
+      {#if isEditing}<button class="ui-button" onclick={toggleShared} aria-pressed={isShared}>{isShared ? "Shared · switch to personal" : "Personal · switch to shared"}</button>{/if}
+      <button class="ui-button ml-auto" onclick={toggleFullscreen}>{isFullscreen ? "Exit fullscreen" : "Fullscreen"}</button>
     </div>
-    {#if loading}
-      <div class="flex items-center justify-center" style={isEditing ? 'height: 80vh;' : 'aspect-ratio: 16/9;'}>
-        <span class="loading loading-spinner loading-lg"></span>
-      </div>
+    {#if isEditing}<p class="ui-muted mb-3 text-sm" role="status">{saveStatus || (env.PUBLIC_ANON_MODE === "TRUE" || !supabase ? "Edits are not saved in this session." : "Use the whiteboard export menu to keep a copy of your work.")}</p>{/if}
+    {#if loading}<p class="ui-muted p-8" role="status">Loading whiteboard…</p>{/if}
+    {#if cachedScene}
+      {#key `${isEditing}-${isShared}`}
+        <iframe bind:this={iframe} src={isEditing ? "/excalidraw-editor.html" : "/excalidraw-viewer.html"} title={lo.title || "Whiteboard"} class="w-full border-0" class:hidden={loading} style={isEditing || isFullscreen ? 'height: 75dvh;' : 'aspect-ratio: 16/9;'} sandbox="allow-scripts allow-same-origin"></iframe>
+      {/key}
     {/if}
-    {#key `${isEditing}:${isShared}`}
-      <iframe
-        bind:this={iframe}
-        src={isEditing ? "/excalidraw-editor.html" : "/excalidraw-viewer.html"}
-        title="Excalidraw Whiteboard"
-        class="w-full border-0 {isFullscreen ? 'flex-1' : 'rounded-b-lg'} {loading ? 'hidden' : ''}"
-        style={isFullscreen ? '' : isEditing ? 'height: 80vh;' : 'aspect-ratio: 16/9;'}
-        sandbox="allow-scripts allow-same-origin"
-      ></iframe>
-    {/key}
   </div>
 {/if}
+<style>
+  .whiteboard { min-width: 0; }
+  .expanded { position: fixed; inset: 0; z-index: 9999; border-radius: 0; overflow: auto; }
+</style>

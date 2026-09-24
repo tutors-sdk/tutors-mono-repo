@@ -4,6 +4,15 @@
 > [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors).
 > Version history prior to v16.0.0 originates from that repository.
 
+> **Writing an entry.** An entry that changes something observable ends with the
+> artefacts it expects to move, in a parenthesis before the PR reference:
+> `Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)`.
+> The vocabulary (`dom`, `screenshot`, `network`, `console`, `headers`, `axe`,
+> `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`,
+> `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`) and how an entry
+> becomes a release claim are in [CONTRIBUTING.md](CONTRIBUTING.md#changelog-entries).
+> Earlier entries carry no hints and are not rewritten.
+
 ---
 
 ## Reader (`tutors-reader`)

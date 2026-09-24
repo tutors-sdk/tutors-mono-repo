@@ -1,102 +1,46 @@
 <script lang="ts">
   import Iconify from "@iconify/svelte";
   import type { LoEvent } from "@tutors/community";
-  import { cardStyles, type CardConfig } from "@tutors/themes";
-  import Icon from "./Icon.svelte";
   import { themeService } from "@tutors/themes";
-
-  let {
-    lo,
-    cardLayout,
-    showCourseTitle = false
-  } = $props<{
-    lo: LoEvent;
-    cardLayout?: CardConfig;
-    showCourseTitle?: boolean;
-  }>();
-
+  import Icon from "./Icon.svelte";
+  let { lo, showCourseTitle = false }: { lo: LoEvent; showCourseTitle?: boolean } = $props();
   const student = $derived(lo.user!);
-  const target = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? "_blank" : "");
-  const route = $derived(`https://tutors.dev${lo.loRoute}`);
-  const layout = $derived(cardLayout?.layout ?? themeService.layout.value);
-  const style = $derived(cardLayout?.style ?? themeService.cardStyle.value);
+  const route = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? lo.loRoute : `https://tutors.dev${lo.loRoute}`);
   const sentiment = $derived(student.sentiment ?? "neutral");
-  const isLandscape = $derived(style === "landscape");
-  const isCircular = $derived(style === "circular");
-
-  const primaryLine = $derived(showCourseTitle ? lo.courseTitle : lo.title);
-  const secondaryLine = $derived(showCourseTitle ? `${lo.title}` : "");
-
-  const styles = $derived({
-    heading: cardStyles.heading[layout][style],
-    dimensions: cardStyles.dimensions[layout][style],
-    image: cardStyles.image[layout][style],
-    icon: cardStyles.icon[layout][style],
-    iconHeight: cardStyles.iconHeight[layout][style],
-    text: cardStyles.text[layout][style],
-    container: cardStyles.container[layout][style]
-  });
-
-  const cardShellClass = $derived(
-    `card preset-filled-${themeService.getTypeColour(lo.type)}-100-900 border-[1px] ` +
-      `${styles.container} border-${themeService.getTypeColour(lo.type)}-500 ` +
-      `m-2 ${styles.dimensions} transition-all hover:scale-[1.10]`
-  );
 </script>
 
-<div class={cardShellClass}>
-  <div class="flex h-full w-full flex-col">
-    <div class="flex w-full shrink-0 items-center gap-2 border-b px-3 py-3" style="border-color: light-dark(var(--color-surface-300), var(--color-surface-600));">
-      <span class="shrink-0">
-        <Icon type={sentiment} tip={`Sentiment — ${sentiment}.`} height="28" />
-      </span>
-      <div class="flex min-w-0 flex-1 justify-center">
-        {#if student.id}
-          <a
-            href="https://github.com/{student.id}"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary hover:text-primary-dark min-w-0 truncate text-center {styles.heading} underline underline-offset-2 transition-colors"
-          >
-            {student.fullName ?? student.id}
-          </a>
-        {:else}
-          <span class="min-w-0 truncate text-center {styles.heading}">
-            {student.fullName}
-          </span>
-        {/if}
-      </div>
-      <span class="flex min-w-0 items-center gap-1">
-        <span class="truncate">{lo.type}</span><span class="shrink-0"><Icon type={lo.type} height={styles.iconHeight} /></span>
-      </span>
+<article style:--resource-accent={`var(--color-${themeService.getIcon(lo.type).color}-500, var(--ui-brand))`} class="activity-card ui-lift">
+  <header>
+    <img src={student.avatar} alt="" class="avatar" />
+    {#if student.id}<a href="https://github.com/{student.id}" target="_blank" rel="noopener noreferrer">{student.fullName ?? student.id}</a>
+    {:else}<span>{student.fullName}</span>{/if}
+    <Icon type={sentiment} tip={`Sentiment — ${sentiment}.`} height="24" />
+  </header>
+  <a class="activity-resource" href={route} target={lo.type === 'web' ? '_blank' : undefined} rel={lo.type === 'web' ? 'noopener noreferrer' : undefined}>
+    <div class="activity-heading min-w-0">
+      <span class="resource-type"><Icon type={lo.type} height="18" />{lo.type}</span>
+      <h3>{showCourseTitle ? lo.courseTitle : lo.title}</h3>
+      {#if showCourseTitle}<p>{lo.title}</p>{/if}
     </div>
-    <a href={route} target={target || undefined} class="text-inherit relative flex min-h-0 flex-1 gap-1 no-underline">
-      <div class="ml-2 flex h-full w-[26%] min-w-0 shrink-0 items-center justify-center">
-        <figure class="flex items-center justify-center">
-          <img src={student.avatar} alt={student.fullName} class="{styles.image} object-contain object-center {isCircular ? 'rounded-full' : 'rounded-xl'}" />
-        </figure>
-      </div>
-      <div class="relative flex min-w-0 flex-1 flex-col pr-2">
-        <div class="min-h-0 flex-1 overflow-auto">
-          <div class="flex flex-col justify-between p-4 {!isLandscape ? 'text-center' : ''}">
-            <div class="text-primary hover:text-primary-dark {styles.heading}">
-              {primaryLine}
-            </div>
-            {#if secondaryLine}
-              <div class="{styles.text} ">
-                {secondaryLine}
-              </div>
-            {/if}
-          </div>
-        </div>
-      </div>
-      <div class="mr-2 flex h-full w-[26%] min-w-0 shrink-0 items-center justify-center py-2">
-        {#if lo.img}
-          <img src={lo.img} alt="" class="{styles.image} max-h-full w-full object-contain object-center rounded-xl" />
-        {:else if lo.icon}
-          <Iconify icon={lo.icon.type} color={lo.icon.color} height={styles.icon} />
-        {/if}
-      </div>
-    </a>
-  </div>
-</div>
+    {#if lo.img}<img src={lo.img} alt="" class="resource-art" />
+    {:else if lo.icon}<Iconify icon={lo.icon.type} color={lo.icon.color} height="96" />{/if}
+  </a>
+</article>
+<style>
+  /* Fills its slot rather than sizing to content, so in a card grid it is the same box as a resource card
+     (--card-width x --card-height); in the time app's plain grids it still stretches to the row. The
+     column layout hands the slack to .activity-resource, which centres the artwork in it. */
+  .activity-card { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; overflow: hidden; border: 1px solid var(--resource-accent); border-radius: var(--radius-card); background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface)); }
+  header { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--ui-border); }
+  header > a, header > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: var(--font-label); font-weight: var(--weight-medium); }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+  .activity-resource { display: flex; flex: 1; min-height: 0; flex-direction: column-reverse; align-items: center; justify-content: center; gap: var(--space-3); padding: var(--space-4); border-radius: 0 0 var(--radius-card) var(--radius-card); color: var(--ui-ink); text-decoration: none; }
+  .activity-resource:hover { background: var(--ui-selected); }
+  .activity-heading { width: 100%; }
+  .resource-type { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-small); color: var(--ui-muted); }
+  /* The card is a fixed height, so long titles clamp rather than push the artwork out of the box. */
+  h3, p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  h3 { font-weight: var(--weight-semibold); margin-top: var(--space-2); overflow-wrap: anywhere; }
+  p { margin-top: var(--space-2); color: var(--ui-muted); font-size: var(--font-label); overflow-wrap: anywhere; }
+  .resource-art { flex-shrink: 0; width: 96px; height: 96px; object-fit: contain; }
+</style>

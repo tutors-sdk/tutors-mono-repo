@@ -56,8 +56,6 @@ export const FluentIconLib: IconLib = {
   light: { type: "fluent:weather-sunny-32-filled", color: "warning" },
   dark: { type: "fluent:weather-moon-48-filled", color: "warning" },
   toc: { type: "fluent:line-horizontal-3-20-filled", color: "bg-base-content" },
-  compacted: { type: "fluent:re-order-dots-vertical-24-filled", color: "success" },
-  expanded: { type: "fluent:re-order-dots-horizontal-24-filled", color: "success" },
   portrait: { type: "fluent:rectangle-portrait-location-target-20-regular", color: "primary" },
   circular: { type: "fluent:circle-sparkle-28-regular", color: "warning" },
   landscape: { type: "fluent:rectangle-landscape-sparkle-48-regular", color: "error" },

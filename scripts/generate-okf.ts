@@ -948,28 +948,28 @@ function generateServiceConcepts(services: ServiceInfo[], timestamp: string): vo
 // --- Main ---
 
 function main(): void {
-  console.log("Generating Tutors OKF knowledge bundle...\n");
+  process.stdout.write("Generating Tutors OKF knowledge bundle...\n\n");
 
   const timestamp = generateTimestamp();
 
   // Extract all data
   const packages = extractPackages();
-  console.log(`Extracted ${packages.length} packages`);
+  process.stdout.write(`Extracted ${packages.length} packages\n`);
 
   const routes = extractRoutes();
-  console.log(`Extracted ${routes.length} routes`);
+  process.stdout.write(`Extracted ${routes.length} routes\n`);
 
   const components = extractComponents();
-  console.log(`Extracted ${components.length} components`);
+  process.stdout.write(`Extracted ${components.length} components\n`);
 
   const types = extractTypes();
-  console.log(`Extracted ${types.length} types`);
+  process.stdout.write(`Extracted ${types.length} types\n`);
 
   const schemas = extractSchemas();
-  console.log(`Extracted ${schemas.length} schemas`);
+  process.stdout.write(`Extracted ${schemas.length} schemas\n`);
 
   const services = extractServices();
-  console.log(`Extracted ${services.length} services`);
+  process.stdout.write(`Extracted ${services.length} services\n`);
 
   // Clean output directory
   if (fs.existsSync(OKF_OUTPUT)) {
@@ -993,8 +993,8 @@ function main(): void {
   generateServiceConcepts(services, timestamp);
 
   const totalFiles = packages.length + components.length + routes.length + types.length + schemas.length + services.length + 8; // +8 for index files
-  console.log(`\nOKF bundle written to okf/`);
-  console.log(`  ~${totalFiles} total files`);
+  process.stdout.write(`\nOKF bundle written to okf/\n`);
+  process.stdout.write(`  ~${totalFiles} total files\n`);
 }
 
 main();

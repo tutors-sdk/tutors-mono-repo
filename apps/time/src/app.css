@@ -56,3 +56,32 @@
   white-space: nowrap;
   line-height: 1.2;
 }
+
+@import "@tutors/themes/styles/tutors.css";
+@import "@tutors/themes/styles/classic.css";
+@import "@tutors/themes/styles/dyslexia.css";
+@import "@tutors/themes/styles/easter.css";
+@import "@tutors/themes/styles/paper-tokens.css";
+@import "@tutors/themes/styles/paper-ui.css";
+
+.ag-theme-quartz {
+  --ag-font-family: var(--ui-font-family);
+  --ag-font-size: var(--font-label);
+  --ag-background-color: var(--ui-surface);
+  --ag-foreground-color: var(--ui-ink);
+  --ag-header-background-color: var(--ui-canvas);
+  --ag-header-foreground-color: var(--ui-muted);
+  --ag-border-color: var(--ui-border);
+  --ag-row-border-color: var(--ui-border);
+  --ag-row-hover-color: var(--ui-selected);
+  --ag-selected-row-background-color: var(--ui-selected);
+  --ag-active-color: var(--ui-brand);
+  --ag-wrapper-border-radius: var(--radius-card);
+  --ag-header-height: 48px;
+  --ag-row-height: 48px;
+}
+.time-app table { background: var(--ui-surface); border-color: var(--ui-border); }
+.time-app thead { background: var(--ui-canvas); color: var(--ui-muted); }
+.time-app tr { border-color: var(--ui-border); }
+.time-app tbody tr:hover { background: var(--ui-selected); }
+.time-app h2 { font-size: var(--font-section); }

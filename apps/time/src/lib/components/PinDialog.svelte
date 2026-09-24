@@ -67,10 +67,10 @@
     <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/50 backdrop-blur-sm" />
     <Dialog.Positioner class="fixed inset-0 z-50 flex justify-center items-center p-4">
       <Dialog.Content
-        class="card bg-surface-100-900 w-full max-w-md p-6 space-y-4 shadow-xl {animation}"
+        class="ui-panel w-full max-w-md space-y-4 shadow-xl {animation}"
       >
         <Dialog.Title class="text-2xl font-bold">Enter PIN</Dialog.Title>
-        <Dialog.Description class="text-surface-600">
+        <Dialog.Description class="text-[var(--ui-muted)]">
           Please enter the PIN code to continue.
         </Dialog.Description>
         <div class="space-y-4">
@@ -89,7 +89,7 @@
             {/if}
           </div>
           <div class="flex justify-end gap-2">
-            <button type="button" onclick={handleSubmit} class="btn preset-filled">
+            <button type="button" onclick={handleSubmit} class="ui-button ui-button-primary">
               Verify
             </button>
           </div>

@@ -1,2 +1,2 @@
-export { tourService } from "./tour-service.svelte";
+export { tourService, findTourTarget } from "./tour-service.svelte";
 export type { TourStep, TourPlacement } from "./types";

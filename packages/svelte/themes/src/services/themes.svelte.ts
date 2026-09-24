@@ -4,7 +4,7 @@
  * Supports multiple icon sets and persists user preferences.
  */
 
-import type { CardStyleType, LayoutType, Theme, ThemeService } from "../types.ts";
+import type { CardStyleType, Theme, ThemeService } from "../types.ts";
 import { FluentIconLib } from "../icons/fluent-icons.ts";
 import { HeroIconLib } from "../icons/hero-icons.ts";
 import { EasterIcons } from "../icons/easter-icons.ts";
@@ -32,11 +32,11 @@ export const themeService: ThemeService = {
     { name: "easter", icons: EasterIcons }
   ] as Theme[],
 
-  /** Current display layout */
-  layout: rune<LayoutType>("expanded"),
-
   /** Current card style */
   cardStyle: rune<CardStyleType>("portrait"),
+
+  /** Lab and note text fills the reading panel */
+  fullWidthReading: rune<boolean>(false),
 
   /** Current light move layout */
   lightMode: rune<string>("light"),
@@ -62,8 +62,8 @@ export const themeService: ThemeService = {
       this.setDisplayMode(localStorage.modeCurrent);
       this.setTheme(localStorage.theme);
     }
-    this.setLayout(localStorage.layout);
     this.setCardStyle(localStorage.cardStyle);
+    this.setFullWidthReading(localStorage.fullWidthReading === "true");
   },
 
   /**
@@ -117,18 +117,6 @@ export const themeService: ThemeService = {
   },
 
   /**
-   * Sets and persists the current display layout
-   * @param layout - Layout name to set
-   */
-  setLayout(layout: LayoutType): void {
-    if (!layout) {
-      layout = "expanded";
-    }
-    this.layout.value = layout;
-    localStorage.layout = layout;
-  },
-
-  /**
    * Sets and persists the current card style
    * @param style - Card style to set (portrait/landscape)
    */
@@ -141,14 +129,13 @@ export const themeService: ThemeService = {
   },
 
   /**
-   * Toggles the layout between expanded & compact
+   * Sets and persists whether lab and note text fills the reading panel
+   * @param full - true to drop the comfortable line length
    */
-  toggleLayout(): void {
-    if (this.layout.value === "expanded") {
-      this.setLayout("compacted");
-    } else {
-      this.setLayout("expanded");
-    }
+  setFullWidthReading(full: boolean): void {
+    this.fullWidthReading.value = full;
+    localStorage.fullWidthReading = String(full);
+    document.documentElement.toggleAttribute("data-full-width-reading", full);
   },
 
   /**
@@ -159,8 +146,9 @@ export const themeService: ThemeService = {
    */
   getIcon(type: string): IconType {
     const iconLib = themeService.themes.find((theme) => theme.name === this.currentTheme.value)?.icons;
-    if (iconLib && iconLib[type]) {
-      return iconLib[type];
+    const icon = iconLib?.[type] ?? FluentIconLib[type];
+    if (icon) {
+      return icon;
     } else {
       log.warn("No type found for icon", type);
       return FluentIconLib.tutors;
@@ -185,10 +173,7 @@ export const themeService: ThemeService = {
    */
   getTypeColour(type: string): string {
     const iconLib = themeService.themes.find((theme) => theme.name === this.currentTheme.value)?.icons;
-    if (iconLib && iconLib[type]) {
-      return iconLib[type].color;
-    }
-    return "primary";
+    return iconLib?.[type]?.color ?? FluentIconLib[type]?.color ?? "primary";
   },
 
   /**

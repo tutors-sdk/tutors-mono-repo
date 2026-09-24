@@ -23,6 +23,7 @@
   let includeReadme = $state(false);
   let readmeDescription = $state("");
   let downloaded = $state(false);
+  let downloadError = $state("");
 
   const steps = ["Course Info", "Structure", "Preview", "Download"];
 
@@ -63,8 +64,13 @@
   }
 
   function handleDownload() {
-    downloadCourseZip(files, courseId, spec);
-    downloaded = true;
+    downloadError = "";
+    try {
+      downloadCourseZip(files, courseId, spec);
+      downloaded = true;
+    } catch {
+      downloadError = "The download could not be prepared. Please try again.";
+    }
   }
 
   function handleImport(imported: import("@tutors/tutors-create/generate").CourseSpec) {
@@ -78,12 +84,15 @@
     includeLabs = imported.includeLabs;
     includeCalendar = imported.includeCalendar ?? false;
     includeEnrollment = imported.includeEnrollment ?? false;
+    includeGitignore = imported.includeGitignore ?? true;
+    includeReadme = imported.includeReadme ?? false;
+    readmeDescription = imported.readmeDescription ?? "";
   }
 </script>
 
-<div class="container mx-auto max-w-3xl p-4">
-  <div class="card m-4 space-y-6 p-6">
-    <h2 class="h2 text-center">Create a New Course</h2>
+<div class="ui-page max-w-4xl">
+  <div class="ui-panel space-y-6">
+    <h1 class="ui-title">Create a New Course</h1>
 
     <StepIndicator {steps} current={currentStep} onjump={(i) => (currentStep = i)} />
 
@@ -108,6 +117,7 @@
       {:else if currentStep === 2}
         <PreviewStep {files} {courseId} onnext={next} onback={back} />
       {:else if currentStep === 3}
+        {#if downloadError}<p role="alert">{downloadError}</p>{/if}
         <DownloadStep {courseId} steps={downloadSteps} {downloaded} ondownload={handleDownload} onback={back} />
       {/if}
     </div>

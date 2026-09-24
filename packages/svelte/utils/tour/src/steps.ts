@@ -5,7 +5,8 @@ export const courseReaderSteps: TourStep[] = [
     target: "[data-tour='course-title']",
     titleKey: "tour.courseTitle.title",
     descriptionKey: "tour.courseTitle.description",
-    placement: "bottom"
+    placement: "bottom",
+    optional: true
   },
   {
     target: "[data-tour='search']",
@@ -29,7 +30,7 @@ export const courseReaderSteps: TourStep[] = [
     target: "[data-tour='toc']",
     titleKey: "tour.toc.title",
     descriptionKey: "tour.toc.description",
-    placement: "left",
+    placement: "right",
     optional: true
   },
   {

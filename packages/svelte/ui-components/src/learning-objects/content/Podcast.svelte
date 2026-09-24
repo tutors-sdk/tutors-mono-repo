@@ -11,11 +11,13 @@
   let episodeId = lo.episode.id;
 </script>
 
+<!-- No panel of its own: a podcast sits on the unit panel behind it, so its own surface, padding and
+     border would only be chrome on chrome. The player carries its own rounded block. -->
 <div class="flex flex-col">
   <iframe
     title={lo.title}
     data-testid="embed-iframe"
-    style="border-radius:12px"
+    style="border-radius: var(--radius-card)"
     src="https://open.spotify.com/embed/episode/{episodeId}?utm_source=generator?utm_source=generator"
     width="100%"
     height="152"
@@ -25,9 +27,9 @@
   ></iframe>
 
   <div class="mt-4 flex flex-col gap-2">
-    <p class="text-center text-lg italic">{lo.title}</p>
+    <p class="ui-section-title">{lo.title}</p>
     {#if !hideSummary}
-      <div class="text-center text-sm italic">
+      <div class="prose dark:prose-invert text-sm">
         {@html sanitizeHtml(lo.summary ?? "")}
       </div>
     {/if}

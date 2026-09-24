@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Avatar } from "@skeletonlabs/skeleton-svelte";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
 
   import { env } from "$env/dynamic/public";
@@ -13,17 +13,18 @@
 </script>
 
 {#snippet menuSelector()}
-  <div class="mt-2 flex items-center">
-    <Avatar classes="size-9" src="/tutors-profile.png" name={t("menu.anonName")} />
+  <div class="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--ui-border)]">
+    <Icon icon="lucide:user-round" height="20" color="var(--ui-muted)" />
   </div>
 {/snippet}
 
 {#snippet menuContent()}
-  <ul class="space-y-6">
+  <p class="menu-name">{t("menu.anonName")}</p>
+  <ul class="space-y-1">
     {#if env.PUBLIC_ANON_MODE !== "TRUE"}
       <MenuItem link="/auth{redirect}" text={t("menu.connect")} type="github" />
-      <MenuItem link="/" text={t("menu.home")} type="tutors" />
     {/if}
+    <MenuItem link="/" text={t("menu.home")} type="tutors" />
   </ul>
 {/snippet}
 

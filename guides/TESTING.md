@@ -353,7 +353,7 @@ to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 **Protects** the requirements: a scenario in `tests/bdd/features/` is a statement about the
 product that fails when the product stops doing it.
 
-**How.** Each of the 20 feature files (73 scenarios) is loaded by its steps file with
+**How.** Each of the 20 Node-level feature files (73 scenarios) is loaded by its steps file with
 [`vitest-cucumber`](https://vitest-cucumber.miceli.click/), inside the ordinary Vitest run, so
 there is one runner and no second CI job. The binder fails the run when a scenario or step is
 on one side only, which is what keeps the Gherkin from drifting back into prose. Steps drive
@@ -370,29 +370,33 @@ covering tier for each or says that none does. [#214](https://github.com/tutors-
 still owns `Rule:` blocks and the structural audit. Writing and binding a scenario:
 [EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md).
 
-## Dev-server smoke tests and the standalone axe audit
+## The reader's UI contract, and dev-server smoke tests
 
-Thin Playwright smoke tests live in `apps/<app>/tests/e2e/smoke.spec.ts` with a config per app
-(`apps/<app>/playwright.config.ts`), each starting `vite dev` on its own port — reader 5173,
-live 5174, catalogue 5175. They check that a page loads, `/auth` responds, an unknown course
-renders an error page, and there is at most one `h1`.
+**What.** The reader's browser behaviour is written as `@ui` EARS Rules in
+`tests/bdd/features/ui/` (33 Rules, 40 scenarios: layout, navigation, cards, reading width,
+themes, course tools, quizzes, notebooks, slides and WCAG 2.1 AA). Each scenario is proved by
+one Playwright test in `apps/reader/tests/e2e/`, titled with the scenario and tagged with the
+Rule id.
+
+**How.** `pnpm test:ears:audit` binds the two statically: a scenario with no test
+(`unproved-scenario`), a test whose title or Rule id matches no scenario (`orphan-ui-test`) and
+a skipped test (`rule-not-run`) fail it. The tests run with `apps/reader/playwright.config.ts`
+against `vite dev` on port 5173; the reader needs its `.env` (copy `.env.example` into
+`apps/reader/`).
 
 ```bash
-pnpm test:e2e            # reader, then catalogue, then live
-pnpm test:e2e:reader --retries=0
+pnpm test:e2e:reader --project=chromium              # the whole contract
+pnpm test:e2e:reader --project=chromium -g @rule-0032  # one Rule
 ```
 
-The root has no Playwright config on purpose: a bare `playwright test` would collect every
-Vitest file in the repo, so `pnpm test:e2e` chains the three per-app configs instead. These are
-smoke tests, not journeys — the real coverage is tier G against built images. No workflow runs
-them: they are a local convenience, and they need the app's own `.env` (copy `.env.example` into
-`apps/<app>/`) plus a warm dependency cache, or the first page load fails with Vite's
-`504 (Outdated Optimize Dep)`.
+**When.** Every pull request runs the contract in Chromium (`ui-contract` in `ci.yml`), and it
+and the audit are required by `ci-success`. Release candidates run it in Chromium, Firefox and
+WebKit.
 
-`pnpm test:a11y` runs `tests/e2e/accessibility.spec.ts` (axe over a course page via
-`playwright-a11y.config.ts`) against `localhost:5173`. It runs in no workflow, and one of its
-tests logs violations without asserting — it is baselined as `no-assertion` in tier O. The
-enforced accessibility gate is the axe audit inside the tier G journeys.
+The catalogue and live apps keep thin smoke tests in `apps/<app>/tests/e2e/smoke.spec.ts`
+(live 5174, catalogue 5175), run locally with `pnpm test:e2e:catalogue` and `:live`. The root has
+no Playwright config on purpose: a bare `playwright test` would collect every Vitest file in the
+repo, so `pnpm test:e2e` chains the per-app configs instead.
 
 ## Release testing
 
@@ -445,9 +449,10 @@ exist.
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
 | `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
 | `e2e-stack` | Build reader, catalogue and live images, build the fixture course, bring the stack up, run the journeys on chromium and webkit, then the baseline stale-line check; uploads the report and compose logs on failure |
-| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` |
+| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` and `pnpm check:server` |
 | `generator-diff` | Only when the PR touches `packages/jsr/{gen,tutors,tutors-lite,model}`, `deno.json(.lock)`, `tests/generator/` or `scripts/checks/generator-*`: the planted-change self-test, then every difference must be claimed |
-| `CI success` | Needs all eight; a skipped or cancelled job counts as a failure. The one required check |
+| `ears-audit` | `pnpm test:ears:audit`: the structure of the `Rule:` blocks in `tests/bdd/features` (one shall, system name, EARS tag, unique id, a scenario per Rule). Only violations outside `tests/bdd/ears-audit-baseline.txt` fail. `continue-on-error` and not in `CI success` needs until the seed features are migrated ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)) |
+| `CI success` | Needs all eight (not `ears-audit`); a skipped or cancelled job counts as a failure. The one required check |
 
 `codeql.yml` and `zizmor.yml` also run on every PR (CodeQL for JavaScript/TypeScript, zizmor over
 the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
@@ -487,6 +492,11 @@ preview, then a report that blocks on 6a and 6c and warns on 6b.
 `pnpm check:release-claims`: `release/claims.yaml` exists and is a claims file the release harness
 would accept. The same validator runs over the committed file in every PR through
 `tests/conformance/release-claims.test.ts`.
+
+Its second job runs `pnpm check:migrations` (`scripts/checks/migrations.ts`): the migrations added
+since `main` may not be destructive unless a `migration` claim covers them, and the layout rules
+(names, order, merged files immutable) hold. Rules and rationale: [MIGRATIONS.md](MIGRATIONS.md).
+The rules are unit-tested in `tests/conformance/migrations.test.ts`.
 
 ### `release-dispatch.yml` — push to `release/**`
 
@@ -538,8 +548,8 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 
 - `apps/time` is not type-checked in CI; it has type errors of its own to clear first ([#268](https://github.com/tutors-sdk/tutors-mono-repo/issues/268)).
 - Coverage thresholds sit at 55/50/65/55 and should ratchet upward.
-- `tests/components/` tests props, variants and state transitions as plain data; nothing renders
-  a Svelte component, and `@testing-library/svelte` is an unused dependency.
+- `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
+  contract in a real browser instead.
 - 48 specified scenarios are prose, many with no tier covering them: [specifications/](./specifications/README.md).
 - Mutation testing runs nowhere in CI.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
