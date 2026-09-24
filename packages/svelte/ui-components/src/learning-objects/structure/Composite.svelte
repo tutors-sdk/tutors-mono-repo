@@ -56,14 +56,9 @@
 {#if composite}
   <div class="ui-page composite-page">
     <header class="composite-heading">
-      <div><p class="ui-eyebrow">{composite.type === "course" ? t("shell.overview") : composite.type}</p><h1 class="ui-title">{composite.title}</h1><div class="ui-muted summary">{@html sanitizeHtml(composite.summary ?? "")}</div></div>
+      <div><p class="ui-eyebrow">{composite.type === "course" ? t("shell.overview") : composite.type}</p><h1 class="ui-title">{composite.title}</h1><div class="ui-muted summary">{@html sanitizeHtml(composite.summary ?? "")}</div>{#if composite.type === "course" && currentCourse.value?.courseCalendar?.currentWeek}<div class="current-week"><CalendarButton chip /></div>{/if}</div>
       <Image lo={composite} />
     </header>
-    {#if composite.type === "course" && currentCourse.value?.courseCalendar?.currentWeek}
-      <div class="course-start">
-        <section class="ui-panel"><p class="ui-eyebrow">{t("nav.calendar.label")}</p><h2>{currentCourse.value.courseCalendar.currentWeek.title}</h2><CalendarButton /></section>
-      </div>
-    {/if}
     <div class="composite-columns" class:with-sides={sides.length > 0} use:layoutCards>
       <div class="main-group">
         <Panels panels={composite.panels} />
@@ -83,12 +78,14 @@
   .composite-heading > div { min-width: 0; }
   h1 { margin-top: var(--space-2); }
   .summary { margin-top: var(--space-2); }
-  /* Holds the current-week callout on a course page. A flex row rather than a bare section because the
-     row used to carry a "start here" panel beside it; keeping it means a second callout can go back in. */
-  .course-start { display: flex; gap: var(--space-5); margin-top: var(--space-6); }
+  /* The current week is a small chip under the summary: useful, not a feature of the page. */
+  .current-week { margin-top: var(--space-3); }
   h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); }
   .composite-columns { margin-top: var(--space-6); }
   .main-group, .side-groups { min-width: 0; }
+  /* The columns already sit 24px below the header, so the "Course topics" heading adds no margin of its own:
+     it lines up with the top of the side column instead of starting 32px below it. */
+  .main-group :global(.ui-section-heading) { margin-top: 0; }
   /* The side column is pinned to one card's width (--side-width, set by layoutCards from --card-width plus
      the unit panel's padding and border) and never grows; the main group takes the rest, with a 24px spacer
      track between them. The card grids inside wrap and centre their own cards. */
@@ -97,6 +94,5 @@
   .with-sides > .side-groups { grid-column: 3; }
   .with-sides:global([data-stacked="true"]) { grid-template-columns: minmax(0, 1fr); }
   .with-sides:global([data-stacked="true"]) > :is(.main-group, .side-groups) { grid-column: auto; }
-  @media (max-width: 1279px) { .course-start { flex-wrap: wrap; } }
-  @media (max-width: 767px) { .composite-heading > :global(.lo-artwork) { display: none; } .course-start > section { width: 100%; } }
+  @media (max-width: 767px) { .composite-heading > :global(.lo-artwork) { display: none; } }
 </style>
