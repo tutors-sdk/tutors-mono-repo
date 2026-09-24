@@ -16,7 +16,7 @@ The harness reads this directory and nothing else: `--mode migration --a <ref> -
 
 ### What is not in this directory yet
 
-The RBAC tables are created by hand-run scripts in `packages/svelte/utils/rbac/sql/` (`002_content_locks.sql`, `003_whiteboard_scenes.sql`), and the tables behind the community, connect and time features predate this directory. The harness therefore rehearses a schema that has only `app_errors` in it: a destructive change to any other table is invisible to it, and to `pnpm check:migrations`. Moving those scripts in, as new migrations with `IF NOT EXISTS`, is the way to bring them under the rule; it needs a maintainer who can confirm what production already has.
+The RBAC tables are created by hand-run scripts in `packages/svelte/utils/rbac/sql/` (`002_content_locks.sql`, `003_whiteboard_scenes.sql`), and the tables behind the community, connect and time features predate this directory. The harness therefore rehearses a schema that has only `app_errors` in it: a destructive change to any other table is invisible to it, and to `pnpm check:migrations`. Moving those scripts in, as new migrations with `IF NOT EXISTS`, is the way to bring them under the rule; it needs a maintainer who can confirm what production already has. Row-Level Security on all of them is already under the rule: `20260924_enable_rls_public_tables.sql` turns it on for every table in `public` and gives `anon` only the operations the apps perform.
 
 ## Expand and contract
 
