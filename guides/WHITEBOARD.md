@@ -93,6 +93,8 @@ The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collabor
 - **Cursor sync**: Broadcasts pointer positions via the `cursor-update` event. Cursor colors are deterministically assigned from the user's ID.
 - **User tracking**: Uses Supabase Presence to track active collaborators. When a user disconnects, they are automatically removed from the presence state.
 - **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table. `WhiteboardViewer.svelte` keeps a single `message` listener for its lifetime (it must keep receiving `scene-changed` after `editor-ready`) and ignores messages that do not come from its own iframe. The iframe is recreated when the mode or the personal/shared room changes, so each room starts with a fresh `editor-ready` handshake.
+- **Same origin only**: the parent and both iframe pages accept messages only from the reader's own origin and post only to it (never `"*"`).
+- **Appearance**: `load-scene` and `init-editor` carry `theme` (`"light"` or `"dark"`, the reader's appearance). The viewer renders its SVG with Excalidraw's dark export and the editor opens in Excalidraw's dark theme. When the reader's appearance changes, the parent posts `set-theme` and the open iframe follows without reloading.
 
 ### Excalidraw Loading
 
