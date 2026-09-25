@@ -17,6 +17,14 @@
 
 ## Reader (`tutors-reader`)
 
+### Unreleased
+
+#### Fixes
+
+- Database: `whiteboard_scenes` is created by a migration (`20260925100000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #TBD)
+- Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #TBD)
+- Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #TBD)
+
 ### v16.2.2 (2026-09)
 
 #### Fixes

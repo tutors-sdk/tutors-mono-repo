@@ -108,7 +108,7 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap â€
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (created by `supabase/migrations/20260925100000_create_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
 
 To try a whiteboard against a course on your machine, generate one that contains a `whiteboard-*` folder, serve its `json/` output over HTTP with CORS enabled, and open `/whiteboard/localhost:<port>/<topic>/<whiteboard-folder>` on the reader (add `whiteboard: 1` to the course's `properties.yaml` to see the toolbar button). The reader treats a `localhost` course id as plain HTTP, but the generator writes the `.excalidraw` URL into `tutors.json` as `https://{{COURSEURL}}/...`, so when serving over plain HTTP change that prefix to `http://` in the generated `tutors.json`.
 

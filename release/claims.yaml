@@ -30,4 +30,7 @@
 #
 # Reset to `claims: []` when the next release branch is cut. Field reference:
 # release/README.md here, claims/README.md in the harness repository.
-claims: []
+claims:
+  - artefact: migration
+    scope: "app_errors:anon_select_app_errors"
+    reason: "CHANGELOG Unreleased: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it (migration)"
