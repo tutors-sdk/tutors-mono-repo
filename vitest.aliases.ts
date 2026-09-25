@@ -27,6 +27,7 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/tutors-time-lib": resolve(root, "packages/jsr/time/src/index.ts"),
   "@tutors/tutors-types": resolve(root, "packages/jsr/types/src/index.ts"),
   "@tutors/community/utils/supabase-client": resolve(root, "packages/svelte/community/src/utils/supabase-client.ts"),
+  "@tutors/community/utils/reader-api": resolve(root, "packages/svelte/community/src/utils/reader-api.ts"),
   "@tutors/identity": resolve(root, "packages/jsr/identity/src/index.ts"),
   "@tutors/realtime": resolve(root, "packages/jsr/realtime/src/index.ts"),
   "@tutors/realtime-supabase": resolve(root, "packages/svelte/realtime-supabase/src/index.ts"),

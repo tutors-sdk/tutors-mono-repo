@@ -1,10 +1,3 @@
-/**
- * @service SupabaseClient
- * Service for managing Supabase database connections and operations
- * Handles learning analytics, user interactions, and calendar data
- * Provides low-level database operations for the Tutors platform
- */
-
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as env from "$app/env/public";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
@@ -12,6 +5,7 @@ import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
 import log, { withRequestId, withTimeout } from "@tutors/logger";
+import { readerApi, readerApiJson } from "./reader-api.ts";
 import { realtimeClientOptions } from "@tutors/realtime-supabase";
 
 export let supabase: SupabaseClient;
@@ -87,31 +81,10 @@ export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = ne
   return d.getFullYear() === ref.getFullYear();
 }
 
-/**
- * Upsert latest Lo snapshot for (course, student) into tutors-connect-latest.
- * Fire-and-forget from presence; does not throw.
- */
 export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
-  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return;
-
-  const rec = loRecord as { courseId?: string; user?: { id?: string } };
-  const courseId = rec.courseId?.trim();
-  const studentId = rec.user?.id?.trim();
-  if (!courseId || !studentId) return;
-
-  const { error } = await supabase.from("tutors-connect-latest").upsert(
-    {
-      course_id: courseId,
-      student_id: studentId,
-      payload: loRecord,
-      received_at: new Date().toISOString()
-    },
-    { onConflict: "course_id,student_id" }
-  );
-
-  if (error) {
-    log.error("upsertTutorsConnectLatestLo failed:", error);
-  }
+  const courseId = (loRecord as { courseId?: string }).courseId?.trim();
+  if (!courseId) return;
+  await readerApi("POST", "/api/presence", { courseId, payload: loRecord });
 }
 
 /**
@@ -212,10 +185,10 @@ export async function watchLiveTopic(topic: string, watcher: string): Promise<Li
  * them to the day's Live budget. Called by the reader's server only.
  * @returns the tier and topics, or null when the claim failed (the caller publishes nothing)
  */
-export async function claimLivePublish(courseId: string): Promise<{ tier: LiveBudgetTier; topics: string[] } | null> {
-  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return null;
+export async function claimLivePublish(courseId: string, db: SupabaseClient): Promise<{ tier: LiveBudgetTier; topics: string[] } | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE") return null;
 
-  const { data, error } = await supabase.rpc("realtime_claim_live_publish", { p_course_id: courseId });
+  const { data, error } = await db.rpc("realtime_claim_live_publish", { p_course_id: courseId });
   if (error) {
     log.warn("realtime_claim_live_publish failed:", error);
     return null;
@@ -223,67 +196,6 @@ export async function claimLivePublish(courseId: string): Promise<{ tier: LiveBu
   const claim = data as { tier?: LiveBudgetTier; topics?: unknown } | null;
   if (!claim?.tier || !Array.isArray(claim.topics)) return null;
   return { tier: claim.tier, topics: claim.topics.filter((topic): topic is string => typeof topic === "string") };
-}
-
-/**
- * Retrieves the number of learning record increments for a specific field
- * @async
- * @param fieldName - Name of the field to count increments for
- * @param courseId - Identifier of the course
- * @param studentId - Identifier of the student
- * @param loId - Identifier of the learning object
- * @returns Promise resolving to the number of increments
- */
-async function getNumOfLearningRecordsIncrements(fieldName: string, courseId: string, studentId: string, loId: string) {
-  if (!courseId || !studentId || !loId) return 0;
-
-  const { data: student, error } = await supabase.rpc("get_count_learning_records", {
-    field_name: fieldName,
-    course_base: courseId,
-    user_name: studentId,
-    lo_key: loId
-  });
-
-  if (error) {
-    log.error("Error fetching student interaction:", error);
-    return 0;
-  }
-  // No record yet comes back as an empty array, not null: the first visit counts as 1.
-  return (student?.[0]?.increment ?? 0) + 1;
-}
-
-/**
- * Manages student interaction data with a course learning object
- * Updates both duration and count metrics
- * @async
- * @param courseId - Identifier of the course
- * @param studentId - Identifier of the student
- * @param loId - Identifier of the learning object
- * @param lo - Learning object data
- */
-async function manageStudentCourseLo(courseId: string, studentId: string, loId: string, lo: Lo) {
-  const durationPromise = getNumOfLearningRecordsIncrements("duration", courseId, studentId, loId);
-  const countPromise = getNumOfLearningRecordsIncrements("count", courseId, studentId, loId);
-  const [duration, count] = await Promise.all([durationPromise, countPromise]);
-  const { error } = await supabase.from("learning_records").upsert(
-    {
-      course_id: courseId,
-      student_id: studentId,
-      lo_id: loId,
-      date_last_accessed: new Date().toISOString(),
-      duration: duration,
-      count: count,
-      type: lo.type
-    },
-    {
-      onConflict: "student_id, course_id, lo_id",
-      ignoreDuplicates: false
-    }
-  );
-  if (error) {
-    log.error("Failed to upsert learning record:", error);
-    throw error;
-  }
 }
 
 /**
@@ -301,229 +213,26 @@ export function formatDate(date: Date): string {
   return [year, month, day].join("-");
 }
 
-/**
- * Updates the duration of a calendar entry
- * @async
- * @param id - Calendar entry identifier
- * @param studentId - Identifier of the student
- * @param courseId - Identifier of the course
- */
-export const updateCalendarDuration = async (id: string, studentId: string, courseId: string) => {
-  if (!id || !studentId || !courseId) return;
-  await supabase.rpc("increment_calendar", {
-    field_name: "timeactive",
-    row_id: id,
-    student_id_value: studentId,
-    course_id_value: courseId
-  });
-};
-
-/**
- * Retrieves the duration from a calendar entry
- * @async
- * @param id - Calendar entry identifier
- * @param studentId - Identifier of the student
- * @param courseId - Identifier of the course
- * @returns Promise resolving to the duration value
- */
-async function getCalendarDuration(id: string, studentId: string, courseId: string): Promise<number> {
-  const { data } = await supabase.from("calendar").select("timeactive").eq("id", id).eq("studentid", studentId).eq("courseid", courseId).maybeSingle();
-  return data?.timeactive ? data.timeactive + 1 : 1;
+export async function recordLearningPageLoad(course: Course, loid: string, lo: Lo): Promise<void> {
+  if (!course.courseId || !loid) return;
+  await readerApi("POST", "/api/analytics", { kind: "page-load", courseId: course.courseId, loId: loid, loType: lo.type, day: formatDate(new Date()) });
 }
 
-/**
- * Retrieves the count from a calendar entry
- * @async
- * @param id - Calendar entry identifier
- * @param studentId - Identifier of the student
- * @param courseId - Identifier of the course
- * @returns Promise resolving to the count value
- */
-async function getCalendarCount(id: string, studentId: string, courseId: string): Promise<number> {
-  const { data } = await supabase.from("calendar").select("pageloads").eq("id", id).eq("studentid", studentId).eq("courseid", courseId).maybeSingle();
-  return data?.pageloads ? data.pageloads + 1 : 1;
+export async function recordLearningTick(courseId: string, loId: string | null): Promise<void> {
+  if (!courseId) return;
+  await readerApi("POST", "/api/analytics", { kind: "tick", courseId, loId, day: formatDate(new Date()) });
 }
 
-/**
- * Creates or updates a calendar entry for a student's course interaction
- * @async
- * @param studentId - Identifier of the student
- * @param courseId - Identifier of the course
- */
-async function insertOrUpdateCalendar(studentId: string, courseId: string) {
-  if (!studentId || !courseId) return;
-  const durationPromise = getCalendarDuration(formatDate(new Date()), studentId, courseId);
-  const countPromise = getCalendarCount(formatDate(new Date()), studentId, courseId);
-  const [timeActive, pageLoads] = await Promise.all([durationPromise, countPromise]);
-  await supabase.from("calendar").upsert(
-    {
-      id: formatDate(new Date()),
-      studentid: studentId,
-      timeactive: timeActive,
-      pageloads: pageLoads,
-      courseid: courseId
-    },
-    {
-      onConflict: "id, studentid, courseid"
-    }
-  );
-}
-
-/**
- * Processes student interaction data with learning objects
- * @async
- * @param courseId - Identifier of the course
- * @param studentId - Identifier of the student
- * @param loId - Identifier of the learning object
- * @param lo - Learning object data
- */
-async function handleInteractionData(courseId: string, studentId: string, loId: string, lo: Lo) {
-  if (!courseId || !studentId || !loId) return;
-  await manageStudentCourseLo(courseId, studentId, loId, lo);
-}
-
-/**
- * Stores student's interaction with a course learning object in Supabase
- * @async
- * @param course - Course data
- * @param loid - Learning object identifier
- * @param lo - Learning object data
- * @param student - Student data
- */
-export async function storeStudentCourseLearningObjectInSupabase(course: Course, loid: string, lo: Lo, student: TutorsId) {
-  const courseId = course.courseId;
-  const studentId = student.login;
-  if (courseId && studentId && loid) {
-    const recorded = await callRecordingFunction("record_page_view", {
-      p_course_id: courseId,
-      p_student_id: studentId,
-      p_lo_id: loid,
-      p_lo_type: lo.type,
-      p_day: formatDate(new Date())
-    });
-    if (recorded) return;
-  }
-  await handleInteractionData(courseId, studentId, loid, lo);
-  await insertOrUpdateCalendar(studentId, courseId);
-}
-
-/**
- * Records 30 seconds of activity against the learning object (when there is one) and the day's calendar.
- * @param courseId - Identifier of the course
- * @param studentId - Identifier of the student
- * @param loId - Identifier of the learning object, or null when the page has none
- */
-export async function recordHeartbeat(courseId: string, studentId: string, loId: string | null) {
-  if (!courseId || !studentId) return;
-  const recorded = await callRecordingFunction("record_heartbeat", {
-    p_course_id: courseId,
-    p_student_id: studentId,
-    p_lo_id: loId || null,
-    p_day: formatDate(new Date())
-  });
-  if (recorded) return;
-  if (loId) await updateLearningRecordsDuration(courseId, studentId, loId);
-  await updateCalendarDuration(formatDate(new Date()), studentId, courseId);
-}
-
-/** PostgREST's code for a function its schema cache does not hold: the migration is not applied yet. */
-const MISSING_FUNCTION = "PGRST202";
-/**
- * Both functions ship in one migration, so once the database answers that one is missing, this tab
- * uses the per-table requests until it reloads, without asking again.
- */
-export const recordingFunctions = { missing: false };
-
-/**
- * Calls one of the single-request recording functions (supabase/migrations/20261014_record_page_view_and_heartbeat.sql).
- * Each replaces several read-then-write requests with one atomic write.
- * @returns true when the write is done (or failed and was logged); false when the caller should use the per-table requests
- */
-async function callRecordingFunction(fn: "record_page_view" | "record_heartbeat", args: Record<string, unknown>): Promise<boolean> {
-  if (recordingFunctions.missing) return false;
-  const { error } = await supabase.rpc(fn, args);
-  if (!error) return true;
-  if (error.code === MISSING_FUNCTION) {
-    recordingFunctions.missing = true;
-    log.warn("Single-request recording functions are missing; using per-table requests");
-    return false;
-  }
-  log.error("Single-request recording failed:", fn, error);
-  return true;
-}
-
-/**
- * Updates the duration metric for learning records
- * @async
- * @param courseId - Identifier of the course
- * @param studentId - Identifier of the student
- * @param loId - Identifier of the learning object
- */
-export async function updateLearningRecordsDuration(courseId: string, studentId: string, loId: string) {
-  const numOfDuration = await getNumOfLearningRecordsIncrements("duration", courseId, studentId, loId);
-  await supabase.from("learning_records").update({ duration: numOfDuration }).eq("student_id", studentId).eq("course_id", courseId).eq("lo_id", loId);
-}
-
-/**
- * Creates or updates a student record in the database
- * @async
- * @param student - Student data to store
- */
 export async function addOrUpdateStudent(student: TutorsId) {
   if (!student) return;
-
-  try {
-    let fullName = student.name;
-
-    // If name is null or empty, fetch from GitHub API
-    if (!fullName && student.login) {
-      try {
-        const response = await fetch(`https://api.github.com/users/${student.login}`);
-        if (response.ok) {
-          const githubUser = await response.json();
-          fullName = githubUser.name || student.login;
-        } else {
-          // Fallback to login if API call fails
-          fullName = student.login;
-        }
-      } catch (fetchError) {
-        log.error("Failed to fetch GitHub user:", fetchError);
-        // Fallback to login if API call fails
-        fullName = student.login;
-      }
-    }
-
-    const row: {
-      github_id: string;
-      avatar_url: string;
-      full_name: string;
-      email: string;
-      date_last_accessed: string;
-      sentiment: string;
-      online_status?: string;
-    } = {
-      github_id: student.login,
-      avatar_url: student.image,
-      full_name: fullName,
-      email: student.email,
-      date_last_accessed: new Date().toISOString(),
-      sentiment: student.sentiment
-    };
-    if (student.share === "true") {
-      row.online_status = "online";
-    } else if (student.share === "false") {
-      row.online_status = "offline";
-    }
-
-    const { error } = await supabase.from("tutors-connect-users").upsert(row);
-
-    if (error) {
-      log.error("Upsert failed:", error);
-      throw error;
-    }
-  } catch (error) {
-    log.error("An error occurred in addOrUpdateUserProfile:", error);
-    throw error;
+  const body: { sentiment?: string; onlineStatus?: "online" | "offline" } = {};
+  const sentiment = normalizeStoredSentiment(student.sentiment);
+  if (sentiment) body.sentiment = sentiment;
+  if (student.share === "true") body.onlineStatus = "online";
+  else if (student.share === "false") body.onlineStatus = "offline";
+  const response = await readerApi("PUT", "/api/me", body);
+  if (response && !response.ok && response.status !== 401 && response.status !== 503) {
+    throw new Error(`Saving the student record failed with status ${response.status}`);
   }
 }
 
@@ -533,82 +242,29 @@ function normalizeStoredSentiment(raw: string | null | undefined): string | null
   return (COURSE_SENTIMENT_IDS as readonly string[]).includes(s) ? s : null;
 }
 
-/**
- * Fetches sentiment for a row in tutors-connect-users.
- * @param githubId - Student GitHub login (primary key for the row)
- * @returns Stored sentiment if present and valid per {@link COURSE_SENTIMENT_IDS}, otherwise null (includes no row).
- */
+type MyStatus = { sentiment: string | null; online_status: string | null };
+
 export async function getTutorsConnectUserSentiment(githubId: string): Promise<string | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
-
-  const { data, error } = await supabase.from("tutors-connect-users").select("sentiment").eq("github_id", githubId).maybeSingle();
-
-  if (error) {
-    log.error("getTutorsConnectUserSentiment failed:", error);
-    throw error;
-  }
-  if (!data) return null;
-  return normalizeStoredSentiment((data as { sentiment: string | null }).sentiment);
+  const status = await readerApiJson<MyStatus>("/api/me");
+  return normalizeStoredSentiment(status?.sentiment);
 }
 
-/**
- * Updates sentiment (and last-accessed) for a row in tutors-connect-users.
- * @param githubId - Student GitHub login (primary key for the row)
- * @param sentiment - Current mood string
- */
 export async function updateTutorsConnectUserSentiment(githubId: string, sentiment: string) {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
-
-  const { error } = await supabase
-    .from("tutors-connect-users")
-    .update({
-      sentiment,
-      date_last_accessed: new Date().toISOString()
-    })
-    .eq("github_id", githubId);
-
-  if (error) {
-    log.error("updateTutorsConnectUserSentiment failed:", error);
-    throw error;
-  }
+  const response = await readerApi("PATCH", "/api/me", { sentiment });
+  if (response && !response.ok && response.status !== 401) throw new Error(`Saving the sentiment failed with status ${response.status}`);
 }
 
-/**
- * Fetches online_status for a row in tutors-connect-users (mirrors Share Presence / {@link updateTutorsConnectUserOnlineStatus}).
- * @param githubId - Student GitHub login (primary key for the row)
- * @returns Stored online_status if present, otherwise null (includes no row).
- */
 export async function getTutorsConnectUserOnlineStatus(githubId: string): Promise<string | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
-
-  const { data, error } = await supabase.from("tutors-connect-users").select("online_status").eq("github_id", githubId).maybeSingle();
-
-  if (error) {
-    log.error("getTutorsConnectShare failed:", error);
-    throw error;
-  }
-  if (!data) return null;
-  const raw = (data as { online_status: string | null }).online_status;
+  const raw = (await readerApiJson<MyStatus>("/api/me"))?.online_status;
   if (raw == null || !String(raw).trim()) return null;
   return String(raw).trim();
 }
 
-/**
- * Sets online_status on tutors-connect-users (mirrors share: visible / sharing = online).
- */
 export async function updateTutorsConnectUserOnlineStatus(githubId: string, onlineStatus: "online" | "offline") {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
-
-  const { error } = await supabase
-    .from("tutors-connect-users")
-    .update({
-      online_status: onlineStatus,
-      date_last_accessed: new Date().toISOString()
-    })
-    .eq("github_id", githubId);
-
-  if (error) {
-    log.error("updateTutorsConnectUserOnlineStatus failed:", error);
-    throw error;
-  }
+  const response = await readerApi("PATCH", "/api/me", { onlineStatus });
+  if (response && !response.ok && response.status !== 401) throw new Error(`Saving the online status failed with status ${response.status}`);
 }
