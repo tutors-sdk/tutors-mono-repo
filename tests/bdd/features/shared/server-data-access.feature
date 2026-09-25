@@ -55,6 +55,49 @@ Feature: Student data goes through the reader's server
       Then the reader answers 204
       And the first lab of "web-dev-101" is locked by "eve"
 
+  @rule-0073 @ears-unwanted
+  Rule: If the reader cannot read a course's educators from its host and holds no copy read within the last hour, then the reader shall answer 503 to a request that needs them and leave the course's locks unchanged.
+
+    Scenario: The course host is down and the reader never read the course
+      Given the course "maths-101" is published with "eve" as its educator
+      And the host of "maths-101" is unreachable
+      And "Eve" is signed in to the reader
+      When the browser asks the reader to lock the first lab of "maths-101"
+      Then the reader answers 503
+      And "maths-101" has no content locks
+
+    Scenario: The course host is down and the reader's copy is older than an hour
+      Given the course "maths-102" is published with "eve" as its educator
+      And the reader read the educators of "maths-102" 90 minutes ago
+      And the host of "maths-102" is unreachable
+      And "Eve" is signed in to the reader
+      When the browser asks the reader to lock the first lab of "maths-102"
+      Then the reader answers 503
+      And "maths-102" has no content locks
+
+  @rule-0074 @ears-state-driven
+  Rule: While a course's host is unreachable, the reader shall decide who teaches the course from the copy of its educators it read within the last hour.
+
+    @active
+    Scenario: An educator locks content while the course host is briefly down
+      Given the course "maths-103" is published with "eve" as its educator
+      And the reader read the educators of "maths-103" 10 minutes ago
+      And the host of "maths-103" is unreachable
+      And "Eve" is signed in to the reader
+      When the browser asks the reader to lock the first lab of "maths-103"
+      Then the reader answers 204
+      And the first lab of "maths-103" is locked by "eve"
+
+    @inactive
+    Scenario: With the course host up, a removed educator loses the lock at once
+      Given the course "maths-104" is published with "eve" as its educator
+      And the reader read the educators of "maths-104" 10 minutes ago
+      And "maths-104" is republished without "eve" as an educator
+      And "Eve" is signed in to the reader
+      When the browser asks the reader to lock the first lab of "maths-104"
+      Then the reader answers 403
+      And "maths-104" has no content locks
+
   @rule-0066 @ears-state-driven
   Rule: While a signed-in viewer is not an educator of a course, the reader shall return the course's time data with every other student's id replaced by a pseudonym and without any other student's name, avatar, sentiment or online status.
 
@@ -65,7 +108,7 @@ Feature: Student data goes through the reader's server
       When the browser asks the reader for the time data of "web-dev-101"
       Then the reader answers 200
       And the time data holds the rows of "carol" under "carol"
-      And the time data holds the other students' rows under "student-1" and "student-2"
+      And the time data holds the other students' rows under 2 pseudonyms that are not their logins
       And the time data names no student other than "carol"
 
     @inactive
@@ -75,6 +118,16 @@ Feature: Student data goes through the reader's server
       When the browser asks the reader for the time data of "web-dev-101"
       Then the reader answers 200
       And the time data holds the rows of "alice", "bob" and "carol" with their names and avatars
+
+  @rule-0075 @ears-event-driven
+  Rule: When a viewer who is not an educator of a course asks for its time data again, the reader shall give the other students pseudonyms that differ from the ones it gave before.
+
+    Scenario: Pseudonyms do not link one answer to the next
+      Given "alice", "bob" and "carol" have learning records and calendar rows in "web-dev-101"
+      And "Carol" is signed in to the reader
+      When the browser asks the reader for the time data of "web-dev-101" twice
+      Then each answer gives every other student one pseudonym across its calendar and learning records
+      And no pseudonym in the second answer appears in the first
 
   @rule-0067 @ears-event-driven
   Rule: When a viewer opens a course in the time dashboard, the time dashboard shall load the course's time data from the reader's API with the viewer's reader session instead of from the database.

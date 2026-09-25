@@ -1,7 +1,8 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import log from "@tutors/logger";
 import { sessionUser } from "../../../../lib/server/api/http.ts";
-import { allowedOrigins, courseAccess } from "../../../../lib/server/api/access.ts";
+import { allowedOrigins, authorization } from "../../../../lib/server/api/access.ts";
+import { AuthorizationUnavailableError } from "../../../../lib/server/api/authorization.ts";
 import { serviceClient } from "../../../../lib/server/api/service-client.ts";
 import { pseudonymise, readTimeRows } from "../../../../lib/server/api/time-data.ts";
 import * as check from "../../../../lib/server/api/validate.ts";
@@ -28,8 +29,15 @@ export const GET: RequestHandler = async ({ request, url, params, locals }) => {
   const db = serviceClient();
   if (!db) return answer(503, { message: "Time data is not configured on this server" }, cors);
 
+  let educator: boolean;
+  try {
+    educator = await authorization().can(user, "analytics:view", { kind: "course", courseId });
+  } catch (e) {
+    // Not knowing who teaches the course is not the same as "not an educator" (Rule 0073).
+    if (e instanceof AuthorizationUnavailableError) return answer(503, { message: "Could not read who teaches this course from its host; try again shortly" }, cors);
+    throw e;
+  }
   const rows = await readTimeRows(db, courseId);
-  const educator = await courseAccess().isEducator(user.login, courseId);
   log.info("Time data read", { courseId, role: educator ? "educator" : "student" });
   return answer(200, educator ? rows : pseudonymise(rows, user.login), cors);
 };
