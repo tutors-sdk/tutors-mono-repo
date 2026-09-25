@@ -117,8 +117,8 @@
       const savedScene = await loadSceneFromDb();
       iframe?.contentWindow?.postMessage({
         type: "init-editor",
-        supabaseUrl: env.PUBLIC_SUPABASE_URL,
-        supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
+        supabaseUrl: isShared ? env.PUBLIC_SUPABASE_URL : undefined,
+        supabaseAnonKey: isShared ? env.PUBLIC_SUPABASE_ANON_KEY : undefined,
         roomId,
         user: {
           name: tutorsId.value?.name || "Anonymous",

@@ -162,7 +162,8 @@ export async function removeLock(db: SupabaseClient, courseId: string, loRoute: 
 
 export function whiteboardRoomId(courseId: string, route: string, owner: string | null): string {
   const base = `wb-${courseId}-${route.replace(/[^a-zA-Z0-9-]/g, "-")}`;
-  return owner ? `${base}-${owner}` : base;
+  // Personal rooms need a separate namespace: "route-owner" is a valid shared route.
+  return owner ? `wb-personal:${encodeURIComponent(courseId)}:${encodeURIComponent(route)}:${encodeURIComponent(owner)}` : base;
 }
 
 export interface WhiteboardScene {
