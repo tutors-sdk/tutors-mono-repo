@@ -171,8 +171,6 @@
 
         debounceTimerRef.current = setTimeout(() => {
           const channel = channelRef.current;
-          if (!channel) return;
-
           const versionMap = lastVersionsRef.current;
           const changed = elements.filter(el => {
             const lastVersion = versionMap.get(el.id);
@@ -185,11 +183,13 @@
             versionMap.set(el.id, el.version);
           }
 
-          channel.send({
-            type: "broadcast",
-            event: "scene-update",
-            payload: { elements: changed },
-          });
+          if (channel) {
+            channel.send({
+              type: "broadcast",
+              event: "scene-update",
+              payload: { elements: changed },
+            });
+          }
 
           window.parent.postMessage({
             type: "scene-changed",

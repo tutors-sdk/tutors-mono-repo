@@ -155,7 +155,7 @@ Excalidraw whiteboard persistence. Keyed on `room_id`.
 
 | Field | Type | PII | Description |
 |-------|------|-----|-------------|
-| room_id | string | Yes | Scene key; personal boards embed the user's login (`wb-<courseId>-<route>-<userId>`) |
+| room_id | string | Yes | Scene key; personal boards embed the user's login (`wb-personal:<courseId>:<route>:<userId>`, each part URL-encoded) |
 | elements | jsonb | Yes | User-authored scene content (drawings/text) |
 | app_state | jsonb | No | Excalidraw app state (e.g. background colour) |
 | files | jsonb | Yes | Embedded user-uploaded files |
@@ -226,7 +226,7 @@ When a user requests data deletion, purge the tables holding their personal data
 2. `calendar` (WHERE `studentid` = `<login>`)
 3. `"tutors-connect-latest"` (WHERE `student_id` = `<login>`)
 4. `"tutors-connect-profiles"` (WHERE `tutorId` = `<login>`)
-5. `whiteboard_scenes` (personal boards — WHERE `room_id` ends with `-<login>`)
+5. `whiteboard_scenes` (personal boards — WHERE `room_id` LIKE `wb-personal:%:<login>`)
 6. `app_errors` (WHERE `student_id` = `<login>`)
 7. `tutors_content_locks` (set `locked_by` = NULL WHERE `locked_by` = `<login>` — preferable to deleting locks)
 8. `"tutors-connect-users"` (WHERE `github_id` = `<login>`) — last

@@ -32,7 +32,7 @@
 - Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
 - My time: a student sees their own time and their classmates under pseudonyms, with no classmate's name or avatar (Rule 0066). The pseudonyms are random and new on every answer, so they cannot be linked from one request to the next (Rule 0075) (network) (PR #320)
 - Content locks and time data: when a course's host cannot be read, the reader decides from the educators it read within the last hour (Rule 0074), and without such a copy answers 503 instead of treating an educator as a student (Rule 0073) (network) (PR #320)
-- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; personal rooms have their own namespace, so no shared room id can name one, and no longer use public Realtime channels; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320, PR #328)
 
   Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. Apply the anon-access revocation after the new pods are serving traffic.
 
