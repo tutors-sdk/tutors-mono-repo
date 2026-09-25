@@ -115,6 +115,16 @@ When a course has auth level >= 1 and a whitelist, the system checks access on c
 
 ## Architecture
 
+### On the server
+
+The browser's role decides what the UI shows; the server decides what is allowed. The reader's data
+API asks one function, `can(actor, action, resource)` in
+`apps/reader/src/lib/server/api/authorization.ts`, which reads the course's `enrollment.yaml`
+educators from its published `tutors.json` (or `PRIVATE_TUTORS_ADMINS`) and the permission table in
+`src/permissions.ts` below. When the course's host cannot be read it answers from a copy read within
+the hour, else refuses with 503 rather than calling anyone a student (Rules 0073, 0074). See
+[SERVER-WRITES.md](SERVER-WRITES.md#who-may-do-what-one-authorization-module).
+
 ### Package: `@tutors/rbac`
 
 Located at `packages/svelte/utils/rbac/`. Contains:

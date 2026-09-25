@@ -37,6 +37,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/data-api": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
