@@ -1,15 +1,16 @@
 <script lang="ts">
+  /**
+   * Identity only: who I am, and what is true of me on every course. Anything keyed by a courseId -
+   * my time, class activity, live now, who is online - is a course tool and lives in CourseNavigation,
+   * so each of those has one home, one name and one visibility rule.
+   */
   import { tutorsConnectService } from "@tutors/connect";
   import { presenceService } from "@tutors/community";
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
-  import OnlineButton from "../buttons/OnlineButton.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { currentCourse, tutorsId } from "@tutors/runes";
-  import { analyticsEnabled } from "@tutors/connect";
+  import { tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
-
-  let menuOpen = $state(false);
 
   function logout() {
     tutorsConnectService.disconnect("/");
@@ -43,34 +44,23 @@
 {#snippet menuContent()}
   <p class="menu-name">{tutorsId.value?.name || tutorsId.value?.login}</p>
   <ul class="space-y-1">
-    {#if currentCourse.value}
-      {#if tutorsId.value?.share === "true"}
-        <MenuItem text={`${t("menu.sharePresence")} · On`} type="online" onClick={shareStatusChange} />
-      {:else}
-        <MenuItem text={`${t("menu.sharePresence")} · Off`} type="offline" onClick={shareStatusChange} />
-      {/if}
-      {#if tutorsId.value?.share === "true"}
-        {#if analyticsEnabled}
-          <MenuItem link="/time/{currentCourse.value?.courseId}" text={t("menu.tutorsTime")} type="tutorsTime" />
-          <MenuItem link="https://time.tutors.dev/{currentCourse.value?.courseId}" text={t("menu.educatorTime")} type="tutorsTime" targetStr="_blank" />
-        {/if}
-        <MenuItem link="https://live.tutors.dev/{currentCourse.value?.courseId}" text={t("menu.tutorsLive")} type="live" targetStr="_blank" />
-
-        <li class="option p-0!">
-          <OnlineButton onOpen={() => menuOpen = false} />
-        </li>
-
-        <hr />
-      {/if}
+    <!-- Presence sharing is one consent for the whole profile, not a per-course setting, so it is
+         offered off a course too: a privacy control a reader can only reach from some pages is not
+         a control they can rely on. -->
+    {#if tutorsId.value?.share === "true"}
+      <MenuItem text={`${t("menu.sharePresence")} · On`} type="online" onClick={shareStatusChange} />
+    {:else}
+      <MenuItem text={`${t("menu.sharePresence")} · Off`} type="offline" onClick={shareStatusChange} />
     {/if}
-    <MenuItem link="/" text={t("menu.dashboard")} type="tutors" />
+    <hr />
+    <MenuItem link="/" text={t("shell.myCourses")} type="tutors" />
     <MenuItem link="https://github.com/{tutorsId.value?.login}" text={t("menu.githubProfile")} type="github" targetStr="_blank" />
     <MenuItem text={t("menu.disconnect")} type="logout" onClick={logout} />
   </ul>
 {/snippet}
 
 <div data-tour="profile">
-  <Menu bind:open={menuOpen} {menuSelector} {menuContent} ariaLabel={t("menu.profile")} />
+  <Menu {menuSelector} {menuContent} ariaLabel={t("menu.profile")} />
 </div>
 
 <style>

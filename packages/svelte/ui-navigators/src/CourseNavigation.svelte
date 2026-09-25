@@ -12,6 +12,7 @@
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
   import CourseSentimentButton from "./buttons/CourseSentimentButton.svelte";
+  import OnlineButton from "./buttons/OnlineButton.svelte";
   let { showConnect = true, mobile = false } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
@@ -51,16 +52,27 @@
     {#if course.properties.github}<EditCoursButton labelled />{/if}
     {#if showConnect}
       {#if course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
-      {#if analyticsEnabled && tutorsId.value?.share === "true"}
-        <a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>
-      {/if}
-      {#if course.authLevel! > 0 && tutorsId.value?.share === "true"}
-        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`}><Icon type="tutorsTime" />Tutors Time ↗</a>
-      {/if}
       {#if course.hasWhiteboard}<WhiteboardButton labelled />{/if}
       {#if tutorsId.value?.login && tutorsId.value.share === "true"}<CourseSentimentButton />{/if}
     {/if}
     </div>
+    <!-- Tutors Time is one product with several views, so its links are one group rather than rows
+         scattered between here and the account menu. Sharing presence gates the group: every view
+         reads the activity that sharing produces. -->
+    {#if showConnect && tutorsId.value?.login && tutorsId.value.share === "true"}
+      <div class="tool-section">
+      <p class="nav-section">{t("shell.activity")}</p>
+      {#if analyticsEnabled}<a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>{/if}
+      <!-- The class's activity is an educator's view of everyone, so an educator is exactly who sees it.
+           It replaces a gate on the course's authLevel, which let a link to a dashboard a student cannot
+           read appear for the whole class. -->
+      {#if isEducator.value}
+        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
+      {/if}
+      <a class="nav-row" href={`https://live.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
+      <OnlineButton />
+      </div>
+    {/if}
     {#if currentLo.value?.parentTopic && !lab}
       <details><summary class="nav-row">{currentLo.value.parentTopic.title}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary><LoContextTree lo={currentLo.value.parentTopic} expandAll={false} /></details>
     {/if}

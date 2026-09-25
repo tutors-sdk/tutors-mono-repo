@@ -129,16 +129,11 @@ test("Course creator downloads the new course", { tag: "@rule-0045" }, async ({ 
 
 test("Online list opens as a dialog", { tag: "@rule-0046" }, async ({ page }) => {
   await seedOneOnline(page);
-  const account = page.locator('[data-tour="profile"] .paper-menu-trigger');
-  await expect(account.locator(".online-count")).toHaveText("1");
-  await account.click();
-  const viewOnline = page.getByRole("button", { name: "View 1 Online", exact: true });
-  const share = page.getByRole("button", { name: "Share Presence · On", exact: true });
-  expect((await viewOnline.locator(".menu-label").boundingBox())!.x).toBe((await share.locator(".menu-label").boundingBox())!.x);
-  await viewOnline.click();
+  // The count stays on the avatar as an indicator; the list itself is a course tool.
+  await expect(page.locator('[data-tour="profile"] .paper-menu-trigger .online-count')).toHaveText("1");
+  await page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true }).click();
   const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
   await expect(online).toBeVisible();
-  await expect(account).toHaveAttribute("aria-expanded", "false");
   await expect(online).toHaveAttribute("data-presentation", "dialog");
   await expect(online).toContainText("UI Preview");
   const card = (await online.locator(".activity-card").boundingBox())!;
@@ -147,4 +142,20 @@ test("Online list opens as a dialog", { tag: "@rule-0046" }, async ({ page }) =>
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await online.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await expect(online).toHaveCSS("height", "844px");
+});
+
+test("Course tools withholds class activity from a student", { tag: "@rule-0063" }, async ({ page }) => {
+  await seedOneOnline(page);
+  const navigation = page.locator(".shell-navigation");
+  await expect(navigation.getByRole("link", { name: "My time", exact: true })).toHaveAttribute("href", "/time/reference-course");
+  await expect(navigation.getByRole("link", { name: "Live now" })).toHaveAttribute("href", "https://live.tutors.dev/reference-course");
+  await expect(navigation.getByRole("button", { name: "View 1 Online", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Class activity" })).toHaveCount(0);
+});
+
+test("Course tools offers class activity to an educator", { tag: "@rule-0063" }, async ({ page }) => {
+  await seedOneOnline(page, { educator: true });
+  const classActivity = page.locator(".shell-navigation").getByRole("link", { name: "Class activity" });
+  await expect(classActivity).toHaveAttribute("href", "https://time.tutors.dev/reference-course");
+  await expect(classActivity).toHaveAttribute("target", "_blank");
 });

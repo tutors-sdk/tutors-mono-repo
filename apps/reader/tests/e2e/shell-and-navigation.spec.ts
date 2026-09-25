@@ -133,22 +133,21 @@ test("Closing the preferences menu returns focus to its button", { tag: "@rule-0
   await expect(button).toBeFocused();
 });
 
-test("Closing the online dialog returns focus to the account button", { tag: "@rule-0025" }, async ({ page }) => {
+test("Closing the online dialog returns focus to its course tools row", { tag: "@rule-0025" }, async ({ page }) => {
   await seedOneOnline(page);
-  const account = page.locator('[data-tour="profile"] .paper-menu-trigger');
-  await account.click();
-  await page.getByRole("button", { name: "View 1 Online", exact: true }).click();
+  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true });
+  await viewOnline.click();
   const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
   await expect(online).toBeVisible();
   await online.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(account).toHaveAttribute("aria-expanded", "false");
-  await expect(account).toBeFocused();
+  await expect(online).not.toBeVisible();
+  await expect(viewOnline).toBeFocused();
 });
 
 test("Anonymous account menu links home", { tag: "@rule-0026" }, async ({ page }) => {
   await page.goto(course);
   await page.locator('[data-tour="profile"] button').click();
-  await page.getByRole("dialog").getByRole("link", { name: "Home", exact: true }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "My courses", exact: true }).click();
   await expect(page).toHaveURL("/");
 });
 
