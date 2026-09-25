@@ -232,6 +232,14 @@
 
 ## Time (`tutors-time`)
 
+### Unreleased
+
+#### Security
+
+- Moodle sync: `POST /api/sync` requires `Authorization: Bearer <PRIVATE_MOODLE_SYNC_TOKEN>` and answers 401 without it, before it reaches Moodle or the database; a malformed course id is refused with 400. The dashboard no longer offers the "Advanced · Moodle sync" fields, since it has no sign-in of its own to protect them (dom, screenshot) (PR #329)
+
+  Deploy with `PRIVATE_MOODLE_SYNC_TOKEN` set to a random value in the time app's Secret; operators call the sync with it.
+
 ### v16.2.0 (2026-09)
 
 #### Features

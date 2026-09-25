@@ -30,4 +30,10 @@
 #
 # Reset to `claims: []` when the next release branch is cut. Field reference:
 # release/README.md here, claims/README.md in the harness repository.
-claims: []
+claims:
+  - artefact: dom
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
+  - artefact: screenshot
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
