@@ -81,17 +81,25 @@ Feature: Reader shell and navigation
       When a student opens Preferences and presses Escape
       Then focus is on the "Open Theme Menu" button
 
-    Scenario: Closing the online dialog returns focus to the account button
+    Scenario: Closing the online dialog returns focus to its course tools row
       Given a signed-in student sees one student online
-      When the student opens "View 1 Online" from the account menu and closes it
-      Then the account menu is closed and focus is on the account button
+      When the student opens "View 1 Online" from course tools and closes it
+      Then focus is on the "View 1 Online" row of course tools
 
   @rule-0026 @ears-event-driven
   Rule: When an anonymous visitor opens the account menu, the reader shall offer a link to the home page.
 
     Scenario: Anonymous account menu links home
-      When an anonymous visitor opens the account menu and follows "Home"
+      When an anonymous visitor opens the account menu and follows "My courses"
       Then the home page opens
+
+  @rule-0064 @ears-event-driven
+  Rule: When a signed-in reader who shares presence opens the account menu, the reader shall offer the sentiment picker in that menu and nowhere in course tools.
+
+    Scenario: Account menu holds the sentiment picker
+      Given a signed-in student sees one student online
+      When the student opens the account menu and picks a sentiment
+      Then the picker sat in the account menu, not in course tools, and the menu shows the chosen sentiment
 
   @rule-0027 @ears-ubiquitous
   Rule: The reader shall draw the header's search and preferences controls with the same font size, weight, colour, padding and height.

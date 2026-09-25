@@ -11,7 +11,7 @@
   import TocButton from "./buttons/TocButton.svelte";
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
-  import CourseSentimentButton from "./buttons/CourseSentimentButton.svelte";
+  import OnlineButton from "./buttons/OnlineButton.svelte";
   let { showConnect = true, mobile = false } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
@@ -32,12 +32,18 @@
     <hr />
   {/if}
   {#if course}
+    <!-- Learn holds every way into the course's own content: its front page, its tree, its search, its
+         calendar, its machine-readable copy and its source. They are ways of reading one course, so
+         they read as one list rather than as content in Learn and its index under Tools. -->
     <p class="nav-section">{t("shell.learn")}</p>
     <a class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
+    {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
     {#if !course.isPortfolio}
       <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
     {/if}
     {#if showConnect}<CalendarButton labelled />{/if}
+    {#if showConnect && course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
+    {#if course.properties.github}<EditCoursButton labelled />{/if}
     {#if course.companions?.show && course.companions.bar.length > 0}
       <p class="nav-section">{t("shell.links")}</p>
       {#each course.companions.bar as item}
@@ -47,20 +53,25 @@
     <div class="tool-section">
     <p class="nav-section">{t("shell.tools")}</p>
     {#if mobile}<InfoButton showEducatorPanel={isEducator.value} labelled />{/if}
-    {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
-    {#if course.properties.github}<EditCoursButton labelled />{/if}
-    {#if showConnect}
-      {#if course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
-      {#if analyticsEnabled && tutorsId.value?.share === "true"}
-        <a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>
-      {/if}
-      {#if course.authLevel! > 0 && tutorsId.value?.share === "true"}
-        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`}><Icon type="tutorsTime" />Tutors Time ↗</a>
-      {/if}
-      {#if course.hasWhiteboard}<WhiteboardButton labelled />{/if}
-      {#if tutorsId.value?.login && tutorsId.value.share === "true"}<CourseSentimentButton />{/if}
-    {/if}
+    {#if showConnect && course.hasWhiteboard}<WhiteboardButton labelled />{/if}
     </div>
+    <!-- Tutors Time is one product with several views, so its links are one group rather than rows
+         scattered between here and the account menu. Sharing presence gates the group: every view
+         reads the activity that sharing produces. -->
+    {#if showConnect && tutorsId.value?.login && tutorsId.value.share === "true"}
+      <div class="tool-section">
+      <p class="nav-section">{t("shell.activity")}</p>
+      {#if analyticsEnabled}<a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>{/if}
+      <!-- The class's activity is an educator's view of everyone, so an educator is exactly who sees it.
+           It replaces a gate on the course's authLevel, which let a link to a dashboard a student cannot
+           read appear for the whole class. -->
+      {#if isEducator.value}
+        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
+      {/if}
+      <a class="nav-row" href={`https://live.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
+      <OnlineButton />
+      </div>
+    {/if}
     {#if currentLo.value?.parentTopic && !lab}
       <details><summary class="nav-row">{currentLo.value.parentTopic.title}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary><LoContextTree lo={currentLo.value.parentTopic} expandAll={false} /></details>
     {/if}

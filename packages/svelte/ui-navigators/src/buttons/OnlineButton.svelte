@@ -4,14 +4,12 @@
   import StudentCard from "@tutors/ui-primitives/components/StudentCard.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
-  let { onOpen }: { onOpen?: () => void } = $props();
   let open = $state(false);
-  $effect(() => { if (open) onOpen?.(); });
   const label = $derived(`${t("nav.online.view")} ${presenceService.studentsOnline.value.length} ${t("nav.online.online")}`);
 </script>
 
 {#snippet menuSelector()}
-  <span class="menu-label">{label}</span><Icon type="listOnline" />
+  <span class="nav-row"><Icon type="listOnline" /><span>{label}</span></span>
 {/snippet}
 {#snippet sidebarContent()}
   <div class="ui-grid card-grid online-grid">
@@ -26,7 +24,10 @@
   </div>
 {/snippet}
 
-<Sidebar triggerClass="menu-row" bind:open presentation="dialog" width="w-3xl" {menuSelector} {sidebarContent} ariaLabel={label} title={label} finalFocusEl={() => document.querySelector<HTMLElement>('[data-tour="profile"] .paper-menu-trigger')} />
+<!-- No finalFocusEl: the trigger is a row of the course navigation that stays in the document while the
+     dialog is open, so the dialog's own restore puts focus back on it. It needed the override only while
+     it lived inside the account menu, which unmounts its trigger on close. -->
+<Sidebar bind:open presentation="dialog" width="w-3xl" {menuSelector} {sidebarContent} ariaLabel={label} title={label} />
 <style>
   /* Geometry comes from .ui-grid.card-grid in paper-ui.css: online students are the same fixed card as
      everywhere else, wrapped and centred. Only the top gap is local to the dialog. */
