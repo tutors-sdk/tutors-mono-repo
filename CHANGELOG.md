@@ -21,16 +21,16 @@
 
 #### Fixes
 
-- Database: `whiteboard_scenes` is created by a migration (`20260925100000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #TBD)
-- Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #TBD)
-- Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #TBD)
+- Database: `whiteboard_scenes` is created by a migration (`20260925100000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)
+- Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #320)
+- Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #320)
 
 #### Security
 
-- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the Auth.js session and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0063, 0064) (network, persistence) (PR #TBD)
-- Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #TBD)
-- My time: a student sees their own time and their classmates under pseudonyms (`student-1`, ...), with no classmate's name or avatar (Rule 0066) (network) (PR #TBD)
-- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #TBD)
+- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the Auth.js session and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0063, 0064) (network, persistence) (PR #320)
+- Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
+- My time: a student sees their own time and their classmates under pseudonyms (`student-1`, ...), with no classmate's name or avatar (Rule 0066) (network) (PR #320)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320)
 
   Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. The anon write policies stay for this release and are removed in the next (expand/contract).
 
@@ -231,8 +231,8 @@
 
 ### Unreleased
 
-- The student count comes from `get_student_count()`, which returns the number without reading any student's profile (Rule 0070) (network) (PR #TBD)
-- The catalogue no longer deletes courses from the browser; the unused `pruneCatalogue` and `deleteCourses` are removed (PR #TBD)
+- The student count comes from `get_student_count()`, which returns the number without reading any student's profile (Rule 0070) (network) (PR #320)
+- The catalogue no longer deletes courses from the browser; the unused `pruneCatalogue` and `deleteCourses` are removed (PR #320)
 
 ### v16.2.0 (2026-09)
 
@@ -256,8 +256,8 @@
 
 ### Unreleased
 
-- Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067) (network, dom, screenshot) (PR #TBD)
-- The Moodle sync writes assignments with the service_role key (PR #TBD)
+- Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067) (network, dom, screenshot) (PR #320)
+- The Moodle sync writes assignments with the service_role key (PR #320)
 
   Deploy with `PUBLIC_READER_URL` set to the reader people sign in at, and `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` for the sync.
 ### v16.2.0 (2026-09)
