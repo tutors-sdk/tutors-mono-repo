@@ -5,7 +5,7 @@ import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
 import log, { withRequestId, withTimeout } from "@tutors/logger";
-import { readerApi, readerApiJson } from "./reader-api.ts";
+import { dataApi } from "@tutors/data-api";
 import { realtimeClientOptions } from "@tutors/realtime-supabase";
 
 export let supabase: SupabaseClient;
@@ -84,7 +84,7 @@ export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = ne
 export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
   const courseId = (loRecord as { courseId?: string }).courseId?.trim();
   if (!courseId) return;
-  await readerApi("POST", "/api/presence", { courseId, payload: loRecord });
+  await dataApi.reportPresence({ courseId, payload: loRecord });
 }
 
 /**
@@ -181,24 +181,6 @@ export async function watchLiveTopic(topic: string, watcher: string): Promise<Li
 }
 
 /**
- * Asks the database which Realtime topics a course's learning event may be published to, and charges
- * them to the day's Live budget. Called by the reader's server only.
- * @returns the tier and topics, or null when the claim failed (the caller publishes nothing)
- */
-export async function claimLivePublish(courseId: string, db: SupabaseClient): Promise<{ tier: LiveBudgetTier; topics: string[] } | null> {
-  if (env.PUBLIC_ANON_MODE === "TRUE") return null;
-
-  const { data, error } = await db.rpc("realtime_claim_live_publish", { p_course_id: courseId });
-  if (error) {
-    log.warn("realtime_claim_live_publish failed:", error);
-    return null;
-  }
-  const claim = data as { tier?: LiveBudgetTier; topics?: unknown } | null;
-  if (!claim?.tier || !Array.isArray(claim.topics)) return null;
-  return { tier: claim.tier, topics: claim.topics.filter((topic): topic is string => typeof topic === "string") };
-}
-
-/**
  * Formats a date into a standardized string format
  * @param date - Date to format
  * @returns Formatted date string
@@ -215,12 +197,12 @@ export function formatDate(date: Date): string {
 
 export async function recordLearningPageLoad(course: Course, loid: string, lo: Lo): Promise<void> {
   if (!course.courseId || !loid) return;
-  await readerApi("POST", "/api/analytics", { kind: "page-load", courseId: course.courseId, loId: loid, loType: lo.type, day: formatDate(new Date()) });
+  await dataApi.recordAnalytics({ kind: "page-load", courseId: course.courseId, loId: loid, loType: lo.type, day: formatDate(new Date()) });
 }
 
 export async function recordLearningTick(courseId: string, loId: string | null): Promise<void> {
   if (!courseId) return;
-  await readerApi("POST", "/api/analytics", { kind: "tick", courseId, loId, day: formatDate(new Date()) });
+  await dataApi.recordAnalytics({ kind: "tick", courseId, loId, day: formatDate(new Date()) });
 }
 
 export async function addOrUpdateStudent(student: TutorsId) {
@@ -230,7 +212,7 @@ export async function addOrUpdateStudent(student: TutorsId) {
   if (sentiment) body.sentiment = sentiment;
   if (student.share === "true") body.onlineStatus = "online";
   else if (student.share === "false") body.onlineStatus = "offline";
-  const response = await readerApi("PUT", "/api/me", body);
+  const response = await dataApi.saveMe(body);
   if (response && !response.ok && response.status !== 401 && response.status !== 503) {
     throw new Error(`Saving the student record failed with status ${response.status}`);
   }
@@ -242,29 +224,28 @@ function normalizeStoredSentiment(raw: string | null | undefined): string | null
   return (COURSE_SENTIMENT_IDS as readonly string[]).includes(s) ? s : null;
 }
 
-type MyStatus = { sentiment: string | null; online_status: string | null };
 
 export async function getTutorsConnectUserSentiment(githubId: string): Promise<string | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
-  const status = await readerApiJson<MyStatus>("/api/me");
+  const status = await dataApi.getMyStatus();
   return normalizeStoredSentiment(status?.sentiment);
 }
 
 export async function updateTutorsConnectUserSentiment(githubId: string, sentiment: string) {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
-  const response = await readerApi("PATCH", "/api/me", { sentiment });
+  const response = await dataApi.changeMyStatus({ sentiment });
   if (response && !response.ok && response.status !== 401) throw new Error(`Saving the sentiment failed with status ${response.status}`);
 }
 
 export async function getTutorsConnectUserOnlineStatus(githubId: string): Promise<string | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
-  const raw = (await readerApiJson<MyStatus>("/api/me"))?.online_status;
+  const raw = (await dataApi.getMyStatus())?.online_status;
   if (raw == null || !String(raw).trim()) return null;
   return String(raw).trim();
 }
 
 export async function updateTutorsConnectUserOnlineStatus(githubId: string, onlineStatus: "online" | "offline") {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
-  const response = await readerApi("PATCH", "/api/me", { onlineStatus });
+  const response = await dataApi.changeMyStatus({ onlineStatus });
   if (response && !response.ok && response.status !== 401) throw new Error(`Saving the online status failed with status ${response.status}`);
 }

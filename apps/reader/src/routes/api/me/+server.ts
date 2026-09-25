@@ -1,4 +1,5 @@
 import { json, error, type RequestHandler } from "@sveltejs/kit";
+import type { MyStatus } from "@tutors/data-api";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import { noContent, readJson, requireDb, requireUser } from "../../../lib/server/api/http.ts";
 import { getUserStatus, updateUserStatus, upsertUser, type UserStatus } from "../../../lib/server/api/store.ts";
@@ -21,7 +22,7 @@ function statusFrom(body: Record<string, unknown>): Partial<UserStatus> {
 
 export const GET: RequestHandler = async ({ locals }) => {
   const user = await requireUser(locals);
-  return json(await getUserStatus(requireDb(), user.login));
+  return json((await getUserStatus(requireDb(), user.login)) satisfies MyStatus);
 };
 
 export const PUT: RequestHandler = async ({ request, locals }) => {

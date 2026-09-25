@@ -6,6 +6,7 @@
  */
 import { supabase } from "@tutors/community/utils/supabase-client";
 import log from "@tutors/logger";
+import { dataApi } from "@tutors/data-api";
 import type { ContentLock } from "./types.ts";
 
 export async function getLocksForCourse(courseId: string): Promise<ContentLock[]> {
@@ -37,17 +38,9 @@ type LockWriteResult = "saved" | "refused" | "unavailable";
  */
 export async function upsertLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWriteResult> {
   if (!courseId || !loRoute) return "refused";
-  try {
-    const response = await fetch(`/api/courses/${encodeURIComponent(courseId)}/locks`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ loRoute, locked })
-    });
-    if (response.ok) return "saved";
-    log.warn("upsertLock not saved", { courseId, loRoute, status: response.status });
-    return response.status === 503 ? "unavailable" : "refused";
-  } catch (error) {
-    log.error("upsertLock failed:", error);
-    return "unavailable";
-  }
+  const response = await dataApi.setLock({ courseId, loRoute, locked });
+  if (response?.ok) return "saved";
+  if (!response) return "unavailable";
+  log.warn("upsertLock not saved", { courseId, loRoute, status: response.status });
+  return response.status === 503 ? "unavailable" : "refused";
 }
