@@ -8,7 +8,7 @@ import * as check from "../../../../lib/server/api/validate.ts";
 
 /**
  * A course's time data for Tutors Time: every row for an educator of the course, the viewer's own
- * rows and pseudonymised classmates for anyone else signed in (Rule 0066), 401 for nobody (Rule 0063).
+ * rows and pseudonymised classmates for anyone else signed in (Rule 0066), 401 for nobody (Rule 0071).
  *
  * The time dashboard runs on its own origin and has no sign-in of its own, so it calls this route
  * with `credentials: "include"` and the reader's session cookie comes along (the two share a site).

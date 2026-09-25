@@ -9,7 +9,7 @@ expand/contract change ([MIGRATIONS.md](MIGRATIONS.md)) spread over two releases
 
 The behaviour is specified as EARS Rules in
 [`tests/bdd/features/shared/server-data-access.feature`](../tests/bdd/features/shared/server-data-access.feature)
-(Rules 0063 to 0070) and proved by `pnpm test:bdd`: the scenarios call the real route handlers and
+(Rules 0065 to 0072) and proved by `pnpm test:bdd`: the scenarios call the real route handlers and
 the real browser services, with only the session, the database and the course host stood in.
 
 ## The routes
@@ -31,7 +31,7 @@ All in the reader, under `apps/reader/src/routes/api/`. The helpers they share a
 Common to every route:
 
 - **Identity comes from the session**, never from the body. A request that names another student is
-  stored under the caller's own login (Rule 0064). No session: 401 before any row is read (Rule 0063).
+  stored under the caller's own login (Rule 0072). No session: 401 before any row is read (Rule 0071).
 - **Writes accept only `application/json`.** A cross-site page cannot send that without a CORS
   preflight, and the write routes answer none, so only the reader's own pages can write. SvelteKit's
   own origin check turns away cross-site form posts (`tests/security/mutating-routes.txt`).

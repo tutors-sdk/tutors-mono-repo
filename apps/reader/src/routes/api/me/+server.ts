@@ -34,7 +34,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
   return noContent();
 };
 
-/** Change the signed-in user's sentiment or online status (Rule 0064). */
+/** Change the signed-in user's sentiment or online status (Rule 0072). */
 export const PATCH: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);
   const status = statusFrom(await readJson(request));
