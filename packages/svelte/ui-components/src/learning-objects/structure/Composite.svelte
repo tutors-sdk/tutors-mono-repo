@@ -12,7 +12,7 @@
   let { composite }: { composite: Composite } = $props();
   // Side units the viewer can see: when a student can see none (all hidden or locked), no side column is reserved.
   const sides = $derived((composite?.units?.sides ?? []).filter(hasVisibleLos));
-  // What the cards show (rbacService.isLoCardVisible), so the count matches the cards.
+  // Only show the section heading when the viewer has visible cards.
   const visible = $derived((composite.type === "course" ? filterByType(composite.los, "topic") : (composite?.units?.standardLos ?? [])).filter(lo => rbacService.isLoCardVisible(lo)));
 
   /**
@@ -64,7 +64,7 @@
         <Panels panels={composite.panels} />
         <div class:ui-panel={composite.type === "course" && !composite.units.units.length} class:unit-panel={composite.type === "course" && !composite.units.units.length}>
           {#if visible.length}
-            <div class="ui-section-heading"><h2>{composite.type === "course" ? t("shell.topics") : t("shell.resources")}</h2><span class="ui-muted text-sm">{visible.length}</span></div>
+            <div class="ui-section-heading"><h2>{composite.type === "course" ? t("shell.topics") : t("shell.resources")}</h2></div>
           {/if}
           <Units units={composite.units.units} />
           <Cards los={composite.units.standardLos} />

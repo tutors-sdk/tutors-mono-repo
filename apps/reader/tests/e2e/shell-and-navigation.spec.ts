@@ -32,7 +32,7 @@ test("Course home leads to the first topic", { tag: "@rule-0021" }, async ({ pag
   await expect(page.locator(".composite-heading")).toHaveCount(0);
   await expect(page.locator(".shell-header").getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
   await expect(page.locator(".shell-navigation .calendar-week")).toContainText("This week");
-  await expect(page.locator(".main-group .ui-section-heading .ui-muted")).toHaveText("9");
+  await expect(page.locator(".main-group .ui-section-heading")).toHaveText("Course topics");
   // The course page reaches its first topic through the topic card itself; there is no separate
   // "start here" callout duplicating that link.
   await page.locator('.resource-link[href="/topic/reference-course/topic-01-typical"]').click();

@@ -24,11 +24,11 @@ Feature: Reader shell and navigation
       And the introduction region with its heading and Create link sits above "Welcome to Tutors"
 
   @rule-0021 @ears-event-driven
-  Rule: When a student opens a course, the reader shall show the course title, its topic count in the author's order and a link to the first topic.
+  Rule: When a student opens a course, the reader shall show the course title, topics in the author's order and a link to the first topic.
 
     Scenario: Course home leads to the first topic
       When a student opens the Reference Course
-      Then the heading "Reference Course" and a topic count of 9 are shown
+      Then the headings "Reference Course" and "Course topics" are shown without a topic count
       And following the first topic card and then the first lab card opens the lab's first step
 
   @rule-0022 @ears-event-driven

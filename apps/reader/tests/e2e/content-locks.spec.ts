@@ -18,7 +18,6 @@ test("Locked resource is hidden from a student's cards", { tag: "@rule-0052" }, 
   await openCourseAsStudent(page, [simple]);
   await expect(cardFor(page, "Simple")).toHaveCount(0);
   await expect(cardFor(page, "Sidebar")).toBeVisible();
-  await expect(page.locator(".main-group .ui-section-heading .ui-muted")).toHaveText("8");
 });
 
 test("Locked resource is left out of the course tree", { tag: "@rule-0052" }, async ({ page }) => {
