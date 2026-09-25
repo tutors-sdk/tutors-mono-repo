@@ -9,6 +9,7 @@
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import CourseSentimentButton from "../buttons/CourseSentimentButton.svelte";
   import { tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
 
@@ -49,11 +50,14 @@
          a control they can rely on. -->
     {#if tutorsId.value?.share === "true"}
       <MenuItem text={`${t("menu.sharePresence")} · On`} type="online" onClick={shareStatusChange} />
+      <!-- The sentiment travels with the reader, not with a course: it is one field of the profile,
+           shown wherever presence shows them. So it sits beside the consent that publishes it rather
+           than in each course's tools, where it read as a rating of that course. -->
+      <li class="option p-0!"><CourseSentimentButton variant="menu" /></li>
     {:else}
       <MenuItem text={`${t("menu.sharePresence")} · Off`} type="offline" onClick={shareStatusChange} />
     {/if}
     <hr />
-    <MenuItem link="/" text={t("shell.myCourses")} type="tutors" />
     <MenuItem link="https://github.com/{tutorsId.value?.login}" text={t("menu.githubProfile")} type="github" targetStr="_blank" />
     <MenuItem text={t("menu.disconnect")} type="logout" onClick={logout} />
   </ul>

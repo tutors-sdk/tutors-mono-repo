@@ -151,6 +151,17 @@ test("Anonymous account menu links home", { tag: "@rule-0026" }, async ({ page }
   await expect(page).toHaveURL("/");
 });
 
+test("Account menu holds the sentiment picker", { tag: "@rule-0064" }, async ({ page }) => {
+  await seedOneOnline(page);
+  await expect(page.locator(".shell-navigation").getByRole("button", { name: /Course sentiment/ })).toHaveCount(0);
+  await page.locator('[data-tour="profile"] button').click();
+  const menu = page.getByRole("dialog", { name: "Profile menu", exact: true });
+  await expect(menu.getByRole("button", { name: /^Course sentiment: neutral/ })).toBeVisible();
+  await menu.getByRole("button", { name: /^Course sentiment: neutral/ }).click();
+  await page.getByRole("button", { name: "confident", exact: true }).click();
+  await expect(menu.getByRole("button", { name: /^Course sentiment: confident/ })).toBeVisible();
+});
+
 test("Header controls share one style", { tag: "@rule-0027" }, async ({ page }) => {
   await page.goto(course);
   const search = page.locator('[data-tour="search"]');
