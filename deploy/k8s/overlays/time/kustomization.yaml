@@ -39,6 +39,7 @@ patches:
         value: "60"
       # Course time data comes from the reader's /api/time with the viewer's
       # reader session; the reader lists this origin in PRIVATE_API_ALLOWED_ORIGINS.
+      # It must be the host people sign in at (tutors.dev): the session cookie is host-only.
       - op: add
         path: /data/PUBLIC_READER_URL
-        value: "https://reader.tutors.dev"
+        value: "https://tutors.dev"
