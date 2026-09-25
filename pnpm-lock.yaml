@@ -317,6 +317,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/data-api':
+        specifier: workspace:*
+        version: link:../../packages/svelte/data-api
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/i18n
@@ -524,6 +527,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.116.0
         version: 2.116.0(@opentelemetry/api@1.9.1)
+      '@tutors/data-api':
+        specifier: workspace:*
+        version: link:../data-api
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
@@ -545,6 +551,9 @@ importers:
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
+      '@tutors/data-api':
+        specifier: workspace:*
+        version: link:../data-api
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
@@ -590,6 +599,15 @@ importers:
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.70.0)
+
+  packages/svelte/data-api:
+    dependencies:
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../utils/logger
+      '@tutors/tutors-time-lib':
+        specifier: workspace:*
+        version: link:../../jsr/time
 
   packages/svelte/quiz: {}
 
@@ -662,6 +680,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../course
+      '@tutors/data-api':
+        specifier: workspace:*
+        version: link:../data-api
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n
@@ -884,6 +905,9 @@ importers:
       '@tutors/community':
         specifier: workspace:*
         version: link:../../community
+      '@tutors/data-api':
+        specifier: workspace:*
+        version: link:../../data-api
       '@tutors/logger':
         specifier: workspace:*
         version: link:../logger

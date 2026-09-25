@@ -12,12 +12,12 @@
     },
     "./services/*": "./src/services/*",
     "./utils/supabase-client": "./src/utils/supabase-client.ts",
-    "./utils/reader-api": "./src/utils/reader-api.ts",
     "./utils/error-transport": "./src/utils/error-transport.ts",
     "./utils/health-check": "./src/utils/health-check.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
+    "@tutors/data-api": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*"
