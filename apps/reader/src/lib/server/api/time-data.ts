@@ -96,21 +96,26 @@ export async function readTimeRows(db: SupabaseClient, courseId: string): Promis
   };
 }
 
-export function pseudonymise(rows: TimeRows, viewer: string): TimeRows {
+/**
+ * A fresh random pseudonym for each classmate, per answer (Rule 0075). It is the same for one student
+ * across the calendar and learning records of one answer, so medians still work, but it neither
+ * follows row or alphabetical order nor survives to the next request: a viewer cannot link a
+ * pseudonym across answers and single a classmate out over a term.
+ */
+export function pseudonymise(rows: TimeRows, viewer: string, randomId: () => string = () => crypto.randomUUID()): TimeRows {
   const aliases = new Map<string, string>();
+  const used = new Set<string>();
   const alias = (id: unknown): unknown => {
     if (typeof id !== "string" || id === viewer) return id;
     let a = aliases.get(id);
     if (!a) {
-      a = `student-${aliases.size + 1}`;
+      do a = `student-${randomId().replace(/-/g, "").slice(0, 12)}`;
+      while (used.has(a));
       aliases.set(id, a);
+      used.add(a);
     }
     return a;
   };
-  [...new Set([...rows.calendar.map((r) => r.studentid), ...rows.learningRecords.map((r) => r.student_id)])]
-    .filter((id): id is string => typeof id === "string")
-    .sort()
-    .forEach(alias);
   return {
     ...rows,
     role: "student",

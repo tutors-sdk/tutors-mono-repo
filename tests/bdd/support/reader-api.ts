@@ -41,8 +41,16 @@ export async function readerIdle(): Promise<void> {
 
 const courseHost = new Map<string, unknown>();
 
+/** Course hosts that fail every request, as an unreachable site does. */
+const downHosts = new Set<string>();
+
 export function serveCourseJson(courseId: string, json: unknown): void {
   courseHost.set(courseId, json);
+}
+
+/** The course's host stops answering: every fetch of its tutors.json fails as a network error. */
+export function takeCourseHostDown(courseId: string): void {
+  downHosts.add(courseId);
 }
 
 export function resetReaderApi(): void {
@@ -50,6 +58,7 @@ export function resetReaderApi(): void {
   inFlight.clear();
   apiRequests.length = 0;
   courseHost.clear();
+  downHosts.clear();
 }
 
 function httpErrorResponse(thrown: unknown): Response | null {
@@ -84,6 +93,7 @@ async function callReader(request: Request, withSession: boolean): Promise<Respo
 function courseJsonResponse(url: URL): Response | null {
   const match = /^([a-z0-9-]+)\.netlify\.app$/i.exec(url.hostname);
   if (!match || url.pathname !== "/tutors.json") return null;
+  if (downHosts.has(match[1])) throw new TypeError("fetch failed");
   const json = courseHost.get(match[1]);
   return json === undefined ? new Response("Not Found", { status: 404 }) : new Response(JSON.stringify(json), { status: 200, headers: { "content-type": "application/json" } });
 }

@@ -19,7 +19,7 @@ import { catalogueService } from "../../../../packages/svelte/community/src/serv
 import { load as loadTimeCourse } from "../../../../apps/time/src/routes/[courseid]/(calendar-lab)/+layout.ts";
 import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { anonPolicies, anyAnonPolicy, builtSchema, type Schema } from "../../support/migrations.ts";
-import { apiRequests, readerRequest, setReaderSession } from "../../support/reader-api.ts";
+import { apiRequests, readerRequest, serveCourseJson, setReaderSession, takeCourseHostDown } from "../../support/reader-api.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 import { tutorsId } from "../../../../packages/svelte/runes/src/index.svelte.ts";
 
@@ -96,6 +96,32 @@ describeFeature(feature, ({ Background, Rule }) => {
     expectCourse(courseId);
     await answer(await readerRequest("PUT", "/api/whiteboard", { courseId, route: firstLab().route, shared: false, elements: [{ id: `${who ?? "anonymous"}-rect`, type: "rectangle" }] }));
   };
+
+  const askToLock = async (_ctx: unknown, courseId: string) => {
+    expectCourse(courseId);
+    await answer(await readerRequest("PUT", "/api/locks", { courseId, loRoute: firstLab().route, locked: true }));
+  };
+  const noLocks = (_ctx: unknown, courseId: string) => {
+    expect(recorder.rows("tutors_content_locks").filter((r) => r.course_id === courseId)).toEqual([]);
+  };
+  const lockedBy = (_ctx: unknown, courseId: string, login: string) => {
+    expect(recorder.rows("tutors_content_locks")).toMatchObject([{ course_id: courseId, lo_route: firstLab().route, locked: true, locked_by: login }]);
+  };
+  const publishWithEducator = (_ctx: unknown, courseId: string, educator: string) => {
+    course = publishedCourse(courseId, 1, {}, { educators: [educator], whitelist: [], students: [] });
+  };
+  /** The reader consults the course's educators `minutes` ago (Eve opens its time data then), and the clock returns to now. */
+  const readEducatorsAgo = async (_ctx: unknown, courseId: string, minutes: number) => {
+    expectCourse(courseId);
+    const now = Date.now();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now - minutes * 60_000);
+    setReaderSession(githubUser("Eve"));
+    await readerRequest("GET", `/api/time/${courseId}`);
+    setReaderSession(null);
+    vi.setSystemTime(now);
+  };
+  const hostDown = (_ctx: unknown, courseId: string) => takeCourseHostDown(courseId);
 
   Background(({ Given }) => {
     Given("the course {string} is published with {number} labs and {string} as its educator", (_ctx, courseId: string, labs: number, educator: string) => {
@@ -177,11 +203,6 @@ describeFeature(feature, ({ Background, Rule }) => {
   Rule(
     "If a signed-in user who is not an educator of a course asks the reader to lock or unlock its content, then the reader shall answer 403 and leave the course's locks unchanged.",
     ({ RuleScenario }) => {
-      const askToLock = async (_ctx: unknown, courseId: string) => {
-        expectCourse(courseId);
-        await answer(await readerRequest("PUT", "/api/locks", { courseId, loRoute: firstLab().route, locked: true }));
-      };
-
       RuleScenario("A student cannot lock a course's content", ({ Given, When, Then, And }) => {
         Given("{string} is signed in to the reader", signedIn);
         When("the browser asks the reader to lock the first lab of {string}", askToLock);
@@ -203,6 +224,55 @@ describeFeature(feature, ({ Background, Rule }) => {
   );
 
   Rule(
+    "If the reader cannot read a course's educators from its host and holds no copy read within the last hour, then the reader shall answer 503 to a request that needs them and leave the course's locks unchanged.",
+    ({ RuleScenario }) => {
+      RuleScenario("The course host is down and the reader never read the course", ({ Given, When, Then, And }) => {
+        Given("the course {string} is published with {string} as its educator", publishWithEducator);
+        And("the host of {string} is unreachable", hostDown);
+        And("{string} is signed in to the reader", signedIn);
+        When("the browser asks the reader to lock the first lab of {string}", askToLock);
+        Then("the reader answers {number}", readerAnswers);
+        And("{string} has no content locks", noLocks);
+      });
+
+      RuleScenario("The course host is down and the reader's copy is older than an hour", ({ Given, When, Then, And }) => {
+        Given("the course {string} is published with {string} as its educator", publishWithEducator);
+        And("the reader read the educators of {string} {number} minutes ago", readEducatorsAgo);
+        And("the host of {string} is unreachable", hostDown);
+        And("{string} is signed in to the reader", signedIn);
+        When("the browser asks the reader to lock the first lab of {string}", askToLock);
+        Then("the reader answers {number}", readerAnswers);
+        And("{string} has no content locks", noLocks);
+      });
+    }
+  );
+
+  Rule("While a course's host is unreachable, the reader shall decide who teaches the course from the copy of its educators it read within the last hour.", ({ RuleScenario }) => {
+    RuleScenario("An educator locks content while the course host is briefly down", ({ Given, When, Then, And }) => {
+      Given("the course {string} is published with {string} as its educator", publishWithEducator);
+      And("the reader read the educators of {string} {number} minutes ago", readEducatorsAgo);
+      And("the host of {string} is unreachable", hostDown);
+      And("{string} is signed in to the reader", signedIn);
+      When("the browser asks the reader to lock the first lab of {string}", askToLock);
+      Then("the reader answers {number}", readerAnswers);
+      And("the first lab of {string} is locked by {string}", lockedBy);
+    });
+
+    RuleScenario("With the course host up, a removed educator loses the lock at once", ({ Given, When, Then, And }) => {
+      Given("the course {string} is published with {string} as its educator", publishWithEducator);
+      And("the reader read the educators of {string} {number} minutes ago", readEducatorsAgo);
+      And("{string} is republished without {string} as an educator", (_ctx, courseId: string) => {
+        expectCourse(courseId);
+        serveCourseJson(courseId, { title: course.title, properties: {}, enrollment: { educators: [], whitelist: [], students: [] } });
+      });
+      And("{string} is signed in to the reader", signedIn);
+      When("the browser asks the reader to lock the first lab of {string}", askToLock);
+      Then("the reader answers {number}", readerAnswers);
+      And("{string} has no content locks", noLocks);
+    });
+  });
+
+  Rule(
     "While a signed-in viewer is not an educator of a course, the reader shall return the course's time data with every other student's id replaced by a pseudonym and without any other student's name, avatar, sentiment or online status.",
     ({ RuleScenario }) => {
       RuleScenario("A student sees their own time and anonymous classmates", ({ Given, When, Then, And }) => {
@@ -214,9 +284,10 @@ describeFeature(feature, ({ Background, Rule }) => {
           expect(timeData().calendar.filter((r) => r.studentid === login)).toHaveLength(1);
           expect(timeData().learningRecords.filter((r) => r.student_id === login)).toHaveLength(1);
         });
-        And("the time data holds the other students' rows under {string} and {string}", (_ctx, first: string, second: string) => {
-          const others = [...idsIn(timeData())].filter((id) => id !== tutorsId.value?.login);
-          expect(others.sort()).toEqual([first, second]);
+        And("the time data holds the other students' rows under {number} pseudonyms that are not their logins", (_ctx, count: number) => {
+          const others = [...idsIn(timeData())].filter((id) => id !== tutorsId.value?.login) as string[];
+          expect(others).toHaveLength(count);
+          for (const pseudonym of others) expect(["alice", "bob", "carol"]).not.toContain(pseudonym);
         });
         And("the time data names no student other than {string}", (_ctx, login: string) => {
           expect(timeData().users.map((u) => u.github_id)).toEqual([login]);
@@ -242,6 +313,34 @@ describeFeature(feature, ({ Background, Rule }) => {
       });
     }
   );
+
+  Rule("When a viewer who is not an educator of a course asks for its time data again, the reader shall give the other students pseudonyms that differ from the ones it gave before.", ({ RuleScenario }) => {
+    RuleScenario("Pseudonyms do not link one answer to the next", ({ Given, When, Then, And }) => {
+      const answers: TimeData[] = [];
+      const others = (data: TimeData) => new Set([...idsIn(data)].filter((id) => id !== tutorsId.value?.login));
+      Given("{string}, {string} and {string} have learning records and calendar rows in {string}", seedThree);
+      And("{string} is signed in to the reader", signedIn);
+      When("the browser asks the reader for the time data of {string} twice", async (_ctx, courseId: string) => {
+        for (let i = 0; i < 2; i++) {
+          await askTimeData(_ctx, courseId);
+          expect(response.status).toBe(200);
+          answers.push(timeData());
+        }
+      });
+      Then("each answer gives every other student one pseudonym across its calendar and learning records", () => {
+        for (const data of answers) {
+          const inCalendar = new Set(data.calendar.map((r) => r.studentid).filter((id) => id !== tutorsId.value?.login));
+          const inRecords = new Set(data.learningRecords.map((r) => r.student_id).filter((id) => id !== tutorsId.value?.login));
+          expect([...inCalendar].sort()).toEqual([...inRecords].sort());
+          expect(inCalendar.size).toBe(2);
+        }
+      });
+      And("no pseudonym in the second answer appears in the first", () => {
+        const first = others(answers[0]);
+        for (const pseudonym of others(answers[1])) expect(first.has(pseudonym)).toBe(false);
+      });
+    });
+  });
 
   Rule(
     "When a viewer opens a course in the time dashboard, the time dashboard shall load the course's time data from the reader's API with the viewer's reader session instead of from the database.",

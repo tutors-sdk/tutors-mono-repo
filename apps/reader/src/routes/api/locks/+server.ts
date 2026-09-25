@@ -1,6 +1,6 @@
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
 import { noContent, readJson, requireDb, requireUser, valid } from "../../../lib/server/api/http.ts";
-import { courseAccess } from "../../../lib/server/api/access.ts";
+import { authorize } from "../../../lib/server/api/access.ts";
 import { removeLock, setLock } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
 
@@ -9,7 +9,7 @@ async function educatorRequest(request: Request, locals: RequestEvent["locals"])
   const body = await readJson(request);
   const courseId = valid(check.courseId(body.courseId), "courseId is required");
   const loRoute = valid(check.loRoute(body.loRoute), "loRoute is required");
-  if (!(await courseAccess().isEducator(user.login, courseId))) error(403, "Only an educator of this course can lock its content");
+  if (!(await authorize(user, "content:lock", { kind: "course", courseId }))) error(403, "Only an educator of this course can lock its content");
   return { user, body, courseId, loRoute };
 }
 

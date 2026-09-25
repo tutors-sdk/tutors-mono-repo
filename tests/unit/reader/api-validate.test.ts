@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as check from "../../../apps/reader/src/lib/server/api/validate.ts";
-import { courseFactsFrom, courseJsonUrl, createCourseAccess, listFromEnv } from "../../../apps/reader/src/lib/server/api/course-access.ts";
+import { AuthorizationUnavailableError, courseFactsFrom, courseJsonUrl, createAuthorization, listFromEnv } from "../../../apps/reader/src/lib/server/api/authorization.ts";
 import { whiteboardRoomId } from "../../../apps/reader/src/lib/server/api/store.ts";
 
 describe("reader /api input checks", () => {
@@ -56,7 +56,7 @@ describe("reader /api input checks", () => {
   });
 });
 
-describe("reader course access", () => {
+describe("reader authorization", () => {
   it("fetches tutors.json only from the course's Netlify site or an allowed host", () => {
     expect(courseJsonUrl("web-dev-101")).toBe("https://web-dev-101.netlify.app/tutors.json");
     expect(courseJsonUrl("web-dev-101.netlify.app")).toBe("https://web-dev-101.netlify.app/tutors.json");
@@ -79,35 +79,68 @@ describe("reader course access", () => {
 
   it("makes a login an educator from enrollment.yaml or the admin list, caching the course", async () => {
     let fetches = 0;
-    const access = createCourseAccess({
+    const access = createAuthorization({
       fetch: (async () => {
         fetches++;
         return new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }));
       }) as unknown as typeof fetch,
       admins: listFromEnv("root, ops")
     });
-    expect(await access.isEducator("eve", "c")).toBe(true);
-    expect(await access.isEducator("alice", "c")).toBe(false);
-    expect(await access.isEducator("ops", "other")).toBe(true);
-    expect(await access.isEducator("", "c")).toBe(false);
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).toBe(true);
+    expect(await access.can({ login: "alice" }, "content:lock", { kind: "course", courseId: "c" })).toBe(false);
+    expect(await access.can({ login: "ops" }, "content:lock", { kind: "course", courseId: "other" })).toBe(true);
+    expect(await access.can(null, "content:lock", { kind: "course", courseId: "c" })).toBe(false);
     expect(fetches).toBe(1);
+  });
+
+  it("asks the role's permissions: an educator may lock and view analytics, a student neither", async () => {
+    const access = createAuthorization({ fetch: (async () => new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }))) as unknown as typeof fetch });
+    const course = { kind: "course" as const, courseId: "c" };
+    expect(await access.can({ login: "eve" }, "analytics:view", course)).toBe(true);
+    expect(await access.can({ login: "alice" }, "analytics:view", course)).toBe(false);
+  });
+
+  it("says it cannot tell, rather than no, when the host is unreachable and it holds no copy", async () => {
+    const access = createAuthorization({ fetch: (async () => { throw new TypeError("fetch failed"); }) as unknown as typeof fetch });
+    await expect(access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).rejects.toBeInstanceOf(AuthorizationUnavailableError);
+    const serverError = createAuthorization({ fetch: (async () => new Response("", { status: 502 })) as unknown as typeof fetch });
+    await expect(serverError.course("c")).rejects.toBeInstanceOf(AuthorizationUnavailableError);
+  });
+
+  it("decides from a copy read within the hour while the host is down, and not from an older one", async () => {
+    let clock = 0;
+    let up = true;
+    const access = createAuthorization({
+      now: () => clock,
+      fetch: (async () => {
+        if (!up) throw new TypeError("fetch failed");
+        return new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }));
+      }) as unknown as typeof fetch
+    });
+    const course = { kind: "course" as const, courseId: "c" };
+    expect(await access.can({ login: "eve" }, "content:lock", course)).toBe(true);
+    up = false;
+    clock = 10 * 60_000;
+    expect(await access.can({ login: "eve" }, "content:lock", course)).toBe(true);
+    clock = 61 * 60_000;
+    await expect(access.can({ login: "eve" }, "content:lock", course)).rejects.toBeInstanceOf(AuthorizationUnavailableError);
   });
 
   it("does not cache a course it could not find, so it recovers once the course is published", async () => {
     let published = false;
-    const access = createCourseAccess({
+    const access = createAuthorization({
       fetch: (async () => (published ? new Response(JSON.stringify({ enrollment: { educators: ["eve"] } })) : new Response("", { status: 404 }))) as unknown as typeof fetch
     });
-    expect(await access.isEducator("eve", "c")).toBe(false);
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).toBe(false);
     published = true;
     await Promise.resolve();
-    expect(await access.isEducator("eve", "c")).toBe(true);
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).toBe(true);
   });
 });
 
-describe("reader course access: redirects", () => {
+describe("reader authorization: redirects", () => {
   it("follows a course site's redirect only to a public https host", async () => {
-    const { redirectTarget } = await import("../../../apps/reader/src/lib/server/api/course-access.ts");
+    const { redirectTarget } = await import("../../../apps/reader/src/lib/server/api/authorization.ts");
     const from = "https://web-dev-101.netlify.app/tutors.json";
     expect(redirectTarget(from, "https://courses.example.org/tutors.json")).toBe("https://courses.example.org/tutors.json");
     expect(redirectTarget(from, "/elsewhere/tutors.json")).toBe("https://web-dev-101.netlify.app/elsewhere/tutors.json");
@@ -117,19 +150,19 @@ describe("reader course access: redirects", () => {
   });
 
   it("reads educators from a course site that redirects to its custom domain", async () => {
-    const access = createCourseAccess({
+    const access = createAuthorization({
       fetch: (async (url: string) =>
         url.includes("netlify.app")
           ? new Response(null, { status: 301, headers: { location: "https://courses.example.org/tutors.json" } })
           : new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }))) as unknown as typeof fetch
     });
-    expect(await access.isEducator("eve", "web-dev-101")).toBe(true);
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "web-dev-101" })).toBe(true);
   });
 
   it("gives up on a redirect to an internal address", async () => {
-    const access = createCourseAccess({
+    const access = createAuthorization({
       fetch: (async () => new Response(null, { status: 302, headers: { location: "http://169.254.169.254/" } })) as unknown as typeof fetch
     });
-    expect(await access.isEducator("eve", "web-dev-101")).toBe(false);
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "web-dev-101" })).toBe(false);
   });
 });
