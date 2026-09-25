@@ -5,16 +5,41 @@ arrives as `anon`, with the key every page ships. Row-Level Security cannot tell
 another, and the policies `20260924_enable_rls_public_tables.sql` added let any row through. This
 guide describes how that is being closed: writes, and reads of personal data, move to SvelteKit
 server routes that check the Auth.js session and use a private `service_role` key. The contract
-migration in this release removes the old anon access after the new pods are serving traffic.
+step that removes the old anon access ships in the next release, once no older pod or tab uses it
+(see [Release order](#release-order)).
 
 The behaviour is specified as EARS Rules in
 [`tests/bdd/features/shared/server-data-access.feature`](../tests/bdd/features/shared/server-data-access.feature)
-(Rules 0065 to 0072) and proved by `pnpm test:bdd`: the scenarios call the real route handlers and
+(Rules 0065 to 0075) and proved by `pnpm test:bdd`: the scenarios call the real route handlers and
 the real browser services, with only the session, the database and the course host stood in.
+
+## The data API: the seam
+
+Browser packages no longer talk to the database for anything personal. They talk to a typed data
+API: [`@tutors/data-api`](../packages/svelte/data-api/src/contract.ts) holds what each route takes
+and returns, and the one client (`dataApi`) the community, connect, RBAC and whiteboard code call.
+The server side implements that contract; nothing in a browser package knows which database is
+behind it, so leaving Supabase changes this layer and the routes, and no browser package.
+
+Two checks keep the seam honest:
+
+- `no-database-client-in-browser-code` (`.dependency-cruiser.cjs`, run by `pnpm test:runway`):
+  browser code may not import `@supabase/supabase-js`. The exceptions are the anon client factory
+  used for Realtime channels and public reads (`packages/svelte/community/src/utils/supabase-client.ts`),
+  server-only files, and type-only imports.
+- `tests/architecture/browser-data-access.test.ts`: what browser code does with that anon client is
+  limited to reading the public tables (`tutors-connect-courses`, `tutors-connect-latest`,
+  `tutors_content_locks`), inserting into `app_errors`, and calling `get_student_count` and
+  `get_error_counts`. Anything else belongs behind a route.
+
+**The reader is the data API's host for now, and that is temporary.** The routes live in the reader
+because it is the app with Auth.js. The time dashboard calling the reader for its data is the smell
+that says so: on OpenShift the data API wants to be its own pod, with the reader, time and live
+apps as clients. Moving it is a deployment change, not a browser one, because of the contract above.
 
 ## The routes
 
-All in the reader, under `apps/reader/src/routes/api/`. The helpers they share are in
+All in the reader for now, under `apps/reader/src/routes/api/`. The helpers they share are in
 `apps/reader/src/lib/server/api/`.
 
 | Route | Who may call it | What it does |
@@ -40,12 +65,25 @@ Common to every route:
 - **503 without a key.** When `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` is not set (local development,
   anonymous mode) the routes answer 503 and the browser carries on without saving.
 
-## Who is an educator
+## Who may do what: one authorization module
 
-The server decides, for locks and time data, from the same source the browser's RBAC uses
-([RBAC.md](RBAC.md)): a GitHub login listed under `educators` in the course's `enrollment.yaml`,
-read from the course's published `tutors.json` (`course-access.ts`, cached for five minutes).
-Logins in `PRIVATE_TUTORS_ADMINS` count as educators of every course.
+Every decision goes through one question, `can(actor, action, resource)`, in
+`apps/reader/src/lib/server/api/authorization.ts`. Actions are the RBAC permissions
+(`content:lock`, `analytics:view`, ...) and a role's permissions come from the RBAC package's table
+(`packages/svelte/utils/rbac/src/permissions.ts`), the same one the browser uses. A login's role in a
+course is `educator` when the course's `enrollment.yaml` lists it under `educators` (read from the
+course's published `tutors.json`) or when it is in `PRIVATE_TUTORS_ADMINS`; otherwise `student`.
+Anything new that needs an authorization decision, the message bus included, asks `can()`; no
+route decides for itself.
+
+The course read is cached for five minutes. **If the course's host cannot be read** (network error,
+timeout, 5xx, a broken tutors.json), the module does not guess:
+
+- with a copy read within the last hour, it decides from that copy (Rule 0074), so a short Netlify
+  outage does not stop educators; a removed educator keeps their rights for at most that hour while
+  the host is down, and loses them at the first successful read after five minutes;
+- without one, it says it cannot tell, and the route answers **503** "could not read who teaches
+  this course", never a 403 that would claim the user is not an educator (Rule 0073).
 
 A course with no `enrollment.yaml` has no educators, so nobody sees its students' time by name
 until one is added. The server fetches tutors.json only from `https://<id>.netlify.app` or a host in
@@ -67,18 +105,33 @@ A viewer who is not signed in to the reader gets a link to its sign-in page inst
 calendar and lab layout; no Rule covers this yet, since the time app has no browser tests).
 
 The reader's own "My time" page uses the same route. A student there sees their own rows, and their
-classmates as `student-1`, `student-2`, ... with no name, avatar, sentiment or status, so the course
-medians still work (Rule 0066).
+classmates under pseudonyms with no name, avatar, sentiment or status, so the course medians still
+work (Rule 0066). The pseudonyms are chosen to be **unlinkable**: a fresh random one per classmate
+per answer, the same across the calendar and learning records of that answer, and different in the
+next (Rule 0075). They follow neither row order nor alphabetical order, and a student cannot follow
+"student-3" through a term to single a classmate out.
 
 The live dashboard reads `tutors-connect-latest`, and the catalogue reads `tutors-connect-courses`
 and the student count. These are public data: presence a student chose to share, and the course
 list. The anon key keeps reading them. The catalogue's student count now comes from
 `get_student_count()`, which returns only the number (Rule 0070).
 
-## The key
+## The key, and the debt it carries
 
 `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` bypasses Row-Level Security completely, so a leaked key is
 worse than the situation this change closes.
+
+**This is the first cut, and it is debt.** With service_role, Row-Level Security no longer applies
+underneath the routes: every query scopes itself by hand (`.eq("student_id", login)` and the
+like), and one missed filter is a full leak of that table. The scenarios for Rules 0071, 0072 and
+0066 test the scoping that exists, but they cannot prove a filter nobody wrote. The way out is one
+of:
+
+- a least-privilege Postgres role for the data API, granted exactly the tables and columns the
+  routes use, instead of service_role; or
+- minting a short-lived Supabase JWT per request from the Auth.js session (`sub` = the GitHub
+  login, plus a course role claim), so per-user RLS policies apply underneath and a missed filter
+  returns nothing instead of everything.
 
 - It is read only from `$env/dynamic/private`, in `apps/reader/src/lib/server/api/service-client.ts`
   and the time app's `$lib/server/db/submissionsRepository.ts`. SvelteKit refuses to bundle
@@ -106,7 +159,8 @@ unless `tutors.contract_ok` is set. In the release after N:
 
 3. Rehearse it against a copy of production (`SET tutors.contract_ok = 'on';` then the file). The
    protected tables predate `supabase/migrations`, so the release harness cannot recreate them from
-   migrations alone.
+   migrations alone; until the harness's migration mode can restore a production copy and run the
+   contract step there as a gate, this rehearsal is manual.
 4. Move it into `supabase/migrations/` with a `-- contract-for: v<N>` header, delete its guard, and
    claim its drops. `pnpm check:migrations` refuses it until CHANGELOG.md records v<N> as released,
    so it cannot land in the same release as the routes that make it safe
@@ -120,6 +174,14 @@ read and write the tables the old code used.
 Moodle sync is operator-only. Call the time app's `POST /api/sync` with
 `Authorization: Bearer <PRIVATE_MOODLE_SYNC_TOKEN>`; the dashboard no longer offers a browser sync
 control because it has no sign-in of its own.
+
+## Presence is the first message-bus candidate
+
+Presence and the live dashboard are the one thing still on Supabase's proprietary transport
+(Realtime broadcast channels, joined with the anon key). They are also where the weakest boundary
+is: anyone can broadcast a forged `lo-event`. Moving presence to the platform's own message bus,
+with publishers authenticated by the data API, fixes both, and is the natural first user of that
+bus and of `can()`.
 
 ## Not closed by this change
 
