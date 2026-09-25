@@ -1,21 +1,8 @@
 import type { TutorsConnectCourse, TutorsConnectUser } from "../types/index.ts";
 import { getSupabase } from "./supabase.ts";
 
-/**
- * Where the time library gets its rows from.
- *
- * - `supabaseTimeSource()` (the default) queries the tables with the key given to `initSupabase`.
- *   It suits a server holding a key that may read them.
- * - `readerTimeSource(readerUrl)` asks the Tutors reader's `GET /api/time/<courseId>` with the
- *   browser's reader session (`credentials: "include"`). The reader checks who is signed in: an
- *   educator of the course gets every row, anyone else their own rows with classmates pseudonymised.
- *   Tutors' own apps use this one, so no browser needs to read student rows with the anon key.
- */
-
-/** A course's time rows, in the shape of their tables. */
 export interface TutorsTimeRows {
   courseId: string;
-  /** "educator" when the viewer teaches the course; "student" when other students are pseudonymised. */
   role: "educator" | "student";
   course: Pick<TutorsConnectCourse, "course_id" | "course_record"> | null;
   calendar: Record<string, unknown>[];
@@ -25,15 +12,11 @@ export interface TutorsTimeRows {
 }
 
 export interface TutorsTimeSource {
-  /** Every time row of the course that the viewer may see. */
   courseRows(courseId: string): Promise<TutorsTimeRows>;
-  /** The course's catalogue record (title, image, icon), or null. */
   courseRecord(courseId: string): Promise<Pick<TutorsConnectCourse, "course_id" | "course_record"> | null>;
-  /** One student's user row, or null. `courseId` scopes the lookup for sources that answer per course. */
   user(studentId: string, courseId?: string): Promise<Omit<TutorsConnectUser, "email"> | null>;
 }
 
-/** A failed read of the reader's time API, with its HTTP status (401: not signed in to the reader). */
 export class TutorsTimeSourceError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);
@@ -53,7 +36,6 @@ async function selectAll(query: (from: number, to: number) => PromiseLike<{ data
   }
 }
 
-/** Reads the tables directly with the key given to `initSupabase`. */
 export function supabaseTimeSource(): TutorsTimeSource {
   return {
     async courseRows(courseId) {
@@ -82,18 +64,12 @@ export function supabaseTimeSource(): TutorsTimeSource {
   };
 }
 
-/** Drops trailing slashes. A loop, not /\/+$/, which backtracks polynomially on long runs of "/" (CodeQL js/polynomial-redos). */
 export function withoutTrailingSlashes(url: string): string {
   let end = url.length;
   while (end > 0 && url[end - 1] === "/") end--;
   return url.slice(0, end);
 }
 
-/**
- * Reads a course's rows from the Tutors reader at `readerUrl` (e.g. `https://tutors.dev`), sending
- * the reader's session cookie. One answer per course is reused for 30 seconds, so the app bar, the
- * calendar and the lab views of one page load share a request.
- */
 export function readerTimeSource(readerUrl: string, fetchFn: typeof fetch = (...args) => fetch(...args)): TutorsTimeSource {
   const base = withoutTrailingSlashes(readerUrl);
   const cache = new Map<string, { at: number; rows: Promise<TutorsTimeRows> }>();
@@ -128,7 +104,6 @@ export function readerTimeSource(readerUrl: string, fetchFn: typeof fetch = (...
 let current: TutorsTimeSource | null = null;
 const listeners = new Set<() => void>();
 
-/** Chooses where the time library reads from; clears anything it cached from the previous source. */
 export function setTutorsTimeSource(source: TutorsTimeSource): void {
   current = source;
   for (const listener of listeners) listener();
@@ -139,7 +114,6 @@ export function getTutorsTimeSource(): TutorsTimeSource {
   return current;
 }
 
-/** Lets a cache inside the library empty itself when the source changes. */
 export function onTutorsTimeSourceChange(listener: () => void): void {
   listeners.add(listener);
 }

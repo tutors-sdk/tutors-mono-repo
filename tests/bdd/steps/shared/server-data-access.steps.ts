@@ -1,9 +1,6 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
-// The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public and
-// private env, SvelteKit and Auth.js. The reader's route handlers, the connect and community services, the
-// catalogue service and the time dashboard's layout are the real product code.
 vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$env/dynamic/public", async () => {
@@ -14,7 +11,6 @@ vi.mock("$env/dynamic/public", async () => {
 vi.mock("$env/dynamic/private", async () => ({ env: (await import("../../support/supabase-recorder.ts")).privateEnv }));
 vi.mock("$app/environment", () => ({ browser: true, building: false, goto: vi.fn() }));
 vi.mock("../../../../packages/svelte/connect/node_modules/@auth/sveltekit/dist/client.js", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
-// The time dashboard imports its own modules through SvelteKit's `$lib`; point it at the real files.
 vi.mock("$lib/enrichCourseUserFields", async () => await import("../../../../apps/time/src/lib/enrichCourseUserFields.ts"));
 vi.mock("$lib/time-source", async () => await import("../../../../apps/time/src/lib/time-source.ts"));
 
@@ -33,13 +29,11 @@ const ANON_KEY = "anon-key";
 const STUDENT_TABLES = ["learning_records", "calendar", "tutors-connect-users", "tutors-connect-latest", "tutors-connect-profiles", "whiteboard_scenes"];
 const capitalised = (login: string) => login[0].toUpperCase() + login.slice(1);
 
-/** The browser's local day, the key of a calendar row. */
 function today(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/** The room a whiteboard learning object saves into, as guides/WHITEBOARD.md documents it. */
 function personalRoom(course: Course, lo: Lo, login: string): string {
   return `wb-personal:${encodeURIComponent(course.courseId)}:${encodeURIComponent(lo.route)}:${encodeURIComponent(login)}`;
 }

@@ -4,7 +4,6 @@ import { courseAccess } from "../../../lib/server/api/access.ts";
 import { removeLock, setLock } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
 
-/** The course and route of a lock request, from a signed-in educator of that course; 403 for anyone else (Rule 0065). */
 async function educatorRequest(request: Request, locals: RequestEvent["locals"]) {
   const user = await requireUser(locals);
   const body = await readJson(request);
@@ -14,7 +13,6 @@ async function educatorRequest(request: Request, locals: RequestEvent["locals"])
   return { user, body, courseId, loRoute };
 }
 
-/** Lock or unlock a learning object (or set the course's show-locked setting). */
 export const PUT: RequestHandler = async ({ request, locals }) => {
   const { user, body, courseId, loRoute } = await educatorRequest(request, locals);
   if (typeof body.locked !== "boolean") error(400, "locked is true or false");
@@ -22,7 +20,6 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
   return noContent();
 };
 
-/** Remove a lock row. */
 export const DELETE: RequestHandler = async ({ request, locals }) => {
   const { courseId, loRoute } = await educatorRequest(request, locals);
   await removeLock(requireDb(), courseId, loRoute);

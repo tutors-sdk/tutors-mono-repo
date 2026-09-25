@@ -21,10 +21,6 @@ function applyUserFields(fieldsByGithub: Map<string, UserFields>, rows: ConnectU
   }
 }
 
-/**
- * Attaches `online_status`, `sentiment`, and `avatar_url` of the students in the calendar and lab views
- * to their day/week and lab/step rows, from the user rows the time source returned for the course.
- */
 export async function enrichCourseUserFields(course: TutorsTimeCourse | null): Promise<void> {
   if (!course) return;
 

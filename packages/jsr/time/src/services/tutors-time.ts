@@ -11,7 +11,6 @@ import type {
 import { BaseLabModel } from "./base-lab-model.ts";
 
 const courseMap = new Map<string, CourseTime>();
-// A course loaded from one source is not the answer another source would give (another viewer, another server).
 onTutorsTimeSourceChange(() => courseMap.clear());
 
 function emptyConnectUser(githubId: string): TutorsConnectUser {
@@ -33,10 +32,6 @@ function studentDisplayName(info: StudentDisplayInfo): string {
 }
 
 export const TutorsTime: TutorsTimeService = {
-  /**
-   * A student's `tutors-connect-users` row for the app bar and student views. `courseId` is the course
-   * being viewed; the reader's source answers per course and needs it. Email is never returned.
-   */
   async getStudentDisplayInfo(studentId: string, courseId?: string): Promise<StudentDisplayInfo> {
     const id = studentId.trim();
     const row = await getTutorsTimeSource().user(id, courseId);

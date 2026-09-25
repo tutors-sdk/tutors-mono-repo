@@ -1,20 +1,6 @@
 import { vi } from "vitest";
 import type { TutorsId } from "../../../packages/jsr/model/src/tutors.ts";
 
-/**
- * The reader's server, as a browser reaches it. Requests to `/api/...` are dispatched to the real
- * route modules under apps/reader/src/routes/api (their `GET`, `PUT`, ... exports), with the
- * Auth.js session of whoever is signed in to the reader in this scenario. Only three things are
- * stand-ins: the session (Auth.js owns the GitHub round trip), the database (the Supabase recorder)
- * and the course host that serves tutors.json.
- *
- * A request to a route that does not exist answers 404, so a scenario written before its route
- * fails on the status it expected, not on an import.
- *
- * The session travels as the browser would send the reader's cookie: always on a same-origin
- * request (`/api/...`), and on a cross-origin one (`https://reader.test/api/...` from the time
- * dashboard) only when the request asks for `credentials: "include"`.
- */
 
 export const READER_ORIGIN = "https://reader.test";
 
@@ -23,7 +9,6 @@ type RouteModule = Record<string, Handler | unknown>;
 
 const routeModules = import.meta.glob<RouteModule>("../../../apps/reader/src/routes/api/**/+server.ts");
 
-/** `/api/time/[courseId]` → a matcher and the parameter names. */
 const routes = Object.entries(routeModules).map(([file, load]) => {
   const id = file.replace(/^.*\/apps\/reader\/src\/routes/, "").replace(/\/\+server\.ts$/, "");
   const names: string[] = [];
@@ -36,30 +21,24 @@ const routes = Object.entries(routeModules).map(([file, load]) => {
 
 let session: TutorsId | null = null;
 
-/** Who the reader's Auth.js session says is signed in; null for nobody. */
 export function setReaderSession(user: TutorsId | null): void {
   session = user;
 }
 
 export type ApiRequest = { method: string; url: string; credentials?: RequestCredentials; origin: string | null; sessionLogin: string | null; status: number };
 
-/** Every request the browser made to the reader's /api, oldest first. */
 export const apiRequests: ApiRequest[] = [];
 
-/** Requests to the reader still being answered. */
 const inFlight = new Set<Promise<unknown>>();
 
-/** Whether a request to the reader is still being answered. */
 export function readerBusy(): boolean {
   return inFlight.size > 0;
 }
 
-/** Resolves once no request to the reader is in flight, including requests started while waiting. */
 export async function readerIdle(): Promise<void> {
   while (inFlight.size > 0) await Promise.allSettled([...inFlight]);
 }
 
-/** Tutors.json files the course host serves, by course id. */
 const courseHost = new Map<string, unknown>();
 
 export function serveCourseJson(courseId: string, json: unknown): void {
@@ -73,14 +52,12 @@ export function resetReaderApi(): void {
   courseHost.clear();
 }
 
-/** A SvelteKit `error(...)` thrown by a handler, as the framework would answer it. */
 function httpErrorResponse(thrown: unknown): Response | null {
   const e = thrown as { status?: unknown; body?: { message?: unknown } };
   if (typeof e?.status !== "number" || !e.body) return null;
   return new Response(JSON.stringify({ message: e.body.message }), { status: e.status, headers: { "content-type": "application/json" } });
 }
 
-/** Dispatches one request to the reader's route modules. */
 async function callReader(request: Request, withSession: boolean): Promise<Response> {
   const url = new URL(request.url);
   const route = routes.find((r) => r.regex.test(url.pathname));
@@ -111,12 +88,7 @@ function courseJsonResponse(url: URL): Response | null {
   return json === undefined ? new Response("Not Found", { status: 404 }) : new Response(JSON.stringify(json), { status: 200, headers: { "content-type": "application/json" } });
 }
 
-/**
- * Installs a global `fetch` that routes the reader's /api and the course host to the stand-ins above
- * and passes anything else to the `fetch` that was installed before it.
- */
 export function installReaderFetch(): void {
-  // Installing twice must not chain one router behind another.
   const current = globalThis.fetch as typeof fetch & { fallback?: typeof fetch };
   const previous = current.fallback ?? current;
   const readerFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -141,7 +113,6 @@ export function installReaderFetch(): void {
   vi.stubGlobal("fetch", Object.assign(readerFetch, { fallback: previous }));
 }
 
-/** A same-origin JSON request from the reader's own pages. */
 export function readerRequest(method: string, path: string, body?: unknown): Promise<Response> {
   return globalThis.fetch(path, {
     method,

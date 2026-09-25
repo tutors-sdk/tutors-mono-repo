@@ -29,7 +29,6 @@ describe("migration check: the committed directory", () => {
     expect(layoutFindings(files)).toEqual([]);
   });
 
-  // `<file> <scope>` of each contract step that shipped with a claim.
   const shipped = readFileSync(join(REPO_ROOT, "tests/conformance/shipped-contract-migrations.txt"), "utf8")
     .split("\n")
     .map((line) => line.trim())
@@ -44,7 +43,6 @@ describe("migration check: the committed directory", () => {
       found.push(...errors.map((f) => `${file} ${f.scope}`));
       expect(errors.filter((f) => !shipped.includes(`${file} ${f.scope}`))).toEqual([]);
     }
-    // A stale entry would silently waive a later statement with the same scope.
     expect(shipped.filter((entry) => !found.includes(entry))).toEqual([]);
   });
 });
