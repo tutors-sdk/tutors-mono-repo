@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import * as check from "../../../apps/reader/src/lib/server/api/validate.ts";
 import { AuthorizationUnavailableError, courseFactsFrom, courseJsonUrl, createAuthorization, listFromEnv } from "../../../apps/reader/src/lib/server/api/authorization.ts";
+import { whiteboardRoomId } from "../../../apps/reader/src/lib/server/api/store.ts";
 
 describe("reader /api input checks", () => {
+  it("keeps personal whiteboard rooms outside the public shared namespace", () => {
+    expect(whiteboardRoomId("web-dev-101", "lab-1", "alice"))
+      .not.toBe(whiteboardRoomId("web-dev-101", "lab-1-alice", null));
+  });
   it("accepts course ids that are Netlify site names or host names, and nothing that could leave the host", () => {
     expect(check.courseId("web-dev-101")).toBe("web-dev-101");
     expect(check.courseId(" courses.example.org ")).toBe("courses.example.org");
