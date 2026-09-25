@@ -22,11 +22,15 @@ The harness reads this directory and nothing else: `--mode migration --a <ref> -
 
 While a release rolls out, pods of the previous version (**a**) and the new version (**b**) run at the same time against one database, and a rollback puts **a** back on the schema **b** left. So a release may only **expand** the schema. Removing or narrowing something is a **contract** step, and it ships in a later release, after no deployed version reads it any more.
 
-The critical anon-access revocation in `20260925100300_revoke_anon_student_data.sql` is an emergency
-contract step in the same PR as the server routes. Apply it separately **after** every old pod has
-drained; a blanket migration run before deployment would break old pods. Old browser tabs must
-reload once direct anon writes are revoked. If a rollback is needed, keep the patched server routes
-deployed rather than reopening anonymous database access. See [SERVER-WRITES.md](SERVER-WRITES.md).
+A contract step never lands in the release that makes it safe, and CI enforces it: a migration that
+removes or narrows something (a destructive statement, a `DO` block that drops or revokes, a
+`REVOKE` from `anon` or `authenticated`) needs a header line `-- contract-for: vX.Y.Z` naming the
+release whose code no longer uses what it removes, and `pnpm check:migrations` fails unless
+CHANGELOG.md already records that version as released. A contract step written ahead of time waits
+in [`supabase/contracts/`](../supabase/contracts/README.md), outside this directory, so no
+`supabase db push` or release run can apply it early; each file there also refuses to run unless
+`tutors.contract_ok` is set. The anon-access revocation for the server-side data routes waits there
+now ([SERVER-WRITES.md](SERVER-WRITES.md)).
 
 | Release | Code | Migration |
 | --- | --- | --- |
@@ -71,6 +75,7 @@ pnpm check:migrations --all        # treat every file as new
 It runs in CI on `release/**` pushes and release PRs (`release-claims.yml`), and its rules are unit-tested in `tests/conformance/migrations.test.ts`, which also holds the harness's `b-good` and `b-bad` fixtures. It fails on:
 
 - a destructive statement in an added migration: `DROP TABLE`, `DROP COLUMN`, `RENAME` of a table or column, `ALTER COLUMN ... TYPE`, `SET NOT NULL`, `ADD COLUMN ... NOT NULL` with no `DEFAULT`, `DROP INDEX`, `DROP POLICY`, `DROP FUNCTION`, `DROP SCHEMA`, `TRUNCATE`;
+- a contract step (anything above, a `DO` block that drops or revokes, or a `REVOKE` from `anon` or `authenticated`) without a `-- contract-for: vX.Y.Z` header naming a version CHANGELOG.md records as released: a contract step cannot land in the same release as its expand;
 - a file name that is not `<version>_<snake_case>.sql`, a duplicate version prefix, or a new file that sorts before one already merged;
 - an existing migration edited or deleted.
 
@@ -80,7 +85,7 @@ The scan reads the SQL text (comments, strings and `$$` bodies are ignored); it 
 
 ## Shipping a contract migration
 
-A contract migration is deliberate, so it is claimed like any other intended difference, in `release/claims.yaml`, on the release that contains it:
+A contract migration is deliberate, so it names the release it contracts for in a header line (`-- contract-for: v16.5.0`, a version CHANGELOG.md records as released; see above), and it is claimed like any other intended difference, in `release/claims.yaml`, on the release that contains it:
 
 ```yaml
 claims:

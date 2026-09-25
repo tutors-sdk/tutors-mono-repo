@@ -34,42 +34,6 @@ claims:
   - artefact: migration
     scope: "app_errors:anon_select_app_errors"
     reason: "CHANGELOG Unreleased: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it (migration)"
-  - artefact: migration
-    scope: "tutors-connect-users:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous access to personal student rows (migration)"
-  - artefact: migration
-    scope: "tutors-connect-profiles:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous access to personal student rows (migration)"
-  - artefact: migration
-    scope: "tutors-connect-latest:anon_insert"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous writes to shared presence (migration)"
-  - artefact: migration
-    scope: "tutors-connect-latest:anon_update"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous writes to shared presence (migration)"
-  - artefact: migration
-    scope: "tutors-connect-courses:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous catalogue writes (migration)"
-  - artefact: migration
-    scope: "learning_records:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous access to student learning records (migration)"
-  - artefact: migration
-    scope: "calendar:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous access to student calendar rows (migration)"
-  - artefact: migration
-    scope: "assignments:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous access to assignment rows (migration)"
-  - artefact: migration
-    scope: "assignments_submissions:anon_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous access to assignment rows (migration)"
-  - artefact: migration
-    scope: "whiteboard_scenes:Anyone can read whiteboard scenes"
-    reason: "CHANGELOG Unreleased: the contract migration removes the old public whiteboard read policy where the hand-run script was applied (migration)"
-  - artefact: migration
-    scope: "whiteboard_scenes:Authenticated users can upsert whiteboard scenes"
-    reason: "CHANGELOG Unreleased: the contract migration removes the old whiteboard policy where the hand-run script was applied (migration)"
-  - artefact: migration
-    scope: "tutors_content_locks:content_locks_*"
-    reason: "CHANGELOG Unreleased: the contract migration revokes anonymous content-lock writes (migration)"
   - artefact: network
     scope: "reader:*"
     reason: "Rule 0072: the reader stores a signed-in student's data through its /api routes, under the session's login"

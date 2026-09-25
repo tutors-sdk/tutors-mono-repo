@@ -90,23 +90,32 @@ worse than the situation this change closes.
 
 ## Release order
 
+**Release N (the one that ships this change): expand.**
+
 1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader and time, `PRIVATE_API_ALLOWED_ORIGINS` on
    reader, `PUBLIC_READER_URL` on time, and `PRIVATE_MOODLE_SYNC_TOKEN` on time.
-2. Apply migrations `20260925100000` through `20260925100200`, then deploy the new reader and time
-   pods and wait until all old pods have drained.
-3. Apply `20260925100300_revoke_anon_student_data.sql`. It removes anon policies and table grants
-   for personal data and writes, and revokes anon access to the two student-counter RPCs. Public
-   catalogue, shared presence and lock reads remain. Reload old browser tabs: their direct anon
-   writes stop working at this step.
+2. Apply the pending migrations (`20260925100000` to `20260925100200`) as usual, then deploy the new
+   reader and time pods. Everything in `supabase/migrations` is safe to run before the new pods are
+   up: nothing there removes what a v16.2.2 pod or tab uses.
 
-Do not run all pending migrations before step 2: that would apply the contract migration while
-old pods still need anon writes. After step 3, keep the patched pods during any rollback rather
-than restoring the public write policies.
+**Release N+1: contract.** `supabase/contracts/revoke_anon_student_data.sql` removes the anon
+policies and table grants for personal data and writes, and revokes anon access to the two
+student-counter RPCs (public catalogue, shared presence and lock reads remain). It is not a
+migration yet, so no release run or `supabase db push` can apply it early, and it refuses to run
+unless `tutors.contract_ok` is set. In the release after N:
 
-The protected tables predate this repository's migration directory. Rehearse the contract
-migration against a copy of production before applying it; the local release harness cannot
-recreate those tables from migrations alone. Do not describe the exposure as closed until step 3
-has succeeded on production.
+3. Rehearse it against a copy of production (`SET tutors.contract_ok = 'on';` then the file). The
+   protected tables predate `supabase/migrations`, so the release harness cannot recreate them from
+   migrations alone.
+4. Move it into `supabase/migrations/` with a `-- contract-for: v<N>` header, delete its guard, and
+   claim its drops. `pnpm check:migrations` refuses it until CHANGELOG.md records v<N> as released,
+   so it cannot land in the same release as the routes that make it safe
+   ([supabase/contracts/README.md](../supabase/contracts/README.md)).
+5. Once it has run on production, old browser tabs must reload: their direct anon writes stop. Keep
+   the patched pods during any rollback rather than restoring the public write policies.
+
+Until step 5 has succeeded on production the exposure is **not** closed: the anon key can still
+read and write the tables the old code used.
 
 Moodle sync is operator-only. Call the time app's `POST /api/sync` with
 `Authorization: Bearer <PRIVATE_MOODLE_SYNC_TOKEN>`; the dashboard no longer offers a browser sync

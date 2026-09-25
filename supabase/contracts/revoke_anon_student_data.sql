@@ -1,4 +1,21 @@
--- Apply only after the reader and time pods in this release are serving traffic.
+-- CONTRACT STEP FOR THE RELEASE AFTER PR #320. NOT A MIGRATION YET.
+--
+-- Removes the anon access that browsers of releases up to v16.2.2 still use to write student data.
+-- The release that ships PR #320 moves those writes to the reader's /api routes; this file may only
+-- run once no pod or open tab of an earlier release is left. So it lives outside supabase/migrations
+-- (which `supabase db push` and the release harness apply), and it refuses to run by accident.
+--
+-- To ship it, in the release after the one that contains PR #320 (guides/SERVER-WRITES.md):
+--   1. move it to supabase/migrations/<timestamp>_revoke_anon_student_data.sql;
+--   2. replace the line below with "-- contract-for: v<the release that shipped PR #320>";
+--      `pnpm check:migrations` refuses it until CHANGELOG.md records that version as released;
+--   3. delete the guard (the first IF in the block below), and claim its drops in release/claims.yaml.
+-- contract-for: (set when promoting; see step 2)
+--
+-- Run by hand before then (a rehearsal on a copy of production): SET tutors.contract_ok = 'on'; first.
+-- The whole file is one DO block, so when the guard refuses, nothing in it runs, whichever client
+-- runs the file and whether or not it stops on the first error.
+--
 -- Old tabs must reload: their direct anon writes will fail after this migration.
 -- The tables below predate the migration directory on production, so skip absent
 -- tables in local databases. Revoking grants closes access even if a policy was
@@ -9,6 +26,10 @@ DECLARE
   policy_name text;
   fn record;
 BEGIN
+  IF coalesce(current_setting('tutors.contract_ok', true), '') <> 'on' THEN
+    RAISE EXCEPTION 'revoke_anon_student_data is a contract step for the release after PR #320; set tutors.contract_ok = on to run it deliberately';
+  END IF;
+
   FOR item IN SELECT * FROM (VALUES
     ('tutors-connect-users', ARRAY['anon_select', 'anon_insert', 'anon_update'], false),
     ('tutors-connect-profiles', ARRAY['anon_select', 'anon_insert', 'anon_update'], false),
@@ -49,11 +70,11 @@ BEGIN
       RAISE EXCEPTION 'anon can still execute %', fn.signature;
     END IF;
   END LOOP;
-END $$;
 
--- whiteboard_scenes is guaranteed by 20260925100000, so these can be plain SQL.
--- The old hand-run script installed a public read policy on some databases.
-DROP POLICY IF EXISTS "Anyone can read whiteboard scenes" ON whiteboard_scenes;
-DROP POLICY IF EXISTS "Authenticated users can upsert whiteboard scenes" ON whiteboard_scenes;
-REVOKE ALL PRIVILEGES ON TABLE whiteboard_scenes FROM anon, PUBLIC;
-GRANT ALL PRIVILEGES ON TABLE whiteboard_scenes TO service_role;
+  -- whiteboard_scenes comes from 20260925100000. The old hand-run script installed a public read
+  -- policy on some databases (never on tutors-prod).
+  DROP POLICY IF EXISTS "Anyone can read whiteboard scenes" ON public.whiteboard_scenes;
+  DROP POLICY IF EXISTS "Authenticated users can upsert whiteboard scenes" ON public.whiteboard_scenes;
+  REVOKE ALL PRIVILEGES ON TABLE public.whiteboard_scenes FROM anon, PUBLIC;
+  GRANT ALL PRIVILEGES ON TABLE public.whiteboard_scenes TO service_role;
+END $$;

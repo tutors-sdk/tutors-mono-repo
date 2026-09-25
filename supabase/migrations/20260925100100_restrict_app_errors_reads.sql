@@ -1,4 +1,7 @@
 -- app_errors: browsers may report errors, but nobody holding the anon key may read them.
+-- contract-for: v16.2.2
+-- (v16.2.2, the release in production, never reads app_errors rows with the anon key: its
+-- /healthz reads counts through get_error_counts, which this file makes run as its owner.)
 --
 -- 20260822_create_app_errors.sql gave anon SELECT on every row, which would make
 -- every error message, page URL, user agent and student_id publicly readable. The
