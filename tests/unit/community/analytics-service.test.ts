@@ -1,25 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const {
-  mockStoreStudentCourseLearningObjectInSupabase,
-  mockUpdateLearningRecordsDuration,
-  mockUpdateCalendarDuration,
-  mockAddOrUpdateStudent,
-  mockFormatDate
-} = vi.hoisted(() => ({
-  mockStoreStudentCourseLearningObjectInSupabase: vi.fn(),
-  mockUpdateLearningRecordsDuration: vi.fn(),
-  mockUpdateCalendarDuration: vi.fn(),
-  mockAddOrUpdateStudent: vi.fn(),
-  mockFormatDate: vi.fn(() => "2026-07-30")
+const { mockRecordLearningPageLoad, mockRecordLearningTick, mockAddOrUpdateStudent } = vi.hoisted(() => ({
+  mockRecordLearningPageLoad: vi.fn(),
+  mockRecordLearningTick: vi.fn(),
+  mockAddOrUpdateStudent: vi.fn()
 }));
 
+// The reader's server identifies the student from the session, so neither call carries a student id.
 vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
-  storeStudentCourseLearningObjectInSupabase: mockStoreStudentCourseLearningObjectInSupabase,
-  updateLearningRecordsDuration: mockUpdateLearningRecordsDuration,
-  updateCalendarDuration: mockUpdateCalendarDuration,
+  recordLearningPageLoad: mockRecordLearningPageLoad,
+  recordLearningTick: mockRecordLearningTick,
   addOrUpdateStudent: mockAddOrUpdateStudent,
-  formatDate: mockFormatDate,
   supabase: {}
 }));
 
@@ -117,22 +108,16 @@ describe("analyticsService.learningEvent", () => {
   it("delegates to reportPageLoad after setting loRoute", () => {
     analyticsService.learningEvent(makeCourse(), {}, makeLo(), makeStudent());
 
-    expect(mockStoreStudentCourseLearningObjectInSupabase).toHaveBeenCalledTimes(1);
+    expect(mockRecordLearningPageLoad).toHaveBeenCalledTimes(1);
   });
 
-  it("passes the trimmed route to the supabase store when loid is present", () => {
+  it("passes the trimmed route to the reader when loid is present", () => {
     const course = makeCourse();
     const lo = makeLo({ route: "course/test-course-1/topic/unit/lo-1" });
-    const student = makeStudent();
 
-    analyticsService.learningEvent(course, { loid: "deep-page" }, lo, student);
+    analyticsService.learningEvent(course, { loid: "deep-page" }, lo, makeStudent());
 
-    expect(mockStoreStudentCourseLearningObjectInSupabase).toHaveBeenCalledWith(
-      course,
-      "course/test-course-1/topic/deep-page",
-      lo,
-      student
-    );
+    expect(mockRecordLearningPageLoad).toHaveBeenCalledWith(course, "course/test-course-1/topic/deep-page", lo);
   });
 
   it("logs error when route manipulation throws", () => {
@@ -147,20 +132,14 @@ describe("analyticsService.learningEvent", () => {
 });
 
 describe("analyticsService.reportPageLoad", () => {
-  it("delegates to storeStudentCourseLearningObjectInSupabase with loRoute", () => {
+  it("records the page load of loRoute through the reader, without a student id", () => {
     const course = makeCourse();
     const lo = makeLo();
-    const student = makeStudent();
     analyticsService.loRoute = "some/route";
 
-    analyticsService.reportPageLoad(course, lo, student);
+    analyticsService.reportPageLoad(course, lo, makeStudent());
 
-    expect(mockStoreStudentCourseLearningObjectInSupabase).toHaveBeenCalledWith(
-      course,
-      "some/route",
-      lo,
-      student
-    );
+    expect(mockRecordLearningPageLoad).toHaveBeenCalledWith(course, "some/route", lo);
   });
 
   it("uses the current loRoute value at call time", () => {
@@ -174,12 +153,12 @@ describe("analyticsService.reportPageLoad", () => {
     analyticsService.loRoute = "second/route";
     analyticsService.reportPageLoad(course, lo, student);
 
-    expect(mockStoreStudentCourseLearningObjectInSupabase).toHaveBeenCalledTimes(2);
-    expect(mockStoreStudentCourseLearningObjectInSupabase.mock.calls[1][1]).toBe("second/route");
+    expect(mockRecordLearningPageLoad).toHaveBeenCalledTimes(2);
+    expect(mockRecordLearningPageLoad.mock.calls[1][1]).toBe("second/route");
   });
 
-  it("logs error when the supabase call throws", () => {
-    mockStoreStudentCourseLearningObjectInSupabase.mockImplementation(() => {
+  it("logs error when recording throws", () => {
+    mockRecordLearningPageLoad.mockImplementation(() => {
       throw new Error("DB failure");
     });
 
@@ -190,48 +169,34 @@ describe("analyticsService.reportPageLoad", () => {
 });
 
 describe("analyticsService.updatePageCount", () => {
-  it("updates learning records duration when student and lo.route are present", () => {
+  it("records a tick against the tracked learning object when student and lo.route are present", () => {
     const course = makeCourse({ courseId: "c1" });
     const lo = makeLo({ route: "course/c1/topic" });
-    const student = makeStudent({ login: "stu1" });
     analyticsService.loRoute = "tracked/route";
 
-    analyticsService.updatePageCount(course, lo, student);
+    analyticsService.updatePageCount(course, lo, makeStudent({ login: "stu1" }));
 
-    expect(mockUpdateLearningRecordsDuration).toHaveBeenCalledWith("c1", "stu1", "tracked/route");
+    expect(mockRecordLearningTick).toHaveBeenCalledWith("c1", "tracked/route");
   });
 
-  it("updates calendar duration with formatted date", () => {
-    const course = makeCourse({ courseId: "c1" });
-    const lo = makeLo({ route: "course/c1/topic" });
-    const student = makeStudent({ login: "stu1" });
-
-    analyticsService.updatePageCount(course, lo, student);
-
-    expect(mockFormatDate).toHaveBeenCalled();
-    expect(mockUpdateCalendarDuration).toHaveBeenCalledWith("2026-07-30", "stu1", "c1");
-  });
-
-  it("does not call any helper when student is falsy", () => {
+  it("does not record anything when student is falsy", () => {
     analyticsService.updatePageCount(makeCourse(), makeLo({ route: "course/c1/topic" }), null as any);
 
-    expect(mockUpdateLearningRecordsDuration).not.toHaveBeenCalled();
-    expect(mockUpdateCalendarDuration).not.toHaveBeenCalled();
+    expect(mockRecordLearningTick).not.toHaveBeenCalled();
   });
 
-  it("skips learning records update when lo.route is empty", () => {
+  it("records calendar time only when lo.route is empty", () => {
     analyticsService.updatePageCount(
       makeCourse({ courseId: "c1" }),
       makeLo({ route: "" }),
       makeStudent({ login: "stu1" })
     );
 
-    expect(mockUpdateLearningRecordsDuration).not.toHaveBeenCalled();
-    expect(mockUpdateCalendarDuration).toHaveBeenCalled();
+    expect(mockRecordLearningTick).toHaveBeenCalledWith("c1", null);
   });
 
-  it("logs error when a helper throws", () => {
-    mockUpdateLearningRecordsDuration.mockImplementation(() => {
+  it("logs error when recording throws", () => {
+    mockRecordLearningTick.mockImplementation(() => {
       throw new Error("duration fail");
     });
 

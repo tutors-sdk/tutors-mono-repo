@@ -8,6 +8,8 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 // The time library builds its own client; locally it resolves a different copy of supabase-js, so its seam is `getSupabase`.
 vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({ getSupabase: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
+// The reader's /api routes, which the browser code now saves through, read the service_role key from here.
+vi.mock("$env/dynamic/private", async () => ({ env: (await import("../../support/supabase-recorder.ts")).privateEnv }));
 // `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
 vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));

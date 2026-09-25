@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getSupabase } from "@tutors/tutors-time-lib";
+  import { getTutorsTimeSource } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
   import log from "@tutors/logger";
 
@@ -26,40 +26,8 @@
       return;
     }
     try {
-      const supabase = getSupabase();
-
-      const { data: assignments, error: assignmentsError } = await supabase
-        .from("assignments")
-        .select("id, name, url, due_date, opened_date")
-        .eq("courseid", id);
-
-      if (assignmentsError) throw new Error(assignmentsError.message);
-
-      const assignmentIds = (assignments ?? []).map((a) => a.id as number);
-
-      const countsByAssignment = new Map<number, number>();
-      if (assignmentIds.length > 0) {
-        const { data: submissions, error: submissionsError } = await supabase
-          .from("assignments_submissions")
-          .select("assignmentId")
-          .in("assignmentId", assignmentIds);
-
-        if (submissionsError) throw new Error(submissionsError.message);
-
-        for (const s of submissions ?? []) {
-          const aid = (s as { assignmentId: number }).assignmentId;
-          countsByAssignment.set(aid, (countsByAssignment.get(aid) ?? 0) + 1);
-        }
-      }
-
-      rows = (assignments ?? []).map((a) => ({
-        id: a.id as number,
-        name: (a as { name: string | null }).name,
-        url: (a as { url: string | null }).url,
-        due_date: (a as { due_date: string | null }).due_date,
-        opened_date: (a as { opened_date: string | null }).opened_date,
-        submissionCount: countsByAssignment.get(a.id as number) ?? 0
-      }));
+      // The reader counts submissions per assignment; only an educator of the course gets any.
+      rows = (await getTutorsTimeSource().courseRows(id)).assignments;
     } catch (e) {
       log.error("AssignmentsTable failed to load:", e);
       error = e instanceof Error ? e.message : "Failed to load assignments";

@@ -1,4 +1,4 @@
-import { getSupabase } from "@tutors/tutors-time-lib";
+import { getTutorsTimeSource } from "@tutors/tutors-time-lib";
 import log from "@tutors/logger";
 import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
@@ -22,8 +22,8 @@ function applyUserFields(fieldsByGithub: Map<string, UserFields>, rows: ConnectU
 }
 
 /**
- * Fetches `online_status`, `sentiment`, and `avatar_url` from tutors-connect-users for all students
- * in calendar and lab views, and attaches them to day/week and lab/step rows.
+ * Attaches `online_status`, `sentiment`, and `avatar_url` of the students in the calendar and lab views
+ * to their day/week and lab/step rows, from the user rows the time source returned for the course.
  */
 export async function enrichCourseUserFields(course: TutorsTimeCourse | null): Promise<void> {
   if (!course) return;
@@ -47,14 +47,11 @@ export async function enrichCourseUserFields(course: TutorsTimeCourse | null): P
   }
   if (ids.size === 0) return;
 
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("tutors-connect-users")
-    .select("github_id, online_status, sentiment, avatar_url")
-    .in("github_id", [...ids]);
-
-  if (error) {
-    log.warn("enrichCourseUserFields:", error.message);
+  let data: { github_id?: string; online_status?: string | null; sentiment?: string | null; avatar_url?: string | null }[];
+  try {
+    data = (await getTutorsTimeSource().courseRows(course.id)).users.filter((u) => ids.has(u.github_id?.trim() ?? ""));
+  } catch (error) {
+    log.warn("enrichCourseUserFields:", error instanceof Error ? error.message : String(error));
     return;
   }
 

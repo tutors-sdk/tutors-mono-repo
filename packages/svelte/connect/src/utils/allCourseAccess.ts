@@ -1,44 +1,20 @@
 /**
  * @service AllCourseAccess
- * Service for tracking and managing course access statistics across all users
+ * Service for tracking course access statistics across all users
  */
 
 import type { Course, IconType } from "@tutors/tutors-model-lib";
-import { supabase } from "@tutors/community/utils/supabase-client";
+import { readerApi } from "@tutors/community/utils/reader-api";
 import type { CourseVisit } from "../types.ts";
-import log from "@tutors/logger";
 
 /**
- * Updates the course access statistics in the database
- * Increments visit count and updates last visit timestamp
+ * Counts a visit to the course in the public catalogue, through the reader's server, which checks the
+ * course is published and takes its title, credits and privacy from the published course.
  * @param course - The course being accessed
  */
 export async function updateCourseList(course: Course): Promise<void> {
   if (!isValidCourseName(course.courseId)) return;
-  const { data, error } = await supabase.from("tutors-connect-courses").select("visit_count").eq("course_id", course.courseId).single();
-
-  if (error && error.code !== "PGRST116") {
-    log.error("Error fetching row:", error);
-    return;
-  }
-
-  const newVisits = data ? data.visit_count + 1 : 1;
-  const now = new Date();
-
-  // Upsert the row with the updated count and date
-  const { error: upsertError } = await supabase.from("tutors-connect-courses").upsert(
-    {
-      course_id: course.courseId,
-      visited_at: now,
-      visit_count: newVisits,
-      course_record: getCourseRecord(course)
-    },
-    { onConflict: "course_id" }
-  );
-
-  if (upsertError) {
-    log.error("Error upserting row:", upsertError);
-  }
+  await readerApi("POST", "/api/courses/visit", { courseId: course.courseId, courseRecord: getCourseRecord(course) });
 }
 
 /**

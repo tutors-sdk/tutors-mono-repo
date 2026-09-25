@@ -25,6 +25,15 @@
 - Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #TBD)
 - Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #TBD)
 
+#### Security
+
+- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the Auth.js session and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0063, 0064) (network, persistence) (PR #TBD)
+- Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #TBD)
+- My time: a student sees their own time and their classmates under pseudonyms (`student-1`, ...), with no classmate's name or avatar (Rule 0066) (network) (PR #TBD)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #TBD)
+
+  Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. The anon write policies stay for this release and are removed in the next (expand/contract).
+
 ### v16.2.2 (2026-09)
 
 #### Fixes
@@ -220,6 +229,11 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### Unreleased
+
+- The student count comes from `get_student_count()`, which returns the number without reading any student's profile (Rule 0070) (network) (PR #TBD)
+- The catalogue no longer deletes courses from the browser; the unused `pruneCatalogue` and `deleteCourses` are removed (PR #TBD)
+
 ### v16.2.0 (2026-09)
 
 #### Features
@@ -240,6 +254,12 @@
 
 ## Time (`tutors-time`)
 
+### Unreleased
+
+- Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067) (network, dom, screenshot) (PR #TBD)
+- The Moodle sync writes assignments with the service_role key (PR #TBD)
+
+  Deploy with `PUBLIC_READER_URL` set to the reader people sign in at, and `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` for the sync.
 ### v16.2.0 (2026-09)
 
 #### Features
@@ -306,6 +326,7 @@ any single one. Versioned with the monorepo.
 
 ### Unreleased
 
+- `time`: a pluggable data source. `readerTimeSource(readerUrl)` reads a course's rows from the Tutors reader with the viewer's session; `supabaseTimeSource()` (the default) keeps reading the tables. New exports `setTutorsTimeSource`, `getTutorsTimeSource`, `TutorsTimeSourceError`; `getStudentDisplayInfo` takes the course id and no longer returns an email address
 - `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
 - `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
 - `tutors-lite`: note pages no longer render a stray `s` after the note card

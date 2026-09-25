@@ -37,3 +37,8 @@ patches:
       - op: add
         path: /data/SYNC_INTERVAL_MINUTES
         value: "60"
+      # Course time data comes from the reader's /api/time with the viewer's
+      # reader session; the reader lists this origin in PRIVATE_API_ALLOWED_ORIGINS.
+      - op: add
+        path: /data/PUBLIC_READER_URL
+        value: "https://reader.tutors.dev"

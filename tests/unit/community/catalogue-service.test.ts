@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MockSupabaseClient, createMockFetch } from "../../bdd/support/mocks";
+import { MockSupabaseClient } from "../../bdd/support/mocks";
 
 vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
   const { MockSupabaseClient } = await import("../../bdd/support/mocks");
@@ -97,139 +97,37 @@ describe("catalogueService.getCatalogueCount", () => {
   });
 });
 
+// The student count comes from the database's get_student_count(), never from reading profile rows (Rule 0070).
 describe("catalogueService.getStudentCount", () => {
-  it("returns the count of students", async () => {
-    mockClient.setTableData("tutors-connect-profiles", [
-      { id: "s1" },
-      { id: "s2" }
-    ]);
+  const rpc = vi.fn();
+  beforeEach(() => {
+    rpc.mockReset();
+    (mockClient as unknown as { rpc: typeof rpc }).rpc = rpc;
+  });
+
+  it("returns the count the database function reports", async () => {
+    rpc.mockResolvedValue({ data: 2, error: null });
 
     const result = await catalogueService.getStudentCount();
 
     expect(result).toBe(2);
+    expect(rpc).toHaveBeenCalledWith("get_student_count");
   });
 
   it("returns 0 when no profiles exist", async () => {
-    const result = await catalogueService.getStudentCount();
-
-    expect(result).toBe(0);
-  });
-
-  it("returns 0 when Supabase returns an error", async () => {
-    mockClient.setTableError("tutors-connect-profiles", { message: "no profiles" });
+    rpc.mockResolvedValue({ data: 0, error: null });
 
     const result = await catalogueService.getStudentCount();
 
     expect(result).toBe(0);
   });
-});
 
-describe("catalogueService.pruneCatalogue", () => {
-  it("removes dead courses from the catalogue", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      makeCatalogueEntry({ course_id: "alive-course" }),
-      makeCatalogueEntry({ course_id: "dead-course" })
-    ]);
+  it("returns 0 and logs when the database function fails", async () => {
+    rpc.mockResolvedValue({ data: null, error: { message: "no function" } });
 
-    const mockFetch = createMockFetch({
-      "alive-course": async () => new Response(null, { status: 200 }),
-      "dead-course": async () => new Response(null, { status: 404 })
-    });
+    const result = await catalogueService.getStudentCount();
 
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    const remaining = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(remaining).toHaveLength(1);
-    expect(remaining[0].course_id).toBe("alive-course");
-  });
-
-  it("does not remove any courses when all are alive", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      makeCatalogueEntry({ course_id: "alive-1" }),
-      makeCatalogueEntry({ course_id: "alive-2" })
-    ]);
-
-    const mockFetch = createMockFetch({
-      "alive-1": async () => new Response(null, { status: 200 }),
-      "alive-2": async () => new Response(null, { status: 200 })
-    });
-
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(2);
-  });
-
-  it("treats fetch errors as dead courses", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      makeCatalogueEntry({ course_id: "error-course" })
-    ]);
-
-    const mockFetch = createMockFetch({
-      "error-course": async () => { throw new Error("network error"); }
-    });
-
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
-  });
-
-  it("handles empty catalogue gracefully", async () => {
-    const mockFetch = vi.fn();
-
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it("removes multiple dead courses in a single operation", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      makeCatalogueEntry({ course_id: "dead-1" }),
-      makeCatalogueEntry({ course_id: "dead-2" }),
-      makeCatalogueEntry({ course_id: "dead-3" })
-    ]);
-
-    const mockFetch = createMockFetch({
-      "dead-1": async () => new Response(null, { status: 500 }),
-      "dead-2": async () => new Response(null, { status: 500 }),
-      "dead-3": async () => new Response(null, { status: 500 })
-    });
-
-    await catalogueService.pruneCatalogue(mockFetch as any);
-
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
-  });
-});
-
-describe("catalogueService.deleteCourses", () => {
-  it("removes specified courses from the store", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      makeCatalogueEntry({ course_id: "c1" }),
-      makeCatalogueEntry({ course_id: "c2" }),
-      makeCatalogueEntry({ course_id: "c3" })
-    ]);
-
-    await catalogueService.deleteCourses(["c1", "c2"]);
-
-    const remaining = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(remaining).toHaveLength(1);
-    expect(remaining[0].course_id).toBe("c3");
-  });
-
-  it("logs success message after deletion", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      makeCatalogueEntry({ course_id: "c1" })
-    ]);
-
-    await catalogueService.deleteCourses(["c1"]);
-
-    expect(log.debug).toHaveBeenCalledWith("Deleted courses", { count: 1 });
-  });
-
-  it("throws and logs when Supabase returns an error", async () => {
-    mockClient.setTableError("tutors-connect-courses", { message: "permission denied" });
-
-    await expect(catalogueService.deleteCourses(["c1"])).rejects.toEqual({ message: "permission denied" });
-
-    expect(log.error).toHaveBeenCalledWith("Error deleting courses:", { message: "permission denied" });
+    expect(result).toBe(0);
+    expect(log.error).toHaveBeenCalled();
   });
 });

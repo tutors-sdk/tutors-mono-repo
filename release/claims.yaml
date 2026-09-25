@@ -34,3 +34,24 @@ claims:
   - artefact: migration
     scope: "app_errors:anon_select_app_errors"
     reason: "CHANGELOG Unreleased: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it (migration)"
+  - artefact: network
+    scope: "reader:*"
+    reason: "Rule 0064: the reader stores a signed-in student's data through its /api routes, under the session's login"
+  - artefact: persistence
+    scope: "reader:*"
+    reason: "Rule 0064: student rows are written by the reader's server under the session's login, not by the browser"
+  - artefact: dom
+    scope: "reader:whiteboard*"
+    reason: "Rule 0068: an anonymous visitor's whiteboard edits are not saved, and the status line says so"
+  - artefact: network
+    scope: "time:*"
+    reason: "Rule 0067: the time dashboard loads course time data from the reader's API with the viewer's reader session"
+  - artefact: dom
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): a viewer not signed in to the reader is shown a link to sign in instead of course time data"
+  - artefact: screenshot
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): a viewer not signed in to the reader is shown a link to sign in instead of course time data"
+  - artefact: network
+    scope: "catalogue:*"
+    reason: "Rule 0070: the catalogue shows the number of students without reading any student's profile"

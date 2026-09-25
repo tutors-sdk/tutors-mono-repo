@@ -1,15 +1,20 @@
 import type { LayoutLoad } from "./$types";
-import { initSupabase, TutorsTime } from "@tutors/tutors-time-lib";
-import { env } from "$env/dynamic/public";
+import { TutorsTime } from "@tutors/tutors-time-lib";
 import { enrichCourseUserFields } from "$lib/enrichCourseUserFields";
+import { isSignedOut, readerSignInUrl, useReaderTimeSource } from "$lib/time-source";
 
 export const load: LayoutLoad = async ({ params }) => {
-  initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+  useReaderTimeSource();
   const courseId = (params.courseid ?? "").trim();
   if (!courseId) {
-    return { course: null };
+    return { course: null, signInUrl: null };
   }
-  const course = await TutorsTime.loadCourseTime(courseId);
-  await enrichCourseUserFields(course);
-  return { course };
+  try {
+    const course = await TutorsTime.loadCourseTime(courseId);
+    await enrichCourseUserFields(course);
+    return { course, signInUrl: null };
+  } catch (error) {
+    if (isSignedOut(error)) return { course: null, signInUrl: readerSignInUrl() };
+    throw error;
+  }
 };

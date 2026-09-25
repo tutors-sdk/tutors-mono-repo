@@ -7,6 +7,15 @@
 # Format: `<app> <METHOD> <route id> | who: <callers>`
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
-time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one)
+time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one). It writes only what it fetches from Moodle, with the service_role key
+reader POST /api/analytics | who: a signed-in student (Auth.js session, else 401); rows are written under the session's login (Rules 0063, 0064)
+reader PUT /api/me | who: a signed-in user, for their own tutors-connect-users row; name, email and avatar come from the session
+reader PATCH /api/me | who: a signed-in user, for their own sentiment and online status (Rule 0064)
+reader PUT /api/profile | who: a signed-in user, for their own course-visit history
+reader POST /api/courses/visit | who: anyone viewing a course; counts a visit to a course the server finds published, with title and credits from that course
+reader POST /api/presence | who: a signed-in student who shares presence; stored under the session's login (Rule 0064)
+reader PUT /api/locks | who: a signed-in educator of the course (enrollment.yaml educators or PRIVATE_TUTORS_ADMINS), else 403 (Rule 0065)
+reader DELETE /api/locks | who: a signed-in educator of the course, else 403 (Rule 0065)
+reader PUT /api/whiteboard | who: a signed-in user; a personal room is always the session's own (Rule 0068)
 reader POST /auth/signin/github | hook | who: anyone; Auth.js starts the GitHub OAuth flow
 reader POST /auth/signout | hook | who: a signed-in user; Auth.js checks its own CSRF token
