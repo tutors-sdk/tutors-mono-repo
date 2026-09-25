@@ -4,8 +4,8 @@ Tutors signs people in with Auth.js, so Supabase never sees who is calling: ever
 arrives as `anon`, with the key every page ships. Row-Level Security cannot tell one student from
 another, and the policies `20260924_enable_rls_public_tables.sql` added let any row through. This
 guide describes how that is being closed: writes, and reads of personal data, move to SvelteKit
-server routes that check the Auth.js session and use a private `service_role` key. It is an
-expand/contract change ([MIGRATIONS.md](MIGRATIONS.md)) spread over two releases.
+server routes that check the Auth.js session and use a private `service_role` key. The contract
+migration in this release removes the old anon access after the new pods are serving traffic.
 
 The behaviour is specified as EARS Rules in
 [`tests/bdd/features/shared/server-data-access.feature`](../tests/bdd/features/shared/server-data-access.feature)
@@ -25,7 +25,7 @@ All in the reader, under `apps/reader/src/routes/api/`. The helpers they share a
 | `POST /api/courses/visit` | anyone viewing a course | counts a visit in the public catalogue; the course must be published, and its title, credits and privacy come from its tutors.json |
 | `POST /api/presence` | a signed-in student who shares presence | the latest learning object in `tutors-connect-latest`; the user in the payload is replaced with the session's |
 | `PUT`, `DELETE /api/locks` | an educator of the course | lock, unlock or remove a lock in `tutors_content_locks` |
-| `GET`, `PUT /api/whiteboard` | reading a shared board: anyone; a personal board or saving: a signed-in user | a whiteboard learning object's saved scene; the owner of a personal room is appended by the server |
+| `GET`, `PUT /api/whiteboard` | reading a shared board: anyone; a personal board or saving: a signed-in user | a whiteboard learning object's saved scene; personal rooms have a separate namespace derived from the session |
 | `GET /api/time/[courseId]` | a signed-in user; the time dashboard's origin with the reader's cookie | a course's time rows: all of them for an educator, otherwise the viewer's own and classmates pseudonymised |
 
 Common to every route:
@@ -88,73 +88,29 @@ worse than the situation this change closes.
   `secrets.yaml.example` files).
 - If it equals the anon key, the reader logs an error and does not use it (the routes answer 503).
 
-## Release plan
+## Release order
 
-### Release N (this change): expand
+1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader and time, `PRIVATE_API_ALLOWED_ORIGINS` on
+   reader, `PUBLIC_READER_URL` on time, and `PRIVATE_MOODLE_SYNC_TOKEN` on time.
+2. Apply migrations `20260925100000` through `20260925100200`, then deploy the new reader and time
+   pods and wait until all old pods have drained.
+3. Apply `20260925100300_revoke_anon_student_data.sql`. It removes anon policies and table grants
+   for personal data and writes, and revokes anon access to the two student-counter RPCs. Public
+   catalogue, shared presence and lock reads remain. Reload old browser tabs: their direct anon
+   writes stop working at this step.
 
-- Migrations: `whiteboard_scenes` (RLS on, no anon policy), `app_errors` closed to anon reads,
-  `get_error_counts` runs as its owner, `get_student_count()` added. The `app_errors` policy drop is a
-  claimed contract step: the table had never reached production.
-- Code: every write and every personal read in the reader, the community and connect packages, the
-  RBAC lock store, the whiteboard and the time dashboard goes through the routes above. The time
-  app's Moodle sync writes with the service key.
-- **The anon policies on the other tables stay.** While the release rolls out, pods of the previous
-  release, and browser tabs opened before it, still write as anon. Removing the policies now would
-  stop them saving learning records, sign-in and presence.
-- Deploy: set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (reader and time), `PRIVATE_API_ALLOWED_ORIGINS`
-  (reader) and `PUBLIC_READER_URL` (time) before rolling out. Without the key, saving answers 503.
-- Apply the three new migrations to production, in name order, before the new pods take traffic.
+Do not run all pending migrations before step 2: that would apply the contract migration while
+old pods still need anon writes. After step 3, keep the patched pods during any rollback rather
+than restoring the public write policies.
 
-### Release N+1: contract
+The protected tables predate this repository's migration directory. Rehearse the contract
+migration against a copy of production before applying it; the local release harness cannot
+recreate those tables from migrations alone. Do not describe the exposure as closed until step 3
+has succeeded on production.
 
-Once no deployed version writes as anon (release N is the one in production, and the previous
-release's tag has been checked, not only `main`), remove the anon policies. Draft of the migration:
-it is **not** in `supabase/migrations` yet, so the harness and `pnpm check:migrations` cannot
-mistake it for part of release N.
-
-```sql
--- supabase/migrations/<N+1 date>_revoke_anon_student_data.sql
--- Contract step of guides/SERVER-WRITES.md. Every write and personal read goes through the
--- reader's server since release N; no deployed version uses these policies.
-DROP POLICY IF EXISTS anon_select ON public."tutors-connect-users";
-DROP POLICY IF EXISTS anon_insert ON public."tutors-connect-users";
-DROP POLICY IF EXISTS anon_update ON public."tutors-connect-users";
-DROP POLICY IF EXISTS anon_select ON public."tutors-connect-profiles";
-DROP POLICY IF EXISTS anon_insert ON public."tutors-connect-profiles";
-DROP POLICY IF EXISTS anon_update ON public."tutors-connect-profiles";
-DROP POLICY IF EXISTS anon_insert ON public."tutors-connect-latest";   -- anon_select stays: live dashboard
-DROP POLICY IF EXISTS anon_update ON public."tutors-connect-latest";
-DROP POLICY IF EXISTS anon_insert ON public."tutors-connect-courses";  -- anon_select stays: catalogue
-DROP POLICY IF EXISTS anon_update ON public."tutors-connect-courses";
-DROP POLICY IF EXISTS anon_delete ON public."tutors-connect-courses";
-DROP POLICY IF EXISTS anon_select ON public.learning_records;
-DROP POLICY IF EXISTS anon_insert ON public.learning_records;
-DROP POLICY IF EXISTS anon_update ON public.learning_records;
-DROP POLICY IF EXISTS anon_select ON public.calendar;
-DROP POLICY IF EXISTS anon_insert ON public.calendar;
-DROP POLICY IF EXISTS anon_update ON public.calendar;
-DROP POLICY IF EXISTS anon_select ON public.assignments;
-DROP POLICY IF EXISTS anon_insert ON public.assignments;
-DROP POLICY IF EXISTS anon_update ON public.assignments;
-DROP POLICY IF EXISTS anon_select ON public.assignments_submissions;
-DROP POLICY IF EXISTS anon_insert ON public.assignments_submissions;
-DROP POLICY IF EXISTS anon_update ON public.assignments_submissions;
-DROP POLICY IF EXISTS content_locks_insert ON public.tutors_content_locks;  -- content_locks_select stays
-DROP POLICY IF EXISTS content_locks_update ON public.tutors_content_locks;
-DROP POLICY IF EXISTS content_locks_delete ON public.tutors_content_locks;
--- The two counters the browser used to call. Confirm their exact signatures on production first
--- (\df get_count_learning_records, \df increment_calendar); a SECURITY DEFINER one would otherwise
--- keep letting anon change any student's counts.
-REVOKE EXECUTE ON FUNCTION public.get_count_learning_records(text, text, text, text) FROM anon, PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.increment_calendar(text, text, text, text) FROM anon, PUBLIC;
-```
-
-The release that ships it claims each dropped policy in `release/claims.yaml` (`artefact: migration`,
-scope `tutors-connect-users:anon_select` and so on, or a glob such as `learning_records:anon_*`), and
-records the same findings in `tests/conformance/shipped-contract-migrations.txt`.
-The tables other than `app_errors` and `whiteboard_scenes` are not created by
-`supabase/migrations` yet, so the harness cannot rehearse this file against them (see MIGRATIONS.md,
-"What is not in this directory yet"). Apply it to a copy of production first.
+Moodle sync is operator-only. Call the time app's `POST /api/sync` with
+`Authorization: Bearer <PRIVATE_MOODLE_SYNC_TOKEN>`; the dashboard no longer offers a browser sync
+control because it has no sign-in of its own.
 
 ## Not closed by this change
 
@@ -163,7 +119,5 @@ The tables other than `app_errors` and `whiteboard_scenes` are not created by
   only by `/api/presence`.
 - **`app_errors`** still accepts inserts from anyone holding the anon key, so the table can be filled
   with junk, but it can no longer be read.
-- **The time app's `POST /api/sync`** still has no authentication. It writes only what it fetches
-  from Moodle, now with the service key.
 - **Assignments and submissions** reach browsers only as counts, and only for educators, through
-  `/api/time`. Their anon policies go in release N+1.
+  `/api/time`.

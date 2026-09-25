@@ -40,7 +40,7 @@
   }
 
   // Scenes are read and saved through the reader's server, which puts a personal board in a room only
-  // the signed-in student can reach (Rule 0068). The room id sent to the editor is only its realtime channel.
+  // the signed-in student can reach (Rule 0068). Only shared rooms join Realtime.
   function sceneQuery(): URLSearchParams {
     return new URLSearchParams({ courseId: lo.parentCourse?.courseId || "unknown", route: lo.route, shared: String(isShared) });
   }
@@ -119,8 +119,9 @@
       const savedScene = await loadSceneFromDb();
       iframe?.contentWindow?.postMessage({
         type: "init-editor",
-        supabaseUrl: env.PUBLIC_SUPABASE_URL,
-        supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
+        // Personal edits stay in this browser and are persisted by the authenticated route.
+        supabaseUrl: isShared ? env.PUBLIC_SUPABASE_URL : undefined,
+        supabaseAnonKey: isShared ? env.PUBLIC_SUPABASE_ANON_KEY : undefined,
         roomId,
         user: {
           name: tutorsId.value?.name || "Anonymous",

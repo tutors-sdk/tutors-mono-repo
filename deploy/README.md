@@ -238,6 +238,7 @@ Environment variables the server reads at startup:
 | `PRIVATE_TUTORS_ADMINS`, `PRIVATE_COURSE_HOSTS` | Reader: logins that are educators of every course; hosts besides `*.netlify.app` that serve courses |
 | `PUBLIC_READER_URL` | Time: the reader it reads course time data from |
 | `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
+| `PRIVATE_MOODLE_SYNC_TOKEN` | Time: required bearer token for operator-only `POST /api/sync`; keep it in a Secret |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
 | `HARNESS_NOW` | **Release harness only.** An ISO 8601 instant that freezes the clock the server stamps into responses and records. Never set it in a deployment |

@@ -187,7 +187,7 @@ Client/server error aggregation for observability. Authoritative columns from `s
 **Access:** browsers may insert rows with the anon key; since `20260925100100_restrict_app_errors_reads.sql` nobody holding the anon key can read them (Rule 0069). `/healthz` reads per-app counts only, through `get_error_counts`.
 
 ### Who can reach student rows
-Every write and every read of a student's own data goes through the reader's `/api` routes, which check the Auth.js session and use the service_role key ([guides/SERVER-WRITES.md](../guides/SERVER-WRITES.md)). The anon policies on `tutors-connect-users`, `tutors-connect-profiles`, `learning_records`, `calendar` and the write policies on the other tables remain for one more release, for pods and browser tabs of the previous release, and are removed by the contract migration drafted in that guide.
+Every write and every read of a student's own data goes through the reader's `/api` routes, which check the Auth.js session and use the service_role key ([guides/SERVER-WRITES.md](../guides/SERVER-WRITES.md)). `20260925100300_revoke_anon_student_data.sql` removes the old anon access after the new pods are serving traffic.
 
 ### Legacy tables (unused)
 `students`, `studentsinteraction`, `course`, `learningobject`, `users` and `"tutors-connect_moodle"` predate Tutors Connect and are not read or written by any current app, nor are the 19 functions over them (`get_lab_data`, `get_topic_data`, `get_learner_records` and others). They may still hold student data from earlier deployments. Since `supabase/migrations/20260924_enable_rls_public_tables.sql` they have RLS on with no policy, so the anon key cannot reach them; only `service_role` or a direct Postgres role can. Export anything worth keeping before a later contract migration drops them.
@@ -226,7 +226,7 @@ When a user requests data deletion, purge the tables holding their personal data
 2. `calendar` (WHERE `studentid` = `<login>`)
 3. `"tutors-connect-latest"` (WHERE `student_id` = `<login>`)
 4. `"tutors-connect-profiles"` (WHERE `tutorId` = `<login>`)
-5. `whiteboard_scenes` (personal boards — WHERE `room_id` ends with `-<login>`)
+5. `whiteboard_scenes` (personal boards — WHERE `room_id` LIKE `wb-personal:%:<login>`)
 6. `app_errors` (WHERE `student_id` = `<login>`)
 7. `tutors_content_locks` (set `locked_by` = NULL WHERE `locked_by` = `<login>` — preferable to deleting locks)
 8. `"tutors-connect-users"` (WHERE `github_id` = `<login>`) — last
