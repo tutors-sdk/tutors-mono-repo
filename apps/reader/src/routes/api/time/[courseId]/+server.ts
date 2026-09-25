@@ -6,15 +6,6 @@ import { serviceClient } from "../../../../lib/server/api/service-client.ts";
 import { pseudonymise, readTimeRows } from "../../../../lib/server/api/time-data.ts";
 import * as check from "../../../../lib/server/api/validate.ts";
 
-/**
- * A course's time data for Tutors Time: every row for an educator of the course, the viewer's own
- * rows and pseudonymised classmates for anyone else signed in (Rule 0066), 401 for nobody (Rule 0071).
- *
- * The time dashboard runs on its own origin and has no sign-in of its own, so it calls this route
- * with `credentials: "include"` and the reader's session cookie comes along (the two share a site).
- * Only origins in PRIVATE_API_ALLOWED_ORIGINS get the CORS headers that let their page read the
- * answer, and a request from any other origin is refused before the database is touched.
- */
 
 function corsHeaders(request: Request, url: URL): Record<string, string> | null {
   const origin = request.headers.get("origin");
@@ -43,7 +34,6 @@ export const GET: RequestHandler = async ({ request, url, params, locals }) => {
   return answer(200, educator ? rows : pseudonymise(rows, user.login), cors);
 };
 
-/** The CORS preflight for an allowed origin. */
 export const OPTIONS: RequestHandler = async ({ request, url }) => {
   const cors = corsHeaders(request, url);
   if (!cors) return new Response(null, { status: 403 });

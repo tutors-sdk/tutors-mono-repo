@@ -3,14 +3,7 @@ import { noContent, readJson, requireDb, requireUser, sessionUser, valid } from 
 import { getWhiteboardScene, saveWhiteboardScene, whiteboardRoomId } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
 
-/**
- * A whiteboard learning object's saved edits. A personal room belongs to the session's login, which
- * the server appends to the room id itself, so no request can name another student's room (Rule
- * 0068). A shared room is the course's collaborative board: anyone may read it and any signed-in
- * user may save it.
- */
 
-/** The saved scene of a room, or `{ scene: null }`. */
 export const GET: RequestHandler = async ({ url, locals }) => {
   const courseId = valid(check.courseId(url.searchParams.get("courseId")), "courseId is required");
   const route = valid(check.loRoute(url.searchParams.get("route")), "route is required");
@@ -24,7 +17,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
   return json({ scene: await getWhiteboardScene(requireDb(), whiteboardRoomId(courseId, route, owner)) });
 };
 
-/** Save the elements of a room. */
 export const PUT: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);
   const body = await readJson(request, 512 * 1024);

@@ -1,11 +1,3 @@
-/**
- * @service SupabaseProfile
- * Service for managing a signed-in user's course visit history and preferences, stored in Supabase
- * through the reader's /api/profile route (the server reads and writes the session's own row only).
- * Implements the ProfileStore interface for server-side persistence
- * Requires authenticated user context from tutorsConnectService
- */
-
 import { readerApi, readerApiJson } from "@tutors/community/utils/reader-api";
 import { tutorsId } from "@tutors/runes";
 import log from "@tutors/logger";

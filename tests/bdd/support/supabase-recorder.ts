@@ -16,7 +16,6 @@ type BroadcastHandler = (message: BroadcastMessage) => void;
 export type TableCall = {
   table: string;
   op: "select" | "upsert" | "update" | "delete";
-  /** The API key of the client that made the call: the browser's anon key or the server's service_role key. */
   key?: string;
   columns?: string;
   row?: Row;
@@ -59,7 +58,6 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
-  /** Paging: the recorder holds few rows, so every page but the first is empty. */
   range(from: number) {
     this.from = from;
     return this;
@@ -193,7 +191,6 @@ export class RecordingSupabase {
     return new RecordingQuery(this, { table, op: "select", filters: [], key });
   }
 
-  /** The same database seen through a client created with `key`: every call it makes is logged with that key. */
   client(key: string) {
     return {
       from: (table: string) => this.from(table, key),
@@ -203,16 +200,10 @@ export class RecordingSupabase {
     };
   }
 
-  /** Every table call and rpc made with `key`. */
   callsWith(key: string): (TableCall | RpcCall)[] {
     return [...this.tableCalls.filter((c) => c.key === key), ...this.rpcCalls.filter((c) => c.key === key)];
   }
 
-  /**
-   * The database functions the apps call. `get_count_learning_records` reports the
-   * stored value of a learning record field; `get_student_count` counts the profiles
-   * without returning them; `increment_calendar` is only logged.
-   */
   rpc(fn: string, args: Row = {}, key?: string) {
     this.rpcCalls.push({ fn, args, key });
     if (fn === "get_student_count") return Promise.resolve({ data: this.rows("tutors-connect-profiles").length, error: null });
@@ -253,10 +244,6 @@ export class RecordingSupabase {
 /** The one client every product module receives from the mocked `createClient`. */
 export const recorder = new RecordingSupabase();
 
-/**
- * Stands in for `createClient` from `@supabase/supabase-js`. A client created with a key logs that key on
- * every call, so a step can tell the browser's anon-key calls from the reader server's service_role calls.
- */
 export const createClient = (_url?: string, key?: string) => (key ? recorder.client(key) : recorder);
 
 /** `$env/dynamic/public` as a configured, signed-in deployment. */
@@ -266,10 +253,6 @@ export const publicEnv: Record<string, string> = {
   PUBLIC_ANON_MODE: "FALSE"
 };
 
-/**
- * `$env/dynamic/private` as the reader's server sees it in a configured deployment: the service_role key
- * its /api routes use, and the time dashboard as the one other origin allowed to read time data.
- */
 export const privateEnv: Record<string, string> = {
   PRIVATE_SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
   PRIVATE_API_ALLOWED_ORIGINS: "https://time.test",
@@ -297,14 +280,8 @@ export function browserStorage(): Storage {
   });
 }
 
-/**
- * Let fire-and-forget product promises (analytics writes, profile saves) run to completion, including
- * the requests they make to the reader's server and anything those requests set off.
- */
 export async function settle(): Promise<void> {
   const { readerBusy, readerIdle } = await import("./reader-api.ts");
-  // A request's answer can set off the next one (a profile reload, then its save), so wait until a
-  // few ticks pass with nothing in flight.
   for (let round = 0; round < 20; round++) {
     for (let i = 0; i < 3; i++) await new Promise((resolve) => setTimeout(resolve, 0));
     if (!readerBusy()) return;

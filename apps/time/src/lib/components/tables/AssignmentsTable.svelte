@@ -26,7 +26,6 @@
       return;
     }
     try {
-      // The reader counts submissions per assignment; only an educator of the course gets any.
       rows = (await getTutorsTimeSource().courseRows(id)).assignments;
     } catch (e) {
       log.error("AssignmentsTable failed to load:", e);

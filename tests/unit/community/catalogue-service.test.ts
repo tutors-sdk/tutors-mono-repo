@@ -97,7 +97,6 @@ describe("catalogueService.getCatalogueCount", () => {
   });
 });
 
-// The student count comes from the database's get_student_count(), never from reading profile rows (Rule 0070).
 describe("catalogueService.getStudentCount", () => {
   const rpc = vi.fn();
   beforeEach(() => {

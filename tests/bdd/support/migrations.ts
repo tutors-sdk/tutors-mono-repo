@@ -3,16 +3,6 @@ import { join } from "node:path";
 import { REPO_ROOT } from "../../../scripts/checks/lib/repo.ts";
 import { MIGRATIONS_DIR, splitStatements } from "../../../scripts/checks/migrations.ts";
 
-/**
- * The Row-Level Security policies and functions the database ends up with after every file in
- * supabase/migrations is applied in name order, read from the migrations themselves: the product
- * the harness ships. CREATE POLICY adds a policy, DROP POLICY removes it, CREATE OR REPLACE
- * FUNCTION keeps the last definition.
- *
- * A `DO $$ ... $$` block runs SQL this reader cannot follow, so any table a DO block names is
- * reported in `opaqueTables`, and a step about that table fails rather than trusting a partial
- * picture.
- */
 
 export interface Policy {
   name: string;
@@ -66,13 +56,11 @@ export function builtSchema(): Schema {
   return { policies, functions, opaqueTables };
 }
 
-/** Policies on `table` that apply to the anon key (granted to anon or to every role) for `command`. */
 export function anonPolicies(schema: Schema, table: string, command: "SELECT" | "INSERT" | "UPDATE" | "DELETE"): Policy[] {
   if (schema.opaqueTables.has(table)) throw new Error(`a DO block in supabase/migrations names ${table}; its policies cannot be read from the SQL text`);
   return schema.policies.filter((p) => p.table === table && (p.command === command || p.command === "ALL") && p.roles.some((r) => r === "anon" || r === "public"));
 }
 
-/** Every policy on `table` that applies to the anon key, whatever the command. */
 export function anyAnonPolicy(schema: Schema, table: string): Policy[] {
   return (["SELECT", "INSERT", "UPDATE", "DELETE"] as const).flatMap((c) => anonPolicies(schema, table, c));
 }

@@ -6,7 +6,6 @@ const { mockRecordLearningPageLoad, mockRecordLearningTick, mockAddOrUpdateStude
   mockAddOrUpdateStudent: vi.fn()
 }));
 
-// The reader's server identifies the student from the session, so neither call carries a student id.
 vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
   recordLearningPageLoad: mockRecordLearningPageLoad,
   recordLearningTick: mockRecordLearningTick,

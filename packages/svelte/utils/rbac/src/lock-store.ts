@@ -20,11 +20,6 @@ export async function getLocksForCourse(courseId: string): Promise<ContentLock[]
   return (data ?? []) as ContentLock[];
 }
 
-/**
- * Lock or unlock a learning object through the reader's server, which checks that the signed-in user
- * is an educator of the course (Rule 0065) and records them as `locked_by`.
- * @returns whether the server saved it
- */
 export async function upsertLock(courseId: string, loRoute: string, locked: boolean): Promise<boolean> {
   if (!courseId || !loRoute) return false;
   const response = await readerApi("PUT", "/api/locks", { courseId, loRoute, locked });
@@ -35,7 +30,6 @@ export async function upsertLock(courseId: string, loRoute: string, locked: bool
   return true;
 }
 
-/** Remove a lock row through the reader's server (educators only). */
 export async function removeLock(courseId: string, loRoute: string): Promise<boolean> {
   if (!courseId || !loRoute) return false;
   const response = await readerApi("DELETE", "/api/locks", { courseId, loRoute });

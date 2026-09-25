@@ -1,17 +1,7 @@
-/**
- * @service AllCourseAccess
- * Service for tracking course access statistics across all users
- */
-
 import type { Course, IconType } from "@tutors/tutors-model-lib";
 import { readerApi } from "@tutors/community/utils/reader-api";
 import type { CourseVisit } from "../types.ts";
 
-/**
- * Counts a visit to the course in the public catalogue, through the reader's server, which checks the
- * course is published and takes its title, credits and privacy from the published course.
- * @param course - The course being accessed
- */
 export async function updateCourseList(course: Course): Promise<void> {
   if (!isValidCourseName(course.courseId)) return;
   await readerApi("POST", "/api/courses/visit", { courseId: course.courseId, courseRecord: getCourseRecord(course) });

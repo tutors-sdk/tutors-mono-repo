@@ -85,10 +85,6 @@ function toSubmissionRow(
   };
 }
 
-/**
- * The Moodle sync writes assignments and submissions on the server with the service_role key, so the
- * anon key needs no write access to those tables. The key is private and never reaches a browser.
- */
 function getClient() {
   const key = privateEnv.PRIVATE_SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!key) throw new Error("PRIVATE_SUPABASE_SERVICE_ROLE_KEY is not set; the Moodle sync cannot write");

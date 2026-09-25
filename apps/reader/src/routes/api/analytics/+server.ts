@@ -3,11 +3,6 @@ import { noContent, readJson, requireDb, requireUser, valid } from "../../../lib
 import { recordPageLoad, recordTick } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
 
-/**
- * A signed-in student's learning analytics: a page load (`kind: "page-load"`) or the 30-second
- * "still reading" tick (`kind: "tick"`). The student is the session's login; a student id in the
- * body is ignored (Rules 0071, 0072).
- */
 export const POST: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);
   const body = await readJson(request);

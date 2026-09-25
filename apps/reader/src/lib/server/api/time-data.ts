@@ -1,14 +1,3 @@
-/**
- * The rows behind Tutors Time for one course, read with the service_role client and returned by
- * GET /api/time/[courseId] to the reader's own "My time" page and to the time dashboard. The rows
- * keep the shape of their tables (TutorsTimeRows in packages/jsr/time); the time library builds its
- * models from them in the browser.
- *
- * An educator of the course (course-access.ts) gets every row (Rule 0066, @inactive). Anyone else
- * signed in gets their own rows as they are and every other student's rows under a pseudonym
- * (`student-1`, ...), with no other student's name, avatar, sentiment or status: enough for the
- * course medians on "My time", nothing that identifies a classmate (Rule 0066, @active).
- */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { StoreError } from "./store.ts";
 
@@ -45,7 +34,6 @@ type Page<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null
 const PAGE = 1000;
 const MAX_ROWS = 200_000;
 
-/** Every row of a query, a page at a time: PostgREST returns at most 1000 rows per request. */
 async function selectAll<T>(what: string, page: (from: number, to: number) => Page<T>): Promise<T[]> {
   const rows: T[] = [];
   for (let from = 0; from < MAX_ROWS; from += PAGE) {
@@ -70,7 +58,6 @@ async function readUsers(db: SupabaseClient, ids: string[]): Promise<TimeUserRow
   return users;
 }
 
-/** Moodle assignments of the course with their submission counts; none when the course has no Moodle sync. */
 async function readAssignments(db: SupabaseClient, courseId: string): Promise<AssignmentSummary[]> {
   const { data, error } = await db.from("assignments").select("id, name, url, due_date, opened_date").eq("courseid", courseId);
   if (error || !data?.length) return [];
@@ -83,7 +70,6 @@ async function readAssignments(db: SupabaseClient, courseId: string): Promise<As
   return assignments.map((a) => ({ ...a, submissionCount: counts.get(a.id) ?? 0 }));
 }
 
-/** Every time row of the course, as an educator sees it. */
 export async function readTimeRows(db: SupabaseClient, courseId: string): Promise<TimeRows> {
   const [courseResult, calendar, learningRecords, assignments] = await Promise.all([
     db.from("tutors-connect-courses").select("course_id, course_record").eq("course_id", courseId).maybeSingle(),
@@ -110,7 +96,6 @@ export async function readTimeRows(db: SupabaseClient, courseId: string): Promis
   };
 }
 
-/** What a viewer who does not teach the course may see: their own rows, and every other student pseudonymised. */
 export function pseudonymise(rows: TimeRows, viewer: string): TimeRows {
   const aliases = new Map<string, string>();
   const alias = (id: unknown): unknown => {
@@ -122,7 +107,6 @@ export function pseudonymise(rows: TimeRows, viewer: string): TimeRows {
     }
     return a;
   };
-  // Aliases are handed out in id order, so a pseudonym does not reveal who was most recently active.
   [...new Set([...rows.calendar.map((r) => r.studentid), ...rows.learningRecords.map((r) => r.student_id)])]
     .filter((id): id is string => typeof id === "string")
     .sort()

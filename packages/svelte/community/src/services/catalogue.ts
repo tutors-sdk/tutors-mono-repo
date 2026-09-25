@@ -34,7 +34,6 @@ export const catalogueService: CatalogueService = {
     }
   },
 
-  /** The number of students with a profile, counted by the database: no profile leaves it (Rule 0070). */
   async getStudentCount() {
     try {
       const { data, error } = await supabase.rpc("get_student_count");

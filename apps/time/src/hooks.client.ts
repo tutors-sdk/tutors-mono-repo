@@ -4,7 +4,6 @@ import { createSupabaseErrorTransport } from "@tutors/community/utils/error-tran
 
 import { useReaderTimeSource } from "$lib/time-source";
 
-// Course rows come from the reader's API with the viewer's reader session, never from the database.
 useReaderTimeSource();
 
 setAppName("tutors-time");

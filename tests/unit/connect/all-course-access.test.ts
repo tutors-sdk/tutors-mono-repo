@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Course visits reach the catalogue through the reader's POST /api/courses/visit. The browser half
-// (updateCourseList) and the server half (the route handler, with the service_role client) are both
-// the real code; the database is the Supabase recorder and the course host is a stubbed fetch.
-// By the path product code resolves (the reader and community share one install), and by name for a hoisted install.
 vi.mock("../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
 vi.mock("$env/dynamic/public", () => ({
@@ -28,10 +24,8 @@ function createMockCourse(overrides: Partial<Course> = {}): Course {
   } as Course;
 }
 
-/** What the browser sent, as parsed JSON bodies of POST /api/courses/visit. */
 let sent: { courseId: string; courseRecord: Record<string, unknown> }[];
 
-/** The published tutors.json of each course the host serves. */
 const published = new Map<string, unknown>([
   ["valid-course-1", { title: "Published Title", properties: { credits: "Published Credits", private: 0 } }],
   ["private-course", { title: "Private Course", properties: { credits: "Staff", private: 1 } }]
@@ -51,7 +45,6 @@ async function visit(courseId: string, courseRecord: Record<string, unknown> = {
     body: JSON.stringify({ courseId, courseRecord })
   });
   return POST({ request } as Parameters<typeof POST>[0]).catch((e: { status?: number }) => {
-    // Only a SvelteKit error(...) is an answer; anything else is a bug the test must show.
     if (typeof e.status !== "number") throw e;
     return new Response(null, { status: e.status });
   });

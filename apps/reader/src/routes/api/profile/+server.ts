@@ -4,13 +4,11 @@ import { getProfile, saveProfile } from "../../../lib/server/api/store.ts";
 
 const MAX_VISITS = 1000;
 
-/** The signed-in user's course-visit history (the reader's home page list). */
 export const GET: RequestHandler = async ({ locals }) => {
   const user = await requireUser(locals);
   return json({ courseVisits: await getProfile(requireDb(), user.login) });
 };
 
-/** Replace the signed-in user's course-visit history. */
 export const PUT: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);
   const body = await readJson(request, 512 * 1024);

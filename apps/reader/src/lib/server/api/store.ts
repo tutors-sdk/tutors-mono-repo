@@ -1,10 +1,3 @@
-/**
- * What the reader's /api routes do to the database, with the service_role client.
- *
- * Every function takes the caller's identity from the Auth.js session (`login`), never from the
- * request body, so a student can only write their own rows. The logic mirrors what the browser
- * used to do with the anon key (packages/svelte/community/src/utils/supabase-client.ts).
- */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SessionUser } from "./http.ts";
 
@@ -14,7 +7,6 @@ function fail(what: string, error: { message?: string } | null): never {
   throw new StoreError(`${what}: ${error?.message ?? "unknown error"}`);
 }
 
-// ---- learning records and calendar ---------------------------------------------------------
 
 async function nextIncrement(db: SupabaseClient, field: "duration" | "count", courseId: string, login: string, loId: string): Promise<number> {
   const { data, error } = await db.rpc("get_count_learning_records", {
@@ -24,7 +16,6 @@ async function nextIncrement(db: SupabaseClient, field: "duration" | "count", co
     lo_key: loId
   });
   if (error) fail("get_count_learning_records", error);
-  // No record yet comes back as an empty array: the first visit counts as 1.
   return ((data as { increment?: number }[] | null)?.[0]?.increment ?? 0) + 1;
 }
 
@@ -35,7 +26,6 @@ async function nextCalendarValue(db: SupabaseClient, column: "timeactive" | "pag
   return current ? current + 1 : 1;
 }
 
-/** A page load: bumps the learning record for the learning object and today's calendar row. */
 export async function recordPageLoad(
   db: SupabaseClient,
   login: string,
@@ -69,7 +59,6 @@ export async function recordPageLoad(
   if (calendarError) fail("calendar upsert", calendarError);
 }
 
-/** The 30-second "still reading" tick: bumps the learning object's duration and today's active time. */
 export async function recordTick(db: SupabaseClient, login: string, input: { courseId: string; loId: string | null; day: string }): Promise<void> {
   if (input.loId) {
     const duration = await nextIncrement(db, "duration", input.courseId, login, input.loId);
@@ -90,14 +79,12 @@ export async function recordTick(db: SupabaseClient, login: string, input: { cou
   if (error) fail("increment_calendar", error);
 }
 
-// ---- the user's own row in tutors-connect-users ----------------------------------------------
 
 export interface UserStatus {
   sentiment: string | null;
   online_status: string | null;
 }
 
-/** Creates or refreshes the signed-in user's row. Name, email and avatar come from the session. */
 export async function upsertUser(db: SupabaseClient, user: SessionUser, status: Partial<UserStatus>): Promise<void> {
   const row: Record<string, string | null> = {
     github_id: user.login,
@@ -127,7 +114,6 @@ export async function updateUserStatus(db: SupabaseClient, login: string, status
   if (error) fail("tutors-connect-users update", error);
 }
 
-// ---- the user's course-visit history in tutors-connect-profiles ------------------------------
 
 export async function getProfile(db: SupabaseClient, login: string): Promise<unknown[]> {
   const { data, error } = await db.from("tutors-connect-profiles").select("profile").eq("tutorId", login).maybeSingle();
@@ -141,7 +127,6 @@ export async function saveProfile(db: SupabaseClient, login: string, visits: unk
   if (error) fail("tutors-connect-profiles upsert", error);
 }
 
-// ---- the public catalogue in tutors-connect-courses ------------------------------------------
 
 export async function recordCourseVisit(db: SupabaseClient, courseId: string, courseRecord: Record<string, unknown>): Promise<void> {
   const { data, error } = await db.from("tutors-connect-courses").select("visit_count").eq("course_id", courseId).maybeSingle();
@@ -153,7 +138,6 @@ export async function recordCourseVisit(db: SupabaseClient, courseId: string, co
   if (upsertError) fail("tutors-connect-courses upsert", upsertError);
 }
 
-// ---- the latest shared learning object per student in tutors-connect-latest ------------------
 
 export async function upsertLatest(db: SupabaseClient, login: string, courseId: string, payload: unknown): Promise<void> {
   const { error } = await db
@@ -162,7 +146,6 @@ export async function upsertLatest(db: SupabaseClient, login: string, courseId: 
   if (error) fail("tutors-connect-latest upsert", error);
 }
 
-// ---- content locks in tutors_content_locks (educators only; checked by the route) -------------
 
 export async function setLock(db: SupabaseClient, login: string, courseId: string, loRoute: string, locked: boolean): Promise<void> {
   const { error } = await db
@@ -176,16 +159,9 @@ export async function removeLock(db: SupabaseClient, courseId: string, loRoute: 
   if (error) fail("tutors_content_locks delete", error);
 }
 
-// ---- whiteboard scenes -----------------------------------------------------------------------
 
-/**
- * The room a whiteboard learning object saves into. Same shape the reader has always used
- * (guides/WHITEBOARD.md), but the server appends the owner of a personal room from the session,
- * so nobody can read or overwrite another student's personal board.
- */
 export function whiteboardRoomId(courseId: string, route: string, owner: string | null): string {
   const base = `wb-${courseId}-${route.replace(/[^a-zA-Z0-9-]/g, "-")}`;
-  // Personal rooms need a separate namespace: "route-owner" is a valid shared route.
   return owner ? `wb-personal:${encodeURIComponent(courseId)}:${encodeURIComponent(route)}:${encodeURIComponent(owner)}` : base;
 }
 

@@ -3,7 +3,6 @@ import { createCourseAccess, listFromEnv, type CourseAccess } from "./course-acc
 
 let access: CourseAccess | undefined;
 
-/** The reader's one course-access cache, configured from the private environment. */
 export function courseAccess(): CourseAccess {
   access ??= createCourseAccess({
     fetch,
@@ -13,7 +12,6 @@ export function courseAccess(): CourseAccess {
   return access;
 }
 
-/** Origins (the time and live apps) allowed to read /api/time with the reader's session cookie. */
 export function allowedOrigins(): string[] {
   return listFromEnv(env.PRIVATE_API_ALLOWED_ORIGINS);
 }

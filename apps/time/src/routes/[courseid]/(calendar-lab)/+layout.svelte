@@ -24,7 +24,6 @@
 
 <div class="flex-1 min-h-0 flex flex-col h-full">
   {#if data.signInUrl}
-    <!-- The reader answered 401: time data is only shown to someone signed in to the reader. -->
     <p class="p-4" role="status">Sign in to Tutors to see this course's time data. <a class="underline" href={data.signInUrl}>Sign in</a>, then come back to this page.</p>
   {:else}
     {@render children()}

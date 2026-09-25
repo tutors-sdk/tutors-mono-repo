@@ -5,18 +5,6 @@ import log, { withRequestId } from "@tutors/logger";
 
 let client: SupabaseClient | null | undefined;
 
-/**
- * The reader's Supabase client for its own /api routes, created with the service_role key.
- *
- * service_role bypasses Row-Level Security completely, so this client only ever runs on the
- * server (the file lives under $lib/server, which SvelteKit refuses to bundle for the browser)
- * and the key is read from the private PRIVATE_SUPABASE_SERVICE_ROLE_KEY, never a PUBLIC_ var.
- * Every route that uses it checks the Auth.js session first and scopes each query to the
- * signed-in user or to a course they teach.
- *
- * Returns null when the key or URL is missing (local development, anonymous mode); the routes
- * then answer 503 and the browser carries on without saving.
- */
 export function serviceClient(): SupabaseClient | null {
   if (client !== undefined) return client;
   const url = publicEnv.PUBLIC_SUPABASE_URL?.trim();

@@ -5,8 +5,6 @@ import { createSupabaseErrorTransport } from "@tutors/community/utils/error-tran
 import { readerTimeSource, setTutorsTimeSource } from "@tutors/tutors-time-lib";
 import { setCourseNotFoundHandler, setCourseUnreachableHandler } from "@tutors/course/course";
 
-// "My time" reads the course's rows from this reader's own /api/time, which returns the student's
-// rows and pseudonymised classmates; the browser never reads student rows with the anon key.
 setTutorsTimeSource(readerTimeSource(""));
 
 // A course that does not exist is a 404 page, not an unexpected error (a 500). A browser cannot tell

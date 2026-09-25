@@ -3,15 +3,6 @@ import { resolve } from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
 import { recordTick } from "../../../apps/reader/src/lib/server/api/store.ts";
 
-/**
- * `get_count_learning_records` returns a set of rows. For a learning object a student has never
- * opened, PostgREST answers with an empty array, not null, and indexing into it used to throw
- * "Cannot read properties of undefined (reading 'increment')" on every first visit.
- *
- * The count now happens on the reader's server (apps/reader/src/lib/server/api/store.ts), with the
- * service_role client. The real Supabase client is used; only its fetch is stubbed, answering the
- * rpc calls and recording the update that follows.
- */
 
 const net = { rpcBody: undefined as unknown, updates: [] as unknown[], calendarIncrements: [] as unknown[] };
 
@@ -30,7 +21,6 @@ const stubFetch = (async (...[input, init]: Parameters<typeof fetch>) => {
   return json({ message: `unexpected ${init?.method ?? "GET"} ${url}` }, 500);
 }) as typeof fetch;
 
-// The Supabase client the reader itself depends on, resolved from the reader's package.
 const { createClient } = (await import(createRequire(resolve(__dirname, "../../../apps/reader/package.json")).resolve("@supabase/supabase-js"))) as {
   createClient: (url: string, key: string, options: object) => Parameters<typeof recordTick>[0];
 };

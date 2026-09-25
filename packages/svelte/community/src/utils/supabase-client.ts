@@ -1,12 +1,3 @@
-/**
- * @service SupabaseClient
- * The browser's Supabase client (anon key) and the reader's data operations.
- *
- * The anon client is used only for realtime presence channels and for reading public data (the
- * catalogue, content locks, shared presence). Everything that writes or reads a student's own data
- * goes to the reader's /api routes through `readerApi`, where the server checks the Auth.js session.
- */
-
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { env } from "$env/dynamic/public";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
@@ -89,10 +80,6 @@ export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = ne
   return d.getFullYear() === ref.getFullYear();
 }
 
-/**
- * Record the learning object a student who shares their presence is on, as the latest for the course.
- * Fire-and-forget from presence; does not throw. The reader's server stores it under the session's login.
- */
 export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
   const courseId = (loRecord as { courseId?: string }).courseId?.trim();
   if (!courseId) return;
@@ -138,32 +125,16 @@ export function formatDate(date: Date): string {
   return [year, month, day].join("-");
 }
 
-/**
- * Record that the signed-in student loaded a learning object: the reader's server bumps the learning
- * record and today's calendar row, under the session's login.
- * @param course - Course data
- * @param loid - Learning object identifier (its route)
- * @param lo - Learning object data
- */
 export async function recordLearningPageLoad(course: Course, loid: string, lo: Lo): Promise<void> {
   if (!course.courseId || !loid) return;
   await readerApi("POST", "/api/analytics", { kind: "page-load", courseId: course.courseId, loId: loid, loType: lo.type, day: formatDate(new Date()) });
 }
 
-/**
- * Record another 30 seconds on a page: the reader's server bumps the learning object's duration
- * (when `loId` is given) and today's active time.
- */
 export async function recordLearningTick(courseId: string, loId: string | null): Promise<void> {
   if (!courseId) return;
   await readerApi("POST", "/api/analytics", { kind: "tick", courseId, loId, day: formatDate(new Date()) });
 }
 
-/**
- * On sign-in: create or refresh the signed-in user's row. The reader's server takes the name, email and
- * avatar from the Auth.js session; only the sentiment and sharing choice come from here.
- * @param student - The signed-in user
- */
 export async function addOrUpdateStudent(student: TutorsId) {
   if (!student) return;
   const body: { sentiment?: string; onlineStatus?: "online" | "offline" } = {};
@@ -185,33 +156,18 @@ function normalizeStoredSentiment(raw: string | null | undefined): string | null
 
 type MyStatus = { sentiment: string | null; online_status: string | null };
 
-/**
- * The signed-in user's stored sentiment, from the reader's server.
- * @param githubId - The signed-in user's GitHub login; the server answers for the session, whatever it is
- * @returns Stored sentiment if present and valid per {@link COURSE_SENTIMENT_IDS}, otherwise null (includes no row).
- */
 export async function getTutorsConnectUserSentiment(githubId: string): Promise<string | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
   const status = await readerApiJson<MyStatus>("/api/me");
   return normalizeStoredSentiment(status?.sentiment);
 }
 
-/**
- * Updates the signed-in user's sentiment (and last-accessed).
- * @param githubId - The signed-in user's GitHub login
- * @param sentiment - Current mood string
- */
 export async function updateTutorsConnectUserSentiment(githubId: string, sentiment: string) {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
   const response = await readerApi("PATCH", "/api/me", { sentiment });
   if (response && !response.ok && response.status !== 401) throw new Error(`Saving the sentiment failed with status ${response.status}`);
 }
 
-/**
- * The signed-in user's stored online_status (mirrors Share Presence / {@link updateTutorsConnectUserOnlineStatus}).
- * @param githubId - The signed-in user's GitHub login
- * @returns Stored online_status if present, otherwise null (includes no row).
- */
 export async function getTutorsConnectUserOnlineStatus(githubId: string): Promise<string | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
   const raw = (await readerApiJson<MyStatus>("/api/me"))?.online_status;
@@ -219,9 +175,6 @@ export async function getTutorsConnectUserOnlineStatus(githubId: string): Promis
   return String(raw).trim();
 }
 
-/**
- * Sets the signed-in user's online_status (mirrors share: visible / sharing = online).
- */
 export async function updateTutorsConnectUserOnlineStatus(githubId: string, onlineStatus: "online" | "offline") {
   if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
   const response = await readerApi("PATCH", "/api/me", { onlineStatus });

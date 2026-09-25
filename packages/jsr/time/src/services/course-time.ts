@@ -11,7 +11,6 @@ import { BaseLabModel } from "./base-lab-model.ts";
 import { filterByDateRange } from "../utils/index.ts";
 import { getTutorsTimeSource } from "./source.ts";
 
-/** github_id → display name (trimmed full_name, else the id). */
 function displayNames(users: Pick<TutorsConnectUser, "github_id" | "full_name">[]): Record<string, string> {
   const names: Record<string, string> = {};
   for (const row of users) {
@@ -78,10 +77,6 @@ export class CourseTime implements TutorsTimeCourse {
     return this;
   }
 
-  /**
-   * Learning records of one student in a course, of one type (all required).
-   * Returns an empty array if no records are found or on error.
-   */
   static async getLearningRecords(
     studentId: string,
     courseId: string,
@@ -96,10 +91,6 @@ export class CourseTime implements TutorsTimeCourse {
     }
   }
 
-  /**
-   * Calendar data for a course, from the configured source (see `setTutorsTimeSource`),
-   * with each entry's student full name attached. Throws when the rows cannot be read.
-   */
   static async getCalendarData(courseId: string): Promise<CalendarEntry[]> {
     const rows = await getTutorsTimeSource().courseRows(courseId);
     const rawEntries = (rows.calendar as unknown as Omit<CalendarEntry, "full_name">[]).slice().sort((a, b) => String(a.id).localeCompare(String(b.id)));
@@ -117,10 +108,6 @@ export class CourseTime implements TutorsTimeCourse {
     }));
   }
 
-  /**
-   * All learning records of a course (every student the viewer may see), from the configured source,
-   * with student full names attached. Throws when the rows cannot be read.
-   */
   static async getAllLearningRecordsForCourse(courseId: string): Promise<LearningRecord[]> {
     const rows = await getTutorsTimeSource().courseRows(courseId);
     const names = displayNames(rows.users);
@@ -129,7 +116,6 @@ export class CourseTime implements TutorsTimeCourse {
     const learningRecords = (rows.learningRecords as unknown as LearningRecord[]).map((r) => ({
       ...r,
       duration: r.duration != null ? Math.round((r.duration * 30) / 60) : null,
-      // Add full_name for display; keep student_id as raw github_id for links
       full_name: names[r.student_id] ?? r.student_id
     }));
 

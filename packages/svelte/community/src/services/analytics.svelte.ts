@@ -1,9 +1,3 @@
-/**
- * Analytics service for tracking user interactions and learning progress.
- * Persists through the reader's /api routes, which store each record under the signed-in session's login.
- * Handles learning events, page loads, and duration tracking.
- */
-
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import { recordLearningPageLoad, recordLearningTick, addOrUpdateStudent } from "../utils/supabase-client.ts";
@@ -37,13 +31,6 @@ export const analyticsService: AnalyticsService = {
     }
   },
 
-  /**
-   * Records a page load event through the reader's server
-   * Creates or updates learning object interaction record
-   * @param course - Current course
-   * @param lo - Learning object being viewed
-   * The student is not sent: the server records the page load under the session's login.
-   */
   reportPageLoad(course: Course, lo: Lo) {
     try {
       void recordLearningPageLoad(course, this.loRoute, lo);
