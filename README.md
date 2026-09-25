@@ -195,6 +195,8 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 
+Browser packages reach personal data only through the typed data API, `@tutors/data-api` (a core package): never through the database client, which only the Realtime/public-read factory and server code may import. See [guides/SERVER-WRITES.md](guides/SERVER-WRITES.md#the-data-api-the-seam).
+
 That is the vertical view, which answers "what may depend on what". [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) is the horizontal view, which answers "where does this pixel come from". Most changes need the second one.
 
 ## Contributing

@@ -13,11 +13,30 @@ The behaviour is specified as EARS Rules in
 (Rules 0065 to 0075) and proved by `pnpm test:bdd`: the scenarios call the real route handlers and
 the real browser services, with only the session, the database and the course host stood in.
 
-## The reader hosts these routes for now
+## The data API: the seam
 
-**That is temporary.** The routes live in the reader because it is the app with Auth.js. The time
-dashboard calling the reader for its data is the smell that says so: on OpenShift the data API
-wants to be its own pod, with the reader, time and live apps as clients (#325).
+Browser packages no longer talk to the database for anything personal. They talk to a typed data
+API: [`@tutors/data-api`](../packages/svelte/data-api/src/contract.ts) holds what each route takes
+and returns, and the one client (`dataApi`) the community, connect, RBAC and whiteboard code call.
+The server side implements that contract; nothing in a browser package knows which database is
+behind it, so leaving Supabase changes this layer and the routes, and no browser package.
+
+Two checks keep the seam honest:
+
+- `no-database-client-in-browser-code` (`.dependency-cruiser.cjs`, run by `pnpm test:runway`):
+  browser code may not import `@supabase/supabase-js`. The exceptions are the anon client factory
+  used for Realtime channels and public reads (`packages/svelte/community/src/utils/supabase-client.ts`),
+  server-only files, and type-only imports.
+- `tests/architecture/browser-data-access.test.ts`: what browser code does with that anon client is
+  limited to reading the public tables (`tutors-connect-courses`, `tutors-connect-latest`,
+  `tutors_content_locks`), inserting into `app_errors`, and calling `get_student_count` and
+  `get_error_counts`. Anything else belongs behind a route.
+
+**The reader is the data API's host for now, and that is temporary.** The routes live in the reader
+because it is the app with Auth.js. The time dashboard calling the reader for its data is the smell
+that says so: on OpenShift the data API wants to be its own pod, with the reader, time and live
+apps as clients (#325). Moving it is a deployment change, not a browser one, because of the
+contract above.
 
 ## The routes
 
