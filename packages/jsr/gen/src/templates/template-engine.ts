@@ -4,13 +4,10 @@ import {  getIconType, loBackgroundColour, loBorderColour } from "./styles.ts";
 import vento from "@vento/vento";
 import autoTrim from "jsr:@vento/vento@1.14.0/plugins/auto_trim.ts";
 import type { Environment } from "@vento/vento/src/environment.ts";
-import { generateCrumbLink, generateImg, generateLink, generateRefLink, generateVideoLink, tocLink, wallLink } from "./utils.ts";
+import { generateCrumbLink, generateImg, generateLink, generateRefLink, generateVideoLink, panoptoEmbedUrl, panoptoViewerUrl, tocLink, wallLink } from "./utils.ts";
 
 const moduleDir = path.dirname(new URL(import.meta.url).pathname);
 const ventoDir = path.join(moduleDir, 'vento');
-
-console.log('Module dir:', moduleDir);
-console.log('Vento dir:', ventoDir);
 
 let env:Environment;
 
@@ -31,6 +28,8 @@ export function initTemplateEngine(folder:string) {
   env.filters.generateCrumbLink =  generateCrumbLink;
   env.filters.wallLink = wallLink;
   env.filters.generateVideoLink = generateVideoLink;
+  env.filters.panoptoEmbedUrl = panoptoEmbedUrl;
+  env.filters.panoptoViewerUrl = panoptoViewerUrl;
   env.filters.tocLink = tocLink;
 
   env.use(autoTrim());

@@ -24,7 +24,7 @@
     />
   {:else}
     <div
-      class="rounded-full bg-surface-300 flex items-center justify-center text-surface-600 font-semibold shrink-0 {compact
+      class="rounded-full bg-surface-300 flex items-center justify-center text-[var(--ui-muted)] font-semibold shrink-0 {compact
         ? 'size-14 text-base'
         : 'size-20 sm:size-24 text-2xl'}"
       aria-hidden="true"
@@ -33,7 +33,7 @@
     </div>
   {/if}
   <p
-    class="font-semibold text-surface-800 truncate max-w-full {compact ? 'text-sm' : 'text-lg'}"
+    class="font-semibold text-[var(--ui-ink)] truncate max-w-full {compact ? 'text-sm' : 'text-lg'}"
   >
     {fullName}
   </p>

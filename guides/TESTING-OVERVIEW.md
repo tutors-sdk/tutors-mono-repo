@@ -1,153 +1,150 @@
 # Testing Overview
 
-A quick-reference companion to the full [Testing Guide](./TESTING.md). This document answers three questions: what do we test, how do I run it, and what blocks a release.
+What each tier owns, how to run it, and what blocks a release. The long form is
+[TESTING.md](./TESTING.md). The map from `tests/<dir>` to tier and runner is
+[../tests/TESTING.md](../tests/TESTING.md).
 
-## At a Glance
+Two rules hold everywhere:
 
-| Tier | Name | Status | Runs On |
+- **One owning tier per failure class.** If no tier owns a class of bug, it ships.
+- **No tier without a negative fixture.** A check nobody has watched fail is not a check.
+
+## Tiers
+
+Letters follow the Testing Runway. "In repo" means both the tests and the CI job exist
+today. There are no git hooks in this repository, so nothing runs at commit time; the
+first gate is the pull request.
+
+| Tier | Failure class it owns | Status | Where it runs |
 |---|---|---|---|
-| 1 | TDD (unit) | Partial (course, gen) | Every push |
-| 2 | BDD (behavioral) | Scaffolded | Every push |
-| 3 | Component (browser) | Scaffolded | Every push |
-| 4 | Integration (mocked) | Scaffolded | Every push |
-| 5 | E2E (Playwright) | Configured | PR / nightly |
-| 6 | Contract (API surface) | Scaffolded | PR / RC |
-| 7 | Fuzz (fast-check) | Active (`pnpm test:fuzz`) | PR / RC |
+| **A** | Structure — layer violations, package cycles, app-to-app imports, JSR/Node manifest drift, unused files, exports and dependencies | In repo | PR: `build-and-test` (`pnpm check:knip`, then `vitest`) |
+| **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
+| **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
+| **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
+| **F** | Authorisation — who may call what | Planned ([#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77)) | — |
+| **G** | User journeys — the whole system through a real browser, against built images | In repo | PR: `e2e-stack` (chromium, webkit). Nightly: `e2e-stack-nightly` (firefox, mobile) |
+| **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | Planned, no issue yet | Shapes are snapshot-checked under tier "contract" below |
+| **I** | Data — migration and the Supabase exit | Planned, no issue yet | — |
+| **J** | Platform — kustomize overlays, restricted-SCC policy, arbitrary UID, read-only root, env-var completeness | In repo | PR: `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, and `vitest` |
+| **K** | Observability — log schema, request-id correlation, hook order, metrics an alert queries | In repo | PR: `build-and-test` (`vitest`) and `container-smoke` |
+| **L** | Performance and capacity — client bundle ceilings, Lighthouse floors, latency, memory growth | In repo | PR: `bundle-budgets`. Nightly: `lighthouse`, `load` |
+| **M** | Security — response headers, cookie flags, CSRF, the mutating-route inventory, dependency advisories | In repo | PR: `dependency-audit`, `container-smoke` (`--app`), and `vitest` |
+| **N** | Completeness — translations, theme tokens, icon libraries, dead links and anchors in tracked Markdown, app READMEs | In repo | PR: `build-and-test` (`vitest`) |
+| **O** | Suite health — `.only`, undated skips, assertionless tests, files no runner collects, per-file time budgets | In repo | PR: `build-and-test` (`vitest`). Nightly: `suite-health` (no retries, budgets) |
 
-Fuzz runs via a dedicated Vitest config with the threads pool ([#8](https://github.com/tutors-sdk/tutors-mono-repo/issues/8)); it is not part of default `pnpm test`.
+The letters skip E: nothing in this repository claims it.
 
-Additionally, **Gate 6: Release Artifact Testing** compares CLI output against production using the [tutors-reference-course](https://github.com/tutors-sdk/tutors-reference-course). This runs on RC branches and can be triggered manually.
+Three tiers predate the runway letters and still carry weight:
 
-## Quick Reference
-
-### Running Tests
-
-| Command | What It Runs | When To Use |
+| Tier | Owns | Where it runs |
 |---|---|---|
-| `pnpm test` | Unit + BDD (Tiers 1-2) via Turborepo | During development |
-| `pnpm test:bdd` | Root-level BDD step definitions | After changing feature behaviour |
-| `pnpm test:contract` | API surface snapshot tests | After modifying package exports |
-| `pnpm test:fuzz` | Property-based fuzz tests (threads pool) | After changing data models/transforms |
-| `pnpm test:e2e` | Playwright E2E tests | Before submitting a PR |
-| `pnpm test:components` | Svelte component tests | After UI changes |
-| `pnpm test:cli` | Deno CLI tests | After changing CLI code |
-| `pnpm test:release` | Artifact regression (baseline vs candidate) | Before cutting an RC |
-| `pnpm test:release:smoke` | Production smoke tests via Playwright | After deploying |
-| `pnpm test:release:bench` | Performance benchmarks (CLI, build, bundle) | Before cutting an RC |
-| `pnpm check:all` | Full validation pipeline | Before cutting an RC |
+| Contract / API surface | Public exports of the three JSR packages, Supabase row and RPC shapes, realtime message shapes, generated course JSON | PR: `pnpm api-report:check` in `build-and-test`. Nightly: `contract-snapshots`. RC: Gate 2b |
+| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Local only — `pnpm test:mutation`. No workflow runs it |
+| Release artifact | The CLI's output for the reference course against the last published CLI | Push to `rc/**`: `rc-validation.yml` Gate 6, `release-testing.yml` Gates 6a–6c |
 
-### Filtering
+## Commands
 
-```bash
-pnpm --filter tutors-reader test              # Test only the reader app
-pnpm --filter @tutors/course test             # Test only a single package
-pnpm vitest run tests/fuzz/calendar-model.fuzz.test.ts  # Single file
+Every command below exists in the root `package.json`.
+
+| Command | What it runs |
+|---|---|
+| `pnpm lint` | ESLint over the repo |
+| `pnpm test` | `vitest run` — everything under `tests/` except `e2e`, `e2e-stack`, `release` and `fuzz` |
+| `pnpm test:coverage` | The same run with v8 coverage against the thresholds in `vitest.config.ts` |
+| `pnpm test:bdd` | The executable features: `tests/bdd/steps/` bound to `tests/bdd/features/` |
+| `pnpm test:contract` | `tests/contract/` — API surface snapshots and Zod shape checks |
+| `pnpm test:fuzz` | The property suites, on the threads pool (`vitest.config.fuzz.ts`) |
+| `pnpm test:tz` | Unit and property suites under UTC, Europe/Dublin and Pacific/Auckland |
+| `pnpm test:runway` | The repo-level suites: architecture, suite-health, completeness, observability, conformance, security, performance |
+| `pnpm test:mutation` | Stryker over the five targeted modules |
+| `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
+| `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
+| `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |
+| `pnpm e2e:stack:fixture` | Builds the fixture course (needs Deno) |
+| `pnpm e2e:stack:up` / `:down` | The tier G compose stack |
+| `pnpm test:e2e:stack` | The journeys against the running stack |
+| `pnpm test:e2e:stack:ratchet` | Fails on stale lines in the journey baselines |
+| `pnpm api-report` / `api-report:check` | Regenerate / verify `etc/*.api.md` |
+| `pnpm architecture-report` | Every dependency-cruiser violation, baselined ones included |
+| `pnpm check:knip` | Unused files, exports and dependencies |
+| `pnpm check:audit` | `pnpm audit` against `tests/security/audit-allowlist.json` |
+| `pnpm check:bundle` | Per-app client bundle ceilings |
+| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with Auth.js on |
+| `pnpm check:lighthouse` | Lighthouse floors on three reader pages |
+| `pnpm check:load` | k6 load or soak against a built image |
+| `pnpm check:k8s` | Render every overlay and apply the manifest policies |
+| `pnpm check:container` | Smoke a built image: UID, read-only root, healthz, metrics, logs, headers |
+| `pnpm check:test-time` | Per-file time budgets from a Vitest JSON report |
+| `pnpm check:generator-diff` | Generator differential against a base ref, or the nightly corpus |
+| `pnpm check:all` | `check`, `test`, `test:contract`, `build` — currently fails at the first step, because the root `check` script is broken (see the long form) |
+
+Before opening a PR the expected local run is `pnpm lint` and `pnpm test`; see
+[../CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Where does my new test go
+
+| What you are protecting | Put it in | Tier |
+|---|---|---|
+| A pure function in a JSR or Svelte package | `tests/unit/<area>/` | B |
+| A property that must hold for any course or calendar | `tests/fuzz/`, with the arbitrary in `tests/support/arbitraries/` | B |
+| A Supabase row, RPC or realtime message shape | `tests/contract/` | Contract |
+| A public export of a JSR package | `pnpm api-report`, then update the contract snapshot | Contract |
+| Something a user does in a browser | `tests/e2e-stack/journeys/` | G |
+| A difference in generated course output | `tests/generator/corpus/`, claimed in `tests/generator/claims.yaml` | C |
+| A rule about the repository — config, manifests, docs, logs, headers | A pure function in `scripts/checks/`, a suite in `tests/<area>/` with negative fixtures | A, J, K, M, N, O |
+| A ceiling or floor — bundle size, Lighthouse, latency | The JSON beside the suite in `tests/performance/` | L |
+| Something a student sees or does in the reader | A `@ui` Rule in `tests/bdd/features/ui/`, proved by a Playwright test in `apps/reader/tests/e2e/` | UI contract |
+
+New repo-level checks are written as a pure function plus a suite that runs it against a
+deliberately broken fixture first, then against the real repo.
+
+## Ratchets, baselines and quarantine
+
+Checks that found problems on day one hold them in a baseline text file beside the suite.
+The rule is the same for all of them:
+
+- A problem that is not in the baseline fails the build.
+- A baseline line that no longer occurs also fails the build.
+- Fixing something therefore means deleting its line. Baselines may only shrink.
+
+| Baseline | Holds |
+|---|---|
+| `tests/architecture/known-violations.txt` | Dependency-cruiser violations |
+| `tests/architecture/known-manifest-drift.txt` | `deno.json` vs `package.json` drift |
+| `tests/architecture/known-knip.txt` | Unused files, exports and dependencies |
+| `tests/completeness/known-gaps.txt` | Translations, themes, icons, docs, READMEs |
+| `tests/suite-health/known-findings.txt` | Skips, assertionless tests, uncollected files |
+| `tests/security/known-response-gaps.txt` | Missing headers and 5xx answers per app |
+| `tests/fuzz/known-timezone-failures.txt` | Tests that fail outside UTC |
+| `tests/e2e-stack/a11y-known-violations.txt` | Serious and critical axe findings per page |
+| `tests/e2e-stack/reduced-motion-known.txt` | Elements that still animate under reduced motion |
+
+A test may be skipped without a baseline entry if the line above it names an issue and an
+expiry date. After that date the skip fails again:
+
+```ts
+// quarantine: #123 until 2026-10-01
+it.skip("flaky in webkit", () => { ... });
 ```
 
-## Testing Philosophy
+## The gate
 
-### BDD First
+`ci.yml` ends in one job, **`CI success`**, which needs `build-and-test`,
+`platform-conformance`, `container-smoke`, `container-smoke-fixtures`, `dependency-audit`,
+`e2e-stack`, `bundle-budgets` and `generator-diff`. It treats a skipped or cancelled job
+as a failure. It is the one check to mark as required in branch protection, so adding a job
+to its `needs` extends the gate without touching repository settings. Whether it is currently
+marked required is a setting, not something this repository can show you.
 
-Every significant user-facing behaviour starts as a Gherkin feature file before implementation begins. Feature files serve as the specification — readable by non-developers, versioned with the code, and executable as tests. This is the primary testing paradigm, adapted from [ESI.ts](https://github.com/lgriffin/ESI.ts/blob/master/guides/TESTING.md).
+## What blocks a release
 
-### Why Seven Tiers
+Only what CI enforces today.
 
-Each tier catches a different class of defect:
-
-| Tier | What It Catches |
+| Stage | Blocks on |
 |---|---|
-| **TDD** | Implementation bugs — wrong logic, off-by-one, null handling |
-| **BDD** | Behaviour regressions — the user expected X but got Y |
-| **Component** | Rendering bugs — reactive state, DOM events, CSS (real browser) |
-| **Integration** | Wiring bugs — data doesn't flow correctly between packages |
-| **E2E** | System bugs — routing, SSR, auth flows, real browser interactions |
-| **Contract** | Semver violations — accidental removal/rename of public API exports |
-| **Fuzz** | Edge cases — random inputs finding failures humans wouldn't write tests for |
+| PR to `main` | `CI success`. That includes coverage below the thresholds in `vitest.config.ts` (statements 55, branches 50, functions 65, lines 55), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
+| Push to `rc/**` | `rc-validation.yml` — its `RC Readiness Report` fails if any gate failed — and `release-testing.yml`, whose report blocks on artifact regression and smoke tests and only warns on the performance benchmark |
+| Nightly | Nothing. A red nightly is a bug to chase, not a merge block |
 
-### TDD + BDD Coexistence
-
-TDD covers the **how** (internal functions, edge cases, error paths). BDD verifies the **what** (user-facing behaviours in Gherkin). The overlap is intentional.
-
-## Coverage Requirements
-
-| Metric | Threshold | Target |
-|---|---|---:|
-| Statements | 90% | 95% |
-| Branches | 80% | 85% |
-| Functions | 75% | 90% |
-| Lines | 90% | 95% |
-
-Coverage is enforced per-package via Vitest config. CI hard-fails if any package drops below thresholds.
-
-## CI Pipeline Summary
-
-### What Runs When
-
-| Trigger | Workflow | Tests Run |
-|---|---|---|
-| Every push/PR | `ci.yml` | Lint, typecheck, unit + BDD, fuzz, E2E (Chromium), CLI |
-| Daily 3 AM UTC | `nightly.yml` | Full E2E (all browsers), contract validation |
-| Push to `rc/**` | `rc-validation.yml` | All gates (9 jobs) — full test matrix |
-| Push to `rc/**` | `release-testing.yml` | Artifact regression, performance, smoke tests |
-
-### Gate Summary (RC Validation)
-
-| Gate | Job(s) | Pass Criteria |
-|---|---|---|
-| 1 | Lint & Type Check | Zero ESLint errors, zero TypeScript errors |
-| 2a | Unit & BDD | All tests pass, coverage above thresholds |
-| 2b | Contract | API snapshots match (or intentionally updated) |
-| 2c | Fuzz (Extended) | 1000-run fuzz with zero failures (`FUZZ_RUNS=1000 pnpm test:fuzz`) |
-| 2d | CLI | All Deno tests pass |
-| 3a | Build Verification | All apps produce `.svelte-kit/` output |
-| 3b | Dependency Audit | Zero critical CVEs |
-| 4 | Cross-Browser E2E | Pass on Chromium, Firefox, and WebKit |
-| 6 | Artifact Regression | CLI output matches production for reference course |
-
-## What Blocks a Release
-
-Every condition below is a **hard-fail** — the RC cannot merge to main until resolved.
-
-| Condition | Gate |
-|---|---|
-| Any test tier fails | 2 |
-| Coverage below thresholds | 2 |
-| Contract snapshot mismatch (unintentional) | 2b |
-| Fuzz failure at 1000 runs | 2c |
-| Production build fails | 3a |
-| Critical CVE in dependencies | 3b |
-| Cross-browser E2E failure | 4 |
-| Artifact regression — missing LOs or changed routes | 6 |
-
-**Soft-fail conditions** (warning, does not block):
-
-| Condition | Required Action |
-|---|---|
-| Bundle size increase 5-10% | Justify in PR description |
-| New BDD feature files without step definitions | Track in issue |
-| Moderate CVEs in dependencies | File issue for next sprint |
-
-## Adding Tests
-
-1. **Start with BDD** — Write the Gherkin feature file first. Place in `tests/bdd/features/<domain>/`.
-2. **Write step definitions** — Create `*.steps.ts` in `tests/bdd/steps/<domain>/`. Use `TestWorld` and `TestDataFactory`.
-3. **Add unit tests** — Cover edge cases and error paths with co-located `*.test.ts` files.
-4. **Add component tests** — New Svelte components get `*.svelte.test.ts` using browser mode.
-5. **Update contract snapshots** — If you changed public exports: `pnpm test:contract -- --update`.
-6. **Consider fuzz testing** — Data transformation functions benefit from property-based tests in `tests/fuzz/`.
-7. **Add test data** — New response types need factory methods in `tests/bdd/support/fixtures.ts`.
-
-## Test Infrastructure
-
-| File | Purpose |
-|---|---|
-| `vitest.config.ts` | Root config (coverage thresholds, path aliases) |
-| `vitest.workspace.ts` | Workspace definition (all packages + apps) |
-| `tests/bdd/support/world.ts` | `TestWorld` — shared BDD test context |
-| `tests/bdd/support/fixtures.ts` | `TestDataFactory` — factory methods for mock data |
-| `tests/bdd/support/mocks.ts` | `MockSupabaseClient`, `MockRealtimeChannel`, `createMockFetch` |
-| `tests/release/comparators/json-comparator.ts` | Semantic JSON diff for artifact regression |
-
-## Deep Dive
-
-For full details on BDD test patterns, TDD patterns, test architecture decisions, mocking strategies, debugging, and known gaps, see the full [Testing Guide](./TESTING.md).
+Type checking **is** a blocker: the three `check` steps in `build-and-test` (`svelte-check` on the
+reader, catalogue and live apps) fail the job on any type error. `pnpm check` runs the same three locally.

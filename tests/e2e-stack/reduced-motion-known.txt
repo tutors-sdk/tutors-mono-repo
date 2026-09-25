@@ -1,0 +1,8 @@
+# Elements that still transition or animate with prefers-reduced-motion: reduce
+# emulated, as of tier G. Format: `<project> | <page> :: <element> <kind>`.
+# Shrink-only, like a11y-known-violations.txt.
+#
+# Empty: packages/svelte/themes/src/styles/reduced-motion.css turns transitions
+# and animations off under the preference for every app that imports it. Motion
+# driven from JavaScript (scrollIntoView behavior, Svelte transitions) is not
+# visible to this check; gate it on prefersReducedMotion from @tutors/a11y.

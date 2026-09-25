@@ -35,6 +35,7 @@ describe("simpleTypes", () => {
       "note", "archive", "web", "github", "panelnote",
       "paneltalk", "panelvideo", "podcast", "talk",
       "book", "lab", "tutorial", "notebook", "whiteboard",
+      "quiz",
     ];
     expected.forEach((t) => {
       expect(simpleTypes).toContain(t);

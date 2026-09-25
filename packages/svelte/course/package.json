@@ -13,9 +13,10 @@
     "@marp-team/marp-core": "^4.3.1",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
+    "@tutors/runtime": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "mermaid": "^11.17.0",
+    "mermaid": "^12.0.0",
     "shiki": "^4.4.1"
   },
   "peerDependencies": {

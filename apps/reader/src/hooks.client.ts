@@ -1,17 +1,24 @@
-import type { HandleClientError } from "@sveltejs/kit";
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
-import log, { addTransport } from "@tutors/logger";
+import { error, type HandleClientError } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
+import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
 (globalThis as any).__TUTORS_TIME_SUPABASE_INIT__ = {
-  url: PUBLIC_SUPABASE_URL,
-  key: PUBLIC_SUPABASE_ANON_KEY
+  url: env.PUBLIC_SUPABASE_URL,
+  key: env.PUBLIC_SUPABASE_ANON_KEY
 };
 
 import { initSupabase } from "@tutors/tutors-time-lib";
+import { setCourseNotFoundHandler, setCourseUnreachableHandler } from "@tutors/course/course";
 
-initSupabase(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 
+// A course that does not exist is a 404 page, not an unexpected error (a 500). A browser cannot tell
+// an unknown course site from being offline, so an unreachable host is a 404 page as well.
+setCourseNotFoundHandler((notFound) => error(404, `Course ${notFound.courseId} not found at https://${notFound.courseUrl}/tutors.json`));
+setCourseUnreachableHandler(() => error(404, "Course not found"));
+
+setAppName("tutors-reader");
 addTransport(createSupabaseErrorTransport("tutors-reader"));
 
 window.addEventListener("unhandledrejection", (event) => {

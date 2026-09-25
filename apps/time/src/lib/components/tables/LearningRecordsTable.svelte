@@ -2,6 +2,7 @@
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
+  import log from "@tutors/logger";
 
   let { courseId }: { courseId: string } = $props();
 
@@ -21,6 +22,7 @@
       course = courseTime;
       error = course?.learningRecordsError ?? null;
     } catch (e) {
+      log.error("LearningRecordsTable failed to load:", e);
       error = e instanceof Error ? e.message : "Failed to load learning records";
     } finally {
       loading = false;
@@ -55,13 +57,13 @@
     <p class="text-lg">Loading learning records...</p>
   </div>
 {:else if error}
-  <div class="card preset-filled-error-500 p-4">
+  <div class="ui-panel border-[var(--ui-danger)] p-4">
     <p class="font-bold">Error loading data</p>
     <p class="text-sm">{error}</p>
   </div>
 {:else if data.length === 0}
   <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-surface-600">No learning records available</p>
+    <p class="text-lg text-[var(--ui-muted)]">No learning records available</p>
   </div>
 {:else}
   <!-- Table -->
@@ -91,7 +93,7 @@
       </tbody>
     </table>
   </div>
-  <p class="mt-4 text-sm text-surface-600">
+  <p class="mt-4 text-sm text-[var(--ui-muted)]">
     Showing {data.length} learning {data.length === 1 ? "record" : "records"}
   </p>
 {/if}

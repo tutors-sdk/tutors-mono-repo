@@ -1,0 +1,1 @@
+# Empty on purpose; keeps Grafana from logging a missing-directory error.

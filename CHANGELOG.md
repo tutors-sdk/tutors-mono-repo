@@ -4,9 +4,105 @@
 > [tutors-sdk/tutors](https://github.com/tutors-sdk/tutors).
 > Version history prior to v16.0.0 originates from that repository.
 
+> **Writing an entry.** An entry that changes something observable ends with the
+> artefacts it expects to move, in a parenthesis before the PR reference:
+> `Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)`.
+> The vocabulary (`dom`, `screenshot`, `network`, `console`, `headers`, `axe`,
+> `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`,
+> `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`) and how an entry
+> becomes a release claim are in [CONTRIBUTING.md](CONTRIBUTING.md#changelog-entries).
+> Earlier entries carry no hints and are not rewritten.
+
 ---
 
 ## Reader (`tutors-reader`)
+
+### v16.2.2 (2026-09)
+
+#### Fixes
+
+- Card summaries: markdown in the summary line of a lab, note, notebook or quiz now renders on the card. Summary conversion was deferred along with the body for these types, so a summary written as `**bold** intro` showed its own source until the learning object was opened (PR #263)
+- Translations: accents and umlauts restored across the German, Spanish, French and Italian messages — `oeffnen` is again `öffnen` (PR #259)
+
+### v16.2.1 (2026-09)
+
+#### Features
+
+- Quiz learning objects (PR #260): a `quiz-*` folder containing a markdown file with a fenced `quiz` block renders as an interactive quiz — one question at a time, free navigation between questions, submission gated on a complete answer set, and a scored results page with a retake. Multiple-choice and true/false are supported, and question and option text is rendered as markdown
+- Quiz options form a WAI-ARIA radio group with roving tabindex and arrow-key navigation
+- A quiz wall at `/wall/quiz/{courseid}`, listing every quiz in a course
+
+  Answers are held in memory only and are not recorded; `time_limit` is accepted
+  by the parser but not yet enforced. This is a self-check for students rather
+  than an assessment.
+
+  Courses must be regenerated with `@tutors/tutors-gen-lib` 5.3.0 or later.
+  Earlier generators do not know the `quiz` type and mistype a `quiz-*` folder
+  as its enclosing topic, which renders as an empty topic page.
+
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+#### Fixes
+
+- Calendar: assessment due dates are reformatted for display and emphasised in the week row; unparseable dates fall back to the raw value (PR #231)
+
+### v16.1.8 (2026-09)
+
+#### Features
+
+- Create wizard: optional `.gitignore` and README in generated courses (PR #197)
+- Create wizard: the downloaded zip now includes a `course.json` manifest describing the generated course (PR #153)
+- Create wizard: import an existing `course.json` to pre-fill the wizard fields (PR #154)
+
+#### Fixes
+
+- Logging: the analytics beacon now flushes reliably, UI errors are reported through the logger rather than silently swallowed, and stray console output was removed from Marp talks and the whiteboard viewer (PR #173)
+- Tutors Live menu link now points at the Live deployment instead of a reader-relative path that 404s (PR #225)
+
+#### Chores
+
+- API surface report regenerated for `getPanoptoUrls` (PR #193)
+- Dependency update: eslint 10.10.0 (PR #189)
+- README: Node prerequisite corrected to >= 22.12.0, matching the `engines.node` raised in v16.1.6
+
+### v16.1.6 (2026-09)
+
+#### Fixes
+
+- Content locking: enrolled students no longer hit a navigation loop ("Attempt to use history.pushState() more than 100 times per 10 seconds") when landing on a locked route — the redirect target is excluded from the lock check and the redirect replaces history rather than pushing to it (PR #205)
+- Content locking: the course context tree (TOC sidebar) now renders for enrolled students, rebuilding when lock state resolves instead of being computed once at mount (PR #205)
+- Content locking: educator/student role is re-resolved after sign-in on enrolment courses, so lock state matches the signed-in user without a page reload (PR #205)
+- Content locking: locks are now loaded in anonymous-mode builds; previously an enrolment course rendered with no cards, wall entries or context tree because lock state never resolved
+- Content locking: a failing lock store no longer surfaces as an unhandled promise rejection on every course visit
+
+#### Chores
+
+- Dependency updates: mermaid 12, markdown-it-anchor 10, vite 8.3, zod 4.6, @supabase/supabase-js 2.116, isomorphic-dompurify 4.2, @playwright/test 1.63, typescript-eslint 8.70, and the GitHub Actions group (PRs #215–#223)
+- `engines.node` raised to >=22.12.0, required by mermaid 12 and already matching CI and the Netlify builds
+
+### v16.1.5 (2026-09)
+
+#### Features
+
+- Panopto video support: embed Panopto-hosted videos in courses via `panopto=` video identifiers (PR #188)
+
+#### Fixes
+
+- Course visit card thumbnail missing on home page recently accessed / favourites cards for courses without a custom icon (PR #191)
+- Content locking: course context sidebar tree collapsed by default; TOC tree refactored with RBAC-aware visibility filtering; LLM export links respect content locks for enrolled students (PR #204)
+- Circular card title no longer hidden behind the card image (PR #194)
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+- PDF.js worker updated
+
+### v16.1.4 (2026-09)
+
+#### Fixes
+
+- Exclude locked content from walls: labs/talks/videos under a locked topic are now hidden from students on wall pages, with correct ancestor matching for topics nested inside units (PR #183)
 
 ### v16.1.3 (2026-09)
 
@@ -82,6 +178,25 @@
 
 ## Live (`tutors-live`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+### v16.1.8 (2026-09)
+
+#### Fixes
+
+- Course group header: the course title link pointed at `/course/{courseId}`, which 404s on the Live deployment — it now targets the reader origin, and the live stream link is relative to Live itself (PRs #225, #226)
+- Online course and student cards linked to reader-relative paths broadcast over presence, so every card 404d on the Live origin; they now resolve against the reader (PR #226)
+
+### v16.1.5 (2026-09)
+
+#### Fixes
+
+- Student card name no longer collides with the type label; type label truncates on narrow cards (PR #201)
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
@@ -97,6 +212,12 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
 ### v16.0.2 (2026-08)
 
 #### Fixes
@@ -111,6 +232,26 @@
 
 ## Time (`tutors-time`)
 
+### v16.2.0 (2026-09)
+
+#### Features
+
+- Liveness probe at `/healthz/live` and a Prometheus metrics endpoint at `/metrics` — see Infrastructure below
+
+#### Fixes
+
+- Moodle API, submissions repository and the assignments sync service now report failures through the logger rather than the console (PR #116)
+
+### v16.1.8 (2026-09)
+
+> `apps/time` has tracked the monorepo version since v16.0.0; the v1.0.0 entry
+> below records its migration from the standalone repository.
+
+#### Fixes
+
+- Logging: assignment, calendar and learning-record tables now report load failures through the logger instead of failing silently (PR #173)
+- Student cards linked to reader-relative paths and 404d on the Time origin; they now resolve against the reader (PR #226)
+
 ### v1.0.0 (2026-08)
 
 - Migrated from standalone `tutors-time` repository into monorepo at `apps/time`
@@ -119,7 +260,58 @@
 
 ---
 
+## Infrastructure
+
+Cross-cutting changes that land in every application at once, rather than in
+any single one. Versioned with the monorepo.
+
+### v16.2.2 (2026-09)
+
+#### Chores
+
+- Testing guides rewritten (`guides/TESTING-OVERVIEW.md`, `guides/TESTING.md`, `tests/TESTING.md`), and the two nightly CI jobs left broken by the runway merges now pass; the broken nightly E2E job was dropped (PR #262)
+- E2E accessibility run settles the page before the axe audit, removing a flaky colour-contrast failure (PR #257)
+
+### v16.2.0 (2026-09)
+
+#### Structured logging (PR #116)
+
+- `@tutors/logger` gains a request logger: request lifecycle logs with a generated request id propagated through the server hooks of all four apps
+- Liveness probe at `/healthz/live` in reader, live, time and catalogue, for container and Kubernetes health checks
+- Console logging replaced with structured logger calls across the time app's server-side services
+
+#### Containerisation (PR #229)
+
+- `Dockerfile` and `compose.yaml` at the repository root, with `deploy/k8s` kustomize bases and per-app overlays for reader, live, time and catalogue
+- Runtime configuration via `.env.example`; apps read their environment at container start rather than build time
+- `svelte.config.js` in each app selects `adapter-node` when `SVELTEKIT_ADAPTER=node` and otherwise keeps `adapter-auto`, so the Netlify builds are unaffected by the container work
+- Local standup documented in `docs/LOCAL-CONTAINERS.md`
+
+#### Metrics and alerting (PR #144)
+
+- New `@tutors/metrics` package: a Prometheus registry, request middleware and a `/metrics` endpoint served by all four apps
+- Grafana alerting rules and a ServiceMonitor component for Prometheus Operator scraping under `observability/` and `deploy/k8s/components/`
+
+---
+
 ## Shared Packages
+
+### Unreleased
+
+- `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
+- `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
+- `tutors-lite`: note pages no longer render a stray `s` after the note card
+
+### v5.3.0 (2026-09)
+
+- `model`: new `quiz` learning object type, registered in `simpleTypes` and `preOrder`. Without it the generator mistypes a `quiz-*` folder as its enclosing topic, so publishing this is what makes authored quizzes reachable
+- `model`: new `pluraliseLoType` export, so a quiz wall reads "All quizzes" rather than "All quizs"
+- `model`: quiz walls registered in `createWalls`
+- Realign all JSR package versions (`model`, `time`, `gen`, `tutors`, `tutors-lite`, `create`) to 5.3.0
+
+### v5.2.4 (2026-09)
+
+- `tutors-create`: optional `.gitignore` and README in generated courses, offered by both the CLI prompts and the reader wizard (PR #197)
 
 ### v5.2.3 (2026-09)
 

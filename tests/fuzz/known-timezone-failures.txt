@@ -1,0 +1,2 @@
+# Tests that fail under a non-UTC timezone (scripts/checks/tz-matrix.ts, `pnpm test:tz`).
+# This file may only shrink. Format: `zone :: file :: full test name`.

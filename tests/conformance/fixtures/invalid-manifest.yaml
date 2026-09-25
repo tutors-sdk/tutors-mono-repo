@@ -1,0 +1,21 @@
+# Negative fixture for kubeconform in CI: schema-invalid on purpose
+# (replicas must be an integer; containerPort must be a number).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invalid
+spec:
+  replicas: "two"
+  selector:
+    matchLabels:
+      app: invalid
+  template:
+    metadata:
+      labels:
+        app: invalid
+    spec:
+      containers:
+        - name: app
+          image: registry.example.com/invalid:1.0.0
+          ports:
+            - containerPort: http

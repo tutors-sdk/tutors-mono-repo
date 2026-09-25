@@ -2,6 +2,7 @@
 node_modules/
 .pnp
 .pnp.js
+.pnpm-store/
 
 # Build outputs
 dist/
@@ -34,7 +35,9 @@ lerna-debug.log*
 Thumbs.db
 
 # Editor directories
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
@@ -44,6 +47,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 tests/release/.release-work/
+test-results/
+playwright-report/
+tests/e2e-stack/work/
 .stryker-tmp/
 reports/mutation/
 
@@ -53,3 +59,12 @@ reports/mutation/
 
 # Generated OKF knowledge bundle
 okf/
+
+# Kubernetes secrets are created out of band; only the example is tracked
+deploy/k8s/**/secrets.yaml
+# Generator differential work area (scripts/checks/generator-diff.ts)
+.generator-diff/
+# graphify working output and cache (the committed report lives in docs/knowledge-graph/)
+graphify-out/
+# Local-only observability guides (contain production setup steps)
+observability/grafana/PRODUCTION-SETUP.md

@@ -1,6 +1,5 @@
 // @ts-types="npm:@types/markdown-it@^14.1.2"
 import MarkdownIt from "markdown-it";
-import { katex as latex } from "@mdit/plugin-katex";
 // @ts-ignore no types available
 import anchor from "markdown-it-anchor";
 // @ts-ignore no types available
@@ -19,7 +18,7 @@ import footnote from "markdown-it-footnote";
 import deflist from "markdown-it-deflist";
 import { addCopyButton } from "shiki-transformer-copy-button";
 import type { Course, Lab, Lo, Note } from "../types/index.ts";
-import { link_open, podcastPlayer, quote_close, quote_open, videoPlayer } from "./markdown-plugins.ts";
+import { link_open, type MarkdownItInstance, podcastPlayer, quote_close, quote_open, videoPlayer } from "./markdown-plugins.ts";
 
 const options = {
   // delay time from "copied" state back to normal state
@@ -34,7 +33,7 @@ export function initHighlighter(codeHighlighter: any) {
   customHighlighter = codeHighlighter;
 }
 
-export const markdownIt: MarkdownIt = new MarkdownIt({
+export const markdownIt: MarkdownItInstance = new MarkdownIt({
   html: true, // Enable HTML tags in source
   xhtmlOut: false, // Use '/' to close single tags (<br />).
   breaks: false, // Convert '\n' in paragraphs into <br>
@@ -56,7 +55,6 @@ export const markdownIt: MarkdownIt = new MarkdownIt({
 });
 
 const tocOptions = { includeLevel: [1, 2, 3] };
-markdownIt.use(latex);
 markdownIt.use(anchor, {
   permalink: anchor.permalink.headerLink(),
 });
@@ -74,13 +72,37 @@ markdownIt.renderer.rules.blockquote_open = quote_open;
 markdownIt.renderer.rules.blockquote_close = quote_close;
 markdownIt.renderer.rules.link_open = link_open as unknown as typeof markdownIt.renderer.rules.link_open;
 
+let mathLoading: Promise<void> | undefined;
+
+/**
+ * Registers KaTeX math rendering (`$...$` and `$$...$$`) on markdownIt.
+ * KaTeX is imported on demand so a browser only downloads it for a course
+ * that contains math; await this before rendering such markdown. Registering
+ * after the other plugins gives the same output as registering first: the
+ * math rules are anchored to built-in rules ("escape", "blockquote") that no
+ * other plugin here inserts next to. Safe to call repeatedly.
+ */
+export function loadMath(): Promise<void> {
+  mathLoading ??= import("@mdit/plugin-katex").then(({ katex }) => {
+    markdownIt.use(katex);
+  });
+  return mathLoading;
+}
+
+/**
+ * False only when the text renders identically with or without math: every
+ * delimiter the KaTeX plugin recognises starts with "$".
+ */
+export function mayContainMath(text: string): boolean {
+  return text.includes("$");
+}
+
 export function convertMdToHtml(md: string, codeTheme: string = "ayu-dark"): string {
   currentTheme = codeTheme;
   return markdownIt.render(md);
 }
 
 export function convertLabToHtml(course: Course, lab: Lab, protocol: string = "https://") {
-  lab.summary = markdownIt.render(lab.summary);
   const url = lab.route.replace(`/lab/${course.courseId}`, course.courseUrl);
   lab.los?.forEach((step) => {
     if (course.courseUrl) {
@@ -93,7 +115,6 @@ export function convertLabToHtml(course: Course, lab: Lab, protocol: string = "h
 }
 
 export function convertNoteToHtml(course: Course, note: Note, protocol: string = "https://") {
-  note.summary = convertMdToHtml(note.summary);
   const url = note.route.replace(`/note/${course.courseId}`, course.courseUrl);
   if (course.courseUrl) {
     note.contentMd = filter(note.contentMd, url, protocol);
@@ -102,13 +123,25 @@ export function convertNoteToHtml(course: Course, note: Note, protocol: string =
 }
 
 
+/**
+ * Converts an Lo summary - the single line of markdown below the title - to HTML.
+ *
+ * Kept separate from the body conversion because every Lo needs its summary as
+ * HTML the moment the tree is built (cards render it), while the types with
+ * large bodies are converted on demand. Conversion happens in place and is not
+ * idempotent, so this runs exactly once per Lo.
+ */
+export function convertLoSummaryToHtml(lo: Lo, codeTheme: string = "ayu-dark") {
+  if (lo.summary) lo.summary = convertMdToHtml(lo.summary, codeTheme);
+}
+
 export function convertLoToHtml(course: Course, lo: Lo, protocol: string = "https://") {
+  convertLoSummaryToHtml(lo);
   if (lo.type === "lab") {
-    convertLabToHtml(course, lo as Lab);
+    convertLabToHtml(course, lo as Lab, protocol);
   }else if (lo.type == "note") {
-    convertNoteToHtml(course, lo as Note);
+    convertNoteToHtml(course, lo as Note, protocol);
   } else {
-    if (lo.summary) lo.summary = convertMdToHtml(lo.summary);
     if (lo.type === "talk" && lo.frontMatter?.marp) return;
     let md = lo.contentMd;
     if (md) {

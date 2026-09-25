@@ -16,10 +16,8 @@
     "./utils/health-check": "./src/utils/health-check.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.4",
-    "@tutors/course": "workspace:*",
+    "@supabase/supabase-js": "^2.116.0",
     "@tutors/logger": "workspace:*",
-    "@tutors/privacy": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*"
   },

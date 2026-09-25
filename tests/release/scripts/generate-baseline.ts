@@ -24,14 +24,14 @@ async function run() {
     ? "jsr:@tutors/tutors"
     : `jsr:@tutors/tutors@${version}`;
 
-  console.log(`[baseline] Generating with CLI version: ${version}`);
-  console.log(`[baseline] Package: ${jsrPackage}`);
+  process.stdout.write(`[baseline] Generating with CLI version: ${version}\n`);
+  process.stdout.write(`[baseline] Package: ${jsrPackage}\n`);
 
   // Verify reference course exists
   try {
     await Deno.stat(`${COURSE_DIR}/course.md`);
   } catch {
-    console.error("[baseline] Reference course not found. Run fetch-reference-course.ts first.");
+    process.stderr.write("[baseline] Reference course not found. Run fetch-reference-course.ts first.\n");
     Deno.exit(1);
   }
 
@@ -52,12 +52,12 @@ async function run() {
     cwd: COURSE_DIR,
   });
 
-  console.log(`[baseline] Running CLI in ${COURSE_DIR}...`);
+  process.stdout.write(`[baseline] Running CLI in ${COURSE_DIR}...\n`);
   const result = await cmd.output();
 
   if (!result.success) {
     const stderr = new TextDecoder().decode(result.stderr);
-    console.error(`[baseline] Generation failed: ${stderr}`);
+    process.stderr.write(`[baseline] Generation failed: ${stderr}\n`);
     Deno.exit(1);
   }
 
@@ -65,12 +65,12 @@ async function run() {
   try {
     await Deno.stat(courseJsonDir);
   } catch {
-    console.error("[baseline] No json/ directory produced by CLI.");
+    process.stderr.write("[baseline] No json/ directory produced by CLI.\n");
     Deno.exit(1);
   }
 
   await Deno.rename(courseJsonDir, OUTPUT_DIR);
-  console.log(`[baseline] Artifacts moved to ${OUTPUT_DIR}`);
+  process.stdout.write(`[baseline] Artifacts moved to ${OUTPUT_DIR}\n`);
 }
 
 await run();

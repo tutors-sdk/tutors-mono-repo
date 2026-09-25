@@ -12,6 +12,7 @@
 @import "@tutors/themes/styles/dyslexia.css";
 @import "@tutors/themes/styles/easter.css";
 @import "@tutors/themes/styles/prose-headings.css";
+@import "@tutors/themes/styles/reduced-motion.css";
 @import "@tutors/ui-components/styles.css";
 
 @source "../../../packages/svelte/ui-navigators/src/**/*.svelte";
@@ -104,3 +105,10 @@ pre button.copy.copied .success {
 pre button.copy.copied .ready {
   display: none;
 }
+
+@import "@tutors/themes/styles/paper-tokens.css";
+@import "@tutors/themes/styles/paper-ui.css";
+
+pre button.copy { width: 44px; height: 44px; min-height: 44px; right: 8px; top: 8px; align-items: center; justify-content: center; border-radius: var(--radius-control); background: var(--ui-surface); border: 1px solid var(--ui-border); opacity: 1; }
+pre button.copy span { width: 20px; height: 20px; background-size: contain; }
+pre:has(button.copy) { padding-right: 64px; }

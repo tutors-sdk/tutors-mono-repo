@@ -6,6 +6,8 @@ declare global {
     // interface Error {}
     interface Locals {
       locale: string;
+      /** Correlation id set by the request logger hook; echoed as x-request-id. */
+      requestId?: string;
     }
     // interface PageData {}
     // interface PageState {}

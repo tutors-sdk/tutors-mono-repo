@@ -1,0 +1,4 @@
+{
+  "$comment": "Advisories accepted for a limited time (runway tier M). Each needs a reason and an expiry; an expired entry fails the nightly audit and warns on PRs. Check with: pnpm check:audit",
+  "allowances": []
+}

@@ -6,6 +6,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./search/*": {
+      "types": "./src/search/*.ts",
+      "default": "./src/search/*.ts"
+    },
     "./*": "./src/*"
   },
   "scripts": {
@@ -20,7 +24,6 @@
     "@tutors/course": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
-    "@tutors/quiz": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
@@ -32,11 +35,11 @@
     "@skeletonlabs/skeleton-svelte": "^5.0.0",
     "@sveltejs/package": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
-    "svelte": "^5.0.0",
+    "svelte": "^5.57.0",
     "typescript": "^6.0.3",
-    "vite": "^8.2.0"
+    "vite": "^8.3.0"
   },
   "peerDependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "^5.57.0"
   }
 }

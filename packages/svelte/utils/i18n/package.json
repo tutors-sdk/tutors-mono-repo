@@ -10,14 +10,13 @@
     "./messages/*": "./src/messages/*"
   },
   "dependencies": {
-    "@tutors/runes": "workspace:*",
-    "@tutors/course": "workspace:*"
+    "@tutors/runes": "workspace:*"
   },
   "devDependencies": {
-    "svelte": "^5.0.0",
+    "svelte": "^5.57.0",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "^5.57.0"
   }
 }

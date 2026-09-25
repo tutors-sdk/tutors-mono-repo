@@ -13,7 +13,7 @@ A toolbar sits above the whiteboard with three controls:
 | Button | Description |
 |--------|-------------|
 | **Edit** | Switches from read-only SVG view to the full Excalidraw editor with real-time collaboration via Supabase Realtime. Click again to return to view mode. |
-| **Personal / Shared** | Visible in edit mode only. Toggles between a personal whiteboard (unique to the current user) and a shared whiteboard (all users collaborate on the same canvas). Uses a lock/unlock icon. |
+| **Personal / Shared** | Visible in edit mode only. Toggles between a personal whiteboard (unique to the current user) and a shared whiteboard (all users collaborate on the same canvas). Uses a lock/unlock icon. Switching reloads the editor into the other room. |
 | **Fullscreen** | Expands the whiteboard to fill the browser viewport. |
 
 ### View Mode vs Edit Mode
@@ -33,11 +33,23 @@ Room IDs follow the pattern:
 
 ## Course Whiteboard (Toolbar Button)
 
-A whiteboard icon in the main course toolbar opens a fullscreen Excalidraw editor overlay. This is a per-course collaborative whiteboard for freeform use — not tied to any specific learning object.
+A whiteboard icon in the main course toolbar opens a fullscreen Excalidraw editor overlay. This is a per-course collaborative whiteboard for freeform use — not tied to any specific learning object. It has the full Excalidraw toolset, so students and tutors can draw, add text and shapes, and import images.
 
 - Opens as a fullscreen overlay with a **Close** button (also supports Escape key)
 - Connects to a shared channel: `wb-{courseId}-shared`
-- Available on any course page (desktop only)
+- Shown on course pages on desktop only (hidden below the `md` breakpoint)
+- **Opt-in**: the button only appears when the course enables it (see below)
+- Edits are shared live between everyone who has the overlay open. The overlay does not save the board to `whiteboard_scenes`, so closing it or reloading the page clears the board, and someone joining later starts from an empty canvas. (Whiteboard learning objects do save their edits; see [View Mode vs Edit Mode](#view-mode-vs-edit-mode).)
+
+### Enabling the course whiteboard
+
+Add the `whiteboard` property to the course's `properties.yaml`:
+
+```yaml
+whiteboard: 1
+```
+
+The value must be the number `1`. Any other value, including `true` or `"1"`, leaves the button hidden, as does omitting the property. The flag applies to the toolbar button only; whiteboard learning objects do not need it.
 
 ## Architecture
 
@@ -56,9 +68,11 @@ A whiteboard icon in the main course toolbar opens a fullscreen Excalidraw edito
 ```
 WhiteboardViewer.svelte
   │
-  ├── View mode: postMessage("load-scene") → excalidraw-viewer.html
+  ├── View mode: iframe posts "viewer-ready", parent replies postMessage("load-scene")
+  │              → excalidraw-viewer.html
   │
-  └── Edit mode: postMessage("init-editor") → excalidraw-editor.html
+  └── Edit mode: iframe posts "editor-ready", parent replies postMessage("init-editor")
+                 → excalidraw-editor.html
                       │                              │
                       │                              └── Supabase Realtime channel (wb:{roomId})
                       │                                    │
@@ -78,7 +92,9 @@ The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collabor
 - **Scene sync**: Broadcasts element changes via the `scene-update` event. Elements are merged by ID using Excalidraw's version numbers (higher version wins).
 - **Cursor sync**: Broadcasts pointer positions via the `cursor-update` event. Cursor colors are deterministically assigned from the user's ID.
 - **User tracking**: Uses Supabase Presence to track active collaborators. When a user disconnects, they are automatically removed from the presence state.
-- **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table.
+- **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table. `WhiteboardViewer.svelte` keeps a single `message` listener for its lifetime (it must keep receiving `scene-changed` after `editor-ready`) and ignores messages that do not come from its own iframe. The iframe is recreated when the mode or the personal/shared room changes, so each room starts with a fresh `editor-ready` handshake.
+- **Same origin only**: the parent and both iframe pages accept messages only from the reader's own origin and post only to it (never `"*"`).
+- **Appearance**: `load-scene` and `init-editor` carry `theme` (`"light"` or `"dark"`, the reader's appearance). The viewer renders its SVG with Excalidraw's dark export and the editor opens in Excalidraw's dark theme. When the reader's appearance changes, the parent posts `set-theme` and the open iframe follows without reloading.
 
 ### Excalidraw Loading
 
@@ -92,7 +108,9 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap �
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`).
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
+
+To try a whiteboard against a course on your machine, generate one that contains a `whiteboard-*` folder, serve its `json/` output over HTTP with CORS enabled, and open `/whiteboard/localhost:<port>/<topic>/<whiteboard-folder>` on the reader (add `whiteboard: 1` to the course's `properties.yaml` to see the toolbar button). The reader treats a `localhost` course id as plain HTTP, but the generator writes the `.excalidraw` URL into `tutors.json` as `https://{{COURSEURL}}/...`, so when serving over plain HTTP change that prefix to `http://` in the generated `tutors.json`.
 
 ### Environment Variables
 

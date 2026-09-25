@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namePrefix: live-
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: tutors-live
+      app.kubernetes.io/component: live
+    includeSelectors: true
+    includeTemplates: true
+
+images:
+  - name: tutors-app
+    newName: quay.io/tutors-sdk/tutors-live
+    newTag: "16.2.2"
+    digest: sha256:12ed5642e5cbec601790771a8f9fc85221f8202679a312a0e707622bb6e84e9a
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: tutors-app-config
+    patch: |
+      - op: replace
+        path: /data/ORIGIN
+        value: "https://live.tutors.dev"

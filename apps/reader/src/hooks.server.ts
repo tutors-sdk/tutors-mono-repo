@@ -1,10 +1,33 @@
-import type { Handle, HandleServerError } from "@sveltejs/kit";
+/* global APP_VERSION */
+import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
+import { building } from "$app/environment";
 import { SvelteKitAuth } from "@auth/sveltekit";
-import { PRIVATE_AUTH_GITHUB_SECRET, PRIVATE_AUTH_GITHUB_ID, PRIVATE_AUTH_SECRET } from "$env/static/private";
+import { env } from "$env/dynamic/private";
+import { env as publicEnv } from "$env/dynamic/public";
 import GithubProvider from "@auth/core/providers/github";
 import { initLocaleFromCookie } from "@tutors/i18n";
-import log from "@tutors/logger";
+import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
+import { metricsHandle } from "@tutors/metrics";
+import { announceClock } from "@tutors/runtime";
+import { authMode } from "$lib/server/auth-mode";
+
+setAppName("tutors-reader");
+// From here on every stdout/stderr line of the running server is one JSON object: stray console
+// output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
+if (!building) installProcessLogging();
+
+const currentAuthMode = () =>
+  authMode({ PUBLIC_ANON_MODE: publicEnv.PUBLIC_ANON_MODE, PRIVATE_AUTH_SECRET: env.PRIVATE_AUTH_SECRET });
+
+export const init: ServerInit = async () => {
+  const mode = currentAuthMode();
+  logServiceStart({ version: APP_VERSION, authMode: mode });
+  announceClock(log);
+  if (mode === "unconfigured") {
+    log.error("Authentication disabled: PRIVATE_AUTH_SECRET is not set. Set it, or set PUBLIC_ANON_MODE=TRUE.");
+  }
+};
 
 const { handle: authInitHandle } = SvelteKitAuth({
   basePath: "/auth",
@@ -12,8 +35,8 @@ const { handle: authInitHandle } = SvelteKitAuth({
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     GithubProvider({
-      clientId: PRIVATE_AUTH_GITHUB_ID,
-      clientSecret: PRIVATE_AUTH_GITHUB_SECRET,
+      clientId: env.PRIVATE_AUTH_GITHUB_ID,
+      clientSecret: env.PRIVATE_AUTH_GITHUB_SECRET,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       profile(profile: any) {
         return {
@@ -46,9 +69,23 @@ const { handle: authInitHandle } = SvelteKitAuth({
     strategy: "jwt"
   },
 
-  secret: PRIVATE_AUTH_SECRET,
-  trustHost: true
+  secret: env.PRIVATE_AUTH_SECRET,
+  trustHost: true,
+
+  // Route Auth.js output through the structured logger; its default writes
+  // coloured plain text that log collectors cannot parse.
+  logger: {
+    error: (error) => log.error("Auth.js error", error),
+    // @auth/sveltekit turns off Auth.js's own CSRF token and relies on
+    // SvelteKit's origin check, so "csrf-disabled" arrives on every auth request.
+    warn: (code) => (code === "csrf-disabled" ? log.debug("Auth.js warning", { code }) : log.warn("Auth.js warning", { code })),
+    debug: (message, metadata) => log.debug("Auth.js debug", { details: message, metadata })
+  }
 });
+
+// First in the chain so every request gets a correlation id and one completion line,
+// including requests that fail inside the hooks below.
+const requestLogger = createRequestLogger();
 
 const localeHandle: Handle = async ({ event, resolve }) => {
   event.locals.locale = initLocaleFromCookie(event.request.headers.get("cookie") ?? "");
@@ -64,10 +101,18 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handle = sequence(localeHandle, securityHeaders, authInitHandle);
+// Without a secret Auth.js throws MissingSecret from the root layout on every
+// page, so anonymous and unconfigured deployments skip it and have no session.
+const authHandle: Handle = async (input) => {
+  if (currentAuthMode() === "enabled") return authInitHandle(input);
+  input.event.locals.auth = async () => null;
+  return input.resolve(input.event);
+};
 
-export const handleError: HandleServerError = ({ error }) => {
-  log.error("Server error:", error instanceof Error ? error : { details: error });
+export const handle = sequence(requestLogger, metricsHandle, localeHandle, securityHeaders, authHandle);
+
+export const handleError: HandleServerError = ({ error, event, status, message }) => {
+  logRequestError({ error, event, status, message });
   return {
     message: "An unexpected error occurred"
   };

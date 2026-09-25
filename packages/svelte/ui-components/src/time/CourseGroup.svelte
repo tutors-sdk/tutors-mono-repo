@@ -8,18 +8,12 @@
   let students = $derived(liveService.studentsOnline.value.filter((lo: LoRecord) => lo.courseId === courseId));
 </script>
 
-<div class="bg-surface-100-800-token border-surface-200-700-token mx-auto mb-2 w-full place-items-center overflow-hidden rounded-xl border-[1px] p-4">
+<div class="ui-panel mb-4 w-full">
   <CourseGroupHeader {courseId} {courseTitle} />
-  <div class="flex flex-wrap justify-center">
+  <div class="ui-grid">
     {#each students as lo}
       {#if lo?.user?.fullName !== "Anon"}
-        <StudentCard
-          {lo}
-          cardLayout={{
-            layout: "expanded",
-            style: "landscape"
-          }}
-        />
+        <StudentCard {lo} />
       {/if}
     {/each}
   </div>

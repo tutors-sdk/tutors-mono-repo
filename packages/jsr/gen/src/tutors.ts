@@ -1,5 +1,5 @@
 import { buildCourse } from "./services/course-builder.ts";
-import { decorateCourseTree } from "@tutors/tutors-model-lib";
+import { decorateCourseTree, loadMath } from "@tutors/tutors-model-lib";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 
 import { writeFile } from "./utils/file-utils.ts";
@@ -10,6 +10,10 @@ import { downloadVentoTemplates } from "./templates/template-downloader.ts";
 import { initTemplateEngine } from "./templates/template-engine.ts";
 import { buildTree, copyAssetFiles } from "./services/resource-builder.ts";
 import type { LearningResource } from "./types/types.ts";
+
+// The model lib loads KaTeX on demand so the reader's bundle can skip it; the
+// generator renders every course up front, so it always has math on.
+await loadMath();
 
 export function parseCourse(folder: string, silent: boolean = false): [Course, LearningResource] {
   const lr = buildTree(folder);
@@ -39,8 +43,9 @@ export async function generateStaticCourse(course: Course, destFolder: string, s
     initTemplateEngine(destFolder);
     await emitStaticCourse(destFolder, course);
     return true;
-  } catch (error) {
-    console.error('Error generating static course:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error generating static course: ${message}\n`);
     return false;
   }
 }

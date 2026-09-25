@@ -1,0 +1,10 @@
+# Notification routing policy.
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: tutors-oncall
+    group_by: ["alertname", "severity"]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h

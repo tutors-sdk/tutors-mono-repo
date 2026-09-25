@@ -1,0 +1,85 @@
+/* Application roles adapt the Paper layout to each existing theme palette. */
+@font-face { font-family: OpenDyslexic; src: url('/OpenDyslexic-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: OpenDyslexic; src: url('/OpenDyslexic-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: OpenDyslexic; src: url('/OpenDyslexic-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: OpenDyslexic; src: url('/OpenDyslexic-BoldItalic.woff2') format('woff2'); font-weight: 700; font-style: italic; font-display: swap; }
+
+:root {
+  --ui-font-family: var(--font-interface), system-ui, sans-serif;
+  --ui-line-height: var(--leading-ui);
+  --ui-reading-leading: 1.65;
+  --ui-summary-leading: 1.5;
+  --ui-letter-spacing: normal;
+  --ui-word-spacing: normal;
+  --ui-label-transform: uppercase;
+  --ui-label-spacing: .1em;
+  --ui-paragraph-spacing: 1.25em;
+}
+
+:where([data-theme]):not([data-theme="tutors"]) {
+  --ui-font-family: var(--typo-base--font-family);
+  --ui-canvas: light-dark(var(--color-surface-100), var(--color-surface-950));
+  --ui-surface: light-dark(var(--color-surface-50), var(--color-surface-900));
+  --ui-ink: light-dark(var(--color-surface-950), var(--color-surface-50));
+  --ui-muted: light-dark(var(--color-surface-600), var(--color-surface-300));
+  --ui-brand: light-dark(var(--color-primary-700), var(--color-primary-300));
+  --ui-brand-hover: light-dark(var(--color-primary-800), var(--color-primary-200));
+  --ui-brand-pressed: light-dark(var(--color-primary-900), var(--color-primary-400));
+  --ui-border: light-dark(var(--color-surface-300), var(--color-surface-700));
+  --ui-control-border: light-dark(var(--color-surface-500), var(--color-surface-400));
+  --ui-selected: light-dark(var(--color-surface-200), var(--color-surface-800));
+  --ui-on-brand: light-dark(var(--color-surface-50), var(--color-surface-950));
+  --ui-focus: var(--ui-brand);
+  --ui-disabled-ink: var(--ui-muted);
+  --ui-raised: var(--ui-selected);
+  --ui-info: light-dark(var(--color-secondary-700), var(--color-secondary-300));
+  --ui-warning: light-dark(var(--color-warning-700), var(--color-warning-300));
+  --ui-danger: light-dark(var(--color-error-700), var(--color-error-300));
+}
+
+/* These custom themes predate Skeleton's v5 typography variable names. */
+[data-theme="tutors"], [data-theme="classic"], [data-theme="easter"], [data-theme="dyslexia"] {
+  --typo-base--font-family: var(--base-font-family);
+  --typo-heading--font-family: var(--base-font-family);
+}
+
+[data-theme="dyslexia"] {
+  --base-font-family: OpenDyslexic, Arial, sans-serif;
+  --font-body: 1.125rem;
+  --font-reading: 1.25rem;
+  --font-label: 1rem;
+  --font-control: 1rem;
+  --font-caption: .875rem;
+  --font-meta: .875rem;
+  --font-small: .875rem;
+  --leading-ui: 160%;
+  --leading-heading: 145%;
+  --ui-reading-leading: 1.85;
+  --ui-summary-leading: 1.75;
+  --ui-letter-spacing: .035em;
+  --ui-word-spacing: .12em;
+  --ui-label-transform: none;
+  --ui-label-spacing: .035em;
+  --ui-paragraph-spacing: 1.75em;
+  --ui-emphasis-style: normal;
+  --ui-emphasis-weight: 700;
+  --reading-width: 60ch;
+  --ui-canvas: light-dark(#F5F0E3, #191B18);
+  --ui-surface: light-dark(#FFFAED, #232620);
+  --ui-ink: light-dark(#25241F, #F4F0DF);
+  --ui-muted: light-dark(#575344, #C8C5B5);
+  --ui-brand: light-dark(#365E4B, #B9D7A1);
+  --ui-brand-hover: light-dark(#294B3B, #CFE7BC);
+  --ui-brand-pressed: light-dark(#1D3A2C, #A4C889);
+  --ui-border: light-dark(#C3BAA4, #52594D);
+  --ui-control-border: light-dark(#8A806B, #8A9380);
+  --ui-selected: light-dark(#EAE1C9, #333A31);
+  --ui-on-brand: light-dark(#FFFAED, #191B18);
+}
+
+/* Let larger text reflow in existing utility-based labels and controls too. */
+[data-theme="dyslexia"] :is(.text-xs, .text-sm) { font-size: var(--font-label); line-height: var(--leading-ui); }
+[data-theme="dyslexia"] :is(h1, h2, h3, h4, h5, h6) { line-height: var(--leading-heading); letter-spacing: var(--ui-letter-spacing); }
+[data-theme="dyslexia"] .prose { text-align: start; hyphens: none; }
+
+[data-theme="dyslexia"] .uppercase { text-transform: none; letter-spacing: var(--ui-letter-spacing); }

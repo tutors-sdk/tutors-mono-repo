@@ -1,0 +1,13 @@
+# Contact points for alert notifications.
+# Update with your team's Slack webhook, PagerDuty key, or email.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: tutors-oncall
+    receivers:
+      - uid: default-email
+        type: email
+        settings:
+          addresses: "tutors-alerts@example.com"
+        disableResolveMessage: false

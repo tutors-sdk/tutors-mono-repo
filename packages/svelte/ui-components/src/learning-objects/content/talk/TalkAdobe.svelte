@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { PUBLIC_PDF_KEY } from "$env/static/public";
+  import { env } from "$env/dynamic/public";
   import { adobeLoaded, currentCourse } from "@tutors/runes";
   import type { Talk } from "@tutors/tutors-model-lib";
   import { onMount } from "svelte";
@@ -47,7 +47,7 @@
     if (!window.AdobeDC) return;
 
     adobeDCView = new window.AdobeDC.View({
-      clientId: PUBLIC_PDF_KEY,
+      clientId: env.PUBLIC_PDF_KEY,
       divId: viewerId
     });
 
@@ -87,15 +87,15 @@
 </script>
 
 {#if orientation === "portrait"}
-  <div class="mt-2 mr-2 px-4 py-2">
+  <div class="ui-panel">
     <div id={viewerId} class="mx-auto h-[85dvh]"></div>
   </div>
 {:else if currentCourse?.value?.pdfOrientation === "landscape"}
-  <div class="relative w-full p-2" style="aspect-ratio: 16/11;">
+  <div class="ui-panel relative w-full" style="aspect-ratio: 16/11;">
     <div id={viewerId} class="mx-auto h-full w-full"></div>
   </div>
 {:else}
-  <div class="mt-2 mr-2 px-4 py-2">
+  <div class="ui-panel">
     <div id={viewerId} class="mx-auto h-[85dvh]"></div>
   </div>
 {/if}

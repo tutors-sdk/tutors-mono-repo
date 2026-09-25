@@ -11,7 +11,8 @@
   "dependencies": {
     "@tutors/community": "workspace:*",
     "@tutors/runes": "workspace:*",
-    "@tutors/logger": "workspace:*"
+    "@tutors/logger": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

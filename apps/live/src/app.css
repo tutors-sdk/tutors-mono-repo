@@ -12,6 +12,7 @@
 @import "@tutors/themes/styles/dyslexia.css";
 @import "@tutors/themes/styles/easter.css";
 @import "@tutors/themes/styles/prose-headings.css";
+@import "@tutors/themes/styles/reduced-motion.css";
 @import "@tutors/ui-components/styles.css";
 
 @source "../../../packages/svelte/ui-navigators/src/**/*.svelte";
@@ -36,3 +37,6 @@
     .xl\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
 }
+
+@import "@tutors/themes/styles/paper-tokens.css";
+@import "@tutors/themes/styles/paper-ui.css";

@@ -10,6 +10,7 @@
   interface TreeNode {
     name: string;
     children?: TreeNode[];
+    content?: string;
   }
 
   function buildTree(generated: GeneratedFile[], root: string): TreeNode {
@@ -23,7 +24,7 @@
         node.children ??= [];
         let child = node.children.find((c) => c.name === name);
         if (!child) {
-          child = isFile ? { name } : { name, children: [] };
+          child = isFile ? { name, content: file.content } : { name, children: [] };
           node.children.push(child);
         }
         node = child;
@@ -38,12 +39,12 @@
 {#snippet renderNode(node: TreeNode, depth: number)}
   <div style="padding-left: {depth * 1.25}rem" class="py-0.5">
     {#if node.children}
-      <span class="font-semibold text-primary-600 dark:text-primary-400">{node.name}</span>
+      <span class="font-semibold text-[var(--ui-brand)]">{node.name}</span>
       {#each node.children as child}
         {@render renderNode(child, depth + 1)}
       {/each}
     {:else}
-      <span class="text-surface-600 dark:text-surface-400">{node.name}</span>
+      <details><summary class="flex cursor-pointer items-center">{node.name}</summary><pre class="overflow-auto rounded-lg border border-[var(--ui-border)] p-4">{node.content}</pre></details>
     {/if}
   </div>
 {/snippet}

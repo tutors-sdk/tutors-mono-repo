@@ -7,13 +7,13 @@
   let { courseId, courseTitle }: Props = $props();
 </script>
 
-<div class="flex w-full justify-between pb-2">
+<div class="flex w-full flex-wrap items-center justify-between gap-3 pb-4">
   <h2 class="p-2 text-base font-semibold">
     <a
       target="_blank"
       rel="noopener noreferrer"
-      href="/course/{courseId}"
-      class="text-primary hover:text-primary-dark inline-flex items-center gap-1 underline underline-offset-2 transition-colors hover:decoration-primary"
+      href="https://tutors.dev/course/{courseId}"
+      class="inline-flex items-center gap-2 text-[var(--ui-brand)] underline underline-offset-4"
     >
       <Icon type="course" height="20" /><span>{courseTitle}</span>
     </a>
@@ -22,8 +22,8 @@
     <a
       target="_blank"
       rel="noopener noreferrer"
-      href="/live/{courseId}"
-      class="text-primary hover:text-primary-dark inline-flex items-center gap-1 underline underline-offset-2 transition-colors hover:decoration-primary"
+      href="/{courseId}"
+      class="inline-flex items-center gap-2 text-[var(--ui-brand)] underline underline-offset-4"
     >
       <Icon type="live" height="20" /><span>Live Stream</span>
     </a>

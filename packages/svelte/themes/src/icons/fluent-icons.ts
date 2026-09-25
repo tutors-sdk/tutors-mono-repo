@@ -29,6 +29,7 @@ export const FluentIconLib: IconLib = {
   panelnote: { type: "fluent:notepad-16-regular", color: "warning" },
   tutorial: { type: "fluent:arrow-clockwise-dashes-settings-24-regular", color: "primary" },
   notebook: { type: "simple-icons:jupyter", color: "error" },
+  quiz: { type: "fluent:quiz-new-24-filled", color: "primary" },
   whiteboard: { type: "fluent:whiteboard-24-filled", color: "primary" },
   podcast: { type: "fluent:mic-20-filled", color: "primary" },
 
@@ -55,8 +56,6 @@ export const FluentIconLib: IconLib = {
   light: { type: "fluent:weather-sunny-32-filled", color: "warning" },
   dark: { type: "fluent:weather-moon-48-filled", color: "warning" },
   toc: { type: "fluent:line-horizontal-3-20-filled", color: "bg-base-content" },
-  compacted: { type: "fluent:re-order-dots-vertical-24-filled", color: "success" },
-  expanded: { type: "fluent:re-order-dots-horizontal-24-filled", color: "success" },
   portrait: { type: "fluent:rectangle-portrait-location-target-20-regular", color: "primary" },
   circular: { type: "fluent:circle-sparkle-28-regular", color: "warning" },
   landscape: { type: "fluent:rectangle-landscape-sparkle-48-regular", color: "error" },
@@ -72,11 +71,6 @@ export const FluentIconLib: IconLib = {
   close: { type: "carbon:close-outline", color: "primary" },
   theme: { type: "fluent:color-fill-24-regular", color: "success" },
   codeTheme: { type: "fluent:paint-brush-sparkle-20-regular", color: "primary" },
-
-  // quiz
-  quiz: { type: "fluent:quiz-new-24-filled", color: "primary" },
-  quizLive: { type: "fluent:live-24-filled", color: "error" },
-  quizResults: { type: "fluent:data-bar-vertical-24-filled", color: "success" },
 
   // sentiment
   neutral: { type: "twemoji:dizzy", color: "bg-base-content" },

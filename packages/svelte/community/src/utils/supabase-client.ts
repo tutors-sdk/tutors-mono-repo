@@ -6,18 +6,28 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_ANON_MODE } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
-import log from "@tutors/logger";
-import { checkConsent, ConsentCategory } from "@tutors/privacy";
+import log, { withRequestId } from "@tutors/logger";
 
 export let supabase: SupabaseClient;
 
-if (PUBLIC_ANON_MODE !== "TRUE") {
-  supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+// Configuration is read at runtime. The client is only created when the app is
+// not in anonymous mode AND a URL and key are present, so an unconfigured
+// environment (including the SvelteKit build analysis step, which imports
+// server modules with no env) degrades to "no Supabase" instead of throwing.
+const supabaseConfigured = Boolean(env.PUBLIC_SUPABASE_URL && env.PUBLIC_SUPABASE_ANON_KEY);
+
+if (env.PUBLIC_ANON_MODE !== "TRUE") {
+  if (supabaseConfigured) {
+    // On the server, calls made while serving a request carry its x-request-id; in the browser this is plain fetch.
+    supabase = createClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, { global: { fetch: withRequestId() } });
+  } else {
+    log.warn("Supabase is not configured (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY missing); running without it");
+  }
 }
 
 export function localYyyyMmDd(d = new Date()) {
@@ -81,8 +91,7 @@ export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = ne
  * Fire-and-forget from presence; does not throw.
  */
 export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
-  if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return;
-  if (!checkConsent(ConsentCategory.Analytics)) return;
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return;
 
   const rec = loRecord as { courseId?: string; user?: { id?: string } };
   const courseId = rec.courseId?.trim();
@@ -109,7 +118,7 @@ export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<voi
  * Sorted by `received_at` descending (most recently updated first).
  */
 export async function getTutorsConnectLatestLosByCourseId(courseId: string): Promise<TutorsConnectLatestRow[]> {
-  if (PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
 
   const id = courseId?.trim();
   if (!id) return [];
@@ -151,7 +160,8 @@ async function getNumOfLearningRecordsIncrements(fieldName: string, courseId: st
     log.error("Error fetching student interaction:", error);
     return 0;
   }
-  return student ? student[0].increment + 1 : 1;
+  // No record yet comes back as an empty array, not null: the first visit counts as 1.
+  return (student?.[0]?.increment ?? 0) + 1;
 }
 
 /**
@@ -164,12 +174,11 @@ async function getNumOfLearningRecordsIncrements(fieldName: string, courseId: st
  * @param lo - Learning object data
  */
 async function manageStudentCourseLo(courseId: string, studentId: string, loId: string, lo: Lo) {
-  if (!checkConsent(ConsentCategory.Analytics)) return;
-
   const durationPromise = getNumOfLearningRecordsIncrements("duration", courseId, studentId, loId);
   const countPromise = getNumOfLearningRecordsIncrements("count", courseId, studentId, loId);
   const [duration, count] = await Promise.all([durationPromise, countPromise]);
-  const { error } = await supabase.from("learning_records").upsert({
+  const { error } = await supabase.from("learning_records").upsert(
+    {
       course_id: courseId,
       student_id: studentId,
       lo_id: loId,
@@ -184,7 +193,7 @@ async function manageStudentCourseLo(courseId: string, studentId: string, loId: 
     }
   );
   if (error) {
-    log.error(error);
+    log.error("Failed to upsert learning record:", error);
     throw error;
   }
 }
@@ -213,7 +222,6 @@ export function formatDate(date: Date): string {
  */
 export const updateCalendarDuration = async (id: string, studentId: string, courseId: string) => {
   if (!id || !studentId || !courseId) return;
-  if (!checkConsent(ConsentCategory.Analytics)) return;
   await supabase.rpc("increment_calendar", {
     field_name: "timeactive",
     row_id: id,
@@ -362,13 +370,11 @@ export async function addOrUpdateStudent(student: TutorsId) {
       row.online_status = "offline";
     }
 
-    if (checkConsent(ConsentCategory.Presence)) {
-      const { error } = await supabase.from("tutors-connect-users").upsert(row);
+    const { error } = await supabase.from("tutors-connect-users").upsert(row);
 
-      if (error) {
-        log.error("Upsert failed:", error);
-        throw error;
-      }
+    if (error) {
+      log.error("Upsert failed:", error);
+      throw error;
     }
   } catch (error) {
     log.error("An error occurred in addOrUpdateUserProfile:", error);
@@ -388,7 +394,7 @@ function normalizeStoredSentiment(raw: string | null | undefined): string | null
  * @returns Stored sentiment if present and valid per {@link COURSE_SENTIMENT_IDS}, otherwise null (includes no row).
  */
 export async function getTutorsConnectUserSentiment(githubId: string): Promise<string | null> {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
+  if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
 
   const { data, error } = await supabase.from("tutors-connect-users").select("sentiment").eq("github_id", githubId).maybeSingle();
 
@@ -406,8 +412,7 @@ export async function getTutorsConnectUserSentiment(githubId: string): Promise<s
  * @param sentiment - Current mood string
  */
 export async function updateTutorsConnectUserSentiment(githubId: string, sentiment: string) {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
-  if (!checkConsent(ConsentCategory.Presence)) return;
+  if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
 
   const { error } = await supabase
     .from("tutors-connect-users")
@@ -429,7 +434,7 @@ export async function updateTutorsConnectUserSentiment(githubId: string, sentime
  * @returns Stored online_status if present, otherwise null (includes no row).
  */
 export async function getTutorsConnectUserOnlineStatus(githubId: string): Promise<string | null> {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
+  if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return null;
 
   const { data, error } = await supabase.from("tutors-connect-users").select("online_status").eq("github_id", githubId).maybeSingle();
 
@@ -447,8 +452,7 @@ export async function getTutorsConnectUserOnlineStatus(githubId: string): Promis
  * Sets online_status on tutors-connect-users (mirrors share: visible / sharing = online).
  */
 export async function updateTutorsConnectUserOnlineStatus(githubId: string, onlineStatus: "online" | "offline") {
-  if (PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
-  if (!checkConsent(ConsentCategory.Presence)) return;
+  if (env.PUBLIC_ANON_MODE === "TRUE" || !githubId) return;
 
   const { error } = await supabase
     .from("tutors-connect-users")

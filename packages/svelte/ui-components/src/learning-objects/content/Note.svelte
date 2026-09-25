@@ -2,21 +2,22 @@
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
   import { copyCode } from "@tutors/course/markdown";
-  import { quizify } from "@tutors/quiz";
   import type { Lo } from "@tutors/tutors-model-lib";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
+  import WidthToggle from "./WidthToggle.svelte";
 
   interface Props {
     lo: Lo;
   }
   let { lo }: Props = $props();
+  const content = $derived((lo.contentHtml ?? "").replace(/<div class="table-of-contents">([\s\S]*?)<\/div>/g, '<details class="table-of-contents ui-disclosure"><summary>On this page</summary>$1</details>'));
 </script>
 
-<article class="prose dark:prose-invert mr-4 max-w-none overflow-x-auto" use:mermaidify use:copyCode use:quizify>
+<div class="reading-panel"><div class="reading-tools"><WidthToggle /></div><article class="prose dark:prose-invert max-w-none overflow-x-auto" use:mermaidify use:copyCode>
   {#key currentCodeTheme.value}
-    {@html sanitizeHtml(lo.contentHtml ?? "")}
+    {@html sanitizeHtml(content)}
   {/key}
-</article>
+</article></div>
 
 <svelte:head>
   <link
@@ -26,7 +27,5 @@
 </svelte:head>
 
 <style>
-  :global(.notecontent pre) {
-    color: white;
-  }
+  .reading-tools { display: flex; justify-content: flex-end; }
 </style>

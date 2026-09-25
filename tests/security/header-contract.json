@@ -1,0 +1,35 @@
+{
+  "$comment": "Response headers every Tutors app must send on every response (runway tier M). Checked against the built image by scripts/checks/container-smoke.ts --app <name>. Known gaps live in known-response-gaps.txt, which may only shrink.",
+  "headers": {
+    "X-Frame-Options": {
+      "equals": "SAMEORIGIN",
+      "reason": "Stops other sites framing the reader (clickjacking); CSP frame-ancestors is the modern equivalent."
+    },
+    "X-Content-Type-Options": {
+      "equals": "nosniff",
+      "reason": "Stops browsers treating uploaded or course content as a different type."
+    },
+    "Referrer-Policy": {
+      "equals": "strict-origin-when-cross-origin",
+      "reason": "Course and student routes must not leak in full to third-party embeds."
+    },
+    "Permissions-Policy": {
+      "matches": "camera=\\(\\).*microphone=\\(\\)",
+      "reason": "No Tutors page needs camera or microphone; embedded content must not ask."
+    },
+    "Strict-Transport-Security": {
+      "matches": "max-age=\\d{7,}",
+      "reason": "Pins HTTPS for at least ~115 days. Browsers ignore it over plain HTTP, so sending it locally is harmless."
+    },
+    "Content-Security-Policy": {
+      "matches": "default-src|frame-ancestors",
+      "reason": "Limits where scripts, frames and styles may load from; the main defence if course markdown ever renders unsafe HTML."
+    }
+  },
+  "apps": {
+    "reader": { "paths": ["/", "/runway-smoke-not-found", "/auth/csrf", "/auth", "/auth/runway-smoke-course"] },
+    "catalogue": { "paths": ["/", "/runway-smoke-not-found"] },
+    "live": { "paths": ["/", "/runway-smoke-not-found"] },
+    "time": { "paths": ["/", "/runway-smoke-not-found"] }
+  }
+}

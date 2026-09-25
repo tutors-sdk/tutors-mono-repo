@@ -1,0 +1,41 @@
+# Allowlist: only the files the image build needs enter the build context.
+# Everything else in the monorepo (docs, tests, tooling, local env files,
+# stray archives) stays out, which keeps builds fast and secrets out of layers.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps
+!packages
+
+# Generated output and local-only files inside the allowed trees. The image
+# rebuilds all of these from source.
+**/node_modules
+**/.svelte-kit
+**/build
+**/dist
+**/.netlify
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/.stryker-tmp
+
+# Never copy environment files: configuration is injected at runtime.
+**/.env
+**/.env.*
+
+# Tests and test tooling are not part of the shipped app.
+**/tests
+**/test
+**/e2e
+**/*.test.ts
+**/*.spec.ts
+**/playwright.config.ts
+**/vitest.config.*
+
+# Editor and agent metadata
+**/.vscode
+**/.idea
+**/.claude
+**/*.md

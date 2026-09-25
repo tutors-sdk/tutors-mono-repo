@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 
 describe("Public API Surface — @tutors/tutors-time-lib", () => {
+  // The first import transforms the whole library on a cold cache, which can
+  // exceed the default 5 s when the suite runs in parallel on a busy runner.
   it("should export expected modules", async () => {
     const module = await import("@tutors/tutors-time-lib");
     expect(Object.keys(module).length).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it("should maintain stable export names", async () => {
     const module = await import("@tutors/tutors-time-lib");

@@ -1,7 +1,4 @@
 /// <reference types="@sveltejs/kit" />
 
-declare module "$env/static/public" {
-  export const PUBLIC_SUPABASE_URL: string;
-  export const PUBLIC_SUPABASE_ANON_KEY: string;
-  export const PUBLIC_ANON_MODE: string;
-}
+// Runtime configuration is read from $env/dynamic/public, whose types are
+// provided by @sveltejs/kit. Nothing is inlined at build time.

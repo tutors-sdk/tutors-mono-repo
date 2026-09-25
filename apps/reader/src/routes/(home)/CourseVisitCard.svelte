@@ -5,37 +5,100 @@
   import { t } from "@tutors/i18n";
 
   let { courseVisit, deleteCourse, starUnstarCourse } = $props();
+
+  const accentFor = (color?: string) => {
+    const allowed = ["primary", "secondary", "tertiary", "success", "warning", "error", "surface"];
+    return allowed.includes(color ?? "") ? `var(--color-${color}-500, var(--ui-brand))` : "var(--ui-brand)";
+  };
 </script>
 
 <div
   transition:scale|local={scaleTransition}
-  class="to-accent-50 dark:to-accent-900 card card-hover border-surface-200 dark:border-surface-400 from-primary-50 dark:from-primary-900 m-2 border bg-linear-to-l p-2"
+  style:--resource-accent={accentFor(courseVisit.icon?.color)}
+  class="course-visit-card ui-lift"
 >
-  <div class="flex justify-between">
-    <section class="p-4">
-      <p class="line-clamp-1 font-bold">{courseVisit.title}</p>
-      <p class="line-clamp-1">{courseVisit.credits}</p>
-      <p class="line-clamp-1">
-        {t("course.visitCard.lastAccessed")} {courseVisit.lastVisit?.slice(0, 10)}
-        {courseVisit.lastVisit.slice(11, 19)}
+  <section class="course-visit-content">
+    <p class="course-visit-title">{courseVisit.title}</p>
+    <div class="course-visit-artwork" aria-hidden="true">
+      {#if courseVisit.icon}
+        <Iconify
+          icon={courseVisit.icon.type}
+          color={courseVisit.icon.color}
+          height="128"
+        />
+      {:else}
+        {#if courseVisit.image}
+          <img src={courseVisit.image} alt="" />
+        {:else}
+          <Iconify icon="fluent:book-24-regular" color="var(--ui-brand)" height="128" />
+        {/if}
+      {/if}
+    </div>
+    <div class="course-visit-details">
+      <p class="break-words">{courseVisit.credits}</p>
+      <p class="break-words">
+        {t("course.visitCard.lastAccessed")}
+        {courseVisit.lastVisit?.slice(0, 10)}
+        {courseVisit.lastVisit?.slice(11, 19)}
       </p>
       <p>{t("course.visitCard.visits")} {courseVisit.visits}</p>
-    </section>
-    <section class="content-center">
-      {#if courseVisit.icon}
-        <Iconify icon={courseVisit.icon.type} color={courseVisit.icon.color} height="96" />
-      {:else}
-        <img class="h-20" src={courseVisit.image} alt={courseVisit.title} />
-      {/if}
-    </section>
-  </div>
-  <footer class="card-footer p-0">
-    <div class="flex w-full">
-      <a class="variant-filled-primary btn hover:preset-tonal m-0 w-2/3 rounded-t-none rounded-br-none" href={"/course/" + courseVisit.id}>{t("course.visitCard.visitCourse")}</a>
-      <button class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none" onclick={() => deleteCourse(courseVisit.id)}>{t("course.visitCard.delete")}</button>
-      <button class="variant-filled-error btn hover:preset-tonal m-0 w-1/3 rounded-t-none rounded-bl-none" aria-label={courseVisit.favourite ? t("course.visitCard.unstar") : t("course.visitCard.star")} onclick={() => starUnstarCourse(courseVisit.id)}>
-        <Iconify icon={courseVisit.favourite ? "openmoji:star" : "openmoji:black-star"} width="36" height="36" />
+    </div>
+  </section>
+  <footer class="course-visit-footer">
+    <div class="ui-actions">
+      <a
+        class="ui-button ui-button-primary"
+        href={"/course/" + courseVisit.id}
+        >{t("course.visitCard.visitCourse")}</a
+      >
+      <button
+        class="ui-button"
+        onclick={() => deleteCourse(courseVisit.id)}
+        >{t("course.visitCard.delete")}</button
+      >
+      <button
+        class="ui-button"
+        aria-label={courseVisit.favourite
+          ? t("course.visitCard.unstar")
+          : t("course.visitCard.star")}
+        onclick={() => starUnstarCourse(courseVisit.id)}
+      >
+        <Iconify
+          icon={courseVisit.favourite ? "openmoji:star" : "openmoji:black-star"}
+          width="36"
+          height="36"
+        />
       </button>
     </div>
   </footer>
 </div>
+
+<style>
+  .course-visit-card {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--resource-accent);
+    border-block-width: 8px;
+    border-radius: var(--radius-panel);
+    background: color-mix(in srgb, var(--resource-accent) 7%, var(--ui-surface));
+  }
+
+  /* Title, then artwork, then the detail lines: the course name is what the eye is looking for, so it
+     leads rather than sitting below the picture. */
+  .course-visit-content { display: flex; min-width: 0; flex-direction: column; gap: var(--space-4); }
+  .course-visit-title { overflow-wrap: anywhere; font-size: var(--font-section); font-weight: var(--weight-semibold); line-height: var(--leading-heading); }
+  .course-visit-artwork { display: grid; min-height: 128px; place-items: center; }
+  .course-visit-artwork img { width: 128px; height: 128px; object-fit: contain; }
+  /* Credits, last visit and visit count are supporting detail, so they drop to label size and the muted
+     ink rather than competing with the title above the artwork. */
+  .course-visit-details { min-width: 0; font-size: var(--font-label); line-height: var(--leading-ui); color: var(--ui-muted); }
+  .course-visit-footer { margin-top: auto; }
+  .course-visit-footer .ui-actions { align-items: stretch; }
+  .course-visit-footer .ui-actions > :first-child { flex: 1 1 auto; }
+</style>

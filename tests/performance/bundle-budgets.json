@@ -1,0 +1,26 @@
+{
+  "note": "Gzip byte ceilings per app from scripts/checks/bundle-budget.ts. CSS remeasured 2026-09-21 for the Paper redesign: shared tokens, responsive navigation/content layouts and seven-theme support (including Dyslexia reading styles), after removing the obsolete card-style safelist. Measured CSS KiB: reader 47.9, catalogue 33.5, live 33.5, time 81.4; ceilings use the existing 5% headroom rounded up to KiB. JavaScript ceilings remain from 2026-09-17 on 16.2.0 with KaTeX, MathJax, Marp and Mermaid loaded on demand. Lower a ceiling when an app shrinks; raising one needs a reason in the PR. Reader remeasured 2026-09-24 at CSS 51.1 KiB after the redesign's later work (My time heatmaps and activity tables, the content-width switch, fixed-size cards, content-lock states and the lecturer setting); its CSS ceiling rises to 54 KiB with the same 5% headroom and its JS ceiling drops to the measured proposal. Regenerate a proposal with pnpm check:bundle --propose.",
+  "headroom": 0.05,
+  "apps": {
+    "reader": {
+      "jsGzipBytes": 3936256,
+      "cssGzipBytes": 55296,
+      "largestJsChunkGzipBytes": 1211392
+    },
+    "catalogue": {
+      "jsGzipBytes": 771072,
+      "cssGzipBytes": 36864,
+      "largestJsChunkGzipBytes": 455680
+    },
+    "live": {
+      "jsGzipBytes": 783360,
+      "cssGzipBytes": 36864,
+      "largestJsChunkGzipBytes": 366592
+    },
+    "time": {
+      "jsGzipBytes": 611328,
+      "cssGzipBytes": 88064,
+      "largestJsChunkGzipBytes": 311296
+    }
+  }
+}

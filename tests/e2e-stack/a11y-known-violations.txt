@@ -1,0 +1,7 @@
+# Serious and critical axe violations (WCAG 2.1 A/AA) that predate tier G.
+# Format: `<project> | <page> :: <axe rule>`. Shrink-only: journeys fail on
+# a line that is not here, and `node tests/e2e-stack/ratchet.mjs` fails on a
+# line that no longer occurs. Fixing one means deleting its line.
+#
+# Empty: every audited page on chromium, webkit, firefox and mobile is clean.
+# Keep it that way; a new violation is a bug to fix, not a line to add.

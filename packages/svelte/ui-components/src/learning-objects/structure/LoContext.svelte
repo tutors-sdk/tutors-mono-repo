@@ -2,6 +2,7 @@
   import type { Lo } from "@tutors/tutors-model-lib";
   import LoReference from "@tutors/ui-primitives/components/LoReference.svelte";
   import Self from "./LoContext.svelte";
+  import { rbacService } from "@tutors/rbac";
 
   let { lo, indent = 0 }: { lo: Lo; indent: number } = $props();
 
@@ -15,9 +16,11 @@
       }
     });
   }
+
+  let visibleChildren = $derived((lo?.toc ?? []).filter((child) => rbacService.isLoVisibleToStudent(child)));
 </script>
 
-{#each (lo as any)?.toc as childLo}
+{#each visibleChildren as childLo}
   <LoReference lo={childLo} indent={indent + 2} />
   {#if childLo?.toc}
     <Self lo={childLo} indent={indent + 2} />

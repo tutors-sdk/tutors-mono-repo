@@ -1,12 +1,11 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { PUBLIC_ANON_MODE } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import { rune, tutorsId } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
-import { checkConsent, ConsentCategory } from "@tutors/privacy";
 
 const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
 
@@ -21,15 +20,6 @@ export const presenceService: PresenceService = {
     const nextCourseEvent = payload.payload as LoRecord;
     if (!nextCourseEvent?.courseId) return;
 
-    try {
-      if ((nextCourseEvent as any).type === "quiz:live-started") {
-        this.onQuizStarted?.(nextCourseEvent);
-        return;
-      }
-    } catch {
-      return;
-    }
-
     if (nextCourseEvent.courseId === this.listeningTo) {
       const studentEvent = this.studentEventMap.get(nextCourseEvent.user!.id);
       if (!studentEvent) {
@@ -43,14 +33,14 @@ export const presenceService: PresenceService = {
   },
 
   connectToAllCourseAccess(): void {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
     this.channelAll = supabase
       .channel("tutors-all-course-access", BROADCAST_CONFIG)
       .subscribe();
   },
 
   startPresenceListener(courseId: string) {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
     if (this.channelCourse) {
       supabase.removeChannel(this.channelCourse);
@@ -67,8 +57,7 @@ export const presenceService: PresenceService = {
   },
 
   sendLoEvent(course: Course, lo: Lo, student: TutorsId) {
-    if (PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
-    if (!checkConsent(ConsentCategory.Presence)) return;
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
     const loRecord: LoRecord = {
       courseId: course.courseId,

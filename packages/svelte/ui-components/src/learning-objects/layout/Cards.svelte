@@ -4,9 +4,6 @@
   import type { Lo } from "@tutors/tutors-model-lib";
 
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
-  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { scale } from "svelte/transition";
-  import { scaleTransition } from "@tutors/ui-primitives/utils/animations";
   import { currentCourse, isEducator, contentLocks, locksLoaded } from "@tutors/runes";
   import { setShowHide } from "@tutors/tutors-model-lib";
   import { rbacService } from "@tutors/rbac";
@@ -50,12 +47,14 @@
 </script>
 
 {#if los.length > 0 && isLoaded && (isEducator.value || !currentCourse.value?.hasEnrollment || locksLoaded.value)}
-  <div transition:scale|local={scaleTransition} class="mx-auto mb-2 place-items-center overflow-hidden rounded-xl p-4" style="background-color: light-dark(var(--color-surface-100), var(--color-surface-900));">
-    <div class="mx-auto flex flex-wrap justify-center">
+  <div class="w-full">
+    <div class="ui-grid card-grid">
       {#key refresh}
         {#each los as lo}
-          {#if !lo.hide && !(contentLocks.value.get(lo.route) && !isEducator.value)}
-            <div class="relative flex justify-center">
+          <!-- Locked resources: greyed for lecturers (Rule 0053); for students hidden (0052) unless the lecturer
+               shows locked content (0054). -->
+          {#if rbacService.isLoCardVisible(lo)}
+            <div class="min-w-0">
               <Card
                 cardDetails={{
                   route: lo.route,
@@ -66,15 +65,10 @@
                   icon: lo.icon,
                   video: lo.video
                 }}
+                locked={rbacService.isLoLocked(lo)}
+                lecturer={isEducator.value}
+                onUnlock={isEducator.value && contentLocks.value.get(lo.route) ? () => rbacService.toggleContentLock(lo.route, false) : undefined}
               />
-              {#if isEducator.value && contentLocks.value.get(lo.route)}
-                <button
-                  class="absolute top-2 right-2 z-20 rounded-lg bg-surface-200 p-1 opacity-70 transition-opacity hover:opacity-100 dark:bg-surface-700"
-                  onclick={() => rbacService.toggleContentLock(lo.route, !contentLocks.value.get(lo.route))}
-                >
-                  <Icon type="lock" height="20" />
-                </button>
-              {/if}
             </div>
           {/if}
         {/each}

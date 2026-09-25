@@ -9,8 +9,12 @@ const json = readFileSync(file, 'utf8');
 const pkg = JSON.parse(json);
 
 export default defineConfig({
+  envDir: '../../',
   define: {
     APP_VERSION: JSON.stringify(pkg.version)
   },
-  plugins: [tailwindcss(), sveltekit()]
+  plugins: [tailwindcss(), sveltekit()],
+  ssr: {
+    noExternal: [/^@tutors\//]
+  }
 });

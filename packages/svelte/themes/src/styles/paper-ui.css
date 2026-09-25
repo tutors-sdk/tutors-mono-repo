@@ -1,0 +1,119 @@
+@import "./theme-overrides.css";
+/* Shared application chrome. Authored media and code themes retain their colours. */
+html { background: var(--ui-canvas); }
+body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui-font-family); font-size: var(--font-body); line-height: var(--ui-line-height); letter-spacing: var(--ui-letter-spacing); word-spacing: var(--ui-word-spacing); }
+:where(button, input, select, textarea) { font-family: inherit; letter-spacing: inherit; word-spacing: inherit; }
+:where(pre, code, kbd, samp, .cm-editor) { letter-spacing: normal; word-spacing: normal; }
+:where(a, button, input, select, textarea, summary):focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 3px; }
+:where(button, a, input, select, summary) { scroll-margin-block: var(--space-6); }
+:where(button, .btn, .btn-icon, summary) { min-height: 44px; }
+:where(button, a) { transition: background-color 150ms, border-color 150ms, color 150ms; }
+:where(button, a):disabled { color: var(--ui-disabled-ink); cursor: not-allowed; }
+/* Tailwind's reset leaves buttons on the arrow cursor; every enabled control shows the hand. */
+:where(button, [role="button"], [role="tab"], [role="option"], [role="menuitem"], [role="treeitem"], summary, select, label:has(> input:is([type="checkbox"], [type="radio"])), input:is([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"]), [data-scope="switch"][data-part="root"], .ui-button):not(:disabled, [aria-disabled="true"]) { cursor: pointer; }
+:where(.card) { background: var(--ui-surface); border-radius: var(--radius-card); }
+:where(.input, .select, textarea) { background: var(--ui-surface); color: var(--ui-ink); border: 1px solid var(--ui-control-border); border-radius: var(--radius-control); }
+:where(.table-wrap) { max-width: 100%; overflow-x: auto; }
+:where(.table) { background: var(--ui-surface); }
+:where(.table th) { color: var(--ui-muted); font-weight: var(--weight-medium); }
+:where(.table td, .table th) { border-color: var(--ui-border); padding: var(--space-3) var(--space-4); }
+:where(.table tr[aria-current]) { background: var(--ui-selected); border-inline-start: 3px solid var(--ui-brand); }
+.ui-button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-4); border: 1px solid var(--ui-border); border-radius: var(--radius-control); font-size: var(--font-control); font-weight: var(--weight-medium); background: var(--ui-surface); color: var(--ui-ink); text-decoration: none; }
+.ui-button:hover { background: var(--ui-selected); text-decoration: none; }
+.ui-button-primary { background: var(--ui-brand); border-color: var(--ui-brand); color: var(--ui-on-brand); }
+.ui-button-primary:hover { background: var(--ui-brand-hover); }
+.ui-button-primary:active { background: var(--ui-brand-pressed); }
+.ui-eyebrow { font-size: var(--font-small); font-weight: var(--weight-bold); letter-spacing: var(--ui-label-spacing); text-transform: var(--ui-label-transform); color: var(--ui-brand); }
+.ui-title { font-size: var(--font-title); font-weight: var(--weight-semibold); line-height: 1.25; overflow-wrap: anywhere; }
+.ui-muted { color: var(--ui-muted); }
+.ui-label { display: block; margin-bottom: var(--space-2); font-size: var(--font-label); font-weight: var(--weight-medium); }
+.ui-page { padding: var(--space-8) var(--space-10); max-width: 1600px; margin-inline: auto; }
+.ui-panel { padding: var(--space-6); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-surface); }
+.ui-empty { padding: var(--space-8); border: 1px dashed var(--ui-border); border-radius: var(--radius-card); color: var(--ui-muted); }
+.ui-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.ui-section-heading { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: space-between; align-items: baseline; margin-block: var(--space-8) var(--space-4); }
+.ui-section-heading h2, .ui-section-title { font-size: var(--font-section); font-weight: var(--weight-semibold); line-height: var(--leading-heading); }
+/* Cards zoom slightly on hover or keyboard focus; reduced motion keeps them still. */
+.ui-lift { transition: transform 180ms ease-out; }
+.ui-lift:is(:hover, :focus-within) { transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) { .ui-lift { transition: none; } .ui-lift:is(:hover, :focus-within) { transform: none; } }
+/* Resource cards share one portrait geometry everywhere (course, topic, side units, walls, search). */
+/* Wrapping flex, not grid: cards are all one fixed size, so grid's column alignment buys nothing, and a
+   grid cannot centre a short final row - its items sit in fixed tracks. Flex centres every row, so four
+   cards under a row of five come out centred rather than left-aligned under the first four. */
+.ui-grid.card-grid { display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; }
+.ui-grid.card-grid > * { flex: 0 0 var(--card-width); width: var(--card-width); height: var(--card-height); }
+/* No exceptions: search results carry an extra excerpt but still take the fixed box, so a long summary
+   cannot make one row taller than the next. Content past the box clips (see Card.svelte). */
+/* Full-width messages (empty states) break the line rather than sitting in it. */
+.ui-grid.card-grid > .ui-empty { flex-basis: 100%; height: auto; }
+/* Phones (below 768px): a 220px card would stand alone in the middle of its row, so cards fill the grid
+   instead. From 390px (iPhone 14/15/16 and up) the same portrait card sits two to a row (Rule 0031) - no
+   wider than the desktop card, centred, on a landscape phone - at the compact box from paper-tokens.css
+   (Card.svelte tightens its type and padding); never three or four, which makes each card too small to read.
+   Below 390px (iPhone mini and SE) two would be too narrow, so one compact card fills the row (Rule 0059). */
+@media (max-width: 767px) {
+  .ui-grid.card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, var(--card-width))); justify-content: center; gap: var(--space-3); }
+  .ui-grid.card-grid > * { width: auto; }
+  .ui-grid.card-grid > .ui-empty { grid-column: 1 / -1; }
+}
+@media (max-width: 389px) { .ui-grid.card-grid { grid-template-columns: minmax(0, 1fr); } }
+.ui-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-4); width: 100%; }
+.prose { --tw-prose-body: var(--ui-ink); --tw-prose-headings: var(--ui-ink); --tw-prose-links: var(--ui-brand); --tw-prose-bold: var(--ui-ink); --tw-prose-counters: var(--ui-muted); --tw-prose-quotes: var(--ui-ink); --tw-prose-bullets: var(--ui-muted); overflow-wrap: anywhere; }
+.prose :where(pre, table) { max-width: 100%; overflow-x: auto; }
+.prose table { display: block; }
+/* Table cells break only between words: the prose's overflow-wrap: anywhere would let a column shrink on a
+   phone until "Option" splits into "Opti / on". A table wider than its panel scrolls sideways instead. */
+.prose :where(th, td) { overflow-wrap: normal; word-break: normal; }
+.prose :where(img, iframe, video) { max-width: 100%; }
+.reader-content { min-width: 0; padding: var(--space-8) var(--space-10); }
+/* Reading panels span the content column; the text inside stays at a readable measure. */
+.reading-panel { container-type: inline-size; width: 100%; min-width: 0; padding: var(--space-8) var(--space-10); background: var(--ui-surface); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); }
+.reading-panel > .prose { width: 100%; max-width: min(88ch, calc(var(--reading-width) + 16ch)); margin-inline: auto; font-size: var(--font-reading); line-height: var(--ui-reading-leading); }
+/* Panels that offer the full-width toggle drop the comfortable line length when the reader turns it on. */
+:root[data-full-width-reading] .reading-panel:has(.width-toggle) > .prose { max-width: none; }
+/* Tablets: 24px gutters, so a 768px portrait screen holds three cards a row (3 x 220 + 2 x 16 = 692px) rather
+   than two with a card's width of empty space beside them. */
+@media (min-width: 768px) and (max-width: 1023px) { .ui-page, .reader-content { padding-inline: var(--space-6); } .reading-panel { padding-inline: var(--space-6); } }
+@media (max-width: 767px) { .ui-page, .reader-content { padding: var(--space-5) var(--space-4); } .reading-panel { padding: var(--space-5) var(--space-4); } .ui-panel { padding: var(--space-4); } .ui-title { font-size: var(--font-heading); } }
+@media (prefers-reduced-motion: reduce) { :where(button, a) { transition: none; } }
+
+.header-action { display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 44px; padding: var(--space-3); border-radius: var(--radius-control); font-size: var(--font-label); font-weight: var(--weight-medium); color: var(--ui-ink); }
+.header-action:hover, .header-action[aria-pressed="true"] { background: var(--ui-selected); }
+/* Shared native forms and Skeleton controls use the same application tokens. */
+:where(.input, .select) { min-height: 44px; padding: var(--space-2) var(--space-3); }
+/* A select draws no arrow of its own (appearance: none), so it gets one: a chevron in the muted ink, drawn
+   from two gradients so it follows light and dark. The Preferences menu draws its own. */
+select.select { padding-right: var(--space-10); background-image: linear-gradient(45deg, transparent 50%, var(--ui-muted) 50%), linear-gradient(135deg, var(--ui-muted) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 15px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+:where(input[type="checkbox"], input[type="radio"]) { accent-color: var(--ui-brand); }
+[data-scope="tabs"][data-part="list"] { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-bottom: var(--space-3); border-bottom: 1px solid var(--ui-border); }
+[data-scope="tabs"][data-part="trigger"] { min-height: 44px; padding: var(--space-2) var(--space-4); border-radius: var(--radius-control); color: var(--ui-muted); }
+[data-scope="tabs"][data-part="trigger"][data-selected], [data-scope="tabs"][data-part="trigger"]:hover { background: var(--ui-selected); color: var(--ui-ink); }
+[data-scope="tabs"][data-part="content"] { padding-top: var(--space-5); }
+[data-scope="tabs"][data-part="indicator"] { background: var(--ui-brand); }
+[data-scope="tree-view"][data-part="item"], [data-scope="tree-view"][data-part="branch-control"] { min-height: 44px; border-radius: var(--radius-control); margin-block: var(--space-1); }
+[data-scope="tree-view"][data-part="item"]:hover, [data-scope="tree-view"][data-part="branch-control"]:hover { background: var(--ui-selected); }
+.prose .header-anchor { color: var(--ui-ink); font-weight: inherit; text-decoration: none; }
+.prose .header-anchor:hover { color: var(--ui-brand); text-decoration: underline; text-underline-offset: 4px; }
+.prose > :is(h1,h2,h3):first-child { margin-top: 0; }
+.prose details.table-of-contents { padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-border); border-radius: var(--radius-control); background: var(--ui-canvas); font-size: var(--font-body); }
+.prose details.table-of-contents summary { cursor: pointer; padding-block: var(--space-2); font-weight: var(--weight-medium); }
+/* Disclosures (a lab's steps on narrow screens, a notebook's outline, a note's contents): the summary is a
+   full-width, 44px row with a chevron that turns when open, in place of the browser's triangle. */
+.ui-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 44px; list-style: none; }
+.ui-disclosure > summary::-webkit-details-marker { display: none; }
+.ui-disclosure > summary::after { content: ""; flex: none; width: 8px; height: 8px; margin: 0 var(--space-1) 4px; border: solid var(--ui-muted); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform 150ms ease-out; }
+.ui-disclosure[open] > summary::after { margin-bottom: 0; margin-top: 4px; transform: rotate(-135deg); }
+.prose details.table-of-contents ul { margin-block: var(--space-2); }
+.media-viewer:fullscreen { overflow: auto; border-radius: 0; background: var(--ui-surface); }
+.media-viewer:fullscreen canvas { max-height: calc(100dvh - 120px); object-fit: contain; }
+.prose hr { margin-block: var(--space-6); border-color: var(--ui-border); }
+.ui-button:is([aria-current="step"], [aria-pressed="true"]) { background: var(--ui-selected); border-color: var(--ui-brand); box-shadow: inset 0 -2px var(--ui-brand); }
+/* Paper F3: disabled controls use neutral fill and text, never a faded brand. */
+.ui-button:disabled { background: var(--ui-raised); border-color: var(--ui-border); color: var(--ui-disabled-ink); box-shadow: none; cursor: not-allowed; }
+
+.prose { line-height: var(--ui-reading-leading); }
+.prose p { margin-block: var(--ui-paragraph-spacing); }
+.prose em, .resource-summary em { font-style: var(--ui-emphasis-style, italic); font-weight: var(--ui-emphasis-weight, inherit); }
+/* Search words on a page opened from a search result (CSS Custom Highlight API, set in resource-search.ts). */
+::highlight(search) { background-color: color-mix(in srgb, var(--ui-warning) 32%, transparent); color: inherit; }

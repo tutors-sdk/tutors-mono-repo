@@ -1,11 +1,22 @@
 import { defineConfig } from "vitest/config";
-import { resolve } from "path";
+import { workspaceAliases } from "./vitest.aliases";
 
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
-    exclude: ["tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Replaces Vitest's default exclude, so node_modules must be listed again (the isolated
+    // Lighthouse runner under tests/performance/lighthouse has its own).
+    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Unit and property tiers never reach the network (runway tier B).
+    setupFiles: ["tests/support/no-network.ts"],
+    server: {
+      deps: {
+        // Ships imports of SvelteKit's `$app/*` virtual modules, which only
+        // resolve when Vite processes the package rather than externalising it.
+        inline: ["@auth/sveltekit"]
+      }
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov", "html"],
@@ -19,19 +30,6 @@ export default defineConfig({
     }
   },
   resolve: {
-    alias: {
-      "@tutors/tutors-model-lib": resolve(__dirname, "packages/jsr/model/src/tutors.ts"),
-      "@tutors/tutors-gen-lib": resolve(__dirname, "packages/jsr/gen/src/tutors.ts"),
-      "@tutors/tutors-time-lib": resolve(__dirname, "packages/jsr/time/src/index.ts"),
-      "@tutors/community/utils/supabase-client": resolve(__dirname, "packages/svelte/community/src/utils/supabase-client.ts"),
-      "@tutors/logger": resolve(__dirname, "packages/svelte/utils/logger/src/index.ts"),
-      "front-matter": resolve(__dirname, "node_modules/.pnpm/front-matter@4.0.2/node_modules/front-matter/index.js"),
-      "js-yaml": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
-      "npm:js-yaml@^4": resolve(__dirname, "node_modules/.pnpm/js-yaml@4.3.0/node_modules/js-yaml/index.js"),
-      "npm:archiver@^7": resolve(__dirname, "tests/support/archiver-shim.ts"),
-      "@marp-team/marp-core": resolve(__dirname, "packages/svelte/course/node_modules/@marp-team/marp-core/lib/marp.js"),
-      "@vento/vento": resolve(__dirname, "tests/support/vento-stub.ts"),
-      "jsr:@vento/vento@1.14.0/plugins/auto_trim.ts": resolve(__dirname, "tests/support/vento-stub.ts")
-    }
+    alias: workspaceAliases
   }
 });

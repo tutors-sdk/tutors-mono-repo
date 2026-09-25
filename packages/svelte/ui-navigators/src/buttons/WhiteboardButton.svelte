@@ -2,11 +2,13 @@
   import { onMount, onDestroy } from "svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from "$env/static/public";
+  import { env } from "$env/dynamic/public";
 
+  import { t } from "@tutors/i18n";
+  let { labelled = false } = $props();
   let showEditor = $state(false);
   let loading = $state(false);
-  let overlayEl: HTMLDivElement | undefined = $state();
+  let overlayEl: HTMLDialogElement | undefined = $state();
   let editorIframe: HTMLIFrameElement | undefined = $state();
 
   function getWhiteboardRoomId(): string {
@@ -30,15 +32,16 @@
 
   $effect(() => {
     if (showEditor && overlayEl) {
-      document.body.appendChild(overlayEl);
+      overlayEl.showModal();
 
       const handler = (event: MessageEvent) => {
+        if (event.source !== editorIframe?.contentWindow || event.origin !== window.location.origin) return;
         if (event.data?.type === "editor-ready") {
           window.removeEventListener("message", handler);
           editorIframe?.contentWindow?.postMessage({
             type: "init-editor",
-            supabaseUrl: PUBLIC_SUPABASE_URL,
-            supabaseAnonKey: PUBLIC_SUPABASE_ANON_KEY,
+            supabaseUrl: env.PUBLIC_SUPABASE_URL,
+            supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
             roomId: getWhiteboardRoomId(),
             user: {
               name: tutorsId.value?.name || "Anonymous",
@@ -46,7 +49,7 @@
               avatar: tutorsId.value?.image || "",
             },
             initialScene: null,
-          }, "*");
+          }, window.location.origin);
           loading = false;
         }
       };
@@ -54,9 +57,7 @@
 
       return () => {
         window.removeEventListener("message", handler);
-        if (overlayEl?.parentNode === document.body) {
-          document.body.removeChild(overlayEl);
-        }
+
       };
     }
   });
@@ -65,19 +66,20 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if currentCourse?.value}
-  <button onclick={openEditor}>
-    <div class="hover:preset-tonal-secondary flex items-center gap-2 rounded-lg p-3 text-sm font-bold">
-      <Icon type="whiteboard" tip="Whiteboard" />
+  <button onclick={openEditor} aria-label={t("shell.whiteboard")}>
+    <div class="nav-row">
+      <Icon type="whiteboard" />
+      {#if labelled}<span>{t("shell.whiteboard")}</span>{/if}
     </div>
   </button>
 {/if}
 
 {#if showEditor}
-  <div bind:this={overlayEl} class="fixed inset-0 z-[9999] flex flex-col bg-white" style="isolation: isolate;">
-    <div class="flex items-center justify-between bg-surface-200 px-4 py-3 shadow-md" style="z-index: 1;">
-      <span class="text-lg font-semibold">Course Whiteboard</span>
+  <dialog bind:this={overlayEl} class="course-whiteboard" aria-label="Course whiteboard" onclose={closeEditor}>
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] px-4 py-3" style="z-index: 1;">
+      <span class="ui-section-title">Course whiteboard · Shared</span>
       <button
-        class="rounded-lg bg-error-500 px-4 py-2 text-sm font-bold text-white hover:bg-error-600"
+        class="ui-button"
         onclick={closeEditor}
         aria-label="Close whiteboard"
       >
@@ -87,7 +89,7 @@
     <div class="relative flex-1">
       {#if loading}
         <div class="absolute inset-0 flex items-center justify-center">
-          <span class="loading loading-spinner loading-lg"></span>
+          <p role="status" class="ui-muted">{t("shell.loading")}</p>
         </div>
       {/if}
       <iframe
@@ -98,5 +100,10 @@
         sandbox="allow-scripts allow-same-origin"
       ></iframe>
     </div>
-  </div>
+  </dialog>
 {/if}
+
+<style>
+  .course-whiteboard { position: fixed; inset: 0; margin: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; padding: 0; background: var(--ui-surface); color: var(--ui-ink); }
+  .course-whiteboard[open] { display: flex; flex-direction: column; }
+</style>
