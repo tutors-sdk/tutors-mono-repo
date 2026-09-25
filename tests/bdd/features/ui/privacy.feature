@@ -12,7 +12,7 @@ Feature: Privacy choices
 
     Scenario: Privacy dialog asks a student who has not chosen
       Given a signed-in student who has made no privacy choice opens a course
-      Then a "Choose what Tutors records" dialog offers learning analytics and presence sharing, both off
+      Then a centred "Choose what Tutors records" dialog offers learning analytics and presence sharing, both off
       And saving it unchanged closes the dialog and shows both as off in the profile menu
 
     Scenario: Privacy dialog stays closed once a student has chosen

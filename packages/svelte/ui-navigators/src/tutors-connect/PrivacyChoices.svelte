@@ -39,19 +39,17 @@
 </dialog>
 
 <style>
-  .privacy-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); margin: auto; padding: var(--space-6); overflow-y: auto; border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-surface); color: var(--ui-ink); box-shadow: 0 20px 64px #00000024; }
+  .privacy-dialog { width: 560px; margin: auto; padding: var(--space-6); border: 1px solid var(--ui-border); border-radius: var(--radius-panel); background: var(--ui-surface); color: var(--ui-ink); box-shadow: 0 20px 64px #00000024; }
   .privacy-dialog[open] { display: flex; flex-direction: column; gap: var(--space-3); animation: privacy-enter 150ms ease-out; }
-  .privacy-dialog::backdrop { background: color-mix(in srgb, black 35%, transparent); }
-  .privacy-dialog p { margin: 0; }
+  .privacy-dialog::backdrop { background: #00000059; }
   .privacy-options { display: flex; flex-direction: column; gap: var(--space-2); margin-block: var(--space-2); }
-  .privacy-option { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-border); border-radius: var(--radius-control); }
+  .privacy-option { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--ui-border); border-radius: var(--radius-control); }
   .privacy-option:hover { background: var(--ui-selected); }
-  .privacy-option:has(input:checked) { border-color: var(--ui-brand); }
-  .privacy-option input { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+  .privacy-option:has(:checked) { border-color: var(--ui-brand); }
+  .privacy-option input { width: 20px; height: 20px; margin-top: 2px; }
   .privacy-option > span { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-label); line-height: 1.5; }
-  .privacy-option-title { font-size: var(--font-body); font-weight: var(--weight-medium); color: var(--ui-ink); }
+  .privacy-option-title { font-size: var(--font-body); font-weight: var(--weight-medium); }
   .ui-actions { justify-content: flex-end; }
-  @keyframes privacy-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes privacy-enter { from { opacity: 0; transform: translateY(8px); } }
   @media (max-width: 767px) { .privacy-dialog { width: 100vw; max-width: none; height: 100dvh; max-height: none; border: 0; border-radius: 0; padding: var(--space-5); } .ui-actions > button { flex: 1; } }
-  @media (prefers-reduced-motion: reduce) { .privacy-dialog[open] { animation: none; } }
 </style>

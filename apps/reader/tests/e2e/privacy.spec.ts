@@ -18,6 +18,10 @@ test("Privacy dialog asks a student who has not chosen", { tag: "@rule-0070" }, 
   await signInAs(page, "student", [], null);
   const dialog = privacyDialog(page);
   await expect(dialog).toBeVisible();
+  const box = (await dialog.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(2);
+  expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(2);
   await expect(dialog.getByRole("checkbox", { name: /^Learning analytics/ })).not.toBeChecked();
   await expect(dialog.getByRole("checkbox", { name: /^Share Presence/ })).not.toBeChecked();
   await dialog.getByRole("button", { name: "Save choices", exact: true }).click();
