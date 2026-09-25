@@ -22,6 +22,12 @@ The harness reads this directory and nothing else: `--mode migration --a <ref> -
 
 While a release rolls out, pods of the previous version (**a**) and the new version (**b**) run at the same time against one database, and a rollback puts **a** back on the schema **b** left. So a release may only **expand** the schema. Removing or narrowing something is a **contract** step, and it ships in a later release, after no deployed version reads it any more.
 
+The critical anon-access revocation in `20260925100300_revoke_anon_student_data.sql` is an emergency
+contract step in the same PR as the server routes. Apply it separately **after** every old pod has
+drained; a blanket migration run before deployment would break old pods. Old browser tabs must
+reload once direct anon writes are revoked. If a rollback is needed, keep the patched server routes
+deployed rather than reopening anonymous database access. See [SERVER-WRITES.md](SERVER-WRITES.md).
+
 | Release | Code | Migration |
 | --- | --- | --- |
 | N | writes and reads the new column, still tolerates the old | **expand**: add the new column (nullable, or with a default), new table, new index |

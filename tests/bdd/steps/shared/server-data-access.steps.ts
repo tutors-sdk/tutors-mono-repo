@@ -41,7 +41,7 @@ function today(): string {
 
 /** The room a whiteboard learning object saves into, as guides/WHITEBOARD.md documents it. */
 function personalRoom(course: Course, lo: Lo, login: string): string {
-  return `wb-${course.courseId}-${lo.route.replace(/[^a-zA-Z0-9-]/g, "-")}-${login}`;
+  return `wb-personal:${encodeURIComponent(course.courseId)}:${encodeURIComponent(lo.route)}:${encodeURIComponent(login)}`;
 }
 
 type TimeData = { role: string; calendar: Record<string, unknown>[]; learningRecords: Record<string, unknown>[]; users: Record<string, unknown>[] };
@@ -296,6 +296,12 @@ describeFeature(feature, ({ Background, Rule }) => {
           await answer(await readerRequest("GET", `/api/whiteboard?${query}`));
           expect(response.status).toBe(200);
           expect(body).toMatchObject({ scene: { elements: [{ id: `${owner}-rect` }] } });
+        });
+        And("a public shared route cannot read {string}'s personal drawing", async (_ctx, owner: string) => {
+          const query = new URLSearchParams({ courseId: course.courseId, route: `${firstLab().route}-${owner.toLowerCase()}`, shared: "true" });
+          await answer(await readerRequest("GET", `/api/whiteboard?${query}`));
+          expect(response.status).toBe(200);
+          expect(body).toEqual({ scene: null });
         });
         And("the database gives the anon key no policy on whiteboard_scenes", () => {
           expect(anyAnonPolicy(builtSchema(), "whiteboard_scenes")).toEqual([]);
