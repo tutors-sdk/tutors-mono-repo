@@ -6,7 +6,7 @@ Feature: Student data goes through the reader's server
   Background:
     Given the course "web-dev-101" is published with 2 labs and "eve" as its educator
 
-  @rule-0063 @ears-unwanted
+  @rule-0071 @ears-unwanted
   Rule: If a request to record, read or change a student's data reaches the reader without a signed-in session, then the reader shall answer 401 and read or write no row.
 
     Scenario: An anonymous page load is refused
@@ -22,7 +22,7 @@ Feature: Student data goes through the reader's server
       Then the reader answers 401
       And no row is read from or written to the database
 
-  @rule-0064 @ears-ubiquitous
+  @rule-0072 @ears-ubiquitous
   Rule: The reader shall store a signed-in student's learning records, calendar, sentiment, online status and shared presence under the GitHub login of the session, whatever student id the request names.
 
     Scenario: A request naming another student is stored under the session's login

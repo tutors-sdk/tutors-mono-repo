@@ -9,6 +9,7 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should export service 
   "setTutorsTimeSource",
   "getTutorsTimeSource",
   "TutorsTimeSourceError",
+  "withoutTrailingSlashes",
   "BaseCalendarModel",
   "BaseLabModel",
   "CourseTime",
@@ -52,5 +53,6 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should maintain stable
   "setTutorsTimeSource",
   "supabaseTimeSource",
   "toggleLabViewMode",
+  "withoutTrailingSlashes",
 ]
 `;

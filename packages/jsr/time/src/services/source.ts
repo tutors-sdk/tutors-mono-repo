@@ -82,13 +82,20 @@ export function supabaseTimeSource(): TutorsTimeSource {
   };
 }
 
+/** Drops trailing slashes. A loop, not /\/+$/, which backtracks polynomially on long runs of "/" (CodeQL js/polynomial-redos). */
+export function withoutTrailingSlashes(url: string): string {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === "/") end--;
+  return url.slice(0, end);
+}
+
 /**
  * Reads a course's rows from the Tutors reader at `readerUrl` (e.g. `https://tutors.dev`), sending
  * the reader's session cookie. One answer per course is reused for 30 seconds, so the app bar, the
  * calendar and the lab views of one page load share a request.
  */
 export function readerTimeSource(readerUrl: string, fetchFn: typeof fetch = (...args) => fetch(...args)): TutorsTimeSource {
-  const base = readerUrl.replace(/\/+$/, "");
+  const base = withoutTrailingSlashes(readerUrl);
   const cache = new Map<string, { at: number; rows: Promise<TutorsTimeRows> }>();
 
   async function load(courseId: string): Promise<TutorsTimeRows> {

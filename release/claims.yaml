@@ -36,10 +36,10 @@ claims:
     reason: "CHANGELOG Unreleased: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it (migration)"
   - artefact: network
     scope: "reader:*"
-    reason: "Rule 0064: the reader stores a signed-in student's data through its /api routes, under the session's login"
+    reason: "Rule 0072: the reader stores a signed-in student's data through its /api routes, under the session's login"
   - artefact: persistence
     scope: "reader:*"
-    reason: "Rule 0064: student rows are written by the reader's server under the session's login, not by the browser"
+    reason: "Rule 0072: student rows are written by the reader's server under the session's login, not by the browser"
   - artefact: dom
     scope: "reader:whiteboard*"
     reason: "Rule 0068: an anonymous visitor's whiteboard edits are not saved, and the status line says so"

@@ -7,7 +7,7 @@ import * as check from "../../../lib/server/api/validate.ts";
 /**
  * The learning object a student who shares their presence is on, kept as the latest per course for
  * the live dashboard. Who the student is comes from the session: the user in the payload is
- * replaced with the session's login, name and avatar (Rule 0064). Everyone can read the stored
+ * replaced with the session's login, name and avatar (Rule 0072). Everyone can read the stored
  * record on the live dashboard, so only its known fields are kept, each checked.
  */
 export const POST: RequestHandler = async ({ request, locals }) => {

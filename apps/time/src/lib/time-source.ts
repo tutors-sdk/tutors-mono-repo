@@ -1,5 +1,5 @@
 import { env } from "$env/dynamic/public";
-import { readerTimeSource, setTutorsTimeSource, TutorsTimeSourceError } from "@tutors/tutors-time-lib";
+import { readerTimeSource, setTutorsTimeSource, TutorsTimeSourceError, withoutTrailingSlashes } from "@tutors/tutors-time-lib";
 
 /**
  * The time dashboard has no sign-in and no database key of its own: it reads each course's rows from
@@ -8,7 +8,7 @@ import { readerTimeSource, setTutorsTimeSource, TutorsTimeSourceError } from "@t
  * the reader lists this app's origin in PRIVATE_API_ALLOWED_ORIGINS.
  */
 export function readerUrl(): string {
-  return (env.PUBLIC_READER_URL?.trim() || "https://tutors.dev").replace(/\/+$/, "");
+  return withoutTrailingSlashes(env.PUBLIC_READER_URL?.trim() || "https://tutors.dev");
 }
 
 let configuredFor: string | null = null;

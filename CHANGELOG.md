@@ -27,7 +27,7 @@
 
 #### Security
 
-- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the Auth.js session and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0063, 0064) (network, persistence) (PR #320)
+- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the Auth.js session and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0071, 0072) (network, persistence) (PR #320)
 - Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
 - My time: a student sees their own time and their classmates under pseudonyms (`student-1`, ...), with no classmate's name or avatar (Rule 0066) (network) (PR #320)
 - Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320)
