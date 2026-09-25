@@ -73,12 +73,6 @@ There is no self-service erasure. Run the **Deletion Cascade** in [DATA-INVENTOR
 
 Name, avatar and email come from GitHub at each sign-in; the student corrects them on GitHub. Correct anything else directly in Supabase.
 
-## Row Level Security
-
-Every table in `public` has RLS on since `supabase/migrations/20260924_enable_rls_public_tables.sql`. The reader signs students in with Auth.js, not Supabase Auth, so every browser call reaches Supabase as `anon`. Policies based on `auth.uid()` or `auth.jwt()` therefore never match, and adding them would block every write the apps make.
-
-The current policies give `anon` only the operations the apps perform, but with `USING (true)`: anyone holding the public anon key can read any student's rows in the tables the apps use. Closing that needs the writes to move server-side or a Supabase JWT minted from the Auth.js session. Until then, assess it as a risk in your Article 32 documentation.
-
 ## Breach notification
 
 Under Article 33, notify your supervisory authority of a personal data breach within **72 hours** of becoming aware of it, unless it is unlikely to result in a risk to people's rights and freedoms. Under Article 34, if it is likely to result in a **high** risk, also tell the affected students without undue delay.
@@ -104,7 +98,6 @@ Under Article 33, notify your supervisory authority of a personal data breach wi
 - [ ] Tell lecturers that Tutors Time and Tutors Live show only students who opt in.
 - [ ] Sign DPAs with Supabase, GitHub and your host.
 - [ ] Define retention periods and schedule their enforcement.
-- [ ] Assess the `USING (true)` RLS policies as a risk (see above).
 - [ ] Name who handles access and erasure requests, and how they reach `service_role`.
 - [ ] Prepare a breach notification procedure.
 - [ ] Appoint a DPO if required.
