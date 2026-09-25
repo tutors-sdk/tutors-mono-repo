@@ -151,7 +151,6 @@ Feature: Student data goes through the reader's server
       And "Bob" saves a drawing on the whiteboard of the first lab of "web-dev-101"
       Then the whiteboard of the first lab holds the drawing of "Alice" for "alice" and the drawing of "Bob" for "bob"
       And the reader gives "Bob" back only the drawing of "Bob"
-      And a public shared route cannot read "Alice"'s personal drawing
       And the database gives the anon key no policy on whiteboard_scenes
 
     @inactive

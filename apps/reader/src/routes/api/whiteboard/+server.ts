@@ -1,5 +1,4 @@
 import { json, error, type RequestHandler } from "@sveltejs/kit";
-import type { WhiteboardScene } from "@tutors/data-api";
 import { noContent, readJson, requireDb, requireUser, sessionUser, valid } from "../../../lib/server/api/http.ts";
 import { getWhiteboardScene, saveWhiteboardScene, whiteboardRoomId } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
@@ -15,8 +14,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
     if (!user) error(401, "Sign in to open your personal whiteboard");
     owner = user.login;
   }
-  const scene: WhiteboardScene | null = await getWhiteboardScene(requireDb(), whiteboardRoomId(courseId, route, owner));
-  return json({ scene });
+  return json({ scene: await getWhiteboardScene(requireDb(), whiteboardRoomId(courseId, route, owner)) });
 };
 
 export const PUT: RequestHandler = async ({ request, locals }) => {

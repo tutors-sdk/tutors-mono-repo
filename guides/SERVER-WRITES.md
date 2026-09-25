@@ -13,29 +13,11 @@ The behaviour is specified as EARS Rules in
 (Rules 0065 to 0075) and proved by `pnpm test:bdd`: the scenarios call the real route handlers and
 the real browser services, with only the session, the database and the course host stood in.
 
-## The data API: the seam
+## The reader hosts these routes for now
 
-Browser packages no longer talk to the database for anything personal. They talk to a typed data
-API: [`@tutors/data-api`](../packages/svelte/data-api/src/contract.ts) holds what each route takes
-and returns, and the one client (`dataApi`) the community, connect, RBAC and whiteboard code call.
-The server side implements that contract; nothing in a browser package knows which database is
-behind it, so leaving Supabase changes this layer and the routes, and no browser package.
-
-Two checks keep the seam honest:
-
-- `no-database-client-in-browser-code` (`.dependency-cruiser.cjs`, run by `pnpm test:runway`):
-  browser code may not import `@supabase/supabase-js`. The exceptions are the anon client factory
-  used for Realtime channels and public reads (`packages/svelte/community/src/utils/supabase-client.ts`),
-  server-only files, and type-only imports.
-- `tests/architecture/browser-data-access.test.ts`: what browser code does with that anon client is
-  limited to reading the public tables (`tutors-connect-courses`, `tutors-connect-latest`,
-  `tutors_content_locks`), inserting into `app_errors`, and calling `get_student_count` and
-  `get_error_counts`. Anything else belongs behind a route.
-
-**The reader is the data API's host for now, and that is temporary.** The routes live in the reader
-because it is the app with Auth.js. The time dashboard calling the reader for its data is the smell
-that says so: on OpenShift the data API wants to be its own pod, with the reader, time and live
-apps as clients. Moving it is a deployment change, not a browser one, because of the contract above.
+**That is temporary.** The routes live in the reader because it is the app with Auth.js. The time
+dashboard calling the reader for its data is the smell that says so: on OpenShift the data API
+wants to be its own pod, with the reader, time and live apps as clients (#325).
 
 ## The routes
 
@@ -50,7 +32,7 @@ All in the reader for now, under `apps/reader/src/routes/api/`. The helpers they
 | `POST /api/courses/visit` | anyone viewing a course | counts a visit in the public catalogue; the course must be published, and its title, credits and privacy come from its tutors.json |
 | `POST /api/presence` | a signed-in student who shares presence | the latest learning object in `tutors-connect-latest`; the user in the payload is replaced with the session's |
 | `PUT`, `DELETE /api/locks` | an educator of the course | lock, unlock or remove a lock in `tutors_content_locks` |
-| `GET`, `PUT /api/whiteboard` | reading a shared board: anyone; a personal board or saving: a signed-in user | a whiteboard learning object's saved scene; personal rooms have a separate namespace derived from the session |
+| `GET`, `PUT /api/whiteboard` | reading a shared board: anyone; a personal board or saving: a signed-in user | a whiteboard learning object's saved scene; the owner of a personal room is appended by the server |
 | `GET /api/time/[courseId]` | a signed-in user; the time dashboard's origin with the reader's cookie | a course's time rows: all of them for an educator, otherwise the viewer's own and classmates pseudonymised |
 
 Common to every route:
@@ -146,7 +128,7 @@ of:
 **Release N (the one that ships this change): expand.**
 
 1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader and time, `PRIVATE_API_ALLOWED_ORIGINS` on
-   reader, `PUBLIC_READER_URL` on time, and `PRIVATE_MOODLE_SYNC_TOKEN` on time.
+   reader, and `PUBLIC_READER_URL` on time.
 2. Apply the pending migrations (`20260925100000` to `20260925100200`) as usual, then deploy the new
    reader and time pods. Everything in `supabase/migrations` is safe to run before the new pods are
    up: nothing there removes what a v16.2.2 pod or tab uses.
@@ -171,10 +153,6 @@ unless `tutors.contract_ok` is set. In the release after N:
 Until step 5 has succeeded on production the exposure is **not** closed: the anon key can still
 read and write the tables the old code used.
 
-Moodle sync is operator-only. Call the time app's `POST /api/sync` with
-`Authorization: Bearer <PRIVATE_MOODLE_SYNC_TOKEN>`; the dashboard no longer offers a browser sync
-control because it has no sign-in of its own.
-
 ## Presence is the first message-bus candidate
 
 Presence and the live dashboard are the one thing still on Supabase's proprietary transport
@@ -190,5 +168,7 @@ bus and of `can()`.
   only by `/api/presence`.
 - **`app_errors`** still accepts inserts from anyone holding the anon key, so the table can be filled
   with junk, but it can no longer be read.
+- **The time app's `POST /api/sync`** still has no authentication. It writes only what it fetches
+  from Moodle, now with the service key.
 - **Assignments and submissions** reach browsers only as counts, and only for educators, through
   `/api/time`.

@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@tutors/community": "workspace:*",
-    "@tutors/data-api": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*"

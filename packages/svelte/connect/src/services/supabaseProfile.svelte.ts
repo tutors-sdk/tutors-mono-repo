@@ -1,4 +1,4 @@
-import { dataApi } from "@tutors/data-api";
+import { readerApi, readerApiJson } from "@tutors/community/utils/reader-api";
 import { tutorsId } from "@tutors/runes";
 import log from "@tutors/logger";
 
@@ -15,7 +15,7 @@ export const supabaseProfile: ProfileStore = {
    */
   async reload() {
     if (tutorsId.value?.login) {
-      const profile = await dataApi.getProfile<CourseVisit>();
+      const profile = await readerApiJson<{ courseVisits: CourseVisit[] }>("/api/profile");
       if (profile && profile.courseVisits.length > 0) {
         this.courseVisits = profile.courseVisits;
       }
@@ -30,7 +30,7 @@ export const supabaseProfile: ProfileStore = {
   async save() {
     const id = tutorsId.value?.login;
     if (id) {
-      const response = await dataApi.saveProfile({ courseVisits: this.courseVisits });
+      const response = await readerApi("PUT", "/api/profile", { courseVisits: this.courseVisits });
       if (response && !response.ok) {
         log.error("Failed to save profile:", { status: response.status });
       }

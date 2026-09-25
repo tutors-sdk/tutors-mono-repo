@@ -162,7 +162,7 @@ export async function removeLock(db: SupabaseClient, courseId: string, loRoute: 
 
 export function whiteboardRoomId(courseId: string, route: string, owner: string | null): string {
   const base = `wb-${courseId}-${route.replace(/[^a-zA-Z0-9-]/g, "-")}`;
-  return owner ? `wb-personal:${encodeURIComponent(courseId)}:${encodeURIComponent(route)}:${encodeURIComponent(owner)}` : base;
+  return owner ? `${base}-${owner}` : base;
 }
 
 export interface WhiteboardScene {
