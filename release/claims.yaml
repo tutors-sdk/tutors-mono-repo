@@ -45,13 +45,13 @@ claims:
     reason: "Rule 0068: an anonymous visitor's whiteboard edits are not saved, and the status line says so"
   - artefact: network
     scope: "time:*"
-    reason: "CHANGELOG Unreleased (Time): the dashboard loads time data from the reader and no longer calls Moodle sync from the browser"
+    reason: "CHANGELOG Unreleased (Time): the dashboard loads time data from the reader"
   - artefact: dom
     scope: "time:*"
-    reason: "CHANGELOG Unreleased (Time): signed-out viewers see a sign-in link and the browser Moodle sync control is removed"
+    reason: "CHANGELOG Unreleased (Time): signed-out viewers see a sign-in link"
   - artefact: screenshot
     scope: "time:*"
-    reason: "CHANGELOG Unreleased (Time): signed-out viewers see a sign-in link and the browser Moodle sync control is removed"
+    reason: "CHANGELOG Unreleased (Time): signed-out viewers see a sign-in link"
   - artefact: network
     scope: "catalogue:*"
     reason: "Rule 0070: the catalogue shows the number of students without reading any student's profile"

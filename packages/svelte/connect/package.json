@@ -11,13 +11,12 @@
     "./utils/*": "./src/utils/*"
   },
   "dependencies": {
-    "@auth/sveltekit": "^1.11.3",
-    "@tutors/community": "workspace:*",
-    "@tutors/data-api": "workspace:*",
     "@tutors/logger": "workspace:*",
-    "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
-    "@tutors/tutors-model-lib": "workspace:*"
+    "@tutors/community": "workspace:*",
+    "@tutors/rbac": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*",
+    "@auth/sveltekit": "^1.11.3"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

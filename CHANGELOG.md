@@ -32,8 +32,7 @@
 - Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
 - My time: a student sees their own time and their classmates under pseudonyms, with no classmate's name or avatar (Rule 0066). The pseudonyms are random and new on every answer, so they cannot be linked from one request to the next (Rule 0075) (network) (PR #320)
 - Content locks and time data: when a course's host cannot be read, the reader decides from the educators it read within the last hour (Rule 0074), and without such a copy answers 503 instead of treating an educator as a student (Rule 0073) (network) (PR #320)
-- Browser packages reach personal data only through the new `@tutors/data-api` package; CI refuses a database-client import in browser code and any browser write outside the data API (PR #320)
-- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; personal rooms no longer use public Realtime channels, and an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320)
 
   Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. Apply the anon-access revocation after the new pods are serving traffic.
 
@@ -260,7 +259,7 @@
 ### Unreleased
 
 - Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067) (network, dom, screenshot) (PR #320)
-- Moodle sync writes assignments with the service_role key and requires a private operator token; the time dashboard no longer starts a sync from the browser (network, dom) (PR #320)
+- The Moodle sync writes assignments with the service_role key (PR #320)
 
   Deploy with `PUBLIC_READER_URL` set to the reader people sign in at, and `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` for the sync.
 ### v16.2.0 (2026-09)

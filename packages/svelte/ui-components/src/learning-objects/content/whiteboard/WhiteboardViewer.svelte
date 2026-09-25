@@ -3,7 +3,7 @@
   import { env } from "$env/dynamic/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
-  import { dataApi, type WhiteboardRoom } from "@tutors/data-api";
+  import { readerApi, readerApiJson } from "@tutors/community/utils/reader-api";
   import log from "@tutors/logger";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { themeService } from "@tutors/themes";
@@ -39,15 +39,15 @@
     return `wb-${courseId}-${route}-${getUserId()}`;
   }
 
-  function sceneRoom(): WhiteboardRoom {
-    return { courseId: lo.parentCourse?.courseId || "unknown", route: lo.route, shared: isShared };
+  function sceneQuery(): URLSearchParams {
+    return new URLSearchParams({ courseId: lo.parentCourse?.courseId || "unknown", route: lo.route, shared: String(isShared) });
   }
 
   const canSave = () => env.PUBLIC_ANON_MODE !== "TRUE" && !!tutorsId.value?.login;
 
   async function loadSceneFromDb(): Promise<any | null> {
     if (env.PUBLIC_ANON_MODE === "TRUE" || (!isShared && !tutorsId.value?.login)) return null;
-    const saved = await dataApi.getWhiteboard(sceneRoom());
+    const saved = await readerApiJson<{ scene: { elements: unknown; appState: unknown; files: unknown } | null }>(`/api/whiteboard?${sceneQuery()}`);
     return saved?.scene ?? null;
   }
 
@@ -56,7 +56,12 @@
     if (saveTimer) clearTimeout(saveTimer);
     saveStatus = "Saving…";
     saveTimer = setTimeout(async () => {
-      const response = await dataApi.saveWhiteboard({ ...sceneRoom(), elements });
+      const response = await readerApi("PUT", "/api/whiteboard", {
+        courseId: lo.parentCourse?.courseId || "unknown",
+        route: lo.route,
+        shared: isShared,
+        elements,
+      });
       saveStatus = response?.ok ? "Drawing changes saved" : "Changes could not be saved. Keep this whiteboard open and export your work.";
     }, 2000);
   }
@@ -112,8 +117,8 @@
       const savedScene = await loadSceneFromDb();
       iframe?.contentWindow?.postMessage({
         type: "init-editor",
-        supabaseUrl: isShared ? env.PUBLIC_SUPABASE_URL : undefined,
-        supabaseAnonKey: isShared ? env.PUBLIC_SUPABASE_ANON_KEY : undefined,
+        supabaseUrl: env.PUBLIC_SUPABASE_URL,
+        supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
         roomId,
         user: {
           name: tutorsId.value?.name || "Anonymous",

@@ -7,7 +7,7 @@
 # Format: `<app> <METHOD> <route id> | who: <callers>`
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
-time POST /api/sync | who: an operator holding PRIVATE_MOODLE_SYNC_TOKEN; the browser cannot call it
+time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one). It writes only what it fetches from Moodle, with the service_role key
 reader POST /api/analytics | who: a signed-in student (Auth.js session, else 401); rows are written under the session's login (Rules 0071, 0072)
 reader PUT /api/me | who: a signed-in user, for their own tutors-connect-users row; name, email and avatar come from the session
 reader PATCH /api/me | who: a signed-in user, for their own sentiment and online status (Rule 0072)

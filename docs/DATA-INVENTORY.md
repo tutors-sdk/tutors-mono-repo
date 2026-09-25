@@ -226,7 +226,7 @@ When a user requests data deletion, purge the tables holding their personal data
 2. `calendar` (WHERE `studentid` = `<login>`)
 3. `"tutors-connect-latest"` (WHERE `student_id` = `<login>`)
 4. `"tutors-connect-profiles"` (WHERE `tutorId` = `<login>`)
-5. `whiteboard_scenes` (personal boards — WHERE `room_id` LIKE `wb-personal:%:<login>`)
+5. `whiteboard_scenes` (personal boards — WHERE `room_id` ends with `-<login>`)
 6. `app_errors` (WHERE `student_id` = `<login>`)
 7. `tutors_content_locks` (set `locked_by` = NULL WHERE `locked_by` = `<login>` — preferable to deleting locks)
 8. `"tutors-connect-users"` (WHERE `github_id` = `<login>`) — last
