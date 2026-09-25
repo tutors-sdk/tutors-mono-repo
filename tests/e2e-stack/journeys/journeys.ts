@@ -28,7 +28,7 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
   await onPage("reader:home");
 
   await page.goto(`${stack.reader}/course/${courseId}`);
-  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main navigation", exact: true }).getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
   await expect(page).toHaveTitle(fixture.title);
   await onPage("reader:course");
 
@@ -77,7 +77,7 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
  */
 export async function anonymousStudentSearches(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
   await page.goto(`${stack.reader}/course/${courseId}`);
-  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main navigation", exact: true }).getByRole("heading", { level: 1, name: fixture.title })).toBeVisible();
 
   await page.getByRole("button", { name: "Search this course" }).click();
   const dialog = page.getByRole("dialog", { name: "Search this course" });
