@@ -16,7 +16,7 @@ The harness reads this directory and nothing else: `--mode migration --a <ref> -
 
 ### What is not in this directory yet
 
-The RBAC tables are created by hand-run scripts in `packages/svelte/utils/rbac/sql/` (`002_content_locks.sql`, `003_whiteboard_scenes.sql`), and the tables behind the community, connect and time features predate this directory. The harness therefore rehearses a schema that has only `app_errors` in it: a destructive change to any other table is invisible to it, and to `pnpm check:migrations`. Moving those scripts in, as new migrations with `IF NOT EXISTS`, is the way to bring them under the rule; it needs a maintainer who can confirm what production already has. Row-Level Security on all of them is already under the rule: `20260924_enable_rls_public_tables.sql` turns it on for every table in `public` and gives `anon` only the operations the apps perform.
+`tutors_content_locks` is created by a hand-run script in `packages/svelte/utils/rbac/sql/` (`002_content_locks.sql`), and the tables behind the community, connect and time features predate this directory. (`whiteboard_scenes` moved in as `20260925100000_create_whiteboard_scenes.sql`; its old script was never run on production.) The harness therefore rehearses a schema that has only `app_errors` and `whiteboard_scenes` in it: a destructive change to any other table is invisible to it, and to `pnpm check:migrations`. Moving those scripts in, as new migrations with `IF NOT EXISTS`, is the way to bring them under the rule; it needs a maintainer who can confirm what production already has. Row-Level Security on all of them is already under the rule: `20260924_enable_rls_public_tables.sql` turns it on for every table in `public` and gives `anon` only the operations the apps perform.
 
 ## Expand and contract
 
@@ -84,5 +84,7 @@ claims:
 ```
 
 The scope is the hunk scope in the table above; globs work (`app_errors.*`). The same claim satisfies `pnpm check:migrations` and the harness. Reviewers own it through CODEOWNERS on `release/claims.yaml`. The changelog entry carries the hint `(migration)`, so the claim is one line from it ([CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries)).
+
+Once the claim is in, add the same finding to `tests/conformance/shipped-contract-migrations.txt` (`<file> <scope> | <reason>`). `claims.yaml` is reset for the next release, but the merged migration stays, and that list is how the conformance test keeps telling a reviewed contract step from an accidental one.
 
 Before writing one, confirm in the code that no deployed version reads the column: search for it in `apps/` and `packages/`, and check the previous release's tag, not only `main`.

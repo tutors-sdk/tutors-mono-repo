@@ -29,11 +29,23 @@ describe("migration check: the committed directory", () => {
     expect(layoutFindings(files)).toEqual([]);
   });
 
-  it("finds nothing destructive in what is committed", () => {
+  // `<file> <scope>` of each contract step that shipped with a claim.
+  const shipped = readFileSync(join(REPO_ROOT, "tests/conformance/shipped-contract-migrations.txt"), "utf8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => line.split("|")[0].trim());
+
+  it("finds nothing destructive in what is committed, except the contract steps that shipped with a claim", () => {
+    const found: string[] = [];
     for (const file of files) {
       const sql = readFileSync(join(REPO_ROOT, MIGRATIONS_DIR, file), "utf8");
-      expect(scanMigration(file, sql).filter((f) => f.severity === "error")).toEqual([]);
+      const errors = scanMigration(file, sql).filter((f) => f.severity === "error");
+      found.push(...errors.map((f) => `${file} ${f.scope}`));
+      expect(errors.filter((f) => !shipped.includes(`${file} ${f.scope}`))).toEqual([]);
     }
+    // A stale entry would silently waive a later statement with the same scope.
+    expect(shipped.filter((entry) => !found.includes(entry))).toEqual([]);
   });
 });
 
