@@ -51,9 +51,22 @@ Feature: Course tools
       Then the preview shows course.md with the name and the download is "ui-test-course.zip"
 
   @rule-0046 @ears-event-driven
-  Rule: When a signed-in student opens the online list from the account menu, the reader shall close the menu and show the online students in a dialog.
+  Rule: When a signed-in student opens the online list from course tools, the reader shall show the online students in a dialog.
 
     Scenario: Online list opens as a dialog
       Given a signed-in student sees one student online
-      When the student opens "View 1 Online" from the account menu
-      Then the menu closes and a dialog lists the online student in a card narrower than 60 percent of its grid
+      When the student opens "View 1 Online" from course tools
+      Then a dialog lists the online student in a card narrower than 60 percent of its grid
+
+  @rule-0063 @ears-state-driven
+  Rule: While a signed-in reader who shares presence is an educator of the course, the reader shall offer that course's class activity link in course tools.
+
+    @inactive
+    Scenario: Course tools withholds class activity from a student
+      Given a signed-in student sees one student online
+      Then course tools lists "My time", "Live now" and the online list, and no class activity link
+
+    @active
+    Scenario: Course tools offers class activity to an educator
+      Given a signed-in educator sees one student online
+      Then course tools lists a "Class activity" link to that course on the educator time dashboard

@@ -6,6 +6,10 @@
   import log from "@tutors/logger";
   import { t } from "@tutors/i18n";
 
+  // The picker sits in the account menu, whose rows put their label left and their icon right, and in
+  // the course navigation, whose rows put the icon first. Only the trigger differs between the two.
+  let { variant = "nav" }: { variant?: "nav" | "menu" } = $props();
+
   let menuOpen = $state(false);
   let selected = $state<CourseSentimentId>("neutral");
 
@@ -26,11 +30,16 @@
 
 <Popover open={menuOpen} onOpenChange={(d) => (menuOpen = d.open)} positioning={{ placement: "bottom-start", gutter: 8 }}>
   <Popover.Trigger
-    class="nav-row sentiment-trigger"
+    class={`${variant === "menu" ? "menu-row" : "nav-row"} sentiment-trigger`}
     aria-label={`${t("content.sentiment")}: ${selected}. ${t("content.sentimentOpen")}`}
   >
-    <Icon icon="lucide:smile" color="var(--ui-brand)" height="20" />
-    <span>{t("content.sentiment")}</span>
+    {#if variant === "menu"}
+      <span class="menu-label">{t("content.sentiment")}</span>
+      <Icon type={selected} />
+    {:else}
+      <Icon icon="lucide:smile" color="var(--ui-brand)" height="20" />
+      <span>{t("content.sentiment")}</span>
+    {/if}
   </Popover.Trigger>
   <Portal>
     <Popover.Positioner>

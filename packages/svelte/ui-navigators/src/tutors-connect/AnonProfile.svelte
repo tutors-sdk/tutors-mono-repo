@@ -24,7 +24,7 @@
     {#if env.PUBLIC_ANON_MODE !== "TRUE"}
       <MenuItem link="/auth{redirect}" text={t("menu.connect")} type="github" />
     {/if}
-    <MenuItem link="/" text={t("menu.home")} type="tutors" />
+    <MenuItem link="/" text={t("shell.myCourses")} type="tutors" />
   </ul>
 {/snippet}
 
