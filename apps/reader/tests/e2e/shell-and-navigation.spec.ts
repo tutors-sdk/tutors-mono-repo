@@ -15,6 +15,7 @@ test("Lab pages fit every viewport width", { tag: "@rule-0019" }, async ({ page 
 test("Home page introduces Tutors above the courses", { tag: "@rule-0020" }, async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Tutors/);
+  await expect(page.locator(".shell-header .brand")).toBeVisible();
   const intro = page.getByRole("region", { name: "An Open Learning Web Toolkit" });
   await expect(intro.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(intro.getByRole("link", { name: "Create", exact: true })).toBeVisible();
@@ -26,7 +27,12 @@ test("Home page introduces Tutors above the courses", { tag: "@rule-0020" }, asy
 test("Course home leads to the first topic", { tag: "@rule-0021" }, async ({ page }) => {
   await page.goto(course);
   await expect(page.getByRole("heading", { name: "Reference Course", exact: true })).toBeVisible();
-  await expect(page.getByText("9 · Author’s order")).toBeVisible();
+  await expect(page.locator(".shell-header h1")).toHaveText("Reference Course");
+  await expect(page.locator(".shell-header .brand")).toHaveCount(0);
+  await expect(page.locator(".composite-heading")).toHaveCount(0);
+  await expect(page.locator(".shell-header").getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
+  await expect(page.locator(".shell-navigation .calendar-week")).toContainText("This week");
+  await expect(page.locator(".main-group .ui-section-heading .ui-muted")).toHaveText("9");
   // The course page reaches its first topic through the topic card itself; there is no separate
   // "start here" callout duplicating that link.
   await page.locator('.resource-link[href="/topic/reference-course/topic-01-typical"]').click();
@@ -88,9 +94,12 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
     for (const width of [320, 390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       await expect(header.locator('[data-tour="course-title"]')).toBeVisible();
+      await expect(header.getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
       expect(await header.evaluate(el => el.scrollWidth <= el.clientWidth), `${theme} ${width}px header fits`).toBe(true);
       const tree = header.getByRole("button", { name: "Open course tree", exact: true });
-      await expect(tree).toContainText("Course Tree");
+      await expect(tree).toHaveText("");
+      expect((await tree.boundingBox())!.width).toBeGreaterThanOrEqual(44);
+      expect((await header.boundingBox())!.height, `${theme} ${width}px single toolbar`).toBeLessThanOrEqual(65);
       await tree.click();
       await expect(page.getByRole("dialog")).toHaveCount(1);
       await expect(page.getByRole("dialog", { name: "Course Tree", exact: true })).toBeVisible();
@@ -102,6 +111,8 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   await menu.click();
   const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
   await expect(navigation.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "View Calendar for this course", exact: true })).toBeVisible();
+  await expect(navigation.locator(".calendar-week")).toContainText("This week");
   await page.keyboard.press("Escape");
   await expect(menu).toBeFocused();
 });
@@ -112,12 +123,32 @@ test("Desktop header shows course info and the sidebar holds the tools", { tag: 
   const header = page.locator(".shell-header");
   await expect(header.locator('[data-tour="course-title"]')).toHaveText("Reference Course");
   await expect(header.getByRole("button", { name: "Course navigation", exact: true })).toBeHidden();
+  // A multi-page course summary belongs in the scrollable info dialog, not above the topics.
+  await page.evaluate(async () => {
+    const runes = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/runes/src/index.svelte.ts"))!;
+    const { currentCourse } = await import(runes);
+    currentCourse.value.contentHtml = "";
+    currentCourse.value.summary = Array.from({ length: 40 }, (_, i) => `<p>Course summary paragraph ${i + 1}</p>`).join("");
+  });
+  await expect(page.locator("#main-content")).not.toContainText("Course summary paragraph");
   await header.getByRole("button", { name: "Open course info", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Course Info", exact: true })).toBeVisible();
+  const info = page.getByRole("dialog", { name: "Course Info", exact: true });
+  await expect(info).toBeVisible();
+  await expect(info.locator(".prose p")).toHaveCount(40);
+  await info.getByText("Course summary paragraph 40", { exact: true }).scrollIntoViewIfNeeded();
+  await expect(info.getByText("Course summary paragraph 40", { exact: true })).toBeInViewport();
   await page.keyboard.press("Escape");
   const sidebar = page.locator(".shell-navigation");
   await expect(sidebar.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("button", { name: "Open course info", exact: true })).toHaveCount(0);
+  // A short window must scroll the sidebar, never squeeze a multi-line button over the next row.
+  await page.setViewportSize({ width: 1440, height: 500 });
+  const rows = await sidebar.locator(".nav-row").evaluateAll(elements => elements.map(el => {
+    const { top, bottom } = el.getBoundingClientRect();
+    return { top, bottom };
+  }));
+  for (let i = 1; i < rows.length; i++) expect(rows[i].top).toBeGreaterThanOrEqual(rows[i - 1].bottom);
+
 });
 
 test("Closing the preferences menu returns focus to its button", { tag: "@rule-0025" }, async ({ page }) => {
