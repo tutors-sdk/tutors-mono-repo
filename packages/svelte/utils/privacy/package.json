@@ -9,8 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.4",
-    "@tutors/logger": "workspace:*"
+    "@tutors/runes": "workspace:*"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

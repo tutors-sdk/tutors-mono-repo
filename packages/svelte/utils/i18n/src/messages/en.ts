@@ -100,6 +100,15 @@ const en = {
   "menu.disconnect": "Disconnect",
   "menu.profile": "Profile menu",
 
+  "privacy.eyebrow": "Privacy",
+  "privacy.title": "Choose what Tutors records",
+  "privacy.intro": "Signing in and reading courses need nothing more from you. These two are optional and start off. You can change them at any time from your profile menu.",
+  "privacy.analytics": "Learning analytics",
+  "privacy.analyticsHelp": "The pages you open and the time you spend on them, which you and your lecturers see in Tutors Time.",
+  "privacy.presenceHelp": "Your name, photo, mood and the page you are on, shown to others in the course and in Tutors Live, which also keeps your latest page.",
+  "privacy.save": "Save choices",
+  "privacy.download": "Download my data",
+
   // Home page
   "home.title": "Tutors:",
   "home.titleAn": "An",

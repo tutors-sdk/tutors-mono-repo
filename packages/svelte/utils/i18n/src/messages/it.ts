@@ -100,6 +100,15 @@ const it: Record<string, string> = {
   "menu.disconnect": "Disconnetti",
   "menu.profile": "Menu del profilo",
 
+  "privacy.eyebrow": "Privacy",
+  "privacy.title": "Scegli cosa registra Tutors",
+  "privacy.intro": "Per accedere e leggere i corsi non serve altro. Queste due opzioni sono facoltative e partono disattivate. Puoi cambiarle in qualsiasi momento dal menu del profilo.",
+  "privacy.analytics": "Analisi dell’apprendimento",
+  "privacy.analyticsHelp": "Le pagine che apri e il tempo che ci passi, visibili a te e ai tuoi docenti in Tutors Time.",
+  "privacy.presenceHelp": "Il tuo nome, la tua foto, il tuo umore e la pagina in cui ti trovi, visibili agli altri nel corso e in Tutors Live, che conserva anche la tua ultima pagina.",
+  "privacy.save": "Salva le scelte",
+  "privacy.download": "Scarica i miei dati",
+
   // Home page
   "home.title": "Tutors:",
   "home.titleAn": "Un",
