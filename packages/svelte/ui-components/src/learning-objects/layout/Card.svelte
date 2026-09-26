@@ -77,7 +77,7 @@
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
         <span class="resource-type" title={cardDetails.type}>
-          <Icon icon={themeService.getIcon(cardDetails.type).type} color="var(--resource-accent)" height="26" />
+          <Icon icon={themeService.getIcon(cardDetails.type).type} color="var(--resource-accent)" height="30" />
           <span class="visually-hidden">{cardDetails.type}</span>
         </span>
       </div>
@@ -140,9 +140,9 @@
     .resource-link { gap: var(--space-3); }
     .resource-heading { gap: var(--space-2); }
     h3 { font-size: var(--font-body); }
-    .resource-type :global(svg) { width: 20px; height: 20px; }
+    .resource-type :global(svg) { width: 24px; height: 24px; }
     .resource-card :global(.lo-artwork) { min-height: 64px; }
-    .resource-summary { margin-top: var(--space-2); font-size: var(--font-meta); -webkit-line-clamp: 2; }
+    .resource-summary { margin-top: var(--space-2); font-size: var(--font-label); -webkit-line-clamp: 2; }
     .companion-video { margin-top: 0; }
   }
 </style>

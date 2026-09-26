@@ -48,6 +48,8 @@ All in the reader for now, under `apps/reader/src/routes/api/`. The helpers they
 | `POST /api/analytics` | a signed-in student | a page load (`kind: "page-load"`) or a 30-second tick (`kind: "tick"`): learning record and calendar row, under the session's login |
 | `GET`, `PUT`, `PATCH /api/me` | a signed-in user | their own `tutors-connect-users` row: read sentiment and status; create or refresh on sign-in (name, email, avatar from the session); change sentiment or online status |
 | `GET`, `PUT /api/profile` | a signed-in user | their own course-visit history in `tutors-connect-profiles` |
+| `GET /api/home` | a signed-in user | their progress in each course of their profile: learning objects opened out of those the course's tutors.json publishes, and the last one opened; `null` for a course whose host cannot be read (Rules 0076 to 0079); and which of those courses they teach (Rule 0154) |
+| `GET`, `PUT`, `DELETE /api/bookmarks` | a signed-in user | their own bookmarks in `tutors_bookmarks`; a bookmark must name a learning object the course's tutors.json publishes, and takes its title and type from there (Rules 0150 to 0153) |
 | `POST /api/courses/visit` | anyone viewing a course | counts a visit in the public catalogue; the course must be published, and its title, credits and privacy come from its tutors.json |
 | `POST /api/presence` | a signed-in student who shares presence | the latest learning object in `tutors-connect-latest`; the user in the payload is replaced with the session's |
 | `PUT`, `DELETE /api/locks` | an educator of the course | lock, unlock or remove a lock in `tutors_content_locks` |
