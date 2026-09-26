@@ -4,7 +4,14 @@
 @font-face { font-family: OpenDyslexic; src: url('/OpenDyslexic-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
 @font-face { font-family: OpenDyslexic; src: url('/OpenDyslexic-BoldItalic.woff2') format('woff2'); font-weight: 700; font-style: italic; font-display: swap; }
 
+/* Reader sizing restores the original 16px card copy without changing the source design tokens. */
 :root {
+  --font-body: 18px;
+  --font-label: 16px;
+  --font-control: 16px;
+  --font-caption: 14px;
+  --font-meta: 14px;
+  --font-small: 12px;
   --ui-font-family: var(--font-interface), system-ui, sans-serif;
   --ui-line-height: var(--leading-ui);
   --ui-reading-leading: 1.65;

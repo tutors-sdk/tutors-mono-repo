@@ -44,7 +44,6 @@ const ga = {
   "shell.standardWidth": "Caighdeánach",
   "shell.contentWidth": "Leithead an ábhair",
   "shell.topics": "Topaicí an chúrsa",
-  "shell.authoredOrder": "Ord an údair",
   "shell.previous": "Roimhe",
   "shell.next": "Ar aghaidh",
   "shell.video": "Físeán",

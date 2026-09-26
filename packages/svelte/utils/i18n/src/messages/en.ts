@@ -44,7 +44,6 @@ const en = {
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Content width",
   "shell.topics": "Course topics",
-  "shell.authoredOrder": "Author’s order",
   "shell.previous": "Previous",
   "shell.next": "Next",
   "shell.video": "Video",
