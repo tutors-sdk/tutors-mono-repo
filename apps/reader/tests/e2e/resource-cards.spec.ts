@@ -69,7 +69,11 @@ test("Desktop viewport sets cards side by side", { tag: "@rule-0031" }, async ({
     expect(first.width, url).toBeLessThan(400);
     expect(second.y, url).toBe(first.y);
     expect(second.x, url).toBeGreaterThan(first.x + first.width);
+    if (url === course) await expect(page.locator(".main-group > .ui-panel")).toBeVisible();
   }
+  await page.goto("/course/tutors-reference-manual");
+  await expect(page.locator(".main-group .unit-panel").first()).toBeVisible();
+  await expect(page.locator(".main-group .ui-panel .ui-panel")).toHaveCount(0);
 });
 
 test("Small phone viewport gives each card its own row", { tag: "@rule-0059" }, async ({ page }) => {

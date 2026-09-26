@@ -57,7 +57,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Backfill only: an existing vX.Y.Z tag to build and publish (run from main). Leave empty when dispatching on a v* tag."
+        description: "Backfill only: an existing release tag to build and publish (run from main), e.g. v16.2.1 (16.2.1 and V16.2.1 work too). Leave empty when dispatching on a v* tag."
         required: false
         default: ""
       require_promotion:
@@ -181,8 +181,13 @@ jobs:
             echo "::error::A backfill runs from main (got $GITHUB_REF)."
             exit 1
           fi
+          # Forgive how the tag was typed (a phone capitalises the first letter): " V16.2.1 ", "16.2.1"
+          # and "v16.2.1" all mean v16.2.1. Anything else is still refused below.
+          TYPED="$RELEASE_TAG"
+          RELEASE_TAG="$(printf '%s' "$RELEASE_TAG" | tr -d '[:space:]')"
+          RELEASE_TAG="v${RELEASE_TAG#[vV]}"
           if ! printf '%s' "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::release_tag must be a release tag vX.Y.Z (got '$RELEASE_TAG')."
+            echo "::error::release_tag must be a release tag such as v16.2.1 (got '$TYPED')."
             exit 1
           fi
           if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --silent 2>/dev/null; then
@@ -190,6 +195,7 @@ jobs:
             exit 1
           fi
           echo "ref=refs/tags/$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "backfill=true" >> "$GITHUB_OUTPUT"
           echo "final=false" >> "$GITHUB_OUTPUT"
           echo "Backfill of \`$RELEASE_TAG\` from main" >> "$GITHUB_STEP_SUMMARY"
@@ -326,7 +332,7 @@ jobs:
       - name: Check the backfill's version
         if: steps.what.outputs.backfill == 'true' && steps.plan.outputs.promoted != 'true'
         env:
-          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_TAG: ${{ steps.what.outputs.release_tag }}
           VERSION: ${{ steps.meta.outputs.version }}
         run: |
           if [ "$VERSION" != "${RELEASE_TAG#v}" ]; then

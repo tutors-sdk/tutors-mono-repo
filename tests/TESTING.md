@@ -148,9 +148,12 @@ it can fail, then against the real repo.
 
 `schema-snapshot.test.ts` is a Vitest suite: it snapshots the contract Zod schemas as JSON
 Schema, so a renamed Supabase column fails here rather than in production. Stryker itself is
-configured at the repo root (`stryker.config.json`, `vitest.config.mutation.ts`) over five
-modules, thresholds high 85 / low 75 / break 65, and runs only locally via `pnpm test:mutation`
-— no workflow runs it. See [../guides/MUTATION-TESTING.md](../guides/MUTATION-TESTING.md).
+configured at the repo root (`stryker.config.json`, `vitest.config.mutation.ts`) over twelve
+modules, thresholds high 85 / low 75 / break 90, with a floor per module in `mutation-floors.json`. The nightly `mutation` job runs it; locally,
+`pnpm test:mutation`. The comprehensive run (`stryker.nightly.config.json`,
+`vitest.config.mutation-nightly.ts`) mutates every library module, with its floors in
+`nightly-mutation-floors.json`; the nightly `mutation-nightly` job runs it; locally,
+`pnpm test:mutation:nightly`. See [../guides/MUTATION-TESTING.md](../guides/MUTATION-TESTING.md).
 
 ### `release/`
 
