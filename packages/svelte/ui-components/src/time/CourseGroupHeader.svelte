@@ -7,25 +7,16 @@
   let { courseId, courseTitle }: Props = $props();
 </script>
 
-<div class="flex w-full flex-wrap items-center justify-between gap-3 pb-4">
-  <h2 class="p-2 text-base font-semibold">
-    <a
-      target="_blank"
-      rel="noopener noreferrer"
-      href="https://tutors.dev/course/{courseId}"
-      class="inline-flex items-center gap-2 text-[var(--ui-brand)] underline underline-offset-4"
-    >
-      <Icon type="course" height="20" /><span>{courseTitle}</span>
-    </a>
+<div class="group-header">
+  <h2 class="ui-section-title">
+    <a target="_blank" rel="noopener noreferrer" href="https://tutors.dev/course/{courseId}"><Icon type="course" height="24" /><span>{courseTitle}</span></a>
   </h2>
-  <h2 class="p-2 text-base font-semibold">
-    <a
-      target="_blank"
-      rel="noopener noreferrer"
-      href="/{courseId}"
-      class="inline-flex items-center gap-2 text-[var(--ui-brand)] underline underline-offset-4"
-    >
-      <Icon type="live" height="20" /><span>Live Stream</span>
-    </a>
-  </h2>
+  <a class="ui-button" href="/{courseId}"><Icon type="live" height="20" /><span>Live stream</span></a>
 </div>
+
+<style>
+  .group-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
+  h2 { min-width: 0; }
+  h2 a { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ui-brand); text-decoration: none; overflow-wrap: anywhere; }
+  h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+</style>

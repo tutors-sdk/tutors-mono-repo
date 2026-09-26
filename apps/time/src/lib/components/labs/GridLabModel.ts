@@ -1,7 +1,8 @@
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import type { LabModel, LabRow, LabMedianRow } from "@tutors/tutors-time-lib";
 import {
-  cellColorForMinutes,
+  heatColor,
+  minutesOf,
   formatTimeMinutesOnly,
   formatDateShort,
   extractLabIdentifier,
@@ -69,7 +70,7 @@ export class GridLabModel {
         p.value != null && Number(p.value) > 0 ? String(Math.round(Number(p.value))) : "",
       cellClass: "ag-right-aligned-cell",
       cellStyle: (p) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
+        backgroundColor: heatColor(minutesOf(p.value)),
         paddingLeft: "4px"
       }),
       width: 60,
@@ -96,7 +97,7 @@ export class GridLabModel {
           p.value != null && Number(p.value) > 0 ? formatTimeMinutesOnly(Number(p.value)) : "",
         cellClass: "ag-right-aligned-cell",
         cellStyle: (p) => ({
-          backgroundColor: cellColorForMinutes(p.value as number),
+          backgroundColor: heatColor(minutesOf(p.value)),
           textAlign: "center",
           paddingLeft: "4px"
         }),
@@ -119,7 +120,7 @@ export class GridLabModel {
           const name = String(params.value ?? "");
           const studentId = String(params.data?.studentid ?? "");
           if (!studentId || !courseId) return name;
-          return `<a href="/${courseId}/${studentId}" class="underline text-primary-600">${name}</a>`;
+          return `<a href="/${courseId}/${studentId}" class="underline text-[var(--ui-brand)]">${name}</a>`;
         }
       },
       {
@@ -171,7 +172,7 @@ export class GridLabModel {
         cellRenderer: (params: ICellRendererParams<LabRow>) => {
           const studentId = String(params.value ?? "");
           if (!studentId || studentId === "Course median") return studentId === "Course median" ? "—" : studentId;
-          return `<a href="https://github.com/${studentId}" target="_blank" rel="noopener noreferrer" class="underline text-primary-600">${studentId}</a>`;
+          return `<a href="https://github.com/${studentId}" target="_blank" rel="noopener noreferrer" class="underline text-[var(--ui-brand)]">${studentId}</a>`;
         }
       }
     ];
@@ -217,7 +218,7 @@ export class GridLabModel {
         p.value != null && Number(p.value) > 0 ? formatTimeMinutesOnly(Number(p.value)) : "",
       cellClass: "ag-right-aligned-cell",
       cellStyle: (p: { value?: unknown }) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
+        backgroundColor: heatColor(minutesOf(p.value)),
         textAlign: "center",
         paddingLeft: "4px"
       }),

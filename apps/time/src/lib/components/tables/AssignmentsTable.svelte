@@ -82,26 +82,20 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg">Loading assignments...</p>
-  </div>
+  <p role="status">Loading assignments…</p>
 {:else if error}
-  <div class="ui-panel border-[var(--ui-danger)] p-4">
-    <p class="font-bold">Error loading data</p>
-    <p class="text-sm">{error}</p>
-  </div>
+  <p class="ui-empty" role="alert">Error loading data: {error}</p>
 {:else if rows.length === 0}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-[var(--ui-muted)]">No assignments available</p>
-  </div>
+  <p class="ui-empty">No assignments available.</p>
 {:else}
+  <section class="ui-panel">
   <div class="table-wrap overflow-x-auto">
     <table class="table">
       <thead>
         <tr>
           <th>Course ID</th>
           <th>Assignment</th>
-          <th>Due Date</th>
+          <th>Due date</th>
           <th class="text-right">Submissions</th>
         </tr>
       </thead>
@@ -134,4 +128,5 @@
   <p class="mt-4 text-sm text-[var(--ui-muted)]">
     Showing {rows.length} {rows.length === 1 ? "assignment" : "assignments"}
   </p>
+  </section>
 {/if}

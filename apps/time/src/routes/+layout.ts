@@ -3,24 +3,27 @@ import { TutorsTime } from "@tutors/tutors-time-lib";
 
 export const ssr = false;
 
+const VIEWS = ["calendar", "lab", "medians", "assignments"];
+
 /** Derive a human-readable view type from the current pathname. */
 function getViewType(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length < 1) return "";
-  if (segments.length === 2 && segments[1] !== "calendar" && segments[1] !== "lab" && segments[1] !== "medians") return "Student Calendar"; // /courseid/studentid
+  if (segments.length === 2 && !VIEWS.includes(segments[1])) return "Student Calendar"; // /courseid/studentid
   if (segments[1] === "medians") return "Medians";
+  if (segments[1] === "assignments") return "Assignments";
   // /courseid redirects to medians, so this is rarely seen
   if (segments.length === 1) return "Medians";
   if (segments[1] === "calendar") {
     if (segments[2] === "byday") return "Calendar by day";
     if (segments[2] === "byweek") return "Calendar by week";
-    if (segments[2] === "raw") return "Raw Calendar";
+    if (segments[2] === "raw") return "Raw calendar";
     if (segments.length >= 2) return "Calendar";
   }
   if (segments[1] === "lab") {
-    if (segments[2] === "bystep") return "Lab by step";
-    if (segments[2] === "bylab") return "Lab by lab";
-    if (segments[2] === "learning-records") return "Learning Records";
+    if (segments[2] === "bystep") return "Labs by step";
+    if (segments[2] === "bylab") return "Labs by lab";
+    if (segments[2] === "learning-records") return "Learning records";
     if (segments.length >= 2) return "Lab";
   }
   return "";
@@ -51,10 +54,7 @@ export const load: LayoutLoad = async ({ url }) => {
   let sentiment: string | null = "neutral";
   let onlineStatus: string | null = "online";
   const isStudentRoute =
-    segments.length === 2 &&
-    segments[1] !== "calendar" &&
-    segments[1] !== "lab" &&
-    segments[1] !== "medians";
+    segments.length === 2 && !VIEWS.includes(segments[1]);
   if (isStudentRoute && courseId.trim()) {
     const studentId = segments[1] ?? "";
     try {

@@ -2,7 +2,7 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
 import type { CalendarEntry, CalendarRow } from "../../../../packages/jsr/time/src/types/calendar-types.ts";
-import { cellColorForMinutes } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { heatColor } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
 import { calendarEntries, calendarEntriesByStudent, cells, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/analytics-calendar.feature");
@@ -87,19 +87,21 @@ describeFeature(feature, ({ Scenario }) => {
 
   Scenario("Colour code activity cells", ({ When, Then, And }) => {
     const colours = new Map<number, string>();
-    const expectColour = (_ctx: unknown, minutes: number, colour: string) => {
-      expect(colours.get(minutes)).toBe(colour);
+    const tint = (token: string) => (_ctx: unknown, minutes: number, percent: number) => {
+      expect(colours.get(minutes)).toBe(`color-mix(in srgb, var(--ui-${token}) ${percent}%, var(--ui-surface))`);
     };
 
     When("the calendar grid colours cells holding these minutes of activity:", (_ctx, table: TableRow[]) => {
-      for (const row of table) colours.set(Number(row.minutes), cellColorForMinutes(Number(row.minutes)));
+      for (const row of table) colours.set(Number(row.minutes), heatColor(Number(row.minutes)));
     });
-    Then("a cell with {number} minutes shall be white, {string}", expectColour);
-    And("a cell with {number} minutes shall be light green, {string}", expectColour);
-    And("a cell with {number} minutes shall be deep green, {string}", expectColour);
-    And("a cell with {number} minutes shall transition to light red, {string}", expectColour);
-    And("a cell with {number} minutes shall be deep red, {string}", expectColour);
-    And("a cell with {number} minutes shall stay deep red, {string}", expectColour);
+    Then("a cell with {number} minutes shall have no heat colour", (_ctx, minutes: number) => {
+      expect(colours.get(minutes)).toBe("");
+    });
+    And("a cell with {number} minutes shall be the lightest success tint, {number}% over the surface", tint("success"));
+    And("a cell with {number} minutes shall be the deepest success tint, {number}% over the surface", tint("success"));
+    And("a cell with {number} minutes shall be a danger tint, {number}% over the surface", tint("danger"));
+    And("a cell with {number} minutes shall be the deepest danger tint, {number}% over the surface", tint("danger"));
+    And("a cell with {number} minutes shall stay the deepest danger tint, {number}% over the surface", tint("danger"));
   });
 
   Scenario("Handle empty calendar data", ({ Given, When, Then, And }) => {

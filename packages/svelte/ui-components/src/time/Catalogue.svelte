@@ -6,23 +6,28 @@
     courseRecords: CourseVisit[];
   }
   let { courseRecords = [] }: Props = $props();
-  // tabSet.value = 4;
 </script>
 
-<div class="ui-grid">
-  {#each courseRecords as courseRecord}
-    <Card
-      cardDetails={{
-        route: `https://tutors.dev/course/${courseRecord?.id}`,
-        title: courseRecord?.title,
-        type: "course",
-        summary: courseRecord?.credits,
-        metric: courseRecord?.visits?.toString(),
-        img: courseRecord?.img,
-        icon: courseRecord?.icon
-      }}
-      cardLayout={{ style: "landscape" }}
-    />
-  {:else}<p class="ui-empty">No courses are available to display.</p>
-  {/each}
-</div>
+<section class="ui-panel">
+  <h2 class="ui-section-title catalogue-heading">Most visited courses</h2>
+  <div class="ui-grid card-grid">
+    {#each courseRecords as courseRecord}
+      <Card
+        cardDetails={{
+          route: `https://tutors.dev/course/${courseRecord?.id}`,
+          title: courseRecord?.title,
+          type: "course",
+          summary: courseRecord?.credits,
+          metric: courseRecord?.visits ? `${courseRecord.visits} visits` : undefined,
+          img: courseRecord?.img,
+          icon: courseRecord?.icon
+        }}
+      />
+    {:else}<p class="ui-empty">No courses are available to display.</p>
+    {/each}
+  </div>
+</section>
+
+<style>
+  .catalogue-heading { margin-bottom: var(--space-4); }
+</style>

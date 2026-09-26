@@ -26,6 +26,6 @@
   <title>Tutors Catalogue</title>
 </svelte:head>
 
-<TutorsShell showConnect={false}>
+<TutorsShell showConnect={false} title="Catalogue">
   {@render children()}
 </TutorsShell>

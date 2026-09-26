@@ -45,5 +45,5 @@ Feature: Lab Analytics
       | carol   | book-a | 00   | 0       |
     When an instructor opens the lab analytics view
     Then the student "carol" who has not started the lab shall be listed with a total of 0 minutes
-    And a total of 0 minutes shall be highlighted with the cell colour "rgb(255, 255, 255)"
+    And a total of 0 minutes shall have no heat colour
     And the median for "book-a" shall be 40, ignoring students who have not started

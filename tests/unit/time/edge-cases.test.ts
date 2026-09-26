@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { BaseCalendarModel } from "../../../packages/jsr/time/src/services/base-calendar-model";
 import {
   getMondayForDate,
-  cellColorForMinutes
+  heatColor
 } from "../../../packages/jsr/time/src/utils/calendar-utils";
 import type { CalendarEntry } from "../../../packages/jsr/time/src/types/calendar-types";
 
@@ -158,8 +158,8 @@ describe("All entries for same date", () => {
 // Zero timeactive entries
 // ===========================================================================
 describe("Zero timeactive entries", () => {
-  it("cell color for zero minutes is white", () => {
-    expect(cellColorForMinutes(0)).toBe("rgb(255, 255, 255)");
+  it("cell color for zero minutes is uncoloured", () => {
+    expect(heatColor(0)).toBe("");
   });
 
   it("day view shows zero totals for zero-activity entries", () => {

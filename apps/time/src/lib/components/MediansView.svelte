@@ -1,14 +1,8 @@
 <script lang="ts">
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
-  import { BaseLabModel } from "@tutors/tutors-time-lib";
-  import {
-    formatDateShort,
-    formatTimeMinutesOnly,
-    cellColorForMinutes,
-    extractLabIdentifier,
-    extractStepName
-  } from "@tutors/tutors-time-lib";
-  import CalendarHeatmap from "$lib/components/calendar/CalendarHeatmap.svelte";
+  import { BaseLabModel, extractLabIdentifier, extractStepName, formatDateShort } from "@tutors/tutors-time-lib";
+  import ActivityTable from "@tutors/ui-components/time/ActivityTable.svelte";
+  import Heatmap from "@tutors/ui-components/time/Heatmap.svelte";
 
   interface Props {
     course: TutorsTimeCourse | null;
@@ -24,12 +18,8 @@
   const medianByLab = $derived(labsModel?.medianByLab?.row ?? null);
   const medianByStep = $derived(labsModel?.medianByLabStep?.row ?? null);
 
-  const weeks = $derived(calModel?.weeks ?? []);
   const dates = $derived(calModel?.dates ?? []);
-  const labs = $derived(labsModel?.labs ?? []);
-  const steps = $derived(labsModel?.steps ?? []);
 
-  /** Lab median by day – build from learning records when not on course (e.g. medians view) */
   const labsMedianByDay = $derived(
     course?.labsMedianByDay ??
       (course?.learningRecords?.length && dates.length
@@ -37,10 +27,7 @@
         : null)
   );
 
-  function formatTime(minutes: number | undefined): string {
-    if (minutes == null || minutes === 0) return "—";
-    return formatTimeMinutesOnly(minutes);
-  }
+  const dated = (keys: string[] = []) => keys.map((key) => ({ key, label: formatDateShort(key) }));
 </script>
 
 <svelte:head>
@@ -48,193 +35,26 @@
   <meta name="description" content="All course medians in one view" />
 </svelte:head>
 
-<section class="p-2 space-y-6">
-  {#if !course}
-    <div class="flex items-center justify-center p-8">
-      <p class="text-lg">Loading course data...</p>
-    </div>
-  {:else if course.error}
-    <div class="ui-panel border-[var(--ui-danger)] p-4">
-      <p class="font-bold">Error loading course</p>
-      <p class="text-sm">{course.error}</p>
-    </div>
-  {:else}
-    <div class="space-y-8">
-      <!-- Heatmaps: Calendar and Lab median by day -->
-      {#if dates.length > 0 && (medianByDay || labsMedianByDay)}
-        <section class="heatmap-full-width -mx-2 w-[calc(100%+1rem)] min-w-0 space-y-6 px-4">
-          {#if medianByDay}
-            <div>
-              <h2 class="text-xl font-semibold mb-4">Calendar Median by Day</h2>
-              <CalendarHeatmap
-                calendarByDay={medianByDay}
-                dates={dates}
-                elementId="medians-calendar-heatmap"
-              />
-            </div>
-          {/if}
-          {#if labsMedianByDay}
-            <div>
-              <h2 class="text-xl font-semibold mb-4">Lab Median by Day</h2>
-              <CalendarHeatmap
-                calendarByDay={labsMedianByDay}
-                dates={dates}
-                elementId="medians-lab-heatmap"
-              />
-            </div>
-          {/if}
-        </section>
-      {/if}
-
-      <!-- Calendar Median by Week -->
-      {#if medianByWeek}
-        <div class="ui-panel">
-          <h2 class="text-xl font-semibold mb-4">Calendar Median by Week</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse" style="table-layout: fixed;">
-              <thead>
-                <tr class="border-b-2 border-surface-300">
-                  <th class="text-right py-4 px-4 font-semibold" style="width: 80px;">Total</th>
-                  {#each weeks as week}
-                    <th class="text-center py-4 px-1 font-semibold align-middle" style="width: 48px; min-width: 48px;">
-                      <div class="transform -rotate-90 whitespace-nowrap text-xs" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-                        {formatDateShort(week)}
-                      </div>
-                    </th>
-                  {/each}
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-surface-200">
-                  <td class="py-3 px-4 text-right font-mono font-semibold" style="background-color: {cellColorForMinutes((medianByWeek.totalSeconds ?? 0))}">
-                    {formatTime(medianByWeek.totalSeconds)}
-                  </td>
-                  {#each weeks as week}
-                    {@const val = medianByWeek[week] as number | undefined}
-                    <td class="py-3 px-1 text-center font-mono text-xs" style="width: 48px; min-width: 48px; background-color: {cellColorForMinutes(val ?? 0)}">
-                      {formatTime(val)}
-                    </td>
-                  {/each}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {/if}
-
-      <!-- Calendar Median by Day -->
-      {#if medianByDay}
-        <div class="ui-panel">
-          <h2 class="text-xl font-semibold mb-4">Calendar Median by Day</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse" style="table-layout: fixed;">
-              <thead>
-                <tr class="border-b-2 border-surface-300">
-                  <th class="text-right py-4 px-4 font-semibold" style="width: 80px;">Total</th>
-                  {#each dates as date}
-                    <th class="text-center py-4 px-1 font-semibold align-middle" style="width: 48px; min-width: 48px;">
-                      <div class="transform -rotate-90 whitespace-nowrap text-xs" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-                        {formatDateShort(date)}
-                      </div>
-                    </th>
-                  {/each}
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-surface-200">
-                  <td class="py-3 px-4 text-right font-mono font-semibold" style="background-color: {cellColorForMinutes((medianByDay.totalSeconds ?? 0))}">
-                    {formatTime(medianByDay.totalSeconds)}
-                  </td>
-                  {#each dates as date}
-                    {@const val = medianByDay[date] as number | undefined}
-                    <td class="py-3 px-1 text-center font-mono text-xs" style="width: 48px; min-width: 48px; background-color: {cellColorForMinutes(val ?? 0)}">
-                      {formatTime(val)}
-                    </td>
-                  {/each}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {/if}
-
-      <!-- Lab Median by Lab -->
-      {#if medianByLab}
-        <div class="ui-panel">
-          <h2 class="text-xl font-semibold mb-4">Lab Median by Lab</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse" style="table-layout: fixed;">
-              <thead>
-                <tr class="border-b-2 border-surface-300">
-                  <th class="text-right py-4 px-4 font-semibold" style="width: 80px; height: 140px;">Total</th>
-                  {#each labs as labId}
-                    <th class="text-center py-4 px-1 font-semibold align-middle" style="width: 48px; min-width: 48px; height: 140px;">
-                      <div class="transform -rotate-90 whitespace-nowrap text-xs" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-                        {extractLabIdentifier(labId)}
-                      </div>
-                    </th>
-                  {/each}
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-surface-200">
-                  <td class="py-3 px-4 text-right font-mono font-semibold" style="background-color: {cellColorForMinutes(medianByLab.totalMinutes ?? 0)}">
-                    {formatTime(medianByLab.totalMinutes)}
-                  </td>
-                  {#each labs as labId}
-                    {@const val = medianByLab[labId] as number | undefined}
-                    <td class="py-3 px-1 text-center font-mono text-xs" style="width: 48px; min-width: 48px; background-color: {cellColorForMinutes(val ?? 0)}">
-                      {formatTime(val)}
-                    </td>
-                  {/each}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {/if}
-
-      <!-- Lab Median by Step -->
-      {#if medianByStep}
-        <div class="ui-panel">
-          <h2 class="text-xl font-semibold mb-4">Lab Median by Step</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse" style="table-layout: fixed;">
-              <thead>
-                <tr class="border-b-2 border-surface-300">
-                  <th class="text-right py-4 px-4 font-semibold" style="width: 80px; height: 140px;">Total</th>
-                  {#each steps as stepId}
-                    <th class="text-center py-4 px-1 font-semibold align-middle" style="width: 48px; min-width: 48px; height: 140px;">
-                      <div class="transform -rotate-90 whitespace-nowrap text-xs" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-                        {extractStepName(stepId)}
-                      </div>
-                    </th>
-                  {/each}
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-surface-200">
-                  <td class="py-3 px-4 text-right font-mono font-semibold" style="background-color: {cellColorForMinutes(medianByStep.totalMinutes ?? 0)}">
-                    {formatTime(medianByStep.totalMinutes)}
-                  </td>
-                  {#each steps as stepId}
-                    {@const val = medianByStep[stepId] as number | undefined}
-                    <td class="py-3 px-1 text-center font-mono text-xs" style="width: 48px; min-width: 48px; background-color: {cellColorForMinutes(val ?? 0)}">
-                      {formatTime(val)}
-                    </td>
-                  {/each}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      {/if}
-
-      {#if !medianByWeek && !medianByDay && !medianByLab && !medianByStep}
-        <div class="flex items-center justify-center p-8">
-          <p class="text-lg text-[var(--ui-muted)]">No median data found for this course.</p>
-        </div>
-      {/if}
+{#if !course}
+  <p role="status">Loading course data…</p>
+{:else if course.error}
+  <p class="ui-empty" role="alert">Error loading course: {course.error}</p>
+{:else if !medianByWeek && !medianByDay && !medianByLab && !medianByStep}
+  <p class="ui-empty">No median data found for this course.</p>
+{:else}
+  {#if dates.length > 0 && (medianByDay || labsMedianByDay)}
+    <div class="heatmaps">
+      {#if medianByDay}<Heatmap id="medians-calendar-heatmap" title="Calendar median by day" values={medianByDay} {dates} />{/if}
+      {#if labsMedianByDay}<Heatmap id="medians-lab-heatmap" title="Lab median by day" values={labsMedianByDay} {dates} />{/if}
     </div>
   {/if}
-</section>
+  <ActivityTable title="Calendar median by week" columns={dated(calModel?.weeks)} rows={[{ label: "Median", values: medianByWeek, total: medianByWeek?.totalSeconds, median: true }]} />
+  <ActivityTable title="Calendar median by day" columns={dated(dates)} rows={[{ label: "Median", values: medianByDay, total: medianByDay?.totalSeconds, median: true }]} />
+  <ActivityTable title="Lab median by lab" columns={(labsModel?.labs ?? []).map((key) => ({ key, label: extractLabIdentifier(key) }))} rows={[{ label: "Median", values: medianByLab, total: medianByLab?.totalMinutes, median: true }]} />
+  <ActivityTable title="Lab median by step" columns={(labsModel?.steps ?? []).map((key) => ({ key, label: extractStepName(key) }))} rows={[{ label: "Median", values: medianByStep, total: medianByStep?.totalMinutes, median: true }]} />
+{/if}
+
+<style>
+  .heatmaps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+  @media (max-width: 1023px) { .heatmaps { grid-template-columns: minmax(0, 1fr); } }
+</style>

@@ -53,30 +53,23 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg">Loading learning records...</p>
-  </div>
+  <p role="status">Loading learning records…</p>
 {:else if error}
-  <div class="ui-panel border-[var(--ui-danger)] p-4">
-    <p class="font-bold">Error loading data</p>
-    <p class="text-sm">{error}</p>
-  </div>
+  <p class="ui-empty" role="alert">Error loading data: {error}</p>
 {:else if data.length === 0}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-[var(--ui-muted)]">No learning records available</p>
-  </div>
+  <p class="ui-empty">No learning records available.</p>
 {:else}
-  <!-- Table -->
+  <section class="ui-panel">
   <div class="table-wrap overflow-x-auto">
     <table class="table">
       <thead>
         <tr>
           <th>Student ID</th>
-          <th>Learning Object ID</th>
+          <th>Learning object ID</th>
           <th>Type</th>
           <th class="text-right">Duration (minutes)</th>
           <th class="text-right">Count</th>
-          <th>Last Accessed</th>
+          <th>Last accessed</th>
         </tr>
       </thead>
       <tbody>
@@ -96,4 +89,5 @@
   <p class="mt-4 text-sm text-[var(--ui-muted)]">
     Showing {data.length} learning {data.length === 1 ? "record" : "records"}
   </p>
+  </section>
 {/if}

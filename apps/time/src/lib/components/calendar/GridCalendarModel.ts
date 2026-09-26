@@ -3,7 +3,8 @@ import type { CalendarModel, CalendarRow, CalendarMedianRow, ViewMode } from "@t
 import {
   formatDateShort,
   formatTimeMinutesOnly,
-  cellColorForMinutes
+  heatColor,
+  minutesOf
 } from "@tutors/tutors-time-lib";
 import { OnlineCellRenderer } from "$lib/components/calendar/OnlineCellRenderer";
 import { SentimentCellRenderer } from "$lib/components/calendar/SentimentCellRenderer";
@@ -62,7 +63,7 @@ export class GridCalendarModel {
         p.value != null && Number(p.value) > 0 ? String(Math.round(Number(p.value))) : "",
       cellClass: "ag-right-aligned-cell",
       cellStyle: (p) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
+        backgroundColor: heatColor(minutesOf(p.value)),
         paddingLeft: "4px"
       }),
       width: 60,
@@ -83,7 +84,7 @@ export class GridCalendarModel {
           : "",
       cellClass: "ag-right-aligned-cell",
       cellStyle: (p) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
+        backgroundColor: heatColor(minutesOf(p.value)),
         textAlign: "center",
         paddingLeft: "4px"
       }),
@@ -105,7 +106,7 @@ export class GridCalendarModel {
           : "",
       cellClass: "ag-right-aligned-cell",
       cellStyle: (p) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
+        backgroundColor: heatColor(minutesOf(p.value)),
         textAlign: "center",
         paddingLeft: "4px"
       }),
@@ -147,7 +148,7 @@ export class GridCalendarModel {
           const studentId = String(params.data?.studentid ?? "");
           const courseId = String(params.data?.courseid ?? "");
           if (!studentId || !courseId) return name;
-          return `<a href="/${courseId}/${studentId}" class="underline text-primary-600">${name}</a>`;
+          return `<a href="/${courseId}/${studentId}" class="underline text-[var(--ui-brand)]">${name}</a>`;
         }
       },
       {
@@ -199,7 +200,7 @@ export class GridCalendarModel {
         cellRenderer: (params: ICellRendererParams<CalendarRow, string>) => {
           const studentId = String(params.value ?? "");
           if (!studentId) return studentId;
-          return `<a href="https://github.com/${studentId}" target="_blank" rel="noopener noreferrer" class="underline text-primary-600">${studentId}</a>`;
+          return `<a href="https://github.com/${studentId}" target="_blank" rel="noopener noreferrer" class="underline text-[var(--ui-brand)]">${studentId}</a>`;
         }
       }
     ];

@@ -9,9 +9,11 @@
 </script>
 
 <div class="ui-page">
-  <h1 class="ui-title mb-6">Tutors Live</h1>
-  <p class="ui-muted mb-6">Course activity shared by connected learners.</p>
-  {#if liveService.studentsOnline.value.length === 0}<p class="ui-empty mb-6">No learners are sharing activity right now.</p>{/if}
+  <header class="live-header">
+    <p class="ui-eyebrow">Live</p>
+    <h1 class="ui-title">Tutors Live</h1>
+    <p class="ui-muted">Course activity shared by connected learners.</p>
+  </header>
   <Tabs defaultValue="Courses">
     <Tabs.List>
       <Tabs.Trigger value="Courses">Courses ({liveService.coursesOnline.value.length})</Tabs.Trigger>
@@ -24,3 +26,8 @@
     <Tabs.Content value="Groups"><CoursesGroup /></Tabs.Content>
   </Tabs>
 </div>
+
+<style>
+  .live-header { margin-bottom: var(--space-8); }
+  .live-header .ui-title, .live-header .ui-muted { margin-top: var(--space-2); }
+</style>

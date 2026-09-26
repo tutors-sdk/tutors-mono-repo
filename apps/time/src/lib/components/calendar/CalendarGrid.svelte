@@ -147,38 +147,14 @@
   <meta name="description" content="Course {title.toLowerCase()}" />
 </svelte:head>
 
-<section class="p-2 h-[calc(100vh-4rem)]">
-  <div class="ui-panel h-full flex flex-col">
-    <div class="flex flex-col flex-1 min-h-0">
-      {#if !course}
-        <div class="flex items-center justify-center flex-1">
-          <p class="text-lg">Loading calendar data...</p>
-        </div>
-      {:else if courseError}
-        <div class="ui-panel border-[var(--ui-danger)] p-4">
-          <p class="font-bold">Error loading calendar</p>
-          <p class="text-sm">{courseError}</p>
-        </div>
-      {:else if !hasData}
-        <div class="flex items-center justify-center flex-1">
-          <p class="text-lg text-[var(--ui-muted)]">No calendar data found for this course.</p>
-        </div>
-      {:else}
-        <div class="flex-1 min-h-0 flex flex-col">
-          <div class="flex-1 min-h-0">
-            {#if model?.error}
-              <div class="ui-panel border-[var(--ui-danger)] p-4">
-                <p class="font-bold">Error loading data</p>
-                <p class="text-sm">{model.error}</p>
-              </div>
-            {:else}
-              <div class="ag-theme-quartz grid-fill-container h-full min-h-0" role="grid" aria-label={ariaLabel}>
-                <div bind:this={gridContainer} class="grid-fill-container"></div>
-              </div>
-            {/if}
-          </div>
-        </div>
-      {/if}
-    </div>
+{#if !course}
+  <p role="status">Loading calendar data…</p>
+{:else if courseError || model?.error}
+  <p class="ui-empty" role="alert">Error loading calendar: {courseError ?? model?.error}</p>
+{:else if !hasData}
+  <p class="ui-empty">No calendar data found for this course.</p>
+{:else}
+  <div class="ag-theme-quartz time-grid" role="grid" aria-label={ariaLabel}>
+    <div bind:this={gridContainer} class="grid-fill-container"></div>
   </div>
-</section>
+{/if}

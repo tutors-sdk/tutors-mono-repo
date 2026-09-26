@@ -11,11 +11,5 @@
 </svelte:head>
 
 {#key courseId}
-  <section class="p-2 h-[calc(100vh-4rem)]">
-    <div class="ui-panel h-full flex flex-col">
-      <div class="flex flex-col flex-1 min-h-0 overflow-auto">
-        <CalendarTable courseId={courseId} />
-      </div>
-    </div>
-  </section>
+  <CalendarTable courseId={courseId} />
 {/key}

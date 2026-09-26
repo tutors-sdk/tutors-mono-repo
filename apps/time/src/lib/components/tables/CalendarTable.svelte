@@ -47,20 +47,13 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg">Loading calendar data...</p>
-  </div>
+  <p role="status">Loading calendar data…</p>
 {:else if error}
-  <div class="ui-panel border-[var(--ui-danger)] p-4">
-    <p class="font-bold">Error loading data</p>
-    <p class="text-sm">{error}</p>
-  </div>
+  <p class="ui-empty" role="alert">Error loading data: {error}</p>
 {:else if data.length === 0}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-[var(--ui-muted)]">No calendar data available</p>
-  </div>
+  <p class="ui-empty">No calendar data available.</p>
 {:else}
-  <!-- Table -->
+  <section class="ui-panel">
   <div class="table-wrap overflow-x-auto">
     <table class="table">
       <thead>
@@ -68,8 +61,8 @@
           <th>Date</th>
           <th>Student ID</th>
           <th>Course ID</th>
-          <th class="text-right">Time Active (minutes)</th>
-          <th class="text-right">Page Loads</th>
+          <th class="text-right">Time active (minutes)</th>
+          <th class="text-right">Page loads</th>
         </tr>
       </thead>
       <tbody>
@@ -88,4 +81,5 @@
   <p class="mt-4 text-sm text-[var(--ui-muted)]">
     Showing {data.length} calendar {data.length === 1 ? "entry" : "entries"}
   </p>
+  </section>
 {/if}

@@ -21,7 +21,7 @@
   let alreadyVerified = $state(false);
 
   const animation =
-    "transition transition-discrete opacity-0 translate-y-[100px] starting:data-[state=open]:opacity-0 starting:data-[state=open]:translate-y-[100px] data-[state=open]:opacity-100 data-[state=open]:translate-y-0";
+    "transition transition-discrete opacity-0 translate-y-2 starting:data-[state=open]:opacity-0 starting:data-[state=open]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0";
 
   function isVerifiedForSession(key: string): boolean {
     if (typeof sessionStorage === "undefined") return false;
@@ -64,18 +64,18 @@
 
 <Dialog {open} closeOnInteractOutside={false} closeOnEscape={false}>
   <Portal>
-    <Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/50 backdrop-blur-sm" />
+    <Dialog.Backdrop class="fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--ui-canvas)_70%,transparent)]" />
     <Dialog.Positioner class="fixed inset-0 z-50 flex justify-center items-center p-4">
       <Dialog.Content
-        class="ui-panel w-full max-w-md space-y-4 shadow-xl {animation}"
+        class="ui-panel w-full max-w-md space-y-4 shadow-[0_12px_32px_#0000001a] {animation}"
       >
-        <Dialog.Title class="text-2xl font-bold">Enter PIN</Dialog.Title>
+        <Dialog.Title class="ui-section-title">Enter PIN</Dialog.Title>
         <Dialog.Description class="text-[var(--ui-muted)]">
           Please enter the PIN code to continue.
         </Dialog.Description>
         <div class="space-y-4">
           <div>
-            <label for="pin-input" class="label">PIN Code</label>
+            <label for="pin-input" class="ui-label">PIN code</label>
             <input
               id="pin-input"
               type="password"
@@ -85,7 +85,7 @@
               onkeydown={(e) => e.key === "Enter" && handleSubmit()}
             />
             {#if error}
-              <p class="text-sm text-error-500 mt-1">{error}</p>
+              <p role="alert" class="mt-1 text-sm text-[var(--ui-danger)]">{error}</p>
             {/if}
           </div>
           <div class="flex justify-end gap-2">
