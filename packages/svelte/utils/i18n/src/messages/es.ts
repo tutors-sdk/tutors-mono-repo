@@ -138,6 +138,14 @@ const es: Record<string, string> = {
   "course.visitCard.opened": "Abiertos:",
   "course.visitCard.continue": "Continuar",
   "course.visitCard.progressUnavailable": "Progreso no disponible ahora mismo",
+  "bookmarks.add": "Guardar",
+  "bookmarks.saved": "Guardado",
+  "bookmarks.failed": "No se pudo guardar el marcador; inténtalo de nuevo",
+  "bookmarks.remove": "Quitar marcador",
+  "home.bookmarks": "Marcadores",
+  "home.bookmarksEmpty": "Aún no hay marcadores. Usa Guardar junto a la ruta de navegación de una página para tenerla aquí.",
+  "home.bookmarksUnavailable": "Marcadores no disponibles ahora mismo",
+  "home.teaching": "Docencia",
   "course.title.fallback": "Tutors",
 
   // Live page

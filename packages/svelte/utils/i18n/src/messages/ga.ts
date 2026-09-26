@@ -136,6 +136,14 @@ const ga = {
   "course.visitCard.opened": "Oscailte:",
   "course.visitCard.continue": "Lean ar aghaidh",
   "course.visitCard.progressUnavailable": "Níl an dul chun cinn ar fáil faoi láthair",
+  "bookmarks.add": "Leabharmharc",
+  "bookmarks.saved": "Leabharmharcáilte",
+  "bookmarks.failed": "Níorbh fhéidir an leabharmharc a shábháil; bain triail eile as",
+  "bookmarks.remove": "Bain an leabharmharc",
+  "home.bookmarks": "Leabharmharcanna",
+  "home.bookmarksEmpty": "Níl aon leabharmharc fós. Úsáid Leabharmharc in aice le cosán nascleanúna leathanaigh chun é a choinneáil anseo.",
+  "home.bookmarksUnavailable": "Níl leabharmharcanna ar fáil faoi láthair",
+  "home.teaching": "Teagasc",
   "course.title.fallback": "Tutors",
 
   // Live page

@@ -57,6 +57,14 @@ export const dataInventory: DataInventoryEntry[] = [
     consentRequired: true
   },
   {
+    table: "tutors_bookmarks",
+    description: "Learning objects a signed-in reader bookmarked for the home page",
+    piiFields: ["login"],
+    legalBasis: "Consent (the reader creates each bookmark)",
+    retentionNote: "Until the reader removes it or requests deletion",
+    consentRequired: false
+  },
+  {
     table: "realtime_presence",
     description: "Supabase Realtime presence data (who is online, what they are viewing)",
     piiFields: ["user identity", "current location"],

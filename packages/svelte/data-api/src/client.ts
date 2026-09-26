@@ -2,6 +2,8 @@ import { env } from "$env/dynamic/public";
 import log from "@tutors/logger";
 import type {
   AnalyticsEvent,
+  Bookmark,
+  BookmarkChange,
   CourseVisitReport,
   Home,
   LockChange,
@@ -56,6 +58,9 @@ export const dataApi = {
   getProfile: <Visit = Record<string, unknown>>() => getJson<Profile<Visit>>("/api/profile"),
   saveProfile: <Visit>(profile: Profile<Visit>) => send("PUT", "/api/profile", profile),
   getHome: () => getJson<Home>("/api/home"),
+  getBookmarks: () => getJson<{ bookmarks: Bookmark[] }>("/api/bookmarks"),
+  addBookmark: (change: BookmarkChange) => send("PUT", "/api/bookmarks", change),
+  removeBookmark: (change: BookmarkChange) => send("DELETE", "/api/bookmarks", change),
   reportCourseVisit: (visit: CourseVisitReport) => send("POST", "/api/courses/visit", visit),
   reportPresence: (report: PresenceReport) => send("POST", "/api/presence", report),
   setLock: (change: LockChange) => send("PUT", "/api/locks", change),

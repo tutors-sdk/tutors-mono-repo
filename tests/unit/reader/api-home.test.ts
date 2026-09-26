@@ -25,9 +25,9 @@ describe("reader /api/home", () => {
 
   it("counts the pages a course publishes: not topics, units, lab steps, panels or links out", () => {
     expect(los).toEqual([
-      { route: "/lab/c/t1/lab-1", title: "Lab 1" },
-      { route: "/lab/c/t1/lab-10", title: "Lab 10" },
-      { route: "/talk/c/t1/u1/slides", title: "Slides" }
+      { route: "/lab/c/t1/lab-1", title: "Lab 1", type: "lab" },
+      { route: "/lab/c/t1/lab-10", title: "Lab 10", type: "lab" },
+      { route: "/talk/c/t1/u1/slides", title: "Slides", type: "talk" }
     ]);
   });
 

@@ -138,6 +138,14 @@ const de: Record<string, string> = {
   "course.visitCard.opened": "Geöffnet:",
   "course.visitCard.continue": "Weiter",
   "course.visitCard.progressUnavailable": "Fortschritt gerade nicht verfügbar",
+  "bookmarks.add": "Merken",
+  "bookmarks.saved": "Gemerkt",
+  "bookmarks.failed": "Lesezeichen konnte nicht gespeichert werden; bitte erneut versuchen",
+  "bookmarks.remove": "Lesezeichen entfernen",
+  "home.bookmarks": "Lesezeichen",
+  "home.bookmarksEmpty": "Noch keine Lesezeichen. Mit „Merken“ neben der Brotkrümelnavigation einer Seite landet sie hier.",
+  "home.bookmarksUnavailable": "Lesezeichen gerade nicht verfügbar",
+  "home.teaching": "Meine Lehre",
   "course.title.fallback": "Tutors",
 
   // Live page

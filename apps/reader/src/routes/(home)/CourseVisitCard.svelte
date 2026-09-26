@@ -6,7 +6,14 @@
 
   import type { CardProgress, CourseVisit } from "@tutors/connect";
 
-  const { courseVisit, progress = null, deleteCourse, starUnstarCourse }: { courseVisit: CourseVisit & { image?: string }; progress?: CardProgress; deleteCourse: (id: string) => void; starUnstarCourse: (id: string) => void } = $props();
+  const {
+    courseVisit,
+    progress = null,
+    teaching = false,
+    deleteCourse,
+    starUnstarCourse
+  }: { courseVisit: CourseVisit & { image?: string }; progress?: CardProgress; teaching?: boolean; deleteCourse: (id: string) => void; starUnstarCourse: (id: string) => void } = $props();
+  // Continue sits beside Visit Course as a default button: Visit Course stays the card's one primary action.
   const canContinue = $derived(!!progress && progress !== "unavailable" && !!progress.continueAt);
   const percent = $derived(progress && progress !== "unavailable" && progress.total > 0 ? Math.round((100 * progress.opened) / progress.total) : 0);
 
@@ -61,10 +68,13 @@
   <footer class="course-visit-footer">
     <div class="ui-actions">
       {#if canContinue && progress && progress !== "unavailable" && progress.continueAt}
-        <a class="ui-button ui-button-primary" href={progress.continueAt.route} title={progress.continueAt.title}>{t("course.visitCard.continue")}</a>
+        <a class="ui-button" href={progress.continueAt.route} title={progress.continueAt.title}>{t("course.visitCard.continue")}</a>
+      {/if}
+      {#if teaching}
+        <a class="ui-button" href={`https://time.tutors.dev/${courseVisit.id}`} target="_blank" rel="noopener noreferrer">{t("shell.classActivity")}</a>
       {/if}
       <a
-        class={canContinue ? "ui-button" : "ui-button ui-button-primary"}
+        class="ui-button ui-button-primary"
         href={"/course/" + courseVisit.id}
         >{t("course.visitCard.visitCourse")}</a
       >

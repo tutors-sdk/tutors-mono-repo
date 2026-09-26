@@ -44,6 +44,23 @@ export interface CourseProgress {
 /** GET /api/home: progress per course in the signed-in user's profile; null where the course's host could not be read. */
 export interface Home {
   courses: Record<string, CourseProgress | null>;
+  /** The profile's courses the user teaches: listed under Teaching (Rule 0154). */
+  teaching: string[];
+}
+
+/** A learning object a signed-in reader saved; the title and type are the course's own (Rule 0152). */
+export interface Bookmark {
+  courseId: string;
+  loRoute: string;
+  title: string;
+  loType: string;
+  createdAt: string;
+}
+
+/** PUT and DELETE /api/bookmarks: the learning object to bookmark or forget. */
+export interface BookmarkChange {
+  courseId: string;
+  loRoute: string;
 }
 
 /** POST /api/courses/visit: a visit to a published course, for the public catalogue. */

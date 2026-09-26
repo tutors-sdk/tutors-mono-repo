@@ -11,10 +11,12 @@ vi.mock("$app/environment", () => ({ browser: true, building: false, goto: vi.fn
 vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
 import { freshBrowser, githubUser, labsOf, publishedCourse, signIn } from "../../support/connect.ts";
-import { apiRequests, takeCourseHostDown } from "../../support/reader-api.ts";
+import { apiRequests, readerRequest, setReaderSession, takeCourseHostDown } from "../../support/reader-api.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 import type { Course, Lab, Lo } from "../../../../packages/jsr/model/src/tutors.ts";
+import { bookmarkService } from "../../../../packages/svelte/connect/src/services/bookmarks.svelte.ts";
 import { loadHome, type HomeView } from "../../../../packages/svelte/connect/src/services/home.ts";
+import { tutorsId } from "../../../../packages/svelte/runes/src/index.svelte.ts";
 import { localStorageProfile } from "../../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 
 const feature = await loadFeature("tests/bdd/features/student/home-page.feature");
@@ -58,6 +60,19 @@ describeFeature(feature, ({ Background, Rule }) => {
   };
   const showsOpened = (_ctx: unknown, courseId: string, opened: number, total: number) => {
     expect(progressOf(courseId)).toMatchObject({ opened, total });
+  };
+
+  let response: Response;
+  const bookmarkRows = (who: string) => recorder.rows("tutors_bookmarks").filter((r) => r.login === who);
+  const bookmarksOnHome = () => {
+    expect(Array.isArray(home.bookmarks)).toBe(true);
+    return Array.isArray(home.bookmarks) ? home.bookmarks : [];
+  };
+  const bookmarkLab = async (_ctx: unknown, _name: string, n: number, courseId: string) => {
+    expect(await bookmarkService.toggle(courseId, lab(courseId, n).route)).toBe(true);
+  };
+  const askToBookmark = async (courseId: string, body: Record<string, unknown>) => {
+    response = await readerRequest("PUT", "/api/bookmarks", { courseId, ...body });
   };
 
   Background(({ Given }) => {
@@ -118,7 +133,7 @@ describeFeature(feature, ({ Background, Rule }) => {
     }
   );
 
-  Rule("While no one is signed in, the reader shall show on the home page the courses stored in the browser without progression.", ({ RuleScenario }) => {
+  Rule("While no one is signed in, the reader shall show on the home page the courses stored in the browser without progression or bookmarks.", ({ RuleScenario }) => {
     RuleScenario("A visitor who is not signed in sees no progression", ({ Given, When, Then, And }) => {
       Given("nobody is signed in and the browser has visited {string}", (_ctx, courseId: string) => {
         localStorageProfile.logCourseVisit(courses.get(courseId)!);
@@ -126,9 +141,10 @@ describeFeature(feature, ({ Background, Rule }) => {
       When("the home page loads", async () => {
         home = await loadHome();
       });
-      Then("{string} is listed without progression", (_ctx, courseId: string) => {
+      Then("{string} is listed without progression or bookmarks", (_ctx, courseId: string) => {
         expect(home.visits.map((v) => v.id)).toEqual([courseId]);
         expect(home.progress).toEqual({ kind: "signed-out" });
+        expect(home.bookmarks).toBeNull();
       });
       And("the reader asks the data API for nothing", () => {
         expect(apiRequests).toEqual([]);
@@ -144,7 +160,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   });
 
   Rule(
-    "If the reader's data API does not answer while a signed-in student's home page loads, then the reader shall show progression as unavailable instead of as a number.",
+    "If the reader's data API does not answer while a signed-in student's home page loads, then the reader shall show progression and bookmarks as unavailable instead of as empty.",
     ({ RuleScenario }) => {
       RuleScenario("The data API is down", ({ Given, And, When, Then }) => {
         Given("{string} is signed in", signedIn);
@@ -158,8 +174,9 @@ describeFeature(feature, ({ Background, Rule }) => {
           vi.stubGlobal("fetch", Object.assign(down, { fallback: reader.fallback }));
         });
         When("the home page loads the progress of {string}", loadsProgressOf);
-        Then("progression is shown as unavailable", () => {
+        Then("progression and bookmarks are shown as unavailable", () => {
           expect(home.progress).toEqual({ kind: "unavailable" });
+          expect(home.bookmarks).toBe("unavailable");
         });
       });
 
@@ -179,4 +196,99 @@ describeFeature(feature, ({ Background, Rule }) => {
       });
     }
   );
+
+  Rule("When a signed-in student bookmarks a learning object, the reader shall list that learning object under bookmarks on the student's home page.", ({ RuleScenario }) => {
+    RuleScenario("A bookmarked lab is listed on the home page", ({ Given, When, And, Then }) => {
+      Given("{string} is signed in", signedIn);
+      When("{string} bookmarks lab {number} of {string}", bookmarkLab);
+      And("the home page loads the progress of {string}", loadsProgressOf);
+      Then("the bookmarks list lab {number} of {string} with the title the course gives it", (_ctx, n: number, courseId: string) => {
+        expect(bookmarksOnHome()).toMatchObject([{ courseId, loRoute: lab(courseId, n).route, title: lab(courseId, n).title, loType: "lab" }]);
+      });
+    });
+
+    RuleScenario("A lab step is bookmarked under its lab's title", ({ Given, When, And, Then }) => {
+      Given("{string} is signed in", signedIn);
+      When("{string} bookmarks the first step of lab {number} of {string}", async (_ctx, _name: string, n: number, courseId: string) => {
+        expect(await bookmarkService.toggle(courseId, firstStep(courseId, n).route)).toBe(true);
+      });
+      And("the home page loads the progress of {string}", loadsProgressOf);
+      Then("the bookmarks list the first step of lab {number} of {string} titled as lab {number}", (_ctx, n: number, courseId: string, titled: number) => {
+        expect(bookmarksOnHome()).toMatchObject([{ courseId, loRoute: firstStep(courseId, n).route, title: lab(courseId, titled).title }]);
+      });
+    });
+  });
+
+  Rule("When a signed-in student removes a bookmark, the reader shall remove it from the student's home page in every session of that student.", ({ RuleScenario }) => {
+    RuleScenario("A removed bookmark is gone in a new session", ({ Given, And, When, Then }) => {
+      Given("{string} is signed in", signedIn);
+      And("{string} has bookmarked labs 1 and 2 of {string}", async (_ctx, name: string, courseId: string) => {
+        await bookmarkLab(_ctx, name, 1, courseId);
+        await bookmarkLab(_ctx, name, 2, courseId);
+      });
+      When("{string} removes the bookmark on lab {number} of {string}", async (_ctx, _name: string, n: number, courseId: string) => {
+        expect(bookmarkService.isBookmarked(courseId, lab(courseId, n).route)).toBe(true);
+        expect(await bookmarkService.toggle(courseId, lab(courseId, n).route)).toBe(true);
+      });
+      And("{string} signs in again in another browser and the home page loads", async (_ctx, name: string) => {
+        // A fresh browser: nothing in memory from the first session, only what the server kept.
+        tutorsId.value = null;
+        setReaderSession(null);
+        await bookmarkService.load();
+        expect(bookmarkService.bookmarks).toEqual([]);
+        await signIn(githubUser(name));
+        home = await loadHome();
+      });
+      Then("the bookmarks list only lab {number} of {string}", (_ctx, n: number, courseId: string) => {
+        expect(bookmarksOnHome().map((b) => b.loRoute)).toEqual([lab(courseId, n).route]);
+      });
+    });
+  });
+
+  Rule(
+    "The reader shall store a bookmark under the GitHub login of the session with the title the course publishes, whatever student or title the request names.",
+    ({ RuleScenario }) => {
+      RuleScenario("A bookmark request naming another student and title", ({ Given, When, Then, And }) => {
+        Given("{string} is signed in", signedIn);
+        When("the browser asks to bookmark lab {number} of {string} naming the student {string} and the title {string}", async (_ctx, n: number, courseId: string, other: string, title: string) => {
+          await askToBookmark(courseId, { loRoute: lab(courseId, n).route, login: other, studentId: other, title });
+          expect(response.status).toBe(204);
+        });
+        Then("{string} has a bookmark on lab {number} of {string} with the title the course gives it", (_ctx, name: string, n: number, courseId: string) => {
+          expect(bookmarkRows(githubUser(name).login)).toMatchObject([{ course_id: courseId, lo_route: lab(courseId, n).route, title: lab(courseId, n).title, lo_type: "lab" }]);
+        });
+        And("{string} has no bookmarks", (_ctx, name: string) => {
+          expect(bookmarkRows(githubUser(name).login)).toEqual([]);
+        });
+      });
+    }
+  );
+
+  Rule("If a request to bookmark names a learning object the course does not publish, then the reader shall answer 404 and store no bookmark.", ({ RuleScenario }) => {
+    RuleScenario("Bookmarking a route the course does not publish", ({ Given, When, Then, And }) => {
+      Given("{string} is signed in", signedIn);
+      When("the browser asks to bookmark the route {string} of {string}", async (_ctx, loRoute: string, courseId: string) => {
+        await askToBookmark(courseId, { loRoute });
+      });
+      Then("the reader answers {number}", (_ctx, status: number) => {
+        expect(response.status).toBe(status);
+      });
+      And("{string} has no bookmarks", (_ctx, name: string) => {
+        expect(bookmarkRows(githubUser(name).login)).toEqual([]);
+      });
+    });
+
+    RuleScenario("Bookmarking a course that is not published", ({ Given, When, Then, And }) => {
+      Given("{string} is signed in", signedIn);
+      When("the browser asks to bookmark the route {string} of {string}", async (_ctx, loRoute: string, courseId: string) => {
+        await askToBookmark(courseId, { loRoute });
+      });
+      Then("the reader answers {number}", (_ctx, status: number) => {
+        expect(response.status).toBe(status);
+      });
+      And("{string} has no bookmarks", (_ctx, name: string) => {
+        expect(bookmarkRows(githubUser(name).login)).toEqual([]);
+      });
+    });
+  });
 });

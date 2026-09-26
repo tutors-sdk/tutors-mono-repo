@@ -138,6 +138,14 @@ const it: Record<string, string> = {
   "course.visitCard.opened": "Aperti:",
   "course.visitCard.continue": "Continua",
   "course.visitCard.progressUnavailable": "Progressi non disponibili al momento",
+  "bookmarks.add": "Segnalibro",
+  "bookmarks.saved": "Salvato",
+  "bookmarks.failed": "Impossibile salvare il segnalibro; riprova",
+  "bookmarks.remove": "Rimuovi segnalibro",
+  "home.bookmarks": "Segnalibri",
+  "home.bookmarksEmpty": "Ancora nessun segnalibro. Usa Segnalibro accanto al percorso di una pagina per tenerla qui.",
+  "home.bookmarksUnavailable": "Segnalibri non disponibili al momento",
+  "home.teaching": "Insegnamento",
   "course.title.fallback": "Tutors",
 
   // Live page

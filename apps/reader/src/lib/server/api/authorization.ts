@@ -14,6 +14,7 @@ export interface CourseFacts {
 export interface PublishedLo {
   route: string;
   title: string;
+  type: string;
 }
 
 /** Containers, lab steps, topic-page panels and links out: learning objects the reader does not open as a page of their own. */
@@ -26,7 +27,7 @@ function publishedLos(courseId: string, los: unknown, out: PublishedLo[] = []): 
   for (const lo of los as RawLo[]) {
     if (!lo || typeof lo !== "object") continue;
     if (typeof lo.type === "string" && typeof lo.route === "string" && !NOT_A_PAGE.has(lo.type)) {
-      out.push({ route: lo.route.replaceAll("{{COURSEURL}}", courseId), title: typeof lo.title === "string" ? lo.title : "" });
+      out.push({ route: lo.route.replaceAll("{{COURSEURL}}", courseId), title: typeof lo.title === "string" ? lo.title : "", type: lo.type });
     }
     // Lab steps sit beneath their lab, and a unit's or side's pages beneath it.
     if (lo.type !== "lab") publishedLos(courseId, lo.los, out);

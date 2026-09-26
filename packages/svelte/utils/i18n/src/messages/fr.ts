@@ -138,6 +138,14 @@ const fr: Record<string, string> = {
   "course.visitCard.opened": "Ouverts :",
   "course.visitCard.continue": "Continuer",
   "course.visitCard.progressUnavailable": "Progression indisponible pour le moment",
+  "bookmarks.add": "Marquer",
+  "bookmarks.saved": "Marqué",
+  "bookmarks.failed": "Impossible d’enregistrer le signet ; réessayez",
+  "bookmarks.remove": "Retirer le signet",
+  "home.bookmarks": "Signets",
+  "home.bookmarksEmpty": "Aucun signet pour l’instant. Utilisez Marquer à côté du fil d’Ariane d’une page pour la garder ici.",
+  "home.bookmarksUnavailable": "Signets indisponibles pour le moment",
+  "home.teaching": "Enseignement",
   "course.title.fallback": "Tutors",
 
   // Live page

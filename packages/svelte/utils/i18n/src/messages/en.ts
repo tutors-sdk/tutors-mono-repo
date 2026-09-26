@@ -138,6 +138,14 @@ const en = {
   "course.visitCard.opened": "Opened:",
   "course.visitCard.continue": "Continue",
   "course.visitCard.progressUnavailable": "Progress unavailable right now",
+  "bookmarks.add": "Bookmark",
+  "bookmarks.saved": "Bookmarked",
+  "bookmarks.failed": "Could not save the bookmark; try again",
+  "bookmarks.remove": "Remove bookmark",
+  "home.bookmarks": "Bookmarks",
+  "home.bookmarksEmpty": "Nothing bookmarked yet. Use Bookmark beside a page's breadcrumbs to keep it here.",
+  "home.bookmarksUnavailable": "Bookmarks unavailable right now",
+  "home.teaching": "Teaching",
   "course.title.fallback": "Tutors",
 
   // Live page

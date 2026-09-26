@@ -23,8 +23,8 @@ export function homeCourseIds(visits: unknown[]): string[] {
   return [...new Set(dated.map((v) => v.id))].slice(0, MAX_HOME_COURSES);
 }
 
-/** The published learning object a record counts toward: the one whose route it equals or sits beneath. */
-function owner(los: PublishedLo[], loId: string): PublishedLo | undefined {
+/** The published learning object a route belongs to: the one it equals or sits beneath (a lab step belongs to its lab). */
+export function publishedOwner(los: PublishedLo[], loId: string): PublishedLo | undefined {
   let best: PublishedLo | undefined;
   for (const lo of los) {
     if ((loId === lo.route || loId.startsWith(lo.route + "/")) && lo.route.length > (best?.route.length ?? -1)) best = lo;
@@ -37,7 +37,7 @@ export function courseProgress(los: PublishedLo[], records: VisitedLo[]): Course
   const opened = new Set<string>();
   let latest: { record: VisitedLo; lo: PublishedLo } | undefined;
   for (const record of records) {
-    const lo = owner(los, record.lo_id);
+    const lo = publishedOwner(los, record.lo_id);
     if (!lo) continue;
     opened.add(lo.route);
     if (!latest || (record.date_last_accessed ?? "") > (latest.record.date_last_accessed ?? "")) latest = { record, lo };
