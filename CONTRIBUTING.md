@@ -128,7 +128,7 @@ pnpm check                       # svelte-check on the reader, catalogue and liv
 
 The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
 
-Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation`), the browser journeys against built images (`pnpm test:e2e:stack`), the reader's UI contract (`pnpm test:e2e:reader`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
+Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation` and `pnpm test:mutation:nightly`, both nightly), the browser journeys against built images (`pnpm test:e2e:stack`), the reader's UI contract (`pnpm test:e2e:reader`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 
 Useful while developing:
 
