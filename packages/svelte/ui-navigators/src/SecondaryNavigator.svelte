@@ -4,8 +4,8 @@
 </script>
 <div class="secondary-navigation"><Breadcrumbs {lo} {parentCourse} /></div>
 <style>
-  .secondary-navigation { padding: var(--space-6) var(--space-10) 0; margin-bottom: var(--space-4); }
-  /* Same gutters as the page below (paper-ui.css): 24px on tablets, 16px on phones. */
+  .secondary-navigation { padding: var(--space-4) var(--space-10); }
+  /* Keep the breadcrumb row compact while aligning it with the page gutters. */
   @media (min-width: 768px) and (max-width: 1023px) { .secondary-navigation { padding-inline: var(--space-6); } }
-  @media (max-width: 767px) { .secondary-navigation { padding: var(--space-5) var(--space-4) 0; } }
+  @media (max-width: 767px) { .secondary-navigation { padding-inline: var(--space-4); } }
 </style>

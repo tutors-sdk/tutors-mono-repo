@@ -44,7 +44,6 @@ const de: Record<string, string> = {
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Inhaltsbreite",
   "shell.topics": "Kursthemen",
-  "shell.authoredOrder": "Reihenfolge des Autors",
   "shell.previous": "Zurück",
   "shell.next": "Weiter",
   "shell.video": "Video",
