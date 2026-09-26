@@ -1,4 +1,5 @@
-export { hasOpenedEveryLearningObject } from "./criteria.ts";
-export { topicBadgeCredential, OB_V3_CONTEXT, VC_V2_CONTEXT, type Issuer, type OpenBadgeCredential, type TopicAchievement, type TopicBadgeInput } from "./credential.ts";
+export { parseBadgeDefinitions, BadgesFileError, type BadgeCriteria, type BadgeDefinition } from "./definitions.ts";
+export { meetsCriteria, type CourseNode, type StudentActivity } from "./criteria.ts";
+export { badgeCredential, OB_V3_CONTEXT, VC_V2_CONTEXT, type BadgeCredentialInput, type CourseRef, type Issuer, type OpenBadgeCredential } from "./credential.ts";
 export { createSigningClient, type SigningClient, type SigningConfig } from "./signing-client.ts";
-export { issueTopicBadge, type IssueTopicBadgeInput } from "./issue.ts";
+export { issueBadge, type IssueBadgeInput } from "./issue.ts";

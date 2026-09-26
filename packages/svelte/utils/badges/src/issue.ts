@@ -1,19 +1,19 @@
 /**
- * Issues a topic badge when a student meets its criterion.
+ * Issues a course badge when a student meets its criteria.
  */
 
-import { hasOpenedEveryLearningObject } from "./criteria.ts";
-import { topicBadgeCredential, type OpenBadgeCredential, type TopicBadgeInput } from "./credential.ts";
+import { meetsCriteria, type CourseNode, type StudentActivity } from "./criteria.ts";
+import { badgeCredential, type BadgeCredentialInput, type OpenBadgeCredential } from "./credential.ts";
 import type { SigningClient } from "./signing-client.ts";
 
-export interface IssueTopicBadgeInput extends TopicBadgeInput {
-  topicLoRoutes: readonly string[];
-  openedRoutes: Iterable<string>;
+export interface IssueBadgeInput extends BadgeCredentialInput {
+  courseTree: CourseNode;
+  activity: StudentActivity;
   signer: SigningClient;
 }
 
-/** The signed credential, or null when the student has not opened every learning object in the topic. */
-export async function issueTopicBadge(input: IssueTopicBadgeInput): Promise<OpenBadgeCredential | null> {
-  if (!hasOpenedEveryLearningObject(input.topicLoRoutes, input.openedRoutes)) return null;
-  return input.signer.sign(topicBadgeCredential(input));
+/** The signed credential, or null when the student has not met the badge's criteria. */
+export async function issueBadge(input: IssueBadgeInput): Promise<OpenBadgeCredential | null> {
+  if (!meetsCriteria(input.badge, input.courseTree, input.activity)) return null;
+  return input.signer.sign(badgeCredential(input));
 }

@@ -13,13 +13,33 @@ The code that uses them:
 - `@tutors/xapi` (`packages/svelte/utils/xapi`) builds an xAPI "experienced"
   statement when a student opens a learning object, checks the student's
   analytics consent and posts it to the LRS.
-- `@tutors/badges` (`packages/svelte/utils/badges`) checks whether a student
-  has opened every learning object in a topic, builds the Open Badges 3.0
-  credential and has the signing service sign it.
+- `@tutors/badges` (`packages/svelte/utils/badges`) reads the badge
+  definitions from a course's `badges.yaml` (beside `enrollment.yaml`),
+  checks a student's learning records against each badge's criteria, builds
+  the Open Badges 3.0 credential and has the signing service sign it.
 
-Both are proved by EARS Rules 0076 to 0080 in
+A `badges.yaml` looks like this. `manual` badges are only awarded by an
+educator, never by the evaluator.
+
+```yaml
+- id: html-explorer
+  title: HTML explorer
+  criteria: { opened-all: { topic: topic-01, type: lab } }
+- id: streak-7
+  title: 7-day streak
+  criteria: { active-days: 7 }
+- id: lab-helper
+  title: Lab helper
+  criteria: manual
+```
+
+`active-days` counts distinct days with activity in the course, not
+consecutive days.
+
+Both are proved by EARS Rules 0100 to 0105 in
 `tests/bdd/features/student/learning-records.feature` and
-`tests/bdd/features/student/topic-badges.feature`.
+`tests/bdd/features/student/course-badges.feature`. The ids start at 0100
+because other in-flight work already claims 0065 to 0079.
 
 ## Run it locally
 
