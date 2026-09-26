@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { tutorsConnectService, type CourseVisit } from "@tutors/connect";
+  import { cardProgress, loadProgress, tutorsConnectService, type CourseVisit, type HomeProgress } from "@tutors/connect";
+  import { tutorsId } from "@tutors/runes";
   import { onMount } from "svelte";
   import CourseVisitCard from "./CourseVisitCard.svelte";
   import { t } from "@tutors/i18n";
@@ -7,6 +8,7 @@
   let loaded = $state(false);
   let failed = $state(false);
   let courseVisits: CourseVisit[] = $state([]);
+  let progress: HomeProgress = $state({ kind: "signed-out" });
   async function loadCourses() {
     failed = false;
     try { courseVisits = await tutorsConnectService.getCourseVisits(); }
@@ -14,6 +16,12 @@
     finally { loaded = true; }
   }
   onMount(loadCourses);
+
+  // The session can arrive after the list mounts, so progression follows the signed-in login.
+  $effect(() => {
+    if (tutorsId.value?.login) loadProgress().then((p) => (progress = p));
+    else progress = { kind: "signed-out" };
+  });
 
   function deleteCourse(id: string) {
     tutorsConnectService.deleteCourseVisit(id);
@@ -42,7 +50,7 @@
        grid's default stretch gives every tile in a row the height of the tallest instead. -->
   <div class="ui-grid course-grid">
     {#each courseVisits.filter((cv) => cv.favourite) as courseVisit (courseVisit.id)}
-      <CourseVisitCard {courseVisit} {deleteCourse} {starUnstarCourse} />
+      <CourseVisitCard {courseVisit} progress={cardProgress(progress, courseVisit.id)} {deleteCourse} {starUnstarCourse} />
     {/each}
   </div>
 
@@ -50,7 +58,7 @@
   <h2 class="ui-section-title mt-8 mb-4">{t("home.recentlyAccessed")}</h2>
   <div class="ui-grid course-grid">
     {#each courseVisits.filter((cv) => !cv.favourite) as courseVisit (courseVisit.id)}
-      <CourseVisitCard {courseVisit} {deleteCourse} {starUnstarCourse} />
+      <CourseVisitCard {courseVisit} progress={cardProgress(progress, courseVisit.id)} {deleteCourse} {starUnstarCourse} />
     {/each}
   </div>
   {#if loaded && !courseVisits.some(cv => !cv.favourite)}<p class="ui-empty">{t("shell.emptyCourses")}</p>{/if}

@@ -67,9 +67,10 @@ describe("reader authorization", () => {
       title: "C",
       educators: ["eve", "bob"],
       isPrivate: true,
-      credits: "Staff"
+      credits: "Staff",
+      learningObjects: []
     });
-    expect(courseFactsFrom("c", null)).toEqual({ courseId: "c", title: null, educators: [], isPrivate: false, credits: null });
+    expect(courseFactsFrom("c", null)).toEqual({ courseId: "c", title: null, educators: [], isPrivate: false, credits: null, learningObjects: [] });
   });
 
   it("makes a login an educator from enrollment.yaml or the admin list, caching the course", async () => {

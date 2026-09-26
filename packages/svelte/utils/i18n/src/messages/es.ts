@@ -135,6 +135,9 @@ const es: Record<string, string> = {
   "course.visitCard.delete": "Eliminar",
   "course.visitCard.star": "Marcar como favorito",
   "course.visitCard.unstar": "Quitar de favoritos",
+  "course.visitCard.opened": "Abiertos:",
+  "course.visitCard.continue": "Continuar",
+  "course.visitCard.progressUnavailable": "Progreso no disponible ahora mismo",
   "course.title.fallback": "Tutors",
 
   // Live page

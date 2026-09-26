@@ -135,6 +135,9 @@ const en = {
   "course.visitCard.delete": "Delete",
   "course.visitCard.star": "Star course",
   "course.visitCard.unstar": "Unstar course",
+  "course.visitCard.opened": "Opened:",
+  "course.visitCard.continue": "Continue",
+  "course.visitCard.progressUnavailable": "Progress unavailable right now",
   "course.title.fallback": "Tutors",
 
   // Live page

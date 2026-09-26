@@ -31,6 +31,21 @@ export interface Profile<Visit = Record<string, unknown>> {
   courseVisits: Visit[];
 }
 
+/** How far a signed-in student has got in one course (Rules 0076, 0077). */
+export interface CourseProgress {
+  /** Learning objects the student has opened. */
+  opened: number;
+  /** Learning objects the course publishes: pages the reader opens, not topics, units, lab steps or links out. */
+  total: number;
+  /** The learning object the student opened most recently, or null before the first. */
+  continueAt: { route: string; title: string } | null;
+}
+
+/** GET /api/home: progress per course in the signed-in user's profile; null where the course's host could not be read. */
+export interface Home {
+  courses: Record<string, CourseProgress | null>;
+}
+
 /** POST /api/courses/visit: a visit to a published course, for the public catalogue. */
 export interface CourseVisitReport {
   courseId: string;

@@ -19,6 +19,10 @@
 
 ### Unreleased
 
+#### Features
+
+- Home page: each course card shows how many of the course's learning objects a signed-in student has opened, and a Continue button back to the last one; progression reads as unavailable, not zero, when it cannot be read, and nothing is asked for when no one is signed in. Rules 0076 to 0079 (dom, network)
+
 #### Fixes
 
 - Database: `whiteboard_scenes` is created by a migration (`20260925100000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)

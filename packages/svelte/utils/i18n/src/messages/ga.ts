@@ -133,6 +133,9 @@ const ga = {
   "course.visitCard.delete": "Scrios",
   "course.visitCard.star": "Réaltaigh cúrsa",
   "course.visitCard.unstar": "Díréaltaigh cúrsa",
+  "course.visitCard.opened": "Oscailte:",
+  "course.visitCard.continue": "Lean ar aghaidh",
+  "course.visitCard.progressUnavailable": "Níl an dul chun cinn ar fáil faoi láthair",
   "course.title.fallback": "Tutors",
 
   // Live page

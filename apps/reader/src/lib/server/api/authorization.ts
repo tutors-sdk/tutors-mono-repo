@@ -7,6 +7,31 @@ export interface CourseFacts {
   educators: string[];
   isPrivate: boolean;
   credits: string | null;
+  /** The pages the reader opens for the course, in course order (Rule 0077 counts progression against them). */
+  learningObjects: PublishedLo[];
+}
+
+export interface PublishedLo {
+  route: string;
+  title: string;
+}
+
+/** Containers, lab steps, topic-page panels and links out: learning objects the reader does not open as a page of their own. */
+const NOT_A_PAGE = new Set(["course", "topic", "unit", "side", "step", "panelnote", "paneltalk", "panelvideo", "web", "github", "archive"]);
+
+type RawLo = { type?: unknown; route?: unknown; title?: unknown; los?: unknown };
+
+function publishedLos(courseId: string, los: unknown, out: PublishedLo[] = []): PublishedLo[] {
+  if (!Array.isArray(los)) return out;
+  for (const lo of los as RawLo[]) {
+    if (!lo || typeof lo !== "object") continue;
+    if (typeof lo.type === "string" && typeof lo.route === "string" && !NOT_A_PAGE.has(lo.type)) {
+      out.push({ route: lo.route.replaceAll("{{COURSEURL}}", courseId), title: typeof lo.title === "string" ? lo.title : "" });
+    }
+    // Lab steps sit beneath their lab, and a unit's or side's pages beneath it.
+    if (lo.type !== "lab") publishedLos(courseId, lo.los, out);
+  }
+  return out;
 }
 
 export interface AuthorizationOptions {
@@ -65,7 +90,8 @@ export function courseFactsFrom(courseId: string, json: unknown): CourseFacts {
     title: typeof course.title === "string" ? course.title : null,
     educators: stringList(course.enrollment?.educators),
     isPrivate: Number(course.properties?.private) === 1,
-    credits: typeof credits === "string" || typeof credits === "number" ? String(credits) : null
+    credits: typeof credits === "string" || typeof credits === "number" ? String(credits) : null,
+    learningObjects: publishedLos(courseId, (course as { los?: unknown }).los)
   };
 }
 

@@ -3,6 +3,7 @@ import log from "@tutors/logger";
 import type {
   AnalyticsEvent,
   CourseVisitReport,
+  Home,
   LockChange,
   LockRemoval,
   MyStatus,
@@ -54,6 +55,7 @@ export const dataApi = {
   changeMyStatus: (change: MyStatusChange) => send("PATCH", "/api/me", change),
   getProfile: <Visit = Record<string, unknown>>() => getJson<Profile<Visit>>("/api/profile"),
   saveProfile: <Visit>(profile: Profile<Visit>) => send("PUT", "/api/profile", profile),
+  getHome: () => getJson<Home>("/api/home"),
   reportCourseVisit: (visit: CourseVisitReport) => send("POST", "/api/courses/visit", visit),
   reportPresence: (report: PresenceReport) => send("POST", "/api/presence", report),
   setLock: (change: LockChange) => send("PUT", "/api/locks", change),
