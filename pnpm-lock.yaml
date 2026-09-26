@@ -545,6 +545,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/privacy':
+        specifier: workspace:*
+        version: link:../utils/privacy
       '@tutors/rbac':
         specifier: workspace:*
         version: link:../utils/rbac
@@ -747,6 +750,9 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/privacy':
+        specifier: workspace:*
+        version: link:../utils/privacy
       '@tutors/rbac':
         specifier: workspace:*
         version: link:../utils/rbac
@@ -872,6 +878,9 @@ importers:
 
   packages/svelte/utils/privacy:
     dependencies:
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.70.0)

@@ -467,3 +467,22 @@ export async function updateTutorsConnectUserOnlineStatus(githubId: string, onli
     throw error;
   }
 }
+
+const STUDENT_TABLES = {
+  "tutors-connect-users": "github_id",
+  "tutors-connect-profiles": "tutorId",
+  "tutors-connect-latest": "student_id",
+  learning_records: "student_id",
+  calendar: "studentid"
+};
+
+export async function studentRecords(login: string): Promise<Record<string, unknown[]>> {
+  const tables = await Promise.all(
+    Object.entries(STUDENT_TABLES).map(async ([table, column]) => {
+      const { data, error } = await supabase.from(table).select("*").eq(column, login);
+      if (error) throw error;
+      return [table, data ?? []];
+    })
+  );
+  return Object.fromEntries(tables);
+}

@@ -98,6 +98,15 @@ const ga = {
   "menu.githubProfile": "Próifíl Github",
   "menu.disconnect": "Dícheangail",
 
+  "privacy.eyebrow": "Príobháideachas",
+  "privacy.title": "Roghnaigh cad a thaifeadann Tutors",
+  "privacy.intro": "Ní theastaíonn aon rud eile uait chun síniú isteach agus cúrsaí a léamh. Tá an dá rogha seo roghnach agus tosaíonn siad múchta. Is féidir leat iad a athrú am ar bith ó roghchlár do phróifíle.",
+  "privacy.analytics": "Anailísíocht foghlama",
+  "privacy.analyticsHelp": "Na leathanaigh a osclaíonn tú agus an t-am a chaitheann tú orthu, a fheiceann tusa agus do léachtóirí in Tutors Time.",
+  "privacy.presenceHelp": "D’ainm, do ghrianghraf, do ghiúmar agus an leathanach ina bhfuil tú, le feiceáil ag daoine eile sa chúrsa agus in Tutors Live, a choinníonn do leathanach is déanaí freisin.",
+  "privacy.save": "Sábháil roghanna",
+  "privacy.download": "Íoslódáil mo shonraí",
+
   // Home page
   "home.title": "Tutors:",
   "home.titleAn": "An",

@@ -31,8 +31,11 @@ export async function seedOneOnline(page: Page, { educator = false } = {}): Prom
   // runner), so seed, wait a moment, and seed again until the identity holds.
   await expect(async () => {
     const held = await page.evaluate(async ({ urls, educator }) => {
-      const { tutorsId, isEducator } = await import(urls.find(url => url.includes("/runes/src/index.svelte.ts"))!);
+      const runes = urls.find(url => url.includes("/runes/src/index.svelte.ts"))!;
+      const { tutorsId, isEducator } = await import(runes);
       const { presenceService } = await import(urls.find(url => url.includes("/community/src/services/presence.svelte.ts"))!);
+      const { consent } = await import(runes.replace("/runes/src/index.svelte.ts", "/utils/privacy/src/consent.ts"));
+      consent.value = { analytics: false, presence: true, decidedAt: new Date().toISOString() };
       tutorsId.value = { login: "ui-preview", name: "UI Preview", share: "true", sentiment: "neutral" };
       isEducator.value = educator;
       presenceService.studentsOnline.value = [{ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }];
@@ -47,20 +50,22 @@ export async function seedOneOnline(page: Page, { educator = false } = {}): Prom
  * Signs this browser in as a student or a lecturer, and optionally locks routes, by seeding the UI stores the
  * dev server has loaded. Locks save only to this browser (no Supabase in dev or CI); nothing is written anywhere.
  */
-export async function signInAs(page: Page, role: "student" | "lecturer", locked: string[] = []): Promise<void> {
+export async function signInAs(page: Page, role: "student" | "lecturer", locked: string[] = [], choice: { analytics: boolean; presence: boolean } | null = { analytics: false, presence: false }): Promise<void> {
   // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
   // runner), so seed, wait a moment, and seed again until the role holds.
   await expect(async () => {
-    const held = await page.evaluate(async ({ role, locked }) => {
+    const held = await page.evaluate(async ({ role, locked, choice }) => {
       const runes = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/runes/src/index.svelte.ts"))!;
       const { tutorsId, isEducator, contentLocks, locksLoaded } = await import(runes);
-      tutorsId.value = { login: `ui-${role}`, name: `UI ${role}`, share: "false", sentiment: "neutral" };
+      const { consent } = await import(runes.replace("/runes/src/index.svelte.ts", "/utils/privacy/src/consent.ts"));
+      consent.value = choice && { ...choice, decidedAt: new Date().toISOString() };
+      tutorsId.value = { login: `ui-${role}`, name: `UI ${role}`, share: choice?.presence ? "true" : "false", sentiment: "neutral" };
       isEducator.value = role === "lecturer";
       if (locked.length) contentLocks.value = new Map(locked.map(route => [route, true]));
       locksLoaded.value = true;
       await new Promise(resolve => setTimeout(resolve, 750));
       return isEducator.value === (role === "lecturer") && tutorsId.value?.login === `ui-${role}`;
-    }, { role, locked });
+    }, { role, locked, choice });
     expect(held).toBe(true);
   }).toPass({ timeout: 20_000 });
 }

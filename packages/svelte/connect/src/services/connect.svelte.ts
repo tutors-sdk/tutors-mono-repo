@@ -15,6 +15,7 @@ import { env } from "$env/dynamic/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
+import { consent, readConsent, saveConsent } from "@tutors/privacy";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
@@ -22,7 +23,6 @@ import { type CourseVisit, type TutorsConnectService, type TutorsId } from "../t
 import { supabaseProfile } from "./supabaseProfile.svelte.ts";
 import {
   addOrUpdateStudent,
-  getTutorsConnectUserOnlineStatus,
   getTutorsConnectUserSentiment,
   updateTutorsConnectUserOnlineStatus,
   updateTutorsConnectUserSentiment
@@ -67,21 +67,18 @@ export const tutorsConnectService: TutorsConnectService = {
     presenceService.connectToAllCourseAccess();
     if (user) {
       this.profile = supabaseProfile;
+      if (browser) {
+        consent.value = readConsent(user.login);
+        user.share = consent.value?.presence ? "true" : "false";
+      }
       tutorsId.value = user;
       tutorsId.value.sentiment! = (await getTutorsConnectUserSentiment(user.login)) ?? "neutral";
-      tutorsId.value.share = (await getTutorsConnectUserOnlineStatus(user.login)) ?? "online";
-      addOrUpdateStudent(user).catch((err) => log.error("Failed to update student record:", err));
-      if (browser) {
-        if (!localStorage.share) {
-          localStorage.share = true;
-        }
-        tutorsId.value.share = localStorage.share;
-        if (localStorage.loginCourse) {
-          const courseId = localStorage.loginCourse;
-          localStorage.removeItem("loginCourse");
-          goto(`/course/${courseId}`);
-        }
+      if (browser && localStorage.loginCourse) {
+        const courseId = localStorage.loginCourse;
+        localStorage.removeItem("loginCourse");
+        goto(`/course/${courseId}`);
       }
+      addOrUpdateStudent(user).catch((err) => log.error("Failed to update student record:", err));
     }
   },
 
@@ -98,17 +95,16 @@ export const tutorsConnectService: TutorsConnectService = {
    * Updates both local storage and current session
    */
   toggleShare() {
-    if (tutorsId.value && browser) {
-      if (tutorsId.value.share === "true") {
-        localStorage.share = tutorsId.value.share = "false";
-      } else {
-        localStorage.share = tutorsId.value.share = "true";
-      }
-      const login = tutorsId.value.login;
-      if (login && !anonMode) {
-        const onlineStatus = tutorsId.value.share === "true" ? "online" : "offline";
-        void updateTutorsConnectUserOnlineStatus(login, onlineStatus).catch((err) => log.error("Failed to update online status:", err));
-      }
+    this.setConsent({ analytics: consent.value?.analytics ?? false, presence: tutorsId.value?.share !== "true" });
+  },
+
+  setConsent(choice: { analytics: boolean; presence: boolean }) {
+    const login = tutorsId.value?.login;
+    if (!login || !browser) return;
+    consent.value = saveConsent(login, choice);
+    tutorsId.value!.share = choice.presence ? "true" : "false";
+    if (!anonMode) {
+      void updateTutorsConnectUserOnlineStatus(login, choice.presence ? "online" : "offline").catch((err) => log.error("Failed to update online status:", err));
     }
   },
 
@@ -195,7 +191,7 @@ export const tutorsConnectService: TutorsConnectService = {
   learningEvent(params: Record<string, string>): void {
     if (anonMode) return;
     if (currentCourse.value && currentLo.value && tutorsId.value) {
-      if (analyticsEnabled) analyticsService.learningEvent(currentCourse.value, params, currentLo.value, tutorsId.value);
+      if (analyticsEnabled && consent.value?.analytics) analyticsService.learningEvent(currentCourse.value, params, currentLo.value, tutorsId.value);
       if (tutorsId.value.share === "true" && !currentCourse.value.isPrivate) {
         presenceService.sendLoEvent(currentCourse.value, currentLo.value, tutorsId.value);
       }
@@ -210,7 +206,7 @@ export const tutorsConnectService: TutorsConnectService = {
     if (anonMode) return;
     this.intervalId = setInterval(() => {
       if (!document.hidden && currentCourse.value && currentLo.value && tutorsId.value) {
-        if (analyticsEnabled) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
+        if (analyticsEnabled && consent.value?.analytics) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
       }
     }, 30 * 1000);
   },

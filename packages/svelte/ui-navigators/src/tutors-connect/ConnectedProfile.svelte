@@ -11,6 +11,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import CourseSentimentButton from "../buttons/CourseSentimentButton.svelte";
   import { tutorsId } from "@tutors/runes";
+  import { consent } from "@tutors/privacy";
   import { t } from "@tutors/i18n";
 
   function logout() {
@@ -19,6 +20,10 @@
 
   function shareStatusChange() {
     tutorsConnectService.toggleShare();
+  }
+
+  function analyticsChange() {
+    tutorsConnectService.setConsent({ analytics: !consent.value?.analytics, presence: tutorsId.value?.share === "true" });
   }
 </script>
 
@@ -57,6 +62,8 @@
     {:else}
       <MenuItem text={`${t("menu.sharePresence")} · Off`} type="offline" onClick={shareStatusChange} />
     {/if}
+    <MenuItem text={`${t("privacy.analytics")} · ${consent.value?.analytics ? "On" : "Off"}`} type={consent.value?.analytics ? "online" : "offline"} onClick={analyticsChange} />
+    <MenuItem link="/api/privacy" text={t("privacy.download")} type="download" />
     <hr />
     <MenuItem link="https://github.com/{tutorsId.value?.login}" text={t("menu.githubProfile")} type="github" targetStr="_blank" />
     <MenuItem text={t("menu.disconnect")} type="logout" onClick={logout} />

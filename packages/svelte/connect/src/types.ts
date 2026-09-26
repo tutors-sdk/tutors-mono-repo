@@ -52,6 +52,7 @@ export interface TutorsConnectService {
   reconnect(user: TutorsIdType): void;
   disconnect(redirectStr: string): void;
   toggleShare(): void;
+  setConsent(choice: { analytics: boolean; presence: boolean }): void;
   /** Persists sentiment locally and, when signed in, in tutors-connect-users. */
   updateSentiment(sentiment: string): Promise<void>;
 
