@@ -4,6 +4,7 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import yaml from "js-yaml";
 import { expect } from "vitest";
 import vitestConfig from "../../../../vitest.config.ts";
+import mutationConfig from "../../../../vitest.config.mutation.ts";
 import {
   FLOORS_PATH,
   coverageFloorFindings,
@@ -176,7 +177,7 @@ describeFeature(feature, ({ Rule }) => {
   );
 
   Rule(
-    "When the nightly workflow runs, tutors shall run mutation testing and fail the nightly run if the mutation score is below the break threshold of 85 percent.",
+    "When the nightly workflow runs, tutors shall run mutation testing and fail the nightly run if the mutation score is below the break threshold of 90 percent.",
     ({ RuleScenario }) => {
       RuleScenario("The nightly workflow runs mutation testing and its failure fails the night", ({ Given, Then, And }) => {
         let jobs: Record<string, NightlyJob>;
@@ -198,7 +199,7 @@ describeFeature(feature, ({ Rule }) => {
         });
       });
 
-      RuleScenario("Stryker breaks below 85 percent", ({ Given, Then, And }) => {
+      RuleScenario("Stryker breaks below 90 percent", ({ Given, Then, And }) => {
         Given("the Stryker configuration", () => {
           expect(strykerConfig().testRunner).toBe("vitest");
         });
@@ -258,6 +259,38 @@ describeFeature(feature, ({ Rule }) => {
         Then("every module it mutates shall have a recorded mutation floor", () => {
           const floored = Object.keys(recordedMutationFloors().files).sort();
           expect(floored).toEqual([...strykerConfig().mutate].sort());
+        });
+      });
+    }
+  );
+
+  Rule(
+    "Tutors shall load the mutation test run with the same workspace aliases and setup files as the main test run, so every test file it lists can reach the modules it mutates.",
+    ({ RuleScenario }) => {
+      const mutationTest = () => mutationConfig.test!;
+      const mutationConfiguration = () => {
+        expect(mutationTest().include?.length).toBeGreaterThan(0);
+      };
+
+      RuleScenario("The mutation run resolves the workspace the way the main run does", ({ Given, Then, And }) => {
+        Given("the repository's coverage configuration", configuration);
+        And("the mutation test configuration", mutationConfiguration);
+        Then("the mutation run shall resolve the same workspace aliases as the main run", () => {
+          expect(mutationConfig.resolve?.alias).toEqual(vitestConfig.resolve?.alias);
+        });
+        And("the mutation run shall load the same setup files as the main run", () => {
+          expect(mutationTest().setupFiles).toEqual(vitestConfig.test!.setupFiles);
+        });
+      });
+
+      RuleScenario("Every library suite the mutation run lists is one the main run also collects", ({ Given, Then }) => {
+        Given("the mutation test configuration", mutationConfiguration);
+        Then("every test file pattern it lists shall fall under the main run's test files", () => {
+          const mainIncludes = vitestConfig.test!.include!;
+          for (const pattern of mutationTest().include!) {
+            const example = pattern.replace("**/*", "example");
+            expect(mainIncludes.some((g) => matchesGlob(example, g)), pattern).toBe(true);
+          }
         });
       });
     }

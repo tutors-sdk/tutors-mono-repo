@@ -21,6 +21,15 @@ Mutation testing focuses on high-value computation logic where undetected bugs w
 | Type Utils | `packages/jsr/model/src/types/type-utils.ts` | Type guards, composite detection — wrong type silently misroutes LOs |
 | Calendar Model | `packages/jsr/time/src/services/base-calendar-model.ts` | Median calculation, pivoting — wrong math corrupts instructor analytics |
 | Calendar Utils | `packages/jsr/time/src/utils/calendar-utils.ts` | Date formatting, colour grading — visual bugs in heatmaps |
+| LO Tree | `packages/jsr/model/src/services/lo-tree.ts` | Parent links, breadcrumbs, composite panels — a wrong link breaks navigation |
+| Course Utils | `packages/jsr/model/src/utils/course-utils.ts` | Table of contents, companions, walls, calendar — wrong grouping hides content |
+| Markdown Utils | `packages/jsr/model/src/utils/markdown-utils.ts` | Markdown to HTML, course URL rewriting — broken links and images |
+| Lab Model | `packages/jsr/time/src/services/base-lab-model.ts` | Lab and step pivots, medians — wrong numbers in lab analytics |
+| Lab Utils | `packages/jsr/time/src/utils/lab-utils.ts` | Lab record aggregation — wrong totals per student |
+| LR Utils | `packages/jsr/gen/src/utils/lr-utils.ts` | Learning-resource discovery, video ids, front matter — missing resources in generated courses |
+| Template Utils | `packages/jsr/gen/src/templates/utils.ts` | Generated page helpers — broken links in the generated site |
+
+Each module has its own floor in `tests/mutation/mutation-floors.json`, checked by `pnpm check:mutation-floors` after the nightly run (Rule 0114).
 
 ## Running
 
@@ -79,11 +88,11 @@ See `stryker.config.json` at the repo root. Key settings:
 {
   "testRunner": "vitest",
   "mutate": ["packages/jsr/model/src/...", "packages/jsr/time/src/..."],
-  "thresholds": { "high": 85, "low": 75, "break": 85 },
+  "thresholds": { "high": 85, "low": 75, "break": 90 },
   "concurrency": 4
 }
 ```
 
 - `high` (85): green in report — tests are strong
 - `low` (75): yellow — tests need attention
-- `break` (85): the nightly `mutation` job fails — the floor sits just under the measured score and only rises
+- `break` (90): the nightly `mutation` job fails — the floor sits under the measured score (93.6) and only rises

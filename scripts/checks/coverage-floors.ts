@@ -106,6 +106,15 @@ export function raisedFloors(summary: CoverageSummary, floors: CoverageFloors, r
   };
 }
 
+/** The floors file as committed: one line per scope, so a raised floor is a one-line diff. */
+export function formatFloors(floors: CoverageFloors): string {
+  const line = (f: Floors) => `{ ${METRICS.map((m) => `"${m}": ${f[m]}`).join(", ")} }`;
+  const { global, packages, ...rest } = floors;
+  const head = Object.entries(rest).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`);
+  const scopes = Object.entries(packages).map(([scope, f]) => `    ${JSON.stringify(scope)}: ${line(f)}`);
+  return ["{", ...head, `  "global": ${line(global)},`, '  "packages": {', scopes.join(",\n"), "  }", "}", ""].join("\n");
+}
+
 export const FLOORS_PATH = resolve(REPO_ROOT, "tests/suite-health/coverage-floors.json");
 
 function main() {
@@ -115,7 +124,7 @@ function main() {
   const summary: CoverageSummary = JSON.parse(readText(summaryPath));
   const floors: CoverageFloors = JSON.parse(readText(FLOORS_PATH));
   if (update) {
-    writeFileSync(FLOORS_PATH, JSON.stringify(raisedFloors(summary, floors), null, 2) + "\n");
+    writeFileSync(FLOORS_PATH, formatFloors(raisedFloors(summary, floors)));
     process.stdout.write(`raised floors in ${toPosix(FLOORS_PATH)}\n`);
     return;
   }
