@@ -51,7 +51,9 @@ test-results/
 playwright-report/
 tests/e2e-stack/work/
 .stryker-tmp/
+.stryker-tmp-nightly/
 reports/mutation/
+reports/mutation-nightly/
 
 # Misc
 *.tsbuildinfo

@@ -5,6 +5,7 @@ import yaml from "js-yaml";
 import { expect } from "vitest";
 import vitestConfig from "../../../../vitest.config.ts";
 import mutationConfig from "../../../../vitest.config.mutation.ts";
+import nightlyMutationConfig from "../../../../vitest.config.mutation-nightly.ts";
 import {
   FLOORS_PATH,
   coverageFloorFindings,
@@ -15,11 +16,14 @@ import {
 } from "../../../../scripts/checks/coverage-floors.ts";
 import {
   MUTATION_FLOORS_PATH,
+  NIGHTLY_MUTATION_FLOORS_PATH,
+  failingFindings,
   mutationFloorFindings,
+  mutationSummary,
   type MutationFloors,
   type MutationReport
 } from "../../../../scripts/checks/mutation-floors.ts";
-import { REPO_ROOT, readText } from "../../../../scripts/checks/lib/repo.ts";
+import { REPO_ROOT, readText, toPosix, walk } from "../../../../scripts/checks/lib/repo.ts";
 
 const feature = await loadFeature("tests/bdd/features/developer/test-quality-ratchets.feature");
 
@@ -34,10 +38,29 @@ const METRIC_WORDS: Record<string, Metric> = { statement: "statements", line: "l
 const recordedCoverageFloors = (): CoverageFloors => JSON.parse(readText(FLOORS_PATH));
 const recordedMutationFloors = (): MutationFloors => JSON.parse(readText(MUTATION_FLOORS_PATH));
 const strykerConfig = () => JSON.parse(readText(resolve(REPO_ROOT, "stryker.config.json")));
+const nightlyStrykerConfig = () => JSON.parse(readText(resolve(REPO_ROOT, "stryker.nightly.config.json")));
+const recordedNightlyFloors = (): MutationFloors => JSON.parse(readText(NIGHTLY_MUTATION_FLOORS_PATH));
+const nightlyJobs = () =>
+  (yaml.load(readText(resolve(REPO_ROOT, ".github/workflows/nightly.yml"))) as { jobs: Record<string, NightlyJob> }).jobs;
+
+/** Whether Stryker's mutate list selects `file`: a positive glob matches and no `!` glob does. */
+function strykerMutates(mutate: string[], file: string): boolean {
+  const excluded = mutate.filter((g) => g.startsWith("!")).map((g) => g.slice(1));
+  return mutate.some((g) => !g.startsWith("!") && matchesGlob(file, g)) && !excluded.some((g) => matchesGlob(file, g));
+}
 
 interface NightlyJob {
   needs?: string[];
   steps?: { run?: string; if?: string }[];
+}
+
+/** The nightly job with a step that runs `command`, and that step's index. */
+function jobRunning(jobs: Record<string, NightlyJob>, command: string): { name: string; job: NightlyJob; at: number } {
+  for (const [name, job] of Object.entries(jobs)) {
+    const at = job.steps?.findIndex((s) => s.run?.trim() === command) ?? -1;
+    if (at >= 0) return { name, job, at };
+  }
+  throw new Error(`no nightly job runs ${command}`);
 }
 
 /** A coverage summary with one file per scope and a total, every metric at 100% unless set. */
@@ -87,6 +110,36 @@ describeFeature(feature, ({ Rule }) => {
   };
   const configuration = () => {
     expect(coverage().include.length).toBeGreaterThan(0);
+  };
+
+  // Shared state for the nightly workflow scenarios.
+  let jobs: Record<string, NightlyJob>;
+  let mutationJob: string;
+  const givenNightlyWorkflow = () => {
+    jobs = nightlyJobs();
+  };
+  const hasJobRunning = (_ctx: unknown, command: string) => {
+    mutationJob = jobRunning(jobs, command).name;
+  };
+  const reportFailsWithMutationJob = () => {
+    const reportJob = jobs.report;
+    expect(reportJob.needs).toContain(mutationJob);
+    const failStep = reportJob.steps?.find((s) => s.run?.trim() === "exit 1");
+    expect(failStep?.if).toContain(`needs.${mutationJob}.result == 'failure'`);
+  };
+  /** The run commands of the steps after `command` in its job, each with its `if`. */
+  const stepsAfter = (command: string) => {
+    const { job, at } = jobRunning(jobs, command);
+    return job.steps!.slice(at + 1);
+  };
+
+  // Every package source file the coverage run measures, repo-relative.
+  const packageSources = () =>
+    walk(resolve(REPO_ROOT, "packages"), (name) => name.endsWith(".ts"))
+      .map((file) => toPosix(file))
+      .filter(measured);
+  const nightlyStryker = () => {
+    expect(nightlyStrykerConfig().testRunner).toBe("vitest");
   };
 
   Rule(
@@ -180,23 +233,9 @@ describeFeature(feature, ({ Rule }) => {
     "When the nightly workflow runs, tutors shall run mutation testing and fail the nightly run if the mutation score is below the break threshold of 90 percent.",
     ({ RuleScenario }) => {
       RuleScenario("The nightly workflow runs mutation testing and its failure fails the night", ({ Given, Then, And }) => {
-        let jobs: Record<string, NightlyJob>;
-        let mutationJob: string;
-        Given("the nightly workflow", () => {
-          const workflow = yaml.load(readText(resolve(REPO_ROOT, ".github/workflows/nightly.yml"))) as { jobs: Record<string, NightlyJob> };
-          jobs = workflow.jobs;
-        });
-        Then("it shall have a job that runs {string}", (_ctx, command: string) => {
-          const found = Object.entries(jobs).find(([, job]) => job.steps?.some((s) => s.run?.trim() === command));
-          expect(found, `no nightly job runs ${command}`).toBeDefined();
-          mutationJob = found![0];
-        });
-        And("the job that reports the night shall fail when the mutation job fails", () => {
-          const reportJob = jobs.report;
-          expect(reportJob.needs).toContain(mutationJob);
-          const failStep = reportJob.steps?.find((s) => s.run?.trim() === "exit 1");
-          expect(failStep?.if).toContain(`needs.${mutationJob}.result == 'failure'`);
-        });
+        Given("the nightly workflow", givenNightlyWorkflow);
+        Then("it shall have a job that runs {string}", hasJobRunning);
+        And("the job that reports the night shall fail when the mutation job fails", reportFailsWithMutationJob);
       });
 
       RuleScenario("Stryker breaks below 90 percent", ({ Given, Then, And }) => {
@@ -291,6 +330,172 @@ describeFeature(feature, ({ Rule }) => {
             const example = pattern.replace("**/*", "example");
             expect(mainIncludes.some((g) => matchesGlob(example, g)), pattern).toBe(true);
           }
+        });
+      });
+    }
+  );
+
+  Rule(
+    "When the nightly workflow runs, tutors shall mutation-test every TypeScript source file under the packages source directories against the unit, BDD and contract suites.",
+    ({ RuleScenario }) => {
+      const nightlyTest = () => nightlyMutationConfig.test!;
+      const collects = (_ctx: unknown, file: string) => {
+        const included = nightlyTest().include!.some((g) => matchesGlob(file, g));
+        const excluded = nightlyTest().exclude!.some((g) => matchesGlob(file, g));
+        expect(included && !excluded, file).toBe(true);
+      };
+      const mutated = (_ctx: unknown, file: string) => {
+        expect(strykerMutates(nightlyStrykerConfig().mutate, file), file).toBe(true);
+      };
+
+      RuleScenario("The nightly workflow runs the comprehensive mutation run and its failure fails the night", ({ Given, Then, And }) => {
+        Given("the nightly workflow", givenNightlyWorkflow);
+        Then("it shall have a job that runs {string}", hasJobRunning);
+        And("the job that reports the night shall fail when the mutation job fails", reportFailsWithMutationJob);
+      });
+
+      RuleScenario("Every package source file the coverage run measures is mutated", ({ Given, Then, And }) => {
+        Given("the nightly Stryker configuration", nightlyStryker);
+        Then("every package source file the coverage run measures shall be mutated", () => {
+          const sources = packageSources();
+          expect(sources.length).toBeGreaterThan(100);
+          const missed = sources.filter((file) => !strykerMutates(nightlyStrykerConfig().mutate, file));
+          expect(missed).toEqual([]);
+        });
+        And("the scaffolder source file {string} shall be mutated", mutated);
+        And("the course service {string} shall be mutated", mutated);
+      });
+
+      RuleScenario("The comprehensive run collects the unit, BDD and contract suites", ({ Given, Then, And }) => {
+        Given("the nightly mutation test configuration", () => {
+          expect(nightlyTest().include?.length).toBeGreaterThan(0);
+        });
+        Then("it shall collect the unit test {string}", collects);
+        And("it shall collect the BDD steps {string}", collects);
+        And("it shall collect the contract test {string}", collects);
+        And("the nightly run shall resolve the same workspace aliases and setup files as the main run", () => {
+          expect(nightlyMutationConfig.resolve?.alias).toEqual(vitestConfig.resolve?.alias);
+          expect(nightlyTest().setupFiles).toEqual(vitestConfig.test!.setupFiles);
+        });
+      });
+    }
+  );
+
+  // Shared by the nightly floor scenarios (Rules 0117 and 0119): the floors in force and the nightly report.
+  const givenNightlyFloor = (_ctx: unknown, floor: number, file: string) => {
+    mutationFloors = { staleMargin: recordedNightlyFloors().staleMargin, files: { [file]: floor } };
+    report = {
+      files: {
+        [file]: {
+          mutants: [
+            ...Array.from({ length: floor }, () => ({ status: "Killed" })),
+            ...Array.from({ length: 100 - floor }, () => ({ status: "Survived" }))
+          ]
+        }
+      }
+    };
+  };
+  const nightlyRun = (_ctx: unknown, killed: number, missed: number, file: string) => {
+    report.files[file] = {
+      mutants: [
+        ...Array.from({ length: killed }, () => ({ status: "Killed" })),
+        ...Array.from({ length: missed }, (_, i) => ({ status: i % 2 ? "Survived" : "NoCoverage" }))
+      ]
+    };
+  };
+  const nightlyFailures = () => failingFindings(mutationFloorFindings(report, mutationFloors), "warn");
+  const checksFloorsWith = (command: string) =>
+    stepsAfter(command).find((s) => s.run?.includes("pnpm check:mutation-floors"))?.run ?? "";
+
+  Rule(
+    "If a module's score in the nightly mutation run is below its nightly floor or the module has no nightly floor, then tutors shall fail the nightly run and name the module.",
+    ({ RuleScenario }) => {
+      const failsWith = (_ctx: unknown, finding: string) => {
+        expect(nightlyFailures()).toContain(finding);
+      };
+
+      RuleScenario("The nightly job checks every module against the nightly floors", ({ Given, Then }) => {
+        Given("the nightly workflow", givenNightlyWorkflow);
+        Then("the job that runs {string} shall check {string} against {string}", (_ctx, command: string, reportFile: string, floorsFile: string) => {
+          const check = checksFloorsWith(command);
+          expect(check).toContain(reportFile);
+          expect(check).toContain(`--floors ${floorsFile}`);
+          expect(resolve(REPO_ROOT, floorsFile)).toBe(NIGHTLY_MUTATION_FLOORS_PATH);
+          expect(nightlyStrykerConfig().jsonReporter.fileName).toBe(reportFile);
+        });
+      });
+
+      RuleScenario("A module below its nightly floor fails the night", ({ Given, When, Then }) => {
+        Given("a recorded nightly mutation floor of {number} percent for {string}", givenNightlyFloor);
+        When("the nightly run kills {number} and misses {number} of the mutants in {string}", nightlyRun);
+        Then("the nightly floor check shall fail with {string}", failsWith);
+      });
+
+      RuleScenario("A new library module without a nightly floor fails the night", ({ Given, When, Then }) => {
+        Given("a recorded nightly mutation floor of {number} percent for {string}", givenNightlyFloor);
+        When("the nightly run kills {number} and misses {number} of the mutants in {string}", nightlyRun);
+        Then("the nightly floor check shall fail with {string}", failsWith);
+      });
+
+      // A new module is caught at run time as unfloored; this catches a floor left behind by a
+      // renamed or deleted module, which the run would report as unmeasured.
+      RuleScenario("Every nightly floor names a package source file the nightly run mutates", ({ Given, Then }) => {
+        Given("the nightly Stryker configuration", nightlyStryker);
+        Then("every recorded nightly mutation floor shall name a package source file it mutates", () => {
+          const floored = Object.keys(recordedNightlyFloors().files);
+          expect(floored.length).toBeGreaterThan(50);
+          const sources = new Set(packageSources().filter((file) => strykerMutates(nightlyStrykerConfig().mutate, file)));
+          expect(floored.filter((file) => !sources.has(file))).toEqual([]);
+        });
+      });
+    }
+  );
+
+  Rule(
+    "If the nightly mutation run leaves any tracked file changed, then tutors shall fail the nightly run.",
+    ({ RuleScenario }) => {
+      RuleScenario("The nightly job proves the tree is clean after mutating in place", ({ Given, Then }) => {
+        Given("the nightly workflow", givenNightlyWorkflow);
+        Then("the job that runs {string} shall run {string} after it, even when it fails", (_ctx, command: string, clean: string) => {
+          const step = stepsAfter(command).find((s) => s.run?.trim() === clean);
+          expect(step, `no step runs ${clean} after ${command}`).toBeDefined();
+          expect(step!.if).toContain("always()");
+        });
+      });
+
+      RuleScenario("Stryker rewrites only the files it mutates", ({ Given, Then, And }) => {
+        Given("the nightly Stryker configuration", nightlyStryker);
+        Then("it shall mutate the source files in place", () => {
+          expect(nightlyStrykerConfig().inPlace).toBe(true);
+        });
+        And("it shall not add type-check suppressions to files it does not mutate", () => {
+          expect(nightlyStrykerConfig().disableTypeChecks).toBe(false);
+        });
+      });
+    }
+  );
+
+  Rule(
+    "When a module's score in the nightly mutation run is 2 or more points above its nightly floor, tutors shall report the floor to raise in the nightly summary without failing the nightly run.",
+    ({ RuleScenario }) => {
+      RuleScenario("A module that rose past the margin is reported and the night passes", ({ Given, When, Then, And }) => {
+        Given("a recorded nightly mutation floor of {number} percent for {string}", givenNightlyFloor);
+        When("the nightly run kills {number} and misses {number} of the mutants in {string}", nightlyRun);
+        Then("the nightly summary shall report {string}", (_ctx, finding: string) => {
+          const findings = mutationFloorFindings(report, mutationFloors);
+          expect(mutationSummary(report, findings, "Nightly mutation")).toContain(`- ${finding}`);
+        });
+        And("the nightly floor check shall pass", () => {
+          expect(nightlyFailures()).toEqual([]);
+        });
+      });
+
+      RuleScenario("The nightly job warns on stale floors and writes the step summary", ({ Given, Then }) => {
+        Given("the nightly workflow", givenNightlyWorkflow);
+        Then("the job that runs {string} shall check floors with {string} and {string}", (_ctx, command: string, stale: string, summary: string) => {
+          const check = checksFloorsWith(command);
+          expect(check).toContain(stale);
+          expect(check).toContain(`${summary} "$GITHUB_STEP_SUMMARY"`);
         });
       });
     }
