@@ -33,13 +33,21 @@ educator, never by the evaluator.
   criteria: manual
 ```
 
+Each badge is drawn as an SVG medal (`badgeSvg`) that is also embedded in its
+credential as the achievement image. `shareLinks` gives a student prefilled
+LinkedIn "Add to profile", LinkedIn, X, Bluesky and Facebook links, and the
+`BadgeCard` component in `@tutors/ui-components/badges/` shows the badge with
+those links, the device's share sheet where available, and Copy link. The
+links point to the badge's public page, which arrives with the badge awards
+table in the home pages work.
+
 `active-days` counts distinct days with activity in the course, not
 consecutive days.
 
-Both are proved by EARS Rules 0100 to 0105 in
-`tests/bdd/features/student/learning-records.feature` and
-`tests/bdd/features/student/course-badges.feature`. The ids start at 0100
-because other in-flight work already claims 0065 to 0079.
+They are proved by EARS Rules 0100 to 0105 and 0175 to 0178 in
+`tests/bdd/features/student/learning-records.feature`,
+`tests/bdd/features/student/course-badges.feature` and
+`tests/bdd/features/student/badge-sharing.feature`.
 
 ## Run it locally
 

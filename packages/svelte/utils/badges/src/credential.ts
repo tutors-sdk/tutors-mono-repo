@@ -5,6 +5,7 @@
  */
 
 import type { BadgeDefinition } from "./definitions.ts";
+import { badgeImageDataUri } from "./image.ts";
 
 export const VC_V2_CONTEXT = "https://www.w3.org/ns/credentials/v2";
 export const OB_V3_CONTEXT = "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json";
@@ -39,6 +40,7 @@ export interface OpenBadgeCredential {
       name: string;
       description: string;
       criteria: { narrative: string };
+      image: { id: string; type: "Image" };
     };
   };
   proof?: unknown;
@@ -83,7 +85,8 @@ export function badgeCredential(input: BadgeCredentialInput): OpenBadgeCredentia
       achievementType: "Badge",
       name,
       description: badge.description ?? `${badge.title}, a badge of ${course.courseTitle}.`,
-      criteria: { narrative: criteriaNarrative(badge) }
+      criteria: { narrative: criteriaNarrative(badge) },
+      image: { id: badgeImageDataUri(badge, course.courseTitle), type: "Image" }
     }
   };
   if (input.student.name) credentialSubject.name = input.student.name;

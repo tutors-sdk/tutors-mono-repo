@@ -650,6 +650,9 @@ importers:
       '@tutors/a11y':
         specifier: workspace:*
         version: link:../utils/a11y
+      '@tutors/badges':
+        specifier: workspace:*
+        version: link:../utils/badges
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
