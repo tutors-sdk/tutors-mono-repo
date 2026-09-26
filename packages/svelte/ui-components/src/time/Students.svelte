@@ -8,7 +8,7 @@
 <section class="ui-panel">
   <div class="ui-grid card-grid">
     {#each students as lo}
-      <StudentCard {lo} showCourseTitle={true} />
+      <div class="min-w-0"><StudentCard {lo} showCourseTitle={true} /></div>
     {:else}<p class="ui-empty">No students are sharing activity right now.</p>
     {/each}
   </div>

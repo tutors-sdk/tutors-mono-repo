@@ -11,7 +11,7 @@
 
 <div class="ui-grid card-grid">
   {#each los as lo}
-    <StudentCard {lo} />
+    <div class="min-w-0"><StudentCard {lo} /></div>
   {:else}
     <p class="ui-empty">{emptyMessage}</p>
   {/each}

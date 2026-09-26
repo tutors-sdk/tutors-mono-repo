@@ -12,7 +12,7 @@
   <CourseGroupHeader {courseId} {courseTitle} />
   <div class="ui-grid card-grid">
     {#each students as lo}
-      <StudentCard {lo} />
+      <div class="min-w-0"><StudentCard {lo} /></div>
     {/each}
   </div>
 </section>
