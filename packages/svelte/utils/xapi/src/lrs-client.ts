@@ -5,6 +5,7 @@
  * bus consumer), never in the browser.
  */
 
+import { trimTrailingSlashes } from "./slashes.ts";
 import { XAPI_VERSION, type XapiStatement } from "./statement.ts";
 
 export interface LrsConfig {
@@ -22,7 +23,7 @@ export interface LrsClient {
 
 export function createLrsClient(config: LrsConfig): LrsClient {
   const doFetch = config.fetch ?? fetch;
-  const url = `${config.endpoint.replace(/\/+$/, "")}/statements`;
+  const url = `${trimTrailingSlashes(config.endpoint)}/statements`;
   const authorization = `Basic ${btoa(`${config.key}:${config.secret}`)}`;
   return {
     async send(statements) {

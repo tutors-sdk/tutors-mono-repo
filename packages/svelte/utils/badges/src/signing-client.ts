@@ -6,6 +6,7 @@
  * own, so this client runs on the server only and the service is never exposed publicly.
  */
 
+import { trimTrailingSlashes } from "./slashes.ts";
 import type { OpenBadgeCredential } from "./credential.ts";
 
 export interface SigningConfig {
@@ -24,7 +25,7 @@ export interface SigningClient {
 
 export function createSigningClient(config: SigningConfig): SigningClient {
   const doFetch = config.fetch ?? fetch;
-  const url = `${config.endpoint.replace(/\/+$/, "")}/instance/${encodeURIComponent(config.tenant)}/credentials/sign?suite=${config.suite ?? "eddsa2022"}`;
+  const url = `${trimTrailingSlashes(config.endpoint)}/instance/${encodeURIComponent(config.tenant)}/credentials/sign?suite=${config.suite ?? "eddsa2022"}`;
   return {
     async sign(credential) {
       const response = await doFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(credential) });

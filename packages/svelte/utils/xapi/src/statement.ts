@@ -6,6 +6,8 @@
  * which SQL LRS and every conformant LRS accept.
  */
 
+import { trimLeadingSlashes, trimTrailingSlashes } from "./slashes.ts";
+
 export const XAPI_VERSION = "1.0.3";
 
 export const EXPERIENCED = "http://adlnet.gov/expapi/verbs/experienced";
@@ -78,7 +80,7 @@ const activity = (id: string, type: string, title: string): XapiActivity => ({
   definition: { type, name: { en: title } }
 });
 
-const joinIri = (base: string, path: string) => `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
+const joinIri = (base: string, path: string) => `${trimTrailingSlashes(base)}/${trimLeadingSlashes(path)}`;
 
 /** The statement for a student opening a learning object. */
 export function experiencedStatement(visit: LearningObjectVisit): XapiStatement {

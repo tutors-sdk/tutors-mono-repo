@@ -4,6 +4,7 @@
  * The credential is built unsigned; the institution's signing service adds the proof.
  */
 
+import { trimTrailingSlashes } from "./slashes.ts";
 import type { BadgeDefinition } from "./definitions.ts";
 import { badgeImageDataUri } from "./image.ts";
 
@@ -80,7 +81,7 @@ export function badgeCredential(input: BadgeCredentialInput): OpenBadgeCredentia
     type: ["AchievementSubject"],
     identifier: [{ type: "IdentityObject", identityType: "identifier", hashed: false, identityHash: `https://github.com/${input.student.login}` }],
     achievement: {
-      id: `${input.achievementBase.replace(/\/+$/, "")}/course/${encodeURIComponent(course.courseId)}/badges/${encodeURIComponent(badge.id)}`,
+      id: `${trimTrailingSlashes(input.achievementBase)}/course/${encodeURIComponent(course.courseId)}/badges/${encodeURIComponent(badge.id)}`,
       type: ["Achievement"],
       achievementType: "Badge",
       name,
