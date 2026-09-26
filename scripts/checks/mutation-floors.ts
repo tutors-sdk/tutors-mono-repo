@@ -9,9 +9,17 @@
  *   pnpm check:mutation-floors                         # below-floor, stale-floor, unfloored findings
  *   pnpm check:mutation-floors --update                # raise floors to the measured scores
  *
- * Floors live in tests/mutation/mutation-floors.json.
+ * Floors live in tests/mutation/mutation-floors.json. The nightly comprehensive run
+ * (Rules 0116 to 0119) mutates every library source file and keeps its own floors:
+ *
+ *   pnpm test:mutation:nightly                          # writes reports/mutation-nightly/mutation.json
+ *   pnpm check:mutation-floors reports/mutation-nightly/mutation.json \
+ *     --floors tests/mutation/nightly-mutation-floors.json --stale warn --summary "$GITHUB_STEP_SUMMARY"
+ *
+ * `--stale warn` reports a floor to raise without failing (Rule 0119); `--summary` appends a
+ * markdown table of the findings and the weakest modules to the given file.
  */
-import { writeFileSync } from "node:fs";
+import { appendFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REPO_ROOT, readText, toPosix } from "./lib/repo.ts";
@@ -72,22 +80,57 @@ export function raisedMutationFloors(report: MutationReport, floors: MutationFlo
   return { ...floors, files };
 }
 
+/** The findings that fail the check. With `stale: "warn"`, a floor to raise is reported but does not fail. */
+export function failingFindings(findings: string[], stale: "fail" | "warn" = "fail"): string[] {
+  return stale === "warn" ? findings.filter((f) => !f.startsWith("stale-floor:")) : findings;
+}
+
+/** Markdown for a CI step summary: overall score, every finding, and the weakest modules. */
+export function mutationSummary(report: MutationReport, findings: string[], title: string, weakest = 15): string {
+  const statuses = Object.values(report.files).flatMap(({ mutants }) => mutants.map((m) => m.status));
+  const scored = statuses.filter((s) => DETECTED.has(s) || UNDETECTED.has(s)).length;
+  const scores = Object.entries(moduleScores(report)).sort(([, a], [, b]) => a - b);
+  const lines = [
+    `## ${title}`,
+    "",
+    `${mutationScore(statuses).toFixed(2)}% over ${scores.length} modules and ${scored} scored mutants.`,
+    ""
+  ];
+  if (findings.length === 0) lines.push("Every module holds its floor.", "");
+  else lines.push(...findings.map((f) => `- ${f}`), "");
+  lines.push("| Score | Module |", "|------:|--------|", ...scores.slice(0, weakest).map(([file, score]) => `| ${score.toFixed(2)}% | \`${file}\` |`));
+  return lines.join("\n") + "\n";
+}
+
 export const MUTATION_FLOORS_PATH = resolve(REPO_ROOT, "tests/mutation/mutation-floors.json");
+export const NIGHTLY_MUTATION_FLOORS_PATH = resolve(REPO_ROOT, "tests/mutation/nightly-mutation-floors.json");
+
+/** The value after `--name`, if given. */
+function option(args: string[], name: string): string | undefined {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : undefined;
+}
 
 function main() {
   const args = process.argv.slice(2);
-  const reportPath = resolve(args.find((a) => !a.startsWith("--")) ?? "reports/mutation/mutation.json");
+  const valued = new Set(["--floors", "--summary", "--stale"].flatMap((name) => option(args, name) ?? []));
+  const reportPath = resolve(args.find((a) => !a.startsWith("--") && !valued.has(a)) ?? "reports/mutation/mutation.json");
+  const floorsPath = resolve(option(args, "--floors") ?? MUTATION_FLOORS_PATH);
+  const stale = option(args, "--stale") ?? "fail";
+  if (stale !== "fail" && stale !== "warn") throw new Error(`--stale must be fail or warn, not ${stale}`);
   const report: MutationReport = JSON.parse(readText(reportPath));
-  const floors: MutationFloors = JSON.parse(readText(MUTATION_FLOORS_PATH));
+  const floors: MutationFloors = JSON.parse(readText(floorsPath));
   if (args.includes("--update")) {
-    writeFileSync(MUTATION_FLOORS_PATH, JSON.stringify(raisedMutationFloors(report, floors), null, 2) + "\n");
-    process.stdout.write(`raised floors in ${toPosix(MUTATION_FLOORS_PATH)}\n`);
+    writeFileSync(floorsPath, JSON.stringify(raisedMutationFloors(report, floors), null, 2) + "\n");
+    process.stdout.write(`raised floors in ${toPosix(floorsPath)}\n`);
     return;
   }
   for (const [file, score] of Object.entries(moduleScores(report))) process.stdout.write(`  ${score.toFixed(2).padStart(6)}%  ${file}\n`);
   const findings = mutationFloorFindings(report, floors);
   for (const finding of findings) process.stdout.write(finding + "\n");
-  if (findings.length > 0) process.exit(1);
+  const summary = option(args, "--summary");
+  if (summary) appendFileSync(summary, mutationSummary(report, findings, `Mutation floors (${toPosix(floorsPath)})`));
+  if (failingFindings(findings, stale).length > 0) process.exit(1);
   process.stdout.write("mutation floors hold\n");
 }
 

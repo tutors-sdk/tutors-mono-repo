@@ -39,7 +39,7 @@ Three tiers predate the runway letters and still carry weight:
 | Tier | Owns | Where it runs |
 |---|---|---|
 | Contract / API surface | Public exports of the three JSR packages, Supabase row and RPC shapes, realtime message shapes, generated course JSON | PR: `pnpm api-report:check` in `build-and-test`. Nightly: `contract-snapshots`. RC: Gate 2b |
-| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Nightly `mutation` job, then `pnpm check:mutation-floors` per module (Rules 0113, 0114); locally `pnpm test:mutation` |
+| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Nightly `mutation` job, then `pnpm check:mutation-floors` per module (Rules 0113, 0114); nightly `mutation-nightly` over every library module against its own floors (Rules 0116 to 0119); locally `pnpm test:mutation` and `pnpm test:mutation:nightly` |
 | Release artifact | The CLI's output for the reference course against the last published CLI | Push to `rc/**`: `rc-validation.yml` Gate 6, `release-testing.yml` Gates 6a–6c |
 
 ## Commands
@@ -57,6 +57,7 @@ Every command below exists in the root `package.json`.
 | `pnpm test:tz` | Unit and property suites under UTC, Europe/Dublin and Pacific/Auckland |
 | `pnpm test:runway` | The repo-level suites: architecture, suite-health, completeness, observability, conformance, security, performance |
 | `pnpm test:mutation` | Stryker over the twelve targeted modules (break at 90%), then `pnpm check:mutation-floors` |
+| `pnpm test:mutation:nightly` | Stryker over every library source file against the unit, BDD and contract suites, in place (`stryker.nightly.config.json`) |
 | `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
 | `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
 | `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |

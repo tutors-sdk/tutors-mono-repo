@@ -361,7 +361,11 @@ that cover those modules, with the root config's workspace aliases and setup fil
 without them the gen suites cannot load and every gen mutant reads as NoCoverage). The nightly `mutation` job runs it and fails below the break
 threshold (Rule 0113), then `pnpm check:mutation-floors` holds each module to its own floor in
 `tests/mutation/mutation-floors.json` with the same 2-point ratchet as coverage (Rule 0114);
-`pnpm test:mutation` runs it locally. Details and how
+`pnpm test:mutation` runs it locally. The nightly `mutation-nightly` job runs
+`pnpm test:mutation:nightly` over every library source file against the unit, BDD and contract
+suites (Rule 0116), holds each module to its floor in `tests/mutation/nightly-mutation-floors.json`
+(Rule 0117), reports floors to raise without failing (Rule 0119) and fails if the in-place run
+left a tracked file changed (Rule 0118). Details and how
 to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 
 ## BDD and executable specs
@@ -479,6 +483,7 @@ the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
 |---|---|
 | `contract-snapshots` | `pnpm test:contract` |
 | `mutation` | `pnpm test:mutation`, failing below Stryker's break threshold, then `pnpm check:mutation-floors`; uploads the HTML and JSON report |
+| `mutation-nightly` | `pnpm test:mutation:nightly` over every library module, then `pnpm check:mutation-floors` against the nightly floors with a step summary, then `git diff --exit-code --stat`; uploads the report |
 | `suite-health` | `vitest run --retry=0` with a JSON report, then `pnpm check:test-time` on it |
 | `e2e-stack-nightly` | The tier G journeys on firefox and mobile, then the baseline stale-line check |
 | `timezone-matrix` | `pnpm test:tz` |

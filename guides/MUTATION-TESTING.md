@@ -8,7 +8,7 @@ Coverage tells you which lines were *executed*. Mutation testing tells you which
 
 ## Target Score
 
-The project targets an **85% mutation score** — meaning at least 85% of introduced mutants must be killed by tests. This is enforced via the `break` threshold in `stryker.config.json` (build fails below 60%, warnings below 70%).
+The twelve targeted modules hold a **90% mutation score**: the `break` threshold in `stryker.config.json` fails the nightly `mutation` job below it (Rule 0113). Every other library module is held to its own measured floor by the comprehensive nightly run below.
 
 ## Targeted Modules
 
@@ -30,6 +30,25 @@ Mutation testing focuses on high-value computation logic where undetected bugs w
 | Template Utils | `packages/jsr/gen/src/templates/utils.ts` | Generated page helpers — broken links in the generated site |
 
 Each module has its own floor in `tests/mutation/mutation-floors.json`, checked by `pnpm check:mutation-floors` after the nightly run (Rule 0114).
+
+## Comprehensive nightly run
+
+The nightly `mutation-nightly` job mutates every TypeScript source file under `packages/*/*/src` and `packages/*/*/*/src` (the same files the coverage run measures) and runs the unit, BDD and contract suites against each mutant (Rule 0116). Its configuration is `stryker.nightly.config.json` with `vitest.config.mutation-nightly.ts`; locally:
+
+```bash
+pnpm test:mutation:nightly     # about 20 minutes on 4 cores; writes reports/mutation-nightly/
+pnpm check:mutation-floors reports/mutation-nightly/mutation.json \
+  --floors tests/mutation/nightly-mutation-floors.json --stale warn
+```
+
+The first baseline (2026-09-26) scored **58.5%** over 95 modules and 6,073 scored mutants: 1,896 of them sit in code no test reaches, so this run is the map of where tests are missing, while the twelve targeted modules keep their 90% aggregate.
+
+How it stays consistent and safe:
+
+- **Floors per module** (Rule 0117). Every module has a floor in `tests/mutation/nightly-mutation-floors.json`, set to its measured score rounded down. A module below its floor, or a new module with no floor, fails the night and is named in the job summary. Add a floor for a new module with `--update` in the commit that adds it.
+- **Improvements never fail the night** (Rule 0119). A score 2 or more points above its floor is listed in the summary as a floor to raise, with `--stale warn`, instead of failing a run no pull request is waiting on. Raise it with `--update` in any later change.
+- **Deterministic runs.** The run uses the same workspace aliases and `no-network.ts` setup as the main suite, and two consecutive local runs on 2026-09-26 gave identical scores for all 95 modules.
+- **In place, and proven clean** (Rule 0118). The run mutates the working tree in place, because a Vitest `vi.mock` by relative `node_modules` path cannot match inside Stryker's symlinked sandbox. Type-check suppression is off, so only mutated files are touched, and a `git diff --exit-code --stat` step after Stryker (run even when Stryker fails or times out) fails the night if any tracked file was left changed. Locally, a run you interrupt leaves mutated sources behind: restore them with `git checkout -- packages`.
 
 ## Running
 
