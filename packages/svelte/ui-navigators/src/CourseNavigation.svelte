@@ -18,7 +18,8 @@
   const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
   const companionLabels: Record<string, string> = { moodle: "Moodle", youtube: "YouTube", slack: "Slack", zoom: "Zoom", teams: "Teams", podcast: "Podcast" };
 </script>
-<nav class="course-navigation" aria-label={t("shell.navigation")}>
+<!-- Unnamed: the complementary landmark around it (or the dialog on phones) already carries "Course navigation". Rule 0170. -->
+<nav class="course-navigation">
   <div class="navigation-scroll">
   {#if lab && !lab.lab.pdf}
     <a class="nav-row" href={parentTopic?.route ?? lab.lab.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? lab.lab.parentLo?.title ?? course?.title}</a>
