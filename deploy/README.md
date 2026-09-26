@@ -87,6 +87,10 @@ Dockerfile:
 gh workflow run image-build.yml --ref main -f release_tag=v16.2.2
 ```
 
+`release_tag` is forgiving about how it was typed: `V16.2.2`, `16.2.2` and a
+stray space all mean `v16.2.2` (the Actions form on a phone capitalises the
+first letter). Anything that is still not a release tag is refused.
+
 A backfill publishes what production already runs, so its Trivy scan
 reports findings without stopping the push. Its signing identity ends in
 `@refs/heads/main`, not the tag.
