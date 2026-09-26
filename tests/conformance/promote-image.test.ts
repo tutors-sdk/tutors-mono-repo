@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import yaml from "js-yaml";
 import { describe, expect, it } from "vitest";
@@ -386,6 +388,34 @@ describe(".github/workflows/image-build.yml promotes without a build step", () =
     }
     // a backfill sets final=false before it can reach the decision
     expect(what).toMatch(/echo "backfill=true" >> "\$GITHUB_OUTPUT"\n\s*echo "final=false"/);
+  });
+
+  it("a backfill forgives how the tag was typed, and the version check reads the tag it settled on", () => {
+    const what = steps.find((step) => step.id === "what")!;
+    const dir = mkdtempSync(join(tmpdir(), "backfill-tag-"));
+    // a stand-in gh that says every tag exists
+    writeFileSync(join(dir, "gh"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+    const run = (typed: string) => {
+      const out = join(dir, `out-${Math.random()}`);
+      const r = spawnSync("bash", ["-e", "-c", what.run!], {
+        env: { PATH: `${dir}:${process.env.PATH}`, RELEASE_TAG: typed, GITHUB_REF: "refs/heads/main", GITHUB_REPOSITORY: "o/r", GITHUB_OUTPUT: out, GITHUB_STEP_SUMMARY: join(dir, "summary") },
+        encoding: "utf8"
+      });
+      return { status: r.status, stdout: r.stdout, outputs: r.status === 0 ? readFileSync(out, "utf8") : "" };
+    };
+    for (const typed of ["v16.2.1", "V16.2.1", "16.2.1", " v16.2.1 "]) {
+      const r = run(typed);
+      expect(r.status, typed).toBe(0);
+      expect(r.outputs, typed).toContain("ref=refs/tags/v16.2.1\n");
+      expect(r.outputs, typed).toContain("release_tag=v16.2.1\n");
+    }
+    for (const typed of ["vv16.2.1", "v16.2", "v16.2.1-rc.1", "main"]) {
+      const r = run(typed);
+      expect(r.status, typed).toBe(1);
+      expect(r.stdout, typed).toContain(`got '${typed}'`);
+    }
+    const check = steps.find((step) => step.name === "Check the backfill's version")!;
+    expect(check.env?.RELEASE_TAG).toBe("${{ steps.what.outputs.release_tag }}");
   });
 
   it("require_promotion is a boolean dispatch input, off by default, and reaches the script through env", () => {
