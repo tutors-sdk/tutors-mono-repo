@@ -19,7 +19,7 @@ A toolbar sits above the whiteboard with three controls:
 ### View Mode vs Edit Mode
 
 - **View mode** always renders the course author's original `.excalidraw` file as a static SVG. This is the canonical reference content.
-- **Edit mode** connects to a Supabase Realtime broadcast channel where edits are synced in real time and persisted to the `whiteboard_scenes` table. Edits in the collaboration room are independent of the source `.excalidraw` file.
+- **Edit mode** connects to a Supabase Realtime broadcast channel where edits are synced in real time and persisted to the `whiteboard_scenes` table through the reader's `/api/whiteboard` route. Saving needs a signed-in student; an anonymous visitor can draw and export but nothing is saved. A personal board is saved in a room the server derives from the session, so only its owner can read or overwrite it (Rule 0068). Edits in the collaboration room are independent of the source `.excalidraw` file.
 - Switching from edit back to view returns to the original course content. This is intentional â€” the course author's whiteboard is the reference, and collaboration edits live separately.
 
 ### Personal vs Shared
@@ -108,7 +108,7 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap â€
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (created by `supabase/migrations/20260925100000_create_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
 
 To try a whiteboard against a course on your machine, generate one that contains a `whiteboard-*` folder, serve its `json/` output over HTTP with CORS enabled, and open `/whiteboard/localhost:<port>/<topic>/<whiteboard-folder>` on the reader (add `whiteboard: 1` to the course's `properties.yaml` to see the toolbar button). The reader treats a `localhost` course id as plain HTTP, but the generator writes the `.excalidraw` URL into `tutors.json` as `https://{{COURSEURL}}/...`, so when serving over plain HTTP change that prefix to `http://` in the generated `tutors.json`.
 

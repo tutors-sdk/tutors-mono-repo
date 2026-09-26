@@ -22,10 +22,19 @@
  * harness needs. The scope is what the harness reports: `table`, `table.column`,
  * an index name, `table:policy`, or `function/<argument count>`.
  *
+ * A contract step never ships in the release that makes it safe. A migration with
+ * a destructive statement (or a DO block that drops or revokes, or a REVOKE from
+ * anon or authenticated) must say which release it contracts for, in a header
+ * line `-- contract-for: vX.Y.Z`, and that version must already be released: a
+ * `### vX.Y.Z` heading in CHANGELOG.md. The code that stops using what the
+ * migration removes ships in release N; the migration can only name N once N is
+ * out, so it lands in N+1 at the earliest (guides/MIGRATIONS.md).
+ *
  * The scan is lexical, not a SQL parser. It knows comments, quoted strings and
  * dollar-quoted bodies, and reads the statements whose effect it can name. What
- * it cannot see (a DO block that drops, a type change hidden in a function) is
- * the harness's to catch.
+ * it cannot name (the statements inside a DO block, a type change hidden in a
+ * function) is the harness's to catch; a DO block that drops or revokes still
+ * counts as a contract step here.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -52,7 +61,9 @@ export type Kind =
   | "drop-function"
   | "drop-schema"
   | "truncate"
-  | "drop-other";
+  | "drop-other"
+  | "opaque-contract"
+  | "revoke";
 
 export interface Finding {
   file: string;
@@ -60,8 +71,11 @@ export interface Finding {
   kind: Kind;
   /** What the harness would call the hunk: `table`, `table.column`, index name, `table:policy`, `function/<n>`. */
   scope: string;
-  /** `error` fails the check unless a claim covers it; `warn` is reported only. */
-  severity: "error" | "warn";
+  /**
+   * `error` fails the check unless a claim covers it; `warn` is reported only; `contract` needs no claim
+   * (the harness sees its real effect) but makes the file a contract step, bound by the contract-for rule.
+   */
+  severity: "error" | "warn" | "contract";
   message: string;
 }
 
@@ -240,9 +254,43 @@ export function readStatement(text: string): Draft[] {
   return [];
 }
 
+/** A DO block's body is blanked by splitStatements; one that drops, revokes or truncates is a contract step whatever it names. */
+const OPAQUE_CONTRACT = /\b(?:drop\s+(?:policy|table|column|function|index|schema|view)|revoke|truncate)\b/i;
+
+function opaqueContracts(file: string, sql: string): Finding[] {
+  const findings: Finding[] = [];
+  for (const m of sql.matchAll(/\bdo\s+(\$[A-Za-z_]*\$)([\s\S]*?)\1/gi)) {
+    const body = m[2].replace(/--[^\n]*/g, "");
+    if (!OPAQUE_CONTRACT.test(body)) continue;
+    const line = sql.slice(0, m.index).split("\n").length;
+    findings.push({ kind: "opaque-contract", scope: "do-block", severity: "contract", message: "runs a DO block that drops, revokes or truncates", file, line });
+  }
+  return findings;
+}
+
 /** Destructive statements in one migration file. */
 export function scanMigration(file: string, sql: string): Finding[] {
-  return splitStatements(sql).flatMap((s) => readStatement(s.text).map((d) => ({ ...d, file, line: s.line })));
+  const statements = splitStatements(sql).flatMap((s) => {
+    const drafts = readStatement(s.text);
+    const revoke = /^revoke\b.*\bfrom\s+(.*)$/i.exec(s.text);
+    if (revoke && /\b(anon|authenticated)\b/i.test(revoke[1])) {
+      drafts.push({ kind: "revoke", scope: "grant", severity: "contract", message: "revokes a privilege from anon or authenticated" });
+    }
+    return drafts.map((d) => ({ ...d, file, line: s.line }));
+  });
+  return [...statements, ...opaqueContracts(file, sql)].sort((a, b) => a.line - b.line);
+}
+
+// ---- contract steps --------------------------------------------------------------------------
+
+/** The release a contract migration names in its `-- contract-for: vX.Y.Z` header, or null. */
+export function contractFor(sql: string): string | null {
+  return /^--\s*contract-for:\s*v?(\d+\.\d+\.\d+)\s*$/im.exec(sql)?.[1] ?? null;
+}
+
+/** Every version CHANGELOG.md records as released: its `### vX.Y.Z` headings, in any app's section. */
+export function releasedVersions(changelog: string): Set<string> {
+  return new Set([...changelog.matchAll(/^###\s+v(\d+\.\d+\.\d+)\b/gm)].map((m) => m[1]));
 }
 
 // ---- claims ----------------------------------------------------------------------------------
@@ -310,13 +358,30 @@ export interface Report {
   warnings: string[];
 }
 
-/** Everything the check says about the added migrations, given the claims. */
-export function evaluate(added: { file: string; sql: string }[], claims: Claim[]): Pick<Report, "errors" | "claimed" | "warnings"> {
+/**
+ * Everything the check says about the added migrations, given the claims and the versions CHANGELOG.md
+ * records as released (for the contract-for rule).
+ */
+export function evaluate(added: { file: string; sql: string }[], claims: Claim[], released: Set<string> = new Set()): Pick<Report, "errors" | "claimed" | "warnings"> {
   const report = { errors: [] as string[], claimed: [] as string[], warnings: [] as string[] };
   for (const { file, sql } of added) {
-    for (const f of scanMigration(file, sql)) {
+    const findings = scanMigration(file, sql);
+    if (findings.some((f) => f.severity === "error" || f.severity === "contract")) {
+      const version = contractFor(sql);
+      if (!version) {
+        report.errors.push(
+          `${file}: is a contract step (it removes or narrows something) but names no released version. Add a header line "-- contract-for: vX.Y.Z" naming the release whose code no longer needs what it removes; that release must be out before this migration lands (guides/MIGRATIONS.md)`
+        );
+      } else if (!released.has(version)) {
+        report.errors.push(
+          `${file}: contracts for v${version}, which CHANGELOG.md does not record as released. A contract step cannot land in the same release as its expand: move it to a release after v${version} ships (guides/MIGRATIONS.md)`
+        );
+      }
+    }
+    for (const f of findings) {
       const where = `${file}:${f.line}: ${f.message} [${f.scope}]`;
       if (f.severity === "warn") report.warnings.push(where);
+      else if (f.severity === "contract") report.claimed.push(`${where} (contract step; the harness judges its effect)`);
       else if (claims.some((c) => claimCovers(c, f))) report.claimed.push(where);
       else
         report.errors.push(
@@ -379,8 +444,10 @@ function main(): void {
   const claims = existsSync(claimsFile) ? readClaims(readFileSync(claimsFile, "utf8")) : [];
   const added = changes.filter((c) => c.status === "A" && c.file.endsWith(".sql") && files.includes(c.file)).map((c) => ({ file: c.file, sql: readFileSync(join(dir, c.file), "utf8") }));
 
+  const changelogFile = join(REPO_ROOT, "CHANGELOG.md");
+  const released = existsSync(changelogFile) ? releasedVersions(readFileSync(changelogFile, "utf8")) : new Set<string>();
   const errors = layoutFindings(files, existing, all || !base ? [] : changes);
-  const report = evaluate(added, claims);
+  const report = evaluate(added, claims, released);
   errors.push(...report.errors);
 
   for (const line of report.warnings) process.stdout.write(`WARN: ${line}` + "\n");

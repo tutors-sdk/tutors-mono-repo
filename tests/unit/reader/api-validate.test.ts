@@ -1,0 +1,163 @@
+import { describe, expect, it } from "vitest";
+import * as check from "../../../apps/reader/src/lib/server/api/validate.ts";
+import { AuthorizationUnavailableError, courseFactsFrom, courseJsonUrl, createAuthorization, listFromEnv } from "../../../apps/reader/src/lib/server/api/authorization.ts";
+
+describe("reader /api input checks", () => {
+  it("accepts course ids that are Netlify site names or host names, and nothing that could leave the host", () => {
+    expect(check.courseId("web-dev-101")).toBe("web-dev-101");
+    expect(check.courseId(" courses.example.org ")).toBe("courses.example.org");
+    for (const bad of ["", "../etc", "a/b", "a..b", "-lead", "trail-", "x".repeat(300), 42, null]) expect(check.courseId(bad), String(bad)).toBeNull();
+  });
+
+  it("accepts learning-object routes and rejects control characters and oversized values", () => {
+    expect(check.loRoute("/lab/web-dev-101/topic-01/book-a/01")).toBe("/lab/web-dev-101/topic-01/book-a/01");
+    expect(check.loRoute("@settings/show-locked")).toBe("@settings/show-locked");
+    expect(check.loRoute("/lab/x\n")).toBe("/lab/x");
+    expect(check.loRoute("/lab/<script>")).toBeNull();
+    expect(check.loRoute("/".repeat(513))).toBeNull();
+  });
+
+  it("keeps a bounded single-line string", () => {
+    expect(check.text("  Ada  ", 10)).toBe("Ada");
+    expect(check.text("a\u0007b", 10)).toBeNull();
+    expect(check.text("x".repeat(11), 10)).toBeNull();
+  });
+
+  it("accepts only https image URLs and icon objects with short strings", () => {
+    expect(check.imageUrl("https://example.com/a.png")).toBe("https://example.com/a.png");
+    expect(check.imageUrl("javascript:alert(1)")).toBeNull();
+    expect(check.imageUrl("http://example.com/a.png")).toBeNull();
+    expect(check.icon({ type: "mdi:school", color: "red" })).toEqual({ type: "mdi:school", color: "red" });
+    expect(check.icon({ type: "" })).toBeNull();
+  });
+
+  it("accepts the browser's local day within one day of the server's, and no other", () => {
+    const now = new Date("2026-09-25T12:00:00Z");
+    expect(check.calendarDay("2026-09-25", now)).toBe("2026-09-25");
+    expect(check.calendarDay("2026-09-24", now)).toBe("2026-09-24");
+    expect(check.calendarDay("2026-09-26", now)).toBe("2026-09-26");
+    expect(check.calendarDay("2026-09-27", now)).toBeNull();
+    expect(check.calendarDay("2026-02-30", now)).toBeNull();
+    expect(check.calendarDay("25/09/2026", now)).toBeNull();
+  });
+
+  it("accepts only the sentiments and statuses the reader offers", () => {
+    expect(check.sentiment("fine", ["fine", "neutral"])).toBe("fine");
+    expect(check.sentiment("evil", ["fine", "neutral"])).toBeNull();
+    expect(check.onlineStatus("offline")).toBe("offline");
+    expect(check.onlineStatus("away")).toBeNull();
+    expect(check.loType("lab")).toBe("lab");
+    expect(check.loType("Lab; drop")).toBeNull();
+  });
+});
+
+describe("reader authorization", () => {
+  it("fetches tutors.json only from the course's Netlify site or an allowed host", () => {
+    expect(courseJsonUrl("web-dev-101")).toBe("https://web-dev-101.netlify.app/tutors.json");
+    expect(courseJsonUrl("web-dev-101.netlify.app")).toBe("https://web-dev-101.netlify.app/tutors.json");
+    expect(courseJsonUrl("courses.example.org")).toBeNull();
+    expect(courseJsonUrl("courses.example.org", ["courses.example.org"])).toBe("https://courses.example.org/tutors.json");
+    expect(courseJsonUrl("169.254.169.254")).toBeNull();
+    expect(courseJsonUrl("localhost:5173")).toBeNull();
+  });
+
+  it("reads educators, privacy, title and credits from a published course", () => {
+    expect(courseFactsFrom("c", { title: "C", properties: { private: 1, credits: "Staff" }, enrollment: { educators: ["eve", 7, " bob "] } })).toEqual({
+      courseId: "c",
+      title: "C",
+      educators: ["eve", "bob"],
+      isPrivate: true,
+      credits: "Staff"
+    });
+    expect(courseFactsFrom("c", null)).toEqual({ courseId: "c", title: null, educators: [], isPrivate: false, credits: null });
+  });
+
+  it("makes a login an educator from enrollment.yaml or the admin list, caching the course", async () => {
+    let fetches = 0;
+    const access = createAuthorization({
+      fetch: (async () => {
+        fetches++;
+        return new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }));
+      }) as unknown as typeof fetch,
+      admins: listFromEnv("root, ops")
+    });
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).toBe(true);
+    expect(await access.can({ login: "alice" }, "content:lock", { kind: "course", courseId: "c" })).toBe(false);
+    expect(await access.can({ login: "ops" }, "content:lock", { kind: "course", courseId: "other" })).toBe(true);
+    expect(await access.can(null, "content:lock", { kind: "course", courseId: "c" })).toBe(false);
+    expect(fetches).toBe(1);
+  });
+
+  it("asks the role's permissions: an educator may lock and view analytics, a student neither", async () => {
+    const access = createAuthorization({ fetch: (async () => new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }))) as unknown as typeof fetch });
+    const course = { kind: "course" as const, courseId: "c" };
+    expect(await access.can({ login: "eve" }, "analytics:view", course)).toBe(true);
+    expect(await access.can({ login: "alice" }, "analytics:view", course)).toBe(false);
+  });
+
+  it("says it cannot tell, rather than no, when the host is unreachable and it holds no copy", async () => {
+    const access = createAuthorization({ fetch: (async () => { throw new TypeError("fetch failed"); }) as unknown as typeof fetch });
+    await expect(access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).rejects.toBeInstanceOf(AuthorizationUnavailableError);
+    const serverError = createAuthorization({ fetch: (async () => new Response("", { status: 502 })) as unknown as typeof fetch });
+    await expect(serverError.course("c")).rejects.toBeInstanceOf(AuthorizationUnavailableError);
+  });
+
+  it("decides from a copy read within the hour while the host is down, and not from an older one", async () => {
+    let clock = 0;
+    let up = true;
+    const access = createAuthorization({
+      now: () => clock,
+      fetch: (async () => {
+        if (!up) throw new TypeError("fetch failed");
+        return new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }));
+      }) as unknown as typeof fetch
+    });
+    const course = { kind: "course" as const, courseId: "c" };
+    expect(await access.can({ login: "eve" }, "content:lock", course)).toBe(true);
+    up = false;
+    clock = 10 * 60_000;
+    expect(await access.can({ login: "eve" }, "content:lock", course)).toBe(true);
+    clock = 61 * 60_000;
+    await expect(access.can({ login: "eve" }, "content:lock", course)).rejects.toBeInstanceOf(AuthorizationUnavailableError);
+  });
+
+  it("does not cache a course it could not find, so it recovers once the course is published", async () => {
+    let published = false;
+    const access = createAuthorization({
+      fetch: (async () => (published ? new Response(JSON.stringify({ enrollment: { educators: ["eve"] } })) : new Response("", { status: 404 }))) as unknown as typeof fetch
+    });
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).toBe(false);
+    published = true;
+    await Promise.resolve();
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "c" })).toBe(true);
+  });
+});
+
+describe("reader authorization: redirects", () => {
+  it("follows a course site's redirect only to a public https host", async () => {
+    const { redirectTarget } = await import("../../../apps/reader/src/lib/server/api/authorization.ts");
+    const from = "https://web-dev-101.netlify.app/tutors.json";
+    expect(redirectTarget(from, "https://courses.example.org/tutors.json")).toBe("https://courses.example.org/tutors.json");
+    expect(redirectTarget(from, "/elsewhere/tutors.json")).toBe("https://web-dev-101.netlify.app/elsewhere/tutors.json");
+    for (const bad of ["http://courses.example.org/tutors.json", "https://169.254.169.254/latest", "https://localhost/x", "https://[::1]/x", "https://metadata.google.internal/x", "https://intranet/x", null]) {
+      expect(redirectTarget(from, bad), String(bad)).toBeNull();
+    }
+  });
+
+  it("reads educators from a course site that redirects to its custom domain", async () => {
+    const access = createAuthorization({
+      fetch: (async (url: string) =>
+        url.includes("netlify.app")
+          ? new Response(null, { status: 301, headers: { location: "https://courses.example.org/tutors.json" } })
+          : new Response(JSON.stringify({ enrollment: { educators: ["eve"] } }))) as unknown as typeof fetch
+    });
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "web-dev-101" })).toBe(true);
+  });
+
+  it("gives up on a redirect to an internal address", async () => {
+    const access = createAuthorization({
+      fetch: (async () => new Response(null, { status: 302, headers: { location: "http://169.254.169.254/" } })) as unknown as typeof fetch
+    });
+    expect(await access.can({ login: "eve" }, "content:lock", { kind: "course", courseId: "web-dev-101" })).toBe(false);
+  });
+});

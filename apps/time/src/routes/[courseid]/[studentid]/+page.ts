@@ -1,10 +1,8 @@
-import { env } from "$env/dynamic/public";
-import { TutorsTime, initSupabase } from "@tutors/tutors-time-lib";
-
-// Run before any load functions. Hooks modules load at app startup.
+import { TutorsTime } from "@tutors/tutors-time-lib";
+import { useReaderTimeSource } from "$lib/time-source";
 
 export async function load({ params }: { params: Record<string, string> }) {
-  initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+  useReaderTimeSource();
 
   const courseId = (params.courseid ?? "").trim();
   const studentId = (params.studentid ?? "").trim();

@@ -233,6 +233,10 @@ Environment variables the server reads at startup:
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader and time: the Supabase service_role key the reader's `/api` routes and the Moodle sync use. It bypasses Row-Level Security; a Secret only ([guides/SERVER-WRITES.md](../guides/SERVER-WRITES.md)) |
+| `PRIVATE_API_ALLOWED_ORIGINS` | Reader: origins (the time app) allowed to read `/api/time` with the reader's session cookie |
+| `PRIVATE_TUTORS_ADMINS`, `PRIVATE_COURSE_HOSTS` | Reader: logins that are educators of every course; hosts besides `*.netlify.app` that serve courses |
+| `PUBLIC_READER_URL` | Time: the reader it reads course time data from |
 | `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |

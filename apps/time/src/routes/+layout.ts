@@ -1,5 +1,6 @@
 import type { LayoutLoad } from "./$types";
 import { TutorsTime } from "@tutors/tutors-time-lib";
+import { useReaderTimeSource } from "$lib/time-source";
 
 export const ssr = false;
 
@@ -27,6 +28,7 @@ function getViewType(pathname: string): string {
 }
 
 export const load: LayoutLoad = async ({ url }) => {
+  useReaderTimeSource();
   const pathname = url.pathname;
   const segments = pathname.split("/").filter(Boolean);
   const courseId = segments[0] ?? "";
@@ -58,7 +60,7 @@ export const load: LayoutLoad = async ({ url }) => {
   if (isStudentRoute && courseId.trim()) {
     const studentId = segments[1] ?? "";
     try {
-      const info = await TutorsTime.getStudentDisplayInfo(studentId);
+      const info = await TutorsTime.getStudentDisplayInfo(studentId, courseId);
       studentName = info.full_name;
       avatarUrl = info.avatar_url;
       sentiment = info.sentiment;

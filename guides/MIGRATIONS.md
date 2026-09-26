@@ -16,11 +16,21 @@ The harness reads this directory and nothing else: `--mode migration --a <ref> -
 
 ### What is not in this directory yet
 
-The RBAC tables are created by hand-run scripts in `packages/svelte/utils/rbac/sql/` (`002_content_locks.sql`, `003_whiteboard_scenes.sql`), and the tables behind the community, connect and time features predate this directory. The harness therefore rehearses a schema that has only `app_errors` in it: a destructive change to any other table is invisible to it, and to `pnpm check:migrations`. Moving those scripts in, as new migrations with `IF NOT EXISTS`, is the way to bring them under the rule; it needs a maintainer who can confirm what production already has. Row-Level Security on all of them is already under the rule: `20260924_enable_rls_public_tables.sql` turns it on for every table in `public` and gives `anon` only the operations the apps perform.
+`tutors_content_locks` is created by a hand-run script in `packages/svelte/utils/rbac/sql/` (`002_content_locks.sql`), and the tables behind the community, connect and time features predate this directory. (`whiteboard_scenes` moved in as `20260925100000_create_whiteboard_scenes.sql`; its old script was never run on production.) The harness therefore rehearses a schema that has only `app_errors` and `whiteboard_scenes` in it: a destructive change to any other table is invisible to it, and to `pnpm check:migrations`. Moving those scripts in, as new migrations with `IF NOT EXISTS`, is the way to bring them under the rule; it needs a maintainer who can confirm what production already has. Row-Level Security on all of them is already under the rule: `20260924_enable_rls_public_tables.sql` turns it on for every table in `public` and gives `anon` only the operations the apps perform.
 
 ## Expand and contract
 
 While a release rolls out, pods of the previous version (**a**) and the new version (**b**) run at the same time against one database, and a rollback puts **a** back on the schema **b** left. So a release may only **expand** the schema. Removing or narrowing something is a **contract** step, and it ships in a later release, after no deployed version reads it any more.
+
+A contract step never lands in the release that makes it safe, and CI enforces it: a migration that
+removes or narrows something (a destructive statement, a `DO` block that drops or revokes, a
+`REVOKE` from `anon` or `authenticated`) needs a header line `-- contract-for: vX.Y.Z` naming the
+release whose code no longer uses what it removes, and `pnpm check:migrations` fails unless
+CHANGELOG.md already records that version as released. A contract step written ahead of time waits
+in [`supabase/contracts/`](../supabase/contracts/README.md), outside this directory, so no
+`supabase db push` or release run can apply it early; each file there also refuses to run unless
+`tutors.contract_ok` is set. The anon-access revocation for the server-side data routes waits there
+now ([SERVER-WRITES.md](SERVER-WRITES.md)).
 
 | Release | Code | Migration |
 | --- | --- | --- |
@@ -65,6 +75,7 @@ pnpm check:migrations --all        # treat every file as new
 It runs in CI on `release/**` pushes and release PRs (`release-claims.yml`), and its rules are unit-tested in `tests/conformance/migrations.test.ts`, which also holds the harness's `b-good` and `b-bad` fixtures. It fails on:
 
 - a destructive statement in an added migration: `DROP TABLE`, `DROP COLUMN`, `RENAME` of a table or column, `ALTER COLUMN ... TYPE`, `SET NOT NULL`, `ADD COLUMN ... NOT NULL` with no `DEFAULT`, `DROP INDEX`, `DROP POLICY`, `DROP FUNCTION`, `DROP SCHEMA`, `TRUNCATE`;
+- a contract step (anything above, a `DO` block that drops or revokes, or a `REVOKE` from `anon` or `authenticated`) without a `-- contract-for: vX.Y.Z` header naming a version CHANGELOG.md records as released: a contract step cannot land in the same release as its expand;
 - a file name that is not `<version>_<snake_case>.sql`, a duplicate version prefix, or a new file that sorts before one already merged;
 - an existing migration edited or deleted.
 
@@ -74,7 +85,7 @@ The scan reads the SQL text (comments, strings and `$$` bodies are ignored); it 
 
 ## Shipping a contract migration
 
-A contract migration is deliberate, so it is claimed like any other intended difference, in `release/claims.yaml`, on the release that contains it:
+A contract migration is deliberate, so it names the release it contracts for in a header line (`-- contract-for: v16.5.0`, a version CHANGELOG.md records as released; see above), and it is claimed like any other intended difference, in `release/claims.yaml`, on the release that contains it:
 
 ```yaml
 claims:
@@ -84,5 +95,7 @@ claims:
 ```
 
 The scope is the hunk scope in the table above; globs work (`app_errors.*`). The same claim satisfies `pnpm check:migrations` and the harness. Reviewers own it through CODEOWNERS on `release/claims.yaml`. The changelog entry carries the hint `(migration)`, so the claim is one line from it ([CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries)).
+
+Once the claim is in, add the same finding to `tests/conformance/shipped-contract-migrations.txt` (`<file> <scope> | <reason>`). `claims.yaml` is reset for the next release, but the merged migration stays, and that list is how the conformance test keeps telling a reviewed contract step from an accidental one.
 
 Before writing one, confirm in the code that no deployed version reads the column: search for it in `apps/` and `packages/`, and check the previous release's tag, not only `main`.

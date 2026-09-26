@@ -9,15 +9,9 @@ import { supabaseProfile } from "../../../packages/svelte/connect/src/services/s
 import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
+import { installReaderFetch, resetReaderApi, serveCourseJson, setReaderSession } from "./reader-api.ts";
 import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
 
-/**
- * Drives the reader's connect, analytics, presence and live services the way
- * the reader's layouts do. A steps file that imports this must first mock
- * `@supabase/supabase-js` (returning `recorder`), `$env/dynamic/public`,
- * `$app/environment`, `$app/navigation` and `@auth/sveltekit/client`; every
- * module between those seams is the real product code.
- */
 
 export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
 
@@ -25,6 +19,8 @@ export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
 export function freshBrowser(): void {
   vi.clearAllMocks();
   recorder.reset();
+  resetReaderApi();
+  installReaderFetch();
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("window", { localStorage: storage });
@@ -66,6 +62,7 @@ export function publishedCourse(courseId: string, labCount = 2, properties: Reco
   Object.assign(raw.properties, properties);
   const course = structuredClone(raw) as unknown as Course;
   if (enrollment) course.enrollment = enrollment;
+  serveCourseJson(courseId, enrollment ? { ...raw, enrollment } : raw);
   decorateCourseTree(course, courseId, `${courseId}.netlify.app`);
   return course;
 }
@@ -76,6 +73,7 @@ export function labsOf(course: Course): Lo[] {
 
 /** What the reader's root layout does once Auth.js reports a session. */
 export async function signIn(user: TutorsId): Promise<void> {
+  setReaderSession(user);
   await tutorsConnectService.reconnect(user);
   await settle();
 }
@@ -96,6 +94,7 @@ export async function openLo(course: Course, lo: Lo): Promise<void> {
 /** A different student, in their own browser, signs in and opens a lab of `course`. */
 export async function studentOpensLab(name: string, course: Course, lab = 0): Promise<void> {
   tutorsId.value = null;
+  setReaderSession(null);
   currentCourse.value = null;
   await signIn(githubUser(name));
   await openLo(course, labsOf(course)[lab]);

@@ -82,10 +82,6 @@ function createRbacService() {
     return currentCourseId.value || currentCourse.value?.courseId || "";
   }
 
-  function resolvedUserId(): string {
-    return currentUserId.value || tutorsId.value?.login || "dev-user";
-  }
-
   function hasPermission(permission: Permission): boolean {
     return roleHasPermission(currentRole.value, permission);
   }
@@ -132,7 +128,6 @@ function createRbacService() {
 
   async function toggleContentLock(loRoute: string, locked: boolean): Promise<boolean> {
     const courseId = resolvedCourseId();
-    const userId = resolvedUserId();
     if (!courseId) return false;
 
     const updated = new Map(contentLocks.value);
@@ -143,7 +138,7 @@ function createRbacService() {
       localStorage.setItem(`tutors-locks-${courseId}`, JSON.stringify(Object.fromEntries(updated)));
     }
 
-    upsertLock(courseId, loRoute, locked, userId);
+    void upsertLock(courseId, loRoute, locked);
     return true;
   }
 
