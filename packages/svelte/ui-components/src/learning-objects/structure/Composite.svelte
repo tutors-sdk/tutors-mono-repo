@@ -6,15 +6,13 @@
   import Cards from "../layout/Cards.svelte";
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
-  import CalendarButton from "@tutors/ui-navigators/buttons/CalendarButton.svelte";
-  import { currentCourse } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import { rbacService } from "@tutors/rbac";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   let { composite }: { composite: Composite } = $props();
   // Side units the viewer can see: when a student can see none (all hidden or locked), no side column is reserved.
   const sides = $derived((composite?.units?.sides ?? []).filter(hasVisibleLos));
-  // What the cards show (rbacService.isLoCardVisible), so the count matches the cards.
+  // Only show the section heading when the viewer has visible cards.
   const visible = $derived((composite.type === "course" ? filterByType(composite.los, "topic") : (composite?.units?.standardLos ?? [])).filter(lo => rbacService.isLoCardVisible(lo)));
 
   /**
@@ -55,18 +53,22 @@
 <SecondaryNavigator lo={composite} parentCourse={composite?.parentCourse?.properties?.parent} />
 {#if composite}
   <div class="ui-page composite-page">
+    {#if composite.type !== "course"}
     <header class="composite-heading">
-      <div><p class="ui-eyebrow">{composite.type === "course" ? t("shell.overview") : composite.type}</p><h1 class="ui-title">{composite.title}</h1><div class="ui-muted summary">{@html sanitizeHtml(composite.summary ?? "")}</div>{#if composite.type === "course" && currentCourse.value?.courseCalendar?.currentWeek}<div class="current-week"><CalendarButton chip /></div>{/if}</div>
+      <div><p class="ui-eyebrow">{composite.type}</p><h1 class="ui-title">{composite.title}</h1><div class="ui-muted summary">{@html sanitizeHtml(composite.summary ?? "")}</div></div>
       <Image lo={composite} />
     </header>
+    {/if}
     <div class="composite-columns" class:with-sides={sides.length > 0} use:layoutCards>
       <div class="main-group">
         <Panels panels={composite.panels} />
-        {#if visible.length}
-          <div class="ui-section-heading"><h2>{composite.type === "course" ? t("shell.topics") : t("shell.resources")}</h2><span class="ui-muted text-sm">{visible.length} · {t("shell.authoredOrder")}</span></div>
-        {/if}
-        <Units units={composite.units.units} />
-        <Cards los={composite.units.standardLos} />
+        <div class:ui-panel={composite.type === "course" && !composite.units.units.length} class:unit-panel={composite.type === "course" && !composite.units.units.length}>
+          {#if visible.length}
+            <div class="ui-section-heading"><h2>{composite.type === "course" ? t("shell.topics") : t("shell.resources")}</h2></div>
+          {/if}
+          <Units units={composite.units.units} />
+          <Cards los={composite.units.standardLos} />
+        </div>
       </div>
       {#if sides.length}<aside class="side-groups"><Units units={sides} /></aside>{/if}
     </div>
@@ -78,10 +80,8 @@
   .composite-heading > div { min-width: 0; }
   h1 { margin-top: var(--space-2); }
   .summary { margin-top: var(--space-2); }
-  /* The current week is a small chip under the summary: useful, not a feature of the page. */
-  .current-week { margin-top: var(--space-3); }
   h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); }
-  .composite-columns { margin-top: var(--space-6); }
+  .composite-heading + .composite-columns { margin-top: var(--space-6); }
   .main-group, .side-groups { min-width: 0; }
   /* The columns already sit 24px below the header, so the "Course topics" heading adds no margin of its own:
      it lines up with the top of the side column instead of starting 32px below it. */

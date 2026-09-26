@@ -86,8 +86,10 @@
   </div>
 </nav>
 <style>
-  .course-navigation { display: flex; flex-direction: column; height: 100%; min-height: 0; font-size: var(--font-label); }
+  .course-navigation { display: flex; flex-direction: column; height: 100%; min-height: 0; font-size: var(--font-label); line-height: var(--leading-ui); }
   .navigation-scroll { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: var(--space-1); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6) var(--space-4); }
+  /* Keep each row at its content height; short sidebars scroll instead of compressing buttons. */
+  .navigation-scroll > :global(*), .tool-section > :global(*) { flex-shrink: 0; }
   .nav-section { margin: var(--space-6) var(--space-3) var(--space-2); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); font-size: var(--font-small); font-weight: var(--weight-semibold); }
   .navigation-scroll > .nav-section:first-child { margin-top: 0; }
   .tool-section { display: contents; }
@@ -96,6 +98,7 @@
   .course-navigation :global(.nav-row:hover), .course-navigation :global(.nav-row[aria-current]) { background: var(--ui-selected); }
   .course-navigation :global(.nav-row[aria-current]) { box-shadow: inset 3px 0 var(--ui-brand); font-weight: var(--weight-semibold); }
   .nav-row > span:not(.external):not(.step-number) { min-width: 0; }
+  .course-navigation :global(.nav-row svg) { width: 24px; height: 24px; flex-shrink: 0; }
   .external { margin-left: auto; color: var(--ui-muted); }
 
   h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); margin-block: var(--space-5) var(--space-2); overflow-wrap: anywhere; }

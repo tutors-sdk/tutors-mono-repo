@@ -55,7 +55,7 @@
       <Tabs.Content value="info">
         <article>
           <div class="prose dark:prose-invert">
-            {@html sanitizeHtml(currentCourse?.value?.contentHtml ?? "")}
+            {@html sanitizeHtml(currentCourse?.value?.contentHtml || currentCourse?.value?.summary || "")}
           </div>
         </article>
       </Tabs.Content>
@@ -181,7 +181,7 @@
   {:else}
     <article>
       <div class="prose dark:prose-invert">
-        {@html sanitizeHtml(currentCourse?.value?.contentHtml ?? "")}
+        {@html sanitizeHtml(currentCourse?.value?.contentHtml || currentCourse?.value?.summary || "")}
       </div>
     </article>
   {/if}
