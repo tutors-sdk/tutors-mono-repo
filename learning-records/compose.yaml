@@ -1,0 +1,71 @@
+# Learning records and badges stack: a Learning Record Store for xAPI statements
+# and a signing service for Open Badges 3.0 credentials. The code that talks to
+# them lives in packages/svelte/utils/xapi and packages/svelte/utils/badges.
+#
+# Like the observability stack it is independent of the app stacks.
+#
+#   cd learning-records
+#   docker compose up -d
+#
+#   SQL LRS          http://localhost:8080/admin   (LRS_ADMIN_USER / LRS_ADMIN_PASS)
+#   xAPI endpoint    http://localhost:8080/xapi    (LRS_API_KEY / LRS_API_SECRET)
+#   Signing service  http://localhost:4006         (server-side only, see README)
+#
+# The defaults below are for local use only. Set every value in an .env file
+# next to this one for anything shared.
+name: tutors-learning-records
+
+services:
+  lrs-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: lrsql
+      POSTGRES_USER: ${LRS_DB_USER:-lrsql}
+      POSTGRES_PASSWORD: ${LRS_DB_PASSWORD:-lrsql-local}
+    volumes:
+      - lrs-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  lrs:
+    # Yet Analytics SQL LRS, Apache-2.0. https://github.com/yetanalytics/lrsql
+    image: yetanalytics/lrsql:v0.9.8
+    command: /lrsql/bin/run_postgres.sh
+    depends_on:
+      lrs-db:
+        condition: service_healthy
+    environment:
+      LRSQL_DB_HOST: lrs-db
+      LRSQL_DB_PORT: 5432
+      LRSQL_DB_NAME: lrsql
+      LRSQL_DB_USER: ${LRS_DB_USER:-lrsql}
+      LRSQL_DB_PASSWORD: ${LRS_DB_PASSWORD:-lrsql-local}
+      LRSQL_API_KEY_DEFAULT: ${LRS_API_KEY:-tutors-local-key}
+      LRSQL_API_SECRET_DEFAULT: ${LRS_API_SECRET:-tutors-local-secret}
+      LRSQL_ADMIN_USER_DEFAULT: ${LRS_ADMIN_USER:-admin}
+      LRSQL_ADMIN_PASS_DEFAULT: ${LRS_ADMIN_PASS:-admin-local}
+      LRSQL_POOL_INITIALIZATION_FAIL_TIMEOUT: 10000
+      LRSQL_ALLOW_ALL_ORIGINS: "false"
+    ports:
+      - "${LRS_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  signing:
+    # Digital Credentials Consortium signing service, MIT. https://github.com/digitalcredentials/signing-service
+    # With no TENANT_SEED_TUTORS it signs with the DCC test key, and verifiers
+    # mark the result as a test credential. See README for a real key.
+    image: digitalcredentials/signing-service:1.2.0
+    environment:
+      TENANT_SEED_TUTORS: ${SIGNING_TENANT_SEED_TUTORS:-}
+      ENABLE_ACCESS_LOGGING: "true"
+    ports:
+      # Bound to localhost: the service signs anything it is sent.
+      - "127.0.0.1:${SIGNING_PORT:-4006}:4006"
+    restart: unless-stopped
+
+volumes:
+  lrs-db-data:
