@@ -69,19 +69,13 @@ STRYKER_CONCURRENCY=2 ./tests/mutation/run-mutation-tests.sh
 
 ## When to Run
 
-Mutation testing is **slow** (minutes to hours depending on test suite size and mutant count). It should run:
-
-- **Nightly CI** — scheduled pipeline, results reviewed next morning
-- **RC validation** — before cutting a release, as part of the release readiness checklist
-- **After major test additions** — to verify new tests actually improve kill rates
-
-It should **not** run on every commit or PR — the feedback loop is too slow.
+Mutation testing is too slow for every PR: the targeted run takes about 3 minutes and the comprehensive run about 25. Both run in the nightly workflow (`mutation` and `mutation-nightly`), and the nightly summary names any module below its floor. Run one locally after adding tests to a module, to confirm the new tests kill mutants and to raise that module's floor with `--update` in the same change.
 
 ## Reading the Report
 
-After running, open `reports/mutation/index.html`. Key metrics:
+After running, open `reports/mutation/index.html` (targeted run) or `reports/mutation-nightly/index.html` (comprehensive run). The nightly job uploads both as `mutation-report` and `mutation-nightly-report`. Key metrics:
 
-- **Mutation Score**: percentage of mutants killed (target: ≥85%)
+- **Mutation Score**: percentage of mutants killed (90% break on the targeted run; a floor per module on the comprehensive run)
 - **Survived**: mutants the test suite didn't catch — each is a test gap
 - **No Coverage**: mutants in code not reached by any test
 - **Timeout**: mutants that caused infinite loops (counted as killed)
@@ -101,7 +95,7 @@ The config excludes `StringLiteral` and `ObjectLiteral` mutations. These produce
 
 ## Configuration
 
-See `stryker.config.json` at the repo root. Key settings:
+The targeted run is `stryker.config.json` with `vitest.config.mutation.ts`; the comprehensive run is `stryker.nightly.config.json` with `vitest.config.mutation-nightly.ts` (every package source file, in place, no break threshold, `disableTypeChecks: false`). Key settings of the targeted run:
 
 ```json
 {

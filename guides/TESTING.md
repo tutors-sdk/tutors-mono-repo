@@ -343,6 +343,12 @@ renamed column shows up as a snapshot diff rather than a runtime surprise.
 
 ## Mutation testing
 
+**Protects** the assertions themselves: a mutant is a small deliberate bug (a flipped comparison,
+a removed condition), and a surviving mutant is a behaviour no test pins down. Two Stryker runs
+share the tooling and differ in scope.
+
+### Targeted run (`mutation`)
+
 Stryker over twelve modules of the model, time and gen libraries where a flipped comparison
 silently corrupts a dashboard, a course tree or generated output: `search.ts`, `lo-tree.ts`,
 `lo-utils.ts`, `course-utils.ts`, `markdown-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`,
@@ -361,19 +367,41 @@ that cover those modules, with the root config's workspace aliases and setup fil
 without them the gen suites cannot load and every gen mutant reads as NoCoverage). The nightly `mutation` job runs it and fails below the break
 threshold (Rule 0113), then `pnpm check:mutation-floors` holds each module to its own floor in
 `tests/mutation/mutation-floors.json` with the same 2-point ratchet as coverage (Rule 0114);
-`pnpm test:mutation` runs it locally. The nightly `mutation-nightly` job runs
-`pnpm test:mutation:nightly` over every library source file against the unit, BDD and contract
-suites (Rule 0116), holds each module to its floor in `tests/mutation/nightly-mutation-floors.json`
-(Rule 0117), reports floors to raise without failing (Rule 0119) and fails if the in-place run
-left a tracked file changed (Rule 0118). Details and how
-to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
+`pnpm test:mutation` runs it locally.
+
+### Comprehensive run (`mutation-nightly`)
+
+```bash
+pnpm test:mutation:nightly    # about 20 minutes on 4 cores, 25 on a GitHub runner
+pnpm check:mutation-floors reports/mutation-nightly/mutation.json \
+  --floors tests/mutation/nightly-mutation-floors.json --stale warn
+```
+
+Stryker over every TypeScript source file under `packages/*/*/src` and `packages/*/*/*/src`
+(`stryker.nightly.config.json`), the same files the coverage run measures, against the unit, BDD
+and contract suites (`vitest.config.mutation-nightly.ts`, Rule 0116). The baseline on 2026-09-26
+was 58.5% over 95 modules and 6,073 scored mutants, identical across three runs; 1,896 of those
+mutants sit in code no test reaches, so the report doubles as a map of where tests are missing.
+
+- Each module has a floor in `tests/mutation/nightly-mutation-floors.json`. A module below its
+  floor, or a new module with no floor, fails the night and is named in the job summary
+  (Rule 0117). Add the floor with `--update` in the commit that adds the module.
+- A module 2 or more points above its floor is listed in the job summary as a floor to raise and
+  does not fail the night (Rule 0119); raise it with `--update` in any later change.
+- The run mutates files in place, because a `vi.mock` by relative `node_modules` path cannot
+  match inside Stryker's symlinked sandbox. Type-check suppression is off so only mutated files
+  are touched, and `git diff --exit-code --stat` runs after Stryker even when it fails, so a
+  source left mutated fails the night (Rule 0118). Locally, an interrupted run leaves mutated
+  sources behind: restore them with `git checkout -- packages`.
+
+Details and how to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 
 ## BDD and executable specs
 
 **Protects** the requirements: a scenario in `tests/bdd/features/` is a statement about the
 product that fails when the product stops doing it.
 
-**How.** Each of the 20 Node-level feature files (73 scenarios) is loaded by its steps file with
+**How.** Each of the 21 Node-level feature files (100 scenarios) is loaded by its steps file with
 [`vitest-cucumber`](https://vitest-cucumber.miceli.click/), inside the ordinary Vitest run, so
 there is one runner and no second CI job. The binder fails the run when a scenario or step is
 on one side only, which is what keeps the Gherkin from drifting back into prose. Steps drive
@@ -569,10 +597,10 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 ## Known gaps
 
 - `apps/time` is not type-checked in CI; it has type errors of its own to clear first ([#268](https://github.com/tutors-sdk/tutors-mono-repo/issues/268)).
-- Coverage floors (`tests/suite-health/coverage-floors.json`) are the measured values over every source file and only ratchet upward (Rules 0110 to 0112).
+- Coverage over every source file is about 58% lines (floors in `tests/suite-health/coverage-floors.json`, Rules 0110 to 0112); `apps/time`, `packages/jsr/create` and the UI component packages are near zero.
 - `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
   contract in a real browser instead.
 - 48 specified scenarios are prose, many with no tier covering them: [specifications/](./specifications/README.md).
-- Mutation testing runs nowhere in CI.
+- Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
 - Tiers F, H and I are not built.
