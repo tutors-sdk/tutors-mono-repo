@@ -56,7 +56,7 @@ Every command below exists in the root `package.json`.
 | `pnpm test:fuzz` | The property suites, on the threads pool (`vitest.config.fuzz.ts`) |
 | `pnpm test:tz` | Unit and property suites under UTC, Europe/Dublin and Pacific/Auckland |
 | `pnpm test:runway` | The repo-level suites: architecture, suite-health, completeness, observability, conformance, security, performance |
-| `pnpm test:mutation` | Stryker over the five targeted modules |
+| `pnpm test:mutation` | Stryker over the twelve targeted modules (break at 90%), then `pnpm check:mutation-floors` |
 | `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
 | `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
 | `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |

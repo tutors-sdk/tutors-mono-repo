@@ -13,7 +13,14 @@
     "packages/jsr/model/src/utils/lo-utils.ts",
     "packages/jsr/model/src/types/type-utils.ts",
     "packages/jsr/time/src/services/base-calendar-model.ts",
-    "packages/jsr/time/src/utils/calendar-utils.ts"
+    "packages/jsr/time/src/utils/calendar-utils.ts",
+    "packages/jsr/model/src/services/lo-tree.ts",
+    "packages/jsr/model/src/utils/course-utils.ts",
+    "packages/jsr/model/src/utils/markdown-utils.ts",
+    "packages/jsr/time/src/services/base-lab-model.ts",
+    "packages/jsr/time/src/utils/lab-utils.ts",
+    "packages/jsr/gen/src/utils/lr-utils.ts",
+    "packages/jsr/gen/src/templates/utils.ts"
   ],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
@@ -22,7 +29,7 @@
   "thresholds": {
     "high": 85,
     "low": 75,
-    "break": 85
+    "break": 90
   },
   "concurrency": 4,
   "timeoutMS": 30000,
@@ -39,7 +46,7 @@
     "dist",
     ".svelte-kit",
     "reports",
-    ".stryker-tmp"
+    ".stryker-tmp*"
   ],
   "checkers": [],
   "disableTypeChecks": "{packages/**/*.ts,tests/**/*.ts}"

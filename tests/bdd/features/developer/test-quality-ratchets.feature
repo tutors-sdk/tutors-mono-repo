@@ -62,16 +62,16 @@ Feature: Test quality ratchets
       Then the statement floor of "packages/jsr/model/src/**" shall still be 85
 
   @rule-0113 @ears-event-driven
-  Rule: When the nightly workflow runs, tutors shall run mutation testing and fail the nightly run if the mutation score is below the break threshold of 85 percent.
+  Rule: When the nightly workflow runs, tutors shall run mutation testing and fail the nightly run if the mutation score is below the break threshold of 90 percent.
 
     Scenario: The nightly workflow runs mutation testing and its failure fails the night
       Given the nightly workflow
       Then it shall have a job that runs "pnpm test:mutation"
       And the job that reports the night shall fail when the mutation job fails
 
-    Scenario: Stryker breaks below 85 percent
+    Scenario: Stryker breaks below 90 percent
       Given the Stryker configuration
-      Then its break threshold shall be at least 85
+      Then its break threshold shall be at least 90
       And it shall write a JSON report
 
   @rule-0114 @ears-unwanted
@@ -95,3 +95,16 @@ Feature: Test quality ratchets
     Scenario: Every module Stryker mutates has a recorded floor
       Given the Stryker configuration
       Then every module it mutates shall have a recorded mutation floor
+
+  @rule-0115 @ears-ubiquitous
+  Rule: Tutors shall load the mutation test run with the same workspace aliases and setup files as the main test run, so every test file it lists can reach the modules it mutates.
+
+    Scenario: The mutation run resolves the workspace the way the main run does
+      Given the repository's coverage configuration
+      And the mutation test configuration
+      Then the mutation run shall resolve the same workspace aliases as the main run
+      And the mutation run shall load the same setup files as the main run
+
+    Scenario: Every library suite the mutation run lists is one the main run also collects
+      Given the mutation test configuration
+      Then every test file pattern it lists shall fall under the main run's test files

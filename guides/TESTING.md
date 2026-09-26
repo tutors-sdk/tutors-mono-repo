@@ -103,7 +103,7 @@ asserting that fast-check reports a replayable seed and path.
 thresholds in `vitest.config.ts`. `coverage.include` names every TypeScript source under
 `packages/` and `apps/*/src`, so a module no test imports counts as 0% rather than dropping out
 of the denominator (Rule 0110). The floors live in `tests/suite-health/coverage-floors.json`:
-statements 55, branches 48, functions 56, lines 56 overall, and one set for each of seven packages
+statements 58, branches 51, functions 58, lines 58 overall, and one set for each of seven packages
 (`packages/jsr/model/src/**` and so on). Vitest fails a run below a floor (Rule 0111), and CI's
 `pnpm check:coverage-floors` also fails once coverage sits 2 points or more above one (Rule
 0112), so raise the floor in the commit that raises the coverage: `pnpm check:coverage-floors
@@ -343,16 +343,22 @@ renamed column shows up as a snapshot diff rather than a runtime surprise.
 
 ## Mutation testing
 
-Stryker over five modules where a flipped comparison silently corrupts a dashboard:
-`search.ts`, `lo-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`, `calendar-utils.ts`.
-Thresholds: high 85, low 75, break 85 (the measured score is 88.2).
+Stryker over twelve modules of the model, time and gen libraries where a flipped comparison
+silently corrupts a dashboard, a course tree or generated output: `search.ts`, `lo-tree.ts`,
+`lo-utils.ts`, `course-utils.ts`, `markdown-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`,
+`base-lab-model.ts`, `calendar-utils.ts`, `lab-utils.ts`, `lr-utils.ts` and the gen
+`templates/utils.ts`. Thresholds: high 85, low 75, break 90 (the measured score is 93.6). The
+modules below 90 (`lo-tree.ts` 74.5, `search.ts` 84.5, `base-lab-model.ts` 87.4) are held there by
+equivalent mutants: optional chaining on values that are always defined and a fence type that
+`searchHits` computes but never returns.
 
 ```bash
 pnpm test:mutation            # npx stryker run
 ```
 
 It runs its own Vitest config (`vitest.config.mutation.ts`) listing the unit and property files
-that cover those modules. The nightly `mutation` job runs it and fails below the break
+that cover those modules, with the root config's workspace aliases and setup file (Rule 0115;
+without them the gen suites cannot load and every gen mutant reads as NoCoverage). The nightly `mutation` job runs it and fails below the break
 threshold (Rule 0113), then `pnpm check:mutation-floors` holds each module to its own floor in
 `tests/mutation/mutation-floors.json` with the same 2-point ratchet as coverage (Rule 0114);
 `pnpm test:mutation` runs it locally. Details and how
