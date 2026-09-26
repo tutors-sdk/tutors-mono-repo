@@ -100,9 +100,16 @@ asserting that fast-check reports a replayable seed and path.
 **Baselines** `tests/fuzz/known-timezone-failures.txt`.
 
 **Coverage** is enforced by `pnpm test:coverage` (and `vitest run --coverage` in CI) against the
-thresholds in `vitest.config.ts`: statements 55, branches 50, functions 65, lines 55. These are
-the real numbers, set where the suite is rather than where it should be; raise them as the suite
-grows.
+thresholds in `vitest.config.ts`. `coverage.include` names every TypeScript source under
+`packages/` and `apps/*/src`, so a module no test imports counts as 0% rather than dropping out
+of the denominator (Rule 0110). The floors live in `tests/suite-health/coverage-floors.json`:
+statements 55, branches 48, functions 56, lines 56 overall, and one set for each of seven packages
+(`packages/jsr/model/src/**` and so on). Vitest fails a run below a floor (Rule 0111), and CI's
+`pnpm check:coverage-floors` also fails once coverage sits 2 points or more above one (Rule
+0112), so raise the floor in the commit that raises the coverage: `pnpm check:coverage-floors
+--update` rewrites the file, and it never lowers a floor.
+Because the denominator is the whole repo, run coverage over the whole suite: `vitest run
+--coverage <one directory>` fails the global floor.
 
 ## Tier C — generated output
 
@@ -338,14 +345,17 @@ renamed column shows up as a snapshot diff rather than a runtime surprise.
 
 Stryker over five modules where a flipped comparison silently corrupts a dashboard:
 `search.ts`, `lo-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`, `calendar-utils.ts`.
-Thresholds: high 85, low 75, break 65.
+Thresholds: high 85, low 75, break 85 (the measured score is 88.2).
 
 ```bash
 pnpm test:mutation            # npx stryker run
 ```
 
 It runs its own Vitest config (`vitest.config.mutation.ts`) listing the unit and property files
-that cover those modules. **No workflow runs it** — it is a local tool for now. Details and how
+that cover those modules. The nightly `mutation` job runs it and fails below the break
+threshold (Rule 0113), then `pnpm check:mutation-floors` holds each module to its own floor in
+`tests/mutation/mutation-floors.json` with the same 2-point ratchet as coverage (Rule 0114);
+`pnpm test:mutation` runs it locally. Details and how
 to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 
 ## BDD and executable specs
@@ -443,7 +453,7 @@ exist.
 
 | Job | What it does |
 |---|---|
-| `build-and-test` | Install, copy `.env.example` into the four apps, `svelte-kit sync`, `pnpm build`, `pnpm api-report:check`, three `check` steps (`continue-on-error`, [#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53)), `pnpm lint`, `pnpm check:knip`, `vitest run --coverage`, `pnpm test:fuzz` |
+| `build-and-test` | Install, copy `.env.example` into the four apps, `svelte-kit sync`, `pnpm build`, `pnpm api-report:check`, three `check` steps (`continue-on-error`, [#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53)), `pnpm lint`, `pnpm check:knip`, `vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz` |
 | `platform-conformance` | `pnpm check:k8s --out rendered`, kubeconform against the rendered manifests, and kubeconform must reject the invalid-manifest fixture |
 | `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …`; the reader a second time with `--env PUBLIC_ANON_MODE=FALSE` so its sign-in pages are probed with Auth.js on |
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
@@ -462,6 +472,7 @@ the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
 | Job | What it does |
 |---|---|
 | `contract-snapshots` | `pnpm test:contract` |
+| `mutation` | `pnpm test:mutation`, failing below Stryker's break threshold, then `pnpm check:mutation-floors`; uploads the HTML and JSON report |
 | `suite-health` | `vitest run --retry=0` with a JSON report, then `pnpm check:test-time` on it |
 | `e2e-stack-nightly` | The tier G journeys on firefox and mobile, then the baseline stale-line check |
 | `timezone-matrix` | `pnpm test:tz` |
@@ -547,7 +558,7 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 ## Known gaps
 
 - `apps/time` is not type-checked in CI; it has type errors of its own to clear first ([#268](https://github.com/tutors-sdk/tutors-mono-repo/issues/268)).
-- Coverage thresholds sit at 55/50/65/55 and should ratchet upward.
+- Coverage floors (`tests/suite-health/coverage-floors.json`) are the measured values over every source file and only ratchet upward (Rules 0110 to 0112).
 - `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
   contract in a real browser instead.
 - 48 specified scenarios are prose, many with no tier covering them: [specifications/](./specifications/README.md).
