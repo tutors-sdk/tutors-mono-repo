@@ -79,11 +79,11 @@ See `stryker.config.json` at the repo root. Key settings:
 {
   "testRunner": "vitest",
   "mutate": ["packages/jsr/model/src/...", "packages/jsr/time/src/..."],
-  "thresholds": { "high": 85, "low": 70, "break": 60 },
+  "thresholds": { "high": 85, "low": 75, "break": 85 },
   "concurrency": 4
 }
 ```
 
 - `high` (85): green in report — tests are strong
-- `low` (70): yellow — tests need attention
-- `break` (60): build fails — critical test gaps
+- `low` (75): yellow — tests need attention
+- `break` (85): the nightly `mutation` job fails — the floor sits just under the measured score and only rises

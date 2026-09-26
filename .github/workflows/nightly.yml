@@ -382,9 +382,42 @@ jobs:
           path: corpus-store/previous/report.json
           retention-days: 30
 
+  mutation:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Fails below the break threshold in stryker.config.json (testing ramp, R-T4).
+      - name: Run Stryker
+        run: pnpm test:mutation --reporters clear-text,html,json
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 30
+
   report:
     name: Report Results
-    needs: [contract-snapshots, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load, generator-corpus]
+    needs: [contract-snapshots, mutation, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load, generator-corpus]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -395,6 +428,7 @@ jobs:
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Contract Snapshots | ${{ needs.contract-snapshots.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mutation | ${{ needs.mutation.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -403,5 +437,5 @@ jobs:
           echo "| Generator Corpus | ${{ needs.generator-corpus.result }} |" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any job failed
-        if: needs.contract-snapshots.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure' || needs.generator-corpus.result == 'failure'
+        if: needs.contract-snapshots.result == 'failure' || needs.mutation.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure' || needs.generator-corpus.result == 'failure'
         run: exit 1
