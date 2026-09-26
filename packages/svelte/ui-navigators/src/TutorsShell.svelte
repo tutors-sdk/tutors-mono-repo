@@ -9,7 +9,7 @@
   import TourOverlay from "@tutors/ui-primitives/components/TourOverlay.svelte";
   import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
 
-  let { children, hideNavigator = false, showConnect = true }: { children: Snippet; hideNavigator?: boolean; showConnect?: boolean } = $props();
+  let { children, hideNavigator = false, showConnect = true, title, titleHref, navigation, current = "" }: { children: Snippet; hideNavigator?: boolean; showConnect?: boolean; title?: string; titleHref?: string; navigation?: Snippet; current?: string } = $props();
 
   // Phones tuck the header away while the reader scrolls down and bring it back on any scroll up, so the
   // page gets the whole screen (CSS below; only phones move it). Near the top, with a header menu open, or
@@ -37,8 +37,8 @@
 <div class="tutors-shell" class:without-navigation={hideNavigator} style:--header-height={`${headerHeight}px`}>
   <a href="#main-content" class="skip-link">{t("a11y.skipToContent")}</a>
   {#if !hideNavigator}
-    <header class="shell-header" class:tucked bind:this={header} bind:offsetHeight={headerHeight} onfocusin={() => (tucked = false)}><MainNavigator {showConnect} /></header>
-    <aside class="shell-navigation" aria-label={t("shell.navigation")}><CourseNavigation {showConnect} /></aside>
+    <header class="shell-header" class:tucked bind:this={header} bind:offsetHeight={headerHeight} onfocusin={() => (tucked = false)}><MainNavigator {showConnect} {title} {titleHref} {navigation} {current} /></header>
+    <aside class="shell-navigation" aria-label={t("shell.navigation")}>{#if navigation}{@render navigation()}{:else}<CourseNavigation {showConnect} {current} />{/if}</aside>
   {/if}
   <main id="main-content" tabindex="-1" class="shell-main" data-route={page.url.pathname} onscroll={onScroll}>
     {@render children()}

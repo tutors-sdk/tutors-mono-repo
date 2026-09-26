@@ -42,11 +42,13 @@
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
+    "@tutors/tutors-time-lib": "workspace:*",
     "@tutors/ui-navigators": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
     "codemirror": "^6.0.2",
     "isomorphic-dompurify": "^4.2.0",
     "file-saver": "^2.0.5",
+    "jheat.js": "^5.2.0",
     "pdfjs-dist": "^6.3.289"
   },
   "devDependencies": {

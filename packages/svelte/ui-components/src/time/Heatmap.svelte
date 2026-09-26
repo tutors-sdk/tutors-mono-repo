@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { minutesOf } from "./heat";
+  import { minutesOf } from "@tutors/tutors-time-lib";
 
   /** Minutes per day keyed by date (YYYY-MM-DD); Heat.js fills in the days between, so quiet days show as empty. */
   let { title, values, dates, id }: { title: string; values: Record<string, unknown>; dates: string[]; id: string } = $props();

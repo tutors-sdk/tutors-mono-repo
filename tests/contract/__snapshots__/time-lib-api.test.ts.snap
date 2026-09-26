@@ -12,7 +12,8 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should export service 
   "formatDateShort",
   "formatTimeNearestMinute",
   "formatTimeMinutesOnly",
-  "cellColorForMinutes",
+  "minutesOf",
+  "heatColor",
   "getMondayForDate",
   "getDistinctSortedWeeks",
   "extractLabIdentifier",
@@ -28,7 +29,6 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should maintain stable
   "BaseLabModel",
   "CourseTime",
   "TutorsTime",
-  "cellColorForMinutes",
   "extractLabIdentifier",
   "extractStepName",
   "filterByDateRange",
@@ -40,7 +40,9 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should maintain stable
   "getDistinctSortedWeeks",
   "getMondayForDate",
   "getSupabase",
+  "heatColor",
   "initSupabase",
+  "minutesOf",
   "toggleLabViewMode",
 ]
 `;

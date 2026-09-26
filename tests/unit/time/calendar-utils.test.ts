@@ -5,7 +5,7 @@ import {
   formatDateShort,
   formatTimeNearestMinute,
   formatTimeMinutesOnly,
-  cellColorForMinutes,
+  heatColor,
   getMondayForDate,
   getDistinctSortedWeeks
 } from "../../../packages/jsr/time/src/utils/calendar-utils";
@@ -161,50 +161,20 @@ describe("formatTimeMinutesOnly", () => {
   });
 });
 
-// ===========================================================================
-// cellColorForMinutes
-// ===========================================================================
-describe("cellColorForMinutes", () => {
-  it("returns white for 0 minutes", () => {
-    expect(cellColorForMinutes(0)).toBe("rgb(255, 255, 255)");
+describe("heatColor", () => {
+  it("leaves 0 and negative minutes uncoloured", () => {
+    expect(heatColor(0)).toBe("");
+    expect(heatColor(-10)).toBe("");
   });
 
-  it("returns white for null", () => {
-    expect(cellColorForMinutes(null)).toBe("rgb(255, 255, 255)");
+  it("mixes the success token up to 200 minutes", () => {
+    expect(heatColor(100)).toContain("var(--ui-success)");
+    expect(heatColor(200)).toContain("var(--ui-success)");
   });
 
-  it("returns white for undefined", () => {
-    expect(cellColorForMinutes(undefined)).toBe("rgb(255, 255, 255)");
-  });
-
-  it("returns a green-range color for 100 minutes", () => {
-    const color = cellColorForMinutes(100);
-    // 100 is in the 1-200 range (light green to deep green)
-    // t = (100-1)/199 ~ 0.497
-    // Should have low r, mid-high g, low b
-    expect(color).toMatch(/^rgb\(\d+, \d+, \d+\)$/);
-    const [r, g] = color.match(/\d+/g)!.map(Number);
-    expect(r).toBeLessThan(150); // Moving toward deep green (r=0)
-    expect(g).toBeGreaterThan(150); // Still green
-  });
-
-  it("returns a transition color for 300 minutes", () => {
-    const color = cellColorForMinutes(300);
-    // 300 is in 200-400 range (deep green to light red)
-    expect(color).toMatch(/^rgb\(\d+, \d+, \d+\)$/);
-  });
-
-  it("returns a red-range color for 600 minutes", () => {
-    const color = cellColorForMinutes(600);
-    // 600 is in 400-800 range (light red to deep red)
-    expect(color).toMatch(/^rgb\(\d+, \d+, \d+\)$/);
-    const [r, g] = color.match(/\d+/g)!.map(Number);
-    expect(r).toBeGreaterThan(180); // Red-ish
-    expect(g).toBeLessThan(100); // Low green
-  });
-
-  it("returns white for negative values", () => {
-    expect(cellColorForMinutes(-10)).toBe("rgb(255, 255, 255)");
+  it("mixes the danger token past 200 minutes", () => {
+    expect(heatColor(300)).toContain("var(--ui-danger)");
+    expect(heatColor(600)).toContain("var(--ui-danger)");
   });
 });
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   import CourseIdDialog from "$lib/components/CourseIdDialog.svelte";
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import { goto } from "$app/navigation";
@@ -28,13 +29,13 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseId, moodleCourseId, moodleSectionId })
         });
-        if (!response.ok) throw new Error("Moodle sync failed. Check the IDs and try again.");
+        if (!response.ok) throw new Error(t("classTime.moodleSyncFailed"));
       }
 
 
       goto(`/${courseId}/medians`);
     } catch (e) {
-      dialogError = e instanceof Error ? e.message : "Failed to load calendar data";
+      dialogError = e instanceof Error ? e.message : t("shell.loadError");
     } finally {
       dialogLoading = false;
     }

@@ -2,6 +2,7 @@
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
+  import { locale, t } from "@tutors/i18n";
   import log from "@tutors/logger";
 
   let { courseId }: { courseId: string } = $props();
@@ -10,7 +11,9 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  onMount(async () => {
+  async function load() {
+    loading = true;
+    error = null;
     const id = courseId.trim();
     if (!id) {
       error = "Course ID is required.";
@@ -27,18 +30,20 @@
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(load);
 
   const data = $derived(course?.learningRecords ?? []);
 
   function formatDate(dateString: string | null): string {
-    if (!dateString) return "N/A";
+    if (!dateString) return t("classTime.notAvailable");
     try {
       const date = new Date(dateString);
       return (
-        date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) +
+        date.toLocaleDateString(locale.value, { year: "numeric", month: "short", day: "numeric" }) +
         " " +
-        date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+        date.toLocaleTimeString(locale.value, { hour: "2-digit", minute: "2-digit" })
       );
     } catch {
       return dateString;
@@ -47,53 +52,45 @@
 
   // duration is already in minutes (converted at load)
   function formatDuration(minutes: number | null): string {
-    if (minutes === null) return "N/A";
+    if (minutes === null) return t("classTime.notAvailable");
     return `${Math.round(minutes)}`;
   }
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg">Loading learning records...</p>
-  </div>
+  <p role="status">{t("shell.loading")}</p>
 {:else if error}
-  <div class="ui-panel border-[var(--ui-danger)] p-4">
-    <p class="font-bold">Error loading data</p>
-    <p class="text-sm">{error}</p>
-  </div>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={load}>{t("shell.retry")}</button></div>
 {:else if data.length === 0}
-  <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-[var(--ui-muted)]">No learning records available</p>
-  </div>
+  <p class="ui-empty">{t("classTime.noLearningRecords")}</p>
 {:else}
-  <!-- Table -->
+  <section class="ui-panel">
   <div class="table-wrap overflow-x-auto">
     <table class="table">
       <thead>
         <tr>
-          <th>Student ID</th>
-          <th>Learning Object ID</th>
-          <th>Type</th>
-          <th class="text-right">Duration (minutes)</th>
-          <th class="text-right">Count</th>
-          <th>Last Accessed</th>
+          <th>{t("classTime.studentId")}</th>
+          <th>{t("classTime.learningObjectId")}</th>
+          <th>{t("content.type")}</th>
+          <th class="text-right">{t("classTime.durationMinutes")}</th>
+          <th class="text-right">{t("classTime.count")}</th>
+          <th>{t("classTime.lastAccessed")}</th>
         </tr>
       </thead>
       <tbody>
         {#each data as record (record.course_id + record.student_id + (record.lo_id || "") + (record.type || ""))}
           <tr>
             <td>{record.student_id}</td>
-            <td>{record.lo_id || "N/A"}</td>
-            <td>{record.type || "N/A"}</td>
+            <td>{record.lo_id || t("classTime.notAvailable")}</td>
+            <td>{record.type || t("classTime.notAvailable")}</td>
             <td class="text-right">{formatDuration(record.duration)}</td>
-            <td class="text-right">{record.count ?? "N/A"}</td>
+            <td class="text-right">{record.count ?? t("classTime.notAvailable")}</td>
             <td>{formatDate(record.date_last_accessed)}</td>
           </tr>
         {/each}
       </tbody>
     </table>
   </div>
-  <p class="mt-4 text-sm text-[var(--ui-muted)]">
-    Showing {data.length} learning {data.length === 1 ? "record" : "records"}
-  </p>
+  <p class="ui-muted mt-4 text-sm">{t("classTime.learningRecords")}: {data.length}</p>
+  </section>
 {/if}

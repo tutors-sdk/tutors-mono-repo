@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
+  import { invalidateAll } from "$app/navigation";
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { GridApi } from "ag-grid-community";
   import { GridLabModel } from "$lib/components/labs/GridLabModel";
@@ -51,8 +53,8 @@
           };
           const combined: LabRow = {
             ...medianRow,
-            studentid: "Course median",
-            full_name: "Course median",
+            studentid: t("time.median"),
+            full_name: t("time.median"),
             online_status: "",
             sentiment: "",
             avatar_url: ""
@@ -102,40 +104,14 @@
   <meta name="description" content="Course {title.toLowerCase()}" />
 </svelte:head>
 
-<section class="p-2 h-[calc(100vh-4rem)]">
-  <div class="ui-panel h-full flex flex-col">
-    <div class="flex flex-col flex-1 min-h-0">
-      {#if !course}
-        <div class="flex items-center justify-center flex-1">
-          <p class="text-lg">Loading lab data...</p>
-        </div>
-      {:else if courseError}
-        <div class="ui-panel border-[var(--ui-danger)] p-4">
-          <p class="font-bold">Error loading lab data</p>
-          <p class="text-sm">{courseError}</p>
-        </div>
-      {:else if !gridModel || gridModel.lab.rows.length === 0}
-        <div class="flex items-center justify-center flex-1">
-          <p class="text-lg text-[var(--ui-muted)]">No lab data found for this course.</p>
-        </div>
-      {:else}
-        <div class="flex-1 min-h-0 flex flex-col">
-          <div class="flex-1 min-h-0">
-            {#if gridModel?.error}
-              <div class="ui-panel border-[var(--ui-danger)] p-4">
-                <p class="font-bold">Error loading data</p>
-                <p class="text-sm">{gridModel.error}</p>
-              </div>
-            {:else}
-              <div class="flex h-full flex-col gap-2">
-                <div class="ag-theme-quartz grid-fill-container min-h-0 flex-1" role="grid" aria-label="Lab duration by student">
-                  <div bind:this={gridContainer} class="grid-fill-container"></div>
-                </div>
-              </div>
-            {/if}
-          </div>
-        </div>
-      {/if}
-    </div>
+{#if !course}
+  <p role="status">{t("shell.loading")}</p>
+{:else if courseError || gridModel?.error}
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => invalidateAll()}>{t("shell.retry")}</button></div>
+{:else if !gridModel || gridModel.lab.rows.length === 0}
+  <p class="ui-empty">{t("classTime.noLabs")}</p>
+{:else}
+  <div class="ag-theme-quartz time-grid" role="grid" aria-label={t("classTime.gridLabs")}>
+    <div bind:this={gridContainer} class="grid-fill-container"></div>
   </div>
-</section>
+{/if}

@@ -25,6 +25,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
     "@tutors/runtime": "workspace:*",
