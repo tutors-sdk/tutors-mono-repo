@@ -1,0 +1,11 @@
+{
+  "$comment": "Mutation score floor per mutated module (Rule 0114). Each is the measured Stryker score rounded down. pnpm check:mutation-floors fails below a floor, and once a score rises staleMargin points above one; raise it with --update. Every module in stryker.config.json's mutate list needs a floor.",
+  "staleMargin": 2,
+  "files": {
+    "packages/jsr/model/src/services/search.ts": 78,
+    "packages/jsr/model/src/utils/lo-utils.ts": 85,
+    "packages/jsr/model/src/types/type-utils.ts": 100,
+    "packages/jsr/time/src/services/base-calendar-model.ts": 96,
+    "packages/jsr/time/src/utils/calendar-utils.ts": 94
+  }
+}

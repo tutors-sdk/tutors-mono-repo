@@ -15,7 +15,7 @@
     "packages/jsr/time/src/services/base-calendar-model.ts",
     "packages/jsr/time/src/utils/calendar-utils.ts"
   ],
-  "reporters": ["html", "clear-text", "progress"],
+  "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
     "fileName": "reports/mutation/index.html"
   },

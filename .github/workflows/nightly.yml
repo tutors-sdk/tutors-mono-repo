@@ -403,9 +403,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Fails below the break threshold in stryker.config.json (testing ramp, R-T4).
+      # Rule 0113: fails below the break threshold in stryker.config.json.
       - name: Run Stryker
-        run: pnpm test:mutation --reporters clear-text,html,json
+        run: pnpm test:mutation
+
+      # Rule 0114: every mutated module holds its own floor in tests/mutation/mutation-floors.json.
+      - name: Check per-module mutation floors
+        run: pnpm check:mutation-floors reports/mutation/mutation.json
 
       - name: Upload mutation report
         if: always()

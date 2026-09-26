@@ -39,6 +39,8 @@
     "check:container": "tsx scripts/checks/container-smoke.ts",
     "check:build-identity": "tsx scripts/checks/build-identity.ts",
     "check:test-time": "tsx scripts/checks/test-time-budget.ts",
+    "check:coverage-floors": "tsx scripts/checks/coverage-floors.ts",
+    "check:mutation-floors": "tsx scripts/checks/mutation-floors.ts",
     "check:knip": "tsx scripts/checks/knip.ts",
     "check:audit": "tsx scripts/checks/dependency-audit.ts",
     "check:bundle": "tsx scripts/checks/bundle-budget.ts",
