@@ -18,7 +18,7 @@ first gate is the pull request.
 | Tier | Failure class it owns | Status | Where it runs |
 |---|---|---|---|
 | **A** | Structure — layer violations, package cycles, app-to-app imports, JSR/Node manifest drift, unused files, exports and dependencies | In repo | PR: `build-and-test` (`pnpm check:knip`, then `vitest`) |
-| **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
+| **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
 | **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
 | **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
 | **F** | Authorisation — who may call what | Planned ([#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77)) | — |
@@ -39,7 +39,7 @@ Three tiers predate the runway letters and still carry weight:
 | Tier | Owns | Where it runs |
 |---|---|---|
 | Contract / API surface | Public exports of the three JSR packages, Supabase row and RPC shapes, realtime message shapes, generated course JSON | PR: `pnpm api-report:check` in `build-and-test`. Nightly: `contract-snapshots`. RC: Gate 2b |
-| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Local only — `pnpm test:mutation`. No workflow runs it |
+| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Nightly `mutation` job, then `pnpm check:mutation-floors` per module (Rules 0113, 0114); locally `pnpm test:mutation` |
 | Release artifact | The CLI's output for the reference course against the last published CLI | Push to `rc/**`: `rc-validation.yml` Gate 6, `release-testing.yml` Gates 6a–6c |
 
 ## Commands
@@ -50,7 +50,7 @@ Every command below exists in the root `package.json`.
 |---|---|
 | `pnpm lint` | ESLint over the repo |
 | `pnpm test` | `vitest run` — everything under `tests/` except `e2e`, `e2e-stack`, `release` and `fuzz` |
-| `pnpm test:coverage` | The same run with v8 coverage against the thresholds in `vitest.config.ts` |
+| `pnpm test:coverage` | The same run with v8 coverage over every source file, against the floors in `tests/suite-health/coverage-floors.json` |
 | `pnpm test:bdd` | The executable features: `tests/bdd/steps/` bound to `tests/bdd/features/` |
 | `pnpm test:contract` | `tests/contract/` — API surface snapshots and Zod shape checks |
 | `pnpm test:fuzz` | The property suites, on the threads pool (`vitest.config.fuzz.ts`) |
@@ -142,7 +142,7 @@ Only what CI enforces today.
 
 | Stage | Blocks on |
 |---|---|
-| PR to `main` | `CI success`. That includes coverage below the thresholds in `vitest.config.ts` (statements 55, branches 50, functions 65, lines 55), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
+| PR to `main` | `CI success`. That includes coverage below a floor in `tests/suite-health/coverage-floors.json` or 2+ points above one (`pnpm check:coverage-floors`, Rules 0111 and 0112), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
 | Push to `rc/**` | `rc-validation.yml` — its `RC Readiness Report` fails if any gate failed — and `release-testing.yml`, whose report blocks on artifact regression and smoke tests and only warns on the performance benchmark |
 | Nightly | Nothing. A red nightly is a bug to chase, not a merge block |
 
