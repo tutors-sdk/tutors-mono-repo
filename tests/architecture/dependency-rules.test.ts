@@ -37,6 +37,7 @@ describe("architecture rules (runway tier A)", () => {
       ["layer-core", "packages/svelte/course/src/tree.ts", "packages/svelte/themes/src/index.ts"],
       ["layer-feature", "packages/svelte/themes/src/reaches-up.ts", "packages/svelte/ui-primitives/src/index.ts"],
       ["layer-ui-primitives", "packages/svelte/ui-primitives/src/reaches-up.ts", "packages/svelte/ui-navigators/src/index.ts"],
+      ["ui-primitives-no-data-features", "packages/svelte/ui-primitives/src/reaches-data.ts", "packages/svelte/utils/rbac/src/index.ts"],
       ["layer-ui-navigators", "packages/svelte/ui-navigators/src/index.ts", "packages/svelte/ui-components/src/index.ts"],
       ["layer-ui-components", "packages/svelte/ui-components/src/reaches-up.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-app-to-app", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
