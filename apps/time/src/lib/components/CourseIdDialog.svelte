@@ -1,12 +1,10 @@
 <script lang="ts">
-  type Selection = { courseId: string; startDate: string | null; endDate: string | null; moodleCourseId: string | null; moodleSectionId: string | null };
+  type Selection = { courseId: string; startDate: string | null; endDate: string | null };
   let { loading, error, onsubmit }: { loading: boolean; error: string | null; onsubmit: (selection: Selection) => void } = $props();
 
   let courseIdsInput = $state("");
   let startDateInput = $state('');
   let endDateInput = $state('');
-  let moodleCourseIdInput = $state('');
-  let moodleSectionIdInput = $state('');
   let dateRangeError = $state<string | null>(null);
 
 
@@ -69,15 +67,10 @@
 
     dateRangeError = null;
 
-    const moodleCourseId = moodleCourseIdInput.trim() || null;
-    const moodleSectionId = moodleSectionIdInput.trim() || null;
-
     onsubmit({
       courseId,
       startDate,
-      endDate,
-      moodleCourseId,
-      moodleSectionId
+      endDate
     });
   }
 
@@ -126,39 +119,13 @@
       {#if dateRangeError}
         <p role="alert" class="text-sm text-error-500">{dateRangeError}</p>
       {/if}
-      <details class="border-t border-[var(--ui-border)] pt-3">
-        <summary class="flex cursor-pointer items-center font-medium">Advanced · Moodle sync</summary>
-        <p class="ui-muted my-3 text-sm">Providing a Moodle course ID syncs assignments when you load the course.</p>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label for="moodle-course-id-input" class="label">Moodle Course ID (optional)</label>
-          <input
-            id="moodle-course-id-input"
-            type="text"
-            bind:value={moodleCourseIdInput}
-            placeholder="e.g. 1234"
-            class="input"
-          />
-        </div>
-        <div>
-          <label for="moodle-section-id-input" class="label">Moodle Section ID (optional)</label>
-          <input
-            id="moodle-section-id-input"
-            type="text"
-            bind:value={moodleSectionIdInput}
-            placeholder="e.g. 5678"
-            class="input"
-          />
-        </div>
-      </div>
-      </details>
       <div class="flex justify-end gap-2">
         <button
           type="submit"
           class="ui-button ui-button-primary"
           disabled={loading}
         >
-          {loading ? 'Loading…' : moodleCourseIdInput.trim() ? 'Load & sync Moodle' : 'Load course'}
+          {loading ? 'Loading…' : 'Load course'}
         </button>
       </div>
     </form>

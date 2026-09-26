@@ -7,6 +7,6 @@
 # Format: `<app> <METHOD> <route id> | who: <callers>`
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
-time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one)
+time POST /api/sync | who: an operator holding PRIVATE_MOODLE_SYNC_TOKEN (else 401); the browser cannot call it
 reader POST /auth/signin/github | hook | who: anyone; Auth.js starts the GitHub OAuth flow
 reader POST /auth/signout | hook | who: a signed-in user; Auth.js checks its own CSRF token
