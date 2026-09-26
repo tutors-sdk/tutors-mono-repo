@@ -96,7 +96,6 @@
     "packages/svelte/utils/metrics/src/middleware.ts": 76,
     "packages/svelte/utils/runtime/src/clock.ts": 86,
     "packages/svelte/utils/logger/src/index.ts": 100,
-    "packages/jsr/time/src/services/source.ts": 82,
-    "packages/svelte/community/src/utils/reader-api.ts": 73
+    "packages/jsr/time/src/services/source.ts": 82
   }
 }
