@@ -1,30 +1,31 @@
 import type { LayoutLoad } from "./$types";
 import { TutorsTime } from "@tutors/tutors-time-lib";
+import type { MessageKey } from "@tutors/i18n";
 
 export const ssr = false;
 
 const VIEWS = ["calendar", "lab", "medians", "assignments"];
 
 /** Derive a human-readable view type from the current pathname. */
-function getViewType(pathname: string): string {
+function getViewType(pathname: string): MessageKey | "" {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length < 1) return "";
-  if (segments.length === 2 && !VIEWS.includes(segments[1])) return "Student Calendar"; // /courseid/studentid
-  if (segments[1] === "medians") return "Medians";
-  if (segments[1] === "assignments") return "Assignments";
+  if (segments.length === 2 && !VIEWS.includes(segments[1])) return "classTime.student"; // /courseid/studentid
+  if (segments[1] === "medians") return "classTime.medians";
+  if (segments[1] === "assignments") return "classTime.assignments";
   // /courseid redirects to medians, so this is rarely seen
-  if (segments.length === 1) return "Medians";
+  if (segments.length === 1) return "classTime.medians";
   if (segments[1] === "calendar") {
-    if (segments[2] === "byday") return "Calendar by day";
-    if (segments[2] === "byweek") return "Calendar by week";
-    if (segments[2] === "raw") return "Raw calendar";
-    if (segments.length >= 2) return "Calendar";
+    if (segments[2] === "byday") return "classTime.calendarByDay";
+    if (segments[2] === "byweek") return "classTime.calendarByWeek";
+    if (segments[2] === "raw") return "classTime.rawCalendar";
+    if (segments.length >= 2) return "classTime.calendar";
   }
   if (segments[1] === "lab") {
-    if (segments[2] === "bystep") return "Labs by step";
-    if (segments[2] === "bylab") return "Labs by lab";
-    if (segments[2] === "learning-records") return "Learning records";
-    if (segments.length >= 2) return "Lab";
+    if (segments[2] === "bystep") return "classTime.labsByStep";
+    if (segments[2] === "bylab") return "classTime.labsByLab";
+    if (segments[2] === "learning-records") return "classTime.learningRecords";
+    if (segments.length >= 2) return "classTime.labs";
   }
   return "";
 }

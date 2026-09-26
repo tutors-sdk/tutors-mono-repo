@@ -12,6 +12,8 @@
   } from "@tutors/community";
   import ConnectLatestLosCards from "@tutors/ui-components/time/ConnectLatestLosCards.svelte";
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
+  import { t } from "@tutors/i18n";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import type { Course } from "@tutors/tutors-model-lib";
 
   interface Props {
@@ -58,36 +60,37 @@
   });
 </script>
 
+<SecondaryNavigator home={{ title: t("home.live"), route: "/" }} lo={{ breadCrumbs: [{ title: data.course.title, route: `/${data.courseid}` }] }} />
 <div class="ui-page">
   <header class="live-header">
     <div>
-      <p class="ui-eyebrow">Live</p>
+      <p class="ui-eyebrow">{t("home.live")}</p>
       <h1 class="ui-title">{data.course.title}</h1>
-      <p class="ui-muted">Who is studying this course now, and what each learner opened most recently.</p>
+      <p class="ui-muted">{t("live.courseSummary")}</p>
     </div>
-    <a class="ui-button" target="_blank" rel="noopener noreferrer" href="https://tutors.dev/course/{data.course.courseId}">Open course ↗</a>
+    <a class="ui-button" target="_blank" rel="noopener noreferrer" href="https://tutors.dev/course/{data.course.courseId}">{t("live.openCourse")} <span aria-hidden="true">↗</span></a>
   </header>
 
   <div class="live-body">
     <section class="ui-panel">
-      <h2 class="ui-section-title">Online now</h2>
-      <ConnectLatestLosCards los={studentsOnlineVisible} emptyMessage="No students currently online" />
+      <h2 class="ui-section-title">{t("live.onlineNow")}</h2>
+      <ConnectLatestLosCards los={studentsOnlineVisible} emptyMessage={t("live.emptyOnline")} />
     </section>
 
     <section class="ui-panel">
-      <h2 class="ui-section-title">Latest activity</h2>
+      <h2 class="ui-section-title">{t("live.latestActivity")}</h2>
       <Tabs defaultValue="Day">
         <Tabs.List>
-          <Tabs.Trigger value="Day">Today</Tabs.Trigger>
-          <Tabs.Trigger value="Week">This week</Tabs.Trigger>
-          <Tabs.Trigger value="Month">This month</Tabs.Trigger>
-          <Tabs.Trigger value="Year">This year</Tabs.Trigger>
+          <Tabs.Trigger value="Day">{t("live.today")}</Tabs.Trigger>
+          <Tabs.Trigger value="Week">{t("live.thisWeek")}</Tabs.Trigger>
+          <Tabs.Trigger value="Month">{t("live.thisMonth")}</Tabs.Trigger>
+          <Tabs.Trigger value="Year">{t("live.thisYear")}</Tabs.Trigger>
           <Tabs.Indicator />
         </Tabs.List>
-        <Tabs.Content value="Day"><ConnectLatestLosCards los={losThisDay} emptyMessage="No activity today" /></Tabs.Content>
-        <Tabs.Content value="Week"><ConnectLatestLosCards los={losThisWeek} emptyMessage="No activity this week" /></Tabs.Content>
-        <Tabs.Content value="Month"><ConnectLatestLosCards los={losThisMonth} emptyMessage="No activity this month" /></Tabs.Content>
-        <Tabs.Content value="Year"><ConnectLatestLosCards los={losThisYear} emptyMessage="No activity this year" /></Tabs.Content>
+        <Tabs.Content value="Day"><ConnectLatestLosCards los={losThisDay} emptyMessage={t("live.emptyToday")} /></Tabs.Content>
+        <Tabs.Content value="Week"><ConnectLatestLosCards los={losThisWeek} emptyMessage={t("live.emptyWeek")} /></Tabs.Content>
+        <Tabs.Content value="Month"><ConnectLatestLosCards los={losThisMonth} emptyMessage={t("live.emptyMonth")} /></Tabs.Content>
+        <Tabs.Content value="Year"><ConnectLatestLosCards los={losThisYear} emptyMessage={t("live.emptyYear")} /></Tabs.Content>
       </Tabs>
     </section>
   </div>

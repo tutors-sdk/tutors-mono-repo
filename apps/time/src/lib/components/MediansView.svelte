@@ -3,6 +3,8 @@
   import { BaseLabModel, extractLabIdentifier, extractStepName, formatDateShort } from "@tutors/tutors-time-lib";
   import ActivityTable from "@tutors/ui-components/time/ActivityTable.svelte";
   import Heatmap from "@tutors/ui-components/time/Heatmap.svelte";
+  import { t } from "@tutors/i18n";
+  import { invalidateAll } from "$app/navigation";
 
   interface Props {
     course: TutorsTimeCourse | null;
@@ -36,22 +38,22 @@
 </svelte:head>
 
 {#if !course}
-  <p role="status">Loading course data…</p>
+  <p role="status">{t("shell.loading")}</p>
 {:else if course.error}
-  <p class="ui-empty" role="alert">Error loading course: {course.error}</p>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => invalidateAll()}>{t("shell.retry")}</button></div>
 {:else if !medianByWeek && !medianByDay && !medianByLab && !medianByStep}
-  <p class="ui-empty">No median data found for this course.</p>
+  <p class="ui-empty">{t("classTime.noMedians")}</p>
 {:else}
   {#if dates.length > 0 && (medianByDay || labsMedianByDay)}
     <div class="heatmaps">
-      {#if medianByDay}<Heatmap id="medians-calendar-heatmap" title="Calendar median by day" values={medianByDay} {dates} />{/if}
-      {#if labsMedianByDay}<Heatmap id="medians-lab-heatmap" title="Lab median by day" values={labsMedianByDay} {dates} />{/if}
+      {#if medianByDay}<Heatmap id="medians-calendar-heatmap" title={t("classTime.calendarMedianByDay")} values={medianByDay} {dates} />{/if}
+      {#if labsMedianByDay}<Heatmap id="medians-lab-heatmap" title={t("classTime.labMedianByDay")} values={labsMedianByDay} {dates} />{/if}
     </div>
   {/if}
-  <ActivityTable title="Calendar median by week" columns={dated(calModel?.weeks)} rows={[{ label: "Median", values: medianByWeek, total: medianByWeek?.totalSeconds, median: true }]} />
-  <ActivityTable title="Calendar median by day" columns={dated(dates)} rows={[{ label: "Median", values: medianByDay, total: medianByDay?.totalSeconds, median: true }]} />
-  <ActivityTable title="Lab median by lab" columns={(labsModel?.labs ?? []).map((key) => ({ key, label: extractLabIdentifier(key) }))} rows={[{ label: "Median", values: medianByLab, total: medianByLab?.totalMinutes, median: true }]} />
-  <ActivityTable title="Lab median by step" columns={(labsModel?.steps ?? []).map((key) => ({ key, label: extractStepName(key) }))} rows={[{ label: "Median", values: medianByStep, total: medianByStep?.totalMinutes, median: true }]} />
+  <ActivityTable title={t("classTime.calendarMedianByWeek")} columns={dated(calModel?.weeks)} rows={[{ label: t("classTime.median"), values: medianByWeek, total: medianByWeek?.totalSeconds, median: true }]} />
+  <ActivityTable title={t("classTime.calendarMedianByDay")} columns={dated(dates)} rows={[{ label: t("classTime.median"), values: medianByDay, total: medianByDay?.totalSeconds, median: true }]} />
+  <ActivityTable title={t("classTime.labMedianByLab")} columns={(labsModel?.labs ?? []).map((key) => ({ key, label: extractLabIdentifier(key) }))} rows={[{ label: t("classTime.median"), values: medianByLab, total: medianByLab?.totalMinutes, median: true }]} />
+  <ActivityTable title={t("classTime.labMedianByStep")} columns={(labsModel?.steps ?? []).map((key) => ({ key, label: extractStepName(key) }))} rows={[{ label: t("classTime.median"), values: medianByStep, total: medianByStep?.totalMinutes, median: true }]} />
 {/if}
 
 <style>

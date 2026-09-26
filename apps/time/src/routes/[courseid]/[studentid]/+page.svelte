@@ -3,6 +3,8 @@
   import PinDialog from "$lib/components/PinDialog.svelte";
   import HeatMaps from "@tutors/ui-components/time/HeatMaps.svelte";
   import Tables from "@tutors/ui-components/time/Tables.svelte";
+  import { t } from "@tutors/i18n";
+  import { invalidateAll } from "$app/navigation";
 
   interface Props {
     data: { course: { id: string; pin: string } | null; studentCalendar: TutorsTimeStudent };
@@ -29,9 +31,9 @@
 </svelte:head>
 
 {#if data.studentCalendar?.error}
-  <p class="ui-empty" role="alert">Error loading student calendar: {data.studentCalendar.error}</p>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => invalidateAll()}>{t("shell.retry")}</button></div>
 {:else if data.studentCalendar && !data.studentCalendar.hasData}
-  <p class="ui-empty">No calendar or lab data found for this student in this course.</p>
+  <p class="ui-empty">{t("classTime.noStudentData")}</p>
 {:else if data.studentCalendar}
   <HeatMaps studentCalendar={data.studentCalendar} />
   <Tables studentCalendar={data.studentCalendar} />

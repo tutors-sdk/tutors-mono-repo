@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   import type { CourseVisit } from "@tutors/connect";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
 
@@ -9,7 +10,7 @@
 </script>
 
 <section class="ui-panel">
-  <h2 class="ui-section-title catalogue-heading">Most visited courses</h2>
+  <h2 class="ui-section-title catalogue-heading">{t("catalogue.mostVisited")}</h2>
   <div class="ui-grid card-grid">
     {#each courseRecords as courseRecord}
       <div class="min-w-0">
@@ -19,13 +20,13 @@
             title: courseRecord?.title,
             type: "course",
             summary: courseRecord?.credits,
-            metric: courseRecord?.visits ? `${courseRecord.visits} visits` : undefined,
+            metric: courseRecord?.visits ? `${courseRecord.visits} ${t("catalogue.visits")}` : undefined,
             img: courseRecord?.img,
             icon: courseRecord?.icon
           }}
         />
       </div>
-    {:else}<p class="ui-empty">No courses are available to display.</p>
+    {:else}<p class="ui-empty">{t("catalogue.empty")}</p>
     {/each}
   </div>
 </section>

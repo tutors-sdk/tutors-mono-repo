@@ -2,7 +2,7 @@
   import type { Lo } from "@tutors/tutors-model-lib";
   import { t } from "@tutors/i18n";
   import { courseService } from "@tutors/course/course";
-  let { lo, parentCourse = null } = $props();
+  let { lo, parentCourse = null, home = null } = $props();
   const crumbs: Lo[] = $derived(lo?.breadCrumbs ?? []);
 
   // parentCourse is a route such as "course/tutors-reference-manual"; show that course's title once it loads.
@@ -18,7 +18,7 @@
 </script>
 <nav aria-label={t("a11y.breadcrumbs")}>
   <ol class="breadcrumbs">
-    <li><a href="/">{t("shell.myCourses")}</a></li>
+    <li><a href={home?.route ?? "/"}>{home?.title ?? t("shell.myCourses")}</a></li>
     {#if parentCourse}<li aria-hidden="true">/</li><li><a href={`/${parentCourse}`}>{parentTitle || t("shell.parentCourse")}</a></li>{/if}
     {#each crumbs as crumb, i}
       <li aria-hidden="true">/</li>

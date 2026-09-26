@@ -15,12 +15,12 @@
   import ConnectedProfile from "./tutors-connect/ConnectedProfile.svelte";
   import AnonProfile from "./tutors-connect/AnonProfile.svelte";
 
-  let { showConnect = true, title, titleHref, navigation }: { showConnect?: boolean; title?: string; titleHref?: string; navigation?: Snippet } = $props();
+  let { showConnect = true, title, titleHref, navigation, current = "" }: { showConnect?: boolean; title?: string; titleHref?: string; navigation?: Snippet; current?: string } = $props();
   const isCourseHome = $derived(!!currentCourse.value && page.url.pathname.replace(/\/$/, "") === currentCourse.value.route);
   // Cmd/Ctrl+K and "/" open the search dialog (SearchButton).
 </script>
 {#snippet menuSelector()}<span class="menu-toggle"><Icon icon="lucide:menu" height="22" /></span>{/snippet}
-{#snippet sidebarContent()}<div class="mobile-course-navigation">{#if navigation}{@render navigation()}{:else}<CourseNavigation {showConnect} mobile />{/if}</div>{/snippet}
+{#snippet sidebarContent()}<div class="mobile-course-navigation">{#if navigation}{@render navigation()}{:else}<CourseNavigation {showConnect} {current} mobile />{/if}</div>{/snippet}
 <nav class="main-navigation" aria-label={t("a11y.mainNavigation")}>
   <div class="mobile-menu"><Sidebar position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
   {#if !currentCourse.value}

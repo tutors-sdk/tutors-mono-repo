@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import Icon from "@iconify/svelte";
+  import { t, type MessageKey } from "@tutors/i18n";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import CourseNavigation from "@tutors/ui-navigators/CourseNavigation.svelte";
 
   interface Props {
@@ -9,28 +10,29 @@
 
   let { courseId }: Props = $props();
 
-  const navLinks = $derived([
-    { label: "Medians", href: `/${courseId}/medians`, icon: "lucide:chart-no-axes-column" },
-    { label: "Calendar by week", href: `/${courseId}/calendar/byweek`, icon: "lucide:calendar-range" },
-    { label: "Calendar by day", href: `/${courseId}/calendar/byday`, icon: "lucide:calendar-days" },
-    { label: "Labs by lab", href: `/${courseId}/lab/bylab`, icon: "lucide:flask-conical" },
-    { label: "Labs by step", href: `/${courseId}/lab/bystep`, icon: "lucide:list-ordered" },
-    { label: "Raw calendar", href: `/${courseId}/calendar/raw`, icon: "lucide:table" },
-    { label: "Learning records", href: `/${courseId}/lab/learning-records`, icon: "lucide:notebook-tabs" },
-    { label: "Assignments", href: `/${courseId}/assignments`, icon: "lucide:clipboard-list" }
-  ]);
+  const navLinks: { label: MessageKey; path: string; icon: string }[] = [
+    { label: "classTime.medians", path: "medians", icon: "lucide:chart-no-axes-column" },
+    { label: "classTime.calendarByWeek", path: "calendar/byweek", icon: "lucide:calendar-range" },
+    { label: "classTime.calendarByDay", path: "calendar/byday", icon: "lucide:calendar-days" },
+    { label: "classTime.labsByLab", path: "lab/bylab", icon: "lucide:flask-conical" },
+    { label: "classTime.labsByStep", path: "lab/bystep", icon: "lucide:list-ordered" },
+    { label: "classTime.rawCalendar", path: "calendar/raw", icon: "lucide:table" },
+    { label: "classTime.learningRecords", path: "lab/learning-records", icon: "lucide:notebook-tabs" },
+    { label: "classTime.assignments", path: "assignments", icon: "lucide:clipboard-list" }
+  ];
 </script>
 
 {#if !courseId}
   <CourseNavigation showConnect={false} />
 {:else}
-<nav class="time-navigation" aria-label="Class activity">
-  <p class="nav-section">Class activity</p>
-  {#each navLinks as item (item.href)}
-    <a class="nav-row" href={item.href} aria-current={page.url.pathname === item.href ? "page" : undefined}><Icon icon={item.icon} width="24" /><span>{item.label}</span></a>
+<nav class="time-navigation" aria-label={t("shell.classActivity")}>
+  <p class="nav-section">{t("shell.classActivity")}</p>
+  {#each navLinks as item (item.path)}
+    {@const href = `/${courseId}/${item.path}`}
+    <a class="nav-row" {href} aria-current={page.url.pathname === href ? "page" : undefined}><Icon icon={item.icon} height="24" /><span>{t(item.label)}</span></a>
   {/each}
-  <p class="nav-section">Course</p>
-  <a class="nav-row" href="/"><Icon icon="lucide:arrow-left-right" width="24" /><span>Change course</span></a>
+  <p class="nav-section">{t("classTime.course")}</p>
+  <a class="nav-row" href="/"><Icon icon="lucide:arrow-left-right" height="24" /><span>{t("classTime.changeCourse")}</span></a>
 </nav>
 {/if}
 

@@ -1,45 +1,52 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { t, type MessageKey } from "@tutors/i18n";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import StudentAvatar from "$lib/components/StudentAvatar.svelte";
-  import SentimentIcon, { SENTIMENT_ICONS, type Sentiment } from "$lib/components/SentimentIcon.svelte";
 
   let { children } = $props();
 
-  const summaries: Record<string, string> = {
-    Medians: "The median student's minutes across the course, by day, week, lab and step.",
-    "Calendar by week": "Minutes each student was active in the course, week by week.",
-    "Calendar by day": "Minutes each student was active in the course, day by day.",
-    "Labs by lab": "Minutes each student spent in each lab.",
-    "Labs by step": "Minutes each student spent on each lab step.",
-    "Raw calendar": "Every calendar record for the course, as stored.",
-    "Learning records": "Every lab learning record for the course, as stored.",
-    Assignments: "Moodle assignments for the course and how many students have submitted each."
+  const summaries: Partial<Record<MessageKey, MessageKey>> = {
+    "classTime.medians": "classTime.mediansSummary",
+    "classTime.calendarByWeek": "classTime.calendarByWeekSummary",
+    "classTime.calendarByDay": "classTime.calendarByDaySummary",
+    "classTime.labsByLab": "classTime.labsByLabSummary",
+    "classTime.labsByStep": "classTime.labsByStepSummary",
+    "classTime.rawCalendar": "classTime.rawCalendarSummary",
+    "classTime.learningRecords": "classTime.learningRecordsSummary",
+    "classTime.assignments": "classTime.assignmentsSummary"
   };
 
+  const courseId = $derived(page.params.courseid ?? "");
   const student = $derived(page.data.studentName as string | null);
-  const sentiment = $derived((page.data.sentiment ?? "neutral") as Sentiment);
-  const viewType = $derived((page.data.viewType ?? "") as string);
+  const sentiment = $derived((page.data.sentiment as string | null) || "neutral");
+  const viewType = $derived(page.data.viewType as MessageKey | null);
+  const summary = $derived(viewType ? summaries[viewType] : undefined);
 </script>
 
+{#if student}
+  <SecondaryNavigator home={{ title: t("shell.classActivity"), route: `/${courseId}/medians` }} lo={{ breadCrumbs: [{ title: student, route: page.url.pathname }] }} />
+{/if}
 <div class="ui-page">
   {#if student}
     <header class="time-header">
       <div>
-        <p class="ui-eyebrow">Student</p>
+        <p class="ui-eyebrow">{t("classTime.student")}</p>
         <h1 class="ui-title">{student}</h1>
-        <p class="ui-muted">Minutes this student was active, beside the course median.</p>
+        <p class="ui-muted">{t("classTime.studentSummary")}</p>
       </div>
       <div class="time-header-art">
-        {#if sentiment in SENTIMENT_ICONS}<SentimentIcon {sentiment} label={`Sentiment: ${sentiment}`} />{/if}
+        <Icon type={sentiment} tip={`${t("content.sentimentLabel")}: ${sentiment}`} height="40" />
         <StudentAvatar fullName={student} avatarUrl={page.data.avatarUrl} size="size-16" initialClass="text-2xl" />
       </div>
     </header>
-  {:else}
+  {:else if viewType}
     <header class="time-header">
       <div>
-        <p class="ui-eyebrow">Class activity</p>
-        <h1 class="ui-title">{viewType}</h1>
-        {#if summaries[viewType]}<p class="ui-muted">{summaries[viewType]}</p>{/if}
+        <p class="ui-eyebrow">{t("shell.classActivity")}</p>
+        <h1 class="ui-title">{t(viewType)}</h1>
+        {#if summary}<p class="ui-muted">{t(summary)}</p>{/if}
       </div>
     </header>
   {/if}

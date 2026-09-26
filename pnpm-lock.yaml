@@ -127,6 +127,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/i18n
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -205,6 +208,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/i18n
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -420,6 +426,9 @@ importers:
       '@tutors/community':
         specifier: workspace:*
         version: link:../../packages/svelte/community
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/i18n
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger

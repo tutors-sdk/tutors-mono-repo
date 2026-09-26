@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   interface Props {
     courseId: string;
@@ -11,7 +12,7 @@
   <h2 class="ui-section-title">
     <a target="_blank" rel="noopener noreferrer" href="https://tutors.dev/course/{courseId}"><Icon type="course" height="24" /><span>{courseTitle}</span></a>
   </h2>
-  <a class="ui-button" href="/{courseId}"><Icon type="live" height="20" /><span>Live stream</span></a>
+  <a class="ui-button" href="/{courseId}"><Icon type="live" height="20" /><span>{t("live.stream")}</span></a>
 </div>
 
 <style>

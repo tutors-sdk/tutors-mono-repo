@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
+  import { invalidateAll } from "$app/navigation";
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { GridApi } from "ag-grid-community";
   import { GridLabModel } from "$lib/components/labs/GridLabModel";
@@ -51,8 +53,8 @@
           };
           const combined: LabRow = {
             ...medianRow,
-            studentid: "Course median",
-            full_name: "Course median",
+            studentid: t("time.median"),
+            full_name: t("time.median"),
             online_status: "",
             sentiment: "",
             avatar_url: ""
@@ -103,13 +105,13 @@
 </svelte:head>
 
 {#if !course}
-  <p role="status">Loading lab data…</p>
+  <p role="status">{t("shell.loading")}</p>
 {:else if courseError || gridModel?.error}
-  <p class="ui-empty" role="alert">Error loading lab data: {courseError ?? gridModel?.error}</p>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => invalidateAll()}>{t("shell.retry")}</button></div>
 {:else if !gridModel || gridModel.lab.rows.length === 0}
-  <p class="ui-empty">No lab data found for this course.</p>
+  <p class="ui-empty">{t("classTime.noLabs")}</p>
 {:else}
-  <div class="ag-theme-quartz time-grid" role="grid" aria-label="Lab duration by student">
+  <div class="ag-theme-quartz time-grid" role="grid" aria-label={t("classTime.gridLabs")}>
     <div bind:this={gridContainer} class="grid-fill-container"></div>
   </div>
 {/if}

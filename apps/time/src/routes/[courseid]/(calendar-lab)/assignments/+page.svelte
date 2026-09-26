@@ -1,8 +1,8 @@
 <script lang="ts">
   import AssignmentsTable from "$lib/components/tables/AssignmentsTable.svelte";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
 
-  const courseId = $derived(($page.params.courseid as string) ?? "");
+  const courseId = $derived((page.params.courseid as string) ?? "");
 </script>
 
 <svelte:head>

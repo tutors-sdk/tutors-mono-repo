@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   import { liveService } from "@tutors/community";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
 </script>
@@ -18,7 +19,7 @@
           }}
         />
       </div>
-    {:else}<p class="ui-empty">No courses have shared activity yet.</p>
+    {:else}<p class="ui-empty">{t("live.emptyCourses")}</p>
     {/each}
   </div>
 </section>

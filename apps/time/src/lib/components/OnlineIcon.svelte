@@ -18,6 +18,7 @@
 
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { t } from "@tutors/i18n";
 
   interface Props {
     /** Typically `"online"` or `"offline"` from tutors-connect-users (other values show as offline). */
@@ -34,7 +35,7 @@
   const presence = $derived(normalizeOnlineStatus(status));
   const config = $derived(ONLINE_ICONS[presence]);
   const background = $derived(bgClass(config.color));
-  const ariaLabel = $derived(label ?? (presence === "online" ? "Online" : "Offline"));
+  const ariaLabel = $derived(label ?? (presence === "online" ? t("classTime.online") : t("classTime.offline")));
 </script>
 
 <span

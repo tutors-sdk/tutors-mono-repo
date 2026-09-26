@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   import { Dialog, Portal } from "@skeletonlabs/skeleton-svelte";
 
   const STORAGE_KEY_PREFIX = "tutors-time-pin-verified-";
@@ -48,7 +49,7 @@
   function handleSubmit() {
     const trimmed = enteredPin.trim();
     if (!trimmed) {
-      error = "Please enter a PIN";
+      error = t("classTime.pinRequired");
       return;
     }
 
@@ -57,7 +58,7 @@
       if (sessionKey) setVerifiedForSession(sessionKey);
       onVerified?.();
     } else {
-      error = "Incorrect PIN. Please try again.";
+      error = t("classTime.pinIncorrect");
     }
   }
 </script>
@@ -69,18 +70,18 @@
       <Dialog.Content
         class="ui-panel w-full max-w-md space-y-4 shadow-[0_12px_32px_#0000001a] {animation}"
       >
-        <Dialog.Title class="ui-section-title">Enter PIN</Dialog.Title>
-        <Dialog.Description class="text-[var(--ui-muted)]">
-          Please enter the PIN code to continue.
+        <Dialog.Title class="ui-section-title">{t("classTime.pinTitle")}</Dialog.Title>
+        <Dialog.Description class="ui-muted">
+          {t("classTime.pinDescription")}
         </Dialog.Description>
         <div class="space-y-4">
           <div>
-            <label for="pin-input" class="ui-label">PIN code</label>
+            <label for="pin-input" class="ui-label">{t("classTime.pinLabel")}</label>
             <input
               id="pin-input"
               type="password"
               bind:value={enteredPin}
-              placeholder="Enter PIN"
+              placeholder={t("classTime.pinTitle")}
               class="input w-full"
               onkeydown={(e) => e.key === "Enter" && handleSubmit()}
             />
@@ -90,7 +91,7 @@
           </div>
           <div class="flex justify-end gap-2">
             <button type="button" onclick={handleSubmit} class="ui-button ui-button-primary">
-              Verify
+              {t("classTime.verify")}
             </button>
           </div>
         </div>

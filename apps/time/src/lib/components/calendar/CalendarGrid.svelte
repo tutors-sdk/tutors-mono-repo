@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
+  import { invalidateAll } from "$app/navigation";
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { ColDef, GridApi } from "ag-grid-community";
   import { GridCalendarModel } from "$lib/components/calendar/GridCalendarModel";
@@ -77,7 +79,7 @@
             const combined: CalendarRow = {
               ...medianRow,
               studentid: "",
-              full_name: "Course median",
+              full_name: t("time.median"),
               online_status: "",
               sentiment: "",
               avatar_url: ""
@@ -99,11 +101,11 @@
   const ariaLabel = $derived(
     isSummary
       ? mode === "day"
-        ? "Course median by day"
-        : "Course median by week"
+        ? t("classTime.gridMedianByDay")
+        : t("classTime.gridMedianByWeek")
       : mode === "day"
-        ? "Course usage by student and day"
-        : "Course usage by student and week"
+        ? t("classTime.gridByDay")
+        : t("classTime.gridByWeek")
   );
 
   let gridContainer = $state<HTMLDivElement | null>(null);
@@ -148,11 +150,11 @@
 </svelte:head>
 
 {#if !course}
-  <p role="status">Loading calendar data…</p>
+  <p role="status">{t("shell.loading")}</p>
 {:else if courseError || model?.error}
-  <p class="ui-empty" role="alert">Error loading calendar: {courseError ?? model?.error}</p>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={() => invalidateAll()}>{t("shell.retry")}</button></div>
 {:else if !hasData}
-  <p class="ui-empty">No calendar data found for this course.</p>
+  <p class="ui-empty">{t("classTime.noCalendar")}</p>
 {:else}
   <div class="ag-theme-quartz time-grid" role="grid" aria-label={ariaLabel}>
     <div bind:this={gridContainer} class="grid-fill-container"></div>

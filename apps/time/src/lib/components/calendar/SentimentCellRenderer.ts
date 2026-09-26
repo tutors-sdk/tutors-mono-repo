@@ -1,20 +1,17 @@
 import type { ICellRendererComp, ICellRendererParams } from "ag-grid-community";
 import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
 import { mount, unmount } from "svelte";
-import SentimentIcon, { SENTIMENT_ICONS, type Sentiment } from "$lib/components/SentimentIcon.svelte";
+import { t } from "@tutors/i18n";
+import Icon from "@tutors/ui-primitives/components/Icon.svelte";
 
-/** Icon size tuned for dense calendar grids (24px). */
-const GRID_SENTIMENT_ICON_SIZE = "size-6";
+const SENTIMENTS = ["neutral", "fine", "delighted", "confident", "overwhelmed", "confused", "drained"];
 
-function parseSentiment(raw: unknown): Sentiment | null {
+function parseSentiment(raw: unknown): string | null {
   if (raw == null) return null;
   const s = String(raw).trim().toLowerCase();
-  return s in SENTIMENT_ICONS ? (s as Sentiment) : null;
+  return SENTIMENTS.includes(s) ? s : null;
 }
 
-/**
- * AG Grid cell renderer that mounts {@link SentimentIcon} for valid `row.sentiment` values.
- */
 export class SentimentCellRenderer implements ICellRendererComp<ConnectUserFieldsRow> {
   private eGui!: HTMLDivElement;
   /** Return value of `mount()` — required for `unmount()`. */
@@ -36,12 +33,12 @@ export class SentimentCellRenderer implements ICellRendererComp<ConnectUserField
     const sentiment = parseSentiment(params.data?.sentiment);
     if (!sentiment) return;
 
-    this.instance = mount(SentimentIcon, {
+    this.instance = mount(Icon, {
       target: this.eGui,
       props: {
-        sentiment,
-        size: GRID_SENTIMENT_ICON_SIZE,
-        label: `Sentiment: ${sentiment}`
+        type: sentiment,
+        height: "24",
+        tip: `${t("content.sentimentLabel")}: ${sentiment}`
       }
     }) as Record<string, unknown>;
   }

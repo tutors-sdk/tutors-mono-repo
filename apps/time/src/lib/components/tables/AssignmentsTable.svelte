@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getSupabase } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
+  import { locale, t } from "@tutors/i18n";
   import log from "@tutors/logger";
 
   let { courseId }: { courseId: string } = $props();
@@ -18,7 +19,9 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  onMount(async () => {
+  async function load() {
+    loading = true;
+    error = null;
     const id = courseId.trim();
     if (!id) {
       error = "Course ID is required.";
@@ -66,7 +69,9 @@
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(load);
 
   const totalSubmissions = $derived(rows.reduce((sum, r) => sum + r.submissionCount, 0));
 
@@ -74,7 +79,7 @@
     if (!dateString) return "-";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      return date.toLocaleDateString(locale.value, { year: "numeric", month: "short", day: "numeric" });
     } catch {
       return dateString;
     }
@@ -82,21 +87,21 @@
 </script>
 
 {#if loading}
-  <p role="status">Loading assignments…</p>
+  <p role="status">{t("shell.loading")}</p>
 {:else if error}
-  <p class="ui-empty" role="alert">Error loading data: {error}</p>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={load}>{t("shell.retry")}</button></div>
 {:else if rows.length === 0}
-  <p class="ui-empty">No assignments available.</p>
+  <p class="ui-empty">{t("classTime.noAssignments")}</p>
 {:else}
   <section class="ui-panel">
   <div class="table-wrap overflow-x-auto">
     <table class="table">
       <thead>
         <tr>
-          <th>Course ID</th>
-          <th>Assignment</th>
-          <th>Due date</th>
-          <th class="text-right">Submissions</th>
+          <th>{t("classTime.courseId")}</th>
+          <th>{t("classTime.assignment")}</th>
+          <th>{t("classTime.dueDate")}</th>
+          <th class="text-right">{t("classTime.submissions")}</th>
         </tr>
       </thead>
       <tbody>
@@ -120,13 +125,11 @@
       <tfoot>
         <tr>
           <td colspan="3"></td>
-          <th class="text-right">Total: {totalSubmissions}</th>
+          <th class="text-right">{t("time.total")}: {totalSubmissions}</th>
         </tr>
       </tfoot>
     </table>
   </div>
-  <p class="mt-4 text-sm text-[var(--ui-muted)]">
-    Showing {rows.length} {rows.length === 1 ? "assignment" : "assignments"}
-  </p>
+  <p class="ui-muted mt-4 text-sm">{t("classTime.assignments")}: {rows.length}</p>
   </section>
 {/if}

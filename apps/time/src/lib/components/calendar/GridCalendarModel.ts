@@ -1,3 +1,4 @@
+import { t } from "@tutors/i18n";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import type { CalendarModel, CalendarRow, CalendarMedianRow, ViewMode } from "@tutors/tutors-time-lib";
 import {
@@ -53,21 +54,17 @@ export class GridCalendarModel {
     };
   }
 
-  private buildTotalSecondsColumn<T>(field: string = "totalSeconds", headerName = "Total"): ColDef<T> {
+  private buildTotalSecondsColumn<T>(field: string = "totalSeconds", headerName = t("time.total")): ColDef<T> {
     return {
       field: field as never,
       headerName,
-      headerClass: "ag-header-vertical",
       sort: "desc",
       valueFormatter: (p) =>
         p.value != null && Number(p.value) > 0 ? String(Math.round(Number(p.value))) : "",
       cellClass: "ag-right-aligned-cell",
-      cellStyle: (p) => ({
-        backgroundColor: heatColor(minutesOf(p.value)),
-        paddingLeft: "4px"
-      }),
-      width: 60,
-      maxWidth: 72
+      cellStyle: { fontWeight: "600", paddingLeft: "4px" },
+      width: 96,
+      maxWidth: 112
     };
   }
 
@@ -138,7 +135,7 @@ export class GridCalendarModel {
     return [
       {
         field: "full_name",
-        headerName: "Name",
+        headerName: t("classTime.name"),
         minWidth: 160,
         flex: 1,
         pinned: "left",
@@ -166,7 +163,7 @@ export class GridCalendarModel {
       },
       {
         field: "online_status",
-        headerName: "Share",
+        headerName: t("classTime.share"),
         headerClass: "ag-header-vertical",
         minWidth: 44,
         maxWidth: 56,
@@ -178,7 +175,7 @@ export class GridCalendarModel {
       {
         colId: "sentiment",
         field: "sentiment",
-        headerName: "Mood",
+        headerName: t("classTime.mood"),
         headerClass: "ag-header-vertical",
         minWidth: 44,
         maxWidth: 56,
@@ -191,7 +188,7 @@ export class GridCalendarModel {
       },
       {
         field: "studentid",
-        headerName: "Github",
+        headerName: t("classTime.github"),
         minWidth: 120,
         maxWidth: 112,
         width: 96,
@@ -209,7 +206,7 @@ export class GridCalendarModel {
   private buildDayColumnDefs(model: CalendarModel): ColDef<CalendarRow>[] {
     return [
       ...this.buildStudentColumns(),
-      this.buildTotalSecondsColumn<CalendarRow>("totalSeconds", "Total"),
+      this.buildTotalSecondsColumn<CalendarRow>("totalSeconds", t("time.total")),
       ...this.selectTimeColumns<CalendarRow>("day", model.weeks, model.dates, true)
     ];
   }
@@ -217,21 +214,21 @@ export class GridCalendarModel {
   private buildWeekColumnDefs(model: CalendarModel): ColDef<CalendarRow>[] {
     return [
       ...this.buildStudentColumns(),
-      this.buildTotalSecondsColumn<CalendarRow>("totalSeconds", "Total"),
+      this.buildTotalSecondsColumn<CalendarRow>("totalSeconds", t("time.total")),
       ...this.selectTimeColumns<CalendarRow>("week", model.weeks, model.dates, true)
     ];
   }
 
   private buildMedianByDayColumnDefs(model: CalendarModel): ColDef<CalendarMedianRow>[] {
     return [
-      this.buildTotalSecondsColumn<CalendarMedianRow>("totalSeconds", "Total"),
+      this.buildTotalSecondsColumn<CalendarMedianRow>("totalSeconds", t("time.total")),
       ...this.selectTimeColumns<CalendarMedianRow>("day", [], model.dates, true)
     ];
   }
 
   private buildMedianByWeekColumnDefs(model: CalendarModel): ColDef<CalendarMedianRow>[] {
     return [
-      this.buildTotalSecondsColumn<CalendarMedianRow>("totalSeconds", "Total"),
+      this.buildTotalSecondsColumn<CalendarMedianRow>("totalSeconds", t("time.total")),
       ...this.selectTimeColumns<CalendarMedianRow>("week", model.weeks, model.dates, true)
     ];
   }

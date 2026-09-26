@@ -1,8 +1,8 @@
 <script lang="ts">
   import CalendarTable from "$lib/components/tables/CalendarTable.svelte";
-  import { page } from "$app/stores";
+  import { page } from "$app/state";
 
-  const courseId = $derived(($page.params.courseid as string) ?? "");
+  const courseId = $derived((page.params.courseid as string) ?? "");
 </script>
 
 <svelte:head>

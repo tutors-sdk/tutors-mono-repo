@@ -1,5 +1,4 @@
 <script lang="ts" module>
-  /** Default Tailwind size for the inner avatar circle (matches {@link SentimentIcon} default). */
   export const STUDENT_AVATAR_DEFAULT_SIZE = "size-10";
 
   /** Outer frame behind the circle — neutral chip, analogous to sentiment badge backgrounds. */
@@ -37,7 +36,6 @@
   const ariaLabel = $derived(label ?? (fullName.trim() || "Student"));
 </script>
 
-<!-- Structure mirrors SentimentIcon: outer rounded badge + inner visual. -->
 <span
   class="inline-flex items-center justify-center rounded-full p-0.5 {STUDENT_AVATAR_FRAME_CLASS} {className}"
   role="img"

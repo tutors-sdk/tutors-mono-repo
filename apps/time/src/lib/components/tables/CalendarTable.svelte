@@ -2,6 +2,7 @@
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
   import { onMount } from "svelte";
+  import { locale, t } from "@tutors/i18n";
   import log from "@tutors/logger";
 
   let { courseId }: { courseId: string } = $props();
@@ -10,7 +11,9 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  onMount(async () => {
+  async function load() {
+    loading = true;
+    error = null;
     const id = courseId.trim();
     if (!id) {
       error = "Course ID is required.";
@@ -27,14 +30,16 @@
     } finally {
       loading = false;
     }
-  });
+  }
+
+  onMount(load);
 
   const data = $derived(course?.data ?? []);
 
   function formatDate(dateString: string): string {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      return date.toLocaleDateString(locale.value, { year: "numeric", month: "short", day: "numeric" });
     } catch {
       return dateString;
     }
@@ -47,22 +52,22 @@
 </script>
 
 {#if loading}
-  <p role="status">Loading calendar data…</p>
+  <p role="status">{t("shell.loading")}</p>
 {:else if error}
-  <p class="ui-empty" role="alert">Error loading data: {error}</p>
+  <div class="ui-empty" role="alert">{t("shell.loadError")} <button class="ui-button" onclick={load}>{t("shell.retry")}</button></div>
 {:else if data.length === 0}
-  <p class="ui-empty">No calendar data available.</p>
+  <p class="ui-empty">{t("classTime.noCalendar")}</p>
 {:else}
   <section class="ui-panel">
   <div class="table-wrap overflow-x-auto">
     <table class="table">
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Student ID</th>
-          <th>Course ID</th>
-          <th class="text-right">Time active (minutes)</th>
-          <th class="text-right">Page loads</th>
+          <th>{t("classTime.date")}</th>
+          <th>{t("classTime.studentId")}</th>
+          <th>{t("classTime.courseId")}</th>
+          <th class="text-right">{t("classTime.timeActiveMinutes")}</th>
+          <th class="text-right">{t("classTime.pageLoads")}</th>
         </tr>
       </thead>
       <tbody>
@@ -78,8 +83,6 @@
       </tbody>
     </table>
   </div>
-  <p class="mt-4 text-sm text-[var(--ui-muted)]">
-    Showing {data.length} calendar {data.length === 1 ? "entry" : "entries"}
-  </p>
+  <p class="ui-muted mt-4 text-sm">{t("classTime.calendarEntries")}: {data.length}</p>
   </section>
 {/if}
