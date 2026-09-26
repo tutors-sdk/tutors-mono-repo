@@ -54,7 +54,6 @@ export function discoverAssets() {
     }
   }
   if (assets.size === 0) throw new Error(`no _app/immutable assets found behind ${COURSE_PATH || "/"}`);
-  console.log(`discovered ${assets.size} immutable assets behind ${COURSE_PATH || "/"}`);
   return { assets: [...assets].sort() };
 }
 
