@@ -256,9 +256,6 @@ importers:
       dompurify:
         specifier: ^3.4.14
         version: 3.4.14
-      jheat.js:
-        specifier: ^5.2.0
-        version: 5.2.0
     devDependencies:
       '@auth/sveltekit':
         specifier: ^1.11.3
@@ -429,9 +426,6 @@ importers:
       '@tutors/metrics':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/metrics
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../packages/svelte/runes
       '@tutors/runtime':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/runtime
@@ -453,9 +447,6 @@ importers:
       ag-grid-community:
         specifier: ^36.1.0
         version: 36.1.0
-      jheat.js:
-        specifier: ^5.2.0
-        version: 5.2.0
       svelte:
         specifier: ^5.57.0
         version: 5.57.0(@typescript-eslint/types@8.70.0)
