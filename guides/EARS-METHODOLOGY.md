@@ -201,6 +201,7 @@ in front of "shall":
 | `apps/catalogue` | `the catalogue` |
 | `apps/live` | `the live dashboard` |
 | `apps/time` | `the time dashboard` |
+| `@tutors/data-api` and the reader's `/api` routes | `the data API` |
 
 "The system shall" is not a system name.
 
@@ -244,7 +245,7 @@ run the scenarios: `pnpm test:bdd` does that.
 | `shall-count` | its title does not contain exactly one "shall" |
 | `obligation-keyword` | it says should, must, will, would, may, might or could |
 | `vague-language` | it uses a word from the vague list (appropriate, quickly, handle, some, ...) |
-| `system-name` | the words before "shall" are not tutors, the reader, the catalogue, the live dashboard or the time dashboard |
+| `system-name` | the words before "shall" are not tutors, the reader, the catalogue, the live dashboard, the time dashboard or the data API |
 | `ears-form` | a When, While or Where title has no comma before the system, or an If title has no ", then" |
 | `ears-tag-missing`, `ears-tag-mismatch` | its `@ears-*` tag is missing, or is not the one its wording has: When is event-driven, While state-driven, If unwanted, Where optional, none ubiquitous |
 | `no-scenarios` | no scenario sits beneath it |
@@ -340,7 +341,7 @@ bound: most of those scenarios describe failure handling and options the product
 
 New behaviour is written as a Rule. The [`ears-gherkin-dev`](../.claude/skills/ears-gherkin-dev/SKILL.md) skill walks an AI assistant through the same steps.
 
-1. Choose the persona whose perspective the feature serves, and the system name for the Rule (tutors, the reader, the catalogue, the live dashboard, the time dashboard)
+1. Choose the persona whose perspective the feature serves, and the system name for the Rule (tutors, the reader, the catalogue, the live dashboard, the time dashboard, the data API)
 2. Select the EARS pattern that best describes the requirement type and write it as a `Rule:` title with exactly one "shall"
 3. Take an id from `pnpm test:ears:audit --next-id` and put `@rule-NNNN` and the `@ears-*` tag on the lines above the Rule. For a state-driven or optional Rule, tag one scenario `@active` and one `@inactive`
 4. Write the scenarios beneath the Rule, using Gherkin's keywords, not While, Where or If

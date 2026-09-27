@@ -53,7 +53,7 @@ export interface AuditConfig {
 }
 
 export const DEFAULT_CONFIG: AuditConfig = {
-  systems: ["tutors", "the reader", "the catalogue", "the live dashboard", "the time dashboard"],
+  systems: ["tutors", "the reader", "the catalogue", "the live dashboard", "the time dashboard", "the data API"],
   wrongObligations: ["should", "must", "will", "would", "may", "might", "could"],
   vagueTerms: [
     "appropriate",

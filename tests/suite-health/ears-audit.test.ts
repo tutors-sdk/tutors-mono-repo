@@ -112,7 +112,7 @@ describe("EARS audit: Rule shape", () => {
       .map((v) => v.message);
     expect(messages).toEqual([
       'Rule title uses vague language ("quickly", "appropriately"); say what is observable.',
-      'The word before "shall" must be a system name: tutors, the reader, the catalogue, the live dashboard, the time dashboard.',
+      'The word before "shall" must be a system name: tutors, the reader, the catalogue, the live dashboard, the time dashboard, the data API.',
       "Rule has no @ears-* tag; its wording is ubiquitous, so it takes @ears-ubiquitous."
     ]);
   });
