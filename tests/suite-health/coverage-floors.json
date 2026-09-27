@@ -9,6 +9,6 @@
     "packages/svelte/connect/src/**": { "statements": 85, "branches": 76, "functions": 78, "lines": 88 },
     "packages/svelte/quiz/src/**": { "statements": 97, "branches": 97, "functions": 100, "lines": 98 },
     "packages/svelte/course/src/**": { "statements": 50, "branches": 33, "functions": 55, "lines": 50 },
-    "packages/svelte/community/src/**": { "statements": 63, "branches": 51, "functions": 75, "lines": 71 }
+    "packages/svelte/community/src/**": { "statements": 70, "branches": 59, "functions": 86, "lines": 78 }
   }
 }
