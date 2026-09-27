@@ -8,7 +8,7 @@ Coverage tells you which lines were *executed*. Mutation testing tells you which
 
 ## Target Score
 
-The project targets an **85% mutation score** — meaning at least 85% of introduced mutants must be killed by tests. This is enforced via the `break` threshold in `stryker.config.json` (build fails below 60%, warnings below 70%).
+The twelve targeted modules hold a **90% mutation score**: the `break` threshold in `stryker.config.json` fails the nightly `mutation` job below it (Rule 0113). Every other library module is held to its own measured floor by the comprehensive nightly run below.
 
 ## Targeted Modules
 
@@ -21,6 +21,34 @@ Mutation testing focuses on high-value computation logic where undetected bugs w
 | Type Utils | `packages/jsr/model/src/types/type-utils.ts` | Type guards, composite detection — wrong type silently misroutes LOs |
 | Calendar Model | `packages/jsr/time/src/services/base-calendar-model.ts` | Median calculation, pivoting — wrong math corrupts instructor analytics |
 | Calendar Utils | `packages/jsr/time/src/utils/calendar-utils.ts` | Date formatting, colour grading — visual bugs in heatmaps |
+| LO Tree | `packages/jsr/model/src/services/lo-tree.ts` | Parent links, breadcrumbs, composite panels — a wrong link breaks navigation |
+| Course Utils | `packages/jsr/model/src/utils/course-utils.ts` | Table of contents, companions, walls, calendar — wrong grouping hides content |
+| Markdown Utils | `packages/jsr/model/src/utils/markdown-utils.ts` | Markdown to HTML, course URL rewriting — broken links and images |
+| Lab Model | `packages/jsr/time/src/services/base-lab-model.ts` | Lab and step pivots, medians — wrong numbers in lab analytics |
+| Lab Utils | `packages/jsr/time/src/utils/lab-utils.ts` | Lab record aggregation — wrong totals per student |
+| LR Utils | `packages/jsr/gen/src/utils/lr-utils.ts` | Learning-resource discovery, video ids, front matter — missing resources in generated courses |
+| Template Utils | `packages/jsr/gen/src/templates/utils.ts` | Generated page helpers — broken links in the generated site |
+
+Each module has its own floor in `tests/mutation/mutation-floors.json`, checked by `pnpm check:mutation-floors` after the nightly run (Rule 0114).
+
+## Comprehensive nightly run
+
+The nightly `mutation-nightly` job mutates every TypeScript source file under `packages/*/*/src` and `packages/*/*/*/src` (the same files the coverage run measures) and runs the unit, BDD and contract suites against each mutant (Rule 0116). Its configuration is `stryker.nightly.config.json` with `vitest.config.mutation-nightly.ts`; locally:
+
+```bash
+pnpm test:mutation:nightly     # about 20 minutes on 4 cores; writes reports/mutation-nightly/
+pnpm check:mutation-floors reports/mutation-nightly/mutation.json \
+  --floors tests/mutation/nightly-mutation-floors.json --stale warn
+```
+
+The first baseline (2026-09-26) scored **58.5%** over 95 modules and 6,073 scored mutants: 1,896 of them sit in code no test reaches, so this run is the map of where tests are missing, while the twelve targeted modules keep their 90% aggregate.
+
+How it stays consistent and safe:
+
+- **Floors per module** (Rule 0117). Every module has a floor in `tests/mutation/nightly-mutation-floors.json`, set to its measured score rounded down. A module below its floor, or a new module with no floor, fails the night and is named in the job summary. Add a floor for a new module with `--update` in the commit that adds it.
+- **Improvements never fail the night** (Rule 0119). A score 2 or more points above its floor is listed in the summary as a floor to raise, with `--stale warn`, instead of failing a run no pull request is waiting on. Raise it with `--update` in any later change.
+- **Deterministic runs.** The run uses the same workspace aliases and `no-network.ts` setup as the main suite, and two consecutive local runs on 2026-09-26 gave identical scores for all 95 modules.
+- **In place, and proven clean** (Rule 0118). The run mutates the working tree in place, because a Vitest `vi.mock` by relative `node_modules` path cannot match inside Stryker's symlinked sandbox. Type-check suppression is off, so only mutated files are touched, and a `git diff --exit-code --stat` step after Stryker (run even when Stryker fails or times out) fails the night if any tracked file was left changed. Locally, a run you interrupt leaves mutated sources behind: restore them with `git checkout -- packages`.
 
 ## Running
 
@@ -41,19 +69,13 @@ STRYKER_CONCURRENCY=2 ./tests/mutation/run-mutation-tests.sh
 
 ## When to Run
 
-Mutation testing is **slow** (minutes to hours depending on test suite size and mutant count). It should run:
-
-- **Nightly CI** — scheduled pipeline, results reviewed next morning
-- **RC validation** — before cutting a release, as part of the release readiness checklist
-- **After major test additions** — to verify new tests actually improve kill rates
-
-It should **not** run on every commit or PR — the feedback loop is too slow.
+Mutation testing is too slow for every PR: the targeted run takes about 3 minutes and the comprehensive run about 25. Both run in the nightly workflow (`mutation` and `mutation-nightly`), and the nightly summary names any module below its floor. Run one locally after adding tests to a module, to confirm the new tests kill mutants and to raise that module's floor with `--update` in the same change.
 
 ## Reading the Report
 
-After running, open `reports/mutation/index.html`. Key metrics:
+After running, open `reports/mutation/index.html` (targeted run) or `reports/mutation-nightly/index.html` (comprehensive run). The nightly job uploads both as `mutation-report` and `mutation-nightly-report`. Key metrics:
 
-- **Mutation Score**: percentage of mutants killed (target: ≥85%)
+- **Mutation Score**: percentage of mutants killed (90% break on the targeted run; a floor per module on the comprehensive run)
 - **Survived**: mutants the test suite didn't catch — each is a test gap
 - **No Coverage**: mutants in code not reached by any test
 - **Timeout**: mutants that caused infinite loops (counted as killed)
@@ -73,17 +95,17 @@ The config excludes `StringLiteral` and `ObjectLiteral` mutations. These produce
 
 ## Configuration
 
-See `stryker.config.json` at the repo root. Key settings:
+The targeted run is `stryker.config.json` with `vitest.config.mutation.ts`; the comprehensive run is `stryker.nightly.config.json` with `vitest.config.mutation-nightly.ts` (every package source file, in place, no break threshold, `disableTypeChecks: false`). Key settings of the targeted run:
 
 ```json
 {
   "testRunner": "vitest",
   "mutate": ["packages/jsr/model/src/...", "packages/jsr/time/src/..."],
-  "thresholds": { "high": 85, "low": 70, "break": 60 },
+  "thresholds": { "high": 85, "low": 75, "break": 90 },
   "concurrency": 4
 }
 ```
 
 - `high` (85): green in report — tests are strong
-- `low` (70): yellow — tests need attention
-- `break` (60): build fails — critical test gaps
+- `low` (75): yellow — tests need attention
+- `break` (90): the nightly `mutation` job fails — the floor sits under the measured score (93.6) and only rises

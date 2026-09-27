@@ -32,9 +32,11 @@ name: Container Image Build
 #
 # Published images are linux/amd64 + linux/arm64. The amd64 image is scanned
 # with Trivy before anything is pushed; CRITICAL and HIGH findings with an
-# available fix stop the workflow. The pushed digest is then signed with
-# cosign (keyless, GitHub OIDC) and carries an SPDX SBOM attestation. The
-# release harness verifies both, see "Verifying an image" in deploy/README.md.
+# available fix stop the workflow. The image is pushed by digest, with no
+# tag; that digest is signed with cosign (keyless, GitHub OIDC) and carries
+# an SPDX SBOM attestation, and only then are the tags above pointed at it,
+# so no tag is ever visible unsigned. The release harness verifies both, see
+# "Verifying an image" in deploy/README.md.
 #
 # Promotion. The release harness judges the X.Y.Z-rc.N images, so the final
 # tag must ship those images, not a rebuild with a new digest. scripts/
@@ -57,7 +59,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Backfill only: an existing vX.Y.Z tag to build and publish (run from main). Leave empty when dispatching on a v* tag."
+        description: "Backfill only: an existing release tag to build and publish (run from main), e.g. v16.2.1 (16.2.1 and V16.2.1 work too). Leave empty when dispatching on a v* tag."
         required: false
         default: ""
       require_promotion:
@@ -181,8 +183,13 @@ jobs:
             echo "::error::A backfill runs from main (got $GITHUB_REF)."
             exit 1
           fi
+          # Forgive how the tag was typed (a phone capitalises the first letter): " V16.2.1 ", "16.2.1"
+          # and "v16.2.1" all mean v16.2.1. Anything else is still refused below.
+          TYPED="$RELEASE_TAG"
+          RELEASE_TAG="$(printf '%s' "$RELEASE_TAG" | tr -d '[:space:]')"
+          RELEASE_TAG="v${RELEASE_TAG#[vV]}"
           if ! printf '%s' "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::release_tag must be a release tag vX.Y.Z (got '$RELEASE_TAG')."
+            echo "::error::release_tag must be a release tag such as v16.2.1 (got '$TYPED')."
             exit 1
           fi
           if ! gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --silent 2>/dev/null; then
@@ -190,6 +197,7 @@ jobs:
             exit 1
           fi
           echo "ref=refs/tags/$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "backfill=true" >> "$GITHUB_OUTPUT"
           echo "final=false" >> "$GITHUB_OUTPUT"
           echo "Backfill of \`$RELEASE_TAG\` from main" >> "$GITHUB_STEP_SUMMARY"
@@ -326,7 +334,7 @@ jobs:
       - name: Check the backfill's version
         if: steps.what.outputs.backfill == 'true' && steps.plan.outputs.promoted != 'true'
         env:
-          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_TAG: ${{ steps.what.outputs.release_tag }}
           VERSION: ${{ steps.meta.outputs.version }}
         run: |
           if [ "$VERSION" != "${RELEASE_TAG#v}" ]; then
@@ -377,8 +385,12 @@ jobs:
           password: ${{ secrets.QUAY_PASSWORD }}
 
       # Same builder, same inputs: the amd64 layers scanned above are reused
-      # as-is and only arm64 is built fresh.
-      - name: Build and push (linux/amd64, linux/arm64)
+      # as-is and only arm64 is built fresh. Pushed by digest only, with no
+      # tag: a consumer that pulls a tag (the release harness verifies the
+      # cosign signature first) must never find one pointing at an image that
+      # is not yet signed, so the tags are added after the signature and the
+      # SBOM attestation, in "Tag the signed digest" below.
+      - name: Build and push by digest (linux/amd64, linux/arm64)
         id: push
         if: steps.plan.outputs.promoted != 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
@@ -392,8 +404,7 @@ jobs:
             BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
             VERSION=${{ steps.meta.outputs.version }}
             SOURCE_DATE_EPOCH=${{ steps.epoch.outputs.value }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE_PREFIX }}${{ matrix.app }},push-by-digest=true,name-canonical=true,push=true
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
@@ -402,7 +413,7 @@ jobs:
         if: steps.plan.outputs.promoted != 'true'
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      # Sign the digest, never a tag: every tag pushed above resolves to this
+      # Sign the digest, never a tag: every tag added below resolves to this
       # one multi-arch index, so one signature covers them all.
       - name: Sign the pushed digest (keyless)
         if: steps.plan.outputs.promoted != 'true'
@@ -431,6 +442,37 @@ jobs:
           DIGEST: ${{ steps.push.outputs.digest }}
           SBOM: sbom-${{ matrix.app }}.spdx.json
         run: cosign attest --yes --type spdxjson --predicate "${SBOM}" "${IMAGE}@${DIGEST}"
+
+      # Only now, signed and attested, does the digest get its tags (main,
+      # sha-<short>, rc-*, X.Y.Z-rc.N, X.Y.Z, X.Y, latest: whatever metadata
+      # produced above). With one source and no annotations, imagetools
+      # create pushes the index unchanged, so every tag is the signed digest;
+      # the check after it fails the run if one is not.
+      - name: Tag the signed digest
+        if: steps.plan.outputs.promoted != 'true'
+        env:
+          IMAGE: ${{ env.REGISTRY_IMAGE_PREFIX }}${{ matrix.app }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r tag; do
+            [ -n "$tag" ] && args+=(--tag "$tag")
+          done <<< "$TAGS"
+          if [ "${#args[@]}" -eq 0 ]; then
+            echo "::error::metadata produced no tags for ${IMAGE}."
+            exit 1
+          fi
+          docker buildx imagetools create "${args[@]}" "${IMAGE}@${DIGEST}"
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            resolved="$(docker buildx imagetools inspect "$tag" --format '{{.Manifest.Digest}}')"
+            if [ "$resolved" != "$DIGEST" ]; then
+              echo "::error::${tag} resolves to ${resolved}, not the signed ${DIGEST}."
+              exit 1
+            fi
+          done <<< "$TAGS"
 
       - name: Summary
         if: steps.plan.outputs.promoted != 'true'

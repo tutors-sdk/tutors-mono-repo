@@ -24,11 +24,11 @@ Feature: Reader shell and navigation
       And the introduction region with its heading and Create link sits above "Welcome to Tutors"
 
   @rule-0021 @ears-event-driven
-  Rule: When a student opens a course, the reader shall show the course title, its topic count in the author's order and a link to the first topic.
+  Rule: When a student opens a course, the reader shall show the course title, topics in the author's order and a link to the first topic.
 
     Scenario: Course home leads to the first topic
       When a student opens the Reference Course
-      Then the heading "Reference Course" and "9 · Author's order" are shown
+      Then the headings "Reference Course" and "Course topics" are shown without a topic count
       And following the first topic card and then the first lab card opens the lab's first step
 
   @rule-0022 @ears-event-driven
@@ -66,8 +66,9 @@ Feature: Reader shell and navigation
     @active
     Scenario: Phone header opens the course tree and navigation
       Given the viewport is 320, 390 or 768 pixels wide
-      When the student uses the header's "Course Tree" and "Course navigation" buttons
+      When the student uses the header's icon-only "Open course tree" and "Course navigation" buttons
       Then each opens one dialog, and closing it returns focus to its button
+      And the title and controls share one toolbar
 
     @inactive
     Scenario: Desktop header shows course info and the sidebar holds the tools

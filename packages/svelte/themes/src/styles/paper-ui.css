@@ -79,6 +79,7 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 @media (prefers-reduced-motion: reduce) { :where(button, a) { transition: none; } }
 
 .header-action { display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 44px; padding: var(--space-3); border-radius: var(--radius-control); font-size: var(--font-label); font-weight: var(--weight-medium); color: var(--ui-ink); }
+.header-action > svg { width: 24px; height: 24px; flex-shrink: 0; }
 .header-action:hover, .header-action[aria-pressed="true"] { background: var(--ui-selected); }
 /* Shared native forms and Skeleton controls use the same application tokens. */
 :where(.input, .select) { min-height: 44px; padding: var(--space-2) var(--space-3); }
