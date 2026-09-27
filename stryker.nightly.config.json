@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-core.schema.json",
+  "packageManager": "pnpm",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.mutation-nightly.ts"
+  },
+  "mutate": [
+    "packages/*/*/src/**/*.ts",
+    "packages/*/*/*/src/**/*.ts",
+    "!**/*.d.ts",
+    "!**/__tests__/**"
+  ],
+  "reporters": ["html", "json", "progress-append-only"],
+  "htmlReporter": {
+    "fileName": "reports/mutation-nightly/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation-nightly/mutation.json"
+  },
+  "thresholds": {
+    "high": 85,
+    "low": 75,
+    "break": null
+  },
+  "concurrency": 4,
+  "timeoutMS": 30000,
+  "inPlace": true,
+  "tempDirName": ".stryker-tmp-nightly",
+  "cleanTempDir": "always",
+  "mutator": {
+    "excludedMutations": ["StringLiteral", "ObjectLiteral"]
+  },
+  "ignorePatterns": ["node_modules", "dist", "reports", ".stryker-tmp*"],
+  "checkers": [],
+  "disableTypeChecks": false
+}
