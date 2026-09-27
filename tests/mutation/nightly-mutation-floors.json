@@ -97,6 +97,6 @@
     "packages/svelte/utils/runtime/src/clock.ts": 86,
     "packages/svelte/utils/logger/src/index.ts": 100,
     "packages/jsr/time/src/services/source.ts": 82,
-    "packages/svelte/data-api/src/client.ts": 69
+    "packages/svelte/data-api/src/client.ts": 76
   }
 }
