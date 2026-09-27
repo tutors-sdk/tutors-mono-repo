@@ -287,8 +287,12 @@ A release claim names the Rule behind a change in its `reason`, as `Rule 0031: <
   is left alone. A claim may instead carry `rule: "0031"` (harness contract 1.3.0), which is
   resolved the same way, and then needs no `reason`. An older harness (before 1.3.0) ignores the `rule` key and still requires the `reason`, so a claim with only a `rule` fails there for the missing `reason`; keep `reason: "Rule 0031: ..."` until the harness release path is 1.3.0 or later. `--ref <ref>` resolves against the Rules at
   that ref rather than the working tree.
-- `pnpm release:rules [--ref <ref>] [--out <path>]` writes `rules.json`, the id, title and digest of
+- `pnpm release:rules [--ref <ref>] [--out <path>] [--since <ref>]` writes `rules.json`, the id, title and digest of
   every Rule at a ref, which the harness resolves a `rule` against ([release/README.md](../release/README.md#rules-the-release-defines)).
+  With `--since`, each Rule added or changed after that ref also names the PRs that touched it (`prs`), which the harness scorecard shows.
+- `pnpm release:changelog --from <production tag> --to <release ref>` drafts the release's changelog from the merged PRs, naming
+  the Rules each PR added or changed, and ends with a table of the release's Rules and their PRs
+  ([Release-Strategy.md](Release-Strategy.md#changelog-discipline)).
 
 ## Persona-Based Organisation
 

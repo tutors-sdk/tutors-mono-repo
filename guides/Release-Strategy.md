@@ -143,7 +143,13 @@ Every release must have a corresponding `CHANGELOG.md` entry. Entries are writte
 
 The changelog documents what shipped and when. It is not a commit log; it is a curated summary for users and contributors.
 
-Entries that change something observable end with the artefacts they expect to move, `(axe, dom)`, so the release author can write the release harness claims from the changelog in one line each: [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries), [release/README.md](../release/README.md#writing-claims-from-the-changelog). The changelog is curated by hand, so the convention needs no tooling; if it is ever generated from Conventional Commits, the hint travels in the commit subject and the generator keeps it verbatim.
+Entries that change something observable end with the artefacts they expect to move, `(axe, dom)`, so the release author can write the release harness claims from the changelog in one line each: [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries), [release/README.md](../release/README.md#writing-claims-from-the-changelog). The changelog is curated by hand from a generated draft:
+
+```bash
+pnpm release:changelog --from v16.2.2 --to release/16.3.0 --out changelog.md --json changelog.json
+```
+
+lists every PR merged on main's first-parent history since production, under the app with the most changed files and the heading of its Conventional Commits type (`feat` Features, `fix` and `perf` Fixes, `!` or `BREAKING CHANGE` Breaking Changes, anything else Chores), keeps the artefact hint from the PR title verbatim, names the EARS Rules each PR added or changed, and ends with a table of every Rule the release moves and the PRs behind it. A commit pushed to main without a PR is listed and marked as such. Entries already in `CHANGELOG.md` are ticked. When a release candidate is tagged, `release-dispatch.yml` publishes the same draft as the notes and assets (`changelog.md`, `changelog.json`) of the candidate's prerelease, and writes the PRs into `rules.json` (`pnpm release:rules --since`) so the release harness scorecard can join each Rule to its PRs. Rules 0190-0195 in [tests/bdd/features/developer/release-changelog.feature](../tests/bdd/features/developer/release-changelog.feature).
 
 ## CI/CD Integration
 

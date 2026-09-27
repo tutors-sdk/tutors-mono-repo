@@ -153,7 +153,7 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 
 ### Changelog Entries
 
-`CHANGELOG.md` is written by hand at release time from the merged PRs (see [guides/Release-Strategy.md](guides/Release-Strategy.md#changelog-discipline)); no tool generates it. Each entry that changes something a student, lecturer or operator can observe **names the artefacts it expects to move**, in a trailing parenthesis, so the release author can turn the line into a claim for the [release harness](release/README.md) without guessing:
+`CHANGELOG.md` is written by hand at release time from the merged PRs (see [guides/Release-Strategy.md](guides/Release-Strategy.md#changelog-discipline)). `pnpm release:changelog --from <production tag> --to <release ref>` drafts it: every merged PR, grouped by app and by its Conventional Commits type, with the EARS Rules it added or changed; the release author curates the draft into `CHANGELOG.md`. A PR title in Conventional Commits form with its artefact hint, `fix(reader): raise nav contrast (axe, dom)`, lands in the draft as `Raise nav contrast (axe, dom) (PR #301)` under Reader, Fixes. Each entry that changes something a student, lecturer or operator can observe **names the artefacts it expects to move**, in a trailing parenthesis, so the release author can turn the line into a claim for the [release harness](release/README.md) without guessing:
 
 ```markdown
 - Nav bar: link contrast raised to 4.5:1 on the dark theme (axe, dom) (PR #301)
