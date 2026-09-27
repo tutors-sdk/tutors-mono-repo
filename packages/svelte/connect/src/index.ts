@@ -6,3 +6,6 @@
 export { tutorsConnectService, analyticsEnabled } from "./services/connect.svelte.ts";
 export type { TutorsId, CourseVisit, CourseSentimentId } from "./types.ts";
 export { COURSE_SENTIMENT_IDS } from "./types.ts";
+export { loadHome, loadProgress, loadBookmarks, cardProgress, teachingVisits } from "./services/home.ts";
+export type { HomeView, HomeProgress, CardProgress, HomeBookmarks } from "./services/home.ts";
+export { bookmarkService } from "./services/bookmarks.svelte.ts";

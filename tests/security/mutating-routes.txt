@@ -12,6 +12,8 @@ reader POST /api/analytics | who: a signed-in student (Auth.js session, else 401
 reader PUT /api/me | who: a signed-in user, for their own tutors-connect-users row; name, email and avatar come from the session
 reader PATCH /api/me | who: a signed-in user, for their own sentiment and online status (Rule 0072)
 reader PUT /api/profile | who: a signed-in user, for their own course-visit history
+reader PUT /api/bookmarks | who: a signed-in user, for their own bookmarks, on a learning object the course publishes, else 404 (Rules 0152, 0153)
+reader DELETE /api/bookmarks | who: a signed-in user, for their own bookmarks (Rule 0151)
 reader POST /api/courses/visit | who: anyone viewing a course; counts a visit to a course the server finds published, with title and credits from that course
 reader POST /api/presence | who: a signed-in student who shares presence; stored under the session's login (Rule 0072)
 reader PUT /api/locks | who: a signed-in educator of the course (enrollment.yaml educators or PRIVATE_TUTORS_ADMINS), else 403 (Rule 0065)

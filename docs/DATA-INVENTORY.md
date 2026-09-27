@@ -150,6 +150,23 @@ RBAC content-lock state. Composite key `course_id, lo_route`.
 **Consent required:** No
 **Deletion impact:** Minimal — clearing `locked_by` (rather than deleting locks) preserves course state
 
+### `tutors_bookmarks`
+Learning objects a signed-in reader bookmarked to find again from the home page. Keyed on
+(`login`, `course_id`, `lo_route`). Written and read only through the reader's `/api/bookmarks` route.
+
+| Field | Type | PII | Description |
+|-------|------|-----|-------------|
+| login | string | Yes | GitHub login of the reader who made the bookmark |
+| course_id | string | No | Course the learning object belongs to |
+| lo_route | string | No | Route of the bookmarked learning object |
+| title | string | No | The learning object's title, copied from the course's tutors.json |
+| lo_type | string | No | The learning object's type (lab, note, talk, ...) |
+| created_at | timestamp | No | When the bookmark was made |
+
+**Legal basis:** Consent (the reader creates each bookmark)
+**Consent required:** No
+**Retention:** Until the reader removes the bookmark or asks for their data to be deleted
+
 ### `whiteboard_scenes`
 Excalidraw whiteboard persistence. Keyed on `room_id`.
 
@@ -210,6 +227,7 @@ User browses course → learning_records          (per-LO activity)
                     → calendar                   (daily aggregates)
                     → "tutors-connect-latest"    (most recent visit)
                     → whiteboard_scenes          (personal whiteboard content)
+                    → tutors_bookmarks           (bookmarked learning objects)
                     → Supabase Realtime          (ephemeral presence)
 
 Errors             → app_errors                  (observability)
@@ -227,8 +245,9 @@ When a user requests data deletion, purge the tables holding their personal data
 3. `"tutors-connect-latest"` (WHERE `student_id` = `<login>`)
 4. `"tutors-connect-profiles"` (WHERE `tutorId` = `<login>`)
 5. `whiteboard_scenes` (personal boards — WHERE `room_id` ends with `-<login>`)
-6. `app_errors` (WHERE `student_id` = `<login>`)
-7. `tutors_content_locks` (set `locked_by` = NULL WHERE `locked_by` = `<login>` — preferable to deleting locks)
-8. `"tutors-connect-users"` (WHERE `github_id` = `<login>`) — last
+6. `tutors_bookmarks` (WHERE `login` = `<login>`)
+7. `app_errors` (WHERE `student_id` = `<login>`)
+8. `tutors_content_locks` (set `locked_by` = NULL WHERE `locked_by` = `<login>` — preferable to deleting locks)
+9. `"tutors-connect-users"` (WHERE `github_id` = `<login>`) — last
 
 **Separate identifier namespace:** `assignments_submissions` is keyed by the **Moodle** `external_userid`, not the GitHub login. Deleting a user's submissions requires mapping their GitHub identity to their Moodle user id first; this mapping is not stored by Tutors and must come from the deploying institution's Moodle. `"tutors-connect-courses"` holds only course-level aggregates and needs no per-user deletion.
