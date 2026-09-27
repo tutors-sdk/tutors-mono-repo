@@ -70,6 +70,10 @@ jobs:
       - name: Run unit tests
         run: pnpm exec vitest run --coverage
 
+      # Rules 0111 and 0112: no scope below its floor, and no floor left 2+ points under its coverage.
+      - name: Check coverage floors
+        run: pnpm check:coverage-floors coverage/coverage-summary.json
+
       - name: Run fuzz tests
         run: pnpm test:fuzz
 
