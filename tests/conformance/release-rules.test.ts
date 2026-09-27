@@ -154,6 +154,7 @@ describe("release rules.json", () => {
   it("reads its arguments", () => {
     expect(parseArgs([])).toEqual({ ref: "HEAD", out: undefined });
     expect(parseArgs(["--ref", "v1.2.3-rc.1", "--out", "out/rules.json"])).toEqual({ ref: "v1.2.3-rc.1", out: "out/rules.json" });
+    expect(parseArgs(["--ref", "v1.2.3-rc.1", "--since", "v1.2.2"])).toEqual({ ref: "v1.2.3-rc.1", out: undefined, since: "v1.2.2" });
     expect(() => parseArgs(["--ref"])).toThrow(/needs a value/);
     expect(() => parseArgs(["--out", "--ref"])).toThrow(/needs a value/);
     expect(() => parseArgs(["--bogus"])).toThrow(/unknown argument/);
