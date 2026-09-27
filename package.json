@@ -57,6 +57,7 @@
     "release:claims:draft": "tsx scripts/release-claims-draft.ts",
     "promote:image": "tsx scripts/promote-image.ts",
     "release:harness": "tsx scripts/release-harness.ts",
+    "release:candidate": "tsx scripts/release-candidate.ts",
     "release:rules": "tsx scripts/release-rules.ts",
     "release:report-comment": "tsx scripts/release-report-comment.ts"
   },
