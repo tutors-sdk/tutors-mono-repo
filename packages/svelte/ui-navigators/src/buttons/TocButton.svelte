@@ -4,23 +4,22 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";
   import { t } from "@tutors/i18n";
+  let { labelled = false } = $props();
 </script>
 
 {#snippet menuSelector()}
-  <div class="hover:preset-tonal-secondary rounded-lg p-2">
-    <Icon type="coursetree" tip={t("nav.toc.tip")} height="40" />
+  <div class="nav-row">
+    <Icon type="coursetree" tip={t("nav.toc.tip")} height="20" />
+    {#if labelled}<span>{t("nav.toc.suffix")}</span>{/if}
   </div>
 {/snippet}
 
 {#snippet sidebarContent()}
-  <header class="text-center">
-    <h3 class="text-surface-500 text-lg">{currentCourse?.value?.title} {t("nav.toc.suffix")}</h3>
-  </header>
   <article>
     <CourseContext />
   </article>
 {/snippet}
 
 <div data-tour="toc">
-  <Sidebar position="right" {menuSelector} {sidebarContent} ariaLabel={t("nav.toc.tip")} />
+  <Sidebar width="w-lg" description={currentCourse.value?.title ?? ""} title={t("nav.toc.suffix")} position="right" {menuSelector} {sidebarContent} ariaLabel={t("nav.toc.tip")} />
 </div>

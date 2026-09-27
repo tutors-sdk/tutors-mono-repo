@@ -1,0 +1,51 @@
+# Local Grafana for Tutors learning-analytics insights.
+#
+# Grafana connects directly to the Tutors Supabase Postgres database (Supabase IS
+# Postgres). No changes to the Tutors apps are required — the data is already there.
+#
+# Two data sources are provisioned (see provisioning/datasources/datasources.yml):
+#   - "Tutors Local (Supabase)"   -> a local `supabase start` instance on the host
+#   - "Tutors Staging (Supabase)" -> your remote staging Supabase (creds via .env)
+#
+# Usage:
+#   1. cp .env.example .env   # fill in staging creds if you want the staging source
+#   2. (optional, for local data) run `supabase start` in the repo
+#   3. docker compose -f observability/grafana/docker-compose.yml up -d
+#   4. open http://localhost:3001  (admin / admin on first login)
+services:
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: tutors-grafana
+    ports:
+      # 3001 on the host to avoid clashing with SvelteKit dev servers on 3000/5173
+      - "3001:3000"
+    env_file:
+      - .env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}
+      # Auto-provisioning reads these mounted directories at startup.
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      # Staging connection values are referenced by the datasource YAML via env.
+      STAGING_DB_HOST: ${STAGING_DB_HOST:-}
+      STAGING_DB_PORT: ${STAGING_DB_PORT:-5432}
+      STAGING_DB_NAME: ${STAGING_DB_NAME:-postgres}
+      STAGING_DB_USER: ${STAGING_DB_USER:-}
+      STAGING_DB_PASSWORD: ${STAGING_DB_PASSWORD:-}
+      STAGING_DB_SSLMODE: ${STAGING_DB_SSLMODE:-require}
+      LOCAL_DB_HOST: ${LOCAL_DB_HOST:-host.docker.internal}
+      LOCAL_DB_PORT: ${LOCAL_DB_PORT:-54322}
+      LOCAL_DB_NAME: ${LOCAL_DB_NAME:-postgres}
+      LOCAL_DB_USER: ${LOCAL_DB_USER:-postgres}
+      LOCAL_DB_PASSWORD: ${LOCAL_DB_PASSWORD:-postgres}
+    extra_hosts:
+      # Lets the container reach a Supabase instance running on the Linux host.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
+volumes:
+  grafana-data:

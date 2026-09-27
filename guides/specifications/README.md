@@ -2,7 +2,9 @@
 
 Scenarios that describe Tutors but are **not executed**. They were written as Gherkin under
 `tests/bdd/features/`, and cannot be driven from Node: they need a browser, or they describe
-behaviour the product does not have. Everything still under `tests/bdd/features/` runs; see
+behaviour the product does not have. Reader behaviour that needs a browser is now written as
+`@ui` Rules in `tests/bdd/features/ui/` and proved by Playwright; a scenario here moves there
+once the reader does what it describes and a test can drive it. Everything still under `tests/bdd/features/` runs; see
 [EARS-METHODOLOGY.md](../EARS-METHODOLOGY.md) for how a feature is bound to product code.
 
 Each file says why its scenarios are here and which tier covers the behaviour, or that none
@@ -11,7 +13,7 @@ file can call.
 
 | File | Scenarios | Why it is prose | Covered by |
 |---|---|---|---|
-| [accessibility.md](./accessibility.md) | 5 | Focus order, landmarks and contrast need a rendered page | Tier G axe audits, in part; no skip link or high contrast theme exists |
+| [accessibility.md](./accessibility.md) | 5 | Focus order, landmarks and contrast need a rendered page | Rule 0051 (WCAG 2.1 AA axe audits) and 0038 (contrast), in part; no skip link or high contrast theme exists |
 | [analytics-lab.md](./analytics-lab.md) | 2 | Column sorting is ag-grid in the browser; a lab nobody opened is never listed | Nothing: the time app has no journeys |
 | [auth-integration.md](./auth-integration.md) | 6 | The Auth.js OAuth flow, in a browser | Tier M cookie and CSRF contracts; nothing signs in or out |
 | [authentication.md](./authentication.md) | 1 | The avatar and name are rendered by a Svelte component | Nothing |
@@ -23,7 +25,7 @@ file can call.
 | [live-presence.md](./live-presence.md) | 2 | Nothing removes a student who leaves, or reports a failed channel | Nothing |
 | [offline-resilience.md](./offline-resilience.md) | 4 | No reconnection, stale-data indicator or service worker exists | Nothing |
 | [presence-tracking.md](./presence-tracking.md) | 2 | Grouping is a `$derived` inside a component; nothing removes a student | Nothing |
-| [responsive-layout.md](./responsive-layout.md) | 4 | CSS at a real viewport | Tier G runs at desktop and Pixel 7 sizes but asserts none of this |
+| [responsive-layout.md](./responsive-layout.md) | 4 | CSS at a real viewport | Rules 0019 (no sideways scroll), 0024 (phone header) and 0031 (one card column), in part; nothing measures touch targets |
 | [search-content.md](./search-content.md) | 2 | Expected behaviour for two `searchHits` bugs | PRs #270 and #271 |
 | [student-engagement.md](./student-engagement.md) | 2 | Nothing sums page loads; a student with no activity is absent, not zero | `tests/unit/time`, for empty rows |
 | [theme-customisation.md](./theme-customisation.md) | 2 | No icon library picker and no per-course theme exist | Tier N, for icon completeness |

@@ -6,6 +6,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./search/*": {
+      "types": "./src/search/*.ts",
+      "default": "./src/search/*.ts"
+    },
     "./*": "./src/*"
   },
   "scripts": {

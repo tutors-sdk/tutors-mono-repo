@@ -51,13 +51,13 @@
     <p class="text-lg">Loading calendar data...</p>
   </div>
 {:else if error}
-  <div class="card preset-filled-error-500 p-4">
+  <div class="ui-panel border-[var(--ui-danger)] p-4">
     <p class="font-bold">Error loading data</p>
     <p class="text-sm">{error}</p>
   </div>
 {:else if data.length === 0}
   <div class="flex items-center justify-center p-8">
-    <p class="text-lg text-surface-600">No calendar data available</p>
+    <p class="text-lg text-[var(--ui-muted)]">No calendar data available</p>
   </div>
 {:else}
   <!-- Table -->
@@ -85,7 +85,7 @@
       </tbody>
     </table>
   </div>
-  <p class="mt-4 text-sm text-surface-600">
+  <p class="mt-4 text-sm text-[var(--ui-muted)]">
     Showing {data.length} calendar {data.length === 1 ? "entry" : "entries"}
   </p>
 {/if}

@@ -1,0 +1,259 @@
+name: Release Harness Report
+
+# The release harness (tutors-sdk/tutors-release-harness) judges a release
+# candidate but never writes to a pull request: it puts report.md in its job
+# summary and uploads the whole run as the `release-report` artifact. This
+# workflow closes the gap from this side, so the release pull request shows the
+# verdict:
+#
+#   1. find      the harness run that release-dispatch.yml's dispatch started
+#                (release.yml, event repository_dispatch, after dispatched_at,
+#                titled for the candidate: see guides/Release-Strategy.md for the
+#                run-name the harness should set, and for what happens without it)
+#   2. wait      until it completes, polling with backoff, for at most 45 minutes
+#   3. download  the `release-report` artifact and read its release-mode report.json
+#   4. comment   create or update ONE comment on the open pull request of the
+#                release branch, found by a hidden marker in its first line. No
+#                new comment per push; the comment is rewritten for each candidate.
+#
+# Started by the `report` job of release-dispatch.yml, on the default branch: the
+# code that holds HARNESS_TOKEN and can write to a pull request is the code on
+# main, never a release branch's copy. It is a workflow of its own because the wait
+# can take an hour and release-dispatch.yml's concurrency group must be free for
+# the next push. Best-effort by design: whatever happens here (no run, no pull
+# request yet, a token that cannot read the harness's runs, a timeout) is said in
+# this run's summary and nothing about tagging or dispatching depends on it.
+#
+# Permissions: pull-requests: write and contents: read, on the one job. The
+# harness token needs Actions: read on the harness repository, see
+# guides/Release-Strategy.md#the-harness-verdict-on-the-release-pr.
+#
+# Everything read from the harness is data. Inputs and the report reach the shell
+# only through env, and the comment text is escaped by scripts/release-report-comment.ts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: "Release candidate, 16.3.0-rc.1"
+        required: true
+        type: string
+      production:
+        description: "Production tag the harness compared against, 16.2.2"
+        required: false
+        type: string
+      branch:
+        description: "The release branch, release/16.3.0"
+        required: true
+        type: string
+      sha:
+        description: "The candidate's commit"
+        required: true
+        type: string
+      dispatched_at:
+        description: "When release-dispatch.yml sent release-candidate to the harness (UTC, 2026-09-21T10:00:00Z)"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: release-harness-report-${{ inputs.candidate }}
+  cancel-in-progress: true
+
+env:
+  HARNESS_REPO: tutors-sdk/tutors-release-harness
+  # Minutes to wait for the harness run to finish; WAIT_MINUTES in scripts/release-report-comment.ts.
+  WAIT_MINUTES: "45"
+
+jobs:
+  report:
+    name: Post the harness verdict on the release pull request
+    if: github.repository == 'tutors-sdk/tutors-mono-repo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: read
+      pull-requests: write # create or update the one marked comment; nothing else
+    env:
+      CANDIDATE: ${{ inputs.candidate }}
+      PRODUCTION: ${{ inputs.production }}
+      BRANCH: ${{ inputs.branch }}
+      SHA: ${{ inputs.sha }}
+      DISPATCHED_AT: ${{ inputs.dispatched_at }}
+    steps:
+      - name: Check the inputs
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+          printf '%s' "$CANDIDATE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$' || fail "candidate is not X.Y.Z-rc.N."
+          printf '%s' "$PRODUCTION" | grep -Eq '^([0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?)?$' || fail "production is not a version."
+          printf '%s' "$BRANCH" | grep -Eq '^release/[0-9A-Za-z._-]+$' || fail "branch is not a release branch."
+          printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$' || fail "sha is not a commit."
+          printf '%s' "$DISPATCHED_AT" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$' || fail "dispatched_at is not a UTC time."
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter .
+
+      # The only step that holds HARNESS_TOKEN. Reading another repository's
+      # workflow runs and artifacts needs Actions: read on it. A token without it
+      # gets a 403 or 404 here, and the summary says which permission to add.
+      - name: Find the harness run and wait for it
+        id: wait
+        env:
+          GH_TOKEN: ${{ secrets.HARNESS_TOKEN }}
+        run: |
+          state() { echo "state=$1" >> "$GITHUB_OUTPUT"; }
+          note() { echo "$1" >> "$GITHUB_STEP_SUMMARY"; }
+          denied() { grep -qE 'HTTP (401|403|404)|Resource not accessible|Bad credentials' err.txt; }
+          denied_note() { note "HARNESS_TOKEN cannot read workflow runs of $HARNESS_REPO. It needs the fine-grained permission **Actions: read** on that repository (see guides/Release-Strategy.md#the-harness-verdict-on-the-release-pr). Nothing was posted."; }
+
+          if [ -z "$GH_TOKEN" ]; then
+            note "The HARNESS_TOKEN secret is not set, so the harness's run cannot be read. Nothing was posted."
+            state skipped
+            exit 0
+          fi
+
+          start="$(date +%s)"
+          deadline=$(( start + WAIT_MINUTES * 60 ))
+          find_deadline=$(( start + 600 ))
+
+          # 1. The run appears seconds after the dispatch; give it ten minutes.
+          run=""
+          how=""
+          delay=10
+          while [ -z "$run" ]; do
+            if gh api "repos/$HARNESS_REPO/actions/workflows/release.yml/runs?event=repository_dispatch&per_page=30" > runs.json 2> err.txt; then
+              pnpm --silent release:report-comment find-run --runs runs.json --candidate "$CANDIDATE" --dispatched-at "$DISPATCHED_AT" > match.json
+              status="$(jq -r .status match.json)"
+              if [ "$status" = found ]; then
+                run="$(jq -r .id match.json)"
+                how="$(jq -r .how match.json)"
+                break
+              fi
+              if [ "$status" = ambiguous ]; then
+                note "More than one run of the harness's release.yml could be the one this dispatch started, and none is titled for $CANDIDATE: $(jq -r .detail match.json). Nothing was posted."
+                state ambiguous
+                exit 0
+              fi
+            elif denied; then
+              denied_note
+              state denied
+              exit 0
+            fi
+            if [ "$(date +%s)" -ge "$find_deadline" ]; then
+              note "No run of the harness's release.yml for $CANDIDATE appeared within ten minutes of the dispatch. Nothing was posted."
+              state none
+              exit 0
+            fi
+            sleep "$delay"
+            delay=$(( delay * 3 / 2 )); [ "$delay" -gt 60 ] && delay=60
+          done
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          echo "how=$how" >> "$GITHUB_OUTPUT"
+          note "Harness run: $GITHUB_SERVER_URL/$HARNESS_REPO/actions/runs/$run (found by $how)"
+
+          # 2. Poll with backoff until it completes or the time is up.
+          delay=20
+          failures=0
+          while :; do
+            if gh api "repos/$HARNESS_REPO/actions/runs/$run" > run.json 2> err.txt; then
+              failures=0
+              [ "$(jq -r .status run.json)" = completed ] && break
+            elif denied; then
+              denied_note
+              state denied
+              exit 0
+            else
+              failures=$(( failures + 1 ))
+              if [ "$failures" -ge 5 ]; then
+                note "The GitHub API failed five times in a row while waiting for the harness run. Nothing was posted."
+                state error
+                exit 0
+              fi
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              note "The harness run had not finished after $WAIT_MINUTES minutes."
+              state timeout
+              exit 0
+            fi
+            sleep "$delay"
+            delay=$(( delay * 3 / 2 )); [ "$delay" -gt 120 ] && delay=120
+          done
+
+          # 3. The run, its jobs and its artifacts; the report itself if it has one.
+          gh api "repos/$HARNESS_REPO/actions/runs/$run/jobs?per_page=50" > jobs.json 2> /dev/null || echo '{"jobs":[]}' > jobs.json
+          if ! gh api "repos/$HARNESS_REPO/actions/runs/$run/artifacts?per_page=50" > artifacts.json 2> err.txt; then
+            note "The harness run finished but its artifacts could not be listed, so the report was not read. Nothing was posted."
+            state error
+            exit 0
+          fi
+          if jq -e '[.artifacts[] | select(.name == "release-report" and .expired == false)] | length > 0' artifacts.json > /dev/null; then
+            if ! gh run download "$run" --repo "$HARNESS_REPO" --name release-report --dir harness-report 2> err.txt; then
+              note "The harness's release-report artifact exists but could not be downloaded (Actions: read is needed for that too). Nothing was posted."
+              state error
+              exit 0
+            fi
+          else
+            note "The harness run finished without a release-report artifact: it reached no verdict."
+          fi
+          state done
+
+      # Untrusted: the report. The script escapes it; the workflow only passes files.
+      - name: Post or update the comment
+        if: steps.wait.outputs.state == 'done' || steps.wait.outputs.state == 'timeout'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ steps.wait.outputs.state }}
+          RUN: ${{ steps.wait.outputs.run }}
+          HOW: ${{ steps.wait.outputs.how }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          note() { echo "$1" >> "$GITHUB_STEP_SUMMARY"; }
+
+          # The open pull request from THIS repository's release branch; a fork's
+          # branch of the same name is not the release.
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number,headRepositoryOwner \
+            | jq -r --arg owner "$OWNER" '[.[] | select(.headRepositoryOwner.login == $owner)][0].number // empty')"
+          if [ -z "$pr" ]; then
+            note "There is no open pull request for \`$BRANCH\` yet (the branch was pushed before the pull request), so nothing was posted. Open it and re-run this workflow, or start it again from release-dispatch.yml."
+            exit 0
+          fi
+
+          if [ ! -f run.json ]; then gh api "repos/$HARNESS_REPO/actions/runs/$RUN" > run.json; fi
+          if ! pnpm --silent release:report-comment render \
+            --candidate "$CANDIDATE" --production "$PRODUCTION" --run run.json --report-dir harness-report \
+            --jobs jobs.json --artifacts artifacts.json --state "$STATE" --how "$HOW" --max-hunks 10 --out body.md > verdict.json; then
+            note "The comment was not rendered (the run matched by time judged another candidate, or the inputs are unusable). Nothing was posted."
+            exit 0
+          fi
+
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$pr/comments?per_page=100" \
+            --jq '.[] | {id, body, user: {login: .user.login, type: .user.type}}' > comments.json
+          existing="$(pnpm --silent release:report-comment pick-comment --comments comments.json)"
+          if [ -n "$existing" ]; then
+            url="$(gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -F body=@body.md --jq .html_url)"
+            action=updated
+          else
+            url="$(gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$pr/comments" -F body=@body.md --jq .html_url)"
+            action=created
+          fi
+          note "Verdict **$(jq -r .label verdict.json)**: $action [the comment on #$pr]($url)."
+
+      - name: Say what failed
+        if: failure()
+        run: |
+          echo "Posting the harness verdict failed: see the failing step above. The candidate was tagged and dispatched regardless, and the harness's own run is unaffected." >> "$GITHUB_STEP_SUMMARY"

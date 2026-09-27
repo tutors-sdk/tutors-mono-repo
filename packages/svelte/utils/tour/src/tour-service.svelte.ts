@@ -5,24 +5,22 @@ import { browser } from "$app/environment";
 
 const TOUR_COMPLETED_KEY = "tutors-tour-completed";
 
+export function findTourTarget(selector: string): Element | undefined {
+  if (!browser) return;
+  return Array.from(document.querySelectorAll(selector)).find(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && getComputedStyle(el).visibility === "visible";
+  });
+}
+
 function createTourService() {
   const isOpen = rune(false);
   const currentStepIndex = rune(0);
   const activeSteps = rune<TourStep[]>([]);
 
-  function isElementVisible(el: Element): boolean {
-    const rect = el.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
-  }
-
   function start(steps: TourStep[] = courseReaderSteps) {
     if (!browser) return;
-    const visible = steps.filter((step) => {
-      const el = document.querySelector(step.target);
-      if (!el) return false;
-      if (step.optional && !isElementVisible(el)) return false;
-      return true;
-    });
+    const visible = steps.filter(step => findTourTarget(step.target));
     if (visible.length === 0) return;
     activeSteps.value = visible;
     currentStepIndex.value = 0;

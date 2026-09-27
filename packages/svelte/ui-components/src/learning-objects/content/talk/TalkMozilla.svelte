@@ -2,7 +2,7 @@
   import * as pdfjs from "pdfjs-dist";
   // @ts-ignore
   import FileSaver from "file-saver";
-  import { onDestroy, tick, onMount } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import { Progress } from "@skeletonlabs/skeleton-svelte";
   import { PDFWorker, getDocument } from "pdfjs-dist";
   import type { Talk } from "@tutors/tutors-model-lib";
@@ -22,15 +22,15 @@
   let pageNum = $state(1);
   let url = "";
   let canvas: any = $state();
-  let pageCount = 0;
   let pdfDoc: any = $state(null);
   let pageRendering = false;
-  let pageNumPending = false;
+  let pageNumPending: number | null = null;
   let rotation = 0;
-  let totalPage = 0;
-  let pages: any = [];
   let loading = $state(true);
+  let fullscreen = $state(false);
+  let loadError = $state("");
   let worker: PDFWorker | undefined;
+  let viewer: HTMLElement;
 
   $effect(() => {
     loading = true;
@@ -39,11 +39,8 @@
     loadDoc();
   });
 
-  async function initialLoad() {
-    window.addEventListener("keydown", keypressInput);
-  }
-
-  function keypressInput(e) {
+  function keypressInput(e: KeyboardEvent) {
+    if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, button, a")) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       onNextPage();
@@ -53,29 +50,19 @@
     }
   }
 
-  onMount(() => {
-    initialLoad();
-  });
-
-  onDestroy(() => {
-    window.removeEventListener("keydown", keypressInput);
-    // if (worker) {
-    //   worker.destroy();
-    //   worker = undefined;
-    // }
-  });
+  onDestroy(() => { void pdfDoc?.destroy(); });
 
   async function loadDoc() {
+    loading = true; loadError = "";
     try {
       const loadingTask = await getDocument({ url, worker });
       pdfDoc = await loadingTask.promise;
-      await tick();
-      pageCount = pdfDoc.numPages;
-      totalPage = pageCount;
       loading = false;
+      await tick();
       await renderPage(pageNum);
     } catch (error) {
       log.error("Error loading document:", error);
+      loading = false; loadError = "This presentation could not be loaded.";
     }
   }
 
@@ -95,28 +82,23 @@
         };
         const renderTask = page.render(renderContext);
         await renderTask.promise;
-        pageRendering = false;
-        if (!pageNumPending) {
-          if (pageNum < pdfDoc.totalPage) {
-            pages[pageNum] = canvas;
-            pageNum++;
-            await renderPage(pageNum);
-          } else {
-            for (let i = 1; i < pages.length; i++) {
-              canvas.appendChild(pages[i]);
-            }
-          }
-          pageNumPending = false;
-        }
+
       }
     } catch (error) {
       log.error(`Error rendering or getting page ${num}`, error);
+      loadError = "This page could not be displayed. Try reloading the presentation.";
+    } finally {
+      pageRendering = false;
+      if (pageNumPending !== null && !loadError) {
+        const pending = pageNumPending; pageNumPending = null;
+        void renderPage(pending);
+      }
     }
   }
 
   function queueRenderPage(num: number) {
     if (pageRendering) {
-      pageNumPending = true;
+      pageNumPending = num;
     } else {
       renderPage(num);
     }
@@ -131,7 +113,7 @@
   }
 
   function onNextPage() {
-    if (pageNum >= pdfDoc.numPages) {
+    if (!pdfDoc || pageNum >= pdfDoc.numPages) {
       return;
     }
     pageNum++;
@@ -149,34 +131,39 @@
   }
 </script>
 
-<div class="card mr-2 rounded-lg border p-2">
-  <div class="mx-2 mb-2 flex items-center justify-between">
+<svelte:document onfullscreenchange={() => fullscreen = document.fullscreenElement === viewer} />
+
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (The focused presentation surface owns arrow-key slide navigation.) -->
+<section bind:this={viewer} class="ui-panel media-viewer" aria-label={lo.title} tabindex="0" onkeydown={keypressInput}>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <div class="text-sm">
-      {pageNum} of {pdfDoc?.numPages}
+      {#if pdfDoc}{pageNum} of {pdfDoc.numPages}{/if}
     </div>
-    <div>
-      <button class="btn btn-sm" onclick={onPrevPage} aria-label={t("content.slideBack")}>
+    <div class="ui-actions">
+      <button class="ui-button" disabled={pageNum <= 1 || loading || !!loadError} onclick={onPrevPage} aria-label={t("content.slideBack")}>
         <Icon type="left" tip={t("content.slideBack")} />
       </button>
-      <button class="btn btn-sm" onclick={onNextPage} aria-label={t("content.slideForward")}>
+      <button class="ui-button" disabled={pageNum >= (pdfDoc?.numPages ?? 0) || loading || !!loadError} onclick={onNextPage} aria-label={t("content.slideForward")}>
         <Icon type="right" tip={t("content.slideForward")} />
       </button>
-      <button class="btn btn-sm" onclick={clockwiseRotate} aria-label={t("content.slideRotate")}>
+      <button class="ui-button" disabled={loading || !!loadError} onclick={clockwiseRotate} aria-label={t("content.slideRotate")}>
         <Icon type="rotate" tip={t("content.slideRotate")} />
       </button>
-      <button class="btn btn-sm" onclick={downloadPdf} aria-label={t("content.slideDownload")}>
+      <button class="ui-button" onclick={downloadPdf} aria-label={t("content.slideDownload")}>
         <Icon type="download" tip={t("content.slideDownload")} />
       </button>
-      <button class="btn btn-sm" aria-label={t("content.slideFullScreen")}>
-        <Icon link={lo.pdf} type="fullScreen" target="_blank" tip={t("content.slideFullScreen")} />
+      <button class="ui-button" onclick={() => document.fullscreenElement ? document.exitFullscreen() : viewer.requestFullscreen()} aria-label={fullscreen ? "Exit fullscreen" : t("content.slideFullScreen")}>
+        <Icon icon={fullscreen ? "lucide:minimize" : "lucide:maximize"} />
       </button>
     </div>
   </div>
-  {#if !loading}
-    <canvas class="mx-auto w-full" bind:this={canvas}></canvas>
+  {#if loadError}
+    <div class="ui-empty" role="alert"><p>{loadError}</p><div class="ui-actions mt-4"><button class="ui-button" onclick={loadDoc}>Retry</button><a class="ui-button" href={lo.pdf} target="_blank" rel="noopener noreferrer">Open original</a></div></div>
+  {:else if !loading}
+    <canvas aria-label={`${lo.title}, page ${pageNum}`} class="mx-auto w-full" bind:this={canvas}></canvas>
   {:else}
-    <div class="mt-72 mb-72 flex flex-col items-center justify-center">
+    <div class="flex min-h-64 items-center justify-center">
       <Progress value={null} />
     </div>
   {/if}
-</div>
+</section>

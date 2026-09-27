@@ -205,7 +205,7 @@ export function getUnits(los: Lo[]) : Units;
 export function getVideoConfig(lo: Lo) : VideoIdentifier;
 
 // (from src/utils/course-utils.ts)
-export function initCalendar(course: Course);
+export function initCalendar(course: Course, today: number = Date.now());
 
 // (from src/utils/markdown-utils.ts)
 export function initHighlighter(codeHighlighter: any);

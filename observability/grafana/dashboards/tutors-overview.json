@@ -1,0 +1,170 @@
+{
+  "uid": "tutors-overview",
+  "title": "Tutors — Learning Overview",
+  "tags": ["tutors"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "5m",
+  "time": { "from": "now-30d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "postgres",
+        "current": { "text": "Tutors Local (Supabase)", "value": "tutors-local" },
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active student-days",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" } } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(active_students), 0) AS value FROM tutors_reporting.v_daily_engagement WHERE $__timeFilter(day)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Time active (hours)",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "h", "decimals": 1 } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(seconds_active), 0) / 3600.0 AS value FROM tutors_reporting.v_daily_engagement WHERE $__timeFilter(day)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Page loads",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(page_loads), 0) AS value FROM tutors_reporting.v_daily_engagement WHERE $__timeFilter(day)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Errors (window)",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) AS value FROM tutors_reporting.v_errors WHERE $__timeFilter(time)"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Daily engagement",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "fillOpacity": 40 } } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT day::timestamptz AS time, SUM(seconds_active) / 3600.0 AS \"hours active\", SUM(page_loads) AS \"page loads\" FROM tutors_reporting.v_daily_engagement WHERE $__timeFilter(day) GROUP BY day ORDER BY day"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Errors by level",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" }, "fillOpacity": 60 } } },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(time, '1h'), level AS metric, COUNT(*) AS errors FROM tutors_reporting.v_errors WHERE $__timeFilter(time) GROUP BY 1, level ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Top learning objects (by engagement)",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT course_id, lo_id, lo_type, students, duration_units, interactions FROM tutors_reporting.v_lo_time ORDER BY duration_units DESC NULLS LAST LIMIT 25"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Most active students",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 13 },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(full_name, student_id) AS student, courses, learning_objects, duration_units, interactions, last_accessed FROM tutors_reporting.v_student_activity ORDER BY duration_units DESC NULLS LAST LIMIT 25"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Course activity",
+      "datasource": { "type": "postgres", "uid": "${DS}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT course_id, active_days, last_active_day, student_day_count, seconds_active / 3600.0 AS hours_active, page_loads FROM tutors_reporting.v_course_activity ORDER BY hours_active DESC NULLS LAST"
+        }
+      ]
+    }
+  ]
+}

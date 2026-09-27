@@ -127,10 +127,48 @@ describeFeature(feature, ({ Background, Scenario }) => {
 The path passed to `loadFeature` is a literal relative to the repo root, because tier O reads
 it to tell an executable feature from a `documentation-only` one.
 
-A scenario that needs a browser, such as layout, focus order, an OAuth redirect or a service
-worker, cannot be driven from Node. It lives as prose in
+A scenario that needs a browser, such as layout, focus order, colour or a dialog, cannot be
+driven from Node. It is a `@ui` Rule instead, proved by Playwright; see
+[Browser-proved Rules](#browser-proved-rules) below. Behaviour that no test can drive yet,
+such as a real OAuth sign-in or a service worker, lives as prose in
 [`guides/specifications/`](./specifications/README.md), which names the tier that does cover
 the behaviour, or says that none does.
+
+### Browser-proved Rules
+
+A feature tagged `@ui` (the files in `tests/bdd/features/ui/`) holds Rules about what a person
+sees and does in the reader. They are written, tagged and audited like every other Rule, and
+share the one id space, but their scenarios are proved by Playwright rather than by a steps
+file:
+
+```gherkin
+@ui @reader
+Feature: Resource cards
+
+  @rule-0032 @ears-event-driven
+  Rule: When a pointer rests on a card, the reader shall enlarge the card to 102 percent of its size.
+
+    Scenario: Hovering a card enlarges it
+      When a student points at a resource card
+      Then the card is scaled to 1.02
+```
+
+```ts
+// apps/reader/tests/e2e/resource-cards.spec.ts
+test("Hovering a card enlarges it", { tag: "@rule-0032" }, async ({ page }) => { ... });
+```
+
+The binding is the scenario title and the Rule id, both checked by `pnpm test:ears:audit`:
+
+- every scenario needs a test with its exact title, tagged with its Rule id (`unproved-scenario`);
+- a test that cites a Rule id must be a scenario of that `@ui` Rule (`orphan-ui-test`), so a
+  renamed scenario or a stale test fails;
+- `test.skip` or `test.fixme` on a proving test turns the scenario off (`rule-not-run`).
+
+Every test under `apps/reader/tests/e2e/` proves a scenario: a behaviour worth a browser test is
+worth a Rule. The tests run on every pull request (`ui-contract` in `ci.yml`, Chromium) and on
+release candidates in Chromium, Firefox and WebKit. Run one Rule's tests with
+`pnpm test:e2e:reader --project=chromium -g @rule-0032`.
 
 ## Rules are the requirements
 
@@ -163,6 +201,7 @@ in front of "shall":
 | `apps/catalogue` | `the catalogue` |
 | `apps/live` | `the live dashboard` |
 | `apps/time` | `the time dashboard` |
+| `@tutors/data-api` and the reader's `/api` routes | `the data API` |
 
 "The system shall" is not a system name.
 
@@ -206,7 +245,7 @@ run the scenarios: `pnpm test:bdd` does that.
 | `shall-count` | its title does not contain exactly one "shall" |
 | `obligation-keyword` | it says should, must, will, would, may, might or could |
 | `vague-language` | it uses a word from the vague list (appropriate, quickly, handle, some, ...) |
-| `system-name` | the words before "shall" are not tutors, the reader, the catalogue, the live dashboard or the time dashboard |
+| `system-name` | the words before "shall" are not tutors, the reader, the catalogue, the live dashboard, the time dashboard or the data API |
 | `ears-form` | a When, While or Where title has no comma before the system, or an If title has no ", then" |
 | `ears-tag-missing`, `ears-tag-mismatch` | its `@ears-*` tag is missing, or is not the one its wording has: When is event-driven, While state-driven, If unwanted, Where optional, none ubiquitous |
 | `no-scenarios` | no scenario sits beneath it |
@@ -246,7 +285,15 @@ A release claim names the Rule behind a change in its `reason`, as `Rule 0031: <
 - `pnpm check:release-claims` also resolves the citation. A `reason` that starts with "Rule" and a
   number must name a Rule id that a feature under `tests/bdd/features` defines at the ref being
   checked, and the number must have four digits. A free-text reason, such as a CHANGELOG entry,
-  is left alone.
+  is left alone. A claim may instead carry `rule: "0031"` (harness contract 1.3.0), which is
+  resolved the same way, and then needs no `reason`. An older harness (before 1.3.0) ignores the `rule` key and still requires the `reason`, so a claim with only a `rule` fails there for the missing `reason`; keep `reason: "Rule 0031: ..."` until the harness release path is 1.3.0 or later. `--ref <ref>` resolves against the Rules at
+  that ref rather than the working tree.
+- `pnpm release:rules [--ref <ref>] [--out <path>] [--since <ref>]` writes `rules.json`, the id, title and digest of
+  every Rule at a ref, which the harness resolves a `rule` against ([release/README.md](../release/README.md#rules-the-release-defines)).
+  With `--since`, each Rule added or changed after that ref also names the PRs that touched it (`prs`), which the harness scorecard shows.
+- `pnpm release:changelog --from <production tag> --to <release ref>` drafts the release's changelog from the merged PRs, naming
+  the Rules each PR added or changed, and ends with a table of the release's Rules and their PRs
+  ([Release-Strategy.md](Release-Strategy.md#changelog-discipline)).
 
 ## Persona-Based Organisation
 
@@ -276,7 +323,8 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 - Offline resilience
 - Theming
 
-Accessibility, the OAuth flow and responsive layout need a browser and are prose in
+Reader layout, navigation, themes and accessibility need a browser and are `@ui` Rules in
+`features/ui/`, proved by Playwright. The OAuth flow is still prose in
 [specifications/](./specifications/README.md). `course/`, `live/` and `time/` hold features that
 predate the EARS tags.
 
@@ -297,7 +345,7 @@ bound: most of those scenarios describe failure handling and options the product
 
 New behaviour is written as a Rule. The [`ears-gherkin-dev`](../.claude/skills/ears-gherkin-dev/SKILL.md) skill walks an AI assistant through the same steps.
 
-1. Choose the persona whose perspective the feature serves, and the system name for the Rule (tutors, the reader, the catalogue, the live dashboard, the time dashboard)
+1. Choose the persona whose perspective the feature serves, and the system name for the Rule (tutors, the reader, the catalogue, the live dashboard, the time dashboard, the data API)
 2. Select the EARS pattern that best describes the requirement type and write it as a `Rule:` title with exactly one "shall"
 3. Take an id from `pnpm test:ears:audit --next-id` and put `@rule-NNNN` and the `@ears-*` tag on the lines above the Rule. For a state-driven or optional Rule, tag one scenario `@active` and one `@inactive`
 4. Write the scenarios beneath the Rule, using Gherkin's keywords, not While, Where or If

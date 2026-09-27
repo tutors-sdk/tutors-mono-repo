@@ -15,7 +15,6 @@
   let output = $state("");
   let isRunning = $state(false);
   let hasRun = $state(false);
-  let pyodideReady = $state(false);
   let pyodideLoading = $state(false);
   let pyodideInstance: any = null;
 
@@ -28,7 +27,6 @@
     if (pyodideInstance) return pyodideInstance;
     if ((window as any).__pyodideInstance) {
       pyodideInstance = (window as any).__pyodideInstance;
-      pyodideReady = true;
       return pyodideInstance;
     }
 
@@ -45,7 +43,6 @@
       }
       pyodideInstance = await (window as any).loadPyodide();
       (window as any).__pyodideInstance = pyodideInstance;
-      pyodideReady = true;
       return pyodideInstance;
     } finally {
       pyodideLoading = false;
@@ -82,7 +79,6 @@
 
   function resetCode() {
     if (!editorView) return;
-    const { EditorView } = editorView.constructor as any;
     editorView.dispatch({
       changes: { from: 0, to: editorView.state.doc.length, insert: source }
     });
@@ -107,6 +103,7 @@
                    document.documentElement.classList.contains("dark");
 
     const extensions = [
+      EditorView.contentAttributes.of({ "aria-label": `${language} exercise code` }),
       lineNumbers(),
       highlightActiveLine(),
       highlightActiveLineGutter(),
@@ -146,11 +143,9 @@
 
 <div class="notebook-editor" bind:this={editorContainer}></div>
 
-<div class="flex items-center gap-2 border-t border-surface-200 dark:border-surface-700 px-3 py-1.5">
+<div class="ui-actions exercise-actions" aria-busy={isRunning}>
   <button
-    class="run-button flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors
-      bg-success-100 dark:bg-success-900 text-success-700 dark:text-success-300 hover:bg-success-200 dark:hover:bg-success-800
-      disabled:opacity-50 disabled:cursor-not-allowed"
+    class="ui-button ui-button-primary"
     onclick={runCode}
     disabled={isRunning}
   >
@@ -158,15 +153,15 @@
       <span class="text-sm animate-spin">&#9696;</span>
       {pyodideLoading ? "Loading Python..." : "Running..."}
     {:else}
-      <span class="text-sm">&#9654;</span>
+      <span aria-hidden="true">&#9654;</span>
       Run
     {/if}
   </button>
 
   {#if hasRun}
     <button
-      class="flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors
-        bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700"
+      class="ui-button"
+      disabled={isRunning}
       onclick={resetCode}
     >
       Reset
@@ -175,7 +170,11 @@
 </div>
 
 {#if hasRun && output}
-  <div class="notebook-outputs border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 p-3">
+  <div class="notebook-outputs exercise-output" role="status" aria-label="Python output">
     <pre class="text-sm font-mono whitespace-pre-wrap">{output}</pre>
   </div>
 {/if}
+
+<style>
+  .exercise-actions, .exercise-output { padding: var(--space-3); border-top: 1px solid var(--ui-border); background: var(--ui-surface); }
+</style>

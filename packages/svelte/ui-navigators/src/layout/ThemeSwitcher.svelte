@@ -1,37 +1,7 @@
 <script lang="ts">
   import { themeService } from "@tutors/themes";
-  import { Combobox, Portal } from "@skeletonlabs/skeleton-svelte";
-
-  let theme = $state([themeService.currentTheme.value]);
-  let themes = $state(themeService.themes.map((element) => ({ label: element.name, value: element.name })));
-
-  const onOpenChange = () => {
-    themes = themeService.themes.map((element) => ({ label: element.name, value: element.name }));
-  };
-
-  function changeTheme(value: string[]) {
-    theme = value;
-    themeService.setTheme(value[0]);
-  }
+  import { t } from "@tutors/i18n";
 </script>
-
-<div class="relative z-50 mx-4 mb-2">
-  <Combobox class="w-full max-w-md" placeholder={theme[0]} {onOpenChange} onValueChange={(e) => changeTheme(e.value!)}>
-    <Combobox.Control>
-      <Combobox.Input />
-      <Combobox.Trigger />
-    </Combobox.Control>
-    <Portal>
-      <Combobox.Positioner class="z-[1000]!">
-        <Combobox.Content>
-          {#each themes as item (item.value)}
-            <Combobox.Item {item}>
-              <Combobox.ItemText>{item.label}</Combobox.ItemText>
-              <Combobox.ItemIndicator />
-            </Combobox.Item>
-          {/each}
-        </Combobox.Content>
-      </Combobox.Positioner>
-    </Portal>
-  </Combobox>
-</div>
+<select class="select w-full" aria-label={t("nav.layout.theme")} value={themeService.currentTheme.value} onchange={(event) => themeService.setTheme(event.currentTarget.value)}>
+  {#each themeService.themes as theme}<option value={theme.name}>{theme.name.charAt(0).toUpperCase() + theme.name.slice(1)}</option>{/each}
+</select>

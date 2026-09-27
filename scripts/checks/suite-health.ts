@@ -206,7 +206,9 @@ export function lintFeatureFiles(root: string = REPO_ROOT): FeatureFinding[] {
     .flatMap(({ path, file }): FeatureFinding[] => {
       const text = readText(path);
       if (!/^\s*Scenario( Outline)?:/m.test(text)) return [{ kind: "no-scenarios", file }];
-      if (!bound.has(file) && !globs.some((glob) => glob.test(file))) return [{ kind: "documentation-only", file }];
+      // A feature tagged @ui is proved by Playwright tests; the EARS audit checks each scenario has one.
+      const provedInBrowser = /^\s*(@\S+\s+)*@ui\b[^\n]*\n\s*Feature:/m.test(text);
+      if (!bound.has(file) && !provedInBrowser && !globs.some((glob) => glob.test(file))) return [{ kind: "documentation-only", file }];
       return text.split(/\r?\n/).flatMap((line): FeatureFinding[] => {
         if (DROPPED_STEP.test(line)) return [{ kind: "dropped-step", file, detail: line.trim() }];
         if (IGNORE_TAG.test(line)) return [{ kind: "ignored-scenario", file, detail: line.trim() }];

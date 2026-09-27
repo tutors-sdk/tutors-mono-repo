@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { validateClaimsText } from "../../scripts/checks/release-claims.ts";
+import { ARTEFACTS, validateClaimsText } from "../../scripts/checks/release-claims.ts";
+import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
 import { diffRules, gitIn, indexRules, rulesAtRef } from "../../scripts/checks/lib/rules-index.ts";
 import { draftClaims, parseArgs, renderDraft } from "../../scripts/release-claims-draft.ts";
 
@@ -69,6 +70,15 @@ describe("release claims draft", () => {
     expect(draft).not.toContain("Rule 0004");
   });
 
+  it("lists every artefact the pre-check accepts in the TODO hint, and the help says how an older harness treats `rule`", () => {
+    const draft = draftClaims("v1.0.0", "v1.1.0-rc.1", gitIn(dir));
+    const hint = draft.split(/\r?\n/).find((line) => line.includes("artefact: TODO")) ?? "";
+    for (const artefact of ARTEFACTS) expect(hint, artefact).toContain(artefact);
+    const source = readFileSync(join(REPO_ROOT, "scripts/release-claims-draft.ts"), "utf8");
+    expect(source).toContain("ignores the unknown `rule` key");
+    expect(source).not.toContain("rejects a claim with an unknown field");
+  });
+
   it("is not a valid claims file until the author replaces every TODO, and its reasons resolve", () => {
     const draft = draftClaims("v1.0.0", "v1.1.0-rc.1", gitIn(dir));
     const errors = validateClaimsText(draft, new Set(["0001", "0003"]));
@@ -78,13 +88,24 @@ describe("release claims draft", () => {
     expect(validateClaimsText(filled, new Set(["0001", "0003"]))).toEqual([]);
   });
 
+  it("drafts the `rule` field form with --rule, and that draft resolves once the TODOs are filled in", () => {
+    const draft = draftClaims("v1.0.0", "v1.1.0-rc.1", gitIn(dir), { asField: true });
+    expect(draft).toContain('    rule: "0001" # The reader shall show a title.');
+    expect(draft).toContain('    rule: "0003" # When a student opens a lab, the reader shall show its reading time.');
+    expect(draft).not.toContain("    reason:");
+    const filled = draft.replaceAll("artefact: TODO", "artefact: dom").replaceAll("scope: TODO", 'scope: "reader:*"');
+    expect(validateClaimsText(filled, new Set(["0001", "0003"]))).toEqual([]);
+    expect(validateClaimsText(filled, new Set(["0001"]))).toEqual([expect.stringContaining("claims[0]: rule 0003 is not defined")]);
+  });
+
   it("writes an empty claims list when no Rule changed", () => {
     const same = rulesAtRef("v1.0.0", gitIn(dir));
     expect(renderDraft(diffRules(same, same), "a", "b")).toContain("claims: []");
   });
 
   it("needs both refs", () => {
-    expect(parseArgs(["--from", "v1", "--to", "rc"])).toEqual({ from: "v1", to: "rc" });
+    expect(parseArgs(["--from", "v1", "--to", "rc"])).toEqual({ from: "v1", to: "rc", asField: false });
+    expect(parseArgs(["--from", "v1", "--to", "rc", "--rule"])).toEqual({ from: "v1", to: "rc", asField: true });
     expect(() => parseArgs(["--from", "v1"])).toThrow(/usage/);
     expect(() => parseArgs(["--bogus"])).toThrow(/unknown argument/);
   });

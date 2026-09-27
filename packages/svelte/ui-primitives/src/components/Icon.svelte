@@ -42,7 +42,7 @@
 {#snippet displayIcon()}
   {#if type}
     {#if link}
-      <a class="btn btn-sm" {target} href={link} aria-label={ariaLabel || tip || undefined} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
+      <a class="icon-link" {target} href={link} aria-label={ariaLabel || tip || undefined} rel={target === "_blank" ? "noopener noreferrer" : undefined}>
         <Icon icon={themeService.getIcon(type).type} color={legacyIconColour(themeService.getIcon(type).color)} {width} {height} aria-hidden="true" />
         {text}
       </a>
@@ -69,7 +69,7 @@
     <Tooltip.Trigger element={tooltipTrigger} />
     <Portal>
       <Tooltip.Positioner>
-        <Tooltip.Content class="card bg-surface-100-900 z-9999 max-w-md p-2 shadow-xl">
+        <Tooltip.Content class="paper-tooltip">
           {tip}
         </Tooltip.Content>
       </Tooltip.Positioner>
@@ -78,3 +78,9 @@
 {:else}
   {@render displayIcon()}
 {/if}
+
+<style>
+  .icon-link { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2); border-radius: var(--radius-control); color: var(--ui-ink); }
+  .icon-link:hover { background: var(--ui-selected); }
+  :global(.paper-tooltip) { z-index: 9999; max-width: 28rem; padding: var(--space-2) var(--space-3); border: 1px solid var(--ui-border); border-radius: var(--radius-control); background: var(--ui-surface); color: var(--ui-ink); font-size: var(--font-label); box-shadow: 0 12px 32px #0000001a; }
+</style>

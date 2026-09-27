@@ -4,6 +4,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
 
+  let { labelled = false } = $props();
   let editRoute = $state(currentCourse?.value?.properties.github);
 
   let currentLabStep = "";
@@ -38,6 +39,6 @@
   });
 </script>
 
-<div class="flex items-center">
-  <Icon type="edit" link={editRoute} target="_blank" tip={t("nav.edit.tip")}></Icon>
-</div>
+<a href={editRoute} target="_blank" rel="noopener noreferrer" class="nav-row" aria-label={t("nav.edit.tip")}>
+  <Icon type="edit" />{#if labelled}<span>{t("nav.edit.tip")}</span>{/if}<span aria-hidden="true">↗</span>
+</a>

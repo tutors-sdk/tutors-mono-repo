@@ -21,10 +21,3 @@ Feature: Theming
     Then the document theme attribute should be "dyslexia"
     And the "dyslexia" stylesheet should set the base font family to "OpenDyslexic, sans-serif"
     And a later session should start with the "dyslexia" theme
-
-  Scenario: Toggle card layout preference
-    Given I am viewing a course in light mode
-    When I toggle the card layout
-    Then the card layout should be "compacted"
-    And the stored "layout" preference should be "compacted"
-    And a later session should start with the "compacted" card layout

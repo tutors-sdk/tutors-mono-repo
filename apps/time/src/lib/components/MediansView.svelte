@@ -54,7 +54,7 @@
       <p class="text-lg">Loading course data...</p>
     </div>
   {:else if course.error}
-    <div class="card preset-filled-error-500 p-4">
+    <div class="ui-panel border-[var(--ui-danger)] p-4">
       <p class="font-bold">Error loading course</p>
       <p class="text-sm">{course.error}</p>
     </div>
@@ -88,7 +88,7 @@
 
       <!-- Calendar Median by Week -->
       {#if medianByWeek}
-        <div class="card p-6">
+        <div class="ui-panel">
           <h2 class="text-xl font-semibold mb-4">Calendar Median by Week</h2>
           <div class="overflow-x-auto">
             <table class="w-full border-collapse" style="table-layout: fixed;">
@@ -124,7 +124,7 @@
 
       <!-- Calendar Median by Day -->
       {#if medianByDay}
-        <div class="card p-6">
+        <div class="ui-panel">
           <h2 class="text-xl font-semibold mb-4">Calendar Median by Day</h2>
           <div class="overflow-x-auto">
             <table class="w-full border-collapse" style="table-layout: fixed;">
@@ -160,7 +160,7 @@
 
       <!-- Lab Median by Lab -->
       {#if medianByLab}
-        <div class="card p-6">
+        <div class="ui-panel">
           <h2 class="text-xl font-semibold mb-4">Lab Median by Lab</h2>
           <div class="overflow-x-auto">
             <table class="w-full border-collapse" style="table-layout: fixed;">
@@ -196,7 +196,7 @@
 
       <!-- Lab Median by Step -->
       {#if medianByStep}
-        <div class="card p-6">
+        <div class="ui-panel">
           <h2 class="text-xl font-semibold mb-4">Lab Median by Step</h2>
           <div class="overflow-x-auto">
             <table class="w-full border-collapse" style="table-layout: fixed;">
@@ -232,7 +232,7 @@
 
       {#if !medianByWeek && !medianByDay && !medianByLab && !medianByStep}
         <div class="flex items-center justify-center p-8">
-          <p class="text-lg text-surface-600">No median data found for this course.</p>
+          <p class="text-lg text-[var(--ui-muted)]">No median data found for this course.</p>
         </div>
       {/if}
     </div>

@@ -50,7 +50,7 @@
       <img src={avatarUrl} alt="" class="h-full w-full object-cover" />
     {:else}
       <span
-        class="flex h-full w-full items-center justify-center bg-surface-300 font-semibold text-surface-600 {initialClass}"
+        class="flex h-full w-full items-center justify-center bg-surface-300 font-semibold text-[var(--ui-muted)] {initialClass}"
         aria-hidden="true"
       >
         {initial}

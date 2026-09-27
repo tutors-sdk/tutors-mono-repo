@@ -1596,7 +1596,7 @@ Applications (reader, catalogue, live, time)
 - `@tutors/runes` → model
 
 **Layer 2** (depends on runes + foundation):
-- `@tutors/course` → runes, logger, model
+- `@tutors/course` → runes, runtime, logger, model
 - `@tutors/a11y` → runes, course
 - `@tutors/i18n` → runes, course
 

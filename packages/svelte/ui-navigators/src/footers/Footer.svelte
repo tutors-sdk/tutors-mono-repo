@@ -12,18 +12,14 @@
     <img src="https://{currentCourse?.value?.courseUrl}/{currentCourse?.value?.footer}" alt={t("footer.sponsorsAlt")} class="w-full" />
   </div>
 {:else}
-  <div class="bg-surface-100-800-token border-surface-200-700-token flex h-8 w-full items-center overflow-hidden border-t-[1px]">
-    <div class="mx-auto flex w-full items-center">
-          <div class="ml-4">
-            <TutorsIcon widthPlease="28px" />
-          </div>
-          <div class="w-48">
-            <TutorsVersion />
-          </div>
-          <div class="w-full">
-            <TutorsMessage />
-          </div>
-      <SetuIcon />
-    </div>
+  <div class="footer-content">
+    <TutorsIcon widthPlease="28px" />
+    <TutorsVersion />
+    <div class="footer-message"><TutorsMessage /></div>
+    <SetuIcon />
   </div>
 {/if}
+<style>
+  .footer-content { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); padding: var(--space-5) var(--space-6); color: var(--ui-muted); background: var(--ui-surface); }
+  .footer-message { flex: 1; min-width: min(100%, 260px); }
+</style>

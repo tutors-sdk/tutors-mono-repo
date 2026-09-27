@@ -59,8 +59,8 @@
   });
 </script>
 
-<div class="flex w-full min-w-0 flex-col gap-4 pb-4">
-  <section class="bg-surface-100-800-token border-surface-200-700-token w-full min-w-0 overflow-hidden p-4">
+<div class="ui-page flex w-full min-w-0 flex-col gap-6">
+  <section class="ui-panel w-full min-w-0">
     <div class="flex flex-wrap justify-center">
       <div class="border-surface-300-600-token mb-2 w-full">
         <CourseGroupHeader courseId={data.course.courseId!} courseTitle={data.course.title!} />
@@ -73,7 +73,7 @@
     </div>
   </section>
 
-  <section class="bg-surface-100-800-token border-surface-200-700-token w-full min-w-0 overflow-hidden p-4">
+  <section class="ui-panel w-full min-w-0">
     <h2 class="border-surface-300-600-token mb-3 border-b pb-2 text-lg font-semibold">Latest Activity</h2>
     <Tabs defaultValue="Day">
       <Tabs.List>

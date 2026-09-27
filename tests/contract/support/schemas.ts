@@ -219,6 +219,14 @@ export const WhiteboardInitEditorSchema = z.object({
     avatar: z.string(),
   }),
   initialScene: z.unknown().nullable(),
+  /** The reader's appearance; Excalidraw opens in its matching theme. */
+  theme: z.enum(["light", "dark"]).optional(),
+});
+
+/** Sent to the viewer or editor iframe when the reader's appearance changes. */
+export const WhiteboardSetThemeSchema = z.object({
+  type: z.literal("set-theme"),
+  theme: z.enum(["light", "dark"]),
 });
 
 // ---------------------------------------------------------------------------

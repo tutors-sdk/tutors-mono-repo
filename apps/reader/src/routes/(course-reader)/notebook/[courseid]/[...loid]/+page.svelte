@@ -10,5 +10,5 @@
 </script>
 
 <Context lo={data.notebook.notebook}>
-  <Notebook notebook={data.notebook} />
+  {#key data.notebook.url}<Notebook notebook={data.notebook} />{/key}
 </Context>

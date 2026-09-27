@@ -256,6 +256,9 @@ importers:
       dompurify:
         specifier: ^3.4.14
         version: 3.4.14
+      jheat.js:
+        specifier: ^5.2.0
+        version: 5.2.0
     devDependencies:
       '@auth/sveltekit':
         specifier: ^1.11.3
@@ -359,9 +362,6 @@ importers:
       file-saver:
         specifier: ^2.0.5
         version: 2.0.5
-      jheat.js:
-        specifier: ^5.2.0
-        version: 5.2.0
       pdfjs-dist:
         specifier: ^6.3.289
         version: 6.3.289
@@ -432,6 +432,9 @@ importers:
       '@tutors/runtime':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/runtime
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../../packages/svelte/themes
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
@@ -566,6 +569,9 @@ importers:
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
+      '@tutors/runtime':
+        specifier: workspace:*
+        version: link:../utils/runtime
       '@tutors/themes':
         specifier: workspace:*
         version: link:../themes
@@ -693,9 +699,6 @@ importers:
         specifier: ^6.3.289
         version: 6.3.289
     devDependencies:
-      '@iconify/svelte':
-        specifier: ^5.2.1
-        version: 5.2.2(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       '@skeletonlabs/skeleton':
         specifier: ^5.0.0
         version: 5.0.0(tailwindcss@4.3.3)

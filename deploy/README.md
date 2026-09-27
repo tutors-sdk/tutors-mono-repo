@@ -87,6 +87,10 @@ Dockerfile:
 gh workflow run image-build.yml --ref main -f release_tag=v16.2.2
 ```
 
+`release_tag` is forgiving about how it was typed: `V16.2.2`, `16.2.2` and a
+stray space all mean `v16.2.2` (the Actions form on a phone capitalises the
+first letter). Anything that is still not a release tag is refused.
+
 A backfill publishes what production already runs, so its Trivy scan
 reports findings without stopping the push. Its signing identity ends in
 `@refs/heads/main`, not the tag.
@@ -132,14 +136,18 @@ the following, per app, in this order:
    and HIGH findings with an available fix fail the job, before anything has
    been pushed.
 2. Builds `linux/amd64,linux/arm64` (the amd64 layers are the ones just
-   scanned) and pushes every tag to one multi-arch digest, with the
-   `GIT_SHA`, `BUILD_DATE` and `VERSION` build args set. `VERSION` is the
-   semver on a `v*` tag and `sha-<short>` otherwise.
+   scanned) and pushes one multi-arch digest, by digest only and with no
+   tag, with the `GIT_SHA`, `BUILD_DATE` and `VERSION` build args set.
+   `VERSION` is the semver on a `v*` tag and `sha-<short>` otherwise.
 3. Signs that digest with cosign, keyless: the certificate is issued to the
    workflow's GitHub OIDC identity, and no signing key exists to leak.
 4. Generates an SPDX JSON SBOM with syft and attaches it to the digest as a
    signed in-toto attestation (`cosign attest --type spdxjson`). The SBOM is
    also kept as a workflow artifact. It describes the amd64 image.
+5. Points every tag (`main`, `sha-<short>`, `rc-*`, the version tags) at the
+   signed digest with `docker buildx imagetools create`, and fails if any
+   tag resolves to another digest. A tag therefore never names an image
+   whose signature or SBOM attestation is still missing.
 
 Pull requests run only step 1, with no registry login and no OIDC token.
 
@@ -249,7 +257,8 @@ every comparison. The image keeps that to a known, short list:
 
 - **Clock.** Server code that stamps a time into a response or a stored record
   (`/healthz` `timestamp`, the time app's `last_synced_at` and sync-interval
-  check) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
+  check, and which week of a course calendar is the current one, which is
+  rendered into every course page) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
   an ISO 8601 instant (`2026-09-16T09:05:00.000Z`) it answers that instant;
   otherwise the system clock. Log timestamps, metrics, request durations and
   everything Auth.js does with session expiry stay on the real clock: the seam
@@ -266,11 +275,25 @@ every comparison. The image keeps that to a known, short list:
   mtime is pinned to the commit time, so two builds of one commit agree.
   Without it they differ per build. There is no CSP nonce and no per-process id.
 - **Build identity.** The commit and build date are answered by `GET /version`
-  only. With `GIT_SHA` given, SvelteKit's build name (`/_app/version.json`, and
-  the `__sveltekit_<hash>` global in each page) is the commit instead of the
-  build timestamp, so rebuilding a commit changes nothing. The release version
-  also appears in the footer (`Tutors v:16.2.2`, marked
-  `data-tutors-build="version"`) and in the `Service starting` log line.
+  only, on every app. SvelteKit's own build name (`/_app/version.json`, the
+  client bundle and, hashed again, the `__sveltekit_<hash>` global in each page)
+  is a SHA-256 prefix of `GIT_SHA` when it is given, so rebuilding a commit
+  changes nothing and the commit itself is not in any of them; without it
+  SvelteKit falls back to the build timestamp. The release version also
+  appears in the footer (`Tutors v:16.2.2`, marked `data-tutors-build="version"`),
+  compiled into the client bundle that renders it, and in the `Service starting`
+  log line; nowhere else. `pnpm check:build-identity` starts each built app with
+  a sentinel commit and build date and fails if either appears in a response
+  header, page, error page, script, `/_app/version.json` or any built file;
+  `pnpm check:container` runs the same crawl against the image.
+- **What is deliberately left.** `Date` (Node sets it on every response),
+  `x-request-id` (a per-request correlation id; the harness asserts it is
+  present instead of comparing it) and the connection headers a proxy rewrites.
+  Static files pinned to the commit time still differ between two *different*
+  commits, since a change there is a change of `ETag` and `Last-Modified`;
+  only document responses' headers are compared across releases, and the
+  server-rendered pages' `ETag` is a hash of the body, so it moves only when
+  the page does. Chunk names are content hashes and appear in `Link` headers.
 
 ## Metrics
 

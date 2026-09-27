@@ -50,7 +50,6 @@
     "pdfjs-dist": "^6.3.289"
   },
   "devDependencies": {
-    "@iconify/svelte": "^5.2.1",
     "@skeletonlabs/skeleton": "^5.0.0",
     "@skeletonlabs/skeleton-svelte": "^5.0.0",
     "@sveltejs/package": "^2.0.0",

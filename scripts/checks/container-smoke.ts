@@ -16,6 +16,8 @@
  *   - /metrics exports exactly the pinned app-level series plus process_/nodejs_
  *   - two identical requests answer identical headers, Date and x-request-id aside
  *   - /version answers the documented shape, on the system clock
+ *   - the commit, build date and release version it reports appear nowhere else (headers, pages, error page,
+ *     scripts, /_app/version.json), the release version only in the marked footer (scripts/checks/build-identity.ts)
  *
  * With `--app <name>` it also checks tier M against the image: the response
  * header contract (tests/security/header-contract.json), no 5xx on the probed
@@ -35,6 +37,7 @@ import {
   requestCorrelationFindings,
   type LogLine
 } from "./observability.ts";
+import { buildIdentityFindings } from "./build-identity.ts";
 import { REPO_ROOT, readBaseline, readText } from "./lib/repo.ts";
 import { describeRatchet, ratchet } from "./lib/ratchet.ts";
 import { cookieFindings, headerFindings, loadHeaderContract, parseInventory } from "./security.ts";
@@ -148,6 +151,7 @@ async function run(options: Options): Promise<string[]> {
     }
 
     findings.push(...(await determinismFindings(base)));
+    findings.push(...(await buildIdentityFindings(base)));
 
     if (options.app) findings.push(...(await securityFindings(options.app, base)));
 

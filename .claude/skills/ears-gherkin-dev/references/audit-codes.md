@@ -20,7 +20,9 @@ the same line. Script: `scripts/checks/ears-audit.ts`. Only violations not in
 | `no-rule` | Scenarios sit outside any Rule | Wrap them in Rules; then `--update-baseline` |
 | `unbound-feature` | No steps file loads the feature | `loadFeature("<literal path>")` in `tests/bdd/steps/...` |
 | `unbound-rule` | No steps file binds this Rule title | `Rule("<exact title>", ...)` |
-| `rule-not-run` | Bound with `Rule.skip` or `Rule.only` | Remove the modifier |
+| `rule-not-run` | Bound with `Rule.skip` or `Rule.only`; for a `@ui` scenario, its test is `test.skip` or `test.fixme` | Remove the modifier |
+| `unproved-scenario` | A scenario of a `@ui` feature has no Playwright test with its exact title tagged with its Rule id | `test("<scenario title>", { tag: "@rule-NNNN" }, ...)` in `apps/<app>/tests/e2e/` |
+| `orphan-ui-test` | A Playwright test cites a Rule id that is not a `@ui` Rule, or its title is not one of that Rule's scenarios | Rename the test to the scenario it proves, or add the scenario to the Rule |
 
 The audit does not run scenarios. A green audit means the Rules are well formed; only a green
-`pnpm test:bdd` means they are true.
+`pnpm test:bdd` (and, for `@ui` Rules, `pnpm test:e2e:reader`) means they are true.

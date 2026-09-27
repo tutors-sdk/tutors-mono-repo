@@ -15,6 +15,6 @@ export default defineConfig({
   },
   plugins: [tailwindcss(), sveltekit()],
   ssr: {
-    noExternal: ['@tutors/course', '@tutors/themes', '@tutors/i18n', '@tutors/community', '@tutors/connect', '@tutors/runes', '@tutors/logger', '@tutors/a11y']
+    noExternal: [/^@tutors\//]
   }
 });

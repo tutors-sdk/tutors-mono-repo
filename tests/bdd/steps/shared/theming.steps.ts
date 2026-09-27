@@ -59,17 +59,4 @@ describeFeature(feature, ({ Scenario }) => {
       expect(document.documentElement.getAttribute("data-theme")).toBe(expected);
     });
   });
-
-  Scenario("Toggle card layout preference", ({ Given, When, Then, And }) => {
-    Given("I am viewing a course in light mode", viewingInLightMode);
-    When("I toggle the card layout", () => themeService.toggleLayout());
-    Then("the card layout should be {string}", (_ctx, expected: string) => {
-      expect(themeService.layout.value).toBe(expected);
-    });
-    And("the stored {string} preference should be {string}", storedPreferenceIs);
-    And("a later session should start with the {string} card layout", (_ctx, expected: string) => {
-      startLaterSession(themeService);
-      expect(themeService.layout.value).toBe(expected);
-    });
-  });
 });

@@ -1,31 +1,19 @@
 <script lang="ts">
-  type Props = {
-    steps: string[];
-    current: number;
-    onjump: (index: number) => void;
-  };
-  let { steps, current, onjump }: Props = $props();
+  let { steps, current, onjump }: { steps: string[]; current: number; onjump: (index: number) => void } = $props();
 </script>
 
-<div class="flex items-center justify-center gap-2">
+<nav aria-label="Course creation steps" class="creation-steps">
   {#each steps as step, i}
-    <div class="flex items-center gap-2">
-      <button
-        class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors
-          {i === current
-          ? 'bg-primary-500 text-white'
-          : i < current
-            ? 'bg-success-500 text-white'
-            : 'bg-surface-300 dark:bg-surface-600 text-surface-600 dark:text-surface-300'}"
-        onclick={() => {
-          if (i < current) onjump(i);
-        }}
-        disabled={i > current}
-      >
-        {#if i < current}&#10003;{:else}{i + 1}{/if}
-      </button>
-      <span class="hidden text-sm sm:inline {i === current ? 'font-bold' : 'text-surface-500'}">{step}</span>
-      {#if i < steps.length - 1}<div class="mx-1 h-px w-8 bg-surface-300 dark:bg-surface-600"></div>{/if}
-    </div>
+    <button class="ui-button" aria-current={i === current ? 'step' : undefined} disabled={i > current} onclick={() => onjump(i)}>
+      <span aria-hidden="true">{i < current ? '✓' : i + 1}</span><span>{step}</span>
+    </button>
   {/each}
-</div>
+</nav>
+
+<style>
+  .creation-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); }
+  button { flex-wrap: wrap; padding-inline: var(--space-2); }
+  button[aria-current] { background: var(--ui-selected); border-color: var(--ui-brand); }
+  button:disabled { opacity: .6; }
+  @media (max-width: 600px) { .creation-steps { grid-template-columns: repeat(2, 1fr); } }
+</style>

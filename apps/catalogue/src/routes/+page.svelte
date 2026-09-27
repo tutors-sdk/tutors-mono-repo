@@ -16,10 +16,11 @@
   });
 </script>
 
-<div class="w-full p-4">
+<div class="ui-page">
+  <h1 class="ui-title mb-6">Tutors Catalogue</h1>
   <div class="flex justify-end gap-2">
-    <div class="bg-gray-100 p-1 text-right text-xs dark:bg-gray-800">
-      Totals: modules-{totalModules}:students-{totalStudents}
+    <div class="ui-muted mb-4 text-right text-sm">
+      {totalModules} modules · {totalStudents} students
     </div>
   </div>
   <Catalogue courseRecords={data.courseRecords} />
