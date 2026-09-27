@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { curatedPrs, parseArgs, parseTitle, pullRequestOf, ruleRanges, sectionOf, sectionsOf, titleFromBranch } from "../../scripts/release-changelog.ts";
+import { curatedPrs, tableCell, parseArgs, parseTitle, pullRequestOf, ruleRanges, sectionOf, sectionsOf, titleFromBranch } from "../../scripts/release-changelog.ts";
 
 describe("release changelog", () => {
   it("reads a pull request from a merge commit, a squash commit or neither", () => {
@@ -42,6 +42,11 @@ describe("release changelog", () => {
 
   it("finds the pull requests CHANGELOG.md already names", () => {
     expect([...curatedPrs("- Card summaries (PR #263)\n- Fixed scroll (#1092)\n- Issue 12")].sort()).toEqual([1092, 263]);
+  });
+
+  it("escapes a backslash and a pipe in a table cell", () => {
+    expect(tableCell("a | b")).toBe("a \\| b");
+    expect(tableCell("path\\|x")).toBe("path\\\\\\|x");
   });
 
   it("parses its arguments", () => {

@@ -248,6 +248,9 @@ export function renderEntry(entry: Entry): string {
   return `- ${entry.title}${hints}${origin}${rules}${also}`;
 }
 
+/** Text for a Markdown table cell: a backslash or a pipe is escaped, so a title cannot end the cell or eat the next escape. */
+export const tableCell = (text: string): string => text.replace(/[\\|]/g, "\\$&");
+
 export function renderMarkdown(log: ReleaseChangelog): string {
   const prs = log.entries.filter((entry) => entry.pr !== null).length;
   const direct = log.entries.length - prs;
@@ -277,7 +280,7 @@ export function renderMarkdown(log: ReleaseChangelog): string {
     for (const id of ids) {
       const rule = log.rules[id]!;
       const prsOf = rule.prs.length > 0 ? rule.prs.map((pr) => `#${pr}`).join(", ") : "—";
-      out.push(`| ${id} | ${rule.change} | ${prsOf} | ${rule.title.replace(/\|/g, "\\|")} |`);
+      out.push(`| ${id} | ${rule.change} | ${prsOf} | ${tableCell(rule.title)} |`);
     }
   }
   return out.join("\n") + "\n";
