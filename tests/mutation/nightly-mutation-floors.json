@@ -48,7 +48,7 @@
     "packages/svelte/utils/logger/src/logger.ts": 71,
     "packages/svelte/utils/logger/src/process.ts": 56,
     "packages/svelte/utils/metrics/src/endpoint.ts": 59,
-    "packages/svelte/utils/privacy/src/data-inventory.ts": 0,
+    "packages/svelte/utils/privacy/src/consent.ts": 88,
     "packages/svelte/utils/rbac/src/lock-store.ts": 17,
     "packages/svelte/utils/rbac/src/permissions.ts": 0,
     "packages/svelte/utils/rbac/src/rbac-service.svelte.ts": 60,
