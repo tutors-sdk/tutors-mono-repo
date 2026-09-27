@@ -34,6 +34,6 @@
   {/if}
   <p class="text-lg font-semibold truncate max-w-full">{title}</p>
   {#if subtitle}
-    <p class="text-sm text-surface-600 truncate max-w-full">{subtitle}</p>
+    <p class="text-sm text-[var(--ui-muted)] truncate max-w-full">{subtitle}</p>
   {/if}
 </div>

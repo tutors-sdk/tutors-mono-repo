@@ -7,7 +7,20 @@
 # (see .env.example). With no .env the apps start in anonymous mode.
 # Host ports default to 3000-3003; override with READER_PORT, CATALOGUE_PORT,
 # LIVE_PORT or TIME_PORT if one is already taken.
+#
+# Images are tagged tutors/<app>:local. To build, push or run them under their
+# published names instead, set the repository prefix and the tag:
+#
+#   export TUTORS_IMAGE_PREFIX=quay.io/tutors-sdk/tutors- TUTORS_TAG=16.2.2
+#   docker compose build && docker compose push      # publish by hand
+#   docker compose pull && docker compose up --no-build   # run what was published
 name: tutors
+
+# Stamped into the OCI labels; all optional.
+x-build-args: &build-args
+  VERSION: ${TUTORS_TAG:-local}
+  GIT_SHA: ${GIT_SHA:-unknown}
+  BUILD_DATE: ${BUILD_DATE:-unknown}
 
 x-app: &app
   init: true
@@ -36,10 +49,11 @@ x-app: &app
 services:
   reader:
     <<: *app
-    image: tutors/reader:local
+    image: ${TUTORS_IMAGE_PREFIX:-tutors/}reader:${TUTORS_TAG:-local}
     build:
       context: .
       args:
+        <<: *build-args
         APP_NAME: reader
     ports:
       - "${READER_PORT:-3000}:3000"
@@ -49,10 +63,11 @@ services:
 
   catalogue:
     <<: *app
-    image: tutors/catalogue:local
+    image: ${TUTORS_IMAGE_PREFIX:-tutors/}catalogue:${TUTORS_TAG:-local}
     build:
       context: .
       args:
+        <<: *build-args
         APP_NAME: catalogue
     ports:
       - "${CATALOGUE_PORT:-3001}:3000"
@@ -62,10 +77,11 @@ services:
 
   live:
     <<: *app
-    image: tutors/live:local
+    image: ${TUTORS_IMAGE_PREFIX:-tutors/}live:${TUTORS_TAG:-local}
     build:
       context: .
       args:
+        <<: *build-args
         APP_NAME: live
     ports:
       - "${LIVE_PORT:-3002}:3000"
@@ -75,10 +91,11 @@ services:
 
   time:
     <<: *app
-    image: tutors/time:local
+    image: ${TUTORS_IMAGE_PREFIX:-tutors/}time:${TUTORS_TAG:-local}
     build:
       context: .
       args:
+        <<: *build-args
         APP_NAME: time
     ports:
       - "${TIME_PORT:-3003}:3000"

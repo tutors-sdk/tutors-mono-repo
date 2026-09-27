@@ -11,23 +11,21 @@
   }
   let { data }: Props = $props();
 
-  if (data.course.llm === 0) {
-    goto(`/course/${data.course.courseId}`);
-  }
+  $effect(() => { if (data.course.llm === 0) void goto(`/course/${data.course.courseId}`); });
 
   const headding = `
-## Docs for LLMs
+# Docs for LLMs
 
 Tutors supports the [llms.txt](https://llmstxt.org/) convention for making documentation available to large language models and the applications that make use of them.
 
-### Complete Course Content
+## Complete Course Content
 `;
   const headdingHtml = convertMdToHtml(headding);
 </script>
 
 <SecondaryNavigator lo={currentCourse.value} parentCourse={currentCourse.value?.properties?.parent} />
-<div class="container mx-auto mt-2 items-center justify-between lg:flex">
-  <div class="mx-4">
+<div class="reader-content">
+  <div class="reading-panel">
     <div class="prose dark:prose-invert">
       {@html sanitizeHtml(headdingHtml ?? "")}
       {@html sanitizeHtml(data.llmsLinks ?? "")}

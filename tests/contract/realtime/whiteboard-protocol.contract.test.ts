@@ -8,6 +8,7 @@ import {
   WhiteboardUserLeftSchema,
   WhiteboardRoomSchema,
   WhiteboardInitEditorSchema,
+  WhiteboardSetThemeSchema,
 } from "../support/schemas";
 import { validateAgainstSchema, assertSchemaMatch } from "../support/validators";
 
@@ -340,5 +341,21 @@ describe("Whiteboard init-editor postMessage", () => {
     expect(parsed.type).toBe("init-editor");
     expect(parsed.user.name).toBe("Alice Smith");
     expect(parsed.initialScene).toBeNull();
+  });
+});
+
+describe("Whiteboard set-theme postMessage", () => {
+  it("accepts the light and dark appearances", () => {
+    for (const theme of ["light", "dark"]) {
+      expect(validateAgainstSchema({ type: "set-theme", theme }, WhiteboardSetThemeSchema).valid).toBe(true);
+    }
+  });
+
+  it("rejects any other theme, and init-editor accepts the same optional theme", () => {
+    expect(validateAgainstSchema({ type: "set-theme", theme: "sepia" }, WhiteboardSetThemeSchema).valid).toBe(false);
+    expect(validateAgainstSchema({ type: "set-theme" }, WhiteboardSetThemeSchema).valid).toBe(false);
+    const init = { type: "init-editor", supabaseUrl: "https://x.supabase.co", supabaseAnonKey: "k", roomId: "wb-1", user: { name: "A", id: "a", avatar: "" }, initialScene: null };
+    expect(validateAgainstSchema({ ...init, theme: "dark" }, WhiteboardInitEditorSchema).valid).toBe(true);
+    expect(validateAgainstSchema({ ...init, theme: "sepia" }, WhiteboardInitEditorSchema).valid).toBe(false);
   });
 });

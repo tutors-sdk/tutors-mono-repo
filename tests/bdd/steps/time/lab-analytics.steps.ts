@@ -1,61 +1,38 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { TestWorld } from "../../support/world";
-import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model";
+import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
+import { expect } from "vitest";
+import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
+import type { LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
+import { cells, labRecordsByStudent, stepColumn, type TableRow } from "../../support/time.ts";
 
-describe("Time: Lab Analytics", () => {
-  let world: TestWorld;
+const feature = await loadFeature("tests/bdd/features/time/lab-analytics.feature");
 
-  beforeEach(() => {
-    world = new TestWorld();
-  });
+describeFeature(feature, ({ Scenario }) => {
+  let records: LearningRecord[];
+  let model: BaseLabModel;
+  let studentCount: number;
 
-  it("shall display lab completion grid with students as rows and labs as columns", () => {
-    const dataset = world.fixtures.createLabDataset(10, 5);
-
-    expect(dataset.length).toBe(50);
-    const students = [...new Set(dataset.map((r) => r.student_id))];
-    const labs = [...new Set(dataset.map((r) => r.lo_id))];
-    expect(students).toHaveLength(10);
-    expect(labs).toHaveLength(5);
-  });
-
-  it("shall show per-step completion data when clicking a lab column", () => {
-    const dataset = world.fixtures.createLabDataset(3, 1);
-
-    const labRecords = dataset.filter((r) => r.lo_id === "lab-1");
-    expect(labRecords.length).toBe(3);
-    labRecords.forEach((r) => {
-      expect(r.duration).toBeGreaterThanOrEqual(0);
+  Scenario("Calculate and display lab medians", ({ Given, When, Then, And }) => {
+    Given("{number} students have completed a lab, spending these minutes on its steps:", (_ctx, students: number, table: TableRow[]) => {
+      studentCount = students;
+      records = labRecordsByStudent(table);
     });
-  });
-
-  it("shall display learning records with duration and count for a student", () => {
-    const records = [
-      world.fixtures.createLearningRecord({ student_id: "alice", lo_id: "lab-1", duration: 30, count: 2 }),
-      world.fixtures.createLearningRecord({ student_id: "alice", lo_id: "lab-2", duration: 45, count: 1 }),
-      world.fixtures.createLearningRecord({ student_id: "alice", lo_id: "lab-3", duration: 15, count: 3 }),
-    ];
-
-    expect(records).toHaveLength(3);
-    records.forEach((r) => {
-      expect(r.student_id).toBe("alice");
-      expect(r.duration).toBeGreaterThan(0);
-      expect(r.count).toBeGreaterThanOrEqual(1);
+    When("I view the lab analytics", () => {
+      model = new BaseLabModel(records, null);
+      expect(model.lab.rows).toHaveLength(studentCount);
     });
-  });
-
-  it("shall calculate and display median completion time for each lab", () => {
-    const dataset = [
-      world.fixtures.createLearningRecord({ lo_id: "lab-1", duration: 10 }),
-      world.fixtures.createLearningRecord({ lo_id: "lab-1", duration: 30 }),
-      world.fixtures.createLearningRecord({ lo_id: "lab-1", duration: 50 }),
-    ];
-
-    const durations = dataset.map((r) => r.duration).sort((a, b) => a - b);
-    const median = durations[Math.floor(durations.length / 2)];
-
-    expect(median).toBe(30);
-    expect(median).toBeGreaterThanOrEqual(durations[0]);
-    expect(median).toBeLessThanOrEqual(durations[durations.length - 1]);
+    Then("I should see the median completion time for each lab:", (_ctx, table: TableRow[]) => {
+      const labs = Object.keys(table[0]);
+      expect(model.labs).toEqual(labs);
+      expect(cells(model.medianByLab.row, labs)).toEqual(labs.map((lab) => Number(table[0][lab])));
+    });
+    And("I should see the median completion time for each step:", (_ctx, table: TableRow[]) => {
+      const steps = Object.keys(table[0]);
+      expect(model.steps).toEqual(steps.map(stepColumn));
+      expect(cells(model.medianByLabStep.row, steps.map(stepColumn))).toEqual(steps.map((step) => Number(table[0][step])));
+    });
+    And("the median row total should be {number} minutes, the median of the students' totals", (_ctx, total: number) => {
+      expect(model.medianByLab.row?.totalMinutes).toBe(total);
+      expect(model.medianByLabStep.row?.totalMinutes).toBe(total);
+    });
   });
 });

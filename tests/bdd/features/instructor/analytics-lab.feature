@@ -6,29 +6,44 @@ Feature: Lab Analytics
 
   @ears-state-driven
   Scenario: View lab completion across students
-    While a course has lab learning objects with student records
-    Then the system shall display each student's duration per lab
-    And records shall be grouped by student
+    Given a course has lab learning objects with these student records:
+      | student | lab    | step | minutes |
+      | bob     | book-b | 01   | 15      |
+      | alice   | book-a | 00   | 10      |
+      | alice   | book-b | 00   | 5       |
+      | alice   | book-a | 01   | 20      |
+    When an instructor opens the lab analytics view
+    Then records shall be grouped by student, one row each, in the order "alice, bob"
+    And the lab columns shall be "book-a, book-b"
+    And the lab grid shall display each student's duration per lab:
+      | student | book-a | book-b | total |
+      | alice   | 30     | 5      | 35    |
+      | bob     | 0      | 15     | 15    |
 
   @ears-event-driven
   Scenario: View per-step lab analytics
+    Given a course has lab learning objects with these student records:
+      | student | lab    | step | minutes |
+      | alice   | book-a | 02   | 12      |
+      | bob     | book-a | 01   | 7       |
+      | alice   | book-a | 00   | 3       |
+      | alice   | book-a | 01   | 9       |
+      | alice   | book-a | 01   | 4       |
     When an instructor drills into a specific lab
-    Then the system shall show time spent on each step
-    And steps shall be ordered sequentially
+    Then steps shall be ordered sequentially as "book-a/00, book-a/01, book-a/02"
+    And the step grid shall show time spent on each step:
+      | student | book-a/00 | book-a/01 | book-a/02 | total |
+      | alice   | 3         | 13        | 12        | 28    |
+      | bob     | 0         | 7         | 0         | 7     |
 
   @ears-state-driven
   Scenario: Identify students with low engagement
-    While lab records show some students with zero duration
-    Then the system shall highlight students who have not started the lab
-
-  @ears-event-driven
-  Scenario: Compare lab activity across course
-    When an instructor views the lab analytics overview
-    Then the system shall show total duration per lab across all students
-    And labs shall be sortable by total engagement
-
-  @ears-state-driven
-  Scenario: Handle labs with no student activity
-    While a lab has been authored but no students have accessed it
-    Then the system shall show the lab with zero activity
-    And the lab shall still be listed in the analytics view
+    Given a course has lab learning objects with these student records:
+      | student | lab    | step | minutes |
+      | alice   | book-a | 00   | 30      |
+      | bob     | book-a | 00   | 50      |
+      | carol   | book-a | 00   | 0       |
+    When an instructor opens the lab analytics view
+    Then the student "carol" who has not started the lab shall be listed with a total of 0 minutes
+    And a total of 0 minutes shall be highlighted with the cell colour "rgb(255, 255, 255)"
+    And the median for "book-a" shall be 40, ignoring students who have not started

@@ -1,6 +1,7 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { checkSupabase, getRecentErrorCounts } from "@tutors/community/utils/health-check";
+import { now } from "@tutors/runtime";
 
 export const GET: RequestHandler = async () => {
   const [supabaseCheck, errorCounts] = await Promise.all([checkSupabase(), getRecentErrorCounts()]);
@@ -9,7 +10,7 @@ export const GET: RequestHandler = async () => {
 
   return json({
     status: overallStatus,
-    timestamp: new Date().toISOString(),
+    timestamp: now().toISOString(),
     app: "tutors-live",
     checks: {
       supabase: supabaseCheck

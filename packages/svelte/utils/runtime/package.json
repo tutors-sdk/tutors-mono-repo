@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/runtime",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Server runtime seams for Tutors apps: the clock (HARNESS_NOW) and the /version endpoint",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

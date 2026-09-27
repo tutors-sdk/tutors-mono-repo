@@ -36,6 +36,29 @@ correct: true
 Prose outside the fence renders normally, so a quiz can carry instructions,
 diagrams or links.
 
+## What a quiz is (and is not)
+
+Quizzes are a **formative self-check**, not a graded assessment. Say so in the
+learning object's description, so students know what the result means.
+
+- The answer key is part of the course markdown, so it is sent to the browser
+  with the quiz and can be read by anyone who looks.
+- Scoring runs in the browser. Nothing is submitted, so a score cannot be
+  verified.
+- Answers and scores are not stored anywhere. Leaving the page discards them.
+- There is no gradebook, attempt limit or identity check, and `time_limit` is
+  only a client-side hint.
+
+Use a system built for assessment, such as Moodle, for anything that counts
+towards a grade.
+
+Suggested wording for the prose above the `quiz` block:
+
+```markdown
+This quiz is a self-check to help you test your understanding. It is not
+graded and your answers are not recorded. Assessed quizzes are on Moodle.
+```
+
 ## Block format
 
 Sections are separated by lines containing only `---`.

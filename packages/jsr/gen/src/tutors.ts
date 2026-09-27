@@ -43,8 +43,9 @@ export async function generateStaticCourse(course: Course, destFolder: string, s
     initTemplateEngine(destFolder);
     await emitStaticCourse(destFolder, course);
     return true;
-  } catch (error) {
-    console.error('Error generating static course:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error generating static course: ${message}\n`);
     return false;
   }
 }

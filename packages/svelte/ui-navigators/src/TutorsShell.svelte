@@ -1,52 +1,70 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+  import { page } from "$app/state";
+  import { afterNavigate } from "$app/navigation";
   import Footer from "./footers/Footer.svelte";
-  import { onMount, type Snippet } from "svelte";
   import MainNavigator from "./MainNavigator.svelte";
-  import { animationDelay } from "@tutors/runes";
-  import { cubicIn, cubicOut } from "svelte/easing";
-  import { fly, slide } from "svelte/transition";
-  import { prefersReducedMotion } from "@tutors/a11y";
+  import CourseNavigation from "./CourseNavigation.svelte";
   import { t } from "@tutors/i18n";
   import TourOverlay from "@tutors/ui-primitives/components/TourOverlay.svelte";
   import ToastProvider from "@tutors/ui-primitives/components/ToastProvider.svelte";
 
-  type Props = { children: Snippet; hideNavigator?: boolean; showConnect?: boolean };
-  let { children, hideNavigator = false, showConnect = true }: Props = $props();
-  let showFooter = $state(false);
+  let { children, hideNavigator = false, showConnect = true }: { children: Snippet; hideNavigator?: boolean; showConnect?: boolean } = $props();
 
-  onMount(() => {
-    showFooter = true;
+  // Phones tuck the header away while the reader scrolls down and bring it back on any scroll up, so the
+  // page gets the whole screen (CSS below; only phones move it). Near the top, with a header menu open, or
+  // when focus moves into the header, it stays in view.
+  let header: HTMLElement | undefined = $state();
+  let headerHeight = $state(0);
+  let tucked = $state(false);
+  let lastTop = 0;
+  function onScroll(event: Event) {
+    const top = (event.currentTarget as HTMLElement).scrollTop;
+    const delta = top - lastTop;
+    lastTop = top;
+    if (top <= headerHeight || header?.querySelector('[aria-expanded="true"]')) tucked = false;
+    else if (delta > 4) tucked = true;
+    else if (delta < -4) tucked = false;
+  }
+
+  afterNavigate(({ to }) => {
+    if (to?.url.hash) return;
+    document.querySelector<HTMLElement>(".shell-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   });
 </script>
 
 <ToastProvider />
-<div class="flex h-screen flex-col">
-  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:p-4 focus:bg-primary-500 focus:text-white">
-    {t("a11y.skipToContent")}
-  </a>
-  <header class="sticky top-0 z-10" style="background-color: light-dark(var(--color-surface-100), var(--color-surface-950));">
-    {#if !hideNavigator}
-      <div
-        class="w-full"
-        in:fly={{ y: -48, duration: prefersReducedMotion.value ? 0 : animationDelay.value * 2, easing: cubicOut }}
-        out:fly={{ y: -48, duration: prefersReducedMotion.value ? 0 : animationDelay.value * 2, easing: cubicIn }}
-      >
-        <MainNavigator {showConnect} />
-      </div>
-    {/if}
-  </header>
-
-  <main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto outline-none">
-    {@render children()}
-  </main>
-
-  {#if showFooter && !hideNavigator}
-    <footer transition:slide={{ duration: prefersReducedMotion.value ? 0 : 800 }} class="mt-auto hidden [@media(min-height:800px)]:lg:block" aria-label={t("a11y.footer")}>
-      <Footer />
-    </footer>
+<div class="tutors-shell" class:without-navigation={hideNavigator} style:--header-height={`${headerHeight}px`}>
+  <a href="#main-content" class="skip-link">{t("a11y.skipToContent")}</a>
+  {#if !hideNavigator}
+    <header class="shell-header" class:tucked bind:this={header} bind:offsetHeight={headerHeight} onfocusin={() => (tucked = false)}><MainNavigator {showConnect} /></header>
+    <aside class="shell-navigation" aria-label={t("shell.navigation")}><CourseNavigation {showConnect} /></aside>
   {/if}
+  <main id="main-content" tabindex="-1" class="shell-main" data-route={page.url.pathname} onscroll={onScroll}>
+    {@render children()}
+    {#if !hideNavigator}<footer aria-label={t("a11y.footer")}><Footer /></footer>{/if}
+  </main>
 </div>
 <TourOverlay />
 
 <style>
+  .tutors-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 100dvh; background: var(--ui-canvas); }
+  .shell-header { grid-column: 1 / -1; z-index: 30; background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
+  .shell-navigation { min-height: 0; overflow: hidden; border-right: 1px solid var(--ui-border); background: var(--ui-surface); }
+  .shell-main { min-width: 0; overflow-y: auto; outline: none; scroll-padding-block: var(--space-6); }
+  footer { margin-top: var(--space-12); border-top: 1px solid var(--ui-border); }
+  .without-navigation { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .skip-link { position: fixed; left: var(--space-4); top: -100px; z-index: 10000; padding: var(--space-3); background: var(--ui-brand); color: var(--ui-on-brand); }
+  .skip-link:focus { top: var(--space-4); }
+  /* Paper --breakpoint-navigation: 1024px (custom properties cannot be used in media queries). */
+  @media (max-width: 1023px) { .tutors-shell { grid-template-columns: minmax(0, 1fr); } .shell-navigation { display: none; } }
+  /* Phones: the header floats over the top of the page (which starts below it) so it can slide away without
+     the page jumping. Rule 0062. */
+  @media (max-width: 767px) {
+    .tutors-shell:not(.without-navigation) { position: relative; grid-template-rows: minmax(0, 1fr); }
+    .shell-header { position: absolute; inset: 0 0 auto; transition: transform 200ms ease-out; }
+    .shell-header.tucked { transform: translateY(-100%); }
+    .tutors-shell:not(.without-navigation) .shell-main { padding-top: var(--header-height); scroll-padding-top: calc(var(--header-height) + var(--space-6)); }
+  }
+  @media (max-width: 767px) and (prefers-reduced-motion: reduce) { .shell-header { transition: none; } }
 </style>

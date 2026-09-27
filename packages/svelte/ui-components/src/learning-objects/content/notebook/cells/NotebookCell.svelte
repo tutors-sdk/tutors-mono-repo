@@ -38,12 +38,10 @@
   id="notebook-cell-{index}"
   class="notebook-cell mb-2 rounded-lg border transition-colors"
   style="border-color: {isActive
-    ? 'light-dark(var(--color-primary-300), var(--color-primary-600))'
-    : 'light-dark(var(--color-surface-200), var(--color-surface-700))'};"
-  role="button"
+    ? 'var(--ui-brand)'
+    : 'var(--ui-border)'};"
   tabindex="-1"
-  onclick={onClick}
-  onkeydown={() => {}}
+  onfocusin={onClick}
 >
   {#if notebook.isSolutionCell(cell)}
     <NotebookSolutionCell

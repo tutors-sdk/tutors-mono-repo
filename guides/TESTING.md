@@ -100,9 +100,16 @@ asserting that fast-check reports a replayable seed and path.
 **Baselines** `tests/fuzz/known-timezone-failures.txt`.
 
 **Coverage** is enforced by `pnpm test:coverage` (and `vitest run --coverage` in CI) against the
-thresholds in `vitest.config.ts`: statements 55, branches 50, functions 65, lines 55. These are
-the real numbers, set where the suite is rather than where it should be; raise them as the suite
-grows.
+thresholds in `vitest.config.ts`. `coverage.include` names every TypeScript source under
+`packages/` and `apps/*/src`, so a module no test imports counts as 0% rather than dropping out
+of the denominator (Rule 0110). The floors live in `tests/suite-health/coverage-floors.json`:
+statements 58, branches 51, functions 58, lines 58 overall, and one set for each of seven packages
+(`packages/jsr/model/src/**` and so on). Vitest fails a run below a floor (Rule 0111), and CI's
+`pnpm check:coverage-floors` also fails once coverage sits 2 points or more above one (Rule
+0112), so raise the floor in the commit that raises the coverage: `pnpm check:coverage-floors
+--update` rewrites the file, and it never lowers a floor.
+Because the denominator is the whole repo, run coverage over the whole suite: `vitest run
+--coverage <one directory>` fails the global floor.
 
 ## Tier C — generated output
 
@@ -187,10 +194,15 @@ must reject.
 **Protects** the ability to debug production: every log line matches the schema, every line of a
 failed request carries the caller's request id, exactly one error line carries a stack, each app's
 hooks put the request logger first, and every metric a provisioned Grafana alert queries exists in
-`/metrics`.
+`/metrics`. It also pins the two contracts the release harness diffs against
+([deploy/README.md](../deploy/README.md), "Log contract" and "Metrics contract"): every container
+line is JSON that starts with the core keys in order and carries exactly its `event` kind's
+fields, a request's lines share the one `x-request-id` the response returns, and `/metrics`
+exports exactly the pinned app-level series with everything else under `process_` or `nodejs_`.
 
 **Lives in** `scripts/checks/observability.ts`, `tests/observability/observability-contracts.test.ts`,
-`observability/`, and the request logger in `packages/svelte/utils/logger`.
+`tests/unit/utils/logger-contract.test.ts`, `observability/`, and the logger in
+`packages/svelte/utils/logger` (`contract.ts` holds the contract as data).
 
 ```bash
 pnpm exec vitest run tests/observability
@@ -200,7 +212,10 @@ pnpm check:container --image tutors/reader:local     # the same contract against
 **Proves it can fail** with negative fixtures for a bad level, a completion line missing its
 request id, a non-JSON line, a load that throws inside a 200 `__data.json` response, an
 uncorrelated line, a silently swallowed failure, a double-logged failure, a logger that is not
-first, a bare `handleError`, and a renamed metric — which must name the alert it broke.
+first, a bare `handleError`, and a renamed metric — which must name the alert it broke. The
+contracts add: a missing or reordered core key, an unknown `event`, a drifting field set, a wrong
+type, a response without the header or with a changed id, an unprefixed series, an unpinned
+app-level series, a per-process label and a raw path used as a route label.
 
 ## Tier L — performance and capacity
 
@@ -282,7 +297,8 @@ GitHub anchors.
 ## Tier O — suite health
 
 **Protects** the suite itself: no `.only`, no skip/todo/fixme without a dated quarantine, no test
-without an assertion, no `.feature` file that no runner loads, no test file that no Vitest or
+without an assertion, no `.feature` file that nothing binds, no step a Gherkin parser would
+drop or scenario the binder would skip, no test file that no Vitest or
 Playwright config collects, and no file over its wall-clock budget.
 
 **Lives in** `scripts/checks/suite-health.ts`, `scripts/checks/test-time-budget.ts`,
@@ -327,59 +343,108 @@ renamed column shows up as a snapshot diff rather than a runtime surprise.
 
 ## Mutation testing
 
-Stryker over five modules where a flipped comparison silently corrupts a dashboard:
-`search.ts`, `lo-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`, `calendar-utils.ts`.
-Thresholds: high 85, low 75, break 65.
+**Protects** the assertions themselves: a mutant is a small deliberate bug (a flipped comparison,
+a removed condition), and a surviving mutant is a behaviour no test pins down. Two Stryker runs
+share the tooling and differ in scope.
+
+### Targeted run (`mutation`)
+
+Stryker over twelve modules of the model, time and gen libraries where a flipped comparison
+silently corrupts a dashboard, a course tree or generated output: `search.ts`, `lo-tree.ts`,
+`lo-utils.ts`, `course-utils.ts`, `markdown-utils.ts`, `type-utils.ts`, `base-calendar-model.ts`,
+`base-lab-model.ts`, `calendar-utils.ts`, `lab-utils.ts`, `lr-utils.ts` and the gen
+`templates/utils.ts`. Thresholds: high 85, low 75, break 90 (the measured score is 93.6). The
+modules below 90 (`lo-tree.ts` 74.5, `search.ts` 84.5, `base-lab-model.ts` 87.4) are held there by
+equivalent mutants: optional chaining on values that are always defined and a fence type that
+`searchHits` computes but never returns.
 
 ```bash
 pnpm test:mutation            # npx stryker run
 ```
 
 It runs its own Vitest config (`vitest.config.mutation.ts`) listing the unit and property files
-that cover those modules. **No workflow runs it** — it is a local tool for now. Details and how
-to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
+that cover those modules, with the root config's workspace aliases and setup file (Rule 0115;
+without them the gen suites cannot load and every gen mutant reads as NoCoverage). The nightly `mutation` job runs it and fails below the break
+threshold (Rule 0113), then `pnpm check:mutation-floors` holds each module to its own floor in
+`tests/mutation/mutation-floors.json` with the same 2-point ratchet as coverage (Rule 0114);
+`pnpm test:mutation` runs it locally.
+
+### Comprehensive run (`mutation-nightly`)
+
+```bash
+pnpm test:mutation:nightly    # about 20 minutes on 4 cores, 25 on a GitHub runner
+pnpm check:mutation-floors reports/mutation-nightly/mutation.json \
+  --floors tests/mutation/nightly-mutation-floors.json --stale warn
+```
+
+Stryker over every TypeScript source file under `packages/*/*/src` and `packages/*/*/*/src`
+(`stryker.nightly.config.json`), the same files the coverage run measures, against the unit, BDD
+and contract suites (`vitest.config.mutation-nightly.ts`, Rule 0116). The baseline on 2026-09-26
+was 58.5% over 95 modules and 6,073 scored mutants, identical across three runs; 1,896 of those
+mutants sit in code no test reaches, so the report doubles as a map of where tests are missing.
+
+- Each module has a floor in `tests/mutation/nightly-mutation-floors.json`. A module below its
+  floor, or a new module with no floor, fails the night and is named in the job summary
+  (Rule 0117). Add the floor with `--update` in the commit that adds the module.
+- A module 2 or more points above its floor is listed in the job summary as a floor to raise and
+  does not fail the night (Rule 0119); raise it with `--update` in any later change.
+- The run mutates files in place, because a `vi.mock` by relative `node_modules` path cannot
+  match inside Stryker's symlinked sandbox. Type-check suppression is off so only mutated files
+  are touched, and `git diff --exit-code --stat` runs after Stryker even when it fails, so a
+  source left mutated fails the night (Rule 0118). Locally, an interrupted run leaves mutated
+  sources behind: restore them with `git checkout -- packages`.
+
+Details and how to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 
 ## BDD and executable specs
 
-Today: `tests/bdd/features/` holds 24 Gherkin feature files with EARS tags, and
-`tests/bdd/steps/` holds Vitest suites named after those scenarios, backed by `TestWorld`,
-`TestDataFactory` and the mock Supabase/realtime clients in `tests/bdd/support/`.
+**Protects** the requirements: a scenario in `tests/bdd/features/` is a statement about the
+product that fails when the product stops doing it.
 
-The honest state is that **no runner loads the feature files**. All 24 are recorded as
-`documentation-only` in `tests/suite-health/known-findings.txt`, and the step files are ordinary
-Vitest tests, many of which assert against fixtures rather than driving product code. So the
-features are specification prose and the steps are unit-ish tests that happen to be named after
-them.
+**How.** Each of the 21 Node-level feature files (100 scenarios) is loaded by its steps file with
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/), inside the ordinary Vitest run, so
+there is one runner and no second CI job. The binder fails the run when a scenario or step is
+on one side only, which is what keeps the Gherkin from drifting back into prose. Steps drive
+product code and never assert on a fixture; Supabase, the course host and `$state` are the only
+stand-ins.
 
-Tier D closes that: real executable specs, one runner, features that fail when the product
-does. It is tracked in [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214), which
-also retires the legacy feature files. The tag vocabulary and persona split are worth keeping —
-see [EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md) — and until #214 lands, prefer putting new
-behaviour in tier B (unit, property) or tier G (journeys), where it actually fails.
+**Proves it can fail.** Changing one expected value in a feature file turns its run red; every
+bound feature was checked that way when it was bound. Tier O fails a feature that nothing
+binds, an EARS keyword Gherkin would silently drop, and an `@ignore` tag.
 
-## Dev-server smoke tests and the standalone axe audit
+**What it does not cover.** 48 scenarios need a browser or describe behaviour the product does
+not have. They are prose in [specifications/](./specifications/README.md), which names the
+covering tier for each or says that none does. [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
+still owns `Rule:` blocks and the structural audit. Writing and binding a scenario:
+[EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md).
 
-Thin Playwright smoke tests live in `apps/<app>/tests/e2e/smoke.spec.ts` with a config per app
-(`apps/<app>/playwright.config.ts`), each starting `vite dev` on its own port — reader 5173,
-live 5174, catalogue 5175. They check that a page loads, `/auth` responds, an unknown course
-renders an error page, and there is at most one `h1`.
+## The reader's UI contract, and dev-server smoke tests
+
+**What.** The reader's browser behaviour is written as `@ui` EARS Rules in
+`tests/bdd/features/ui/` (33 Rules, 40 scenarios: layout, navigation, cards, reading width,
+themes, course tools, quizzes, notebooks, slides and WCAG 2.1 AA). Each scenario is proved by
+one Playwright test in `apps/reader/tests/e2e/`, titled with the scenario and tagged with the
+Rule id.
+
+**How.** `pnpm test:ears:audit` binds the two statically: a scenario with no test
+(`unproved-scenario`), a test whose title or Rule id matches no scenario (`orphan-ui-test`) and
+a skipped test (`rule-not-run`) fail it. The tests run with `apps/reader/playwright.config.ts`
+against `vite dev` on port 5173; the reader needs its `.env` (copy `.env.example` into
+`apps/reader/`).
 
 ```bash
-pnpm test:e2e            # reader, then catalogue, then live
-pnpm test:e2e:reader --retries=0
+pnpm test:e2e:reader --project=chromium              # the whole contract
+pnpm test:e2e:reader --project=chromium -g @rule-0032  # one Rule
 ```
 
-The root has no Playwright config on purpose: a bare `playwright test` would collect every
-Vitest file in the repo, so `pnpm test:e2e` chains the three per-app configs instead. These are
-smoke tests, not journeys — the real coverage is tier G against built images. No workflow runs
-them: they are a local convenience, and they need the app's own `.env` (copy `.env.example` into
-`apps/<app>/`) plus a warm dependency cache, or the first page load fails with Vite's
-`504 (Outdated Optimize Dep)`.
+**When.** Every pull request runs the contract in Chromium (`ui-contract` in `ci.yml`), and it
+and the audit are required by `ci-success`. Release candidates run it in Chromium, Firefox and
+WebKit.
 
-`pnpm test:a11y` runs `tests/e2e/accessibility.spec.ts` (axe over a course page via
-`playwright-a11y.config.ts`) against `localhost:5173`. It runs in no workflow, and one of its
-tests logs violations without asserting — it is baselined as `no-assertion` in tier O. The
-enforced accessibility gate is the axe audit inside the tier G journeys.
+The catalogue and live apps keep thin smoke tests in `apps/<app>/tests/e2e/smoke.spec.ts`
+(live 5174, catalogue 5175), run locally with `pnpm test:e2e:catalogue` and `:live`. The root has
+no Playwright config on purpose: a bare `playwright test` would collect every Vitest file in the
+repo, so `pnpm test:e2e` chains the per-app configs instead.
 
 ## Release testing
 
@@ -413,7 +478,6 @@ lands.
 
 | Tier | Would own | Tracked by |
 |---|---|---|
-| D | Executable EARS/Gherkin specs | [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
 | F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](./RBAC.md) |
 | H | Message contracts for the realtime and broadcast protocols, versioned | No issue yet; shapes are snapshot-checked in `tests/contract/` |
 | I | Data migration and the Supabase exit | No issue yet |
@@ -427,15 +491,16 @@ exist.
 
 | Job | What it does |
 |---|---|
-| `build-and-test` | Install, copy `.env.example` into the four apps, `svelte-kit sync`, `pnpm build`, `pnpm api-report:check`, three `check` steps (`continue-on-error`, [#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53)), `pnpm lint`, `pnpm check:knip`, `vitest run --coverage`, `pnpm test:fuzz` |
+| `build-and-test` | Install, copy `.env.example` into the four apps, `svelte-kit sync`, `pnpm build`, `pnpm api-report:check`, three `check` steps (`continue-on-error`, [#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53)), `pnpm lint`, `pnpm check:knip`, `vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz` |
 | `platform-conformance` | `pnpm check:k8s --out rendered`, kubeconform against the rendered manifests, and kubeconform must reject the invalid-manifest fixture |
-| `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …` |
+| `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …`; the reader a second time with `--env PUBLIC_ANON_MODE=FALSE` so its sign-in pages are probed with Auth.js on |
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
 | `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
 | `e2e-stack` | Build reader, catalogue and live images, build the fixture course, bring the stack up, run the journeys on chromium and webkit, then the baseline stale-line check; uploads the report and compose logs on failure |
-| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` |
+| `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` and `pnpm check:server` |
 | `generator-diff` | Only when the PR touches `packages/jsr/{gen,tutors,tutors-lite,model}`, `deno.json(.lock)`, `tests/generator/` or `scripts/checks/generator-*`: the planted-change self-test, then every difference must be claimed |
-| `CI success` | Needs all eight; a skipped or cancelled job counts as a failure. The one required check |
+| `ears-audit` | `pnpm test:ears:audit`: the structure of the `Rule:` blocks in `tests/bdd/features` (one shall, system name, EARS tag, unique id, a scenario per Rule). Only violations outside `tests/bdd/ears-audit-baseline.txt` fail. `continue-on-error` and not in `CI success` needs until the seed features are migrated ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)) |
+| `CI success` | Needs all eight (not `ears-audit`); a skipped or cancelled job counts as a failure. The one required check |
 
 `codeql.yml` and `zizmor.yml` also run on every PR (CodeQL for JavaScript/TypeScript, zizmor over
 the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
@@ -445,6 +510,8 @@ the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
 | Job | What it does |
 |---|---|
 | `contract-snapshots` | `pnpm test:contract` |
+| `mutation` | `pnpm test:mutation`, failing below Stryker's break threshold, then `pnpm check:mutation-floors`; uploads the HTML and JSON report |
+| `mutation-nightly` | `pnpm test:mutation:nightly` over every library module, then `pnpm check:mutation-floors` against the nightly floors with a step summary, then `git diff --exit-code --stat`; uploads the report |
 | `suite-health` | `vitest run --retry=0` with a JSON report, then `pnpm check:test-time` on it |
 | `e2e-stack-nightly` | The tier G journeys on firefox and mobile, then the baseline stale-line check |
 | `timezone-matrix` | `pnpm test:tz` |
@@ -469,6 +536,23 @@ is open work; do not read it as the authority on what a release is checked again
 
 Gate 6a artifact regression, 6b performance benchmark, 6c smoke tests against the deployed
 preview, then a report that blocks on 6a and 6c and warns on 6b.
+
+### `release-claims.yml` — push to `release/**`, and PRs from a `release/` branch
+
+`pnpm check:release-claims`: `release/claims.yaml` exists and is a claims file the release harness
+would accept. The same validator runs over the committed file in every PR through
+`tests/conformance/release-claims.test.ts`.
+
+Its second job runs `pnpm check:migrations` (`scripts/checks/migrations.ts`): the migrations added
+since `main` may not be destructive unless a `migration` claim covers them, and the layout rules
+(names, order, merged files immutable) hold. Rules and rationale: [MIGRATIONS.md](MIGRATIONS.md).
+The rules are unit-tested in `tests/conformance/migrations.test.ts`.
+
+### `release-dispatch.yml` — push to `release/**`
+
+Not a test tier: it tags the pushed commit `vX.Y.Z-rc.N`, publishes that tag's images and
+dispatches the separate release harness, which compares the candidate with production. See
+[Release-Strategy.md](Release-Strategy.md#release-harness).
 
 ## Debugging
 
@@ -512,11 +596,11 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 
 ## Known gaps
 
-- Type errors are not a blocker yet ([#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53), [#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235)).
-- Coverage thresholds sit at 55/50/65/55 and should ratchet upward.
-- `tests/components/` tests props, variants and state transitions as plain data; nothing renders
-  a Svelte component, and `@testing-library/svelte` is an unused dependency.
-- `tests/bdd/features/` is documentation only ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)).
-- Mutation testing runs nowhere in CI.
+- `apps/time` is not type-checked in CI; it has type errors of its own to clear first ([#268](https://github.com/tutors-sdk/tutors-mono-repo/issues/268)).
+- Coverage over every source file is about 58% lines (floors in `tests/suite-health/coverage-floors.json`, Rules 0110 to 0112); `apps/time`, `packages/jsr/create` and the UI component packages are near zero.
+- `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
+  contract in a real browser instead.
+- 48 specified scenarios are prose, many with no tier covering them: [specifications/](./specifications/README.md).
+- Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
-- Tiers D, F, H and I are not built.
+- Tiers F, H and I are not built.

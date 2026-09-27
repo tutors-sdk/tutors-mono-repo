@@ -107,7 +107,7 @@ export const tutorsConnectService: TutorsConnectService = {
       const login = tutorsId.value.login;
       if (login && !anonMode) {
         const onlineStatus = tutorsId.value.share === "true" ? "online" : "offline";
-        void updateTutorsConnectUserOnlineStatus(login, onlineStatus).catch((err) => log.error(err));
+        void updateTutorsConnectUserOnlineStatus(login, onlineStatus).catch((err) => log.error("Failed to update online status:", err));
       }
     }
   },

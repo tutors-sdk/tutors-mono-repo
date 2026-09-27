@@ -1,50 +1,27 @@
 <script lang="ts">
   import type { TutorsTimeStudent } from "@tutors/tutors-time-lib";
-  import StudentCalendarTable from "./StudentCalendarTable.svelte";
-  import CalendarByDayTable from "./CalendarByDayTable.svelte";
-  import StudentLabTable from "./StudentLabTable.svelte";
-  import LabByStepTable from "./LabByStepTable.svelte";
+  import { extractLabIdentifier, extractStepName, formatDateShort } from "@tutors/tutors-time-lib";
+  import { t } from "@tutors/i18n";
+  import ActivityTable from "./ActivityTable.svelte";
 
-  interface Props {
-    studentCalendar: TutorsTimeStudent | null;
-  }
-
-  let { studentCalendar }: Props = $props();
+  let { studentCalendar }: { studentCalendar: TutorsTimeStudent } = $props();
+  const course = $derived(studentCalendar.course);
+  const dated = (keys: string[] = []) => keys.map(key => ({ key, label: formatDateShort(key) }));
 </script>
 
-<div class="card p-4 flex flex-col min-w-0 shrink-0">
-  <div class="flex flex-col gap-6">
-    {#if studentCalendar}
-      <div class="flex flex-col gap-6">
-        <StudentCalendarTable
-          courseid={studentCalendar.courseid}
-          studentid={studentCalendar.studentid}
-          calendarByWeek={studentCalendar.calendarByWeek}
-          medianRow={studentCalendar.course?.calendarModel?.medianByWeek?.row ?? null}
-          weeks={studentCalendar.course?.weeks ?? []}
-        />
-        <CalendarByDayTable
-          courseid={studentCalendar.courseid}
-          studentid={studentCalendar.studentid}
-          calendarByDay={studentCalendar.calendarByDay}
-          medianRow={studentCalendar.course?.calendarModel?.medianByDay?.row ?? null}
-          dates={studentCalendar.course?.dates ?? []}
-        />
-        <StudentLabTable
-          courseid={studentCalendar.courseid}
-          studentid={studentCalendar.studentid}
-          studentLabRow={studentCalendar.labsByLab}
-          labMedianRow={studentCalendar.course?.labsModel?.medianByLab?.row ?? null}
-          labColumns={studentCalendar.course?.labColumns ?? []}
-        />
-        <LabByStepTable
-          courseid={studentCalendar.courseid}
-          studentid={studentCalendar.studentid}
-          labsByStep={studentCalendar.labsByStep}
-          medianRow={studentCalendar.course?.labsModel?.medianByLabStep?.row ?? null}
-          stepColumns={studentCalendar.course?.stepColumns ?? []}
-        />
-      </div>
-    {/if}
-  </div>
-</div>
+<ActivityTable title={t("time.calendarByWeek")} columns={dated(course?.weeks)} rows={[
+  { label: studentCalendar.calendarByWeek?.full_name ?? "", values: studentCalendar.calendarByWeek, total: studentCalendar.calendarByWeek?.totalSeconds },
+  { label: t("time.median"), values: course?.calendarModel?.medianByWeek?.row, total: course?.calendarModel?.medianByWeek?.row?.totalSeconds, median: true }
+]} />
+<ActivityTable title={t("time.calendarByDay")} columns={dated(course?.dates)} rows={[
+  { label: studentCalendar.calendarByDay?.full_name ?? "", values: studentCalendar.calendarByDay, total: studentCalendar.calendarByDay?.totalSeconds },
+  { label: t("time.median"), values: course?.calendarModel?.medianByDay?.row, total: course?.calendarModel?.medianByDay?.row?.totalSeconds, median: true }
+]} />
+<ActivityTable title={t("time.labByLab")} columns={(course?.labColumns ?? []).map(key => ({ key, label: extractLabIdentifier(key) }))} rows={[
+  { label: studentCalendar.labsByLab?.full_name ?? "", values: studentCalendar.labsByLab, total: studentCalendar.labsByLab?.totalMinutes },
+  { label: t("time.median"), values: course?.labsModel?.medianByLab?.row, total: course?.labsModel?.medianByLab?.row?.totalMinutes, median: true }
+]} />
+<ActivityTable title={t("time.labByStep")} columns={(course?.stepColumns ?? []).map(key => ({ key, label: extractStepName(key) }))} rows={[
+  { label: studentCalendar.labsByStep?.full_name ?? "", values: studentCalendar.labsByStep, total: studentCalendar.labsByStep?.totalMinutes },
+  { label: t("time.median"), values: course?.labsModel?.medianByLabStep?.row, total: course?.labsModel?.medianByLabStep?.row?.totalMinutes, median: true }
+]} />

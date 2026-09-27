@@ -1,7 +1,11 @@
 import type { LogLevel, Logger, RequestErrorInput, RequestLikeEvent, RequestLoggerOptions } from "./types.ts";
 import { defaultLogger } from "./logger.ts";
+import { runWithRequestContext } from "./context.ts";
+import { serializeError } from "./errors.ts";
 
-const DEFAULT_HEADER = "x-request-id";
+/** The one correlation header: read from the request, set once on the response, forwarded on outbound calls. */
+export const REQUEST_ID_HEADER = "x-request-id";
+const DEFAULT_HEADER = REQUEST_ID_HEADER;
 const DEFAULT_IGNORE = ["/healthz"];
 const DEFAULT_SLOW_MS = 2000;
 
@@ -39,13 +43,26 @@ function elapsedMs(start: number): number {
   return Math.round(performance.now() - start);
 }
 
-function requestFields(event: RequestLikeEvent, requestId: string | undefined) {
+/** Same four keys whether or not the request is known, so the line's key set never changes. */
+function requestFields(event: RequestLikeEvent | null | undefined, requestId: string | undefined) {
   return {
-    requestId,
-    method: event.request.method,
-    path: event.url.pathname,
-    route: event.route?.id ?? null,
+    requestId: requestId ?? null,
+    method: event?.request.method ?? null,
+    path: event?.url.pathname ?? null,
+    route: event?.route?.id ?? null,
   };
+}
+
+/** Copy a response whose headers are immutable (`Response.redirect`, a fetched response) so the id can be set. */
+function withHeader(response: Response, name: string, value: string): Response {
+  try {
+    response.headers.set(name, value);
+    return response;
+  } catch {
+    const copy = new Response(response.body, response);
+    copy.headers.set(name, value);
+    return copy;
+  }
 }
 
 /**
@@ -80,22 +97,19 @@ export function createRequestLogger(options: RequestLoggerOptions = {}) {
 
     let response: Response;
     try {
-      response = await resolve(event);
+      // Everything resolve() awaits logs with this request id, without it being passed around.
+      response = await runWithRequestContext({ requestId }, () => resolve(event));
     } catch (err) {
       logger.error("request failed", {
+        event: "request.failed",
         ...fields,
         duration_ms: elapsedMs(start),
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
+        ...serializeError(err),
       });
       throw err;
     }
 
-    try {
-      response.headers.set(headerName, requestId);
-    } catch {
-      // Some responses (e.g. Response.redirect) carry immutable headers; the log line still has the id.
-    }
+    response = withHeader(response, headerName, requestId);
 
     if (!ignored) {
       const duration_ms = elapsedMs(start);
@@ -105,12 +119,15 @@ export function createRequestLogger(options: RequestLoggerOptions = {}) {
       const errorStatus = (event.locals as LocalsWithRequestId).requestErrorStatus;
       const loadError = errorStatus !== undefined && errorStatus >= 500 && response.status < 500;
       const level = levelForStatus(loadError ? errorStatus : response.status, slow);
+      // `slow` and `loadError` are always present: a key that only appears on a bad day
+      // changes the line's shape, which log pipelines and the release harness compare.
       logger[level]("request completed", {
+        event: "request.completed",
         ...fields,
         status: response.status,
         duration_ms,
-        ...(slow ? { slow: true } : {}),
-        ...(loadError ? { loadError: true } : {}),
+        slow,
+        loadError,
       });
     }
 
@@ -134,14 +151,16 @@ export function logRequestError(input: RequestErrorInput, logger: Logger = defau
   const locals = event ? (event.locals as LocalsWithRequestId) : undefined;
   if (locals) locals.requestErrorStatus = Math.max(locals.requestErrorStatus ?? 0, status ?? 500);
   const requestId = locals?.requestId;
-  const request = event ? requestFields(event, requestId) : { requestId };
-  const cause =
-    error instanceof Error
-      ? { error: error.message, stack: error.stack }
-      : { error: String(error), details: error };
+  const request = requestFields(event, requestId);
 
   // SvelteKit routes unmatched URLs through handleError as a 404; that is noise, not a fault.
   const level: LogLevel = status === 404 ? "warn" : "error";
-  logger[level]("Unhandled server error", { ...request, status, reason: message, ...cause });
+  logger[level]("Unhandled server error", {
+    event: "request.error",
+    ...request,
+    status: status ?? null,
+    reason: message ?? null,
+    ...serializeError(error),
+  });
   return requestId;
 }

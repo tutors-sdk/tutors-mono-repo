@@ -11,7 +11,7 @@ import process from "node:process";
 const versionStr = `tutors-lite: 5.0.9`;
 
 if (!fs.existsSync("course.md")) {
-  console.log("Cannot locate course.md. Please change to course folder and try again.");
+  process.stdout.write("Cannot locate course.md. Please change to course folder and try again.\n");
 } else {
   const srcFolder = process.cwd();
   const destFolder = `${srcFolder}/html`;
@@ -24,4 +24,4 @@ if (!fs.existsSync("course.md")) {
   await generateStaticCourse(course, destFolder, srcVentoFolder);
   copyAssets(lr, destFolder);
 }
-console.log(versionStr);
+process.stdout.write(`${versionStr}\n`);

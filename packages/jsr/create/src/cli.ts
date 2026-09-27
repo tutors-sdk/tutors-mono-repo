@@ -6,7 +6,7 @@ import denoConfig from "../deno.json" with { type: "json" };
 function promptRequired(message: string): string {
   const value = prompt(message);
   if (!value || value.trim().length === 0) {
-    console.error("This field is required.");
+    process.stderr.write("This field is required.\n");
     return promptRequired(message);
   }
   return value.trim();
@@ -17,7 +17,7 @@ function promptNumber(message: string, min: number, max: number, fallback: numbe
   if (!value) return fallback;
   const n = parseInt(value, 10);
   if (isNaN(n) || n < min || n > max) {
-    console.error(`Please enter a number between ${min} and ${max}.`);
+    process.stderr.write(`Please enter a number between ${min} and ${max}.\n`);;
     return promptNumber(message, min, max, fallback);
   }
   return n;
@@ -30,7 +30,7 @@ function promptYesNo(message: string, fallback: boolean): boolean {
 }
 
 export function runCli(): void {
-  console.log(`\n  Welcome to Tutors Course Creator (${denoConfig.version})\n`);
+  process.stdout.write(`\n  Welcome to Tutors Course Creator (${denoConfig.version})\n`);
 
   const courseName = promptRequired("  Course name:");
   const lecturerName = prompt("  Your name (optional):") || "";
@@ -63,7 +63,7 @@ export function runCli(): void {
     readmeDescription: readmeDescription.trim(),
   };
 
-  console.log(`\n  Creating course in ./${courseId}/ ...\n`);
+  process.stdout.write(`\n  Creating course in ./${courseId}/ ...\n`);
   writeCourseToFilesystem(spec, ".");
-  console.log(nextStepsMessage(spec));
+  process.stdout.write(nextStepsMessage(spec));
 }

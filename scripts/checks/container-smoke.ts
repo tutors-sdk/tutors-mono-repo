@@ -10,7 +10,14 @@
  *   - /healthz/live answers 200 within the startup budget
  *   - /metrics serves every series the Grafana alert rules query
  *   - a request carrying x-request-id is echoed and logged with that id
- *   - every log line is JSON and matches the log schema
+ *   - every log line is JSON and matches the log schema and the log contract
+ *     (core keys in order, per-event field sets), including the lines of a 404
+ *   - a request without x-request-id gets a generated UUID, logged on its lines
+ *   - /metrics exports exactly the pinned app-level series plus process_/nodejs_
+ *   - two identical requests answer identical headers, Date and x-request-id aside
+ *   - /version answers the documented shape, on the system clock
+ *   - the commit, build date and release version it reports appear nowhere else (headers, pages, error page,
+ *     scripts, /_app/version.json), the release version only in the marked footer (scripts/checks/build-identity.ts)
  *
  * With `--app <name>` it also checks tier M against the image: the response
  * header contract (tests/security/header-contract.json), no 5xx on the probed
@@ -21,7 +28,16 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { randomInt, randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { alertParityFindings, logSchemaFindings, parseLogStream, type LogLine } from "./observability.ts";
+import {
+  alertParityFindings,
+  containerLogFindings,
+  logSchemaFindings,
+  metricsContractFindings,
+  parseLogStream,
+  requestCorrelationFindings,
+  type LogLine
+} from "./observability.ts";
+import { buildIdentityFindings } from "./build-identity.ts";
 import { REPO_ROOT, readBaseline, readText } from "./lib/repo.ts";
 import { describeRatchet, ratchet } from "./lib/ratchet.ts";
 import { cookieFindings, headerFindings, loadHeaderContract, parseInventory } from "./security.ts";
@@ -47,7 +63,7 @@ function parseArgs(argv: string[]): Options {
     else if (arg === "--keep") options.keep = true;
   }
   if (!options.image) {
-    console.error("usage: container-smoke.ts --image <image> [--app <name>] [--env KEY=VALUE]... [--startup-budget-ms N] [--expect-fail] [--keep]");
+    process.stderr.write("usage: container-smoke.ts --image <image> [--app <name>] [--env KEY=VALUE]... [--startup-budget-ms N] [--expect-fail] [--keep]\n");
     process.exit(2);
   }
   return options;
@@ -106,7 +122,7 @@ async function run(options: Options): Promise<string[]> {
       findings.push(`healthz: /healthz/live did not answer 200 within ${options.startupBudgetMs} ms (uid ${uid}, read-only root)`);
       return findings;
     }
-    console.log(`live after ${Date.now() - started} ms as uid ${uid}`);
+    process.stdout.write(`live after ${Date.now() - started} ms as uid ${uid}\n`);
 
     const requestId = `smoke-${randomUUID()}`;
     const home = await fetchWithTimeout(`${base}/`, { headers: { "x-request-id": requestId } }, 15_000);
@@ -115,13 +131,27 @@ async function run(options: Options): Promise<string[]> {
       findings.push(`request-id: response did not echo x-request-id (got ${home.headers.get("x-request-id")})`);
     }
 
+    // No id from the caller, and a path no route matches: an error line and a completion line, one generated id.
+    const missingPath = `/smoke-missing-${randomUUID().slice(0, 8)}/x/y/z`;
+    const missing = await fetchWithTimeout(`${base}${missingPath}`, {}, 15_000);
+    const generatedId = missing.headers.get("x-request-id");
+    // The same with the caller's id. Unique paths, so every line about them belongs to exactly one request.
+    const tracedPath = `/smoke-traced-${randomUUID().slice(0, 8)}/x/y/z`;
+    const tracedId = `smoke-${randomUUID()}`;
+    const traced = await fetchWithTimeout(`${base}${tracedPath}`, { headers: { "x-request-id": tracedId } }, 15_000);
+
     const metrics = await fetchWithTimeout(`${base}/metrics`);
     if (metrics.status !== 200) {
       findings.push(`metrics: GET /metrics returned ${metrics.status}`);
     } else {
       const alerts = readText(join(REPO_ROOT, "observability/grafana/provisioning/alerting/alerts.yml"));
-      findings.push(...alertParityFindings(alerts, await metrics.text()).map((f) => `metrics: ${f}`));
+      const exposition = await metrics.text();
+      findings.push(...alertParityFindings(alerts, exposition).map((f) => `metrics: ${f}`));
+      findings.push(...metricsContractFindings(exposition).map((f) => `metrics: ${f}`));
     }
+
+    findings.push(...(await determinismFindings(base)));
+    findings.push(...(await buildIdentityFindings(base)));
 
     if (options.app) findings.push(...(await securityFindings(options.app, base)));
 
@@ -131,7 +161,10 @@ async function run(options: Options): Promise<string[]> {
     const { lines, findings: parseFindings } = parseLogStream(`${logs.stdout}\n${logs.stderr}`);
     findings.push(...parseFindings.map((f) => `logs: ${f}`));
     findings.push(...logSchemaFindings(lines).map((f) => `logs: ${f}`));
+    findings.push(...containerLogFindings(lines).map((f) => `logs: ${f}`));
     const entries = lines as LogLine[];
+    findings.push(...requestCorrelationFindings("request-id", tracedId, traced.headers.get("x-request-id"), entries, tracedPath));
+    findings.push(...requestCorrelationFindings("request-id", undefined, generatedId, entries, missingPath));
     if (!entries.some((line) => line.message === "Service starting")) findings.push("logs: no \"Service starting\" line");
     if (!entries.some((line) => line.message === "request completed" && line.requestId === requestId)) {
       findings.push(`logs: no "request completed" line carrying request id ${requestId}`);
@@ -139,14 +172,49 @@ async function run(options: Options): Promise<string[]> {
     return findings;
   } finally {
     if (findings.length > 0 || options.keep) {
-      console.log("--- container logs ---");
-      console.log(spawnSync("docker", ["logs", "--tail", "50", name], { encoding: "utf8" }).stdout);
+      process.stdout.write("--- container logs ---\n");
+      process.stdout.write(spawnSync("docker", ["logs", "--tail", "50", name], { encoding: "utf8" }).stdout + "\n");
     }
     if (!options.keep) spawnSync("docker", ["rm", "--force", name], { stdio: "ignore" });
   }
 }
 
-const RESPONSE_GAPS = "tests/security/known-response-gaps.txt";
+/**
+ * Headers that legitimately differ between two identical requests. The release
+ * harness masks exactly these; anything else that varies is permanent noise in
+ * every release comparison.
+ */
+const VOLATILE_HEADERS = new Set(["date", "x-request-id"]);
+const VERSION_KEYS = ["app", "built", "clock", "revision", "version"];
+
+/** Same request twice gives the same headers, and build identity is answered by /version in the documented shape. */
+async function determinismFindings(base: string): Promise<string[]> {
+  const findings: string[] = [];
+  for (const path of ["/", "/favicon.png", "/healthz/live", "/version"]) {
+    const [first, second] = [await fetchWithTimeout(`${base}${path}`, {}, 15_000), await fetchWithTimeout(`${base}${path}`, {}, 15_000)];
+    await Promise.all([first.arrayBuffer(), second.arrayBuffer()]);
+    const names = new Set([...first.headers.keys(), ...second.headers.keys()]);
+    for (const name of [...names].filter((n) => !VOLATILE_HEADERS.has(n)).sort()) {
+      if (first.headers.get(name) !== second.headers.get(name)) {
+        findings.push(`determinism: GET ${path}: header ${name} differs between two identical requests (${first.headers.get(name)} / ${second.headers.get(name)})`);
+      }
+    }
+  }
+
+  const version = await fetchWithTimeout(`${base}/version`);
+  if (version.status !== 200) {
+    findings.push(`version: GET /version returned ${version.status}`);
+  } else {
+    const body = (await version.json()) as Record<string, unknown>;
+    const keys = Object.keys(body).sort();
+    if (keys.join() !== VERSION_KEYS.join()) findings.push(`version: GET /version keys are [${keys}], expected [${VERSION_KEYS}]`);
+    if (Object.values(body).some((value) => typeof value !== "string" || value === "")) findings.push("version: GET /version has a non-string or empty field");
+    if (body.clock !== "system") findings.push(`version: clock is "${body.clock}"; an image started without HARNESS_NOW must run on the system clock`);
+  }
+  return findings;
+}
+
+const RESPONSE_GAPS ="tests/security/known-response-gaps.txt";
 
 /** Tier M against the running image: header contract, cookie flags and CSRF on mutating routes. */
 async function securityFindings(app: string, base: string): Promise<string[]> {
@@ -197,22 +265,22 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   const findings = await run(options);
 
-  for (const finding of findings) console.log(`finding: ${finding}`);
+  for (const finding of findings) process.stdout.write(`finding: ${finding}\n`);
   if (options.expectFail) {
     if (findings.length === 0) {
-      console.error(`${options.image}: expected the smoke test to fail, but it passed. The check has lost its teeth.`);
+      process.stderr.write(`${options.image}: expected the smoke test to fail, but it passed. The check has lost its teeth.\n`);
       process.exit(1);
     }
-    console.log(`${options.image}: failed as expected (${findings.length} finding(s)).`);
+    process.stdout.write(`${options.image}: failed as expected (${findings.length} finding(s)).\n`);
   } else if (findings.length > 0) {
-    console.error(`${options.image}: ${findings.length} finding(s).`);
+    process.stderr.write(`${options.image}: ${findings.length} finding(s).\n`);
     process.exit(1);
   } else {
-    console.log(`${options.image}: ok`);
+    process.stdout.write(`${options.image}: ok\n`);
   }
 }
 
 main().catch((error) => {
-  console.error(error);
+  process.stderr.write(error + "\n");
   process.exit(1);
 });

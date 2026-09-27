@@ -14,14 +14,14 @@ const OUTPUT_DIR = resolve(`${WORK_DIR}/candidate`);
 const LOCAL_CLI = resolve(`${REPO_ROOT}/packages/jsr/tutors/main.ts`);
 
 async function run() {
-  console.log("[candidate] Generating with local CLI...");
-  console.log(`[candidate] CLI: ${LOCAL_CLI}`);
+  process.stdout.write("[candidate] Generating with local CLI...\n");
+  process.stdout.write(`[candidate] CLI: ${LOCAL_CLI}\n`);
 
   // Verify reference course exists
   try {
     await Deno.stat(`${COURSE_DIR}/course.md`);
   } catch {
-    console.error("[candidate] Reference course not found. Run fetch-reference-course.ts first.");
+    process.stderr.write("[candidate] Reference course not found. Run fetch-reference-course.ts first.\n");
     Deno.exit(1);
   }
 
@@ -29,7 +29,7 @@ async function run() {
   try {
     await Deno.stat(LOCAL_CLI);
   } catch {
-    console.error(`[candidate] Local CLI not found at ${LOCAL_CLI}`);
+    process.stderr.write(`[candidate] Local CLI not found at ${LOCAL_CLI}\n`);
     Deno.exit(1);
   }
 
@@ -50,12 +50,12 @@ async function run() {
     cwd: COURSE_DIR,
   });
 
-  console.log(`[candidate] Running local CLI in ${COURSE_DIR}...`);
+  process.stdout.write(`[candidate] Running local CLI in ${COURSE_DIR}...\n`);
   const result = await cmd.output();
 
   if (!result.success) {
     const stderr = new TextDecoder().decode(result.stderr);
-    console.error(`[candidate] Generation failed: ${stderr}`);
+    process.stderr.write(`[candidate] Generation failed: ${stderr}\n`);
     Deno.exit(1);
   }
 
@@ -63,12 +63,12 @@ async function run() {
   try {
     await Deno.stat(courseJsonDir);
   } catch {
-    console.error("[candidate] No json/ directory produced by CLI.");
+    process.stderr.write("[candidate] No json/ directory produced by CLI.\n");
     Deno.exit(1);
   }
 
   await Deno.rename(courseJsonDir, OUTPUT_DIR);
-  console.log(`[candidate] Artifacts moved to ${OUTPUT_DIR}`);
+  process.stdout.write(`[candidate] Artifacts moved to ${OUTPUT_DIR}\n`);
 }
 
 await run();

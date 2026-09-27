@@ -1,6 +1,8 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  discoverDenoRunners,
+  formatFeatureFinding,
   formatSuiteFinding,
   globToRegExp,
   lintFeatureFiles,
@@ -82,20 +84,40 @@ describe("suite health (runway tier O)", () => {
       ).toEqual([]);
     });
 
-    it("classifies feature files: executable, documentation-only, and scenario-free", () => {
+    it("classifies feature files: run by cucumber, bound by a steps file, documentation-only, and scenario-free", () => {
       const root = resolve(__dirname, "fixtures/features-root");
-      expect(lintFeatureFiles(root)).toEqual([
+      expect(lintFeatureFiles(root).filter((f) => !f.detail)).toEqual([
         { kind: "documentation-only", file: "docs/prose.feature" },
         { kind: "no-scenarios", file: "features/empty.feature" }
       ]);
     });
 
-    it("flags test files no runner config collects: outside include, excluded, unmatched by testMatch", () => {
+    it("flags what a bound feature silently loses: EARS keywords the parser drops, and @ignore", () => {
+      const root = resolve(__dirname, "fixtures/features-root");
+      expect(
+        lintFeatureFiles(root)
+          .filter((f) => f.detail)
+          .map(formatFeatureFinding)
+      ).toEqual([
+        "dropped-step: specs/drops-steps.feature :: While the parser drops this line",
+        "ignored-scenario: specs/drops-steps.feature :: @slow @ignore"
+      ]);
+    });
+
+    it("flags test files no runner collects: outside include, excluded, unmatched by testMatch, no deno test step", () => {
       expect(lintUncollectedTests(resolve(__dirname, "fixtures/runners-root"))).toEqual([
         "uncollected: apps/web/e2e/unmatched.spec.ts",
+        "uncollected: packages/cli/bench/orphan.test.js",
         "uncollected: packages/lib/src/__tests__/orphan.spec.ts",
         "uncollected: tests/e2e/excluded.spec.ts"
       ]);
+    });
+
+    it("reads a workflow's deno test step as a runner, and ignores a commented-out one", () => {
+      const runners = discoverDenoRunners(resolve(__dirname, "fixtures/runners-root"));
+      expect(runners.map((r) => r.config)).toEqual([".github/workflows/ci.yml"]);
+      expect(runners[0].include.some((p) => p.test("packages/cli/test/run.test.js"))).toBe(true);
+      expect(runners[0].include.some((p) => p.test("packages/cli/bench/orphan.test.js"))).toBe(false);
     });
 
     it("refuses a runner config whose include it cannot read statically", () => {
@@ -114,7 +136,7 @@ describe("suite health (runway tier O)", () => {
   it("the repo adds no findings beyond the baseline, and the baseline has no stale entries", () => {
     const current = [
       ...lintTestSuite(REPO_ROOT).map(formatSuiteFinding),
-      ...lintFeatureFiles(REPO_ROOT).map((f) => `${f.kind}: ${f.file}`),
+      ...lintFeatureFiles(REPO_ROOT).map(formatFeatureFinding),
       ...lintUncollectedTests(REPO_ROOT)
     ];
     // `.only` is never baselined: it silently disables the rest of the suite.

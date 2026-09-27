@@ -193,6 +193,24 @@ describe("sortLos", () => {
     expect((sorted[1] as any).id).toBe("o2");
     expect((sorted[2] as any).id).toBe("u1");
   });
+
+  it("treats order 0 as an order, ahead of 1 and of unordered Los", () => {
+    const los = [
+      makeLo({ id: "u1", frontMatter: {} }),
+      makeLo({ id: "o1", frontMatter: { order: 1 } }),
+      makeLo({ id: "o0", frontMatter: { order: 0 } }),
+    ];
+    expect(sortLos(los).map((lo: any) => lo.id)).toEqual(["o0", "o1", "u1"]);
+  });
+
+  it("leaves a Lo whose order is not a number among the unordered", () => {
+    const los = [
+      makeLo({ id: "blank", frontMatter: { order: "" } }),
+      makeLo({ id: "word", frontMatter: { order: "first" } }),
+      makeLo({ id: "o3", frontMatter: { order: "3" } }),
+    ];
+    expect(sortLos(los).map((lo: any) => lo.id)).toEqual(["o3", "blank", "word"]);
+  });
 });
 
 // ===========================================================================

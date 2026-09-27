@@ -64,4 +64,4 @@ Deno.chdir(courseDir);
 const [course, lr] = parseCourse(courseDir);
 generateDynamicCourse(course, outDir);
 copyAssets(lr, outDir);
-console.log(`fixture course written to ${outDir}`);
+process.stdout.write(`fixture course written to ${outDir}\n`);

@@ -25,18 +25,18 @@
 
 <div class="space-y-6 text-center">
   {#if !downloaded}
-    <p class="text-lg font-semibold">Your course is ready!</p>
-    <p class="text-surface-500">
-      Click below to download your editable course as a <code class="code">.zip</code> of Markdown source.
+    <p class="ui-section-title">Your course is ready!</p>
+    <p class="ui-muted">
+      Click below to download your editable course as a <code>.zip</code> of Markdown source.
     </p>
     <button
-      class="btn rounded-sm bg-primary-500 px-8 py-3 text-lg text-white hover:bg-primary-600"
+      class="ui-button ui-button-primary"
       onclick={ondownload}>Download {courseId}.zip</button
     >
   {:else}
-    <p class="text-lg font-semibold text-success-600 dark:text-success-400">Downloaded!</p>
+    <p class="ui-section-title text-[var(--ui-success)]">Downloaded!</p>
     <div
-      class="prose prose-sm dark:prose-invert max-w-none rounded-sm border border-surface-300 bg-surface-100 p-4 text-left dark:border-surface-600 dark:bg-surface-800"
+      class="ui-panel prose prose-sm dark:prose-invert max-w-none text-left"
     >
       <p><strong>Next steps:</strong></p>
       <ol>
@@ -53,11 +53,11 @@
         {/each}
       </ol>
     </div>
-    <button class="btn rounded-sm bg-primary-500 text-white hover:bg-primary-600" onclick={ondownload}
+    <button class="ui-button ui-button-primary" onclick={ondownload}
       >Download Again</button
     >
   {/if}
   <div class="flex justify-start">
-    <button class="btn rounded-sm bg-surface-300 dark:bg-surface-600" onclick={onback}>&larr; Back</button>
+    <button class="ui-button" onclick={onback}>&larr; Back</button>
   </div>
 </div>

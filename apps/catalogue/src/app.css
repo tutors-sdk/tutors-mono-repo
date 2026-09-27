@@ -37,3 +37,6 @@
     .xl\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
 }
+
+@import "@tutors/themes/styles/paper-tokens.css";
+@import "@tutors/themes/styles/paper-ui.css";

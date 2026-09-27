@@ -27,9 +27,9 @@ interface StepResult {
 const results: StepResult[] = [];
 
 async function runStep(name: string, script: string, extraArgs: string[] = []): Promise<boolean> {
-  console.log(`\n${"═".repeat(60)}`);
-  console.log(`  ${name}`);
-  console.log(`${"═".repeat(60)}\n`);
+  process.stdout.write(`\n${"═".repeat(60)}\n`);
+  process.stdout.write(`  ${name}\n`);
+  process.stdout.write(`${"═".repeat(60)}\n\n`);
 
   const start = performance.now();
   const cmd = new Deno.Command("deno", {
@@ -50,9 +50,9 @@ async function runStep(name: string, script: string, extraArgs: string[] = []): 
   });
 
   if (!passed) {
-    console.error(`\n✗ ${name} FAILED (${(duration / 1000).toFixed(1)}s)`);
+    process.stderr.write(`\n✗ ${name} FAILED (${(duration / 1000).toFixed(1)}s)\n`);
   } else {
-    console.log(`\n✓ ${name} passed (${(duration / 1000).toFixed(1)}s)`);
+    process.stdout.write(`\n✓ ${name} passed (${(duration / 1000).toFixed(1)}s)\n`);
   }
 
   return passed;
@@ -95,11 +95,11 @@ async function runReader(): Promise<boolean> {
 }
 
 async function run() {
-  console.log("╔══════════════════════════════════════════════════════╗");
-  console.log("║          Tutors Release Regression Tests             ║");
-  console.log("╚══════════════════════════════════════════════════════╝");
-  console.log(`\n  Mode:    ${mode}`);
-  console.log(`  Version: ${args.version}\n`);
+  process.stdout.write("╔══════════════════════════════════════════════════════╗\n");
+  process.stdout.write("║          Tutors Release Regression Tests             ║\n");
+  process.stdout.write("╚══════════════════════════════════════════════════════╝\n");
+  process.stdout.write(`\n  Mode:    ${mode}\n`);
+  process.stdout.write(`  Version: ${args.version}\n\n`);
 
   let allPassed = true;
 
@@ -114,32 +114,32 @@ async function run() {
   }
 
   // Print summary table
-  console.log(`\n${"═".repeat(60)}`);
-  console.log("  SUMMARY");
-  console.log(`${"═".repeat(60)}`);
-  console.log(`\n  ${"Step".padEnd(40)} ${"Status".padEnd(10)} Duration`);
-  console.log(`  ${"─".repeat(40)} ${"─".repeat(10)} ${"─".repeat(8)}`);
+  process.stdout.write(`\n${"═".repeat(60)}\n`);
+  process.stdout.write("  SUMMARY\n");
+  process.stdout.write(`${"═".repeat(60)}\n`);
+  process.stdout.write(`\n  ${"Step".padEnd(40)} ${"Status".padEnd(10)} Duration\n`);
+  process.stdout.write(`  ${"─".repeat(40)} ${"─".repeat(10)} ${"─".repeat(8)}\n`);
 
   for (const r of results) {
     const status = r.passed ? "PASS" : "FAIL";
     const duration = `${(r.duration / 1000).toFixed(1)}s`;
-    console.log(`  ${r.name.padEnd(40)} ${status.padEnd(10)} ${duration}`);
+    process.stdout.write(`  ${r.name.padEnd(40)} ${status.padEnd(10)} ${duration}\n`);
   }
 
   const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
-  console.log(`\n  Total: ${(totalDuration / 1000).toFixed(1)}s`);
+  process.stdout.write(`\n  Total: ${(totalDuration / 1000).toFixed(1)}s\n`);
 
   if (allPassed) {
-    console.log("\n  RESULT: ALL PASSED");
+    process.stdout.write("\n  RESULT: ALL PASSED\n");
   } else {
-    console.error("\n  RESULT: FAILED");
+    process.stderr.write("\n  RESULT: FAILED\n");
     const failures = results.filter((r) => !r.passed);
     for (const f of failures) {
-      console.error(`    ✗ ${f.name}: ${f.error}`);
+      process.stderr.write(`    ✗ ${f.name}: ${f.error}\n`);
     }
   }
 
-  console.log("");
+  process.stdout.write("\n");
   Deno.exit(allPassed ? 0 : 1);
 }
 

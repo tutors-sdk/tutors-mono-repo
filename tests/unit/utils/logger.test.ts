@@ -96,6 +96,15 @@ describe("logger: argument normalization", () => {
     });
     expect(entries[0].message).toBe("Error fetching row:");
     expect(entries[0].code).toBe("PGRST116");
+    expect(entries[0].error).toBe("DB error");
+  });
+
+  it("keeps an error object's message beside an error key it already has", () => {
+    const { logger, entries } = createTestLogger();
+    logger.error("Sync failed", { error: "E_SYNC", message: "row locked" });
+    expect(entries[0].message).toBe("Sync failed");
+    expect(entries[0].error).toBe("E_SYNC");
+    expect(entries[0].errorMessage).toBe("row locked");
   });
 });
 

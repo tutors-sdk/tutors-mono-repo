@@ -190,7 +190,15 @@ export function loadPropertyFlags(course: Course) {
   });
 }
 
-export function initCalendar(course: Course) {
+/**
+ * Parse the course calendar and work out which week is current.
+ *
+ * @param course The course whose `calendar` property is read.
+ * @param today The instant to treat as "now", in epoch milliseconds. Defaults to the
+ *   system clock; the server passes its clock seam so the current week follows the
+ *   frozen instant the release harness sets (`HARNESS_NOW`).
+ */
+export function initCalendar(course: Course, today: number = Date.now()) {
   try {
     if (!course.calendar) return;
     const calendarObj = course.calendar;
@@ -226,7 +234,6 @@ export function initCalendar(course: Course) {
       }
     }
 
-    const today = Date.now();
     const currentWeek = weeks.find(
       (week, i) =>
         today > Date.parse(week.date) &&
@@ -238,7 +245,8 @@ export function initCalendar(course: Course) {
       weeks,
       currentWeek,
     };
-  } catch (e) {
-    console.error("Error loading calendar:", e);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error loading calendar: ${message}\n`);
   }
 }

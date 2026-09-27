@@ -12,8 +12,11 @@
 
 {#if contentHtml}
   <div class="flex w-full items-center justify-center">
-    <p class="prose prose-sm prose-slate dark:prose-invert [&>*]:m-0 min-w-full text-xs">
+    <div class="footer-prose prose dark:prose-invert [&>*]:m-0 min-w-full">
       {@html sanitizeHtml(contentHtml ?? "")}
-    </p>
+    </div>
   </div>
 {/if}
+<style>
+  .footer-prose { max-width: none; font-size: var(--font-caption); line-height: var(--leading-ui); color: var(--ui-muted); }
+</style>

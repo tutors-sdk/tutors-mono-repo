@@ -278,7 +278,7 @@ function buildLo(
   keyFileName: string = "",
 ): Lo {
   let lo = buildDefaultLo(lr, keyFileName);
-  if (!silentGlobal) console.log(`${"-".repeat(level * 2)}: ${lo.id} : ${lo.title}`);
+  if (!silentGlobal) process.stdout.write(`${"-".repeat(level * 2)}: ${lo.id} : ${lo.title}\n`);
   if (isCompositeLo(lo)) {
     lo = buildCompositeLo(lo, lr, level);
   } else {

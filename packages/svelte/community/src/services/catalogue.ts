@@ -51,7 +51,7 @@ export const catalogueService: CatalogueService = {
 
   async pruneCatalogue(fetchFunction: typeof fetch) {
     const catalogue = await this.getCatalogue();
-    log.debug(`Total courses: ${catalogue.length}`);
+    log.debug("Catalogue size", { count: catalogue.length });
     const invalidIds: string[] = [];
     for (const course of catalogue) {
       try {
@@ -64,8 +64,7 @@ export const catalogueService: CatalogueService = {
         invalidIds.push(course.course_id);
       }
     }
-    log.debug(`Invalid IDs: ${invalidIds.join(", ")}`);
-    log.debug(`Invalid count: ${invalidIds.length}`);
+    log.debug("Invalid catalogue courses", { count: invalidIds.length, courseIds: invalidIds });
 
     if (invalidIds.length > 0) {
       await this.deleteCourses(invalidIds);
@@ -80,7 +79,7 @@ export const catalogueService: CatalogueService = {
         log.error("Error deleting courses:", error);
         throw error;
       }
-      log.debug(`Successfully deleted ${courseIds.length} courses`);
+      log.debug("Deleted courses", { count: courseIds.length });
     } catch (error) {
       log.error("Error in deleteCourses:", error);
       throw error;

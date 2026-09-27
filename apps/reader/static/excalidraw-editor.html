@@ -15,6 +15,8 @@
       background: #fff;
     }
     #loading.hidden { display: none; }
+    /* Excalidraw's own dark canvas colour, while the editor loads in dark mode. */
+    body.dark #loading { background: #121212; color: #a0a0a0; }
   </style>
   <script type="importmap">
     {
@@ -60,8 +62,21 @@
       const isRemoteUpdateRef = useRef(false);
       const debounceTimerRef = useRef(null);
       const [collaborators, setCollaborators] = useState(new Map());
+      // The reader's appearance: set by init-editor, then followed through "set-theme" messages.
+      const [theme, setTheme] = useState(config.theme === "dark" ? "dark" : "light");
+      useEffect(() => {
+        const onTheme = (event) => {
+          if (event.origin !== location.origin || event.data?.type !== "set-theme") return;
+          const next = event.data.theme === "dark" ? "dark" : "light";
+          document.body.classList.toggle("dark", next === "dark");
+          setTheme(next);
+        };
+        window.addEventListener("message", onTheme);
+        return () => window.removeEventListener("message", onTheme);
+      }, []);
 
       useEffect(() => {
+        if (!config.supabaseUrl || !config.supabaseAnonKey) return;
         const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
         const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
         const channelName = `wb:${config.roomId}`;
@@ -179,7 +194,7 @@
           window.parent.postMessage({
             type: "scene-changed",
             elements: elements,
-          }, "*");
+          }, location.origin);
         }, 100);
       }, []);
 
@@ -206,6 +221,7 @@
         onChange: handleChange,
         onPointerUpdate: handlePointerUpdate,
         isCollaborating: true,
+        theme,
         initialData: config.initialScene ? {
           elements: config.initialScene.elements || [],
           appState: {
@@ -217,8 +233,11 @@
       });
     }
 
+    // Only the reader that embeds this page (same origin) may drive it.
     window.addEventListener("message", (event) => {
+      if (event.origin !== location.origin) return;
       if (event.data?.type === "init-editor") {
+        document.body.classList.toggle("dark", event.data.theme === "dark");
         loadingEl.classList.add("hidden");
 
         const root = createRoot(document.getElementById("root"));
@@ -226,7 +245,7 @@
       }
     });
 
-    window.parent.postMessage({ type: "editor-ready" }, "*");
+    window.parent.postMessage({ type: "editor-ready" }, location.origin);
   </script>
 </body>
 </html>

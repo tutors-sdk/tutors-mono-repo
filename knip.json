@@ -11,7 +11,8 @@
   ],
   "ignoreBinaries": [
     "svelte-kit",
-    "deno"
+    "deno",
+    "cosign"
   ],
   "vitest": false,
   "workspaces": {

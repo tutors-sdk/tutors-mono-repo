@@ -45,4 +45,4 @@ createServer((req, res) => {
   } catch {
     res.writeHead(404, headers).end("not found");
   }
-}).listen(port, () => console.log(JSON.stringify({ level: "info", message: "fixture course server listening", port, root, fault })));
+}).listen(port, () => process.stdout.write(JSON.stringify({ level: "info", message: "fixture course server listening", port, root, fault }) + "\n"));

@@ -9,7 +9,7 @@
   // tabSet.value = 4;
 </script>
 
-<div class="flex flex-wrap justify-center">
+<div class="ui-grid">
   {#each courseRecords as courseRecord}
     <Card
       cardDetails={{
@@ -21,10 +21,8 @@
         img: courseRecord?.img,
         icon: courseRecord?.icon
       }}
-      cardLayout={{
-        layout: "compacted",
-        style: "landscape"
-      }}
+      cardLayout={{ style: "landscape" }}
     />
+  {:else}<p class="ui-empty">No courses are available to display.</p>
   {/each}
 </div>

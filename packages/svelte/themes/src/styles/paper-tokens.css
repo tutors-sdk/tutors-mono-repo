@@ -1,0 +1,187 @@
+/* Paper source: https://app.paper.design/file/01M31N5QRJ6FCPM9X3XTG5SWEN/
+ * Exact native tokens, read 2026-09-21 (token hash f04c2fa9).
+ * Keep source tokens unchanged; mode-dependent application roles follow below. */
+:root {
+  --brand: #246F78;
+  --ink: #202020;
+  --muted: #636363;
+  --canvas: #F6F6F6;
+  --surface: #FFFFFF;
+  --border: #DCDCDC;
+  --selected: #EEEEEE;
+  --control-border: #858585;
+  --warning: #8A570D;
+  --warning-soft: #F1F1F1;
+  --danger: #A83939;
+  --danger-soft: #F1F1F1;
+  --info: #245D91;
+  --info-soft: #F1F1F1;
+  --focus: #246F78;
+  --dark-canvas: #111111;
+  --dark-surface: #1B1B1B;
+  --dark-ink: #F2F2F2;
+  --dark-muted: #BDBDBD;
+  --dark-brand: #7DCBD3;
+  --dark-border: #3A3A3A;
+  --dark-raised: #262626;
+  --dark-selected: #292929;
+  --dark-control-border: #858585;
+  --dark-on-brand: #111111;
+  --dark-focus: #7DCBD3;
+  --code-surface: #202020;
+  --type-warning-light: #8C6A00;
+  --type-error-light: #B51D43;
+  --type-success-light: #257544;
+  --type-primary-light: #167276;
+  --type-secondary-light: #6B49A5;
+  --type-tertiary-light: #875581;
+  --type-warning-dark: #E1C15A;
+  --type-error-dark: #FF8BA7;
+  --type-success-dark: #80CCA3;
+  --type-primary-dark: #81D1D1;
+  --type-secondary-dark: #C5ABF2;
+  --type-tertiary-dark: #E0B2D8;
+  --brand-logo: #37919B;
+  --brand-hover: #1C5961;
+  --brand-pressed: #164A51;
+  --dark-brand-hover: #9AD9DF;
+  --dark-brand-pressed: #61BAC4;
+  --disabled-ink: #777777;
+  --dark-disabled-ink: #A0A0A0;
+  --light-raised: #F1F1F1;
+  --dark-info: #A7CEFF;
+  --dark-warning: #F2CD8B;
+  --dark-danger: #FFB4B4;
+  --on-brand: #FFFFFF;
+  --font-interface: Inter;
+  --font-body: 16px;
+  --font-reading: 18px;
+  --font-label: 14px;
+  --font-title: 32px;
+  --font-display: 48px;
+  --font-caption: 12px;
+  --font-meta: 13px;
+  --font-control: 15px;
+  --font-section: 20px;
+  --font-heading: 24px;
+  --font-page: 30px;
+  --font-brand: 23px;
+  --font-small: 11px;
+  --font-size-17: 17px;
+  --font-size-19: 19px;
+  --font-size-21: 21px;
+  --font-size-22: 22px;
+  --font-size-25: 25px;
+  --font-size-26: 26px;
+  --font-size-28: 28px;
+  --font-size-29: 29px;
+  --font-size-34: 34px;
+  --font-size-36: 36px;
+  --font-size-44: 44px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-ui: 145%;
+  --leading-control: 140%;
+  --leading-heading: 120%;
+  --breakpoint-navigation: 1024px;
+  --reading-width: 720px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --radius-small: 4px;
+  --radius-badge: 6px;
+}
+
+:root {
+  --ui-canvas: light-dark(var(--canvas), var(--dark-canvas));
+  --ui-surface: light-dark(var(--surface), var(--dark-surface));
+  --ui-ink: light-dark(var(--ink), var(--dark-ink));
+  --ui-muted: light-dark(var(--muted), var(--dark-muted));
+  --ui-brand: light-dark(var(--brand), var(--dark-brand));
+  --ui-border: light-dark(var(--border), var(--dark-border));
+  --ui-selected: light-dark(var(--selected), var(--dark-selected));
+  --ui-control-border: light-dark(var(--control-border), var(--dark-control-border));
+  --ui-on-brand: light-dark(var(--on-brand), var(--dark-on-brand));
+  --ui-focus: light-dark(var(--focus), var(--dark-focus));
+  --ui-brand-hover: light-dark(var(--brand-hover), var(--dark-brand-hover));
+  --ui-brand-pressed: light-dark(var(--brand-pressed), var(--dark-brand-pressed));
+  --ui-disabled-ink: light-dark(var(--disabled-ink), var(--dark-disabled-ink));
+  --ui-info: light-dark(var(--info), var(--dark-info));
+  --ui-warning: light-dark(var(--warning), var(--dark-warning));
+  --ui-danger: light-dark(var(--danger), var(--dark-danger));
+  --ui-success: light-dark(var(--type-success-light), var(--type-success-dark));
+  --ui-raised: light-dark(var(--light-raised), var(--dark-raised));
+  /* Resource card geometry: a fixed size, not a floor. Cards never stretch, so a row holds as many
+     as fit and the leftover space is split either side (justify-content: center in paper-ui.css).
+     From 768px up the card is the same box at every viewport, so the artwork is one value too; phones
+     get one shorter box with smaller artwork (below), two or more cards a row. Height is sized for the worst case - 2-line title, the artwork,
+     3-line summary, padding and the 8px type bands - so nothing clips; shorter cards carry the slack
+     at the bottom. The three are coupled: shrinking --card-height without shrinking --card-artwork
+     (or tightening the line-clamps in Card.svelte) clips the summary. Heads up if you go tight - the
+     dyslexia theme's larger label font and leading cost roughly 27px more than the default. */
+  --card-width: 220px;
+  --card-height: 340px;
+  --card-artwork: 180px;
+  /* A topic's side column holds a single column of cards and is never wider than one: --card-width plus
+     the unit panel's padding and border, plus this slack so the card is not wall to wall and side content
+     that is not a card (a podcast player) has some room. Raise it if a side embed looks cramped - the
+     main group gives up the width. Applied in Composite.svelte's layoutCards. */
+  --side-slack: 80px;
+}
+/* Phones: cards share the row two across (paper-ui.css), about 150-220px wide, or have it to themselves
+   below 390px - either way a compact box: shorter, with smaller artwork. Sized like the desktop box, for the
+   worst case: 2-line title, 64px artwork, 2-line summary and a companion-video link, at the tighter phone
+   type in Card.svelte. */
+@media (max-width: 767px) { :root { --card-height: 264px; --card-artwork: 104px; } }
+/* Below 390px a card has the whole row, so its title and summary rarely wrap: a shorter box with 96px
+   artwork. ponytail: a two-line title, two-line summary and a companion-video link together would clip
+   about 12px; raise this if a course does that. */
+@media (max-width: 389px) { :root { --card-height: 232px; --card-artwork: 96px; } }
+
+/* Preserve theme selection and its icon library; the Tutors palette uses Paper's type tones. */
+[data-theme="tutors"] {
+  --base-font-color: var(--ink);
+  --base-font-color-dark: var(--dark-ink);
+  --base-font-family: var(--font-interface), system-ui, sans-serif;
+  --heading-font-weight: var(--weight-semibold);
+  --anchor-font-color: var(--brand);
+  --anchor-font-color-dark: var(--dark-brand);
+  --body-background-color: var(--canvas);
+  --body-background-color-dark: var(--dark-canvas);
+  --radius-base: var(--radius-control);
+  --radius-container: var(--radius-card);
+  --color-primary-500: light-dark(var(--type-primary-light), var(--type-primary-dark));
+  /* Type icons (topic = secondary, unit = tertiary) keep the Tutors resource colours the cards use - topic
+     green and talk gold, as in the original Tutors theme - not Paper's purple and mauve type tones. */
+  --color-secondary-500: light-dark(#53A878, var(--type-success-dark));
+  --color-tertiary-500: light-dark(#CB9D00, var(--type-warning-dark));
+  --color-success-500: light-dark(var(--type-success-light), var(--type-success-dark));
+  --color-warning-500: light-dark(var(--type-warning-light), var(--type-warning-dark));
+  --color-error-500: light-dark(var(--type-error-light), var(--type-error-dark));
+  --color-surface-50: var(--surface);
+  --color-surface-100: var(--canvas);
+  --color-surface-200: var(--selected);
+  --color-surface-300: var(--border);
+  --color-surface-400: var(--control-border);
+  --color-surface-500: var(--muted);
+  --color-surface-600: var(--dark-muted);
+  --color-surface-700: var(--dark-border);
+  --color-surface-800: var(--dark-raised);
+  --color-surface-900: var(--dark-surface);
+  --color-surface-950: var(--dark-canvas);
+}

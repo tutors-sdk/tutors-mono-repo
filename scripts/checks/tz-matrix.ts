@@ -63,7 +63,7 @@ const broken: string[] = [];
 try {
   let index = 0;
   for (const zone of TIMEZONES) {
-    console.log(`\n=== TZ=${zone} ===`);
+    process.stdout.write(`\n=== TZ=${zone} ===\n`);
     const runs: [string, readonly string[]][] = [
       ["unit suite", unitPaths],
       ["property suites", ["--config", "vitest.config.fuzz.ts"]]
@@ -86,7 +86,7 @@ const result = ratchet(failures, baseline);
 
 if (broken.length > 0 || result.added.length > 0 || result.stale.length > 0) {
   const details = [...broken, describeRatchet("timezone matrix", BASELINE, result)].filter(Boolean);
-  console.error(`\nTimezone matrix failed.\n${details.join("\n")}`);
+  process.stderr.write(`\nTimezone matrix failed.\n${details.join("\n")}\n`);
   process.exit(1);
 }
-console.log(`\nTimezone matrix passed: ${TIMEZONES.join(", ")} (${failures.length} known failure(s) in ${BASELINE})`);
+process.stdout.write(`\nTimezone matrix passed: ${TIMEZONES.join(", ")} (${failures.length} known failure(s) in ${BASELINE})\n`);

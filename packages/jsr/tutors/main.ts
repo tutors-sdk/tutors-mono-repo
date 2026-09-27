@@ -10,7 +10,7 @@ import denoConfig from "./deno.json" with { type: "json" };
 const versionStr = `tutors: ${denoConfig.version}`;
 
 if (!fs.existsSync("course.md")) {
-  console.log("Cannot locate course.md. Please change to course folder and try again.");
+  process.stdout.write("Cannot locate course.md. Please change to course folder and try again.\n");
 } else {
   const srcFolder = process.cwd();
   const destFolder = `${srcFolder}/json`;
@@ -18,4 +18,4 @@ if (!fs.existsSync("course.md")) {
   generateDynamicCourse(course, destFolder);
   copyAssets(lr, destFolder);
 }
-console.log(versionStr);  
+process.stdout.write(`${versionStr}\n`);  

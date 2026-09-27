@@ -7,7 +7,7 @@
 {#if currentLo?.value}
   <div data-tour="course-title" class="flex flex-nowrap items-center">
     <div class="mr-2 inline-flex">
-      {#if currentLo?.value?.img}
+      {#if currentLo?.value?.icon || currentLo?.value?.img}
         <Image lo={currentLo?.value} miniImage={true} />
       {:else}
         <Image lo={currentCourse?.value} miniImage={true} />

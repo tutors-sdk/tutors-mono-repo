@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Portal, Tooltip } from "@skeletonlabs/skeleton-svelte";
+  import { page } from "$app/state";
   import Icon from "@iconify/svelte";
 
   interface Props {
@@ -55,28 +55,22 @@
   ]);
 </script>
 
-<nav
-  class="w-24 shrink-0 self-start m-2 rounded-xl border border-surface-300 bg-surface-100 px-4 py-4 flex flex-col items-center gap-1"
-  role="navigation"
-  aria-label="Course navigation"
->
-  {#each navLinks as item (item.href)}
-    <Tooltip positioning={{ placement: "right" }}>
-      <Tooltip.Trigger class="w-full flex justify-center">
-        <a
-          href={item.href}
-          class="btn btn-icon btn-icon-lg preset-tonal flex items-center justify-center aspect-square size-10 shrink-0"
-        >
-          <Icon icon={item.icon} class="size-8 shrink-0" />
-        </a>
-      </Tooltip.Trigger>
-      <Portal>
-        <Tooltip.Positioner class="z-20!">
-          <Tooltip.Content class="card p-2 preset-filled-surface-950-50">
-            <span>{item.label}</span>
-          </Tooltip.Content>
-        </Tooltip.Positioner>
-      </Portal>
-    </Tooltip>
-  {/each}
-</nav>
+{#snippet links()}
+  <nav aria-label="Course navigation">
+    {#each navLinks as item (item.href)}
+      <a href={item.href} aria-current={page.url.pathname === item.href ? "page" : undefined}><Icon icon={item.icon} width="24" /><span>{item.label}</span></a>
+    {/each}
+  </nav>
+{/snippet}
+<aside class="time-navigation">{@render links()}</aside>
+<details class="mobile-navigation"><summary>Course navigation</summary>{@render links()}</details>
+<style>
+  .time-navigation { width: 248px; flex-shrink: 0; padding: var(--space-5) var(--space-4); background: var(--ui-surface); border-right: 1px solid var(--ui-border); overflow-y: auto; }
+  nav { display: grid; gap: var(--space-2); }
+  a { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-3); color: var(--ui-ink); border-radius: var(--radius-control); font-size: var(--font-label); }
+  a:hover, a[aria-current] { background: var(--ui-selected); }
+  a[aria-current] { box-shadow: inset 3px 0 var(--ui-brand); font-weight: var(--weight-semibold); }
+  .mobile-navigation { display: none; background: var(--ui-surface); padding: var(--space-3); border-bottom: 1px solid var(--ui-border); }
+  summary { cursor: pointer; padding: var(--space-3); }
+  @media (max-width: 1023px) { .time-navigation { display: none; } .mobile-navigation { display: block; } }
+</style>

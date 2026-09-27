@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { Progress } from "@skeletonlabs/skeleton-svelte";
   import type { Talk } from "@tutors/tutors-model-lib";
   import { renderMarpSlides, buildMarpMarkdown } from "@tutors/course/markdown";
@@ -15,6 +14,7 @@
   let { lo }: Props = $props();
 
   let loading = $state(true);
+  let fullscreen = $state(false);
   let error = $state("");
   let slideIndex = $state(0);
   let slideElements: string[] = $state([]);
@@ -25,15 +25,13 @@
   const currentSlideHtml = $derived(slideElements[slideIndex] ?? "");
 
   onMount(() => {
-    window.addEventListener("keydown", keypressInput);
+
     loadSlides();
   });
 
-  onDestroy(() => {
-    if (browser) window.removeEventListener("keydown", keypressInput);
-  });
 
   async function loadSlides() {
+    loading = true; error = "";
     try {
       const { html, css } = await renderMarpSlides(buildMarpMarkdown(lo));
       marpCss = css;
@@ -57,6 +55,7 @@
   }
 
   function keypressInput(e: KeyboardEvent) {
+    if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, button, a")) return;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
       nextSlide();
@@ -89,40 +88,44 @@
   {/if}
 </svelte:head>
 
-<div class="card mr-2 rounded-lg border p-2">
-  <div class="mx-2 mb-2 flex items-center justify-between">
+<svelte:document onfullscreenchange={() => fullscreen = document.fullscreenElement === viewport} />
+
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (The focused presentation surface owns arrow-key slide navigation.) -->
+<section bind:this={viewport} class="ui-panel media-viewer" aria-label={lo.title} tabindex="0" onkeydown={keypressInput}>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <div class="text-sm">
       {#if totalSlides > 0}
         {slideIndex + 1} of {totalSlides}
       {/if}
     </div>
-    <div>
-      <button class="btn btn-sm" onclick={prevSlide} aria-label={t("content.slideBack")}>
+    <div class="ui-actions">
+      <button class="ui-button" disabled={slideIndex === 0 || loading} onclick={prevSlide} aria-label={t("content.slideBack")}>
         <Icon type="left" tip={t("content.slideBack")} />
       </button>
-      <button class="btn btn-sm" onclick={nextSlide} aria-label={t("content.slideForward")}>
+      <button class="ui-button" disabled={slideIndex >= totalSlides - 1 || loading} onclick={nextSlide} aria-label={t("content.slideForward")}>
         <Icon type="right" tip={t("content.slideForward")} />
       </button>
-      <button class="btn btn-sm" onclick={toggleFullscreen} aria-label={t("content.slideFullScreen")}>
-        <Icon type="fullScreen" tip={t("content.slideFullScreen")} />
+      <button class="ui-button" onclick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : t("content.slideFullScreen")}>
+        <Icon icon={fullscreen ? "lucide:minimize" : "lucide:maximize"} />
       </button>
     </div>
   </div>
 
   {#if loading}
-    <div class="mt-72 mb-72 flex flex-col items-center justify-center">
+    <div class="flex min-h-64 items-center justify-center">
       <Progress value={null} />
     </div>
   {:else if error}
-    <div class="flex items-center justify-center p-8 text-sm text-red-500">
+    <div class="ui-empty flex flex-wrap items-center justify-center gap-3" role="alert">
       {error}
+      <button class="ui-button" onclick={loadSlides}>Retry</button>
     </div>
   {:else if totalSlides === 0}
-    <div class="flex items-center justify-center p-8 text-sm opacity-60">
+    <div class="ui-empty flex items-center justify-center">
       No slides found in this presentation.
     </div>
   {:else}
-    <div class="marp-viewport not-prose" bind:this={viewport} use:mermaidify={currentSlideHtml}>
+    <div class="marp-viewport not-prose" use:mermaidify={currentSlideHtml}>
       <div class="marp-slides">
         {#key slideIndex}
           {@html currentSlideHtml}
@@ -130,7 +133,7 @@
       </div>
     </div>
   {/if}
-</div>
+</section>
 
 <style>
   .marp-viewport {
@@ -138,8 +141,9 @@
     width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;
+    /* Slides keep their authored white stage in both appearances. */
     background: white;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-small);
   }
   .marp-viewport:fullscreen {
     display: flex;

@@ -1,82 +1,59 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { TestWorld } from "../../support/world";
-import { MockRealtimeChannel } from "../../support/mocks";
+import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
+import { expect, vi } from "vitest";
 
-describe("Live: Presence Tracking", () => {
-  let world: TestWorld;
+// The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
+// SvelteKit and Auth.js. Everything between them is product code.
+vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
+// `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
+vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
-  beforeEach(() => {
-    world = new TestWorld();
-  });
+import { freshBrowser, labsOf, loEventArrives, publishedCourse, studentOpensLab } from "../../support/connect.ts";
+import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";
+import { presenceService } from "../../../../packages/svelte/community/src/services/presence.svelte.ts";
 
-  it("shall display courses with active students and show per-course count", () => {
-    const event1 = world.fixtures.createPresenceEvent({ courseId: "course-1" });
-    const event2 = world.fixtures.createPresenceEvent({ courseId: "course-1" });
-    const event3 = world.fixtures.createPresenceEvent({ courseId: "course-2" });
+const feature = await loadFeature("tests/bdd/features/live/presence-tracking.feature");
 
-    for (const event of [event1, event2, event3]) {
-      const existing = world.coursesOnline.get(event.courseId) || [];
-      existing.push(event);
-      world.coursesOnline.set(event.courseId, existing);
-    }
+const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-    expect(world.coursesOnline.size).toBe(2);
-    expect(world.coursesOnline.get("course-1")).toHaveLength(2);
-    expect(world.coursesOnline.get("course-2")).toHaveLength(1);
-  });
-
-  it("shall display individual student with avatar on course detail", () => {
-    const event = world.fixtures.createPresenceEvent({
-      courseId: "web-dev-101",
-      user: { fullName: "Alice", avatar: "https://avatars.example.com/alice.png" }
+describeFeature(feature, ({ Scenario }) => {
+  Scenario("Display courses with active students", ({ Given, When, Then, And }) => {
+    // The home page of the live app: one listener on the channel every reader broadcasts to.
+    Given("I am viewing the live dashboard", () => {
+      freshBrowser();
+      liveService.startGlobalPresenceService();
     });
-    world.onlineStudents.set(event.user.fullName, event);
-
-    const alice = world.onlineStudents.get("Alice");
-    expect(alice).toBeDefined();
-    expect(alice!.user.avatar).toBe("https://avatars.example.com/alice.png");
-  });
-
-  it("shall remove student on disconnect and decrease active count", () => {
-    const event = world.fixtures.createPresenceEvent({
-      courseId: "web-dev-101",
-      user: { fullName: "Alice" }
+    // Each student signs in to the reader and opens a lab; what reaches the dashboard is the reader's own broadcast.
+    When("{number} students come online across the courses {string}", async (_ctx, count: number, courseIds: string) => {
+      const courses = list(courseIds).map((courseId) => publishedCourse(courseId));
+      for (let i = 0; i < count; i++) await studentOpensLab(`Student ${i + 1}`, courses[i % courses.length]);
     });
-    world.onlineStudents.set("Alice", event);
-    const existing = world.coursesOnline.get("web-dev-101") || [];
-    existing.push(event);
-    world.coursesOnline.set("web-dev-101", existing);
-
-    expect(world.onlineStudents.size).toBe(1);
-
-    const channel = new MockRealtimeChannel();
-    channel.subscribe();
-    world.onlineStudents.delete("Alice");
-    const courseStudents = world.coursesOnline.get("web-dev-101")!;
-    courseStudents.splice(courseStudents.indexOf(event), 1);
-    channel.unsubscribe();
-
-    expect(channel.isSubscribed()).toBe(false);
-    expect(world.onlineStudents.size).toBe(0);
-    expect(world.coursesOnline.get("web-dev-101")).toHaveLength(0);
+    Then("I should see {number} course cards, for {string}", (_ctx, count: number, courseIds: string) => {
+      expect(liveService.coursesOnline.value).toHaveLength(count);
+      expect(liveService.coursesOnline.value.map((lo) => lo.courseId)).toEqual(list(courseIds));
+    });
+    And("the dashboard should count {number} active students", (_ctx, count: number) => {
+      expect(liveService.studentsOnline.value.map((lo) => lo.user?.fullName)).toEqual(Array.from({ length: count }, (_, i) => `Student ${i + 1}`));
+    });
   });
 
-  it("shall group students by their current course", () => {
-    const courses = ["course-1", "course-2", "course-3"];
-    const studentCounts = [2, 1, 2];
-
-    for (let c = 0; c < courses.length; c++) {
-      for (let s = 0; s < studentCounts[c]; s++) {
-        const event = world.fixtures.createPresenceEvent({ courseId: courses[c] });
-        const existing = world.coursesOnline.get(courses[c]) || [];
-        existing.push(event);
-        world.coursesOnline.set(courses[c], existing);
-      }
-    }
-
-    expect(world.coursesOnline.size).toBe(3);
-    expect(world.coursesOnline.get("course-1")).toHaveLength(2);
-    expect(world.coursesOnline.get("course-2")).toHaveLength(1);
-    expect(world.coursesOnline.get("course-3")).toHaveLength(2);
+  Scenario("Display individual student on a course", ({ Given, When, Then, And }) => {
+    const course = publishedCourse("web-dev-101");
+    // The course page of the live app listens through the presence service, on the channel of that course.
+    Given("I am viewing the course detail for {string}", (_ctx, courseId: string) => {
+      freshBrowser();
+      presenceService.startPresenceListener(courseId);
+    });
+    When("a student {string} becomes active on {string}", (_ctx, name: string, courseId: string) => {
+      loEventArrives(courseId, name, course, labsOf(course)[0]);
+    });
+    Then("I should see {string} in the active students list", (_ctx, name: string) => {
+      expect(presenceService.studentsOnline.value.map((lo) => lo.user?.fullName)).toEqual([name]);
+    });
+    And("I should see their avatar {string}", (_ctx, avatar: string) => {
+      expect(presenceService.studentsOnline.value[0].user?.avatar).toBe(avatar);
+    });
   });
 });

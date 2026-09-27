@@ -674,6 +674,7 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 **Foundation (Layer 1)**:
 - `runes` - Reactive state management
 - `utils/logger` - Logging
+- `utils/runtime` - Server runtime seams: the clock (`now()`, frozen by `HARNESS_NOW` for the release harness) and the `/version` endpoint. No dependencies
 
 **Core (Layer 2)**:
 - `course` - Course data processing
@@ -1596,7 +1597,7 @@ Applications (reader, catalogue, live, time)
 - `@tutors/runes` → model
 
 **Layer 2** (depends on runes + foundation):
-- `@tutors/course` → runes, logger, model
+- `@tutors/course` → runes, runtime, logger, model
 - `@tutors/a11y` → runes, course
 - `@tutors/i18n` → runes, course
 
@@ -1692,14 +1693,14 @@ pnpm dev
 **Anonymous Mode** (no backend):
 
 ```bash
-# apps/reader/.env
+# .env (repository root)
 PUBLIC_ANON_MODE=TRUE
 ```
 
 **Full Mode** (with services):
 
 ```bash
-# apps/reader/.env
+# .env (repository root)
 PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=xxx
 PRIVATE_AUTH_GITHUB_ID=xxx
@@ -1821,7 +1822,7 @@ import { createSvelteConfig } from "@tutors/app-config/svelte";
 export default createSvelteConfig(/* { kit: { ...overrides } } */);
 ```
 
-`createViteConfig` sets `APP_VERSION` from the app's `package.json`, the Tailwind and SvelteKit plugins, and the `ssr.noExternal` list. `createSvelteConfig` picks the adapter: `adapter-auto` (detects Netlify, Vercel, Cloudflare) by default, `adapter-node` when `SVELTEKIT_ADAPTER=node`, which is what the container image sets.
+`createViteConfig` reads `.env` from the repo root, sets `APP_VERSION` from the app's `package.json`, the Tailwind and SvelteKit plugins, and bundles every `@tutors/*` package into the server build (`ssr.noExternal`). `createSvelteConfig` picks the adapter: `adapter-auto` (detects Netlify, Vercel, Cloudflare) by default, `adapter-node` when `SVELTEKIT_ADAPTER=node`, which is what the container image sets. It also reads `.env` from the repo root and, when the build has a `GIT_SHA`, names the SvelteKit build after a hash of it so two builds of one commit are identical.
 
 **Environment Variables** (production):
 

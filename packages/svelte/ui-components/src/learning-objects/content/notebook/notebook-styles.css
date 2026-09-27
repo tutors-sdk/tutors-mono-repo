@@ -29,8 +29,8 @@
 
 /* Notebook error output styles */
 .notebook-output-error {
-  color: #e74c3c;
-  background: #fdf2f2;
+  color: var(--ui-danger);
+  background: var(--ui-raised);
   padding: 0.5rem;
   border-radius: 0.25rem;
   font-family: monospace;
@@ -39,8 +39,8 @@
 }
 
 .dark .notebook-output-error {
-  background: #2d1b1b;
-  color: #ff6b6b;
+  background: var(--ui-raised);
+  color: var(--ui-danger);
 }
 
 /* Notebook stream output styles */
@@ -52,7 +52,7 @@
 }
 
 .notebook-output-stream-stderr {
-  color: #e74c3c;
+  color: var(--ui-danger);
 }
 
 /* Notebook HTML output styles */

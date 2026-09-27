@@ -1,32 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-
-  interface Props {
-    open: boolean;
-    /** Current or last loaded course ID (used to seed the input) */
-    courseId: string | null;
-    /** Overall loading flag while (re)loading courses */
-    loading: boolean;
-    /** Validation / top-level error message for the dialog */
-    error: string | null;
-  }
-
-  type Events = {
-    /** Single course ID and optional date range submitted from the dialog */
-    submit: {
-      courseId: string;
-      startDate: string | null;
-      endDate: string | null;
-      moodleCourseId: string | null;
-      moodleSectionId: string | null;
-    };
-    close: void;
-    open: { open: boolean };
-  };
-
-  let { open, courseId, loading, error }: Props = $props();
-
-  const dispatch = createEventDispatcher<Events>();
+  type Selection = { courseId: string; startDate: string | null; endDate: string | null; moodleCourseId: string | null; moodleSectionId: string | null };
+  let { loading, error, onsubmit }: { loading: boolean; error: string | null; onsubmit: (selection: Selection) => void } = $props();
 
   let courseIdsInput = $state("");
   let startDateInput = $state('');
@@ -34,7 +8,7 @@
   let moodleCourseIdInput = $state('');
   let moodleSectionIdInput = $state('');
   let dateRangeError = $state<string | null>(null);
-  let dialogElement: HTMLDialogElement | undefined;
+
 
   /**
    * Extract course ID from input, handling URLs by extracting the last path segment.
@@ -42,7 +16,7 @@
    */
   function extractCourseIdFromInput(input: string): string {
     const trimmed = input.trim();
-    
+
     // Check if it looks like a URL
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.includes('/')) {
       try {
@@ -51,16 +25,16 @@
         if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
           urlString = 'https://' + trimmed; // Assume https for relative URLs
         }
-        
+
         const url = new URL(urlString);
         const pathSegments = url.pathname.split('/').filter(segment => segment.length > 0);
-        
+
         if (pathSegments.length > 0) {
           // Get last segment and remove query params/fragments
           const lastSegment = pathSegments[pathSegments.length - 1];
           return lastSegment.split('?')[0].split('#')[0];
         }
-        
+
         // Fallback: if no path segments, return hostname or original input
         return url.hostname || trimmed;
       } catch {
@@ -72,26 +46,10 @@
         }
       }
     }
-    
+
     // Not a URL, return as-is
     return trimmed;
   }
-
-  // Update textarea when primary courseId prop changes
-  $effect(() => {
-    if (courseId) {
-      courseIdsInput = courseId;
-    }
-  });
-
-  // Handle dialog open/close
-  $effect(() => {
-    if (open && dialogElement) {
-      dialogElement.showModal();
-    } else if (!open && dialogElement) {
-      dialogElement.close();
-    }
-  });
 
   function handleSubmit() {
     const firstLine = courseIdsInput.split(/\r?\n/)[0]?.trim() ?? "";
@@ -114,7 +72,7 @@
     const moodleCourseId = moodleCourseIdInput.trim() || null;
     const moodleSectionId = moodleSectionIdInput.trim() || null;
 
-    dispatch("submit", {
+    onsubmit({
       courseId,
       startDate,
       endDate,
@@ -123,34 +81,26 @@
     });
   }
 
-  function handleClose() {
-    // Let the parent decide whether the dialog should reopen
-    dispatch('close');
-  }
 </script>
 
-<dialog
-  bind:this={dialogElement}
-  class="backdrop:bg-surface-50-950/50 backdrop:backdrop-blur-sm bg-transparent border-none p-0"
-  onclose={handleClose}
->
-  <div class="card bg-surface-100-900 w-full max-w-md p-6 space-y-4 shadow-xl m-auto">
-    <h2 class="text-2xl font-bold">Select Course</h2>
-    <p class="text-surface-600">
-      Enter a course Url to view calendar data. Optionally select a date range to filter the data.
+<section class="ui-panel mx-auto w-full max-w-2xl space-y-6">
+    <div><p class="ui-eyebrow">Tutors Time</p><h1 class="ui-title mt-2">Open a course</h1></div>
+    <p class="text-[var(--ui-muted)]">
+      Enter a course URL to view calendar data. Optionally select a date range to filter the data.
     </p>
-    <div class="space-y-4">
+    <form class="space-y-5" onsubmit={(event) => { event.preventDefault(); handleSubmit(); }}>
       <div>
-        <label for="courseids-input" class="label">Course Url</label>
+        <label for="courseids-input" class="label">Course URL</label>
         <input
           id="courseids-input"
           type="text"
+          required
           bind:value={courseIdsInput}
           placeholder="Enter course URL"
           class="input w-full"
         />
-        {#if error && open}
-          <p class="text-sm text-error-500 mt-1">{error}</p>
+        {#if error}
+          <p role="alert" class="text-sm text-error-500 mt-1">{error}</p>
         {/if}
       </div>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -174,8 +124,11 @@
         </div>
       </div>
       {#if dateRangeError}
-        <p class="text-sm text-error-500">{dateRangeError}</p>
+        <p role="alert" class="text-sm text-error-500">{dateRangeError}</p>
       {/if}
+      <details class="border-t border-[var(--ui-border)] pt-3">
+        <summary class="flex cursor-pointer items-center font-medium">Advanced · Moodle sync</summary>
+        <p class="ui-muted my-3 text-sm">Providing a Moodle course ID syncs assignments when you load the course.</p>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label for="moodle-course-id-input" class="label">Moodle Course ID (optional)</label>
@@ -198,31 +151,16 @@
           />
         </div>
       </div>
+      </details>
       <div class="flex justify-end gap-2">
         <button
-          type="button"
-          onclick={handleSubmit}
-          class="btn preset-filled"
+          type="submit"
+          class="ui-button ui-button-primary"
           disabled={loading}
         >
-          {loading ? 'Loading...' : 'Load Data'}
+          {loading ? 'Loading…' : moodleCourseIdInput.trim() ? 'Load & sync Moodle' : 'Load course'}
         </button>
       </div>
-    </div>
-  </div>
-</dialog>
-
-<style>
-  dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    margin: 0;
-  }
-
-  dialog::backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-  }
-</style>
+    </form>
+    <p class="ui-muted text-sm">Recorded activity measures time, not learning outcomes.</p>
+</section>

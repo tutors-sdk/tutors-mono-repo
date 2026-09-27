@@ -18,9 +18,9 @@ first gate is the pull request.
 | Tier | Failure class it owns | Status | Where it runs |
 |---|---|---|---|
 | **A** | Structure — layer violations, package cycles, app-to-app imports, JSR/Node manifest drift, unused files, exports and dependencies | In repo | PR: `build-and-test` (`pnpm check:knip`, then `vitest`) |
-| **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
+| **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
 | **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
-| **D** | Requirements — executable EARS/Gherkin specs | Planned ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)) | Feature files are documentation only today |
+| **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
 | **F** | Authorisation — who may call what | Planned ([#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77)) | — |
 | **G** | User journeys — the whole system through a real browser, against built images | In repo | PR: `e2e-stack` (chromium, webkit). Nightly: `e2e-stack-nightly` (firefox, mobile) |
 | **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | Planned, no issue yet | Shapes are snapshot-checked under tier "contract" below |
@@ -39,7 +39,7 @@ Three tiers predate the runway letters and still carry weight:
 | Tier | Owns | Where it runs |
 |---|---|---|
 | Contract / API surface | Public exports of the three JSR packages, Supabase row and RPC shapes, realtime message shapes, generated course JSON | PR: `pnpm api-report:check` in `build-and-test`. Nightly: `contract-snapshots`. RC: Gate 2b |
-| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Local only — `pnpm test:mutation`. No workflow runs it |
+| Mutation | Whether the tests actually detect a change: the twelve targeted model, time and gen modules at 90%, and every library module at its own floor | Nightly `mutation` job, then `pnpm check:mutation-floors` per module (Rules 0113, 0114); nightly `mutation-nightly` over every library module against its own floors (Rules 0116 to 0119); locally `pnpm test:mutation` and `pnpm test:mutation:nightly` |
 | Release artifact | The CLI's output for the reference course against the last published CLI | Push to `rc/**`: `rc-validation.yml` Gate 6, `release-testing.yml` Gates 6a–6c |
 
 ## Commands
@@ -50,25 +50,27 @@ Every command below exists in the root `package.json`.
 |---|---|
 | `pnpm lint` | ESLint over the repo |
 | `pnpm test` | `vitest run` — everything under `tests/` except `e2e`, `e2e-stack`, `release` and `fuzz` |
-| `pnpm test:coverage` | The same run with v8 coverage against the thresholds in `vitest.config.ts` |
-| `pnpm test:bdd` | The step files under `tests/bdd/` |
+| `pnpm test:coverage` | The same run with v8 coverage over every source file, against the floors in `tests/suite-health/coverage-floors.json` |
+| `pnpm test:bdd` | The executable features: `tests/bdd/steps/` bound to `tests/bdd/features/` |
 | `pnpm test:contract` | `tests/contract/` — API surface snapshots and Zod shape checks |
 | `pnpm test:fuzz` | The property suites, on the threads pool (`vitest.config.fuzz.ts`) |
 | `pnpm test:tz` | Unit and property suites under UTC, Europe/Dublin and Pacific/Auckland |
 | `pnpm test:runway` | The repo-level suites: architecture, suite-health, completeness, observability, conformance, security, performance |
-| `pnpm test:mutation` | Stryker over the five targeted modules |
-| `pnpm test:e2e` | The three per-app Playwright smoke configs in sequence, each against `vite dev`. Local only — no workflow runs them |
-| `pnpm test:e2e:reader` / `:catalogue` / `:live` | One app's smoke config |
+| `pnpm test:mutation` | Stryker over the twelve targeted modules (break at 90%), then `pnpm check:mutation-floors` |
+| `pnpm test:mutation:nightly` | Stryker over every library source file against the unit, BDD and contract suites, in place (`stryker.nightly.config.json`) |
+| `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
+| `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
+| `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |
 | `pnpm e2e:stack:fixture` | Builds the fixture course (needs Deno) |
 | `pnpm e2e:stack:up` / `:down` | The tier G compose stack |
 | `pnpm test:e2e:stack` | The journeys against the running stack |
 | `pnpm test:e2e:stack:ratchet` | Fails on stale lines in the journey baselines |
-| `pnpm test:a11y` | `tests/e2e/accessibility.spec.ts` against `localhost:5173` |
 | `pnpm api-report` / `api-report:check` | Regenerate / verify `etc/*.api.md` |
 | `pnpm architecture-report` | Every dependency-cruiser violation, baselined ones included |
 | `pnpm check:knip` | Unused files, exports and dependencies |
 | `pnpm check:audit` | `pnpm audit` against `tests/security/audit-allowlist.json` |
 | `pnpm check:bundle` | Per-app client bundle ceilings |
+| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with Auth.js on |
 | `pnpm check:lighthouse` | Lighthouse floors on three reader pages |
 | `pnpm check:load` | k6 load or soak against a built image |
 | `pnpm check:k8s` | Render every overlay and apply the manifest policies |
@@ -92,7 +94,7 @@ Before opening a PR the expected local run is `pnpm lint` and `pnpm test`; see
 | A difference in generated course output | `tests/generator/corpus/`, claimed in `tests/generator/claims.yaml` | C |
 | A rule about the repository — config, manifests, docs, logs, headers | A pure function in `scripts/checks/`, a suite in `tests/<area>/` with negative fixtures | A, J, K, M, N, O |
 | A ceiling or floor — bundle size, Lighthouse, latency | The JSON beside the suite in `tests/performance/` | L |
-| Props, state or variant logic for a component | `tests/components/` — these are logic tests, not renders | — |
+| Something a student sees or does in the reader | A `@ui` Rule in `tests/bdd/features/ui/`, proved by a Playwright test in `apps/reader/tests/e2e/` | UI contract |
 
 New repo-level checks are written as a pure function plus a suite that runs it against a
 deliberately broken fixture first, then against the real repo.
@@ -141,11 +143,9 @@ Only what CI enforces today.
 
 | Stage | Blocks on |
 |---|---|
-| PR to `main` | `CI success`. That includes coverage below the thresholds in `vitest.config.ts` (statements 55, branches 50, functions 65, lines 55), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
+| PR to `main` | `CI success`. That includes coverage below a floor in `tests/suite-health/coverage-floors.json` or 2+ points above one (`pnpm check:coverage-floors`, Rules 0111 and 0112), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
 | Push to `rc/**` | `rc-validation.yml` — its `RC Readiness Report` fails if any gate failed — and `release-testing.yml`, whose report blocks on artifact regression and smoke tests and only warns on the performance benchmark |
 | Nightly | Nothing. A red nightly is a bug to chase, not a merge block |
 
-Type checking is **not** a blocker: the three `check` steps in `build-and-test` carry
-`continue-on-error: true` while the pre-existing errors in
-[#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53) and
-[#235](https://github.com/tutors-sdk/tutors-mono-repo/issues/235) are worked through.
+Type checking **is** a blocker: the three `check` steps in `build-and-test` (`svelte-check` on the
+reader, catalogue and live apps) fail the job on any type error. `pnpm check` runs the same three locally.

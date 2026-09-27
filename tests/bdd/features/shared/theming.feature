@@ -6,23 +6,18 @@ Feature: Theming
   Scenario: Switch between light and dark mode
     Given I am viewing a course in light mode
     When I toggle the dark mode switch
-    Then the interface should switch to dark mode
-    And the preference should be persisted
+    Then the interface should switch to "dark" mode
+    And the stored "modeCurrent" preference should be "dark"
 
   Scenario: Apply a Skeleton theme
-    Given the platform supports multiple Skeleton themes
-    When I select the "crimson" theme
-    Then the colour scheme should update to the crimson palette
-    And all components should reflect the new theme
+    Given the platform offers the themes "tutors, classic, dyslexia, terminus, rose, cerberus, easter"
+    When I select the "rose" theme
+    Then the document theme attribute should be "rose"
+    And the stored "theme" preference should be "rose"
 
   Scenario: Enable dyslexia-friendly font
-    Given I am viewing course content
-    When I enable the dyslexia-friendly font option
-    Then all text should render in the OpenDyslexic font family
-    And the preference should be persisted across sessions
-
-  Scenario: Toggle card layout preference
-    Given I am viewing a topic with multiple learning objects
-    When I switch between compact and expanded card layouts
-    Then the cards should re-render in the selected layout
-    And the layout preference should be persisted
+    Given I am viewing a course in light mode
+    When I select the "dyslexia" theme
+    Then the document theme attribute should be "dyslexia"
+    And the "dyslexia" stylesheet should set the base font family to "OpenDyslexic, sans-serif"
+    And a later session should start with the "dyslexia" theme

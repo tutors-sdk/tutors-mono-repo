@@ -147,9 +147,15 @@ export function getUnits(los: Lo[]): Units {
   };
 }
 
+/** An author may order from 0, so the test is for a number, not for a truthy value. */
+function hasOrder(lo: Lo): boolean {
+  const order = lo.frontMatter?.order;
+  return order !== undefined && order !== null && order !== "" && Number.isFinite(Number(order));
+}
+
 export function sortLos(los: Array<Lo>): Lo[] {
-  const orderedLos = los.filter((lo) => lo.frontMatter?.order);
-  const unOrderedLos = los.filter((lo) => !lo.frontMatter?.order);
+  const orderedLos = los.filter((lo) => hasOrder(lo));
+  const unOrderedLos = los.filter((lo) => !hasOrder(lo));
   orderedLos.sort(
     (a: any, b: any) => a.frontMatter.order - b.frontMatter.order,
   );

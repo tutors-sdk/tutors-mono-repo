@@ -77,6 +77,20 @@ export default tseslint.config(
     },
   },
 
+  // no-console rule (issue #211) — ban console.* across the codebase
+  // except in the @tutors/logger package, which owns the console surface
+  {
+    rules: {
+      "no-console": "error",
+    },
+  },
+  {
+    files: ["packages/svelte/utils/logger/**"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+
   // Ignored paths
   {
     ignores: [
@@ -85,6 +99,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/.svelte-kit/**",
       "**/coverage/**",
+      "**/static/**",
       "packages/jsr/**",
       "services/**",
       ".claude/**",

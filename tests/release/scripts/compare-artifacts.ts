@@ -24,28 +24,28 @@ const BASELINE_DIR = resolve(args.baseline);
 const CANDIDATE_DIR = resolve(args.candidate);
 
 async function run() {
-  console.log("╔══════════════════════════════════════════════════════╗");
-  console.log("║          Artifact Regression Comparison              ║");
-  console.log("╚══════════════════════════════════════════════════════╝");
-  console.log(`\n  Baseline:  ${BASELINE_DIR}`);
-  console.log(`  Candidate: ${CANDIDATE_DIR}\n`);
+  process.stdout.write("╔══════════════════════════════════════════════════════╗\n");
+  process.stdout.write("║          Artifact Regression Comparison              ║\n");
+  process.stdout.write("╚══════════════════════════════════════════════════════╝\n");
+  process.stdout.write(`\n  Baseline:  ${BASELINE_DIR}\n`);
+  process.stdout.write(`  Candidate: ${CANDIDATE_DIR}\n\n`);
 
   // Verify directories exist
   try {
     await Deno.stat(BASELINE_DIR);
     await Deno.stat(CANDIDATE_DIR);
   } catch {
-    console.error("[compare] Baseline or candidate directory not found.");
-    console.error("[compare] Run generate-baseline.ts and generate-candidate.ts first.");
+    process.stderr.write("[compare] Baseline or candidate directory not found.\n");
+    process.stderr.write("[compare] Run generate-baseline.ts and generate-candidate.ts first.\n");
     Deno.exit(1);
   }
 
   // Phase 1: Semantic JSON comparison
-  console.log("Phase 1: Semantic JSON comparison...");
+  process.stdout.write("Phase 1: Semantic JSON comparison...\n");
   const jsonResults = await compareDirectoryContents(BASELINE_DIR, CANDIDATE_DIR);
 
   // Phase 2: Binary comparison (all files)
-  console.log("Phase 2: Binary (byte-level) comparison...");
+  process.stdout.write("Phase 2: Binary (byte-level) comparison...\n");
   const binaryResults = await compareBinaryDirectories(BASELINE_DIR, CANDIDATE_DIR);
 
   // Merge results, deduplicating JSON files (JSON semantic diff takes precedence)
@@ -58,27 +58,27 @@ async function run() {
   const info = allResults.filter((r) => r.severity === "info");
 
   // Print summary
-  console.log(`\n${"─".repeat(60)}`);
-  console.log(`Results: ${errors.length} errors, ${warnings.length} warnings, ${info.length} info`);
+  process.stdout.write(`\n${"─".repeat(60)}\n`);
+  process.stdout.write(`Results: ${errors.length} errors, ${warnings.length} warnings, ${info.length} info\n`);
 
   if (errors.length > 0) {
-    console.error("\nERRORS (release blocking):");
+    process.stderr.write("\nERRORS (release blocking):\n");
     for (const e of errors) {
-      console.error(`  ✗ ${e.path}: ${e.message}`);
+      process.stderr.write(`  ✗ ${e.path}: ${e.message}\n`);
     }
   }
 
   if (warnings.length > 0) {
-    console.warn("\nWARNINGS (review required):");
+    process.stderr.write("\nWARNINGS (review required):\n");
     for (const w of warnings) {
-      console.warn(`  ⚠ ${w.path}: ${w.message}`);
+      process.stderr.write(`  ⚠ ${w.path}: ${w.message}\n`);
     }
   }
 
   if (info.length > 0) {
-    console.log("\nINFO:");
+    process.stdout.write("\nINFO:\n");
     for (const i of info) {
-      console.log(`  ℹ ${i.path}: ${i.message}`);
+      process.stdout.write(`  ℹ ${i.path}: ${i.message}\n`);
     }
   }
 
@@ -89,18 +89,18 @@ async function run() {
       reportPath,
       JSON.stringify({ errors, warnings, info, summary: { errors: errors.length, warnings: warnings.length, info: info.length } }, null, 2)
     );
-    console.log(`\nReport written to ${reportPath}`);
+    process.stdout.write(`\nReport written to ${reportPath}\n`);
   }
 
   if (errors.length > 0) {
-    console.error(`\nFAIL: ${errors.length} release-blocking differences found.`);
+    process.stderr.write(`\nFAIL: ${errors.length} release-blocking differences found.\n`);
     Deno.exit(1);
   }
 
   if (warnings.length > 0) {
-    console.warn(`\nPASS with warnings: ${warnings.length} differences to review.`);
+    process.stderr.write(`\nPASS with warnings: ${warnings.length} differences to review.\n`);
   } else {
-    console.log("\nPASS: Baseline and candidate are identical.");
+    process.stdout.write("\nPASS: Baseline and candidate are identical.\n");
   }
 }
 

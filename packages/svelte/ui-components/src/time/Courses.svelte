@@ -3,7 +3,7 @@
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
 </script>
 
-<div class="flex flex-wrap justify-center">
+<div class="ui-grid">
   {#each liveService.coursesOnline.value as lo}
     <Card
       cardDetails={{

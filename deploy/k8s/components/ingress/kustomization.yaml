@@ -1,0 +1,53 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Opt-in Ingress for one app on plain Kubernetes (kind, ingress-nginx). Apply
+# it one layer above the overlay, as deploy/k8s/variants/kind/<app> does:
+#
+#   resources:
+#     - ../../../overlays/reader
+#   components:
+#     - ../../../components/ingress
+#
+# Not inside the overlay itself: a component runs before its own
+# kustomization's patches and namePrefix, so it would read the base ORIGIN and
+# the unprefixed Service name. `pnpm check:k8s` rejects that rendering.
+#
+# The class defaults to `nginx` and there is no TLS block; deploy/README.md
+# shows the patches for another class and for TLS.
+resources:
+  - ingress.yaml
+
+# The overlay states the public host once, in ORIGIN. Everything the Ingress
+# needs is copied from the rendered overlay; both sources are selected by kind,
+# so the overlay must render exactly one ConfigMap and one Service.
+replacements:
+  # https://reader.tutors.dev -> reader.tutors.dev
+  - source:
+      kind: ConfigMap
+      fieldPath: data.ORIGIN
+      options:
+        delimiter: "/"
+        index: 2
+    targets:
+      - select:
+          kind: Ingress
+        fieldPaths:
+          - spec.rules.0.host
+  - source:
+      kind: Service
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Ingress
+        fieldPaths:
+          - metadata.name
+          - spec.rules.0.http.paths.0.backend.service.name
+  - source:
+      kind: Service
+      fieldPath: metadata.labels
+    targets:
+      - select:
+          kind: Ingress
+        fieldPaths:
+          - metadata.labels

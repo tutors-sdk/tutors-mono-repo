@@ -10,7 +10,59 @@ import { markdownService } from "../../markdown/index.ts";
 import { courseProtocol, currentCourse, currentLo, rune, isEducator } from "@tutors/runes";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
 import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
-import log from "@tutors/logger";
+import log, { serializeError } from "@tutors/logger";
+
+/** A course whose tutors.json is not there: the host answered 404. */
+export class CourseNotFoundError extends Error {
+  constructor(
+    readonly courseId: string,
+    readonly courseUrl: string
+  ) {
+    super("Fetch failed with status 404");
+    this.name = "CourseNotFoundError";
+  }
+}
+
+let courseNotFound: (error: CourseNotFoundError) => never = (error) => {
+  throw error;
+};
+
+let courseUnreachable: (cause: TypeError) => never = (cause) => {
+  throw cause;
+};
+
+/**
+ * An app sets this to `(e) => error(404, ...)` so a missing course renders as "Page Not Found".
+ * The app has to supply it: SvelteKit recognises an expected error with `instanceof`, and this
+ * package does not resolve the same copy of SvelteKit as the app does.
+ * Left unset, a missing course is an unexpected error, which SvelteKit renders as a 500.
+ */
+export function setCourseNotFoundHandler(handler: (error: CourseNotFoundError) => never): void {
+  courseNotFound = handler;
+}
+
+/**
+ * A browser reports a host that does not exist, and a 404 sent without CORS headers (Netlify's,
+ * for an unknown site), as a TypeError with no status: the same TypeError as being offline. The
+ * service logs it and lets it propagate; an app that would rather show "Page Not Found" for it
+ * than an unexpected error sets this, as it does setCourseNotFoundHandler.
+ */
+export function setCourseUnreachableHandler(handler: (cause: TypeError) => never): void {
+  courseUnreachable = handler;
+}
+
+/**
+ * One fixed message per failure, with what varies in fields: log collectors (and the release
+ * harness) group and diff lines by message, so the course and URL must not be baked into it.
+ * `error` and `stack` are always present so the line's key set does not depend on the cause.
+ */
+function logCourseFetchFailure(courseId: string, courseUrl: string, cause?: unknown): void {
+  log.error("Error fetching course", {
+    courseId,
+    url: `https://${courseUrl}/tutors.json`,
+    ...(cause === undefined ? { error: null, stack: null } : serializeError(cause))
+  });
+}
 
 export const courseService: CourseService = {
   /** Cache of loaded courses indexed by courseId */
@@ -37,8 +89,17 @@ export const courseService: CourseService = {
       const { courseId: normalizedCourseId, courseUrl } = determineCourseUrl(courseId);
       courseId = normalizedCourseId;
 
+      const response = await fetchFunction(`${courseProtocol.value}${courseUrl}/tutors.json`).catch((cause: unknown) => {
+        logCourseFetchFailure(courseId, courseUrl, cause);
+        if (cause instanceof TypeError) courseUnreachable(cause);
+        throw cause;
+      });
+      if (response.status === 404) {
+        logCourseFetchFailure(courseId, courseUrl);
+        return courseNotFound(new CourseNotFoundError(courseId, courseUrl));
+      }
+
       try {
-        const response = await fetchFunction(`${courseProtocol.value}${courseUrl}/tutors.json`);
         if (!response.ok) {
           throw new Error(`Fetch failed with status ${response.status}`);
         }
@@ -49,8 +110,7 @@ export const courseService: CourseService = {
         decorateCourseTree(course, courseId, courseUrl);
         this.courses.set(courseId, course);
       } catch (error) {
-        log.error(`Error fetching from URL: https://${courseUrl}/tutors.json`);
-        log.error(error);
+        logCourseFetchFailure(courseId, courseUrl, error);
         throw error;
       }
     }

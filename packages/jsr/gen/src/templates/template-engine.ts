@@ -9,9 +9,6 @@ import { generateCrumbLink, generateImg, generateLink, generateRefLink, generate
 const moduleDir = path.dirname(new URL(import.meta.url).pathname);
 const ventoDir = path.join(moduleDir, 'vento');
 
-console.log('Module dir:', moduleDir);
-console.log('Vento dir:', ventoDir);
-
 let env:Environment;
 
 export function initTemplateEngine(folder:string) {

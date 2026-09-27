@@ -6,38 +6,84 @@ Feature: Calendar Analytics
 
   @ears-event-driven
   Scenario: View calendar activity by day
+    Given the calendar holds these entries:
+      | student | date       | minutes |
+      | bob     | 2025-01-06 | 60      |
+      | alice   | 2025-01-07 | 45      |
+      | alice   | 2025-01-06 | 30      |
     When an instructor opens the calendar analytics view
-    Then the system shall display a grid with students as rows
-    And each column shall represent a distinct date
-    And cell values shall show time active in minutes
+    Then the day grid shall have one row per student, in the order "alice, bob"
+    And each day column shall represent a distinct date, in the order "2025-01-06, 2025-01-07"
+    And the day grid cells shall show time active in minutes:
+      | student | 2025-01-06 | 2025-01-07 | total |
+      | alice   | 30         | 45         | 75    |
+      | bob     | 60         | 0          | 60    |
 
   @ears-event-driven
   Scenario: View calendar activity by week
+    Given the calendar holds these entries:
+      | student | date       | minutes |
+      | alice   | 2025-01-06 | 10      |
+      | alice   | 2025-01-08 | 20      |
+      | alice   | 2025-01-12 | 30      |
+      | alice   | 2025-01-13 | 40      |
+      | bob     | 2025-01-15 | 25      |
     When an instructor switches to the week view
-    Then the system shall aggregate daily activity into weekly columns
-    And each week column shall be labelled by its Monday date
+    Then each week column shall be labelled by its Monday date, in the order "2025-01-06, 2025-01-13"
+    And the week grid shall aggregate daily activity into weekly columns:
+      | student | 2025-01-06 | 2025-01-13 | total |
+      | alice   | 60         | 40         | 100   |
+      | bob     | 0          | 25         | 25    |
 
   @ears-state-driven
   Scenario: Calculate median activity per day
-    While the calendar has data for 5 students across 3 days
-    Then the system shall calculate the median time active per day
-    And the median row shall show the middle value across students
+    Given the calendar holds minutes active per student per day:
+      | student | 2025-01-06 | 2025-01-07 | 2025-01-08 |
+      | s1      | 10         | 5          | 50         |
+      | s2      | 20         | 15         | 40         |
+      | s3      | 30         | 25         | 30         |
+      | s4      | 40         | 35         | 20         |
+      | s5      | 50         |            | 10         |
+    When an instructor opens the calendar analytics view
+    Then the daily median row shall show the middle value across the students active each day:
+      | 2025-01-06 | 2025-01-07 | 2025-01-08 |
+      | 30         | 20         | 30         |
+    And the daily median total shall be 75, the middle of the students' totals
 
   @ears-state-driven
   Scenario: Calculate median activity per week
-    While the calendar has daily median values
-    Then the system shall sum daily medians within each week
-    And the total shall be the median of all weekly sums
+    Given the calendar holds minutes active per student per day:
+      | student | 2025-01-06 | 2025-01-07 | 2025-01-13 | 2025-01-14 |
+      | s1      | 10         | 20         | 30         | 10         |
+      | s2      | 20         | 40         | 50         | 20         |
+      | s3      | 60         | 30         | 100        | 40         |
+    When an instructor switches to the week view
+    Then the weekly median row shall sum the daily medians within each week:
+      | 2025-01-06 | 2025-01-13 |
+      | 50         | 70         |
+    And the weekly median total shall be 60, the median of all weekly sums
 
   @ears-event-driven
   Scenario: Colour code activity cells
-    When the calendar grid is displayed
-    Then cells with zero activity shall be white
-    And cells with moderate activity shall be green
-    And cells with very high activity shall transition to red
+    When the calendar grid colours cells holding these minutes of activity:
+      | minutes |
+      | 0       |
+      | 1       |
+      | 200     |
+      | 400     |
+      | 800     |
+      | 1600    |
+    Then a cell with 0 minutes shall be white, "rgb(255, 255, 255)"
+    And a cell with 1 minutes shall be light green, "rgb(200, 255, 200)"
+    And a cell with 200 minutes shall be deep green, "rgb(0, 120, 0)"
+    And a cell with 400 minutes shall transition to light red, "rgb(255, 180, 180)"
+    And a cell with 800 minutes shall be deep red, "rgb(180, 0, 0)"
+    And a cell with 1600 minutes shall stay deep red, "rgb(180, 0, 0)"
 
   @ears-state-driven
   Scenario: Handle empty calendar data
-    While no calendar entries exist for a course
-    Then the system shall display an empty calendar grid
-    And median values shall be zero
+    Given no calendar entries exist for a course
+    When an instructor opens the calendar analytics view
+    Then the day grid and the week grid shall have 0 rows
+    And the calendar shall have 0 day columns and 0 week columns
+    And no daily or weekly median row shall be produced

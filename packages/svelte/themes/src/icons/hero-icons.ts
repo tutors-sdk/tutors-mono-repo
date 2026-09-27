@@ -54,8 +54,6 @@ export const HeroIconLib: IconLib = {
   light: { type: "fluent:weather-sunny-32-filled", color: "warning" },
   dark: { type: "fluent:weather-moon-48-filled", color: "warning" },
   toc: { type: "heroicons-outline:menu-alt-2", color: "bg-base-content" },
-  compacted: { type: "heroicons-outline:dots-vertical", color: "success" },
-  expanded: { type: "heroicons-outline:dots-horizontal", color: "success" },
   portrait: { type: "fluent:rectangle-portrait-location-target-20-regular", color: "primary" },
   circular: { type: "fluent:circle-sparkle-28-regular", color: "warning" },
   landscape: { type: "fluent:rectangle-landscape-sparkle-48-regular", color: "error" },

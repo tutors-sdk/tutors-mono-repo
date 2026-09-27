@@ -14,7 +14,7 @@
   let cardWidths = "w-72";
 </script>
 
-<div class="card {cardWidths} preset-filled-primary-100-900 pt-4 pb-2">
+<div class="ui-panel {cardWidths} max-w-full">
   <h3 class="px-4 py-2 text-center {headingText}">{loContext?.title}</h3>
   <div class="card-body overflow-y-auto">
     <figure class="flex h-44 justify-center p-2">

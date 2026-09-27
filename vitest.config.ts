@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { workspaceAliases } from "./vitest.aliases";
+import coverageFloors from "./tests/suite-health/coverage-floors.json" with { type: "json" };
 
 export default defineConfig({
   test: {
@@ -19,14 +20,14 @@ export default defineConfig({
     },
     coverage: {
       provider: "v8",
-      reporter: ["text", "lcov", "html"],
+      reporter: ["text", "lcov", "html", "json-summary"],
       reportsDirectory: "./coverage",
-      thresholds: {
-        statements: 55,
-        branches: 50,
-        functions: 65,
-        lines: 55
-      }
+      // Measure every source file, not only the ones a test happens to import, so an
+      // untested module counts as 0% rather than being invisible (Rule 0110).
+      include: ["packages/*/*/src/**/*.ts", "packages/*/*/*/src/**/*.ts", "apps/*/src/**/*.ts"],
+      exclude: ["**/__tests__/**", "**/*.d.ts", "**/.svelte-kit/**", "**/node_modules/**"],
+      // Floors live in tests/suite-health/coverage-floors.json and only go up (Rules 0111, 0112).
+      thresholds: { ...coverageFloors.global, ...coverageFloors.packages }
     }
   },
   resolve: {

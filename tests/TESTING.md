@@ -12,19 +12,18 @@ it can fail and when CI runs it are in the long form,
 | `unit/` | B | Vitest, `vitest.config.ts` | `pnpm exec vitest run tests/unit` |
 | `fuzz/` | B | Vitest, `vitest.config.fuzz.ts` (threads pool) | `pnpm test:fuzz` |
 | `generator/` | C | Vitest + Deno generator | `pnpm exec vitest run tests/generator`, `pnpm check:generator-diff` |
-| `bdd/` | D (planned) | Vitest collects `steps/**/*.steps.ts`; nothing loads `features/**` | `pnpm test:bdd` |
-| `components/` | — | Vitest, no DOM environment | `pnpm exec vitest run tests/components` |
+| `bdd/` | D | Vitest collects `steps/**/*.steps.ts`, each of which loads its `features/**` file through `vitest-cucumber`; `features/ui/` is proved by Playwright instead | `pnpm test:bdd` |
 | `contract/` | Contract | Vitest, with `__snapshots__/` | `pnpm test:contract` |
 | `e2e-stack/` | G | Playwright, `playwright.e2e-stack.config.ts` | `pnpm test:e2e:stack` |
-| `e2e/` | — | Playwright, `playwright-a11y.config.ts` | `pnpm test:a11y` |
-| `conformance/` | J | Vitest + `pnpm check:k8s`, `pnpm check:container` | `pnpm exec vitest run tests/conformance` |
+| `../apps/reader/tests/e2e/` | UI contract | Playwright, `apps/reader/playwright.config.ts`; one test per scenario of `bdd/features/ui/` | `pnpm test:e2e:reader` |
+| `conformance/` | J | Vitest + `pnpm check:k8s`, `pnpm check:container`, `pnpm check:server` | `pnpm exec vitest run tests/conformance` |
 | `observability/` | K | Vitest | `pnpm exec vitest run tests/observability` |
 | `performance/` | L | Vitest + `check:bundle`, `check:load`, `check:lighthouse` | `pnpm exec vitest run tests/performance` |
 | `security/` | M | Vitest + `pnpm check:audit`, `check:container --app` | `pnpm exec vitest run tests/security` |
 | `completeness/` | N | Vitest | `pnpm exec vitest run tests/completeness` |
 | `architecture/` | A | Vitest + `pnpm check:knip` | `pnpm exec vitest run tests/architecture` |
 | `suite-health/` | O | Vitest + `pnpm check:test-time` | `pnpm exec vitest run tests/suite-health` |
-| `mutation/` | Mutation / schema | Stryker (`stryker.config.json`, `vitest.config.mutation.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation` |
+| `mutation/` | Mutation / schema | Stryker: targeted (`stryker.config.json`, `vitest.config.mutation.ts`) and comprehensive (`stryker.nightly.config.json`, `vitest.config.mutation-nightly.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation`, `pnpm test:mutation:nightly` |
 | `release/` | Release | Deno scripts | `deno run -A tests/release/scripts/run-release-tests.ts --mode=all` |
 | `support/` | — | Shared setup, stubs and arbitraries; not a suite | — |
 
@@ -68,25 +67,32 @@ difference — an unclaimed hunk fails the PR job, and a claim broad enough to h
 change needs the `approve-broad-claim` label. `pnpm check:generator-diff --plant` is the
 self-test that a one-character template change is caught.
 
-### `bdd/` (tier D, planned)
+### `bdd/` (tier D)
 
-`features/` holds 24 Gherkin files with EARS tags across the student, instructor, developer and
-shared personas. **No runner loads them** — all 24 are recorded as `documentation-only` in
-`suite-health/known-findings.txt`. `steps/` holds Vitest suites named after those scenarios,
-using `TestWorld`, `TestDataFactory` and the mock Supabase and realtime clients in `support/`;
-many assert against fixtures rather than driving product code.
+Outside `features/ui/`, `features/` holds 20 Gherkin files, 73 scenarios, with EARS tags across the student,
+instructor, developer and shared personas. Every one is executable: its file under `steps/`
+loads it with `loadFeature("tests/bdd/features/…")` and binds each scenario with
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/), so the run fails when a scenario
+or a step exists in the feature and not in the steps, or the other way round.
 
-Treat this directory as specification prose plus some unit-level tests until
-[#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) makes the features
-executable. New behaviour is better protected in `unit/`, `fuzz/` or `e2e-stack/`. Tag
-vocabulary: [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md).
+Steps call product code — the model and time libraries, the course, theme, i18n, connect,
+presence and catalogue services — and assert on what it returns, writes or broadcasts. The
+stand-ins are at the edges only: `support/supabase-recorder.ts` for Supabase and realtime,
+`support/runes-stub.ts` and `support/svelte-runes-shim.ts` for `$state` (the root config has no
+Svelte compiler), and a stand-in `fetch` for the course host. `support/course.ts` publishes a
+course as the generator would and loads it through the real `decorateCourseTree`.
 
-### `components/`
+`features/ui/` holds the reader's browser behaviour as `@ui` Rules: layout, navigation, cards,
+themes, dialogs and accessibility. No steps file loads them. Each scenario is proved by the
+Playwright test with the same title, tagged with the Rule id, in `apps/reader/tests/e2e/`, and
+`pnpm test:ears:audit` fails when a scenario has no test or a test has no scenario. The long
+form is [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md#browser-proved-rules).
 
-Despite the name, nothing renders a Svelte component: the root Vitest config runs in Node with
-no DOM environment, and `@testing-library/svelte` is an unused dependency. These files model
-props, variants, state transitions and store logic as plain data. Rendering, events, focus and
-ARIA are covered by the axe audits inside the tier G journeys.
+Scenarios that describe behaviour the product does not have, or that no test can drive yet, are
+prose in [../guides/specifications/](../guides/specifications/README.md), each with the tier that
+covers it or a plain "nothing does". [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
+still owns the rest of the EARS plan: `Rule:` blocks and the structural audit. How to write and
+bind a scenario: [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md).
 
 ### `contract/`
 
@@ -112,14 +118,15 @@ pnpm e2e:stack:down
 No retries: a journey that needs one is a finding. `journeys/negative.journey.spec.ts` holds
 `test.fail()` journeys that prove a journey can fail and pin known product bugs.
 
-### `e2e/`
+### The UI contract (`apps/reader/tests/e2e/`)
 
-One standalone axe audit (`accessibility.spec.ts`) over a course page, run by `pnpm test:a11y`
-against `localhost:5173`. It runs in no workflow, and one of its tests logs violations without
-asserting — baselined as `no-assertion` in tier O. The per-app Playwright smoke tests live
-outside this directory, in `apps/<app>/tests/e2e/smoke.spec.ts`, and run with
-`pnpm test:e2e:reader`, `:catalogue`, `:live` (or all three via `pnpm test:e2e`) against
-`vite dev`.
+One Playwright spec per feature in `bdd/features/ui/`, one test per scenario, titled with the
+scenario and tagged with its Rule id (`test("Hovering a card enlarges it", { tag: "@rule-0032" },
+...)`). The axe audits are the scenarios of Rule 0051. They run against `vite dev` on port 5173:
+on every pull request in Chromium (`ui-contract` in `ci.yml`) and on release candidates in
+Chromium, Firefox and WebKit. `pnpm test:e2e:reader --project=chromium -g @rule-0032` runs one
+Rule's tests. The catalogue and live apps keep their own smoke specs in
+`apps/<app>/tests/e2e/smoke.spec.ts` (`pnpm test:e2e:catalogue`, `:live`).
 
 ### The repo-level suites (tiers A, J, K, M, N, O and L)
 
@@ -135,15 +142,18 @@ it can fail, then against the real repo.
 | L | `performance/` | A client bundle over its ceiling (`bundle-budgets.json`), a Lighthouse median below its floor (`lighthouse.json`), a k6 threshold crossed, memory growing after warm-up, a soak whose late p95 doubled. See [performance/README.md](./performance/README.md) |
 | M | `security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
 | N | `completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
-| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file no cucumber config loads; a test file no Vitest or Playwright config collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
+| O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file that no steps file binds and no cucumber config loads, or one with an EARS keyword Gherkin drops (`While`, `Where`, `If`) or an `@ignore` tag; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
 
 ### `mutation/`
 
 `schema-snapshot.test.ts` is a Vitest suite: it snapshots the contract Zod schemas as JSON
 Schema, so a renamed Supabase column fails here rather than in production. Stryker itself is
-configured at the repo root (`stryker.config.json`, `vitest.config.mutation.ts`) over five
-modules, thresholds high 85 / low 75 / break 65, and runs only locally via `pnpm test:mutation`
-— no workflow runs it. See [../guides/MUTATION-TESTING.md](../guides/MUTATION-TESTING.md).
+configured at the repo root (`stryker.config.json`, `vitest.config.mutation.ts`) over twelve
+modules, thresholds high 85 / low 75 / break 90, with a floor per module in `mutation-floors.json`. The nightly `mutation` job runs it; locally,
+`pnpm test:mutation`. The comprehensive run (`stryker.nightly.config.json`,
+`vitest.config.mutation-nightly.ts`) mutates every library module, with its floors in
+`nightly-mutation-floors.json`; the nightly `mutation-nightly` job runs it; locally,
+`pnpm test:mutation:nightly`. See [../guides/MUTATION-TESTING.md](../guides/MUTATION-TESTING.md).
 
 ### `release/`
 
@@ -185,10 +195,13 @@ These run as their own CI jobs rather than under Vitest:
 pnpm check:k8s                                     # render every overlay and apply the manifest policies
 pnpm check:k8s --out rendered                      # also write the output for kubeconform
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
-pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract
+pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract, identical headers on repeat requests (except Date and x-request-id), /version shape
 pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
+pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with Auth.js on (CI runs both for the reader)
+pnpm check:build-identity                          # after building the apps with SVELTEKIT_ADAPTER=node and GIT_SHA: only GET /version answers the commit and build date
 pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
 pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail
+pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with Auth.js on, no Docker
 pnpm check:bundle                                  # after building the apps with SVELTEKIT_ADAPTER=node
 pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3
 pnpm check:lighthouse --image tutors/reader:ci
@@ -208,8 +221,8 @@ The container check proves it can fail against `conformance/fixtures/faulty-imag
 | `*.contract.test.ts` | Vitest, under `contract/` | `contract/supabase/calendar.contract.test.ts` |
 | `*.fuzz.test.ts` | Vitest (fuzz config only) | `fuzz/course-model.fuzz.test.ts` |
 | `*.journey.spec.ts` | Playwright (`playwright.e2e-stack.config.ts`) | `e2e-stack/journeys/student.journey.spec.ts` |
-| `*.spec.ts` | Playwright only, never Vitest | `e2e/accessibility.spec.ts` |
-| `*.feature` | Nothing today (tier D) | `bdd/features/student/lab-interaction.feature` |
+| `*.spec.ts` | Playwright only, never Vitest | `apps/reader/tests/e2e/resource-cards.spec.ts` |
+| `*.feature` | Vitest, through the steps file that loads it (tier D) | `bdd/features/student/lab-interaction.feature` |
 
 A new test file that no config collects fails tier O, so add the file to a directory an existing
 config already covers, or extend the config in the same commit.

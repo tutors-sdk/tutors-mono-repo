@@ -607,9 +607,9 @@ function main(): void {
   const checkMode = args.includes("--check");
 
   if (checkMode) {
-    console.log("Checking API surface reports are up to date...\n");
+    process.stdout.write("Checking API surface reports are up to date...\n\n");
   } else {
-    console.log("Generating API surface reports...\n");
+    process.stdout.write("Generating API surface reports...\n\n");
   }
 
   fs.mkdirSync(ETC_DIR, { recursive: true });
@@ -622,12 +622,12 @@ function main(): void {
     const entryPoint = path.join(pkgDir, pkg.entry);
 
     if (!fs.existsSync(entryPoint)) {
-      console.error(`  ERROR: Entry point not found: ${entryPoint}`);
+      process.stderr.write(`  ERROR: Entry point not found: ${entryPoint}\n`);
       hasErrors = true;
       continue;
     }
 
-    console.log(`  Processing ${pkg.name}...`);
+    process.stdout.write(`  Processing ${pkg.name}...\n`);
     const symbols = extractExportsFromFile(entryPoint, pkgDir);
     const report = generateReport(pkg, symbols);
     const reportPath = path.join(ETC_DIR, pkg.reportFile);
@@ -635,10 +635,10 @@ function main(): void {
     if (checkMode) {
       const existing = readFileSafe(reportPath);
       if (!existing) {
-        console.error(`    MISSING: ${pkg.reportFile} does not exist. Run 'pnpm api-report' to generate it.`);
+        process.stderr.write(`    MISSING: ${pkg.reportFile} does not exist. Run 'pnpm api-report' to generate it.\n`);
         hasChanges = true;
       } else if (existing !== report) {
-        console.error(`    CHANGED: ${pkg.reportFile} is out of date. Run 'pnpm api-report' to update it.`);
+        process.stderr.write(`    CHANGED: ${pkg.reportFile} is out of date. Run 'pnpm api-report' to update it.\n`);
 
         // Show a simple diff summary
         const existingLines = existing.split("\n");
@@ -647,44 +647,44 @@ function main(): void {
         const removed = existingLines.filter((l) => !newLines.includes(l) && l.trim() && !l.startsWith("//"));
 
         if (removed.length > 0) {
-          console.error("      Removed:");
+          process.stderr.write("      Removed:\n");
           for (const l of removed.slice(0, 10)) {
-            console.error(`        - ${l.trim()}`);
+            process.stderr.write(`        - ${l.trim()}\n`);
           }
         }
         if (added.length > 0) {
-          console.error("      Added:");
+          process.stderr.write("      Added:\n");
           for (const l of added.slice(0, 10)) {
-            console.error(`        + ${l.trim()}`);
+            process.stderr.write(`        + ${l.trim()}\n`);
           }
         }
         hasChanges = true;
       } else {
-        console.log(`    OK: ${pkg.reportFile} is up to date.`);
+        process.stdout.write(`    OK: ${pkg.reportFile} is up to date.\n`);
       }
     } else {
       fs.writeFileSync(reportPath, report, "utf-8");
-      console.log(`    Written: ${pkg.reportFile} (${symbols.length} exports)`);
+      process.stdout.write(`    Written: ${pkg.reportFile} (${symbols.length} exports)\n`);
     }
   }
 
-  console.log("");
+  process.stdout.write("\n");
 
   if (checkMode && hasChanges) {
-    console.error("API surface reports are out of date. Run 'pnpm api-report' and commit the changes.");
+    process.stderr.write("API surface reports are out of date. Run 'pnpm api-report' and commit the changes.\n");
     process.exit(1);
   }
 
   if (hasErrors) {
-    console.error("Some packages could not be processed.");
+    process.stderr.write("Some packages could not be processed.\n");
     process.exit(1);
   }
 
   if (checkMode) {
-    console.log("All API surface reports are up to date.");
+    process.stdout.write("All API surface reports are up to date.\n");
   } else {
-    console.log("API surface reports generated successfully.");
-    console.log(`Reports written to: ${path.relative(ROOT, ETC_DIR)}/`);
+    process.stdout.write("API surface reports generated successfully.\n");
+    process.stdout.write(`Reports written to: ${path.relative(ROOT, ETC_DIR)}/\n`);
   }
 }
 

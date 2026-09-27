@@ -20,7 +20,7 @@ const baselines = {
 };
 
 if (!existsSync(observedFile)) {
-  console.error(`No observations at ${observedFile}. Run the journeys first.`);
+  process.stderr.write(`No observations at ${observedFile}. Run the journeys first.\n`);
   process.exit(1);
 }
 
@@ -46,17 +46,17 @@ for (const [kind, file] of Object.entries(baselines)) {
     const kept = lines.filter((line) => !audited.has(line.split(" :: ")[0]));
     const next = [...new Set([...kept, ...observed])].sort();
     writeFileSync(file, `${[...header, ...next].join("\n")}\n`);
-    console.log(`${kind}: wrote ${next.length} line(s) to ${file}`);
+    process.stdout.write(`${kind}: wrote ${next.length} line(s) to ${file}\n`);
     continue;
   }
 
   const stale = lines.filter((line) => audited.has(line.split(" :: ")[0]) && !observed.has(line));
   if (stale.length > 0) {
     failures += stale.length;
-    console.error(`${kind}: ${stale.length} baseline line(s) no longer occur. Delete them from ${file}:`);
-    for (const line of stale) console.error(`  - ${line}`);
+    process.stderr.write(`${kind}: ${stale.length} baseline line(s) no longer occur. Delete them from ${file}:\n`);
+    for (const line of stale) process.stderr.write(`  - ${line}\n`);
   } else {
-    console.log(`${kind}: baseline has no stale lines for the ${audited.size} page audit(s) in this run`);
+    process.stdout.write(`${kind}: baseline has no stale lines for the ${audited.size} page audit(s) in this run\n`);
   }
 }
 process.exit(failures > 0 ? 1 : 0);

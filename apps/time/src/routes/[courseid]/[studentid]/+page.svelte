@@ -8,7 +8,7 @@
   import LabByStepTable from "$lib/components/tables/LabByStepTable.svelte";
 
   interface Props {
-    data: { course: { pin: string } | null; studentCalendar: TutorsTimeStudent };
+    data: { course: { id: string; pin: string } | null; studentCalendar: TutorsTimeStudent };
   }
 
   let { data }: Props = $props();
@@ -68,16 +68,16 @@
     </section>
   {/if}
 
-  <div class="card p-4 flex flex-col min-w-0 shrink-0">
+  <div class="ui-panel flex flex-col min-w-0 shrink-0">
     <div class="flex flex-col gap-6">
       {#if data.studentCalendar.error}
-        <div class="card preset-filled-error-500 p-4">
+        <div class="ui-panel border-[var(--ui-danger)] p-4">
           <p class="font-bold">Error loading student calendar</p>
           <p class="text-sm">{data.studentCalendar.error}</p>
         </div>
       {:else if data.studentCalendar && !data.studentCalendar.hasData}
         <div class="flex items-center justify-center flex-1">
-          <p class="text-lg text-surface-600">
+          <p class="text-lg text-[var(--ui-muted)]">
             No calendar or lab data found for this student in this course.
           </p>
         </div>
