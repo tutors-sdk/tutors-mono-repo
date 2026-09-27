@@ -136,14 +136,18 @@ the following, per app, in this order:
    and HIGH findings with an available fix fail the job, before anything has
    been pushed.
 2. Builds `linux/amd64,linux/arm64` (the amd64 layers are the ones just
-   scanned) and pushes every tag to one multi-arch digest, with the
-   `GIT_SHA`, `BUILD_DATE` and `VERSION` build args set. `VERSION` is the
-   semver on a `v*` tag and `sha-<short>` otherwise.
+   scanned) and pushes one multi-arch digest, by digest only and with no
+   tag, with the `GIT_SHA`, `BUILD_DATE` and `VERSION` build args set.
+   `VERSION` is the semver on a `v*` tag and `sha-<short>` otherwise.
 3. Signs that digest with cosign, keyless: the certificate is issued to the
    workflow's GitHub OIDC identity, and no signing key exists to leak.
 4. Generates an SPDX JSON SBOM with syft and attaches it to the digest as a
    signed in-toto attestation (`cosign attest --type spdxjson`). The SBOM is
    also kept as a workflow artifact. It describes the amd64 image.
+5. Points every tag (`main`, `sha-<short>`, `rc-*`, the version tags) at the
+   signed digest with `docker buildx imagetools create`, and fails if any
+   tag resolves to another digest. A tag therefore never names an image
+   whose signature or SBOM attestation is still missing.
 
 Pull requests run only step 1, with no registry login and no OIDC token.
 

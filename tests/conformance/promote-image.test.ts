@@ -369,6 +369,22 @@ describe(".github/workflows/image-build.yml promotes without a build step", () =
     expect(promotionPath.at(-1)?.run).toContain("scripts/promote-image.ts apply");
   });
 
+  it("a built image is pushed by digest and tagged only after it is signed and attested", () => {
+    const at = (name: string) => steps.findIndex((step) => step.name === name);
+    const push = steps.find((step) => step.id === "push")!;
+    expect(push.with?.tags, "the multi-arch push carries no tag").toBeUndefined();
+    expect(push.with?.push, "the push happens through outputs, by digest").toBeUndefined();
+    expect(String(push.with?.outputs)).toContain("push-by-digest=true");
+    expect(String(push.with?.outputs)).toContain("push=true");
+    const tag = at("Tag the signed digest");
+    expect(tag).toBeGreaterThan(at("Sign the pushed digest (keyless)"));
+    expect(tag).toBeGreaterThan(at("Attest the SBOM to the pushed digest"));
+    expect(steps[tag].env).toMatchObject({ DIGEST: "${{ steps.push.outputs.digest }}", TAGS: "${{ steps.meta.outputs.tags }}" });
+    expect(steps[tag].run).toContain('docker buildx imagetools create "${args[@]}" "${IMAGE}@${DIGEST}"');
+    // nothing else in the job pushes a tag
+    for (const step of steps) if (step !== push && /build-push-action/.test(step.uses ?? "")) expect(step.with?.push, label(step)).toBe(false);
+  });
+
   it("scans the promoted digest with the same gate as a build, before any tag moves", () => {
     const scan = steps.find((step) => step.name === "Run Trivy vulnerability scan (promoted digest)")!;
     const build = steps.find((step) => step.name === "Run Trivy vulnerability scan")!;
