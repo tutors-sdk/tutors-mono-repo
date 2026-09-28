@@ -2,6 +2,7 @@
   import { t } from "@tutors/i18n";
   import type { CourseVisit } from "@tutors/connect";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
 
   interface Props {
     courseRecords: CourseVisit[];
@@ -16,7 +17,7 @@
       <div class="min-w-0">
         <Card
           cardDetails={{
-            route: `https://tutors.dev/course/${courseRecord?.id}`,
+            route: `${siteUrls.reader}/course/${courseRecord?.id}`,
             title: courseRecord?.title,
             type: "course",
             summary: courseRecord?.credits,
