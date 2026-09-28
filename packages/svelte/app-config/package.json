@@ -1,0 +1,22 @@
+{
+  "name": "@tutors/app-config",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Shared Vite and SvelteKit build configuration for the Tutors apps",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./vite": "./src/vite.js",
+    "./svelte": "./src/svelte.js"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-auto": "^7.0.1",
+    "@sveltejs/adapter-node": "^5.5.7",
+    "@sveltejs/kit": "^2.70.3",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "svelte": "^5.57.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0"
+  }
+}
