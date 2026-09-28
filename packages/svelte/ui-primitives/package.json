@@ -32,7 +32,7 @@
     "@tutors/themes": "workspace:*",
     "@tutors/tour": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "isomorphic-dompurify": "^4.2.0"
+    "isomorphic-dompurify": "^4.3.0"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",
@@ -44,6 +44,7 @@
     "vite": "^8.3.0"
   },
   "peerDependencies": {
+    "@sveltejs/kit": "^2.0.0",
     "svelte": "^5.57.0"
   }
 }

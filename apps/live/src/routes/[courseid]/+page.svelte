@@ -13,6 +13,7 @@
   import ConnectLatestLosCards from "@tutors/ui-components/time/ConnectLatestLosCards.svelte";
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
   import { t } from "@tutors/i18n";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import type { Course } from "@tutors/tutors-model-lib";
 
@@ -68,7 +69,7 @@
       <h1 class="ui-title">{data.course.title}</h1>
       <p class="ui-muted">{t("live.courseSummary")}</p>
     </div>
-    <a class="ui-button" target="_blank" rel="noopener noreferrer" href="https://tutors.dev/course/{data.course.courseId}">{t("live.openCourse")} <span aria-hidden="true">↗</span></a>
+    <a class="ui-button" target="_blank" rel="noopener noreferrer" href="{siteUrls.reader}/course/{data.course.courseId}">{t("live.openCourse")} <span aria-hidden="true">↗</span></a>
   </header>
 
   <div class="live-body">

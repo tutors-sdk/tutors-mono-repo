@@ -32,7 +32,7 @@
     <article class="prose dark:prose-invert prose-pre:overflow-x-auto" use:mermaidify={lab.content} use:copyCode>
       {#key currentCodeTheme.value}<div id="lab-panel">{@html sanitizeHtml(lab.content ?? "")}</div>{/key}
     </article>
-    <nav class="step-pager" aria-label={t("shell.steps")}>
+    <nav class="step-pager" aria-label={t("shell.stepPager")}>
       {#if previous}<a class="ui-button" href={`${lab.url}/${previous}`}>← {t("shell.previous")}<span>{lab.chaptersTitles.get(decodeURI(previous))}</span></a>{/if}
       {#if next}<a class="ui-button ui-button-primary next" href={`${lab.url}/${next}`}>{t("shell.next")} →<span>{lab.chaptersTitles.get(decodeURI(next))}</span></a>{/if}
     </nav>
