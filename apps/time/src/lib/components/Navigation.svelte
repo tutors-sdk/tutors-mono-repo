@@ -23,7 +23,7 @@
 </script>
 
 {#if !courseId}
-  <CourseNavigation showConnect={false} />
+  <CourseNavigation showConnect={false} current="time" />
 {:else}
 <nav class="time-navigation" aria-label={t("shell.classActivity")}>
   <p class="nav-section">{t("shell.classActivity")}</p>

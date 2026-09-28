@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 470" width="1200" height="470" font-family="'Segoe UI', Inter, system-ui, sans-serif"><rect width="100%" height="100%" fill="#0f1720" rx="10"/>
+<rect x="170.0" y="70.0" width="880.0" height="24.0" fill="#5d6b7c" rx="3"/>
+<text x="158.0" y="88.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">sbom</text>
+<text x="1058.0" y="88.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">709</text>
+<rect x="170.0" y="106.0" width="9.9" height="24.0" fill="#5d6b7c" rx="3"/>
+<text x="158.0" y="124.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">image-manifest</text>
+<text x="187.9" y="124.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">8</text>
+<rect x="170.0" y="142.0" width="103.0" height="24.0" fill="#3fd0c2" rx="3"/>
+<text x="158.0" y="160.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">network</text>
+<text x="281.0" y="160.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">83</text>
+<rect x="170.0" y="178.0" width="42.2" height="24.0" fill="#3fd0c2" rx="3"/>
+<text x="158.0" y="196.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">dom</text>
+<text x="220.2" y="196.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">34</text>
+<rect x="170.0" y="214.0" width="19.9" height="24.0" fill="#3fd0c2" rx="3"/>
+<text x="158.0" y="232.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">screenshot</text>
+<text x="197.9" y="232.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">16</text>
+<rect x="170.0" y="250.0" width="17.4" height="24.0" fill="#3fd0c2" rx="3"/>
+<text x="158.0" y="268.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">focus</text>
+<text x="195.4" y="268.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">14</text>
+<rect x="170.0" y="286.0" width="9.9" height="24.0" fill="#3fd0c2" rx="3"/>
+<text x="158.0" y="304.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">headers</text>
+<text x="187.9" y="304.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">8</text>
+<rect x="170.0" y="322.0" width="18.6" height="24.0" fill="#f5b642" rx="3"/>
+<text x="158.0" y="340.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">logs</text>
+<text x="196.6" y="340.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">15</text>
+<rect x="170.0" y="358.0" width="3.7" height="24.0" fill="#f5b642" rx="3"/>
+<text x="158.0" y="376.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">persistence</text>
+<text x="181.7" y="376.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">3</text>
+<rect x="170.0" y="394.0" width="3.0" height="24.0" fill="#f5b642" rx="3"/>
+<text x="158.0" y="412.0" font-size="16" fill="#b6c1cd" text-anchor="end" font-weight="normal">console</text>
+<text x="181.0" y="412.0" font-size="15" fill="#e8edf2" text-anchor="start" font-weight="600">2</text>
+<rect x="170.0" y="23.0" width="13.0" height="13.0" fill="#5d6b7c" rx="3"/>
+<text x="189.0" y="34.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Runtime image hardening: 717</text>
+<rect x="433.6" y="23.0" width="13.0" height="13.0" fill="#3fd0c2" rx="3"/>
+<text x="452.6" y="34.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Paper UI and its bundle: 155</text>
+<rect x="697.2" y="23.0" width="13.0" height="13.0" fill="#f5b642" rx="3"/>
+<text x="716.2" y="34.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Behaviour and logs: 20</text>
+<text x="1170.0" y="34.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">892 unclaimed, Main to RC, 28 Sep</text>
+</svg>

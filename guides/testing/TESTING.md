@@ -1,7 +1,7 @@
 # Testing Guide
 
 The long form. [TESTING-OVERVIEW.md](./TESTING-OVERVIEW.md) is the one-page entry point and
-[../tests/TESTING.md](../tests/TESTING.md) maps each `tests/` directory to a tier, a runner
+[../tests/TESTING.md](../../tests/TESTING.md) maps each `tests/` directory to a tier, a runner
 and a command. This document explains, per tier, what it protects, where its code lives, how
 to run it on a laptop, how it proves it can fail, and which baseline it ratchets.
 
@@ -45,7 +45,7 @@ Gate 1 still calls the broken form.
 
 ## Tier A — structure
 
-**Protects** the layering in [../ARCHITECTURE.md](../ARCHITECTURE.md): nothing imports up a
+**Protects** the layering in [../ARCHITECTURE.md](../../ARCHITECTURE.md): nothing imports up a
 layer, apps do not import each other, no relative import crosses a workspace, no cycle spans
 packages, `deno.json` and `package.json` agree for every JSR package, and no file, export or
 dependency is dead.
@@ -144,7 +144,7 @@ container images** — not `vite dev` — with a fixture course server so GitHub
 not dependencies. It also owns the axe and reduced-motion audits at every page of every journey.
 
 **Lives in** `playwright.e2e-stack.config.ts` and `tests/e2e-stack/`. Read
-[../tests/e2e-stack/README.md](../tests/e2e-stack/README.md) for the compose services, the
+[../tests/e2e-stack/README.md](../../tests/e2e-stack/README.md) for the compose services, the
 fixture course, the port and URL overrides and the file-by-file map; it is not repeated here.
 
 ```bash
@@ -195,7 +195,7 @@ must reject.
 failed request carries the caller's request id, exactly one error line carries a stack, each app's
 hooks put the request logger first, and every metric a provisioned Grafana alert queries exists in
 `/metrics`. It also pins the two contracts the release harness diffs against
-([deploy/README.md](../deploy/README.md), "Log contract" and "Metrics contract"): every container
+([deploy/README.md](../../deploy/README.md), "Log contract" and "Metrics contract"): every container
 line is JSON that starts with the core keys in order and carries exactly its `event` kind's
 fields, a request's lines share the one `x-request-id` the response returns, and `/metrics`
 exports exactly the pinned app-level series with everything else under `process_` or `nodejs_`.
@@ -225,7 +225,7 @@ request latency and error rate under load, and memory growth over a soak.
 **Lives in** `scripts/checks/bundle-budget.ts`, `scripts/checks/lighthouse.ts`,
 `scripts/checks/load-test.ts`, `scripts/checks/lib/stats.ts`, `tests/performance/` (with
 `bundle-budgets.json`, `lighthouse.json`, the k6 scripts under `k6/` and an isolated Lighthouse
-runner under `lighthouse/`). See [../tests/performance/README.md](../tests/performance/README.md)
+runner under `lighthouse/`). See [../tests/performance/README.md](../../tests/performance/README.md)
 for how samples become baselines.
 
 ```bash
@@ -413,7 +413,7 @@ bound feature was checked that way when it was bound. Tier O fails a feature tha
 binds, an EARS keyword Gherkin would silently drop, and an `@ignore` tag.
 
 **What it does not cover.** 48 scenarios need a browser or describe behaviour the product does
-not have. They are prose in [specifications/](./specifications/README.md), which names the
+not have. They are prose in [specifications/](../specifications/README.md), which names the
 covering tier for each or says that none does. [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
 still owns `Rule:` blocks and the structural audit. Writing and binding a scenario:
 [EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md).
@@ -458,8 +458,8 @@ deno run -A tests/release/scripts/run-release-tests.ts --mode=cli --version=5.0.
 ```
 
 Gates, comparators, working directories and the go/no-go rule:
-[../tests/release/RELEASE-TESTING.md](../tests/release/RELEASE-TESTING.md). Branch model and
-versioning: [Release-Strategy.md](./Release-Strategy.md).
+[../tests/release/RELEASE-TESTING.md](../../tests/release/RELEASE-TESTING.md). Branch model and
+versioning: [Release-Strategy.md](../Release-Strategy.md).
 
 ## The release harness
 
@@ -478,7 +478,7 @@ lands.
 
 | Tier | Would own | Tracked by |
 |---|---|---|
-| F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](./RBAC.md) |
+| F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](../RBAC.md) |
 | H | Message contracts for the realtime and broadcast protocols, versioned | No issue yet; shapes are snapshot-checked in `tests/contract/` |
 | I | Data migration and the Supabase exit | No issue yet |
 
@@ -545,14 +545,14 @@ would accept. The same validator runs over the committed file in every PR throug
 
 Its second job runs `pnpm check:migrations` (`scripts/checks/migrations.ts`): the migrations added
 since `main` may not be destructive unless a `migration` claim covers them, and the layout rules
-(names, order, merged files immutable) hold. Rules and rationale: [MIGRATIONS.md](MIGRATIONS.md).
+(names, order, merged files immutable) hold. Rules and rationale: [MIGRATIONS.md](../MIGRATIONS.md).
 The rules are unit-tested in `tests/conformance/migrations.test.ts`.
 
 ### `release-dispatch.yml` — push to `release/**`
 
 Not a test tier: it tags the pushed commit `vX.Y.Z-rc.N`, publishes that tag's images and
 dispatches the separate release harness, which compares the candidate with production. See
-[Release-Strategy.md](Release-Strategy.md#release-harness).
+[Release-Strategy.md](../Release-Strategy.md#release-harness).
 
 ## Debugging
 
@@ -600,7 +600,7 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 - Coverage over every source file is about 58% lines (floors in `tests/suite-health/coverage-floors.json`, Rules 0110 to 0112); `apps/time`, `packages/jsr/create` and the UI component packages are near zero.
 - `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
   contract in a real browser instead.
-- 48 specified scenarios are prose, many with no tier covering them: [specifications/](./specifications/README.md).
+- 48 specified scenarios are prose, many with no tier covering them: [specifications/](../specifications/README.md).
 - Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
 - Tiers F, H and I are not built.

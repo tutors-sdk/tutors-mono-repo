@@ -2,6 +2,7 @@
   import { t } from "@tutors/i18n";
   import { liveService } from "@tutors/community";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
 </script>
 
 <section class="ui-panel">
@@ -10,7 +11,7 @@
       <div class="min-w-0">
         <Card
           cardDetails={{
-            route: `https://tutors.dev${lo.loRoute}`,
+            route: `${siteUrls.reader}${lo.loRoute}`,
             title: lo.courseTitle,
             type: lo.type,
             summary: lo.title,
