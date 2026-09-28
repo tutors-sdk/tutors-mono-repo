@@ -202,6 +202,8 @@ docker compose pull && docker compose up -d   # roll forward
 
 Set each `*_ORIGIN` to the URL users reach the app on; adapter-node uses it
 for absolute URLs and CSRF checks.
+Set `PUBLIC_*_ORIGIN` to those same four URLs so navigation stays inside the
+stack. These are runtime environment values; changing them does not rebuild an image.
 
 ## Run locally
 
@@ -237,6 +239,7 @@ Environment variables the server reads at startup:
 | Variable | Purpose |
 | --- | --- |
 | `ORIGIN` | Public URL of the app, required for correct absolute URLs and CSRF checks |
+| `PUBLIC_READER_ORIGIN`, `PUBLIC_CATALOGUE_ORIGIN`, `PUBLIC_LIVE_ORIGIN`, `PUBLIC_TIME_ORIGIN` | Destinations for links between the four apps |
 | `PROTOCOL_HEADER`, `HOST_HEADER`, `ADDRESS_HEADER`, `XFF_DEPTH` | Trust proxy headers when behind a Route or Ingress |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
@@ -432,6 +435,28 @@ log line.
 `deploy/k8s/base` holds a shared Deployment, Service, ConfigMap and
 PodDisruptionBudget. Each overlay under `deploy/k8s/overlays/<app>` sets the
 image, the name prefix, labels and the public `ORIGIN`.
+
+For the parallel `next` deployment, use `deploy/k8s/next/<app>` or its
+`deploy/k8s/variants/<substrate>/next-<app>` entry point. It reuses each
+production overlay's pinned image and sets runtime ConfigMap URLs:
+
+| App | `ORIGIN` |
+| --- | --- |
+| reader | `https://next.tutors.dev` |
+| catalogue | `https://next.catalogue.tutors.dev` |
+| live | `https://next.live.tutors.dev` |
+| time | `https://next.time.tutors.dev` |
+
+Each next ConfigMap also sets all four `PUBLIC_*_ORIGIN` values, so links in
+every app point at the next sites. For example, render or apply the OpenShift
+reader Route with `kubectl kustomize deploy/k8s/variants/openshift/next-reader`
+or `oc apply -k deploy/k8s/variants/openshift/next-reader`. Apply the other
+three `next-<app>` variants the same way. The production image pins still
+control which image runs; no rebuild is needed to change these URLs. Next
+resources have distinct names and pod selectors, so they can run alongside
+production in one namespace. Supply the reader OAuth credentials as a
+`next-reader-tutors-app-oauth` Secret, and any optional app secrets as
+`next-<app>-tutors-app-secrets`.
 
 ```bash
 kubectl kustomize deploy/k8s/overlays/reader   # render

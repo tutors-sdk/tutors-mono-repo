@@ -3,9 +3,10 @@
   import type { LoEvent } from "@tutors/community";
   import { themeService } from "@tutors/themes";
   import Icon from "./Icon.svelte";
+  import { siteUrls } from "../utils/site-urls";
   let { lo, showCourseTitle = false }: { lo: LoEvent; showCourseTitle?: boolean } = $props();
   const student = $derived(lo.user!);
-  const route = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? lo.loRoute : `https://tutors.dev${lo.loRoute}`);
+  const route = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? lo.loRoute : `${siteUrls.reader}${lo.loRoute}`);
   const sentiment = $derived(student.sentiment ?? "neutral");
 </script>
 

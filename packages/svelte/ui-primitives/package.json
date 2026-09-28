@@ -44,6 +44,7 @@
     "vite": "^8.3.0"
   },
   "peerDependencies": {
+    "@sveltejs/kit": "^2.0.0",
     "svelte": "^5.57.0"
   }
 }

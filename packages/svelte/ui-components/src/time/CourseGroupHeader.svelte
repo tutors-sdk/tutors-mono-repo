@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from "@tutors/i18n";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   interface Props {
     courseId: string;
     courseTitle: string;
@@ -10,7 +11,7 @@
 
 <div class="group-header">
   <h2 class="ui-section-title">
-    <a target="_blank" rel="noopener noreferrer" href="https://tutors.dev/course/{courseId}"><Icon type="course" height="24" /><span>{courseTitle}</span></a>
+    <a target="_blank" rel="noopener noreferrer" href="{siteUrls.reader}/course/{courseId}"><Icon type="course" height="24" /><span>{courseTitle}</span></a>
   </h2>
   <a class="ui-button" href="/{courseId}"><Icon type="live" height="20" /><span>{t("live.stream")}</span></a>
 </div>
