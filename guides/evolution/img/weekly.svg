@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" font-family="'Segoe UI', Inter, system-ui, sans-serif"><rect width="100%" height="100%" fill="#0f1720" rx="10"/>
+<line x1="70.0" y1="450.0" x2="1170.0" y2="450.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="455.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">0</text>
+<line x1="70.0" y1="352.5" x2="1170.0" y2="352.5" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="357.5" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">100</text>
+<line x1="70.0" y1="255.0" x2="1170.0" y2="255.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="260.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">200</text>
+<line x1="70.0" y1="157.5" x2="1170.0" y2="157.5" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="162.5" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">300</text>
+<line x1="70.0" y1="60.0" x2="1170.0" y2="60.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="65.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">400</text>
+<text x="100.6" y="440.1" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="100.6" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">1 Jun</text>
+<rect x="142.7" y="444.1" width="37.9" height="3.8" fill="#5d6b7c" rx="3"/>
+<text x="161.7" y="436.1" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="161.7" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<text x="222.8" y="441.0" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="222.8" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">15 Jun</text>
+<text x="283.9" y="442.0" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="283.9" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<text x="345.0" y="442.0" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="345.0" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">29 Jun</text>
+<rect x="387.2" y="438.3" width="37.9" height="9.7" fill="#5d6b7c" rx="3"/>
+<text x="406.1" y="430.3" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="406.1" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<rect x="448.3" y="371.0" width="37.9" height="77.0" fill="#5d6b7c" rx="3"/>
+<text x="467.2" y="363.0" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">81</text>
+<text x="467.2" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">13 Jul</text>
+<rect x="509.4" y="424.6" width="37.9" height="23.4" fill="#5d6b7c" rx="3"/>
+<text x="528.3" y="416.6" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="528.3" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<rect x="570.5" y="374.9" width="37.9" height="73.1" fill="#f5b642" rx="3"/>
+<text x="589.4" y="366.9" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">77</text>
+<text x="589.4" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">27 Jul</text>
+<rect x="631.6" y="377.9" width="37.9" height="70.2" fill="#f5b642" rx="3"/>
+<text x="650.6" y="369.9" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">74</text>
+<text x="650.6" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<rect x="692.7" y="366.1" width="37.9" height="81.8" fill="#f5b642" rx="3"/>
+<text x="711.7" y="358.1" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">86</text>
+<text x="711.7" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">10 Aug</text>
+<rect x="753.8" y="424.6" width="37.9" height="23.4" fill="#f5b642" rx="3"/>
+<text x="772.8" y="416.6" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="772.8" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<rect x="814.9" y="421.7" width="37.9" height="26.3" fill="#f5b642" rx="3"/>
+<text x="833.9" y="413.7" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="833.9" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">24 Aug</text>
+<rect x="876.1" y="402.2" width="37.9" height="45.8" fill="#f5b642" rx="3"/>
+<text x="895.0" y="394.2" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">49</text>
+<text x="895.0" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal"></text>
+<rect x="937.2" y="423.7" width="37.9" height="24.3" fill="#f5b642" rx="3"/>
+<text x="956.1" y="415.7" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="956.1" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">7 Sep</text>
+<rect x="998.3" y="258.9" width="37.9" height="189.1" fill="#f5b642" rx="3"/>
+<rect x="998.3" y="249.1" width="37.9" height="7.8" fill="#3fd0c2" rx="3"/>
+<text x="1017.2" y="241.1" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">206</text>
+<text x="1017.2" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">14 Sep</text>
+<rect x="1059.4" y="283.3" width="37.9" height="164.7" fill="#f5b642" rx="3"/>
+<rect x="1059.4" y="91.2" width="37.9" height="190.1" fill="#3fd0c2" rx="3"/>
+<text x="1078.3" y="83.2" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600">368</text>
+<text x="1078.3" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">21 Sep</text>
+<rect x="1120.5" y="445.1" width="37.9" height="2.9" fill="#f5b642" rx="3"/>
+<rect x="1120.5" y="439.3" width="37.9" height="3.8" fill="#3fd0c2" rx="3"/>
+<text x="1139.4" y="431.3" font-size="15" fill="#e8edf2" text-anchor="middle" font-weight="600"></text>
+<text x="1139.4" y="472.0" font-size="14" fill="#b6c1cd" text-anchor="middle" font-weight="normal">28 Sep</text>
+<text x="1139.4" y="490.0" font-size="12" fill="#8b98a8" text-anchor="middle" font-weight="normal">1 day</text>
+<rect x="70.0" y="19.0" width="13.0" height="13.0" fill="#5d6b7c" rx="3"/>
+<text x="89.0" y="30.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Predecessor repos</text>
+<rect x="243.4" y="19.0" width="13.0" height="13.0" fill="#f5b642" rx="3"/>
+<text x="262.4" y="30.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">tutors-mono-repo</text>
+<rect x="408.6" y="19.0" width="13.0" height="13.0" fill="#3fd0c2" rx="3"/>
+<text x="427.6" y="30.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">tutors-release-harness</text>
+<text x="1170.0" y="30.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">commits per week (weeks start Monday; the last is one day)</text>
+</svg>
