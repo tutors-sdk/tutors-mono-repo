@@ -2,7 +2,7 @@
 
 What each tier owns, how to run it, and what blocks a release. The long form is
 [TESTING.md](./TESTING.md). The map from `tests/<dir>` to tier and runner is
-[../tests/TESTING.md](../tests/TESTING.md).
+[../tests/TESTING.md](../../tests/TESTING.md).
 
 Two rules hold everywhere:
 
@@ -80,7 +80,7 @@ Every command below exists in the root `package.json`.
 | `pnpm check:all` | `check`, `test`, `test:contract`, `build` — currently fails at the first step, because the root `check` script is broken (see the long form) |
 
 Before opening a PR the expected local run is `pnpm lint` and `pnpm test`; see
-[../CONTRIBUTING.md](../CONTRIBUTING.md).
+[../CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Where does my new test go
 

@@ -44,7 +44,7 @@ export type EarsPattern = "ubiquitous" | "event-driven" | "state-driven" | "unwa
 const PATTERNS: readonly EarsPattern[] = ["ubiquitous", "event-driven", "state-driven", "unwanted", "optional"];
 
 export interface AuditConfig {
-  /** The names allowed in front of "shall". Scope table: guides/EARS-METHODOLOGY.md. */
+  /** The names allowed in front of "shall". Scope table: guides/testing/EARS-METHODOLOGY.md. */
   systems: string[];
   /** Obligation words other than "shall". */
   wrongObligations: string[];

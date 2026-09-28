@@ -5,7 +5,7 @@ Scenarios that describe Tutors but are **not executed**. They were written as Gh
 behaviour the product does not have. Reader behaviour that needs a browser is now written as
 `@ui` Rules in `tests/bdd/features/ui/` and proved by Playwright; a scenario here moves there
 once the reader does what it describes and a test can drive it. Everything still under `tests/bdd/features/` runs; see
-[EARS-METHODOLOGY.md](../EARS-METHODOLOGY.md) for how a feature is bound to product code.
+[EARS-METHODOLOGY.md](../testing/EARS-METHODOLOGY.md) for how a feature is bound to product code.
 
 Each file says why its scenarios are here and which tier covers the behaviour, or that none
 does. A scenario can move back to `tests/bdd/features/` once product code exists that a steps

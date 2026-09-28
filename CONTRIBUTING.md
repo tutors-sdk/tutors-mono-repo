@@ -137,7 +137,7 @@ pnpm exec vitest                                   # watch mode
 pnpm exec vitest run tests/unit/utils/i18n.test.ts # one file
 ```
 
-[guides/TESTING-OVERVIEW.md](guides/TESTING-OVERVIEW.md) explains the tiers and where a new test belongs.
+[guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) explains the tiers and where a new test belongs.
 
 ### Commit Messages
 
