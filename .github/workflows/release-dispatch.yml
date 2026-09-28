@@ -271,6 +271,11 @@ jobs:
   # never changes meaning. A prerelease made with GITHUB_TOKEN starts no workflow,
   # and this job is best-effort: without a rules_url the dispatch still goes out
   # and only a claim that names a `rule` needs the file.
+  #
+  # The same prerelease carries the candidate's changelog (pnpm release:changelog):
+  # every pull request since production with the EARS Rules it added or changed, as
+  # changelog.md (also the prerelease's notes) and changelog.json. rules.json names
+  # those pull requests against each Rule (--since), for the harness scorecard.
   rules:
     name: Publish the candidate's Rules
     needs: candidate
@@ -279,16 +284,19 @@ jobs:
     timeout-minutes: 10
     continue-on-error: true
     permissions:
-      contents: write # create the rc prerelease and attach rules.json
+      contents: write # create the rc prerelease and attach rules.json and the changelog
     outputs:
       rules_url: ${{ steps.publish.outputs.rules_url }}
     env:
       GH_TOKEN: ${{ github.token }}
       CANDIDATE: ${{ needs.candidate.outputs.candidate }}
+      PRODUCTION_REF: ${{ needs.candidate.outputs.migrations_a }}
     steps:
+      # The changelog walks the history back to the production ref, so it needs it.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup pnpm
@@ -303,19 +311,30 @@ jobs:
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts --filter .
 
-      - name: Publish rules.json as an asset of the rc prerelease
+      - name: Publish rules.json and the changelog as assets of the rc prerelease
         id: publish
         run: |
-          pnpm --silent release:rules --ref "$GITHUB_SHA" --out rules.json
+          # The production ref is a tag or a retained branch; checkout fetched both kinds.
+          from="$PRODUCTION_REF"
+          git rev-parse --verify --quiet "$from^{commit}" > /dev/null || from="origin/$PRODUCTION_REF"
+          pnpm --silent release:rules --ref "$GITHUB_SHA" --since "$from" --out rules.json
+          pnpm --silent release:changelog --from "$from" --to "$GITHUB_SHA" --out changelog.md --json changelog.json
           tag="v$CANDIDATE"
-          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease \
-              --title "$tag" --notes "Release candidate $tag. The assets are inputs of the release harness; the candidate's images are published by image-build.yml."
+          {
+            echo "Release candidate $tag. The assets are inputs of the release harness; the candidate's images are published by image-build.yml."
+            echo
+            cat changelog.md
+          } > notes.md
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file notes.md
+          else
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease --title "$tag" --notes-file notes.md
           fi
-          gh release upload "$tag" rules.json --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$tag" rules.json changelog.md changelog.json --repo "$GITHUB_REPOSITORY" --clobber
           url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$tag/rules.json"
           echo "rules_url=$url" >> "$GITHUB_OUTPUT"
           echo "Rules: $url" >> "$GITHUB_STEP_SUMMARY"
+          cat changelog.md >> "$GITHUB_STEP_SUMMARY"
 
   dispatch:
     name: Dispatch the release harness

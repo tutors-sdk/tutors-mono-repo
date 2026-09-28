@@ -417,7 +417,7 @@ describe("release-harness: parity with release-dispatch.yml", () => {
   });
 
   it("publishes rules.json for the pushed commit at a credential-free URL named for the rc tag", () => {
-    expect(workflow).toContain('pnpm --silent release:rules --ref "$GITHUB_SHA" --out rules.json');
+    expect(workflow).toContain('pnpm --silent release:rules --ref "$GITHUB_SHA" --since "$from" --out rules.json');
     expect(workflow).toContain('releases/download/$tag/rules.json');
     expect(workflow).toContain("--prerelease");
   });

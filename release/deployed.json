@@ -1,0 +1,11 @@
+{
+  "tag": "16.2.2",
+  "deployedAt": "2026-09-21T10:57:28Z",
+  "commit": "caa53d021e63004ad6e52a76428f8acd95a87c21",
+  "digests": {
+    "catalogue": "sha256:f6cdb7f6adaba1d227e2cf62260ec2fe7064c58114666774331da3530bf52187",
+    "live": "sha256:12ed5642e5cbec601790771a8f9fc85221f8202679a312a0e707622bb6e84e9a",
+    "reader": "sha256:7567d5927767bd39b7991a586d594f6c310387471109a456d2cff49fa12488cb",
+    "time": "sha256:ddf3ad22b79bbba96199791a49367677bf9ad0ebdd7542f3246d56e7879d5e4e"
+  }
+}

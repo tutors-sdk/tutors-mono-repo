@@ -1,7 +1,7 @@
 {
   "$comment": "Coverage floors (Rules 0111, 0112). Each is the measured percentage rounded down. vitest.config.ts enforces them; pnpm check:coverage-floors also fails once coverage rises staleMargin points above one, so raise the floor in that commit (pnpm check:coverage-floors --update). Keys under packages are '<dir>/**' globs.",
   "staleMargin": 2,
-  "global": { "statements": 63, "branches": 56, "functions": 63, "lines": 65 },
+  "global": { "statements": 64, "branches": 57, "functions": 63, "lines": 65 },
   "packages": {
     "packages/jsr/model/src/**": { "statements": 98, "branches": 90, "functions": 100, "lines": 99 },
     "packages/jsr/time/src/**": { "statements": 87, "branches": 60, "functions": 87, "lines": 89 },
@@ -9,6 +9,6 @@
     "packages/svelte/connect/src/**": { "statements": 85, "branches": 76, "functions": 78, "lines": 88 },
     "packages/svelte/quiz/src/**": { "statements": 97, "branches": 97, "functions": 100, "lines": 98 },
     "packages/svelte/course/src/**": { "statements": 50, "branches": 33, "functions": 55, "lines": 50 },
-    "packages/svelte/community/src/**": { "statements": 70, "branches": 56, "functions": 77, "lines": 80 }
+    "packages/svelte/community/src/**": { "statements": 78, "branches": 65, "functions": 90, "lines": 89 }
   }
 }
