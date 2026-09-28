@@ -99,9 +99,6 @@ export class TutorsTimeSourceError extends Error;
 
 // --- functions ---
 
-// (from src/utils/calendar-utils.ts)
-export function cellColorForMinutes(minutes: number | null | undefined) : string;
-
 // (from src/utils/lab-utils.ts)
 export function extractLabIdentifier(loId: string) : string;
 
@@ -138,8 +135,14 @@ export function getSupabase() : SupabaseClient;
 // (from src/services/source.ts)
 export function getTutorsTimeSource() : TutorsTimeSource;
 
+// (from src/utils/calendar-utils.ts)
+export function heatColor(minutes: number) : string;
+
 // (from src/services/supabase.ts)
 export function initSupabase(url: string, anonKey: string) : void;
+
+// (from src/utils/calendar-utils.ts)
+export function minutesOf(value: unknown) : number;
 
 // (from src/services/source.ts)
 export function readerTimeSource(readerUrl: string, fetchFn: typeof fetch = (...args) => fetch(...args)) : TutorsTimeSource;
@@ -170,7 +173,7 @@ export const TutorsTime: TutorsTimeService;
 |------|-------|
 | class | 4 |
 | const | 1 |
-| function | 19 |
+| function | 20 |
 | interface | 7 |
 | type | 16 |
-| **Total** | **47** |
+| **Total** | **48** |

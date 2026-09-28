@@ -2,7 +2,7 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
 import type { LabRow, LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
-import { cellColorForMinutes } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { heatColor } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
 import { cells, labRecords, stepColumn, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/analytics-lab.feature");
@@ -65,10 +65,9 @@ describeFeature(feature, ({ Scenario }) => {
       total = row!.totalMinutes;
       expect(total).toBe(minutes);
     });
-    And("a total of {number} minutes shall be highlighted with the cell colour {string}", (_ctx, minutes: number, colour: string) => {
-      // The grids colour every duration cell through cellColorForMinutes.
+    And("a total of {number} minutes shall have no heat colour", (_ctx, minutes: number) => {
       expect(total).toBe(minutes);
-      expect(cellColorForMinutes(total)).toBe(colour);
+      expect(heatColor(total)).toBe("");
     });
     And("the median for {string} shall be {number}, ignoring students who have not started", (_ctx, lab: string, median: number) => {
       expect(model.medianByLab.row?.[lab]).toBe(median);

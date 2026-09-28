@@ -1,8 +1,8 @@
 <script lang="ts">
   import Breadcrumbs from "./buttons/Breadcrumbs.svelte";
-  let { lo, parentCourse = null } = $props();
+  let { lo, parentCourse = null, home = null } = $props();
 </script>
-<div class="secondary-navigation"><Breadcrumbs {lo} {parentCourse} /></div>
+<div class="secondary-navigation"><Breadcrumbs {lo} {parentCourse} {home} /></div>
 <style>
   .secondary-navigation { padding: var(--space-4) var(--space-10); }
   /* Keep the breadcrumb row compact while aligning it with the page gutters. */

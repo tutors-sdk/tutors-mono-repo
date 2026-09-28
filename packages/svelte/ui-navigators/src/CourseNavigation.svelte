@@ -12,7 +12,7 @@
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
   import OnlineButton from "./buttons/OnlineButton.svelte";
-  let { showConnect = true, mobile = false } = $props();
+  let { showConnect = true, mobile = false, current = "" } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
   const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
@@ -78,8 +78,10 @@
   {:else}
     <p class="nav-section">Tutors</p>
     <a class="nav-row" href={showConnect ? "/" : "https://tutors.dev/"} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
-    <a class="nav-row" href="https://catalogue.tutors.dev" target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>
-    <a class="nav-row" href="https://live.tutors.dev" target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>
+    {#if current === "catalogue"}<a class="nav-row" href="/" aria-current="page"><Icon type="topic" />{t("home.catalogue")}</a>
+    {:else}<a class="nav-row" href="https://catalogue.tutors.dev" target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>{/if}
+    {#if current === "live"}<a class="nav-row" href="/" aria-current={page.url.pathname === "/" ? "page" : "location"}><Icon type="live" />{t("home.live")}</a>
+    {:else}<a class="nav-row" href="https://live.tutors.dev" target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>{/if}
     <a class="nav-row" href={showConnect ? "/create" : "https://tutors.dev/create"} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
     <a class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : "https://tutors.dev/course/tutors-reference-manual"}><Icon type="note" />{t("home.docs")}</a>
   {/if}
