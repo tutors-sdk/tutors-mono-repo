@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   import { liveService } from "@tutors/community";
   import Courses from "@tutors/ui-components/time/Courses.svelte";
   import CoursesGroup from "@tutors/ui-components/time/CoursesGroup.svelte";
@@ -9,14 +10,16 @@
 </script>
 
 <div class="ui-page">
-  <h1 class="ui-title mb-6">Tutors Live</h1>
-  <p class="ui-muted mb-6">Course activity shared by connected learners.</p>
-  {#if liveService.studentsOnline.value.length === 0}<p class="ui-empty mb-6">No learners are sharing activity right now.</p>{/if}
+  <header class="live-header">
+    <p class="ui-eyebrow">{t("home.live")}</p>
+    <h1 class="ui-title">Tutors Live</h1>
+    <p class="ui-muted">{t("live.summary")}</p>
+  </header>
   <Tabs defaultValue="Courses">
     <Tabs.List>
-      <Tabs.Trigger value="Courses">Courses ({liveService.coursesOnline.value.length})</Tabs.Trigger>
-      <Tabs.Trigger value="Students">Students ({liveService.studentsOnline.value.length})</Tabs.Trigger>
-      <Tabs.Trigger value="Groups">Groups</Tabs.Trigger>
+      <Tabs.Trigger value="Courses">{t("live.courses")} ({liveService.coursesOnline.value.length})</Tabs.Trigger>
+      <Tabs.Trigger value="Students">{t("live.students")} ({liveService.studentsOnline.value.length})</Tabs.Trigger>
+      <Tabs.Trigger value="Groups">{t("live.groups")}</Tabs.Trigger>
       <Tabs.Indicator />
     </Tabs.List>
     <Tabs.Content value="Courses"><Courses /></Tabs.Content>
@@ -24,3 +27,8 @@
     <Tabs.Content value="Groups"><CoursesGroup /></Tabs.Content>
   </Tabs>
 </div>
+
+<style>
+  .live-header { margin-bottom: var(--space-8); }
+  .live-header .ui-title, .live-header .ui-muted { margin-top: var(--space-2); }
+</style>
