@@ -3,8 +3,8 @@
   import TutorsShell from "@tutors/ui-navigators/TutorsShell.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
+  import { initLocaleFromCookie, locale, t } from "@tutors/i18n";
   import { browser } from "$app/environment";
-  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
 
   type Props = { children: Snippet };
@@ -14,11 +14,13 @@
 
   if (browser) {
     themeService.initDisplay();
+    locale.value = initLocaleFromCookie(document.cookie);
   }
 
-  onMount(() => {
-    // Ensure theme is applied on mount
-    themeService.initDisplay();
+  $effect(() => {
+    if (browser) {
+      document.documentElement.lang = locale.value;
+    }
   });
 </script>
 
@@ -26,6 +28,6 @@
   <title>Tutors Live</title>
 </svelte:head>
 
-<TutorsShell showConnect={false}>
+<TutorsShell showConnect={false} title={t("home.live")} current="live">
   {@render children()}
 </TutorsShell>

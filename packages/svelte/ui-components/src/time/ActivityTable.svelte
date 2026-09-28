@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "@tutors/i18n";
-  import { heatColor, minutesOf } from "./heat";
+  import { heatColor, minutesOf } from "@tutors/tutors-time-lib";
 
   interface Row { label: string; values: Record<string, unknown> | null | undefined; total: unknown; median?: boolean }
   /** Minutes per column for the student and the course median, one heat-tinted cell per column. */

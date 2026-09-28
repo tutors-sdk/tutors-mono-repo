@@ -128,6 +128,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/i18n
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -206,6 +209,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/i18n
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -257,9 +263,6 @@ importers:
       dompurify:
         specifier: ^3.4.14
         version: 3.4.14
-      jheat.js:
-        specifier: ^5.2.0
-        version: 5.2.0
     devDependencies:
       '@auth/sveltekit':
         specifier: ^1.11.3
@@ -424,6 +427,9 @@ importers:
       '@tutors/community':
         specifier: workspace:*
         version: link:../../packages/svelte/community
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/i18n
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -439,15 +445,18 @@ importers:
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
+      '@tutors/ui-components':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-components
+      '@tutors/ui-navigators':
+        specifier: workspace:*
+        version: link:../../packages/svelte/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
         version: link:../../packages/svelte/ui-primitives
       ag-grid-community:
         specifier: ^36.1.0
         version: 36.1.0
-      jheat.js:
-        specifier: ^5.2.0
-        version: 5.2.0
       svelte:
         specifier: ^5.57.0
         version: 5.57.0(@typescript-eslint/types@8.70.0)
@@ -681,6 +690,9 @@ importers:
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../jsr/model
+      '@tutors/tutors-time-lib':
+        specifier: workspace:*
+        version: link:../../jsr/time
       '@tutors/ui-navigators':
         specifier: workspace:*
         version: link:../ui-navigators
@@ -696,6 +708,9 @@ importers:
       isomorphic-dompurify:
         specifier: ^4.2.0
         version: 4.2.0
+      jheat.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       pdfjs-dist:
         specifier: ^6.3.289
         version: 6.3.289
