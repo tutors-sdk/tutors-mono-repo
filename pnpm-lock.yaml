@@ -706,8 +706,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5
       isomorphic-dompurify:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.3.0
+        version: 4.3.0
       jheat.js:
         specifier: ^5.2.0
         version: 5.2.0
@@ -831,8 +831,8 @@ importers:
         specifier: workspace:*
         version: link:../../jsr/model
       isomorphic-dompurify:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: ^4.3.0
+        version: 4.3.0
     devDependencies:
       '@iconify/svelte':
         specifier: ^5.2.1
@@ -4299,8 +4299,8 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
-  isomorphic-dompurify@4.2.0:
-    resolution: {integrity: sha512-0rp/dna3nh3lQNZrWRJTZzRS8rSYBFXq7zuDOMn0MiklhFyND8fQqQbAcVFv1MkRJ2xDhgR6G7E0bl1msYQKTQ==}
+  isomorphic-dompurify@4.3.0:
+    resolution: {integrity: sha512-prq6x6sxb/da0HP4S81hiK2Hc444CIvNeZ+gj7A9oDE0r6tqUmQ90ylb9BwhP44ZSCxwUAcTPNoQY0mmjpRHcA==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   istanbul-lib-coverage@3.2.2:
@@ -9295,7 +9295,7 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-dompurify@4.2.0:
+  isomorphic-dompurify@4.3.0:
     dependencies:
       dompurify: 3.4.14
       jsdom: 30.0.1
