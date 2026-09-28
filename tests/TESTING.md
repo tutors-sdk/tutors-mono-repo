@@ -23,7 +23,7 @@ it can fail and when CI runs it are in the long form,
 | `completeness/` | N | Vitest | `pnpm exec vitest run tests/completeness` |
 | `architecture/` | A | Vitest + `pnpm check:knip` | `pnpm exec vitest run tests/architecture` |
 | `suite-health/` | O | Vitest + `pnpm check:test-time` | `pnpm exec vitest run tests/suite-health` |
-| `mutation/` | Mutation / schema | Stryker (`stryker.config.json`, `vitest.config.mutation.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation` |
+| `mutation/` | Mutation / schema | Stryker: targeted (`stryker.config.json`, `vitest.config.mutation.ts`) and comprehensive (`stryker.nightly.config.json`, `vitest.config.mutation-nightly.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation`, `pnpm test:mutation:nightly` |
 | `release/` | Release | Deno scripts | `deno run -A tests/release/scripts/run-release-tests.ts --mode=all` |
 | `support/` | — | Shared setup, stubs and arbitraries; not a suite | — |
 

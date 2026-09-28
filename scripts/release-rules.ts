@@ -25,12 +25,13 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { gitIn, rulesAtRef, type GitRunner, type IndexedRule } from "./checks/lib/rules-index.ts";
+import { buildChangelog } from "./release-changelog.ts";
 
 export const RULES_JSON_VERSION = 1;
 
 export interface RulesJson {
   version: typeof RULES_JSON_VERSION;
-  rules: Record<string, { title: string; digest: string }>;
+  rules: Record<string, { title: string; digest: string; prs?: number[] }>;
 }
 
 /** Code-unit order, not locale order: the same on every machine. */
@@ -41,40 +42,46 @@ const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
  * object, because an object lists integer-like keys ("1234") before the others
  * whatever order they were added in.
  */
-export function renderRulesJson(rules: ReadonlyMap<string, Pick<IndexedRule, "title" | "digest">>): string {
+export function renderRulesJson(rules: ReadonlyMap<string, Pick<IndexedRule, "title" | "digest">>, prs: ReadonlyMap<string, number[]> = new Map()): string {
   const ids = [...rules.keys()].sort(byId);
   const entries = ids.map((id) => {
     const { title, digest } = rules.get(id)!;
-    return `    ${JSON.stringify(id)}: { "title": ${JSON.stringify(title)}, "digest": ${JSON.stringify(digest)} }`;
+    const numbers = prs.get(id) ?? [];
+    const prsField = numbers.length > 0 ? `, "prs": [${numbers.join(", ")}]` : "";
+    return `    ${JSON.stringify(id)}: { "title": ${JSON.stringify(title)}, "digest": ${JSON.stringify(digest)}${prsField} }`;
   });
   const body = entries.length > 0 ? `{\n${entries.join(",\n")}\n  }` : "{}";
   return `{\n  "version": ${RULES_JSON_VERSION},\n  "rules": ${body}\n}\n`;
 }
 
-/** rules.json for the Rules a git ref defines. */
-export function rulesJsonAtRef(ref: string, git: GitRunner = gitIn()): string {
-  return renderRulesJson(rulesAtRef(ref, git));
+/** rules.json for the Rules a git ref defines; with `since`, the Rules changed after it name their pull requests. */
+export function rulesJsonAtRef(ref: string, git: GitRunner = gitIn(), since?: string): string {
+  const prs = new Map<string, number[]>();
+  if (since !== undefined) for (const [id, rule] of Object.entries(buildChangelog(since, ref, git).rules)) prs.set(id, rule.prs);
+  return renderRulesJson(rulesAtRef(ref, git), prs);
 }
 
-export function parseArgs(argv: string[]): { ref: string; out?: string } {
+export function parseArgs(argv: string[]): { ref: string; out?: string; since?: string } {
   let ref = "HEAD";
   let out: string | undefined;
+  let since: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const value = argv[i + 1];
-    if (argv[i] === "--ref" || argv[i] === "--out") {
+    if (argv[i] === "--ref" || argv[i] === "--out" || argv[i] === "--since") {
       if (!value || value.startsWith("--")) throw new Error(`${argv[i]} needs a value`);
       if (argv[i] === "--ref") ref = value;
-      else out = value;
+      else if (argv[i] === "--out") out = value;
+      else since = value;
       i++;
     } else throw new Error(`unknown argument ${argv[i]}`);
   }
-  return { ref, out };
+  return since === undefined ? { ref, out } : { ref, out, since };
 }
 
 function main(): void {
   try {
-    const { ref, out } = parseArgs(process.argv.slice(2));
-    const text = rulesJsonAtRef(ref);
+    const { ref, out, since } = parseArgs(process.argv.slice(2));
+    const text = rulesJsonAtRef(ref, gitIn(), since);
     if (out === undefined) {
       process.stdout.write(text);
       return;

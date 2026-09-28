@@ -50,7 +50,10 @@ function flushOnUnload(appName: string) {
 
   const rows = batch.map((e) => buildRow(e, appName));
   const payload = JSON.stringify(rows);
-  const url = `${env.PUBLIC_SUPABASE_URL}/rest/v1/app_errors?Prefer=return=none&apikey=${env.PUBLIC_SUPABASE_ANON_KEY}`;
+  // Only the key goes in the query string: the gateway takes it from there, but PostgREST reads any other
+  // parameter as a column filter, so `?Prefer=...` is rejected with 400 (PGRST100) and the rows are lost.
+  // sendBeacon cannot send a Prefer header, and an insert returns no body without one.
+  const url = `${env.PUBLIC_SUPABASE_URL}/rest/v1/app_errors?apikey=${env.PUBLIC_SUPABASE_ANON_KEY}`;
 
   // sendBeacon survives page unload where async fetch does not
   const nav = navigator as Navigator & { sendBeacon?: (url: string, data: Blob) => boolean };
@@ -67,7 +70,7 @@ function flushOnUnload(appName: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Prefer: "return=none"
+      Prefer: "return=minimal"
     },
     body: payload,
     keepalive: true

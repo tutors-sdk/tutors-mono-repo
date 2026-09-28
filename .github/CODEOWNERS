@@ -22,5 +22,8 @@
 /release/claims.yaml @tutors-sdk/maintainers
 /tests/conformance/shipped-contract-migrations.txt @tutors-sdk/maintainers
 
+# The release standard work. A change is a pull request citing the 5 Whys behind it.
+/release/SOP.md @tutors-sdk/maintainers
+
 # Security-sensitive files
 SECURITY.md @tutors-sdk/maintainers
