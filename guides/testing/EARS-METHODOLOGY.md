@@ -131,7 +131,7 @@ A scenario that needs a browser, such as layout, focus order, colour or a dialog
 driven from Node. It is a `@ui` Rule instead, proved by Playwright; see
 [Browser-proved Rules](#browser-proved-rules) below. Behaviour that no test can drive yet,
 such as a real OAuth sign-in or a service worker, lives as prose in
-[`guides/specifications/`](./specifications/README.md), which names the tier that does cover
+[`guides/specifications/`](../specifications/README.md), which names the tier that does cover
 the behaviour, or says that none does.
 
 ### Browser-proved Rules
@@ -215,7 +215,7 @@ Every Rule carries one stable id, written as a tag on the line above `Rule:`:
 
 The id is the requirement's identity. The release harness cites it as the `reason` of a claim
 (`reason: "Rule 0031: lab steps shall show estimated reading time"`, see
-[release/README.md](../release/README.md)), and `grep -rn "@rule-0031" tests/bdd/features`
+[release/README.md](../../release/README.md)), and `grep -rn "@rule-0031" tests/bdd/features`
 finds it.
 
 | Choice | Why |
@@ -223,7 +223,7 @@ finds it.
 | Explicit tag `@rule-NNNN`, four digits | A derived id (`<file-number>.<rule-index>`) shifts when a Rule is inserted above another, and a released claim would then cite the wrong requirement. An explicit id never moves with its Rule. |
 | One counter for the whole repository | Ids are unique across all feature files, so a claim needs no file name, and a Rule can move to another file or persona directory without a new id. |
 | Not derived from a file number | Existing features live at `tests/bdd/features/<persona>/<name>.feature` and are not renamed or moved. The numbered file prefixes in the issue (`0001-course-loading.feature`) came with a rewrite into a new top-level `features/` directory. The features stay executable in `tests/bdd` instead, so the tag carries the number. |
-| Ids are never reused | A retired id stays in [`tests/bdd/ears-retired-rule-ids.txt`](../tests/bdd/ears-retired-rule-ids.txt). A claim in an old release still names the requirement it meant. |
+| Ids are never reused | A retired id stays in [`tests/bdd/ears-retired-rule-ids.txt`](../../tests/bdd/ears-retired-rule-ids.txt). A claim in an old release still names the requirement it meant. |
 
 Rules for ids:
 
@@ -234,7 +234,7 @@ Rules for ids:
 
 ### The EARS audit
 
-`pnpm test:ears:audit` ([`scripts/checks/ears-audit.ts`](../scripts/checks/ears-audit.ts)) checks
+`pnpm test:ears:audit` ([`scripts/checks/ears-audit.ts`](../../scripts/checks/ears-audit.ts)) checks
 the shape of every feature under `tests/bdd/features`. It is TypeScript on `tsx`, like the other
 checks in `scripts/checks`, so it needs no second toolchain and shares their ratchet. It does not
 run the scenarios: `pnpm test:bdd` does that.
@@ -261,7 +261,7 @@ or step exists in the feature and not in the steps file, or the reverse, and whe
 scenario. The audit adds the part it can see without running anything.
 
 Most features do not use `Rule:` yet, so the audit runs against a baseline,
-[`tests/bdd/ears-audit-baseline.txt`](../tests/bdd/ears-audit-baseline.txt): the violations that
+[`tests/bdd/ears-audit-baseline.txt`](../../tests/bdd/ears-audit-baseline.txt): the violations that
 predate it. Only a violation that is not in the baseline fails. A baseline line whose violation is
 fixed also fails until it is deleted (`pnpm test:ears:audit --update-baseline` deletes it, and
 refuses to add one), so the file only shrinks. Migrating a feature to Rule blocks removes its
@@ -273,7 +273,7 @@ feature file.
 ### Rules and the release harness
 
 A release claim names the Rule behind a change in its `reason`, as `Rule 0031: <title>` (see
-[release/README.md](../release/README.md)). Two tools tie that to the features:
+[release/README.md](../../release/README.md)). Two tools tie that to the features:
 
 - `pnpm release:claims:draft --from <production tag> --to <release candidate ref>` compares the
   Rules at the two git refs by id and prints a stub for each Rule that was added or whose block
@@ -289,11 +289,11 @@ A release claim names the Rule behind a change in its `reason`, as `Rule 0031: <
   resolved the same way, and then needs no `reason`. An older harness (before 1.3.0) ignores the `rule` key and still requires the `reason`, so a claim with only a `rule` fails there for the missing `reason`; keep `reason: "Rule 0031: ..."` until the harness release path is 1.3.0 or later. `--ref <ref>` resolves against the Rules at
   that ref rather than the working tree.
 - `pnpm release:rules [--ref <ref>] [--out <path>] [--since <ref>]` writes `rules.json`, the id, title and digest of
-  every Rule at a ref, which the harness resolves a `rule` against ([release/README.md](../release/README.md#rules-the-release-defines)).
+  every Rule at a ref, which the harness resolves a `rule` against ([release/README.md](../../release/README.md#rules-the-release-defines)).
   With `--since`, each Rule added or changed after that ref also names the PRs that touched it (`prs`), which the harness scorecard shows.
 - `pnpm release:changelog --from <production tag> --to <release ref>` drafts the release's changelog from the merged PRs, naming
   the Rules each PR added or changed, and ends with a table of the release's Rules and their PRs
-  ([Release-Strategy.md](Release-Strategy.md#changelog-discipline)).
+  ([Release-Strategy.md](../Release-Strategy.md#changelog-discipline)).
 
 ## Persona-Based Organisation
 
@@ -325,7 +325,7 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 
 Reader layout, navigation, themes and accessibility need a browser and are `@ui` Rules in
 `features/ui/`, proved by Playwright. The OAuth flow is still prose in
-[specifications/](./specifications/README.md). `course/`, `live/` and `time/` hold features that
+[specifications/](../specifications/README.md). `course/`, `live/` and `time/` hold features that
 predate the EARS tags.
 
 ## EARS Tag Distribution
@@ -343,7 +343,7 @@ bound: most of those scenarios describe failure handling and options the product
 
 ## Adding New EARS-Tagged Tests
 
-New behaviour is written as a Rule. The [`ears-gherkin-dev`](../.claude/skills/ears-gherkin-dev/SKILL.md) skill walks an AI assistant through the same steps.
+New behaviour is written as a Rule. The [`ears-gherkin-dev`](../../.claude/skills/ears-gherkin-dev/SKILL.md) skill walks an AI assistant through the same steps.
 
 1. Choose the persona whose perspective the feature serves, and the system name for the Rule (tutors, the reader, the catalogue, the live dashboard, the time dashboard, the data API)
 2. Select the EARS pattern that best describes the requirement type and write it as a `Rule:` title with exactly one "shall"

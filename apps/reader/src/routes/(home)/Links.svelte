@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
 </script>
 
 <div class="ui-actions home-links mt-6">
@@ -28,19 +29,27 @@
   </a>
   <a
     class="ui-button"
-    href="https://catalogue.tutors.dev"
+    href={siteUrls.catalogue}
     target="_blank"
     rel="noreferrer"
   >
-    <Icon type="live" /> {t("home.catalogue")}
+    <Icon type="topic" /> {t("home.catalogue")}
   </a>
   <a
     class="ui-button"
-    href="https://live.tutors.dev"
+    href={siteUrls.live}
     target="_blank"
     rel="noreferrer"
   >
-    <Icon type="tutorsTime" /> {t("home.live")}
+    <Icon type="live" /> {t("home.live")}
+  </a>
+  <a
+    class="ui-button"
+    href={siteUrls.time}
+    target="_blank"
+    rel="noreferrer"
+  >
+    <Icon type="tutorsTime" /> {t("classTime.app")}
   </a>
 </div>
 <style>
