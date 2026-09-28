@@ -1,5 +1,6 @@
 <script lang="ts">
   import PinDialog from "$lib/components/PinDialog.svelte";
+  import { t } from "@tutors/i18n";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   interface Props {
@@ -22,10 +23,8 @@
   onVerified={onVerified}
 />
 
-<div class="flex-1 min-h-0 flex flex-col h-full">
-  {#if data.signInUrl}
-    <p class="p-4" role="status">Sign in to Tutors to see this course's time data. <a class="underline" href={data.signInUrl}>Sign in</a>, then come back to this page.</p>
-  {:else}
-    {@render children()}
-  {/if}
-</div>
+{#if data.signInUrl}
+  <div class="ui-empty" role="status">{t("time.signedOut")} <a class="ui-button ui-button-primary" href={data.signInUrl}>{t("auth.signInWithGithub")}</a></div>
+{:else}
+  {@render children()}
+{/if}

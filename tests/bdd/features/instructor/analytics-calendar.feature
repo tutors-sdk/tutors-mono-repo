@@ -73,12 +73,12 @@ Feature: Calendar Analytics
       | 400     |
       | 800     |
       | 1600    |
-    Then a cell with 0 minutes shall be white, "rgb(255, 255, 255)"
-    And a cell with 1 minutes shall be light green, "rgb(200, 255, 200)"
-    And a cell with 200 minutes shall be deep green, "rgb(0, 120, 0)"
-    And a cell with 400 minutes shall transition to light red, "rgb(255, 180, 180)"
-    And a cell with 800 minutes shall be deep red, "rgb(180, 0, 0)"
-    And a cell with 1600 minutes shall stay deep red, "rgb(180, 0, 0)"
+    Then a cell with 0 minutes shall have no heat colour
+    And a cell with 1 minutes shall be the lightest success tint, 25% over the surface
+    And a cell with 200 minutes shall be the deepest success tint, 70% over the surface
+    And a cell with 400 minutes shall be a danger tint, 43% over the surface
+    And a cell with 800 minutes shall be the deepest danger tint, 70% over the surface
+    And a cell with 1600 minutes shall stay the deepest danger tint, 70% over the surface
 
   @ears-state-driven
   Scenario: Handle empty calendar data

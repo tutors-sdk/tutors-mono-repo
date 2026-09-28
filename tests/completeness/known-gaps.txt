@@ -39,7 +39,6 @@ missing-icon: HeroIconLib: podcast
 missing-icon: HeroIconLib: tutorial
 
 # App READMEs out of step with package.json (good first issue #244).
-readme-missing: apps/time
 readme-unknown-package: apps/catalogue: @tutors/ui
 readme-unknown-package: apps/live: @tutors/ui
 readme-unknown-package: apps/reader: @tutors/ui

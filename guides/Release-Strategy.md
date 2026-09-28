@@ -312,7 +312,7 @@ An app that could not be promoted is rebuilt, so its pinned digest differs from 
 
 #### One command: tag, publish, judge
 
-`pnpm release:candidate X.Y.Z` is steps 1 to 7 of the [release SOP](../release/SOP.md): it tags the next free `vX.Y.Z-rc.N` on `HEAD` (reusing an rc tag already on the commit), pushes it so `image-build.yml` publishes the four images, waits until quay.io serves them, and runs `harness release --candidate X.Y.Z-rc.N --baseline prod --monorepo <this checkout>` from `HARNESS_DIR`, else `npx github:tutors-sdk/tutors-release-harness`. The harness reads production from `release/deployed.json`, which `pnpm deploy:pin` writes. `--dry-run` prints every command and runs none.
+`pnpm release:candidate X.Y.Z` is steps 1, 2 and 5 to 7 of the [release SOP](../release/SOP.md) (steps 3 and 4, the changelog and the claims, are done before it and read from the branch): it tags the next free `vX.Y.Z-rc.N` on `HEAD` (reusing an rc tag already on the commit), pushes it so `image-build.yml` publishes the four images, waits until quay.io serves them, and runs `harness release --candidate X.Y.Z-rc.N --baseline prod --monorepo <this checkout>` from `HARNESS_DIR`, else `npx github:tutors-sdk/tutors-release-harness`; set `HARNESS_DIR`, because through npx the harness state (noise store, scoreboard) and the kaizen register do not persist. The harness reads production from `release/deployed.json`, which `pnpm deploy:pin` writes. `--dry-run` prints every command and runs none.
 
 #### Running the harness locally
 
