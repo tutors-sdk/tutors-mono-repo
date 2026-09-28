@@ -21,6 +21,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Tutors - {t("auth.signIn")}</title>
+</svelte:head>
+
 <div class="ui-page" style="max-width: 960px">
   <p class="ui-eyebrow">Tutors</p>
   <h1 class="ui-title mb-6">{t("auth.signIn")}</h1>
