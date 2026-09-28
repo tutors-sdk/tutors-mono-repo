@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   filterByDateRange,
-  cellColorForMinutes,
+  heatColor,
+  minutesOf,
   getMondayForDate,
   formatDateShort,
   getDistinctSortedWeeks
@@ -52,160 +53,50 @@ describe("filterByDateRange reference identity", () => {
   });
 });
 
-// ===========================================================================
-// Survivor #2: cellColorForMinutes — exact boundary and arithmetic tests
-// ===========================================================================
-describe("cellColorForMinutes exact RGB values", () => {
-  // -------------------------------------------------------------------------
-  // mins <= 0  (white)
-  // -------------------------------------------------------------------------
-  it("returns white for exactly 0 minutes", () => {
-    expect(cellColorForMinutes(0)).toBe("rgb(255, 255, 255)");
+describe("heatColor exact token mixes", () => {
+  const success = (percent: number) => `color-mix(in srgb, var(--ui-success) ${percent}%, var(--ui-surface))`;
+  const danger = (percent: number) => `color-mix(in srgb, var(--ui-danger) ${percent}%, var(--ui-surface))`;
+
+  it("leaves 0 and negative minutes uncoloured", () => {
+    expect(heatColor(0)).toBe("");
+    expect(heatColor(-1)).toBe("");
+    expect(heatColor(-0.001)).toBe("");
   });
 
-  it("returns white for -1 (negative)", () => {
-    expect(cellColorForMinutes(-1)).toBe("rgb(255, 255, 255)");
+  it("mixes 25% success at 1 minute", () => {
+    expect(heatColor(1)).toBe(success(25));
   });
 
-  it("returns white for a small negative value (-0.001)", () => {
-    // Ensures mins <= 0 catches negatives close to zero
-    expect(cellColorForMinutes(-0.001)).toBe("rgb(255, 255, 255)");
+  it("deepens success linearly to 70% at 200 minutes", () => {
+    expect(heatColor(100)).toBe(success(48));
+    expect(heatColor(200)).toBe(success(70));
   });
 
-  // -------------------------------------------------------------------------
-  // 0 < mins <= 1  (white -> lightGreen interpolation)
-  //
-  // white     = {r:255, g:255, b:255}
-  // lightGreen= {r:200, g:255, b:200}
-  //
-  // At t=0.5 (mins=0.5):
-  //   r = round(255 + 0.5*(200-255)) = round(255 - 27.5) = round(227.5) = 228
-  //   g = round(255 + 0.5*(255-255)) = 255
-  //   b = round(255 + 0.5*(200-255)) = 228
-  // -------------------------------------------------------------------------
-  it("returns exact interpolated color at 0.5 minutes (white->lightGreen midpoint)", () => {
-    expect(cellColorForMinutes(0.5)).toBe("rgb(228, 255, 228)");
+  it("switches to 30% danger just past 200 minutes", () => {
+    expect(heatColor(201)).toBe(danger(30));
   });
 
-  // At t=1 (mins=1): reaches lightGreen exactly
-  //   r = round(255 + 1*(-55)) = 200
-  //   g = 255
-  //   b = 200
-  it("returns lightGreen at exactly 1 minute", () => {
-    expect(cellColorForMinutes(1)).toBe("rgb(200, 255, 200)");
+  it("deepens danger linearly to 70% at 800 minutes", () => {
+    expect(heatColor(500)).toBe(danger(50));
+    expect(heatColor(800)).toBe(danger(70));
   });
 
-  // At t=0.25 (mins=0.25):
-  //   r = round(255 + 0.25*(-55)) = round(255 - 13.75) = round(241.25) = 241
-  //   g = 255
-  //   b = 241
-  it("returns exact interpolated color at 0.25 minutes", () => {
-    expect(cellColorForMinutes(0.25)).toBe("rgb(241, 255, 241)");
+  it("clamps danger at 70% beyond 800 minutes", () => {
+    expect(heatColor(1200)).toBe(danger(70));
+  });
+});
+
+describe("minutesOf", () => {
+  it("rounds recorded minutes", () => {
+    expect(minutesOf(2.4)).toBe(2);
+    expect(minutesOf("2.6")).toBe(3);
   });
 
-  // -------------------------------------------------------------------------
-  // 1 < mins <= 200  (lightGreen -> deepGreen)
-  //
-  // lightGreen= {r:200, g:255, b:200}
-  // deepGreen = {r:0,   g:120, b:0  }
-  //
-  // At mins=2: t = (2-1)/199 = 1/199
-  //   r = round(200 + (1/199)*(-200)) = round(200 - 1.00503) = round(198.995) = 199
-  //   g = round(255 + (1/199)*(-135)) = round(255 - 0.67839) = round(254.322) = 254
-  //   b = 199
-  // -------------------------------------------------------------------------
-  it("returns exact color at 2 minutes (just past lightGreen boundary)", () => {
-    expect(cellColorForMinutes(2)).toBe("rgb(199, 254, 199)");
-  });
-
-  // At mins=100: t = 99/199
-  //   r = round(200 + (99/199)*(-200)) = round(200 - 99.4975) = round(100.5025) = 101
-  //   g = round(255 + (99/199)*(-135)) = round(255 - 67.1608) = round(187.839) = 188
-  //   b = 101
-  it("returns exact color at 100 minutes (lightGreen->deepGreen midpoint)", () => {
-    expect(cellColorForMinutes(100)).toBe("rgb(101, 188, 101)");
-  });
-
-  // At mins=200: t = 199/199 = 1 -> deepGreen exactly
-  //   r = 0, g = 120, b = 0
-  it("returns deepGreen at exactly 200 minutes", () => {
-    expect(cellColorForMinutes(200)).toBe("rgb(0, 120, 0)");
-  });
-
-  // -------------------------------------------------------------------------
-  // 200 < mins <= 400  (deepGreen -> lightRed)
-  //
-  // deepGreen= {r:0,   g:120, b:0  }
-  // lightRed = {r:255, g:180, b:180}
-  //
-  // At mins=300: t = (300-200)/200 = 0.5
-  //   r = round(0 + 0.5*255) = round(127.5) = 128
-  //   g = round(120 + 0.5*60) = round(150) = 150
-  //   b = round(0 + 0.5*180) = round(90) = 90
-  // -------------------------------------------------------------------------
-  it("returns exact color at 300 minutes (deepGreen->lightRed midpoint)", () => {
-    expect(cellColorForMinutes(300)).toBe("rgb(128, 150, 90)");
-  });
-
-  // At mins=400: t = 1 -> lightRed exactly
-  //   r = 255, g = 180, b = 180
-  it("returns lightRed at exactly 400 minutes", () => {
-    expect(cellColorForMinutes(400)).toBe("rgb(255, 180, 180)");
-  });
-
-  // -------------------------------------------------------------------------
-  // mins > 400  (lightRed -> deepRed)
-  //
-  // lightRed= {r:255, g:180, b:180}
-  // deepRed = {r:180, g:0,   b:0  }
-  //
-  // At mins=600: t = min(1, (600-400)/400) = 0.5
-  //   r = round(255 + 0.5*(-75)) = round(255 - 37.5) = round(217.5) = 218
-  //   g = round(180 + 0.5*(-180)) = round(180 - 90) = 90
-  //   b = round(180 + 0.5*(-180)) = 90
-  // -------------------------------------------------------------------------
-  it("returns exact color at 600 minutes (lightRed->deepRed midpoint)", () => {
-    expect(cellColorForMinutes(600)).toBe("rgb(218, 90, 90)");
-  });
-
-  // At mins=800: t = min(1, 1) = 1 -> deepRed exactly
-  //   r = 180, g = 0, b = 0
-  it("returns deepRed at exactly 800 minutes", () => {
-    expect(cellColorForMinutes(800)).toBe("rgb(180, 0, 0)");
-  });
-
-  // At mins=1200: t = min(1, 2) = 1 -> clamped to deepRed
-  it("clamps at deepRed beyond 800 minutes", () => {
-    expect(cellColorForMinutes(1200)).toBe("rgb(180, 0, 0)");
-  });
-
-  // -------------------------------------------------------------------------
-  // Additional arithmetic mutation killers: verify values differ between
-  // adjacent ranges so any arithmetic change (+ to -, * to /, - to +) in
-  // the interpolation math produces a detectably wrong result.
-  // -------------------------------------------------------------------------
-  it("color at 0.5 differs from both white and lightGreen", () => {
-    const half = cellColorForMinutes(0.5);
-    expect(half).not.toBe("rgb(255, 255, 255)");
-    expect(half).not.toBe("rgb(200, 255, 200)");
-  });
-
-  it("color at 100 differs from both lightGreen and deepGreen", () => {
-    const mid = cellColorForMinutes(100);
-    expect(mid).not.toBe("rgb(200, 255, 200)");
-    expect(mid).not.toBe("rgb(0, 120, 0)");
-  });
-
-  it("color at 300 differs from both deepGreen and lightRed", () => {
-    const mid = cellColorForMinutes(300);
-    expect(mid).not.toBe("rgb(0, 120, 0)");
-    expect(mid).not.toBe("rgb(255, 180, 180)");
-  });
-
-  it("color at 600 differs from both lightRed and deepRed", () => {
-    const mid = cellColorForMinutes(600);
-    expect(mid).not.toBe("rgb(255, 180, 180)");
-    expect(mid).not.toBe("rgb(180, 0, 0)");
+  it("returns 0 for missing, non-numeric and negative values", () => {
+    expect(minutesOf(undefined)).toBe(0);
+    expect(minutesOf(null)).toBe(0);
+    expect(minutesOf("abc")).toBe(0);
+    expect(minutesOf(-5)).toBe(0);
   });
 });
 

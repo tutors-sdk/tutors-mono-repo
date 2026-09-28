@@ -1,6 +1,8 @@
+import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   APPS,
@@ -69,6 +71,27 @@ describe("the sources that read build identity", () => {
     expect(config).not.toMatch(/name:\s*gitSha\b/);
     expect(config).toMatch(/createHash\('sha256'\)\.update\(gitSha\)/);
     expect(config).toMatch(/version:\s*\{\s*name:\s*buildName\s*\}/);
+  });
+
+  it.each(APPS)("%s names a Netlify build after its commit too (COMMIT_REF when there is no GIT_SHA)", async (app) => {
+    // tutors.dev is deployed by hand from Netlify; without this its build is named after the clock and says nothing
+    // about what it runs (release harness rollback report, tutors-sdk/tutors-release-harness#38).
+    const configFile = join(REPO_ROOT, "apps", app, "svelte.config.js");
+    const load = async (env: Record<string, string | undefined>) => {
+      const saved = { GIT_SHA: process.env.GIT_SHA, COMMIT_REF: process.env.COMMIT_REF };
+      Object.assign(process.env, env);
+      for (const [k, v] of Object.entries(env)) if (v === undefined) delete process.env[k];
+      try {
+        const mod = await import(`${pathToFileURL(configFile).href}?${Math.random()}`);
+        return mod.default.kit.version?.name as string | undefined;
+      } finally {
+        for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+      }
+    };
+    const hash = (sha: string) => createHash("sha256").update(sha).digest("hex").slice(0, 16);
+    expect(await load({ GIT_SHA: undefined, COMMIT_REF: identity.revision })).toBe(hash(identity.revision));
+    expect(await load({ GIT_SHA: "0".repeat(40), COMMIT_REF: identity.revision })).toBe(hash("0".repeat(40)));
+    expect(await load({ GIT_SHA: "unknown", COMMIT_REF: undefined })).toBeUndefined();
   });
 });
 

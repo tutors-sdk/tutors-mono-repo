@@ -23,6 +23,7 @@
     "@tutors/app-config": "workspace:*",
     "@tutors/community": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
     "@tutors/runtime": "workspace:*",

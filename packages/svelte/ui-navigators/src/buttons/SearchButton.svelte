@@ -109,7 +109,7 @@
       {/each}
     </div>
     {#if !query.trim() && !kind && results.length}<p class="search-group">{t("search.topics")}</p>{/if}
-    <div id="search-results" class="search-results" role="listbox" aria-label={t("nav.search.tip")}>
+    <div id="search-results" class="search-results" role="listbox" aria-label={t("shell.searchResults")}>
       {#each results as result, index (result.href)}
         {@const detail = result.excerpt || plain(result.lo.summary)}
         <a
