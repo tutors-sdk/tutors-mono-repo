@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "@tutors/i18n";
   type Selection = { courseId: string; startDate: string | null; endDate: string | null };
   let { loading, error, onsubmit }: { loading: boolean; error: string | null; onsubmit: (selection: Selection) => void } = $props();
 
@@ -61,7 +62,7 @@
     const endDate = endDateInput.trim() || null;
 
     if (startDate && endDate && startDate > endDate) {
-      dateRangeError = "Start date must be before or equal to end date";
+      dateRangeError = t("classTime.dateRangeError");
       return;
     }
 
@@ -76,48 +77,49 @@
 
 </script>
 
-<section class="ui-panel mx-auto w-full max-w-2xl space-y-6">
-    <div><p class="ui-eyebrow">Tutors Time</p><h1 class="ui-title mt-2">Open a course</h1></div>
-    <p class="text-[var(--ui-muted)]">
-      Enter a course URL to view calendar data. Optionally select a date range to filter the data.
-    </p>
+<header>
+  <p class="ui-eyebrow">Tutors Time</p>
+  <h1 class="ui-title mt-2">{t("classTime.openCourse")}</h1>
+  <p class="ui-muted mt-2">{t("classTime.openCourseDescription")}</p>
+</header>
+<section class="ui-panel course-form">
     <form class="space-y-5" onsubmit={(event) => { event.preventDefault(); handleSubmit(); }}>
       <div>
-        <label for="courseids-input" class="label">Course URL</label>
+        <label for="courseids-input" class="ui-label">{t("classTime.courseUrl")}</label>
         <input
           id="courseids-input"
           type="text"
           required
           bind:value={courseIdsInput}
-          placeholder="Enter course URL"
+          placeholder={t("classTime.courseUrlPlaceholder")}
           class="input w-full"
         />
         {#if error}
-          <p role="alert" class="text-sm text-error-500 mt-1">{error}</p>
+          <p role="alert" class="mt-1 text-sm text-[var(--ui-danger)]">{error}</p>
         {/if}
       </div>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label for="start-date-input" class="label">Start Date (optional)</label>
+          <label for="start-date-input" class="ui-label">{t("classTime.startDate")}</label>
           <input
             id="start-date-input"
             type="date"
             bind:value={startDateInput}
-            class="input"
+            class="input w-full"
           />
         </div>
         <div>
-          <label for="end-date-input" class="label">End Date (optional)</label>
+          <label for="end-date-input" class="ui-label">{t("classTime.endDate")}</label>
           <input
             id="end-date-input"
             type="date"
             bind:value={endDateInput}
-            class="input"
+            class="input w-full"
           />
         </div>
       </div>
       {#if dateRangeError}
-        <p role="alert" class="text-sm text-error-500">{dateRangeError}</p>
+        <p role="alert" class="text-sm text-[var(--ui-danger)]">{dateRangeError}</p>
       {/if}
       <div class="flex justify-end gap-2">
         <button
@@ -125,9 +127,13 @@
           class="ui-button ui-button-primary"
           disabled={loading}
         >
-          {loading ? 'Loading…' : 'Load course'}
+          {loading ? t("shell.loading") : t("classTime.loadCourse")}
         </button>
       </div>
     </form>
-    <p class="ui-muted text-sm">Recorded activity measures time, not learning outcomes.</p>
+    <p class="ui-muted mt-6 text-sm">{t("classTime.disclaimer")}</p>
 </section>
+
+<style>
+  .course-form { max-width: 720px; margin-top: var(--space-8); }
+</style>

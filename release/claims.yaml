@@ -37,3 +37,21 @@ claims:
   - artefact: screenshot
     scope: "time:*"
     reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
+  # Accessibility fixes the Paper rebuild (#313) made. axe found each on production
+  # (16.2.2) and not on main, and the Main-to-RC run listed them as unclaimed.
+  - artefact: axe
+    scope: "reader-auth:sign-in"
+    rule: "0216"
+    reason: "sign-in button text contrast (color-contrast, serious) fixed by #313; page title added (document-title, serious)"
+  - artefact: axe
+    scope: "reference:course"
+    rule: "0051"
+    reason: "navigation dialog trigger no longer wraps a control (nested-interactive, serious) fixed by #313"
+  - artefact: axe
+    scope: "reference:topic"
+    rule: "0051"
+    reason: "navigation dialog trigger no longer wraps a control (nested-interactive, serious) fixed by #313"
+  - artefact: axe
+    scope: "reference:note"
+    rule: "0036"
+    reason: "code block copy buttons are named \"Copy code\" (button-name, critical) fixed by #313"
