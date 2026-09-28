@@ -1,10 +1,10 @@
 # Evolution
 
-How Tutors changed from June 2026 on, and how its testing grew, with the evidence.
+How Tutors changed from June 2026 on, with the evidence. How our testing grew is told in
+[../testing/journey.md](../testing/journey.md), beside the other testing guides.
 
 | File | What it is |
 |---|---|
-| [testing-journey.md](testing-journey.md) | How our testing grew from 27 tests to a suite built to fail, and the ideas worth keeping |
 | [tutors-revolution.md](tutors-revolution.md) | *Tutors · The (R)evolution*, a Marp deck: the history, the Paper UI, the hardening, the release harness, and who keeps it going. Sources are in its speaker notes and appendix |
 | [img/](img) | The deck's charts, as SVG |
 | [tools/](tools) | The scripts that measure the history and draw the charts |

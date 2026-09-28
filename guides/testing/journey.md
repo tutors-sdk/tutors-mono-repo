@@ -3,8 +3,8 @@
 From 27 tests and no CI to a suite that is built to fail, June to September 2026.
 
 This is the story and the reasons. For what each tier owns and how to run it, read
-[TESTING-OVERVIEW.md](../TESTING-OVERVIEW.md); the long form is [TESTING.md](../TESTING.md),
-and mutation testing has its own guide, [MUTATION-TESTING.md](../MUTATION-TESTING.md).
+[TESTING-OVERVIEW.md](TESTING-OVERVIEW.md); the long form is [TESTING.md](TESTING.md),
+and mutation testing has its own guide, [MUTATION-TESTING.md](MUTATION-TESTING.md).
 
 ## Where we started
 
@@ -14,7 +14,7 @@ fast-moving open-source teaching tool, and it is what made every later change ri
 
 ## Five steps, not a slope
 
-![Declared tests over time](img/test-progress.svg)
+![Declared tests over time](../evolution/img/test-progress.svg)
 
 The count did not grow evenly. It moved in steps, and each step answered a different question.
 
@@ -43,9 +43,9 @@ with their tests.
 
 1 Jun and 26 Jul sum the predecessor repositories; the rest is this repository's `main` at the
 end of each day. Tests are declared `it(`, `test(` and `Deno.test(` calls, not pass counts.
-[tools/measure.py](tools/measure.py) reproduces every column.
+[measure.py](../evolution/tools/measure.py) reproduces every column.
 
-![Test files, CI jobs, guard scripts and scenarios](img/test-multiples.svg)
+![Test files, CI jobs, guard scripts and scenarios](../evolution/img/test-multiples.svg)
 
 ## The ideas worth keeping
 
@@ -92,4 +92,4 @@ but whether the behaviour stayed pinned.
   gate, the ratchets and the harness stand in for review; they do not replace it.
 
 Updated 28 September 2026. The wider story, including the release harness, is the
-[evolution deck](tutors-revolution.md).
+[evolution deck](../evolution/tutors-revolution.md).

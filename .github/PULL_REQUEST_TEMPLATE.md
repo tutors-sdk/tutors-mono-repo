@@ -34,7 +34,7 @@ Everything else runs in CI or nightly and is **not** expected of you locally: fu
 
 ## If this adds or changes behaviour
 
-- [ ] A test covers it (see [guides/TESTING-OVERVIEW.md](../guides/TESTING-OVERVIEW.md) for which tier)
+- [ ] A test covers it (see [guides/testing/TESTING-OVERVIEW.md](../guides/testing/TESTING-OVERVIEW.md) for which tier)
 - [ ] Docs updated if a documented behaviour changed
 
 ## If a student, lecturer or operator can observe the change
