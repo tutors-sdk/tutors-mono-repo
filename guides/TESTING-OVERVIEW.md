@@ -39,7 +39,7 @@ Three tiers predate the runway letters and still carry weight:
 | Tier | Owns | Where it runs |
 |---|---|---|
 | Contract / API surface | Public exports of the three JSR packages, Supabase row and RPC shapes, realtime message shapes, generated course JSON | PR: `pnpm api-report:check` in `build-and-test`. Nightly: `contract-snapshots`. RC: Gate 2b |
-| Mutation | Whether the unit assertions actually detect a change in the analytics and search code | Nightly `mutation` job, then `pnpm check:mutation-floors` per module (Rules 0113, 0114); nightly `mutation-nightly` over every library module against its own floors (Rules 0116 to 0119); locally `pnpm test:mutation` and `pnpm test:mutation:nightly` |
+| Mutation | Whether the tests actually detect a change: the twelve targeted model, time and gen modules at 90%, and every library module at its own floor | Nightly `mutation` job, then `pnpm check:mutation-floors` per module (Rules 0113, 0114); nightly `mutation-nightly` over every library module against its own floors (Rules 0116 to 0119); locally `pnpm test:mutation` and `pnpm test:mutation:nightly` |
 | Release artifact | The CLI's output for the reference course against the last published CLI | Push to `rc/**`: `rc-validation.yml` Gate 6, `release-testing.yml` Gates 6a–6c |
 
 ## Commands

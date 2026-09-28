@@ -5,11 +5,16 @@ name: Deploy
 # A release is deployed in three moves:
 #
 #   1. pin      pnpm deploy:pin X.Y.Z, after image-build.yml has published the
-#               vX.Y.Z tag, rewrites the four overlays; open a pull request.
+#               vX.Y.Z tag, rewrites the four overlays and release/deployed.json
+#               (tag, commit, pin time, digests: what the release harness reads
+#               as production); open a pull request.
 #   2. verify   this workflow, on that pull request and again on main: every
 #               overlay carries a release tag and a matching sha256 digest, each
 #               tag still resolves to its digest, and each digest is signed by
-#               image-build.yml (pnpm check:deploy-pins --registry).
+#               image-build.yml, and release/deployed.json names the same tag
+#               and digests (pnpm check:deploy-pins --registry). Nothing here
+#               writes to main: the pin pull request carries deployed.json, so
+#               its merge is the deploy and the record together.
 #   3. announce once the pins are on main and the rollout is confirmed, tell the
 #               release harness what is deployed: set HARNESS_PRODUCTION_TAG on
 #               the harness repository, then send it the repository_dispatch
@@ -30,6 +35,7 @@ on:
     branches: [main]
     paths:
       - deploy/k8s/overlays/*/kustomization.yaml
+      - release/deployed.json
       - scripts/checks/deploy-pins.ts
       - scripts/checks/lib/registry.ts
       - .github/workflows/deploy.yml
@@ -37,6 +43,7 @@ on:
     branches: [main]
     paths:
       - deploy/k8s/overlays/*/kustomization.yaml
+      - release/deployed.json
   # Announce again without changing a pin: the harness dispatch failed, or the
   # rollout was only confirmed later.
   workflow_dispatch:
