@@ -169,7 +169,7 @@ Docs live in five places. This is the index.
 | [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
 | [guides/Release-Strategy.md](guides/Release-Strategy.md), [tests/release/RELEASE-TESTING.md](tests/release/RELEASE-TESTING.md) | Cut or validate a release |
 | [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md), [deploy/README.md](deploy/README.md) | Run in containers or deploy to a cluster |
-| [docs/DATA-INVENTORY.md](docs/DATA-INVENTORY.md), [docs/PRIVACY-POLICY-TEMPLATE.md](docs/PRIVACY-POLICY-TEMPLATE.md), [SECURITY.md](SECURITY.md) | Privacy, data and security posture |
+| [docs/DATA-INVENTORY.md](docs/DATA-INVENTORY.md), [docs/PRIVACY-ADMIN-GUIDE.md](docs/PRIVACY-ADMIN-GUIDE.md), [docs/PRIVACY-POLICY-TEMPLATE.md](docs/PRIVACY-POLICY-TEMPLATE.md), [SECURITY.md](SECURITY.md) | Privacy, data and security posture |
 | [docs/okf-guide.md](docs/okf-guide.md) | Generate the Open Knowledge Framework export |
 
 ## Technology Stack

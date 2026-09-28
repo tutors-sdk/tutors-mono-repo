@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tutors/logger": "workspace:*",
+    "@tutors/privacy": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/community": "workspace:*",
     "@tutors/rbac": "workspace:*",

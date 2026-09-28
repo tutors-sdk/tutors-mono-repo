@@ -5,6 +5,7 @@
   import { browser } from "$app/environment";
   import { themeService } from "@tutors/themes";
   import { locale, SUPPORTED_LOCALES } from "@tutors/i18n";
+  import PrivacyChoices from "@tutors/ui-navigators/tutors-connect/PrivacyChoices.svelte";
 
   interface Props {
     data: LayoutData;
@@ -31,3 +32,4 @@
 </script>
 
 {@render children()}
+<PrivacyChoices />

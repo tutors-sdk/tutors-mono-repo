@@ -28,9 +28,10 @@
 
 | Data | Purpose | Legal Basis |
 |------|---------|-------------|
-| Learning activity (pages visited, time spent) | Engagement analytics for educators | Consent |
-| Daily activity summaries | Calendar heatmap visualisation | Consent |
-| Real-time presence (online status, current page) | Live classroom collaboration | Consent |
+| Learning analytics: the pages you open and the time you spend on them, with daily summaries | Tutors Time, which you and your lecturers see | Consent |
+| Presence: your name, photo, mood, online status, current page and latest page | Showing you online in the course and in Tutors Live | Consent |
+
+Both start off. The first time you sign in, Tutors asks you whether to turn either on; you can leave both off and still use every course. You can change either at any time from your profile menu.
 
 ### Data you provide voluntarily
 
@@ -52,7 +53,7 @@ Your data is processed by the following third-party services:
 
 | Service | Purpose | Data shared |
 |---------|---------|-------------|
-| [Supabase](https://supabase.com) | Database and authentication | All stored data |
+| [Supabase](https://supabase.com) | Database | All stored data |
 | [GitHub](https://github.com) | OAuth authentication | GitHub ID only |
 | [Netlify](https://netlify.com) | Application hosting | Server logs (IP addresses) |
 | [Supabase Realtime](https://supabase.com/docs/guides/realtime) | Real-time presence | Presence data (ephemeral) |
@@ -69,9 +70,11 @@ Under the General Data Protection Regulation, you have the right to:
 - **Object** — Object to processing based on legitimate interest
 - **Lodge a complaint** — Contact [your national data protection authority]
 
-To exercise any of these rights, contact [Your DPO email].
+You can download a copy of your identity, course history, learning activity and latest activity yourself: sign in and choose **Download my data** in your profile menu. You can withdraw consent there too, by turning learning analytics or presence off. Withdrawing stops future recording; to have what was recorded before deleted, ask us for erasure.
 
-We will respond to all requests within 30 days.
+To exercise any other right, or for a complete copy of everything we hold, contact [Your DPO email].
+
+We will respond within one month. For complex or numerous requests we may extend that by two further months, and will tell you within the first month if we do.
 
 ## 6. Data Retention
 
@@ -79,7 +82,7 @@ We will respond to all requests within 30 days.
 |-----------|-----------------|
 | User accounts | Until account deletion is requested |
 | Learning activity records | [Define: e.g., "2 years after last activity" or "end of academic year"] |
-| Presence data | Not retained — ephemeral, session-only |
+| Presence data | Live broadcasts are not stored; your latest page is kept for Tutors Live [Define: e.g., "until the end of the academic year"] |
 | Server logs | [Define: e.g., "90 days"] |
 
 ## 7. Data Security

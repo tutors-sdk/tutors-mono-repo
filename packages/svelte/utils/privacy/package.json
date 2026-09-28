@@ -8,6 +8,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "@tutors/runes": "workspace:*"
+  },
   "peerDependencies": {
     "svelte": "^5.0.0"
   }
