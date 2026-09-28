@@ -6,6 +6,7 @@
   import { t } from "@tutors/i18n";
   import TutorsIcon from "@tutors/ui-primitives/components/TutorsIcon.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import CourseNavigation from "./CourseNavigation.svelte";
   import LayoutMenu from "./LayoutMenu.svelte";
@@ -24,7 +25,7 @@
 <nav class="main-navigation" aria-label={t("a11y.mainNavigation")}>
   <div class="mobile-menu"><Sidebar position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
   {#if !currentCourse.value}
-    <a class="brand" href={showConnect ? "/" : "https://tutors.dev/"} aria-label="Tutors"><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
+    <a class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label="Tutors"><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
   {/if}
   <div class="course-heading" class:without-course={!currentCourse.value && !title}>
     {#if currentCourse.value}<span class="course-artwork"><Image lo={currentCourse.value} miniImage /></span>{/if}
