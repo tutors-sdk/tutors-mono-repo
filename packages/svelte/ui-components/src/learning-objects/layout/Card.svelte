@@ -127,7 +127,7 @@
   .resource-summary { flex: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
-  .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
+  .resource-metric { margin-top: var(--space-2); text-align: center; font-size: var(--font-caption); color: var(--ui-muted); }
   /* The artwork takes whatever height the title and summary leave, up to --card-artwork (tuned in
      paper-tokens.css) and never below 80px: a one-line title gets the full picture, a two-line title with
      a three-line summary gets a smaller one, and the text keeps its padding either way. */

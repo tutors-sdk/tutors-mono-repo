@@ -39,6 +39,18 @@ test("Note in the Dyslexia theme has no serious violations", { tag: "@rule-0051"
   expect(await seriousViolations(page)).toEqual([]);
 });
 
+test("Topic page has no serious violations", { tag: "@rule-0051" }, async ({ page }) => {
+  await page.goto("/topic/reference-course/topic-07-reference");
+  await expect(page.locator("#main-content")).toBeVisible();
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
+test("Sign-in page has no serious violations", { tag: "@rule-0216" }, async ({ page }) => {
+  await page.goto("/auth/reference-course");
+  await expect(page.getByRole("button", { name: /GitHub/i })).toBeVisible();
+  expect(await seriousViolations(page)).toEqual([]);
+});
+
 const LANDMARKS = /^\s*- (banner|complementary|contentinfo|form|main|navigation|region|search)(?: "((?:[^"\\]|\\.)*)")?/;
 
 /** Named landmarks that share their accessible name with another landmark, read from the accessibility tree. */

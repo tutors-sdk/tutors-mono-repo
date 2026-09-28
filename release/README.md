@@ -5,6 +5,8 @@ Files a release carries for the [release harness](https://github.com/tutors-sdk/
 | File | Purpose |
 | --- | --- |
 | `claims.yaml` | The differences this release intends. The harness fails on any observable difference that no claim covers, and reports claims that match nothing as stale. |
+| `deployed.json` | What production runs: `{"tag", "deployedAt", "commit", "digests"}`. `pnpm deploy:pin X.Y.Z` writes it beside the overlays it pins, so the pin pull request carries both, and `pnpm check:deploy-pins` (deploy.yml) fails when it and the overlays disagree. The harness reads it for `--baseline prod`. `deployedAt` is when production was pinned (UTC); the pin pull request's merge is the deploy. |
+| `SOP.md` | The standard work for a release: roles, the twelve steps, stop-the-line rules. `pnpm release:candidate X.Y.Z` is steps 1, 2 and 5 to 7 in one command; it reads the changelog and claims (steps 3 and 4) from the branch. |
 
 ## Writing a claim
 

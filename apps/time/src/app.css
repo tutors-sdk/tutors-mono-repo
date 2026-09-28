@@ -7,6 +7,11 @@
 @import "@skeletonlabs/skeleton/themes/terminus";
 @import "@skeletonlabs/skeleton/themes/rose";
 
+@source "../../../packages/svelte/ui-navigators/src/**/*.svelte";
+@source "../../../packages/svelte/ui-primitives/src/**/*.svelte";
+@source "../../../packages/svelte/ui-components/src/**/*.svelte";
+@source "../../../packages/svelte/themes/src/**/*.ts";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* AG Grid Community */
@@ -16,24 +21,6 @@
 .grid-fill-container {
   height: 100%;
   width: 100%;
-}
-
-.visual-tab-viewport {
-  width: 100%;
-  height: calc(100vh - 12rem);
-  min-height: 320px;
-}
-
-.summary-tab-viewport {
-  width: 100%;
-  height: calc(100vh - 12rem);
-  min-height: 320px;
-}
-
-.heatmap-full-width .heat-js,
-.heatmap-full-width [data-heat-js] .heat-js {
-  max-width: none !important;
-  width: 100% !important;
 }
 
 .ag-theme-quartz .ag-header-cell-text {
@@ -61,6 +48,9 @@
 @import "@tutors/themes/styles/classic.css";
 @import "@tutors/themes/styles/dyslexia.css";
 @import "@tutors/themes/styles/easter.css";
+@import "@tutors/themes/styles/prose-headings.css";
+@import "@tutors/themes/styles/reduced-motion.css";
+@import "@tutors/ui-components/styles.css";
 @import "@tutors/themes/styles/paper-tokens.css";
 @import "@tutors/themes/styles/paper-ui.css";
 
@@ -76,12 +66,8 @@
   --ag-row-hover-color: var(--ui-selected);
   --ag-selected-row-background-color: var(--ui-selected);
   --ag-active-color: var(--ui-brand);
-  --ag-wrapper-border-radius: var(--radius-card);
+  --ag-wrapper-border-radius: var(--radius-panel);
   --ag-header-height: 48px;
   --ag-row-height: 48px;
 }
-.time-app table { background: var(--ui-surface); border-color: var(--ui-border); }
-.time-app thead { background: var(--ui-canvas); color: var(--ui-muted); }
-.time-app tr { border-color: var(--ui-border); }
-.time-app tbody tr:hover { background: var(--ui-selected); }
-.time-app h2 { font-size: var(--font-section); }
+.time-grid { height: max(420px, calc(100dvh - 22rem)); }

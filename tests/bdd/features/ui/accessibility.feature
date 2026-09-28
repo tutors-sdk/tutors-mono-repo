@@ -22,6 +22,17 @@ Feature: Accessibility
       When axe audits a note in the Dyslexia theme
       Then it reports no critical or serious violation
 
+    Scenario: Topic page has no serious violations
+      When axe audits a topic of the Reference Course
+      Then it reports no critical or serious violation
+
+  @rule-0216 @ears-ubiquitous
+  Rule: The reader shall show the sign-in page with no critical or serious WCAG 2.1 AA violations.
+
+    Scenario: Sign-in page has no serious violations
+      When axe audits the sign-in page
+      Then it reports no critical or serious violation
+
   @rule-0170 @ears-ubiquitous
   Rule: The reader shall give every named landmark on a page an accessible name that no other landmark on that page has.
 

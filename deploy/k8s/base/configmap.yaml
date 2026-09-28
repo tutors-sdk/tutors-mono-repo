@@ -8,6 +8,11 @@ data:
   # Public URL of the app. adapter-node uses it to build absolute URLs and to
   # validate form submissions, so it must match the Route/Ingress host.
   ORIGIN: "https://tutors.dev"
+  # Cross-app links. Public dynamic env is read by SvelteKit at runtime.
+  PUBLIC_READER_ORIGIN: "https://tutors.dev"
+  PUBLIC_CATALOGUE_ORIGIN: "https://catalogue.tutors.dev"
+  PUBLIC_LIVE_ORIGIN: "https://live.tutors.dev"
+  PUBLIC_TIME_ORIGIN: "https://time.tutors.dev"
   # Trust the proxy headers set by the OpenShift router / ingress controller.
   PROTOCOL_HEADER: "x-forwarded-proto"
   HOST_HEADER: "x-forwarded-host"

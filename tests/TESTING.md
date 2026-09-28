@@ -2,8 +2,8 @@
 
 A map from each directory to its tier, runner and command. Why each tier exists, how it proves
 it can fail and when CI runs it are in the long form,
-[../guides/TESTING.md](../guides/TESTING.md); the one-page summary is
-[../guides/TESTING-OVERVIEW.md](../guides/TESTING-OVERVIEW.md).
+[../guides/testing/TESTING.md](../guides/testing/TESTING.md); the one-page summary is
+[../guides/testing/TESTING-OVERVIEW.md](../guides/testing/TESTING-OVERVIEW.md).
 
 ## The map
 
@@ -86,13 +86,13 @@ course as the generator would and loads it through the real `decorateCourseTree`
 themes, dialogs and accessibility. No steps file loads them. Each scenario is proved by the
 Playwright test with the same title, tagged with the Rule id, in `apps/reader/tests/e2e/`, and
 `pnpm test:ears:audit` fails when a scenario has no test or a test has no scenario. The long
-form is [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md#browser-proved-rules).
+form is [../guides/testing/EARS-METHODOLOGY.md](../guides/testing/EARS-METHODOLOGY.md#browser-proved-rules).
 
 Scenarios that describe behaviour the product does not have, or that no test can drive yet, are
 prose in [../guides/specifications/](../guides/specifications/README.md), each with the tier that
 covers it or a plain "nothing does". [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
 still owns the rest of the EARS plan: `Rule:` blocks and the structural audit. How to write and
-bind a scenario: [../guides/EARS-METHODOLOGY.md](../guides/EARS-METHODOLOGY.md).
+bind a scenario: [../guides/testing/EARS-METHODOLOGY.md](../guides/testing/EARS-METHODOLOGY.md).
 
 ### `contract/`
 
@@ -153,7 +153,7 @@ modules, thresholds high 85 / low 75 / break 90, with a floor per module in `mut
 `pnpm test:mutation`. The comprehensive run (`stryker.nightly.config.json`,
 `vitest.config.mutation-nightly.ts`) mutates every library module, with its floors in
 `nightly-mutation-floors.json`; the nightly `mutation-nightly` job runs it; locally,
-`pnpm test:mutation:nightly`. See [../guides/MUTATION-TESTING.md](../guides/MUTATION-TESTING.md).
+`pnpm test:mutation:nightly`. See [../guides/testing/MUTATION-TESTING.md](../guides/testing/MUTATION-TESTING.md).
 
 ### `release/`
 

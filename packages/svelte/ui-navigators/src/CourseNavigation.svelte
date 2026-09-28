@@ -6,13 +6,14 @@
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
   import type { LiveLab } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
   import InfoButton from "./buttons/InfoButton.svelte";
   import TocButton from "./buttons/TocButton.svelte";
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
   import OnlineButton from "./buttons/OnlineButton.svelte";
-  let { showConnect = true, mobile = false } = $props();
+  let { showConnect = true, mobile = false, current = "" } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
   const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
@@ -67,9 +68,9 @@
            It replaces a gate on the course's authLevel, which let a link to a dashboard a student cannot
            read appear for the whole class. -->
       {#if isEducator.value}
-        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
+        <a class="nav-row" href={`${siteUrls.time}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
       {/if}
-      <a class="nav-row" href={`https://live.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
+      <a class="nav-row" href={`${siteUrls.live}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
       <OnlineButton />
       </div>
     {/if}
@@ -78,11 +79,15 @@
     {/if}
   {:else}
     <p class="nav-section">Tutors</p>
-    <a class="nav-row" href={showConnect ? "/" : "https://tutors.dev/"} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
-    <a class="nav-row" href="https://catalogue.tutors.dev" target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>
-    <a class="nav-row" href="https://live.tutors.dev" target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>
-    <a class="nav-row" href={showConnect ? "/create" : "https://tutors.dev/create"} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
-    <a class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : "https://tutors.dev/course/tutors-reference-manual"}><Icon type="note" />{t("home.docs")}</a>
+    <a class="nav-row" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
+    {#if current === "catalogue"}<a class="nav-row" href="/" aria-current="page"><Icon type="topic" />{t("home.catalogue")}</a>
+    {:else}<a class="nav-row" href={siteUrls.catalogue} target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>{/if}
+    {#if current === "live"}<a class="nav-row" href="/" aria-current={page.url.pathname === "/" ? "page" : "location"}><Icon type="live" />{t("home.live")}</a>
+    {:else}<a class="nav-row" href={siteUrls.live} target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>{/if}
+    {#if current === "time"}<a class="nav-row" href="/" aria-current="page"><Icon type="tutorsTime" />{t("classTime.app")}</a>
+    {:else}<a class="nav-row" href={siteUrls.time} target="_blank" rel="noreferrer"><Icon type="tutorsTime" />{t("classTime.app")} ↗</a>{/if}
+    <a class="nav-row" href={showConnect ? "/create" : `${siteUrls.reader}/create`} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
+    <a class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : `${siteUrls.reader}/course/tutors-reference-manual`}><Icon type="note" />{t("home.docs")}</a>
   {/if}
   </div>
 </nav>
