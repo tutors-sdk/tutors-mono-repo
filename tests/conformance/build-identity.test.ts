@@ -44,21 +44,29 @@ describe("GET /version on every app", () => {
   });
 });
 
+const SHARED_SVELTE_CONFIG = "packages/svelte/app-config/src/svelte.js";
+
 describe("the sources that read build identity", () => {
   const isSource = (name: string) => /\.(ts|svelte|js)$/.test(name);
   const sources = [...walk(join(REPO_ROOT, "apps"), isSource), ...walk(join(REPO_ROOT, "packages"), isSource)]
     .map((file) => toPosix(file))
     .filter((file) => !file.includes("/static/") && !file.includes("/__tests__/") && !/\.(test|spec)\./.test(file));
 
-  it("are the runtime package, the /version routes and the build configs, and nothing else", () => {
+  it("are the runtime package, the /version routes and the shared build config, and nothing else", () => {
     const readers = sources
       .filter((file) => !file.startsWith("packages/svelte/utils/runtime/"))
       .filter((file) => /\b(GIT_SHA|BUILD_DATE)\b|\bversionInfo\b|\bversionEndpoint\b/.test(readText(join(REPO_ROOT, file))));
-    expect(readers.sort()).toEqual(APPS.flatMap((app) => [`apps/${app}/src/routes/version/+server.ts`, `apps/${app}/svelte.config.js`]).sort());
+    expect(readers.sort()).toEqual([...APPS.map((app) => `apps/${app}/src/routes/version/+server.ts`), SHARED_SVELTE_CONFIG].sort());
   });
 
-  it.each(APPS)("%s names its SvelteKit build after a hash of the commit, never the commit", (app) => {
+  it.each(APPS)("%s takes its SvelteKit config from the shared helper", (app) => {
     const config = readText(join(REPO_ROOT, "apps", app, "svelte.config.js"));
+    expect(config).toContain("from '@tutors/app-config/svelte'");
+    expect(config).not.toMatch(/\bkit\s*:/);
+  });
+
+  it("names every app's SvelteKit build after a hash of the commit, never the commit", () => {
+    const config = readText(join(REPO_ROOT, SHARED_SVELTE_CONFIG));
     // The build name is served in /_app/version.json and compiled into the client bundle.
     expect(config).not.toMatch(/name:\s*gitSha\b/);
     expect(config).toMatch(/createHash\('sha256'\)\.update\(gitSha\)/);
