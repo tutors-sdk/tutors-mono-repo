@@ -80,6 +80,14 @@ module.exports = {
       to: { path: "@supabase/supabase-js($|/)", dependencyTypesNot: ["type-only"] }
     },
     {
+      name: "ui-primitives-no-data-features",
+      comment:
+        "UI primitives are low-level presentational components: they take users, events and permissions as props or context, and never reach into the data and access packages (community, connect, data-api, rbac) themselves. Theme and tour services stay allowed.",
+      severity: "error",
+      from: { path: "^packages/svelte/ui-primitives/" },
+      to: { path: "^packages/svelte/(community|connect|data-api|utils/rbac)/" }
+    },
+    {
       name: "no-cross-package-cycle",
       comment:
         "A cycle that leaves a workspace and comes back makes the layering meaningless; invert one edge through a seam. Cycles inside one package (a recursive component, for instance) are allowed.",
