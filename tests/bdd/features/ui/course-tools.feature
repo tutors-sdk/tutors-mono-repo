@@ -84,3 +84,34 @@ Feature: Course tools
     Scenario: Learn section withholds Educator Control from a student
       Given a signed-in student is viewing a course
       Then the Learn section offers "Course Info" and has no Educator Control option
+
+  @rule-0218 @ears-event-driven
+  Rule: When a student starts the guided tour, the reader shall offer only the steps that match the kind of page the student started it from.
+
+    Scenario: Tour on a course home ends on a resource card
+      When a student starts the tour on a course home
+      Then the tour ends on a resource card and never points at a lab's step list
+
+    Scenario: Tour on a lab ends on its step list
+      When a student starts the tour on a lab step
+      Then the tour ends on the lab's step list and never points at a resource card
+
+    Scenario: Tour on a note offers neither cards nor lab steps
+      When a student starts the tour on a note
+      Then the tour points at neither a resource card nor a lab's step list
+
+  @rule-0219 @ears-event-driven
+  Rule: When a student starts the guided tour, the reader shall include a step for each option the side menu's Learn section offers.
+
+    Scenario: Tour visits every Learn option in turn
+      Given a signed-in educator is viewing a course
+      When the educator starts the tour on the course home
+      Then each Learn option is framed by a step, in the order the section lists them
+
+  @rule-0220 @ears-event-driven
+  Rule: When a student starts the guided tour, the reader shall include one step for each further side menu section the page offers.
+
+    Scenario: Tour frames each further side menu section once
+      Given a signed-in student sees one student online
+      When the student starts the tour on the course home
+      Then each side menu section below Learn is framed whole by exactly one step

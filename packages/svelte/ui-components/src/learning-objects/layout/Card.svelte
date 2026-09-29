@@ -71,12 +71,12 @@
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
   {@const openable = !locked || lecturer}
-  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
+  <article data-tour="card" style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
     <div class="resource-body">
     <svelte:element this={openable ? "a" : "div"} class="resource-link" href={openable ? route : undefined} target={openable && target ? target : undefined} rel={openable && target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">
         <h3>{cardDetails.title}</h3>
-        <span class="resource-type" title={cardDetails.type}>
+        <span class="resource-type" data-tour="card-type" title={cardDetails.type}>
           <Icon icon={themeService.getIcon(cardDetails.type).type} color="var(--resource-accent)" height="30" />
           <span class="visually-hidden">{cardDetails.type}</span>
         </span>
@@ -94,9 +94,9 @@
     </div>
     {#if locked}
       {#if onUnlock}
-        <button class="lock-badge" aria-label={`${t("lecturer.locks.unlock")} ${cardDetails.title}`} onclick={onUnlock}><Icon type="unlock" height="18" />{t("lecturer.locks.unlock")}</button>
+        <button class="lock-badge" data-tour="card-lock" aria-label={`${t("lecturer.locks.unlock")} ${cardDetails.title}`} onclick={onUnlock}><Icon type="unlock" height="18" />{t("lecturer.locks.unlock")}</button>
       {:else}
-        <span class="lock-badge"><Icon type="lock" height="18" />{t("lecturer.locks.locked")}</span>
+        <span class="lock-badge" data-tour="card-lock"><Icon type="lock" height="18" />{t("lecturer.locks.locked")}</span>
       {/if}
     {/if}
   </article>

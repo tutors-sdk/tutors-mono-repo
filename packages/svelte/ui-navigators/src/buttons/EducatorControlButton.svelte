@@ -172,7 +172,9 @@
   </Tabs>
 {/snippet}
 
-<Sidebar presentation="drawer" title={t("lecturer.panel.title")} {menuSelector} {sidebarContent} width="w-2xl" ariaLabel={t("lecturer.panel.tip")} />
+<div data-tour="educator">
+  <Sidebar presentation="drawer" title={t("lecturer.panel.title")} {menuSelector} {sidebarContent} width="w-2xl" ariaLabel={t("lecturer.panel.tip")} />
+</div>
 <style>
   .info-text { font-size: var(--font-label); }
   .info-heading { margin-bottom: var(--space-1); font-size: var(--font-label); font-weight: var(--weight-medium); }
