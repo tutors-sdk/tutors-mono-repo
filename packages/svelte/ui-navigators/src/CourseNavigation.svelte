@@ -9,6 +9,7 @@
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
   import InfoButton from "./buttons/InfoButton.svelte";
+  import EducatorPanelButton from "./buttons/EducatorPanelButton.svelte";
   import TocButton from "./buttons/TocButton.svelte";
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
@@ -34,11 +35,15 @@
     <hr />
   {/if}
   {#if course}
-    <!-- Learn holds every way into the course's own content: its front page, its tree, its search, its
-         calendar, its machine-readable copy and its source. They are ways of reading one course, so
-         they read as one list rather than as content in Learn and its index under Tools. -->
+    <!-- Learn holds every way into the course's own content: its front page, its summary, its tree, its
+         search, its calendar, its machine-readable copy, its source, and - for an educator - the panel
+         that administers it. They are ways of reading or running one course, so they read as one list
+         rather than as content in Learn and its index under Tools. -->
     <p class="nav-section">{t("shell.learn")}</p>
     <a class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
+    <!-- The same summary for everyone. It used to sit in the header, where an educator never saw it:
+         the header handed them the lecturer panel instead, with the summary buried in a tab of it. -->
+    <InfoButton labelled />
     {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
     {#if !course.isPortfolio}
       <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
@@ -46,6 +51,9 @@
     {#if showConnect}<CalendarButton labelled />{/if}
     {#if showConnect && course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
     {#if course.properties.github}<EditCoursButton labelled />{/if}
+    <!-- An educator's administration of the course they are reading, so it closes the Learn list rather
+         than opening a group of its own. Gated here, not inside: the panel reads the course's locks. -->
+    {#if isEducator.value}<EducatorPanelButton labelled />{/if}
     {#if course.companions?.show && course.companions.bar.length > 0}
       <p class="nav-section">{t("shell.links")}</p>
       {#each course.companions.bar as item}
@@ -54,7 +62,6 @@
     {/if}
     <div class="tool-section">
     <p class="nav-section">{t("shell.tools")}</p>
-    {#if mobile}<InfoButton showEducatorPanel={isEducator.value} labelled />{/if}
     {#if showConnect && course.hasWhiteboard}<WhiteboardButton labelled />{/if}
     </div>
     <!-- Tutors Time is one product with several views, so its links are one group rather than rows

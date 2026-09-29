@@ -70,3 +70,17 @@ Feature: Course tools
     Scenario: Course tools offers class activity to an educator
       Given a signed-in educator sees one student online
       Then course tools lists a "Class activity" link to that course on the educator time dashboard
+
+  @rule-0217 @ears-state-driven
+  Rule: While a signed-in reader is an educator of the course, the reader shall offer the lecturer panel as the last option in the side menu's Learn section.
+
+    @active
+    Scenario: Learn section ends with the lecturer panel for an educator
+      Given a signed-in educator is viewing a course
+      Then "Lecturer Panel" is the last option in the Learn section and opens on Content Locks
+      And the Learn section also offers "Course Info"
+
+    @inactive
+    Scenario: Learn section withholds the lecturer panel from a student
+      Given a signed-in student is viewing a course
+      Then the Learn section offers "Course Info" and has no lecturer panel option

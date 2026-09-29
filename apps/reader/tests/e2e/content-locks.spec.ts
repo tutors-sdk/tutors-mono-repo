@@ -66,8 +66,8 @@ test("Locking greys the card out and Unlock restores it", { tag: "@rule-0053" },
   await page.goto(course);
   await expect(cardFor(page, "Simple")).toBeVisible();
   await signInAs(page, "lecturer");
-  await page.locator(".shell-header").getByRole("button", { name: "Open Lecturer Panel" }).click();
-  const panel = page.getByRole("dialog", { name: "Open Lecturer Panel" });
+  await page.locator(".shell-navigation").getByRole("button", { name: "Open Lecturer Panel" }).click();
+  const panel = page.getByRole("dialog", { name: "Lecturer Panel" });
   await panel.getByRole("tab", { name: "Content Locks" }).click();
   await panel.locator(".info-row").filter({ has: page.getByText("Simple", { exact: true }) }).locator('[data-part="control"]').click();
   await page.keyboard.press("Escape");
@@ -88,8 +88,8 @@ test("Locked card is greyed out for a student", { tag: "@rule-0054" }, async ({ 
   // The lecturer locks Simple and turns the setting on in the lecturer panel ...
   await signInAs(page, "lecturer");
   await seedEnrolledLocks(page, [simple]);
-  await page.locator(".shell-header").getByRole("button", { name: "Open Lecturer Panel" }).click();
-  const panel = page.getByRole("dialog", { name: "Open Lecturer Panel" });
+  await page.locator(".shell-navigation").getByRole("button", { name: "Open Lecturer Panel" }).click();
+  const panel = page.getByRole("dialog", { name: "Lecturer Panel" });
   await panel.getByRole("tab", { name: "Content Locks" }).click();
   await panel.locator(".lock-setting [data-part=\"control\"]").click();
   await page.keyboard.press("Escape");
