@@ -178,31 +178,31 @@ async function learnRows(page: Page): Promise<string[]> {
   });
 }
 
-test("Learn section ends with the lecturer panel for an educator", { tag: "@rule-0217" }, async ({ page }) => {
+test("Learn section ends with Educator Control for an educator", { tag: "@rule-0217" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(course);
   await signInAs(page, "lecturer");
   const sidebar = page.locator(".shell-navigation");
   // The row appears when the seeded role reaches the sidebar, a frame or two after signInAs returns.
-  await expect(sidebar.getByRole("button", { name: "Open Lecturer Panel", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Open Educator Control", exact: true })).toBeVisible();
   const rows = await learnRows(page);
-  expect(rows.at(-1)).toBe("Lecturer Panel");
+  expect(rows.at(-1)).toBe("Educator Control");
   expect(rows).toContain("Course Info");
-  await sidebar.getByRole("button", { name: "Open Lecturer Panel", exact: true }).click();
+  await sidebar.getByRole("button", { name: "Open Educator Control", exact: true }).click();
   // Course info is its own row a few lines above, so the panel is administration only and opens on it.
-  const panel = page.getByRole("dialog", { name: "Lecturer Panel", exact: true });
+  const panel = page.getByRole("dialog", { name: "Educator Control", exact: true });
   await expect(panel.getByRole("tab", { name: "Content Locks", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(panel.getByRole("tab", { name: "Course Info", exact: true })).toHaveCount(0);
 });
 
-test("Learn section withholds the lecturer panel from a student", { tag: "@rule-0217" }, async ({ page }) => {
+test("Learn section withholds Educator Control from a student", { tag: "@rule-0217" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(course);
   await signInAs(page, "student");
   const sidebar = page.locator(".shell-navigation");
   await expect(sidebar.getByRole("button", { name: "Open course info", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("button", { name: "Open Lecturer Panel" })).toHaveCount(0);
+  await expect(sidebar.getByRole("button", { name: "Open Educator Control" })).toHaveCount(0);
   const rows = await learnRows(page);
   expect(rows).toContain("Course Info");
-  expect(rows).not.toContain("Lecturer Panel");
+  expect(rows).not.toContain("Educator Control");
 });

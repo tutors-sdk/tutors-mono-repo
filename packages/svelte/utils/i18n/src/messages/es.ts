@@ -215,8 +215,8 @@ Tutors es una aplicación de código abierto; el componente de recopilación de 
 
   // Accessibility
   // Lecturer panel
-  "lecturer.panel.title": "Panel del profesor",
-  "lecturer.panel.tip": "Abrir panel del profesor",
+  "lecturer.panel.title": "Control del profesor",
+  "lecturer.panel.tip": "Abrir control del profesor",
   "lecturer.locks.title": "Bloqueos de contenido",
   "lecturer.locks.lock": "Bloquear",
   "lecturer.locks.unlock": "Desbloquear",

@@ -215,8 +215,8 @@ Tutors is an open source application - the data collection component [is here](h
 
   // Accessibility
   // Lecturer panel
-  "lecturer.panel.title": "Lecturer Panel",
-  "lecturer.panel.tip": "Open Lecturer Panel",
+  "lecturer.panel.title": "Educator Control",
+  "lecturer.panel.tip": "Open Educator Control",
   "lecturer.locks.title": "Content Locks",
   "lecturer.locks.lock": "Lock",
   "lecturer.locks.unlock": "Unlock",
