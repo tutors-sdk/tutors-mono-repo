@@ -27,7 +27,7 @@
     <a class="nav-row" href={parentTopic?.route ?? lab.lab.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? lab.lab.parentLo?.title ?? course?.title}</a>
     <h2>{lab.lab.title}</h2>
     <p class="ui-muted text-sm">{t("shell.steps")} · {currentLabStepIndex.value + 1} / {lab.steps.length}</p>
-    <ol class="steps" aria-label={t("shell.steps")}>
+    <ol class="steps" data-tour="lab-steps" aria-label={t("shell.steps")}>
       {#each lab.lab.los as step, i}
         <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={currentLabStepIndex.value === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}</a></li>
       {/each}
@@ -40,27 +40,29 @@
          that administer it. They are ways of reading or running one course, so they read as one list
          rather than as content in Learn and its index under Tools. -->
     <p class="nav-section">{t("shell.learn")}</p>
-    <a class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
+    <a class="nav-row" data-tour="course-home" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
     <!-- The same summary for everyone. It used to sit in the header, where an educator never saw it:
          the header handed them Educator Control instead, with the summary buried in a tab of it. -->
     <InfoButton labelled />
     {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
     {#if !course.isPortfolio}
-      <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
+      <a class="nav-row" data-tour="resources" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
     {/if}
     {#if showConnect}<CalendarButton labelled />{/if}
-    {#if showConnect && course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
+    {#if showConnect && course.llm === 2}<a class="nav-row" data-tour="llm" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
     {#if course.properties.github}<EditCoursButton labelled />{/if}
     <!-- An educator's administration of the course they are reading, so it closes the Learn list rather
          than opening a group of its own. Gated here, not inside: it reads the course's locks. -->
     {#if isEducator.value}<EducatorControlButton labelled />{/if}
     {#if course.companions?.show && course.companions.bar.length > 0}
+      <div class="tool-section" data-tour="links">
       <p class="nav-section">{t("shell.links")}</p>
       {#each course.companions.bar as item}
         <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
       {/each}
+      </div>
     {/if}
-    <div class="tool-section">
+    <div class="tool-section" data-tour="tools">
     <p class="nav-section">{t("shell.tools")}</p>
     {#if showConnect && course.hasWhiteboard}<WhiteboardButton labelled />{/if}
     </div>
@@ -68,7 +70,7 @@
          scattered between here and the account menu. Sharing presence gates the group: every view
          reads the activity that sharing produces. -->
     {#if showConnect && tutorsId.value?.login && tutorsId.value.share === "true"}
-      <div class="tool-section">
+      <div class="tool-section" data-tour="activity">
       <p class="nav-section">{t("shell.activity")}</p>
       {#if analyticsEnabled}<a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>{/if}
       <!-- The class's activity is an educator's view of everyone, so an educator is exactly who sees it.
@@ -105,7 +107,10 @@
   .navigation-scroll > :global(*), .tool-section > :global(*) { flex-shrink: 0; }
   .nav-section { margin: var(--space-6) var(--space-3) var(--space-2); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); font-size: var(--font-small); font-weight: var(--weight-semibold); }
   .navigation-scroll > .nav-section:first-child { margin-top: 0; }
-  .tool-section { display: contents; }
+  /* A column of its own rather than display:contents, which leaves the group with no box at all -
+     nothing for the tour to draw a frame around. Same gap as the scroll container, so a section
+     reads exactly as it did when its heading and rows were siblings of everything else. */
+  .tool-section { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
   .tool-section:not(:has(:global(.nav-row))) { display: none; }
   .course-navigation :global(.nav-row) { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-3); border-radius: var(--radius-control); color: var(--ui-ink); text-decoration: none; overflow-wrap: anywhere; }
   .course-navigation :global(.nav-row:hover), .course-navigation :global(.nav-row[aria-current]) { background: var(--ui-selected); }

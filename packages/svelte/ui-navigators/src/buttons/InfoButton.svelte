@@ -23,4 +23,6 @@
   </article>
 {/snippet}
 
-<Sidebar presentation="dialog" title={t("nav.info.title")} {menuSelector} {sidebarContent} width="w-xl" ariaLabel={t("nav.info.tip")} />
+<div data-tour="info">
+  <Sidebar presentation="dialog" title={t("nav.info.title")} {menuSelector} {sidebarContent} width="w-xl" ariaLabel={t("nav.info.tip")} />
+</div>

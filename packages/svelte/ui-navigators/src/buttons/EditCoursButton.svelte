@@ -39,6 +39,6 @@
   });
 </script>
 
-<a href={editRoute} target="_blank" rel="noopener noreferrer" class="nav-row" aria-label={t("nav.edit.tip")}>
+<a href={editRoute} target="_blank" rel="noopener noreferrer" class="nav-row" data-tour="edit" aria-label={t("nav.edit.tip")}>
   <Icon type="edit" />{#if labelled}<span>{t("nav.edit.tip")}</span>{/if}<span aria-hidden="true">↗</span>
 </a>

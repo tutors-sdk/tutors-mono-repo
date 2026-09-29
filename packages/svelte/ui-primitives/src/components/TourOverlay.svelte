@@ -140,7 +140,7 @@
     tabindex="-1"
   >
     <div
-      class="absolute rounded-lg pointer-events-none"
+      class="tour-highlight absolute rounded-lg pointer-events-none"
       style="
         top: {targetRect.top - 6}px;
         left: {targetRect.left - 6}px;

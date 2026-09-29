@@ -1,6 +1,6 @@
-import { rune } from "@tutors/runes";
-import type { TourStep } from "./types";
-import { courseReaderSteps } from "./steps";
+import { rune, currentLo } from "@tutors/runes";
+import type { TourPageKind, TourStep } from "./types";
+import { stepsForPage } from "./steps";
 import { browser } from "$app/environment";
 
 const TOUR_COMPLETED_KEY = "tutors-tour-completed";
@@ -13,12 +13,23 @@ export function findTourTarget(selector: string): Element | undefined {
   });
 }
 
+/**
+ * The kind of page the reader is on, from the learning object it is showing. A course home, a topic
+ * and a lab each have something of their own for the tour to point at; everything else gets the
+ * shell steps under "other".
+ */
+export function currentTourPage(): TourPageKind {
+  const type = currentLo.value?.type;
+  return type === "course" || type === "topic" || type === "lab" ? type : "other";
+}
+
 function createTourService() {
   const isOpen = rune(false);
   const currentStepIndex = rune(0);
   const activeSteps = rune<TourStep[]>([]);
 
-  function start(steps: TourStep[] = courseReaderSteps) {
+  /** Starts the tour. With no argument it takes the steps for the page the reader is on. */
+  function start(steps: TourStep[] = stepsForPage(currentTourPage())) {
     if (!browser) return;
     const visible = steps.filter(step => findTourTarget(step.target));
     if (visible.length === 0) return;
