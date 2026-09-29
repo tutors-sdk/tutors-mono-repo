@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { course, seedOneOnline } from "./support";
+import { course, seedOneOnline, signInAs } from "./support";
 
 // Proves tests/bdd/features/ui/course-tools.feature: one test per scenario, titled and tagged to match.
 
@@ -158,4 +158,51 @@ test("Course tools offers class activity to an educator", { tag: "@rule-0063" },
   const classActivity = page.locator(".shell-navigation").getByRole("link", { name: "Class activity" });
   await expect(classActivity).toHaveAttribute("href", "https://time.tutors.dev/reference-course");
   await expect(classActivity).toHaveAttribute("target", "_blank");
+});
+
+/**
+ * The text of each row of the sidebar's Learn section, in order. Learn runs from its own heading to
+ * whichever comes first: the next section heading, or the Tools group (a div, so a heading nested
+ * inside it is not a sibling to stop at).
+ */
+async function learnRows(page: Page): Promise<string[]> {
+  return page.locator(".shell-navigation .navigation-scroll").evaluate(scroll => {
+    const children = [...scroll.children];
+    const learn = children.findIndex(el => el.matches(".nav-section") && el.textContent?.trim() === "Learn");
+    const rows: string[] = [];
+    for (const el of children.slice(learn + 1)) {
+      if (el.matches(".nav-section, .tool-section")) break;
+      rows.push(el.textContent!.trim());
+    }
+    return rows;
+  });
+}
+
+test("Learn section ends with Educator Control for an educator", { tag: "@rule-0217" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(course);
+  await signInAs(page, "lecturer");
+  const sidebar = page.locator(".shell-navigation");
+  // The row appears when the seeded role reaches the sidebar, a frame or two after signInAs returns.
+  await expect(sidebar.getByRole("button", { name: "Open Educator Control", exact: true })).toBeVisible();
+  const rows = await learnRows(page);
+  expect(rows.at(-1)).toBe("Educator Control");
+  expect(rows).toContain("Course Info");
+  await sidebar.getByRole("button", { name: "Open Educator Control", exact: true }).click();
+  // Course info is its own row a few lines above, so the panel is administration only and opens on it.
+  const panel = page.getByRole("dialog", { name: "Educator Control", exact: true });
+  await expect(panel.getByRole("tab", { name: "Content Locks", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(panel.getByRole("tab", { name: "Course Info", exact: true })).toHaveCount(0);
+});
+
+test("Learn section withholds Educator Control from a student", { tag: "@rule-0217" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(course);
+  await signInAs(page, "student");
+  const sidebar = page.locator(".shell-navigation");
+  await expect(sidebar.getByRole("button", { name: "Open course info", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Open Educator Control" })).toHaveCount(0);
+  const rows = await learnRows(page);
+  expect(rows).toContain("Course Info");
+  expect(rows).not.toContain("Educator Control");
 });

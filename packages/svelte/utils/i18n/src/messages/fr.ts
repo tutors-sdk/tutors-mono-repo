@@ -215,8 +215,8 @@ Tutors est une application open source - le composant de collecte des données [
 
   // Accèssibility
   // Lecturer panel
-  "lecturer.panel.title": "Panneau enseignant",
-  "lecturer.panel.tip": "Ouvrir le panneau enseignant",
+  "lecturer.panel.title": "Contrôle enseignant",
+  "lecturer.panel.tip": "Ouvrir le contrôle enseignant",
   "lecturer.locks.title": "Verrouillages de contenu",
   "lecturer.locks.lock": "Verrouillér",
   "lecturer.locks.unlock": "Déverrouiller",
