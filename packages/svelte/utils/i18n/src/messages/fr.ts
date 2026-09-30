@@ -366,7 +366,16 @@ Tutors est une application open source - le composant de collecte des données [
   "classTime.calendarEntries": "Entrées du calendrier",
   "classTime.notAvailable": "n.d.",
   "classTime.online": "En ligne",
-  "classTime.offline": "Hors ligne"
+  "classTime.offline": "Hors ligne",
+
+  // Badge card
+  "badges.badge": "Badge",
+  "badges.awarded": "Décerné le",
+  "badges.shareGroup": "Partager ce badge",
+  "badges.share": "Partager",
+  "badges.addToLinkedIn": "Ajouter au profil LinkedIn",
+  "badges.copyLink": "Copier le lien",
+  "badges.linkCopied": "Lien copié"
 };
 
 export default fr;

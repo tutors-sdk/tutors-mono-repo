@@ -366,7 +366,16 @@ Tutors es una aplicación de código abierto; el componente de recopilación de 
   "classTime.calendarEntries": "Entradas del calendario",
   "classTime.notAvailable": "N/D",
   "classTime.online": "En línea",
-  "classTime.offline": "Sin conexión"
+  "classTime.offline": "Sin conexión",
+
+  // Badge card
+  "badges.badge": "Insignia",
+  "badges.awarded": "Otorgada el",
+  "badges.shareGroup": "Compartir esta insignia",
+  "badges.share": "Compartir",
+  "badges.addToLinkedIn": "Añadir al perfil de LinkedIn",
+  "badges.copyLink": "Copiar enlace",
+  "badges.linkCopied": "Enlace copiado"
 };
 
 export default es;

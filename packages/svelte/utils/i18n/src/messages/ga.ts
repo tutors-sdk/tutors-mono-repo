@@ -341,7 +341,16 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "classTime.calendarEntries": "Iontrálacha féilire",
   "classTime.notAvailable": "N/B",
   "classTime.online": "Ar líne",
-  "classTime.offline": "As líne"
+  "classTime.offline": "As líne",
+
+  // Badge card
+  "badges.badge": "Suaitheantas",
+  "badges.awarded": "Bronnta",
+  "badges.shareGroup": "Roinn an suaitheantas seo",
+  "badges.share": "Roinn",
+  "badges.addToLinkedIn": "Cuir le próifíl LinkedIn",
+  "badges.copyLink": "Cóipeáil an nasc",
+  "badges.linkCopied": "Nasc cóipeáilte"
 } as const;
 
 export default ga;

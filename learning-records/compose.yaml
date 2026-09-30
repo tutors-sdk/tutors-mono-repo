@@ -56,11 +56,13 @@ services:
 
   signing:
     # Digital Credentials Consortium signing service, MIT. https://github.com/digitalcredentials/signing-service
-    # With no TENANT_SEED_TUTORS it signs with the DCC test key, and verifiers
-    # mark the result as a test credential. See README for a real key.
+    # With no SIGNING_TENANT_SEED_TUTORS it signs with the DCC's published test
+    # seed (the same one its "testing" tenant uses), and verifiers mark the
+    # result as a test credential. The service rejects an empty seed, so this
+    # default must stay. See README for a real key.
     image: digitalcredentials/signing-service:1.2.0
     environment:
-      TENANT_SEED_TUTORS: ${SIGNING_TENANT_SEED_TUTORS:-}
+      TENANT_SEED_TUTORS: ${SIGNING_TENANT_SEED_TUTORS:-z1AeiPT496wWmo9BG2QYXeTusgFSZPNG3T9wNeTtjrQ3rCB}
       ENABLE_ACCESS_LOGGING: "true"
     ports:
       # Bound to localhost: the service signs anything it is sent.

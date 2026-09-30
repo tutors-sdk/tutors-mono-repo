@@ -18,6 +18,15 @@ Feature: Sharing a badge
       And the image should be labelled "Lab explorer badge, Web Development 101" for screen readers
       And the badge's credential should carry the same image as its achievement image
 
+    Scenario: The badge image is readable on a dark page
+      When tutors draws the badge
+      Then the image should fill its whole area with an opaque white card behind the text
+
+    Scenario: A long one-word title stays inside the image
+      Given the course "Programming" defines the badge "oop" titled "IntroductionToObjectOrientedProgramming"
+      When tutors draws the badge
+      Then no line of the badge title should be longer than 22 characters
+
   @rule-0176 @ears-event-driven
   Rule: When a student shares a badge, tutors shall offer LinkedIn, X, Bluesky and Facebook links that point to the badge's public page, with a post that names the badge, the course and the issuer.
 

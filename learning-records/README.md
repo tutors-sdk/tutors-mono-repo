@@ -76,7 +76,8 @@ curl -u tutors-local-key:tutors-local-secret \
 - **Use a real signing key.** Generate one with the service's
   `/did-key-generator` or `/did-web-generator` endpoint, store the seed as a
   secret (`SIGNING_TENANT_SEED_TUTORS`), and publish the issuer DID. Without it
-  every badge verifies as a DCC test credential.
+  compose falls back to the DCC's published test seed, and every badge
+  verifies as a DCC test credential.
 - **Revocation.** The signing service alone cannot revoke a badge. The DCC
   issuer-coordinator adds a status list and bearer-token auth when that is
   needed.

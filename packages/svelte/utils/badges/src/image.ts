@@ -26,11 +26,19 @@ function initials(title: string): string {
     .toUpperCase();
 }
 
-/** Splits text into at most `maxLines` lines of about `width` characters, ending with "…" when cut. */
+/** Splits a word longer than `width` into `width`-character pieces, so it cannot run off the image. */
+function pieces(word: string, width: number): string[] {
+  const chars = [...word];
+  const out: string[] = [];
+  for (let i = 0; i < chars.length; i += width) out.push(chars.slice(i, i + width).join(""));
+  return out;
+}
+
+/** Splits text into at most `maxLines` lines of at most `width` characters, ending with "…" when cut. */
 function wrap(text: string, width: number, maxLines: number): string[] {
   const lines: string[] = [];
   let line = "";
-  for (const word of text.split(/\s+/).filter(Boolean)) {
+  for (const word of text.split(/\s+/).filter(Boolean).flatMap((w) => pieces(w, width))) {
     if (line && line.length + 1 + word.length > width) {
       lines.push(line);
       line = word;
@@ -39,9 +47,13 @@ function wrap(text: string, width: number, maxLines: number): string[] {
   if (line) lines.push(line);
   if (lines.length <= maxLines) return lines;
   const kept = lines.slice(0, maxLines);
-  kept[maxLines - 1] = `${kept[maxLines - 1].slice(0, width - 1)}…`;
+  kept[maxLines - 1] = `${[...kept[maxLines - 1]].slice(0, width - 1).join("")}…`;
   return kept;
 }
+
+/** Card behind the medal. The image is shown on light and dark pages, in wallets and on social
+ * networks, and page CSS cannot restyle text inside an image, so it carries its own background. */
+const CARD = "#ffffff";
 
 /** The badge as a 240 by 320 SVG document. */
 export function badgeSvg(badge: BadgeDefinition, courseTitle: string): string {
@@ -53,6 +65,7 @@ export function badgeSvg(badge: BadgeDefinition, courseTitle: string): string {
   const course = wrap(courseTitle, 30, 1)[0] ?? "";
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" width="240" height="320" role="img" aria-label="${escapeXml(`${badge.title} badge, ${courseTitle}`)}">`,
+    `<rect width="240" height="320" rx="16" fill="${CARD}"/>`,
     `<path d="M84 150 L64 236 L94 222 L110 250 L120 160 Z" fill="${colour}" opacity="0.75"/>`,
     `<path d="M156 150 L176 236 L146 222 L130 250 L120 160 Z" fill="${colour}" opacity="0.75"/>`,
     `<circle cx="120" cy="100" r="78" fill="${colour}"/>`,

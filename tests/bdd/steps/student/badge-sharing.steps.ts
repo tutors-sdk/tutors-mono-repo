@@ -70,6 +70,25 @@ describeFeature(feature, ({ Background, Rule }) => {
           expect(new TextDecoder().decode(Uint8Array.from(atob(data), (c) => c.charCodeAt(0)))).toBe(svg);
         });
       });
+
+      RuleScenario("The badge image is readable on a dark page", ({ When, Then }) => {
+        When("tutors draws the badge", draws);
+        Then("the image should fill its whole area with an opaque white card behind the text", () => {
+          const card = svg.indexOf('<rect width="240" height="320" rx="16" fill="#ffffff"/>');
+          expect(card).toBeGreaterThan(0);
+          expect(card).toBeLessThan(svg.indexOf("<text"));
+        });
+      });
+
+      RuleScenario("A long one-word title stays inside the image", ({ Given, When, Then }) => {
+        Given("the course {string} defines the badge {string} titled {string}", definesBadge);
+        When("tutors draws the badge", draws);
+        Then("no line of the badge title should be longer than {int} characters", (_ctx, width: number) => {
+          const lines = [...svg.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map((m) => m[1]);
+          expect(lines.length).toBeGreaterThan(1);
+          for (const line of lines) expect([...line].length).toBeLessThanOrEqual(width);
+        });
+      });
     }
   );
 

@@ -366,7 +366,16 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "classTime.calendarEntries": "Kalendereinträge",
   "classTime.notAvailable": "k. A.",
   "classTime.online": "Online",
-  "classTime.offline": "Offline"
+  "classTime.offline": "Offline",
+
+  // Badge card
+  "badges.badge": "Abzeichen",
+  "badges.awarded": "Verliehen am",
+  "badges.shareGroup": "Dieses Abzeichen teilen",
+  "badges.share": "Teilen",
+  "badges.addToLinkedIn": "Zum LinkedIn-Profil hinzufügen",
+  "badges.copyLink": "Link kopieren",
+  "badges.linkCopied": "Link kopiert"
 };
 
 export default de;
