@@ -133,3 +133,10 @@ Feature: Student home page
       When the browser asks to bookmark a nonexistent step of lab 1 of "web-dev-101"
       Then the reader answers 404
       And "alice" has no bookmarks
+
+    Scenario: Bookmarking a route a course publishes outside the reader
+      Given "alice" is signed in
+      And the course "odd-101" publishes a note at the route "javascript:alert%28document.domain%29"
+      When the browser asks to bookmark the route "javascript:alert%28document.domain%29" of "odd-101"
+      Then the reader answers 404
+      And "alice" has no bookmarks

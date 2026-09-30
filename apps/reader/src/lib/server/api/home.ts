@@ -45,14 +45,31 @@ export function courseProgress(los: PublishedLo[], records: VisitedLo[]): Course
   };
 }
 
-/** The signed-in student's learning records in the given courses. */
+/** PostgREST answers at most this many rows per request (Supabase's default max-rows). */
+export const RECORDS_PAGE = 1000;
+/** A bound on one home page's reads: 100 pages. */
+const MAX_RECORDS = 100 * RECORDS_PAGE;
+
+/**
+ * The signed-in student's learning records in the given courses, read page by page in a stable order
+ * so that no record is dropped by the row cap or read twice.
+ */
 export async function learningRecordsIn(db: SupabaseClient, login: string, courseIds: string[]): Promise<VisitedLo[]> {
   if (courseIds.length === 0) return [];
-  const { data, error } = await db
-    .from("learning_records")
-    .select("course_id, lo_id, date_last_accessed")
-    .eq("student_id", login)
-    .in("course_id", courseIds);
-  if (error) throw new StoreError(`learning_records read: ${error.message ?? "unknown error"}`);
-  return (data as VisitedLo[] | null) ?? [];
+  const records: VisitedLo[] = [];
+  for (let from = 0; from < MAX_RECORDS; from += RECORDS_PAGE) {
+    const { data, error } = await db
+      .from("learning_records")
+      .select("course_id, lo_id, date_last_accessed")
+      .eq("student_id", login)
+      .in("course_id", courseIds)
+      .order("course_id", { ascending: true })
+      .order("lo_id", { ascending: true })
+      .range(from, from + RECORDS_PAGE - 1);
+    if (error) throw new StoreError(`learning_records read: ${error.message ?? "unknown error"}`);
+    const page = (data as VisitedLo[] | null) ?? [];
+    records.push(...page);
+    if (page.length < RECORDS_PAGE) break;
+  }
+  return records;
 }

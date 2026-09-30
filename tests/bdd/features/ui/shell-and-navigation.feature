@@ -142,3 +142,10 @@ Feature: Reader shell and navigation
       And the home page shows compact tiles in columns where the viewport allows
       And removing a tile forgets its bookmark
       And a failed removal reports an error and keeps the tile
+
+    Scenario: A lab step is bookmarked as the step on screen and a stored route outside the reader is not a link
+      Given a signed-in reader has saved a bookmark whose route leaves the reader
+      When they bookmark the second step of a lab
+      Then the control is at least 44 pixels tall
+      And the bookmark names that step and the control shows it saved only on that step
+      And the home page shows the stored route outside the reader as a tile that is not a link

@@ -6,6 +6,8 @@
   const { bookmarks, courseVisits, onchange }: { bookmarks: HomeBookmarks; courseVisits: CourseVisit[]; onchange: (b: HomeBookmarks) => void } = $props();
 
   const courseTitle = (id: string) => courseVisits.find((cv) => cv.id === id)?.title ?? id;
+  // The server stores only reader paths; a stored row that is anything else never becomes a link.
+  const readerPath = (route: string) => (/^\/[a-z]+\//.test(route) && !/[\\\s:]/.test(route) ? route : undefined);
   let busy = $state(false);
   let failed = $state(false);
 
@@ -31,7 +33,7 @@
     <ul class="ui-grid bookmark-list">
       {#each bookmarks as bookmark (bookmark.courseId + bookmark.loRoute)}
         <li class="ui-panel">
-          <a href={bookmark.loRoute}>
+          <a href={readerPath(bookmark.loRoute)}>
             <span class="artwork" aria-hidden="true"><Icon type={bookmark.loType} height="24" /></span>
             <span class="title">{bookmark.title}</span>
             <span class="course">{courseTitle(bookmark.courseId)}</span>

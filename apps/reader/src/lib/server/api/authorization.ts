@@ -19,8 +19,22 @@ export interface PublishedLo {
   steps?: string[];
 }
 
-/** Containers, lab steps, topic-page panels and links out: learning objects the reader does not open as a page of their own. */
-const NOT_A_PAGE = new Set(["course", "topic", "unit", "side", "step", "panelnote", "paneltalk", "panelvideo", "web", "github", "archive"]);
+/** Containers, lab steps, topic-page panels, inline podcasts and links out: learning objects the reader does not open as a page of their own. */
+const NOT_A_PAGE = new Set(["course", "topic", "unit", "side", "step", "panelnote", "paneltalk", "panelvideo", "podcast", "web", "github", "archive"]);
+
+/**
+ * The route as a path of the reader beneath `/<type>/<courseId>`, or null. A course's tutors.json is not
+ * trusted to name a safe URL: a scheme, an escape or a protocol-relative path could leave the reader or run script.
+ */
+export function readerRoute(route: string, courseId: string): string | null {
+  // The same normalising the reader's model applies: a leading "#" becomes "/", a trailing "/" is dropped.
+  let path = route.replaceAll("{{COURSEURL}}", courseId).replace(/^#/, "/");
+  if (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+  const [, type, id, ...rest] = path.split("/");
+  if (!path.startsWith("/") || !/^[a-z]+$/.test(type ?? "") || id !== courseId) return null;
+  if (/[\\\s:%?#]/.test(path) || rest.some((segment) => segment === "" || segment === "." || segment === "..")) return null;
+  return path;
+}
 
 type RawLo = { type?: unknown; route?: unknown; title?: unknown; los?: unknown };
 
@@ -28,12 +42,13 @@ function publishedLos(courseId: string, los: unknown, out: PublishedLo[] = []): 
   if (!Array.isArray(los)) return out;
   for (const lo of los as RawLo[]) {
     if (!lo || typeof lo !== "object") continue;
-    if (typeof lo.type === "string" && typeof lo.route === "string" && !NOT_A_PAGE.has(lo.type)) {
-      const page: PublishedLo = { route: lo.route.replaceAll("{{COURSEURL}}", courseId), title: typeof lo.title === "string" ? lo.title : "", type: lo.type };
+    const route = typeof lo.route === "string" ? readerRoute(lo.route, courseId) : null;
+    if (typeof lo.type === "string" && route && !NOT_A_PAGE.has(lo.type)) {
+      const page: PublishedLo = { route, title: typeof lo.title === "string" ? lo.title : "", type: lo.type };
       if (lo.type === "lab" && Array.isArray(lo.los)) {
         page.steps = (lo.los as RawLo[])
-          .filter((step) => typeof step?.route === "string")
-          .map((step) => (step.route as string).replaceAll("{{COURSEURL}}", courseId));
+          .map((step) => (typeof step?.route === "string" ? readerRoute(step.route, courseId) : null))
+          .filter((step): step is string => step !== null);
       }
       out.push(page);
     }

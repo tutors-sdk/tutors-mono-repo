@@ -21,8 +21,8 @@
 
 #### Features
 
-- Home page: each course card shows how many of the course's learning objects a signed-in student has opened, and a Continue button back to the last one; progression reads as unavailable, not zero, when it cannot be read, and nothing is asked for when no one is signed in. Rules 0076 to 0079 (dom, network)
-- Bookmarks: a signed-in reader can bookmark a published page or lab step from the control beside its breadcrumbs; the control reflects its saved state, and the home page lists bookmarks newest first in a compact responsive tile grid. Failed removals keep the tile and show an error, and unpublished descendant routes are refused. Stored by the reader's server in `tutors_bookmarks` under the session's login. Rules 0150 to 0153 and 0155 (dom, screenshot, network, migration, persistence) (PR #332)
+- Home page: each course card shows how many of the course's learning objects a signed-in student has opened, and a Continue button back to the last one; progression reads as unavailable, not zero, when it cannot be read, and nothing is asked for when no one is signed in. Inline podcasts are not counted as pages, and every learning record is read however many a student has. Rules 0076 to 0079 (dom, network)
+- Bookmarks: a signed-in reader can bookmark a published page or lab step from the control beside its breadcrumbs; the control reflects its saved state, and the home page lists bookmarks newest first in a compact responsive tile grid. Failed removals keep the tile and show an error, and unpublished descendant routes, and any route that is not a page of the reader beneath its course, are refused; on a lab the control bookmarks the step on screen. Stored by the reader's server in `tutors_bookmarks` under the session's login. Rules 0150 to 0153 and 0155 (dom, screenshot, network, migration, persistence) (PR #332)
 - Home page: a lecturer's own courses (those listing them as an educator) are listed under Teaching, with a link to each course's class activity. Rule 0154 (dom, network)
 
 #### Fixes
