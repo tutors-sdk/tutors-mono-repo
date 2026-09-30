@@ -58,6 +58,7 @@
     "promote:image": "tsx scripts/promote-image.ts",
     "release:harness": "tsx scripts/release-harness.ts",
     "release:candidate": "tsx scripts/release-candidate.ts",
+    "release:quality": "tsx scripts/checks/release-quality.ts",
     "release:rules": "tsx scripts/release-rules.ts",
     "release:report-comment": "tsx scripts/release-report-comment.ts"
   },

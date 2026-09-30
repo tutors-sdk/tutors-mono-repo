@@ -44,13 +44,17 @@ export function mutationScore(statuses: string[]): number {
   return valid === 0 ? 100 : (100 * detected) / valid;
 }
 
+/** Every mutant's status per module, keyed by repo-relative path. */
+export function moduleStatuses(report: MutationReport, root: string = REPO_ROOT): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(report.files).map(([file, { mutants }]) => [isAbsolute(file) ? toPosix(file, root) : file, mutants.map((m) => m.status)])
+  );
+}
+
 /** Score per module, keyed by repo-relative path. */
 export function moduleScores(report: MutationReport, root: string = REPO_ROOT): Record<string, number> {
   return Object.fromEntries(
-    Object.entries(report.files).map(([file, { mutants }]) => [
-      isAbsolute(file) ? toPosix(file, root) : file,
-      Number(mutationScore(mutants.map((m) => m.status)).toFixed(2))
-    ])
+    Object.entries(moduleStatuses(report, root)).map(([file, statuses]) => [file, Number(mutationScore(statuses).toFixed(2))])
   );
 }
 
