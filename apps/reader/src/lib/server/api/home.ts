@@ -23,13 +23,9 @@ export function homeCourseIds(visits: unknown[]): string[] {
   return [...new Set(dated.map((v) => v.id))].slice(0, MAX_HOME_COURSES);
 }
 
-/** The published learning object a route belongs to: the one it equals or sits beneath (a lab step belongs to its lab). */
+/** Match a published page or one of its published lab steps, never an arbitrary descendant. */
 export function publishedOwner(los: PublishedLo[], loId: string): PublishedLo | undefined {
-  let best: PublishedLo | undefined;
-  for (const lo of los) {
-    if ((loId === lo.route || loId.startsWith(lo.route + "/")) && lo.route.length > (best?.route.length ?? -1)) best = lo;
-  }
-  return best;
+  return los.find((lo) => loId === lo.route || lo.steps?.includes(loId));
 }
 
 /** Rules 0076 and 0077: how many of the course's learning objects the records open, and where to continue. */

@@ -222,6 +222,13 @@ describe("bookmarkService", () => {
     expect(api.getBookmarks).not.toHaveBeenCalled();
   });
 
+  it("reports a failed refresh after a successful write instead of claiming the UI is updated", async () => {
+    api.addBookmark.mockResolvedValue({ ok: true });
+    api.getBookmarks.mockResolvedValue(null);
+    expect(await bookmarkService.toggle(bookmark.courseId, bookmark.loRoute)).toBe(false);
+    expect(bookmarkService.bookmarks).toEqual([]);
+  });
+
   it("changes nothing when no one is signed in", async () => {
     who.value = null;
     expect(

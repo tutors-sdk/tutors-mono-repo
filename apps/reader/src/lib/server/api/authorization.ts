@@ -15,6 +15,8 @@ export interface PublishedLo {
   route: string;
   title: string;
   type: string;
+  /** Exact published lab-step routes, counted toward their parent lab. */
+  steps?: string[];
 }
 
 /** Containers, lab steps, topic-page panels and links out: learning objects the reader does not open as a page of their own. */
@@ -27,7 +29,13 @@ function publishedLos(courseId: string, los: unknown, out: PublishedLo[] = []): 
   for (const lo of los as RawLo[]) {
     if (!lo || typeof lo !== "object") continue;
     if (typeof lo.type === "string" && typeof lo.route === "string" && !NOT_A_PAGE.has(lo.type)) {
-      out.push({ route: lo.route.replaceAll("{{COURSEURL}}", courseId), title: typeof lo.title === "string" ? lo.title : "", type: lo.type });
+      const page: PublishedLo = { route: lo.route.replaceAll("{{COURSEURL}}", courseId), title: typeof lo.title === "string" ? lo.title : "", type: lo.type };
+      if (lo.type === "lab" && Array.isArray(lo.los)) {
+        page.steps = (lo.los as RawLo[])
+          .filter((step) => typeof step?.route === "string")
+          .map((step) => (step.route as string).replaceAll("{{COURSEURL}}", courseId));
+      }
+      out.push(page);
     }
     // Lab steps sit beneath their lab, and a unit's or side's pages beneath it.
     if (lo.type !== "lab") publishedLos(courseId, lo.los, out);

@@ -22,7 +22,7 @@
 #### Features
 
 - Home page: each course card shows how many of the course's learning objects a signed-in student has opened, and a Continue button back to the last one; progression reads as unavailable, not zero, when it cannot be read, and nothing is asked for when no one is signed in. Rules 0076 to 0079 (dom, network)
-- Bookmarks: a signed-in reader can bookmark any page from a Bookmark button beside its breadcrumbs, and the home page lists their bookmarks, newest first, in every browser they sign in on. Stored by the reader's server in `tutors_bookmarks` under the session's login. Rules 0150 to 0153 (dom, network, migration, persistence)
+- Bookmarks: a signed-in reader can bookmark a published page or lab step from the control beside its breadcrumbs; the control reflects its saved state, and the home page lists bookmarks newest first in a compact responsive tile grid. Failed removals keep the tile and show an error, and unpublished descendant routes are refused. Stored by the reader's server in `tutors_bookmarks` under the session's login. Rules 0150 to 0153 and 0155 (dom, screenshot, network, migration, persistence) (PR #332)
 - Home page: a lecturer's own courses (those listing them as an educator) are listed under Teaching, with a link to each course's class activity. Rule 0154 (dom, network)
 
 #### Fixes

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { courseFactsFrom } from "../../../apps/reader/src/lib/server/api/authorization.ts";
-import { courseProgress, homeCourseIds, MAX_HOME_COURSES } from "../../../apps/reader/src/lib/server/api/home.ts";
+import { courseProgress, homeCourseIds, MAX_HOME_COURSES, publishedOwner } from "../../../apps/reader/src/lib/server/api/home.ts";
 
 const course = {
   title: "C",
@@ -25,8 +25,8 @@ describe("reader /api/home", () => {
 
   it("counts the pages a course publishes: not topics, units, lab steps, panels or links out", () => {
     expect(los).toEqual([
-      { route: "/lab/c/t1/lab-1", title: "Lab 1", type: "lab" },
-      { route: "/lab/c/t1/lab-10", title: "Lab 10", type: "lab" },
+      { route: "/lab/c/t1/lab-1", title: "Lab 1", type: "lab", steps: ["/lab/c/t1/lab-1/0"] },
+      { route: "/lab/c/t1/lab-10", title: "Lab 10", type: "lab", steps: [] },
       { route: "/talk/c/t1/u1/slides", title: "Slides", type: "talk" }
     ]);
   });
@@ -59,5 +59,13 @@ describe("reader /api/home", () => {
     ).toEqual(["new", "old"]);
     const many = Array.from({ length: MAX_HOME_COURSES + 5 }, (_, i) => ({ id: `c${i}`, lastVisit: `2026-01-01T00:00:${String(i % 60).padStart(2, "0")}Z` }));
     expect(homeCourseIds(many)).toHaveLength(MAX_HOME_COURSES);
+  });
+
+  it("accepts published lab steps and rejects invented descendants of labs and talks", () => {
+    expect(publishedOwner(los, "/lab/c/t1/lab-1/0")?.title).toBe("Lab 1");
+    for (const route of ["/lab/c/t1/lab-1/999", "/lab/c/t1/lab-1/0/missing", "/talk/c/t1/u1/slides/missing"]) {
+      expect(publishedOwner(los, route)).toBeUndefined();
+      expect(courseProgress(los, [{ course_id: "c", lo_id: route, date_last_accessed: "2026-09-30T09:00:00Z" }]).continueAt).toBeNull();
+    }
   });
 });

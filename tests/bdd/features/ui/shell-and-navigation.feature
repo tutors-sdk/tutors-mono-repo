@@ -131,3 +131,14 @@ Feature: Reader shell and navigation
       Given the viewport is 1440 pixels wide
       When a student scrolls down the course home
       Then the header stays in view
+
+  @rule-0155 @ears-event-driven
+  Rule: When a signed-in reader opens or changes a bookmark, the reader shall reflect the saved state in the page control and the home page's responsive tile grid.
+
+    Scenario: Saved bookmarks update the button and appear as compact, removable tiles
+      Given a signed-in reader has saved two bookmarks
+      When they open a bookmarked lab and remove and restore its bookmark
+      Then the control changes between Bookmarked and Bookmark with the saved state
+      And the home page shows compact tiles in columns where the viewport allows
+      And removing a tile forgets its bookmark
+      And a failed removal reports an error and keeps the tile

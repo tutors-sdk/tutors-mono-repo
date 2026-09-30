@@ -290,5 +290,18 @@ describeFeature(feature, ({ Background, Rule }) => {
         expect(bookmarkRows(githubUser(name).login)).toEqual([]);
       });
     });
+
+    RuleScenario("Bookmarking a nonexistent step beneath a published lab", ({ Given, When, Then, And }) => {
+      Given("{string} is signed in", signedIn);
+      When("the browser asks to bookmark a nonexistent step of lab {number} of {string}", async (_ctx, n: number, courseId: string) => {
+        await askToBookmark(courseId, { loRoute: lab(courseId, n).route + "/no-such-step" });
+      });
+      Then("the reader answers {number}", (_ctx, status: number) => {
+        expect(response.status).toBe(status);
+      });
+      And("{string} has no bookmarks", (_ctx, name: string) => {
+        expect(bookmarkRows(githubUser(name).login)).toEqual([]);
+      });
+    });
   });
 });

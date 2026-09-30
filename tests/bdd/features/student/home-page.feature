@@ -8,7 +8,7 @@ Feature: Student home page
   The learning objects a course publishes are the pages the reader opens for it: every learning
   object in its tutors.json except topics, units, sides, lab steps, the panels shown on a topic's
   page, and links out (web, github and archive). A learning record counts toward the learning
-  object whose route it equals or sits beneath, so a lab step's record counts toward its lab.
+  object whose published page or lab-step route it matches, so a lab step's record counts toward its lab.
   Progression measures learning objects opened, not mastered. Only those learning objects can be
   bookmarked, and a bookmark keeps the title the course publishes for it.
 
@@ -125,5 +125,11 @@ Feature: Student home page
     Scenario: Bookmarking a course that is not published
       Given "alice" is signed in
       When the browser asks to bookmark the route "/lab/ghost-course/topic-1/lab-1" of "ghost-course"
+      Then the reader answers 404
+      And "alice" has no bookmarks
+
+    Scenario: Bookmarking a nonexistent step beneath a published lab
+      Given "alice" is signed in
+      When the browser asks to bookmark a nonexistent step of lab 1 of "web-dev-101"
       Then the reader answers 404
       And "alice" has no bookmarks
