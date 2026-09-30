@@ -17,6 +17,7 @@
  * To create or move a pin use `pnpm deploy:pin <version>`, which resolves the
  * digests from the registry and rewrites the overlays.
  */
+import { existsSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import yaml from "js-yaml";
@@ -181,11 +182,83 @@ export function pinOverlayText(text: string, tag: string, digest: string): strin
   return lines.join(eol);
 }
 
+// ---- release/deployed.json ------------------------------------------------------------------------
+
+/**
+ * What production runs, as the release harness reads it (`--baseline prod`): the
+ * release tag, the commit that tag names, when production was pinned to it and
+ * the four digests. `pnpm deploy:pin` writes it beside the overlays, so the pull
+ * request that deploys a release carries both, and this check fails when the two
+ * disagree. The deploy is that pull request's merge: deploy.yml verifies it and
+ * announces it to the harness, and no job writes to main.
+ */
+export const DEPLOYED_FILE = "release/deployed.json";
+
+export interface DeployedRecord {
+  tag: string;
+  /** ISO 8601, UTC, whole seconds: when production was pinned to `tag`. */
+  deployedAt: string;
+  /** The commit `v<tag>` names. */
+  commit: string;
+  digests?: Record<string, string>;
+}
+
+const COMMIT_PATTERN = /^[0-9a-f]{40}$/;
+const INSTANT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+
+/** The record for a set of pins that agree on one release (see overlayPinFindings). */
+export function deployedRecord({ pins, commit, deployedAt }: { pins: Pin[]; commit: string; deployedAt: Date }): DeployedRecord {
+  const tags = new Set(pins.map((pin) => pin.tag));
+  if (tags.size !== 1) throw new Error(`the pins name ${tags.size} releases; a deployed record names one`);
+  if (!COMMIT_PATTERN.test(commit)) throw new Error(`not a full commit sha: ${commit}`);
+  return {
+    tag: pins[0].tag,
+    deployedAt: deployedAt.toISOString().replace(/\.\d{3}Z$/, "Z"),
+    commit,
+    digests: Object.fromEntries(pins.map((pin) => [pin.app, pin.digest]))
+  };
+}
+
+export function renderDeployed(record: DeployedRecord): string {
+  return `${JSON.stringify(record, null, 2)}\n`;
+}
+
+/** release/deployed.json under `root`, or undefined when it is absent. Malformed JSON throws. */
+export function readDeployed(root: string = REPO_ROOT): DeployedRecord | undefined {
+  const path = join(root, DEPLOYED_FILE);
+  if (!existsSync(path)) return undefined;
+  return JSON.parse(readText(path)) as DeployedRecord;
+}
+
+/** Problems with release/deployed.json against the overlay pins; empty when it names exactly what they pin. */
+export function deployedFindings(pins: Pin[], record: DeployedRecord | undefined): string[] {
+  const where = DEPLOYED_FILE;
+  if (record === undefined) return [`missing-deployed-record: ${where}: absent (pnpm deploy:pin <version> writes it beside the overlays)`];
+  const findings: string[] = [];
+  if (typeof record.commit !== "string" || !COMMIT_PATTERN.test(record.commit)) findings.push(`deployed-commit-malformed: ${where}: commit ${String(record.commit)} (a full 40-character sha)`);
+  if (typeof record.deployedAt !== "string" || !INSTANT_PATTERN.test(record.deployedAt)) {
+    findings.push(`deployed-at-malformed: ${where}: deployedAt ${String(record.deployedAt)} (UTC, YYYY-MM-DDTHH:MM:SSZ)`);
+  }
+  const tag = pins[0]?.tag;
+  if (tag !== undefined && record.tag !== tag) findings.push(`deployed-tag-differs: ${where}: tag ${String(record.tag)}, the overlays pin ${tag}`);
+  if (record.digests !== undefined) {
+    for (const pin of pins) {
+      if (record.digests[pin.app] !== pin.digest) {
+        findings.push(`deployed-digest-differs: ${where}: digests.${pin.app} ${String(record.digests[pin.app])}, overlays/${pin.app} pins ${pin.digest}`);
+      }
+    }
+    const extra = Object.keys(record.digests).filter((app) => !pins.some((pin) => pin.app === app));
+    if (extra.length > 0) findings.push(`deployed-digest-unknown-app: ${where}: digests for ${extra.join(", ")}, which no overlay pins`);
+  }
+  return findings.sort();
+}
+
 function main(): void {
   const args = process.argv.slice(2);
   const overlays = readOverlays();
   const packageVersion: string = JSON.parse(readText(join(REPO_ROOT, "package.json"))).version;
   const { findings, pins } = overlayPinFindings(overlays, { packageVersion });
+  if (findings.length === 0) findings.push(...deployedFindings(pins, readDeployed()));
   if (args.includes("--registry") && findings.length === 0) {
     findings.push(...registryPinFindings(pins, { resolve: resolveDigest, verify: verifySignature }));
   }
@@ -193,7 +266,9 @@ function main(): void {
     process.stderr.write("FAIL: the overlays are not pinned to what production runs:\n");
     for (const finding of findings) {
       process.stderr.write(`  ${finding}\n`);
-      if (process.env.GITHUB_ACTIONS) process.stderr.write(`::error file=deploy/k8s/${finding.split(": ")[1]}/kustomization.yaml::${finding}\n`);
+      const at = finding.split(": ")[1];
+      const file = at === DEPLOYED_FILE ? at : `deploy/k8s/${at}/kustomization.yaml`;
+      if (process.env.GITHUB_ACTIONS) process.stderr.write(`::error file=${file}::${finding}\n`);
     }
     process.exit(1);
   }

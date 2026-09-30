@@ -56,49 +56,20 @@ export function formatTimeMinutesOnly(minutes: number): string {
   return `${Math.round(minutes)}`;
 }
 
-/** Background colour by minutes: 0 = white, 1 = light green, 1–200 = deeper green, 200–400 = light red, 400–800 = deep red.
- *  NOTE: input is already in minutes (converted at load).
+/** Rounded minutes for a cell, or 0 when nothing was recorded. */
+export function minutesOf(value: unknown): number {
+  const minutes = Math.round(Number(value) || 0);
+  return minutes > 0 ? minutes : 0;
+}
+
+/**
+ * Heat-scale colour on the design tokens, readable with the normal ink in light and dark mode: success tints
+ * deepen up to 200 minutes, then danger tints flag unusually long days (the same bands as the educator view).
  */
-export function cellColorForMinutes(minutes: number | null | undefined): string {
-  const mins = minutes != null ? Number(minutes) : 0;
-  const white = { r: 255, g: 255, b: 255 };
-  const lightGreen = { r: 200, g: 255, b: 200 };
-  const deepGreen = { r: 0, g: 120, b: 0 };
-  const lightRed = { r: 255, g: 180, b: 180 }; // Lighter red for 200-400 range
-  const deepRed = { r: 180, g: 0, b: 0 }; // Deeper red for 400-800 range
-  let r: number;
-  let g: number;
-  let b: number;
-  if (mins <= 0) {
-    r = white.r;
-    g = white.g;
-    b = white.b;
-  } else if (mins <= 1) {
-    // Transition from white to light green (0-1 minutes)
-    const t = mins;
-    r = Math.round(white.r + t * (lightGreen.r - white.r));
-    g = Math.round(white.g + t * (lightGreen.g - white.g));
-    b = Math.round(white.b + t * (lightGreen.b - white.b));
-  } else if (mins <= 200) {
-    // Transition from light green to deep green (1-200 minutes)
-    const t = (mins - 1) / 199;
-    r = Math.round(lightGreen.r + t * (deepGreen.r - lightGreen.r));
-    g = Math.round(lightGreen.g + t * (deepGreen.g - lightGreen.g));
-    b = Math.round(lightGreen.b + t * (deepGreen.b - lightGreen.b));
-  } else if (mins <= 400) {
-    // Transition from deep green to light red (200-400 minutes)
-    const t = (mins - 200) / 200;
-    r = Math.round(deepGreen.r + t * (lightRed.r - deepGreen.r));
-    g = Math.round(deepGreen.g + t * (lightRed.g - deepGreen.g));
-    b = Math.round(deepGreen.b + t * (lightRed.b - deepGreen.b));
-  } else {
-    // Transition from light red to deep red (400-800 minutes)
-    const t = Math.min(1, (mins - 400) / 400);
-    r = Math.round(lightRed.r + t * (deepRed.r - lightRed.r));
-    g = Math.round(lightRed.g + t * (deepRed.g - lightRed.g));
-    b = Math.round(lightRed.b + t * (deepRed.b - lightRed.b));
-  }
-  return `rgb(${r}, ${g}, ${b})`;
+export function heatColor(minutes: number): string {
+  if (minutes <= 0) return "";
+  if (minutes <= 200) return `color-mix(in srgb, var(--ui-success) ${Math.round(25 + (minutes / 200) * 45)}%, var(--ui-surface))`;
+  return `color-mix(in srgb, var(--ui-danger) ${Math.round(30 + Math.min(1, (minutes - 200) / 600) * 40)}%, var(--ui-surface))`;
 }
 
 /** Get the Monday date (YYYY-MM-DD) for the week containing the given date. */

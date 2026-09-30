@@ -3,10 +3,13 @@
   import { onMount } from "svelte";
   import { t } from "@tutors/i18n";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   let contentHtml = "";
 
   onMount(async () => {
-    contentHtml = convertMdToHtml(t("footer.message"));
+    contentHtml = convertMdToHtml(t("footer.message")
+      .replaceAll("https://catalogue.tutors.dev", siteUrls.catalogue)
+      .replaceAll("https://tutors.dev", siteUrls.reader));
   });
 </script>
 

@@ -6,19 +6,22 @@
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
   import type { LiveLab } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
   import InfoButton from "./buttons/InfoButton.svelte";
+  import EducatorControlButton from "./buttons/EducatorControlButton.svelte";
   import TocButton from "./buttons/TocButton.svelte";
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
   import OnlineButton from "./buttons/OnlineButton.svelte";
-  let { showConnect = true, mobile = false } = $props();
+  let { showConnect = true, mobile = false, current = "" } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
   const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
   const companionLabels: Record<string, string> = { moodle: "Moodle", youtube: "YouTube", slack: "Slack", zoom: "Zoom", teams: "Teams", podcast: "Podcast" };
 </script>
-<nav class="course-navigation" aria-label={t("shell.navigation")}>
+<!-- Unnamed: the complementary landmark around it (or the dialog on phones) already carries "Course navigation". Rule 0170. -->
+<nav class="course-navigation">
   <div class="navigation-scroll">
   {#if lab && !lab.lab.pdf}
     <a class="nav-row" href={parentTopic?.route ?? lab.lab.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? lab.lab.parentLo?.title ?? course?.title}</a>
@@ -32,11 +35,15 @@
     <hr />
   {/if}
   {#if course}
-    <!-- Learn holds every way into the course's own content: its front page, its tree, its search, its
-         calendar, its machine-readable copy and its source. They are ways of reading one course, so
-         they read as one list rather than as content in Learn and its index under Tools. -->
+    <!-- Learn holds every way into the course's own content: its front page, its summary, its tree, its
+         search, its calendar, its machine-readable copy, its source, and - for an educator - the controls
+         that administer it. They are ways of reading or running one course, so they read as one list
+         rather than as content in Learn and its index under Tools. -->
     <p class="nav-section">{t("shell.learn")}</p>
     <a class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
+    <!-- The same summary for everyone. It used to sit in the header, where an educator never saw it:
+         the header handed them Educator Control instead, with the summary buried in a tab of it. -->
+    <InfoButton labelled />
     {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
     {#if !course.isPortfolio}
       <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
@@ -44,6 +51,9 @@
     {#if showConnect}<CalendarButton labelled />{/if}
     {#if showConnect && course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
     {#if course.properties.github}<EditCoursButton labelled />{/if}
+    <!-- An educator's administration of the course they are reading, so it closes the Learn list rather
+         than opening a group of its own. Gated here, not inside: it reads the course's locks. -->
+    {#if isEducator.value}<EducatorControlButton labelled />{/if}
     {#if course.companions?.show && course.companions.bar.length > 0}
       <p class="nav-section">{t("shell.links")}</p>
       {#each course.companions.bar as item}
@@ -52,7 +62,6 @@
     {/if}
     <div class="tool-section">
     <p class="nav-section">{t("shell.tools")}</p>
-    {#if mobile}<InfoButton showEducatorPanel={isEducator.value} labelled />{/if}
     {#if showConnect && course.hasWhiteboard}<WhiteboardButton labelled />{/if}
     </div>
     <!-- Tutors Time is one product with several views, so its links are one group rather than rows
@@ -66,9 +75,9 @@
            It replaces a gate on the course's authLevel, which let a link to a dashboard a student cannot
            read appear for the whole class. -->
       {#if isEducator.value}
-        <a class="nav-row" href={`https://time.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
+        <a class="nav-row" href={`${siteUrls.time}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
       {/if}
-      <a class="nav-row" href={`https://live.tutors.dev/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
+      <a class="nav-row" href={`${siteUrls.live}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
       <OnlineButton />
       </div>
     {/if}
@@ -77,11 +86,15 @@
     {/if}
   {:else}
     <p class="nav-section">Tutors</p>
-    <a class="nav-row" href={showConnect ? "/" : "https://tutors.dev/"} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
-    <a class="nav-row" href="https://catalogue.tutors.dev" target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>
-    <a class="nav-row" href="https://live.tutors.dev" target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>
-    <a class="nav-row" href={showConnect ? "/create" : "https://tutors.dev/create"} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
-    <a class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : "https://tutors.dev/course/tutors-reference-manual"}><Icon type="note" />{t("home.docs")}</a>
+    <a class="nav-row" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
+    {#if current === "catalogue"}<a class="nav-row" href="/" aria-current="page"><Icon type="topic" />{t("home.catalogue")}</a>
+    {:else}<a class="nav-row" href={siteUrls.catalogue} target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>{/if}
+    {#if current === "live"}<a class="nav-row" href="/" aria-current={page.url.pathname === "/" ? "page" : "location"}><Icon type="live" />{t("home.live")}</a>
+    {:else}<a class="nav-row" href={siteUrls.live} target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>{/if}
+    {#if current === "time"}<a class="nav-row" href="/" aria-current="page"><Icon type="tutorsTime" />{t("classTime.app")}</a>
+    {:else}<a class="nav-row" href={siteUrls.time} target="_blank" rel="noreferrer"><Icon type="tutorsTime" />{t("classTime.app")} ↗</a>{/if}
+    <a class="nav-row" href={showConnect ? "/create" : `${siteUrls.reader}/create`} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
+    <a class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : `${siteUrls.reader}/course/tutors-reference-manual`}><Icon type="note" />{t("home.docs")}</a>
   {/if}
   </div>
 </nav>

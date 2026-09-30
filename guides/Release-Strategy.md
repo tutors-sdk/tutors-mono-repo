@@ -143,7 +143,13 @@ Every release must have a corresponding `CHANGELOG.md` entry. Entries are writte
 
 The changelog documents what shipped and when. It is not a commit log; it is a curated summary for users and contributors.
 
-Entries that change something observable end with the artefacts they expect to move, `(axe, dom)`, so the release author can write the release harness claims from the changelog in one line each: [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries), [release/README.md](../release/README.md#writing-claims-from-the-changelog). The changelog is curated by hand, so the convention needs no tooling; if it is ever generated from Conventional Commits, the hint travels in the commit subject and the generator keeps it verbatim.
+Entries that change something observable end with the artefacts they expect to move, `(axe, dom)`, so the release author can write the release harness claims from the changelog in one line each: [CONTRIBUTING.md](../CONTRIBUTING.md#changelog-entries), [release/README.md](../release/README.md#writing-claims-from-the-changelog). The changelog is curated by hand from a generated draft:
+
+```bash
+pnpm release:changelog --from v16.2.2 --to release/16.3.0 --out changelog.md --json changelog.json
+```
+
+lists every PR merged on main's first-parent history since production, under the app with the most changed files and the heading of its Conventional Commits type (`feat` Features, `fix` and `perf` Fixes, `!` or `BREAKING CHANGE` Breaking Changes, anything else Chores), keeps the artefact hint from the PR title verbatim, names the EARS Rules each PR added or changed, and ends with a table of every Rule the release moves and the PRs behind it. A commit pushed to main without a PR is listed and marked as such. Entries already in `CHANGELOG.md` are ticked. When a release candidate is tagged, `release-dispatch.yml` publishes the same draft as the notes and assets (`changelog.md`, `changelog.json`) of the candidate's prerelease, and writes the PRs into `rules.json` (`pnpm release:rules --since`) so the release harness scorecard can join each Rule to its PRs. Rules 0190-0195 in [tests/bdd/features/developer/release-changelog.feature](../tests/bdd/features/developer/release-changelog.feature).
 
 ## CI/CD Integration
 
@@ -303,6 +309,10 @@ The order in step 4 is deliberate: a failure setting the variable stops the job 
 **What closes it, and what is still open.** Harness contract 1.3.0 (the harness's PR #5, not yet released) enforces the equality, and the payloads above already carry what it reads: `release-candidate` takes `production_digests` and `candidate_digests` and pins `--a` and `--b` by digest (`repo:tag@sha256:...`; a tag that now resolves to another digest is exit 2, cannot judge), and `deployed` takes `production` and `digests` and compares them with the release record it kept when it judged the candidate, warning when they differ. Until a harness that speaks 1.3.0 is running, an older one ignores the fields and the equality is not enforced.
 
 An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
+
+#### One command: tag, publish, judge
+
+`pnpm release:candidate X.Y.Z` is steps 1, 2 and 5 to 7 of the [release SOP](../release/SOP.md) (steps 3 and 4, the changelog and the claims, are done before it and read from the branch): it tags the next free `vX.Y.Z-rc.N` on `HEAD` (reusing an rc tag already on the commit), pushes it so `image-build.yml` publishes the four images, waits until quay.io serves them, and runs `harness release --candidate X.Y.Z-rc.N --baseline prod --monorepo <this checkout>` from `HARNESS_DIR`, else `npx github:tutors-sdk/tutors-release-harness`; set `HARNESS_DIR`, because through npx the harness state (noise store, scoreboard) and the kaizen register do not persist. The harness reads production from `release/deployed.json`, which `pnpm deploy:pin` writes. `--dry-run` prints every command and runs none.
 
 #### Running the harness locally
 

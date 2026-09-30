@@ -27,6 +27,7 @@ pnpm build
 - `@tutors/ui` for components
 - `@tutors/themes` for theming
 - `@tutors/i18n` for internationalization
+- `@tutors/app-config` for the shared `vite.config.ts` / `svelte.config.js` (build time only)
 - `@tutors/runtime` for the server clock seam (`HARNESS_NOW`) and the `GET /version` endpoint
 - Skeleton UI for base components
 
