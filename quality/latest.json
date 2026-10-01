@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "commit": "c0a0965900cd0d058e1a75542e4ad5e548c246d8",
+  "base": "caa53d021e63004ad6e52a76428f8acd95a87c21",
+  "generatedAt": "2026-10-01T10:56:12Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/36846328240",
+  "packages": [
+    {
+      "name": "@tutors/a11y",
+      "mutationScore": 0,
+      "changed": false,
+      "path": "packages/svelte/utils/a11y"
+    },
+    {
+      "name": "@tutors/community",
+      "mutationScore": 68.69,
+      "changed": true,
+      "path": "packages/svelte/community"
+    },
+    {
+      "name": "@tutors/connect",
+      "mutationScore": 80.37,
+      "changed": true,
+      "path": "packages/svelte/connect"
+    },
+    {
+      "name": "@tutors/course",
+      "mutationScore": 31.06,
+      "changed": true,
+      "path": "packages/svelte/course"
+    },
+    {
+      "name": "@tutors/i18n",
+      "mutationScore": 27.27,
+      "changed": true,
+      "path": "packages/svelte/utils/i18n"
+    },
+    {
+      "name": "@tutors/logger",
+      "mutationScore": 76.26,
+      "changed": true,
+      "path": "packages/svelte/utils/logger"
+    },
+    {
+      "name": "@tutors/metrics",
+      "mutationScore": 62,
+      "changed": false,
+      "path": "packages/svelte/utils/metrics"
+    },
+    {
+      "name": "@tutors/privacy",
+      "mutationScore": 0,
+      "changed": false,
+      "path": "packages/svelte/utils/privacy"
+    },
+    {
+      "name": "@tutors/quiz",
+      "mutationScore": 83.33,
+      "changed": true,
+      "path": "packages/svelte/quiz"
+    },
+    {
+      "name": "@tutors/rbac",
+      "mutationScore": 50.71,
+      "changed": true,
+      "path": "packages/svelte/utils/rbac"
+    },
+    {
+      "name": "@tutors/runes",
+      "mutationScore": 35.48,
+      "changed": true,
+      "path": "packages/svelte/runes"
+    },
+    {
+      "name": "@tutors/runtime",
+      "mutationScore": 80.28,
+      "changed": true,
+      "path": "packages/svelte/utils/runtime"
+    },
+    {
+      "name": "@tutors/themes",
+      "mutationScore": 44.74,
+      "changed": true,
+      "path": "packages/svelte/themes"
+    },
+    {
+      "name": "@tutors/tour",
+      "mutationScore": 0,
+      "changed": true,
+      "path": "packages/svelte/utils/tour"
+    },
+    {
+      "name": "@tutors/tutors-create",
+      "mutationScore": 0,
+      "changed": true,
+      "path": "packages/jsr/create"
+    },
+    {
+      "name": "@tutors/tutors-model-lib",
+      "mutationScore": 90.17,
+      "changed": true,
+      "path": "packages/jsr/model"
+    },
+    {
+      "name": "@tutors/tutors-time-lib",
+      "mutationScore": 69.41,
+      "changed": true,
+      "path": "packages/jsr/time"
+    },
+    {
+      "name": "@tutors/ui-navigators",
+      "mutationScore": 55.11,
+      "changed": true,
+      "path": "packages/svelte/ui-navigators"
+    },
+    {
+      "name": "@tutors/ui-primitives",
+      "mutationScore": 0,
+      "changed": true,
+      "path": "packages/svelte/ui-primitives"
+    },
+    {
+      "name": "packages/jsr/gen/src/services/course-builder.ts",
+      "mutationScore": 15.93,
+      "changed": false,
+      "path": "packages/jsr/gen/src/services/course-builder.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/services/course-emitter.ts",
+      "mutationScore": 0,
+      "changed": false,
+      "path": "packages/jsr/gen/src/services/course-emitter.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/services/marp-renderer.ts",
+      "mutationScore": 0,
+      "changed": false,
+      "path": "packages/jsr/gen/src/services/marp-renderer.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/services/resource-builder.ts",
+      "mutationScore": 52.73,
+      "changed": false,
+      "path": "packages/jsr/gen/src/services/resource-builder.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/templates/styles.ts",
+      "mutationScore": 80,
+      "changed": false,
+      "path": "packages/jsr/gen/src/templates/styles.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/templates/template-downloader.ts",
+      "mutationScore": 0,
+      "changed": false,
+      "path": "packages/jsr/gen/src/templates/template-downloader.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/templates/template-engine.ts",
+      "mutationScore": 0,
+      "changed": false,
+      "path": "packages/jsr/gen/src/templates/template-engine.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/templates/utils.ts",
+      "mutationScore": 97.69,
+      "changed": false,
+      "path": "packages/jsr/gen/src/templates/utils.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/tutors.ts",
+      "mutationScore": 10,
+      "changed": false,
+      "path": "packages/jsr/gen/src/tutors.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/utils/file-utils.ts",
+      "mutationScore": 40.16,
+      "changed": false,
+      "path": "packages/jsr/gen/src/utils/file-utils.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/utils/llms.ts",
+      "mutationScore": 52.17,
+      "changed": false,
+      "path": "packages/jsr/gen/src/utils/llms.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/utils/lr-utils.ts",
+      "mutationScore": 95.73,
+      "changed": false,
+      "path": "packages/jsr/gen/src/utils/lr-utils.ts"
+    },
+    {
+      "name": "packages/jsr/gen/src/utils/netlify.ts",
+      "mutationScore": 100,
+      "changed": false,
+      "path": "packages/jsr/gen/src/utils/netlify.ts"
+    }
+  ],
+  "nightly": {
+    "result": "failure",
+    "jobs": {
+      "contract-snapshots": "success",
+      "mutation": "failure",
+      "mutation-nightly": "failure",
+      "suite-health": "success",
+      "e2e-stack-nightly": "success",
+      "timezone-matrix": "success",
+      "lighthouse": "success",
+      "load": "success",
+      "generator-corpus": "success"
+    }
+  }
+}
