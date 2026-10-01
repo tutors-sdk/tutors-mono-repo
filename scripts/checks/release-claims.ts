@@ -25,23 +25,65 @@ import { REPO_ROOT } from "./lib/repo.ts";
 import { rulesAtRef, rulesInWorkingTree } from "./lib/rules-index.ts";
 
 /**
- * The harness's vocabulary (ARTEFACTS in src/types.ts there), in its order, as of harness 1.3.0. The first
+ * The harness's vocabulary (ARTEFACTS in src/types.ts there), in its order, as of harness 1.28.0. The first
  * ten are what a student can observe; `persistence`, `bus`, `migration` and `upgrade` are its stubs and
  * rehearsals; `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` (contract 1.2.0) are read from the
- * images and the running containers. tests/conformance/release-claims.test.ts holds a snapshot of the
- * harness list and fails when this one drifts from it.
+ * images and the running containers; `image-hardening`, `build-provenance` and `vuln-ceiling` (contract
+ * 1.22.0) are the policy family, checks on the candidate alone; `timing-tolerance` (1.26.0),
+ * `asset-graph` (1.27.0) and `replay` (1.28.0) are informing checks until harness 2.0. tests/conformance/release-claims.test.ts
+ * holds a snapshot of the harness list and fails when this one drifts from it.
  */
 export const ARTEFACTS = [
   "dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing",
   "persistence", "bus", "migration", "upgrade",
   "image-manifest", "sbom", "vulns",
-  "runtime", "startup"
+  "runtime", "startup",
+  "image-hardening", "build-provenance", "vuln-ceiling",
+  "timing-tolerance", "asset-graph", "replay"
 ] as const;
+
+/** The apps whose images a claim's `digests` may name (APPS in the harness's src/image-ref.ts). */
+export const IMAGE_APPS = ["reader", "catalogue", "live", "time"] as const;
 
 /** The claims file format this check mirrors (CLAIMS_VERSION there); a file may name it as `version: 1`. */
 const CLAIMS_VERSION = 1;
 
-const FIELDS: ReadonlySet<string> = new Set(["artefact", "scope", "reason", "rule", "approvedBy"]);
+const FIELDS: ReadonlySet<string> = new Set(["artefact", "scope", "reason", "rule", "approvedBy", "until", "digests"]);
+const UNTIL_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const UNTIL_RELEASE = /^v?\d+\.\d+\.\d+$/;
+const DIGEST = /^sha256:[0-9a-f]{64}$/;
+
+/** A YYYY-MM-DD that is a day of the calendar: 2026-02-30 is not, though Date.parse rolls it over. */
+function isDay(value: string): boolean {
+  const time = Date.parse(`${value}T00:00:00Z`);
+  return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value;
+}
+
+/**
+ * The claim's lifetime (harness contract 1.25.1), as the harness parses it: `until` is the last day,
+ * "YYYY-MM-DD", or the last release, "X.Y.Z" or "vX.Y.Z", the claim is meant for; `digests` maps one or
+ * more of the four apps to the sha256 digest of the image the claim was written against.
+ */
+function validateLifetime(claim: Record<string, unknown>, label: string, errors: string[]): void {
+  if (claim.until !== undefined) {
+    // js-yaml reads an unquoted 2026-11-30 as a Date; the harness's parser keeps it as text, so accept both.
+    const until = claim.until instanceof Date ? claim.until.toISOString().slice(0, 10) : claim.until;
+    if (typeof until !== "string" || !((UNTIL_DATE.test(until) && isDay(until)) || UNTIL_RELEASE.test(until))) {
+      errors.push(`${label}: until is the last day ("2026-11-30") or release ("16.3.0") the claim is meant for`);
+    }
+  }
+  if (claim.digests !== undefined) {
+    const digests = claim.digests;
+    if (!digests || typeof digests !== "object" || Array.isArray(digests) || Object.keys(digests).length === 0) {
+      errors.push(`${label}: digests maps one or more of ${IMAGE_APPS.join(", ")} to an image digest, as in digests: { reader: "sha256:..." }`);
+      return;
+    }
+    for (const [app, digest] of Object.entries(digests as Record<string, unknown>)) {
+      if (!(IMAGE_APPS as readonly string[]).includes(app)) errors.push(`${label}: digests names "${app}", which is not one of ${IMAGE_APPS.join(", ")}`);
+      if (typeof digest !== "string" || !DIGEST.test(digest)) errors.push(`${label}: digests.${app} must be sha256: and 64 lowercase hex characters`);
+    }
+  }
+}
 const RUBBER_STAMP = /^(see pr|approved|all|ok|misc)\b/i;
 
 /** A claim that could match anything; the harness requires a named human on these. */
@@ -124,6 +166,7 @@ export function validateClaimsText(text: string, ruleIds?: ReadonlySet<string>):
       errors.push(`${label}: approvedBy must be a person's name or handle`);
     }
     if (isBroad(claim) && !claim.approvedBy) errors.push(`${label}: a broad claim needs approvedBy (a person, never a bot)`);
+    validateLifetime(claim, label, errors);
   });
   return errors;
 }
