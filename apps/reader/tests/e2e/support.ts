@@ -15,9 +15,10 @@ export async function fitsViewport(page: Page): Promise<boolean> {
  * Signs this browser in as "UI Preview" with one student online, by seeding the UI stores the dev
  * server has already loaded. No sign-in or presence writes are made.
  * `educator` seeds the same reader as an educator of the course, which is what the activity group's
- * class activity link is gated on.
+ * class activity link is gated on. `online: 0` seeds the same signed-in sharing reader with the
+ * course empty, which is the state no live course reaches on demand.
  */
-export async function seedOneOnline(page: Page, { educator = false } = {}): Promise<void> {
+export async function seedOneOnline(page: Page, { educator = false, online = 1 } = {}): Promise<void> {
   // The presence module is fetched as a preload, which leaves no "resource" timing entry in every
   // browser, so its URL is taken from the requests the page makes rather than from performance.
   const modules: string[] = [];
@@ -30,15 +31,15 @@ export async function seedOneOnline(page: Page, { educator = false } = {}): Prom
   // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
   // runner), so seed, wait a moment, and seed again until the identity holds.
   await expect(async () => {
-    const held = await page.evaluate(async ({ urls, educator }) => {
+    const held = await page.evaluate(async ({ urls, educator, online }) => {
       const { tutorsId, isEducator } = await import(urls.find(url => url.includes("/runes/src/index.svelte.ts"))!);
       const { presenceService } = await import(urls.find(url => url.includes("/community/src/services/presence.svelte.ts"))!);
       tutorsId.value = { login: "ui-preview", name: "UI Preview", share: "true", sentiment: "neutral" };
       isEducator.value = educator;
-      presenceService.studentsOnline.value = [{ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }];
+      presenceService.studentsOnline.value = Array.from({ length: online }, () => ({ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }));
       await new Promise(resolve => setTimeout(resolve, 750));
-      return tutorsId.value?.share === "true" && isEducator.value === educator && presenceService.studentsOnline.value.length === 1;
-    }, { urls: modules, educator });
+      return tutorsId.value?.share === "true" && isEducator.value === educator && presenceService.studentsOnline.value.length === online;
+    }, { urls: modules, educator, online });
     expect(held).toBe(true);
   }).toPass({ timeout: 20_000 });
 }

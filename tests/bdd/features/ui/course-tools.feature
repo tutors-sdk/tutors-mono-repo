@@ -55,8 +55,21 @@ Feature: Course tools
 
     Scenario: Online list opens as a dialog
       Given a signed-in student sees one student online
-      When the student opens "View 1 Online" from course tools
+      When the student opens "View Online" from course tools
       Then a dialog lists the online student in a card narrower than 60 percent of its grid
+
+  @rule-0234 @ears-state-driven
+  Rule: While students are online in the course, the reader shall badge the "View Online" row in course tools with how many, and leave the account avatar unbadged.
+
+    @active
+    Scenario: The online row carries the count
+      Given a signed-in student sees one student online
+      Then "View Online" is badged "1", announces the number, and the account avatar carries no count
+
+    @inactive
+    Scenario: With nobody online no count is drawn
+      Given a signed-in student sees nobody online
+      Then "View Online" is unbadged and the account avatar carries no count
 
   @rule-0063 @ears-state-driven
   Rule: While a signed-in reader who shares presence is an educator of the course, the reader shall offer that course's class activity link in course tools.

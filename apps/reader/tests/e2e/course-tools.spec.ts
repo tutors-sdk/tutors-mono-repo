@@ -127,12 +127,28 @@ test("Course creator downloads the new course", { tag: "@rule-0045" }, async ({ 
   await expect(page.getByText("Downloaded!", { exact: true })).toBeVisible();
 });
 
+test("The online row carries the count", { tag: "@rule-0234" }, async ({ page }) => {
+  await seedOneOnline(page);
+  // Locating by this name is itself the test that the badge is announced: the row reads "View Online"
+  // and the number comes from the badge, so a hidden badge would leave the count unsaid.
+  const row = page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true });
+  await expect(row.locator(".online-count")).toHaveText("1");
+  await expect(page.locator('[data-tour="profile"] .online-count')).toHaveCount(0);
+});
+
+test("With nobody online no count is drawn", { tag: "@rule-0234" }, async ({ page }) => {
+  await seedOneOnline(page, { online: 0 });
+  // Nothing to count, so no badge and no stray "0" in the name.
+  const row = page.locator(".shell-navigation").getByRole("button", { name: "View Online", exact: true });
+  await expect(row).toBeVisible();
+  await expect(row.locator(".online-count")).toHaveCount(0);
+  await expect(page.locator('[data-tour="profile"] .online-count')).toHaveCount(0);
+});
+
 test("Online list opens as a dialog", { tag: "@rule-0046" }, async ({ page }) => {
   await seedOneOnline(page);
-  // The count stays on the avatar as an indicator; the list itself is a course tool.
-  await expect(page.locator('[data-tour="profile"] .paper-menu-trigger .online-count')).toHaveText("1");
-  await page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true }).click();
-  const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
+  await page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true }).click();
+  const online = page.getByRole("dialog", { name: "View Online", exact: true });
   await expect(online).toBeVisible();
   await expect(online).toHaveAttribute("data-presentation", "dialog");
   await expect(online).toContainText("UI Preview");
@@ -149,7 +165,7 @@ test("Course tools withholds class activity from a student", { tag: "@rule-0063"
   const navigation = page.locator(".shell-navigation");
   await expect(navigation.getByRole("link", { name: "My time", exact: true })).toHaveAttribute("href", "/time/reference-course");
   await expect(navigation.getByRole("link", { name: "Live now" })).toHaveAttribute("href", "https://live.tutors.dev/reference-course");
-  await expect(navigation.getByRole("button", { name: "View 1 Online", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "View Online 1", exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Class activity" })).toHaveCount(0);
 });
 
