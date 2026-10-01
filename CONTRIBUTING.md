@@ -182,6 +182,9 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `vulns` | the known vulnerabilities in an image, one per advisory |
 | `runtime` | how a container runs: user, privileges, read-only root filesystem, capabilities, writes outside `/tmp` |
 | `startup` | how a container starts: root, time to ready, boot |
+| `image-hardening` | a policy check on the candidate's image alone: root user, no `HEALTHCHECK`, a secret in its environment or layers |
+| `build-provenance` | a policy check: the candidate's image has no SLSA provenance from `image-build.yml` |
+| `vuln-ceiling` | a policy check: a critical or high advisory with a fix available in the candidate's image |
 
 Rules of thumb:
 

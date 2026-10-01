@@ -27,7 +27,7 @@ const quote = (text: string) => JSON.stringify(text);
 function stub(rule: IndexedRule, note: string, asField: boolean): string[] {
   return [
     `  # ${note}: ${rule.file}:${rule.line}`,
-    "  - artefact: TODO # dom | screenshot | network | console | headers | axe | focus | metrics | logs | timing | persistence | bus | migration | upgrade | image-manifest | sbom | vulns | runtime | startup | \"*\"",
+    "  - artefact: TODO # dom | screenshot | network | console | headers | axe | focus | metrics | logs | timing | persistence | bus | migration | upgrade | image-manifest | sbom | vulns | runtime | startup | image-hardening | build-provenance | vuln-ceiling | \"*\"",
     "    scope: TODO # the page key, route or glob this Rule changes, e.g. \"reader:lab-step*\"",
     asField ? `    rule: ${quote(rule.id)} # ${rule.title}` : `    reason: ${quote(`Rule ${rule.id}: ${rule.title}`)}`
   ];

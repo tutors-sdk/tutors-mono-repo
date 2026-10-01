@@ -20,11 +20,13 @@ claims:
 
 | Field | Meaning |
 | --- | --- |
-| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`, `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, or `"*"` (the harness's vocabulary as of harness 1.3.0, in its order; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md); `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` are read from the images and the running containers). `pnpm check:release-claims` accepts exactly this list, and a test fails if it drifts from the harness's |
+| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`, `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, `image-hardening`, `build-provenance`, `vuln-ceiling`, or `"*"` (the harness's vocabulary as of harness 1.25.1, in its order; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md); `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` are read from the images and the running containers; `image-hardening`, `build-provenance` and `vuln-ceiling` are the harness's policy checks on the candidate alone, from harness 1.22.0). `pnpm check:release-claims` accepts exactly this list, and a test fails if it drifts from the harness's |
 | `scope` | A glob over what changed: a page key (`reader:lab-step`), a route, `GET /api/presence`, `reader:*/content-security-policy`, `<app>/<series>` |
 | `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected. Optional when the claim has a `rule` |
 | `rule` | Optional, harness contract 1.3.0. The id of the Rule behind the change, in quotes: `rule: "0031"`. It must be a Rule the release defines (see [Rules the release defines](#rules-the-release-defines)) |
 | `approvedBy` | Required on a broad claim (`artefact: "*"`, `scope: "*"` or `"**"`): a person, never a bot |
+| `until` | Optional, harness 1.25.1. The last day (`"2026-11-30"`) or release (`"16.3.0"`, `v` allowed) the claim is meant for. After it the harness reports the claim as expired; from harness 2.0 an expired claim covers nothing |
+| `digests` | Optional, harness 1.25.1. The image each named app had when the claim was written: `digests: { reader: "sha256:<64 hex>" }`, for any of `reader`, `catalogue`, `live`, `time`. A candidate with another image for a named app makes the claim expired |
 
 A claim can name its Rule with the field instead of the reason:
 
