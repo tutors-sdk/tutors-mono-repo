@@ -40,6 +40,8 @@ test("Course tree counts stay aligned when a branch opens", { tag: "@rule-0041" 
     const title = row.querySelector(".tree-section-title")!.getBoundingClientRect();
     return { right: count.right, arrowX: chevron.x, offset: Math.abs(count.y + count.height / 2 - chevron.y - chevron.height / 2), titleOffset: Math.abs(count.y + count.height / 2 - title.y - title.height / 2) };
   }));
+  // Take the baseline after the same layout stability check as the click below.
+  await sections.nth(1).click({ trial: true });
   const before = await positions();
   await sections.nth(1).click();
   for (const row of await positions()) {

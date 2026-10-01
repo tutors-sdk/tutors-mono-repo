@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { Window } from "happy-dom";
 import type { Course, Notebook } from "@tutors/tutors-model-lib";
 import { currentLo } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
@@ -33,7 +34,9 @@ it.each(["readNotebook", "readLo"] as const)("%s shares rendered notebook cells,
     const live = await courseService.readNotebook(course.courseId, route, unreachable);
     expect(live.outline).toEqual([{ index: 0, title: "Exercise" }]);
     expect(notebook.cells[0].sourceHtml).toContain("<h2");
-    expect(notebook.cells[1].sourceHtml?.replace(/<[^>]+>/g, "")).toContain("print(1)");
+    const window = new Window();
+    const renderedCode = new window.DOMParser().parseFromString(notebook.cells[1].sourceHtml!, "text/html");
+    expect(renderedCode.querySelector("code")?.textContent).toContain("print(1)");
     expect(notebook.cells[1].outputsHtml).toContain("&lt;output&gt;");
     expect(notebook.cells[2].sourceHtml).toContain("&lt;raw&gt;");
     live.setActiveCell(1);
