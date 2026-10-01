@@ -84,8 +84,8 @@ Feature: Reader shell and navigation
 
     Scenario: Closing the online dialog returns focus to its course tools row
       Given a signed-in student sees one student online
-      When the student opens "View 1 Online" from course tools and closes it
-      Then focus is on the "View 1 Online" row of course tools
+      When the student opens "View Online" from course tools and closes it
+      Then focus is on the "View Online" row of course tools
 
   @rule-0026 @ears-event-driven
   Rule: When an anonymous visitor opens the account menu, the reader shall offer a link to the home page.

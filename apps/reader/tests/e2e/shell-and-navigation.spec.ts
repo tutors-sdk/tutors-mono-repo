@@ -168,9 +168,9 @@ test("Closing the preferences menu returns focus to its button", { tag: "@rule-0
 
 test("Closing the online dialog returns focus to its course tools row", { tag: "@rule-0025" }, async ({ page }) => {
   await seedOneOnline(page);
-  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true });
+  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true });
   await viewOnline.click();
-  const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
+  const online = page.getByRole("dialog", { name: "View Online", exact: true });
   await expect(online).toBeVisible();
   await online.getByRole("button", { name: "Close", exact: true }).click();
   await expect(online).not.toBeVisible();
