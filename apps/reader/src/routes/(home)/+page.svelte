@@ -6,7 +6,7 @@
 </script>
 <div class="ui-page">
   <TutorsInfo />
-  <section class="my-courses" aria-labelledby="my-courses-title">
+  <section data-tour="course-list" class="my-courses" aria-labelledby="my-courses-title">
     <header class="my-courses-header">
       <div>
         <p class="ui-eyebrow">{t("shell.myCourses")}</p>

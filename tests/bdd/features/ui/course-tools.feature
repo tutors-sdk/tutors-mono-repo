@@ -107,3 +107,26 @@ Feature: Course tools
       Given a signed-in student sees one student online
       Then the side menu's section headings read "Learn", "Activity" then "Companions"
       And the phone navigation drawer has the same section order
+
+  @rule-0241 @ears-ubiquitous
+  Rule: The reader shall order the guided tour across the header from left to right, then down the side menu from top to bottom, then through the kinds of card on the page.
+
+    Scenario: Tour crosses the header, descends the side menu, then reaches the cards
+      When a student starts the tour on the Reference Course home
+      Then the steps run "Course Title", "Search", "Theme & Layout", "Your Profile", then the side menu from "Overview" down to "Companions", then "Topic Card"
+      And no step is offered for a control this reader cannot see
+
+  @rule-0242 @ears-event-driven
+  Rule: When a student starts the guided tour on a page showing cards, the reader shall offer one step for each kind of card on that page, named for that kind.
+
+    Scenario: Tour explains each kind of card on the page once
+      When a student starts the tour on a topic page of talks, labs, notebooks, tutorials, notes, web links and archives
+      Then the tour ends with one step for each kind, in the order the kinds first appear, and none repeated
+
+  @rule-0243 @ears-event-driven
+  Rule: When a visitor starts the guided tour away from any course, the reader shall tour the home page's header, its side menu and its course list.
+
+    Scenario: Home page has a tour of its own
+      When a visitor starts the tour on the home page
+      Then the steps run "Tutors", "Theme & Layout", "Your Profile", the side menu from "My Courses" to "Documentation", then "Your Courses"
+      And no step speaks about a course, since the visitor is not reading one

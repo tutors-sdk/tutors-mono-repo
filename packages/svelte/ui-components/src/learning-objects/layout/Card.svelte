@@ -71,7 +71,9 @@
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
   {@const openable = !locked || lecturer}
-  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
+  <!-- data-lo-type is what the guided tour reads: it walks the distinct types on the canvas and explains
+       each one, so the type has to be in the DOM and not only in the icon it picks. -->
+  <article data-lo-type={cardDetails.type} style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
     <div class="resource-body">
     <svelte:element this={openable ? "a" : "div"} class="resource-link" href={openable ? route : undefined} target={openable && target ? target : undefined} rel={openable && target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">

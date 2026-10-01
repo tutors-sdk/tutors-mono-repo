@@ -24,7 +24,7 @@
 <nav class="main-navigation" aria-label={t("a11y.mainNavigation")}>
   <div class="mobile-menu"><Sidebar position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
   {#if !currentCourse.value}
-    <a class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label={t("shell.tutorsHome")}><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
+    <a data-tour="brand" class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label={t("shell.tutorsHome")}><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
   {/if}
   <div class="course-heading" class:without-course={!currentCourse.value && !title}>
     {#if currentCourse.value}<span class="course-artwork"><Image lo={currentCourse.value} miniImage /></span>{/if}
