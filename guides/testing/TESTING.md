@@ -596,7 +596,6 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 
 ## Known gaps
 
-- `apps/time` is not type-checked in CI; it has type errors of its own to clear first ([#268](https://github.com/tutors-sdk/tutors-mono-repo/issues/268)).
 - Coverage over every source file is about 58% lines (floors in `tests/suite-health/coverage-floors.json`, Rules 0110 to 0112); `apps/time`, `packages/jsr/create` and the UI component packages are near zero.
 - `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
   contract in a real browser instead.

@@ -24,9 +24,13 @@ overrides:
   nanoid@<3.3.18: ">=3.3.18 <4"
   qs@>=6.11.1 <=6.15.1: ">=6.15.2 <7"
   "@sveltejs/kit@<=2.70.1": ">=2.70.2 <3"
-  fast-uri@<3.1.6: ">=3.1.6 <4"
+  fast-uri@<3.1.8: ">=3.1.8 <4"
   "@xmldom/xmldom@>=0.9.0 <0.9.12": ">=0.9.12 <0.10"
   # GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh (mermaid > chevrotain > lodash-es).
   lodash-es@<4.18.1: ">=4.18.1 <5"
   # GHSA-9rgm-9g3h-6x36 (@sveltejs/kit > devalue).
   devalue@<5.9.1: ">=5.9.1 <6"
+  brace-expansion@>=4.0.0 <5.0.12: ">=5.0.12 <6"
+  dompurify@>=3.4.13 <3.4.16: ">=3.4.16 <4"
+  "@marp-team/marpit>markdown-it": ">=14.3.1 <15"
+  undici@>=8.0.0 <8.10.2: ">=8.10.2 <9"

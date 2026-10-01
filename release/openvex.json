@@ -1,0 +1,8 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/tutors-sdk/tutors-mono-repo/blob/main/release/openvex.json",
+  "author": "Tutors release captain",
+  "timestamp": "2026-10-01T00:00:00Z",
+  "version": 1,
+  "statements": []
+}

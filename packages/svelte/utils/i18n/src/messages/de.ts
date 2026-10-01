@@ -40,6 +40,7 @@ const de: Record<string, string> = {
   "shell.whiteboard": "Whiteboard",
   "shell.preferences": "Einstellungen",
   "shell.steps": "Schritte",
+  "shell.outline": "Gliederung",
   "shell.fullWidth": "Volle Breite",
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Inhaltsbreite",
@@ -215,8 +216,8 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
 
   // Accessibility
   // Lecturer panel
-  "lecturer.panel.title": "Dozenten-Panel",
-  "lecturer.panel.tip": "Dozenten-Panel öffnen",
+  "lecturer.panel.title": "Dozenten-Steuerung",
+  "lecturer.panel.tip": "Dozenten-Steuerung öffnen",
   "lecturer.locks.title": "Inhaltssperren",
   "lecturer.locks.lock": "Sperren",
   "lecturer.locks.unlock": "Entsperren",

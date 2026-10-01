@@ -3,7 +3,9 @@ name: Release Claims
 # A release branch carries release/claims.yaml, the list of differences the
 # release intends, which release-dispatch.yml hands to the release harness.
 # This fails the push or the release PR when the file is missing or is not a
-# claims file the harness would accept (scripts/checks/release-claims.ts).
+# claims file the harness would accept (scripts/checks/release-claims.ts), and
+# when release/openvex.json is not an OpenVEX file it would accept
+# (scripts/checks/openvex.ts).
 # The second job fails it when a migration the release adds is destructive and
 # unclaimed (scripts/checks/migrations.ts, guides/MIGRATIONS.md).
 
@@ -51,6 +53,11 @@ jobs:
 
       - name: Check release/claims.yaml
         run: pnpm check:release-claims
+
+      # The OpenVEX file beside the claims (Rule 0229): the release harness hands it to its scanner with --vex and
+      # refuses one it cannot use, so it fails here first (scripts/checks/openvex.ts).
+      - name: Check release/openvex.json
+        run: pnpm check:openvex
 
   migrations:
     name: supabase/migrations follow expand/contract

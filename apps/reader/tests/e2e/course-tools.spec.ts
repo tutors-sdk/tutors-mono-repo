@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { course, seedOneOnline } from "./support";
+import { course, seedOneOnline, signInAs } from "./support";
 
 // Proves tests/bdd/features/ui/course-tools.feature: one test per scenario, titled and tagged to match.
 
@@ -40,6 +40,8 @@ test("Course tree counts stay aligned when a branch opens", { tag: "@rule-0041" 
     const title = row.querySelector(".tree-section-title")!.getBoundingClientRect();
     return { right: count.right, arrowX: chevron.x, offset: Math.abs(count.y + count.height / 2 - chevron.y - chevron.height / 2), titleOffset: Math.abs(count.y + count.height / 2 - title.y - title.height / 2) };
   }));
+  // Take the baseline after the same layout stability check as the click below.
+  await sections.nth(1).click({ trial: true });
   const before = await positions();
   await sections.nth(1).click();
   for (const row of await positions()) {
@@ -127,12 +129,46 @@ test("Course creator downloads the new course", { tag: "@rule-0045" }, async ({ 
   await expect(page.getByText("Downloaded!", { exact: true })).toBeVisible();
 });
 
+test("The online row carries the count", { tag: "@rule-0239" }, async ({ page }) => {
+  await seedOneOnline(page);
+  // Locating by this name is itself the test that the badge is announced: the row reads "View Online"
+  // and the number comes from the badge, so a hidden badge would leave the count unsaid.
+  const row = page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true });
+  await expect(row.locator(".online-count")).toHaveText("1");
+  await expect(page.locator('[data-tour="profile"] .online-count')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+  const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
+  const phoneRow = navigation.getByRole("button", { name: "View Online 1", exact: true });
+  await expect(phoneRow.locator(".online-count")).toHaveText("1");
+  expect((await phoneRow.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await phoneRow.click();
+  const online = page.getByRole("dialog", { name: "View Online", exact: true });
+  await expect(online).toContainText("UI Preview");
+  await online.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(online).not.toBeVisible();
+  await expect(phoneRow).toBeFocused();
+});
+
+test("With nobody online no count is drawn", { tag: "@rule-0239" }, async ({ page }) => {
+  await seedOneOnline(page, { online: 0 });
+  // Nothing to count, so no badge and no stray "0" in the name.
+  const row = page.locator(".shell-navigation").getByRole("button", { name: "View Online", exact: true });
+  await expect(row).toBeVisible();
+  await expect(row.locator(".online-count")).toHaveCount(0);
+  await expect(page.locator('[data-tour="profile"] .online-count')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+  const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
+  const phoneRow = navigation.getByRole("button", { name: "View Online", exact: true });
+  await expect(phoneRow).toBeVisible();
+  await expect(phoneRow.locator(".online-count")).toHaveCount(0);
+});
+
 test("Online list opens as a dialog", { tag: "@rule-0046" }, async ({ page }) => {
   await seedOneOnline(page);
-  // The count stays on the avatar as an indicator; the list itself is a course tool.
-  await expect(page.locator('[data-tour="profile"] .paper-menu-trigger .online-count')).toHaveText("1");
-  await page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true }).click();
-  const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
+  await page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true }).click();
+  const online = page.getByRole("dialog", { name: "View Online", exact: true });
   await expect(online).toBeVisible();
   await expect(online).toHaveAttribute("data-presentation", "dialog");
   await expect(online).toContainText("UI Preview");
@@ -149,7 +185,7 @@ test("Course tools withholds class activity from a student", { tag: "@rule-0063"
   const navigation = page.locator(".shell-navigation");
   await expect(navigation.getByRole("link", { name: "My time", exact: true })).toHaveAttribute("href", "/time/reference-course");
   await expect(navigation.getByRole("link", { name: "Live now" })).toHaveAttribute("href", "https://live.tutors.dev/reference-course");
-  await expect(navigation.getByRole("button", { name: "View 1 Online", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "View Online 1", exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Class activity" })).toHaveCount(0);
 });
 
@@ -158,4 +194,68 @@ test("Course tools offers class activity to an educator", { tag: "@rule-0063" },
   const classActivity = page.locator(".shell-navigation").getByRole("link", { name: "Class activity" });
   await expect(classActivity).toHaveAttribute("href", "https://time.tutors.dev/reference-course");
   await expect(classActivity).toHaveAttribute("target", "_blank");
+});
+
+/**
+ * The text of each row of the sidebar's Learn section, in order. Learn runs from its own heading to
+ * whichever comes first: the next section heading, or the Tools group (a div, so a heading nested
+ * inside it is not a sibling to stop at).
+ */
+async function learnRows(page: Page): Promise<string[]> {
+  return page.locator(".shell-navigation .navigation-scroll").evaluate(scroll => {
+    const children = [...scroll.children];
+    const learn = children.findIndex(el => el.matches(".nav-section") && el.textContent?.trim() === "Learn");
+    const rows: string[] = [];
+    for (const el of children.slice(learn + 1)) {
+      if (el.matches(".nav-section, .tool-section")) break;
+      rows.push(el.textContent!.trim());
+    }
+    return rows;
+  });
+}
+
+test("Learn section ends with Educator Control for an educator", { tag: "@rule-0217" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  // Keep course loading slower than the role seed's stability check, as it can be on CI.
+  await page.route("https://reference-course.netlify.app/tutors.json", async route => {
+    const response = await route.fetch();
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await route.fulfill({ response });
+  });
+  await page.goto(course);
+  await signInAs(page, "lecturer");
+  const sidebar = page.locator(".shell-navigation");
+  // The row appears when the seeded role reaches the sidebar, a frame or two after signInAs returns.
+  await expect(sidebar.getByRole("button", { name: "Open Educator Control", exact: true })).toBeVisible();
+  const rows = await learnRows(page);
+  expect(rows.at(-1)).toBe("Educator Control");
+  expect(rows).toContain("Course Info");
+  await sidebar.getByRole("button", { name: "Open Educator Control", exact: true }).click();
+  // Course info is its own row a few lines above, so the panel is administration only and opens on it.
+  const panel = page.getByRole("dialog", { name: "Educator Control", exact: true });
+  await expect(panel.getByRole("tab", { name: "Content Locks", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(panel.getByRole("tab", { name: "Course Info", exact: true })).toHaveCount(0);
+});
+
+test("Side menu runs Learn, Activity, Companions", { tag: "@rule-0240" }, async ({ page }) => {
+  await seedOneOnline(page);
+  // Course tools holds only the whiteboard, which this course has not got, so that heading stays hidden
+  // and the sections a reader sees are the three the order is about.
+  await expect(page.locator(".shell-navigation .nav-section:visible")).toHaveText(["Learn", "Activity", "Companions"]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+  const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
+  await expect(navigation.locator(".nav-section:visible")).toHaveText(["Learn", "Activity", "Companions"]);
+});
+
+test("Learn section withholds Educator Control from a student", { tag: "@rule-0217" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(course);
+  await signInAs(page, "student");
+  const sidebar = page.locator(".shell-navigation");
+  await expect(sidebar.getByRole("button", { name: "Open course info", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Open Educator Control" })).toHaveCount(0);
+  const rows = await learnRows(page);
+  expect(rows).toContain("Course Info");
+  expect(rows).not.toContain("Educator Control");
 });
