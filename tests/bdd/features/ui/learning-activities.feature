@@ -31,6 +31,27 @@ Feature: Quizzes, notebooks and slides
       Then the cell navigation reads "Cell 2 of 19"
       And saved output can be shown and hidden
 
+  @rule-0230 @ears-ubiquitous
+  Rule: The reader shall offer a notebook cell its author tagged as an exercise as code a student can edit and run, a cell tagged as a solution only once the student asks to see it, and every other code cell as its saved output alone.
+
+    Scenario: An exercise cell is editable, a plain code cell is not
+      Given a student opens a notebook with exercise cells
+      Then a plain code cell offers only its saved output
+      And the exercise cell offers an editor and a way to run it
+
+    Scenario: A solution waits until a student asks for it
+      Given a student opens a notebook with exercise cells
+      Then the solution's code is out of sight
+      And selecting "Show Solution" reveals the code and its saved output
+
+  @rule-0231 @ears-event-driven
+  Rule: When a student runs a notebook's exercise cell, the reader shall run the code the student has in front of them, in their browser, and show what it printed.
+
+    Scenario: Running an exercise cell shows what the student's own code printed
+      Given a student opens a notebook with exercise cells
+      When the student selects "Run" on the exercise cell as the author left it
+      Then the output is what that unfinished code prints, not the saved output of the solution
+
   @rule-0050 @ears-state-driven
   Rule: While a slide deck has focus, the reader shall move to the next slide when the student presses the right arrow key.
 
