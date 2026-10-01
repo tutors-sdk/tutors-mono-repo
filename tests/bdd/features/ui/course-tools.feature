@@ -84,3 +84,10 @@ Feature: Course tools
     Scenario: Learn section withholds Educator Control from a student
       Given a signed-in student is viewing a course
       Then the Learn section offers "Course Info" and has no Educator Control option
+
+  @rule-0235 @ears-ubiquitous
+  Rule: The reader shall order the side menu's course sections Learn first, then Activity, then Companions.
+
+    Scenario: Side menu runs Learn, Activity, Companions
+      Given a signed-in student sees one student online
+      Then the side menu's section headings read "Learn", "Activity" then "Companions"

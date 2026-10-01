@@ -54,12 +54,6 @@
     <!-- An educator's administration of the course they are reading, so it closes the Learn list rather
          than opening a group of its own. Gated here, not inside: it reads the course's locks. -->
     {#if isEducator.value}<EducatorControlButton labelled />{/if}
-    {#if course.companions?.show && course.companions.bar.length > 0}
-      <p class="nav-section">{t("shell.links")}</p>
-      {#each course.companions.bar as item}
-        <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
-      {/each}
-    {/if}
     <div class="tool-section">
     <p class="nav-section">{t("shell.tools")}</p>
     {#if showConnect && course.hasWhiteboard}<WhiteboardButton labelled />{/if}
@@ -80,6 +74,14 @@
       <a class="nav-row" href={`${siteUrls.live}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
       <OnlineButton />
       </div>
+    {/if}
+    <!-- Companions lead out of the course, to Moodle, a playlist, a chat. Everything above leads further
+         into it, so they close the list rather than splitting Learn from Activity (#372). -->
+    {#if course.companions?.show && course.companions.bar.length > 0}
+      <p class="nav-section">{t("shell.links")}</p>
+      {#each course.companions.bar as item}
+        <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
+      {/each}
     {/if}
     {#if currentLo.value?.parentTopic && !lab}
       <details><summary class="nav-row">{currentLo.value.parentTopic.title}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary><LoContextTree lo={currentLo.value.parentTopic} expandAll={false} /></details>
