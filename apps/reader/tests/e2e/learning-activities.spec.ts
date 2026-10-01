@@ -5,6 +5,8 @@ import { openNotebookWithoutHeadings } from "./support";
 
 const quiz = "/quiz/reference-course/topic-07-reference/quiz-1";
 const talk = "/talk/python-fundmentals/topic-03-operators/unit-1/talk-1-operators";
+// Cell 2 is a plain code cell, 14 the exercise its author tagged, 15 the solution beside it.
+const exerciseNotebook = "/notebook/reference-course/topic-01-typical/unit-1/notebook-a";
 const notebook = "/notebook/python-fundmentals/topic-03-operators/unit-1/notebook-operators";
 
 /** The outline lives in the sidebar, which the shell only lays out from 1024px up. */
@@ -67,6 +69,49 @@ test("Notebook shows the current cell", { tag: "@rule-0049" }, async ({ page }) 
   await expect(navigation).toContainText("Cell 2 of 19");
   await page.getByRole("button", { name: "Show saved output", exact: true }).first().click();
   await expect(page.getByRole("button", { name: /Hide output/i }).first()).toBeVisible();
+});
+
+test("An exercise cell is editable, a plain code cell is not", { tag: "@rule-0237" }, async ({ page }) => {
+  await page.goto(exerciseNotebook);
+  const plain = page.locator("#notebook-cell-2");
+  await expect(plain.getByRole("button", { name: "Show saved output", exact: true })).toBeVisible();
+  await expect(plain.getByRole("button", { name: "Run", exact: true })).toHaveCount(0);
+  await expect(plain.getByRole("textbox")).toHaveCount(0);
+
+  const exercise = page.locator("#notebook-cell-14");
+  await expect(exercise.getByRole("textbox", { name: "python exercise code", exact: true })).toBeVisible();
+  await expect(exercise.getByRole("button", { name: "Run", exact: true })).toBeVisible();
+  // An exercise carries no saved output of its own: the student's own run is what fills it.
+  await expect(exercise.getByRole("button", { name: /Show saved output/ })).toHaveCount(0);
+});
+
+test("A solution waits until a student asks for it", { tag: "@rule-0237" }, async ({ page }) => {
+  await page.goto(exerciseNotebook);
+  const solution = page.locator("#notebook-cell-15");
+  await expect(solution).not.toContainText("word[0].upper()");
+  await solution.getByRole("button", { name: "Show Solution", exact: true }).click();
+  await expect(solution).toContainText("word[0].upper()");
+  // The saved output waits behind a second ask, so the answer does not arrive with the code.
+  await expect(solution).not.toContainText("G.B.M.H.");
+  await solution.getByRole("button", { name: "Show saved output", exact: true }).click();
+  await expect(solution).toContainText("G.B.M.H.");
+});
+
+test("Running an exercise cell shows what the student's own code printed", { tag: "@rule-0238" }, async ({ page }) => {
+  // The first run fetches a Python runtime from a CDN and starts it, which outlasts the default timeout.
+  test.slow();
+  await page.goto(exerciseNotebook);
+  const exercise = page.locator("#notebook-cell-14");
+  await exercise.getByRole("button", { name: "Run", exact: true }).click();
+  // The exercise is left unfinished, so its two calls print None. The solution beside it has "A.L." saved
+  // against the same two calls: seeing None is what tells the code apart from the author's recorded answer.
+  const output = exercise.getByRole("status", { name: "Python output", exact: true });
+  await expect(output).toContainText("None\nNone", { timeout: 90_000 });
+  await expect(output).not.toContainText("A.L.");
+  await exercise.getByRole("textbox", { name: "python exercise code", exact: true }).fill('print("student edit")');
+  await exercise.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(output).toContainText("student edit");
+  await expect(output).not.toContainText("None");
 });
 
 test("Notebook headings fill the course navigation", { tag: "@rule-0232" }, async ({ page }) => {
