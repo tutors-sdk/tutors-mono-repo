@@ -6,6 +6,7 @@ Files a release carries for the [release harness](https://github.com/tutors-sdk/
 | --- | --- |
 | `claims.yaml` | The differences this release intends. The harness fails on any observable difference that no claim covers, and reports claims that match nothing as stale. |
 | `deployed.json` | What production runs: `{"tag", "deployedAt", "commit", "digests"}`. `pnpm deploy:pin X.Y.Z` writes it beside the overlays it pins, so the pin pull request carries both, and `pnpm check:deploy-pins` (deploy.yml) fails when it and the overlays disagree. The harness reads it for `--baseline prod`. `deployedAt` is when production was pinned (UTC); the pin pull request's merge is the deploy. |
+| `openvex.json` | Advisories that cannot affect this release, as an [OpenVEX](https://openvex.dev) document. The harness (1.23.0 and later) fetches it from beside `claims.yaml` and hands it to its scanner with `--vex` on both sides, so a `not_affected` advisory is not reported. `pnpm check:openvex` (release-claims.yml) holds the harness's rules. See [Writing an OpenVEX statement](#writing-an-openvex-statement) |
 | `SOP.md` | The standard work for a release: roles, the twelve steps, stop-the-line rules. `pnpm release:candidate X.Y.Z` is steps 1, 2 and 5 to 7 in one command; it reads the changelog and claims (steps 3 and 4) from the branch. |
 
 ## Writing a claim
@@ -19,11 +20,13 @@ claims:
 
 | Field | Meaning |
 | --- | --- |
-| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`, `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, or `"*"` (the harness's vocabulary as of harness 1.3.0, in its order; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md); `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` are read from the images and the running containers). `pnpm check:release-claims` accepts exactly this list, and a test fails if it drifts from the harness's |
+| `artefact` | `dom`, `screenshot`, `network`, `console`, `headers`, `axe`, `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`, `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, `image-hardening`, `build-provenance`, `vuln-ceiling`, `timing-tolerance`, `asset-graph`, `replay`, or `"*"` (the harness's vocabulary as of harness 1.28.0, in its order; `migration` is how a contract migration is claimed, see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md); `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` are read from the images and the running containers; `image-hardening`, `build-provenance` and `vuln-ceiling` are the harness's policy checks on the candidate alone, from harness 1.22.0; `timing-tolerance`, `asset-graph` and `replay` are informing checks from harness 1.26.0, 1.27.0 and 1.28.0: reported, never gating until harness 2.0). `pnpm check:release-claims` accepts exactly this list, and a test fails if it drifts from the harness's |
 | `scope` | A glob over what changed: a page key (`reader:lab-step`), a route, `GET /api/presence`, `reader:*/content-security-policy`, `<app>/<series>` |
 | `reason` | The Rule id or CHANGELOG entry behind the change. "see PR", "approved" and the like are rejected. Optional when the claim has a `rule` |
 | `rule` | Optional, harness contract 1.3.0. The id of the Rule behind the change, in quotes: `rule: "0031"`. It must be a Rule the release defines (see [Rules the release defines](#rules-the-release-defines)) |
 | `approvedBy` | Required on a broad claim (`artefact: "*"`, `scope: "*"` or `"**"`): a person, never a bot |
+| `until` | Optional, harness 1.25.1. The last day (`"2026-11-30"`) or release (`"16.3.0"`, `v` allowed) the claim is meant for. After it the harness reports the claim as expired; from harness 2.0 an expired claim covers nothing |
+| `digests` | Optional, harness 1.25.1. The image each named app had when the claim was written: `digests: { reader: "sha256:<64 hex>" }`, for any of `reader`, `catalogue`, `live`, `time`. A candidate with another image for a named app makes the claim expired |
 
 A claim can name its Rule with the field instead of the reason:
 
@@ -35,6 +38,38 @@ claims:
 ```
 
 `pnpm check:release-claims` resolves both forms against the Rules in `tests/bdd/features` and fails on an id no feature defines. A claim whose `reason` starts "Rule 0031" and also has a `rule` must name the same Rule. A reason that names a CHANGELOG entry stays free text. The `rule` field needs a harness that speaks contract 1.3.0. An earlier harness (contract 1.2.0 or before) does not reject the key: its claims schema ignores unknown keys, so a claim with a `reason` and a `rule` passes and the `rule` is dropped. A claim with only a `rule` fails there because `reason` is then missing (it is required before 1.3.0). So keep to `reason: "Rule 0031: ..."` until the harness release path is 1.3.0 or later; a claim with only a `rule` needs 1.3.0.
+
+## Writing an OpenVEX statement
+
+A claim says "we meant this difference". An OpenVEX statement says "this advisory is not a vulnerability here", in a form any scanner reads. The file starts with no statements; add one only when the evidence shows the vulnerable code cannot be reached:
+
+```json
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/tutors-sdk/tutors-mono-repo/blob/main/release/openvex.json",
+  "author": "Tutors release captain",
+  "timestamp": "2026-10-01T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": { "name": "CVE-2026-1234" },
+      "products": [{ "@id": "pkg:npm/tar@7.4.3" }],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "tar is only used by the build; the runtime never extracts an archive"
+    }
+  ]
+}
+```
+
+| Field | Rule |
+| --- | --- |
+| `products[].@id` | A package URL (`pkg:npm/tar@7.4.3`), not an image: the harness scans each image's SBOM, and grype matches a statement by the vulnerable package's purl |
+| `status` | `not_affected`, `affected`, `fixed` or `under_investigation` |
+| `justification` | Required with `not_affected`: `component_not_present`, `vulnerable_code_not_present`, `vulnerable_code_not_in_execute_path`, `vulnerable_code_cannot_be_controlled_by_adversary` or `inline_mitigations_already_exist`. An `impact_statement` alone is not enough |
+| `action_statement` | Required with `affected`: what is being done about it |
+
+Bump `timestamp` (and `version`) when you change a statement. `pnpm check:openvex` checks the file (Rules 0226 to 0228); a release push runs it beside `pnpm check:release-claims` (Rule 0229).
 
 ## Writing claims from the changelog
 

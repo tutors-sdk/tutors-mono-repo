@@ -73,7 +73,7 @@
   /* Width comes from .ui-grid.card-grid > .ui-empty in paper-ui.css; the card grid is flex, not grid. */
   /* Result cards are the same fixed box as every other card, so the excerpt clamps like the summary
      above it rather than pushing the card taller than its neighbours in the row. */
-  .search-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
+  .search-excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--ui-border); font-size: var(--font-label); color: var(--ui-muted); overflow-wrap: anywhere; }
   mark { padding-inline: 2px; border-radius: var(--radius-small); background: color-mix(in srgb, var(--ui-warning) 28%, transparent); color: var(--ui-ink); font-weight: var(--weight-semibold); }
   /* A small inline toggle: the chevron sits after the label, not at the far edge. */
   .resource-walls > summary { justify-content: flex-start; width: fit-content; font-size: var(--font-label); color: var(--ui-brand); cursor: pointer; }

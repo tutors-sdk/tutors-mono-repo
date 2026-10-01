@@ -71,9 +71,9 @@ Feature: Reader shell and navigation
       And the title and controls share one toolbar
 
     @inactive
-    Scenario: Desktop header shows course info and the sidebar holds the tools
+    Scenario: Desktop sidebar holds course info and the tools
       Given the viewport is 1440 pixels wide
-      Then the header offers "Open course info" and the sidebar offers "Edit this course"
+      Then the sidebar offers "Open course info" and "Edit this course", and the header offers neither
 
   @rule-0025 @ears-event-driven
   Rule: When a student closes a menu or dialog, the reader shall return focus to the control that opened it.
@@ -84,8 +84,8 @@ Feature: Reader shell and navigation
 
     Scenario: Closing the online dialog returns focus to its course tools row
       Given a signed-in student sees one student online
-      When the student opens "View 1 Online" from course tools and closes it
-      Then focus is on the "View 1 Online" row of course tools
+      When the student opens "View Online" from course tools and closes it
+      Then focus is on the "View Online" row of course tools
 
   @rule-0026 @ears-event-driven
   Rule: When an anonymous visitor opens the account menu, the reader shall offer a link to the home page.

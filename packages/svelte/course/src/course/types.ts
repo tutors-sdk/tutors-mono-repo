@@ -31,6 +31,12 @@ export interface LabService {
   prevStep(): string;
 }
 
+/** One entry of a notebook's outline: the cell it names, and the text to name it by. */
+export interface NotebookOutlineEntry {
+  index: number;
+  title: string;
+}
+
 /**
  * Interface representing a live interactive notebook session
  * Manages notebook content, navigation, and state
@@ -42,6 +48,7 @@ export interface NotebookService {
   cells: NotebookCell[];
   cellCount: number;
   activeCellIndex: number;
+  outline: NotebookOutlineEntry[];
   navbarHtml: string;
   horizontalNavbarHtml: string;
 
@@ -52,6 +59,7 @@ export interface NotebookService {
   isExerciseCell(cell: NotebookCell): boolean;
   getCellLabel(cell: NotebookCell, index: number): string;
   getCellTypeIcon(cellType: string): string;
+  deriveOutline(): NotebookOutlineEntry[];
   refreshNav(): void;
 }
 

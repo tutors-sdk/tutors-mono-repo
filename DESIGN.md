@@ -364,7 +364,7 @@ The reader is an application shell: a 248px sidebar and a full-width header over
 main column.
 
 - **Shell:** the header spans the top (surface fill, bottom hairline). The sidebar holds course
-  navigation, companions, course tools or a lab's steps. Below 1024px the sidebar disappears
+  navigation, companions, course tools, a lab's steps or a notebook's outline. Below 1024px the sidebar disappears
   and its contents open as a dialog from a "Course navigation" button in the header, next to a
   "Course Tree" button. On phones (below 768px) the header is compact - a 56px bar over a course row, about
   116px in all - and floats over the page: it slides away as the reader scrolls down and back
@@ -429,6 +429,9 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
   teal inset underline. Disabled buttons are neutral grey, never a faded teal.
 - **Header actions:** icon plus label (Search, Preferences), 44px, no border, selected-grey on
   hover. Search and Preferences share one style exactly.
+- **Online count:** a neutral presence counter belongs beside "View Online" in course navigation,
+  with the count in the button's accessible name. It is absent when nobody is online; the avatar
+  shows only the reader's sharing status. On phones the count travels with the navigation drawer.
 - **Resource cards:** portrait. The title (19px, two lines) and type icon share the top row,
   the artwork is centred below, and the centred summary (three lines) sits under it. The artwork
   takes whatever height the text leaves, from 180px down to 80px, so the summary never touches
@@ -451,13 +454,20 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Menus and popovers:** surface, hairline, 16px radius (flush to the header when anchored to
   it), 16px padding, shadow. Rows are 44px with 8px radius and selected-grey hover.
   Section headings are 12px uppercase muted labels.
+- **Course navigation:** Learn first, then Activity, then Companions. An optional whiteboard
+  group sits between Learn and Activity; external companions close the list. Desktop navigation
+  and the phone drawer share this order.
 - **Dialogs:** course tree, course info, calendar, online students and search. On phones they
   fill the screen; on desktop they are centred. Closing one returns focus to the control that
   opened it. The search dialog's type chips are one sideways-scrolling row on phones.
 - **Keyboard hints:** shortcut hints (the ⌘K / Ctrl K beside Search, the key legend in the search
   dialog) show only on a wide screen with a mouse or trackpad. On touch screens the dialog's
   esc hint becomes a close button.
-- **Disclosures:** a lab's steps on narrow screens, a notebook's outline and a note's contents
+- **Notebook outline:** heading cells appear in the course navigation, always open like a lab's
+  steps, with the current entry marked. A notebook without headings lists every cell. Below
+  1024px the outline opens in the Course navigation drawer; choosing an entry also updates the
+  cell pager.
+- **Disclosures:** a lab's steps on narrow screens and a note's contents
   open from a full-width 44px summary row with a chevron that turns, not the browser's triangle.
 - **Selects:** 44px, 8px radius, with a muted chevron drawn in the field.
 - **Breadcrumbs:** "My courses / parent course title / course / page", muted with teal links.

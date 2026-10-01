@@ -113,11 +113,13 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   await expect(navigation.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "View Calendar for this course", exact: true })).toBeVisible();
   await expect(navigation.locator(".calendar-week")).toContainText("This week");
+  await expect.poll(() => navigation.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");
+  await expect(navigation).not.toBeVisible();
   await expect(menu).toBeFocused();
 });
 
-test("Desktop header shows course info and the sidebar holds the tools", { tag: "@rule-0024" }, async ({ page }) => {
+test("Desktop sidebar holds course info and the tools", { tag: "@rule-0024" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(course);
   const header = page.locator(".shell-header");
@@ -131,16 +133,16 @@ test("Desktop header shows course info and the sidebar holds the tools", { tag: 
     currentCourse.value.summary = Array.from({ length: 40 }, (_, i) => `<p>Course summary paragraph ${i + 1}</p>`).join("");
   });
   await expect(page.locator("#main-content")).not.toContainText("Course summary paragraph");
-  await header.getByRole("button", { name: "Open course info", exact: true }).click();
+  const sidebar = page.locator(".shell-navigation");
+  await expect(header.getByRole("button", { name: "Open course info", exact: true })).toHaveCount(0);
+  await sidebar.getByRole("button", { name: "Open course info", exact: true }).click();
   const info = page.getByRole("dialog", { name: "Course Info", exact: true });
   await expect(info).toBeVisible();
   await expect(info.locator(".prose p")).toHaveCount(40);
   await info.getByText("Course summary paragraph 40", { exact: true }).scrollIntoViewIfNeeded();
   await expect(info.getByText("Course summary paragraph 40", { exact: true })).toBeInViewport();
   await page.keyboard.press("Escape");
-  const sidebar = page.locator(".shell-navigation");
   await expect(sidebar.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("button", { name: "Open course info", exact: true })).toHaveCount(0);
   // A short window must scroll the sidebar, never squeeze a multi-line button over the next row.
   await page.setViewportSize({ width: 1440, height: 500 });
   const rows = await sidebar.locator(".nav-row").evaluateAll(elements => elements.map(el => {
@@ -166,9 +168,9 @@ test("Closing the preferences menu returns focus to its button", { tag: "@rule-0
 
 test("Closing the online dialog returns focus to its course tools row", { tag: "@rule-0025" }, async ({ page }) => {
   await seedOneOnline(page);
-  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true });
+  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true });
   await viewOnline.click();
-  const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
+  const online = page.getByRole("dialog", { name: "View Online", exact: true });
   await expect(online).toBeVisible();
   await online.getByRole("button", { name: "Close", exact: true }).click();
   await expect(online).not.toBeVisible();
