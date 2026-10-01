@@ -106,6 +106,29 @@ test("Notebook outline follows the reader", { tag: "@rule-0233" }, async ({ page
   await expect(marked).toHaveText("04Logical Operators and Short-Circuit Evaluation");
 });
 
+test("Notebook outline and pager stay in sync on phones", { tag: "@rule-0233" }, async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(notebook);
+  await page.locator("#notebook-cell-0").waitFor();
+  await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "03 Comparison Operators", exact: true }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await expect(page.locator("#notebook-cell-3")).toBeInViewport();
+  const pager = page.getByRole("navigation", { name: "Notebook cell navigation", exact: true });
+  await expect(pager).toContainText("Cell 4 of 19");
+  await pager.getByRole("button", { name: "Next cell", exact: true }).click();
+  await expect(pager).toContainText("Cell 5 of 19");
+  await expect(page.locator("#notebook-cell-4")).toBeFocused();
+  // Returning to the same fragment must select its cell again, too.
+  // Scroll up to reveal the phone header before opening navigation again.
+  await page.locator(".shell-main").evaluate(main => main.scrollBy({ top: -100 }));
+  await expect(page.getByRole("button", { name: "Course navigation", exact: true })).toBeInViewport();
+  await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "03 Comparison Operators", exact: true }).click();
+  await expect(pager).toContainText("Cell 4 of 19");
+});
+
 test("Arrow keys move a focused slide deck", { tag: "@rule-0050" }, async ({ page }) => {
   const slides = await openDeckOnSlideTwo(page);
   await slides.focus();

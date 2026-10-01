@@ -1,4 +1,5 @@
-import type { Course, Notebook, NotebookCell } from "@tutors/tutors-model-lib";
+import { markdownIt, type Course, type Notebook, type NotebookCell } from "@tutors/tutors-model-lib";
+import { rune } from "@tutors/runes";
 import type { NotebookOutlineEntry, NotebookService } from "../types.ts";
 
 function escapeHtml(str: string): string {
@@ -11,7 +12,8 @@ export class LiveNotebook implements NotebookService {
   url: string;
   cells: NotebookCell[];
   cellCount: number;
-  activeCellIndex: number;
+  private activeCell = rune(0);
+  get activeCellIndex(): number { return this.activeCell.value; }
   outline: NotebookOutlineEntry[];
   navbarHtml: string;
   horizontalNavbarHtml: string;
@@ -22,7 +24,6 @@ export class LiveNotebook implements NotebookService {
     this.url = notebookId;
     this.cells = notebook.cells ?? [];
     this.cellCount = this.cells.length;
-    this.activeCellIndex = 0;
     this.outline = this.deriveOutline();
     this.navbarHtml = "";
     this.horizontalNavbarHtml = "";
@@ -41,16 +42,20 @@ export class LiveNotebook implements NotebookService {
     const headings: NotebookOutlineEntry[] = [];
     this.cells.forEach((cell, index) => {
       if (cell.cellType !== "markdown") return;
-      const heading = /^#{1,3}[ \t]+(\S.*)$/.exec((cell.source ?? "").trimStart().split("\n")[0].trim());
-      if (heading) headings.push({ index, title: heading[1].trim() });
+      const tokens = markdownIt.parse(cell.source ?? "", {});
+      const heading = tokens.findIndex(token => token.type === "heading_open" && ["h1", "h2", "h3"].includes(token.tag));
+      if (heading >= 0) {
+        const title = tokens[heading + 1].children!.filter(token => token.type !== "html_inline").map(token => token.content).join("");
+        headings.push({ index, title });
+      }
     });
     if (headings.length > 0) return headings;
     return this.cells.map((cell, index) => ({ index, title: this.getCellLabel(cell, index) }));
   }
 
   setActiveCell(index: number): void {
-    if (index >= 0 && index < this.cellCount) {
-      this.activeCellIndex = index;
+    if (Number.isInteger(index) && index >= 0 && index < this.cellCount) {
+      this.activeCell.value = index;
       this.refreshNav();
     }
   }

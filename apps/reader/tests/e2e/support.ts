@@ -48,6 +48,8 @@ export async function seedOneOnline(page: Page, { educator = false } = {}): Prom
  * dev server has loaded. Locks save only to this browser (no Supabase in dev or CI); nothing is written anywhere.
  */
 export async function signInAs(page: Page, role: "student" | "lecturer", locked: string[] = []): Promise<void> {
+  // A loaded rune module does not mean the course has mounted: its first visit clears the role.
+  await page.locator(".shell-navigation").getByRole("link", { name: "Course home", exact: true }).waitFor({ state: "attached" });
   // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
   // runner), so seed, wait a moment, and seed again until the role holds.
   await expect(async () => {

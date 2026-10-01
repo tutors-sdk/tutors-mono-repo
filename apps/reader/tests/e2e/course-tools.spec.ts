@@ -180,6 +180,12 @@ async function learnRows(page: Page): Promise<string[]> {
 
 test("Learn section ends with Educator Control for an educator", { tag: "@rule-0217" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  // Keep course loading slower than the role seed's stability check, as it can be on CI.
+  await page.route("https://reference-course.netlify.app/tutors.json", async route => {
+    const response = await route.fetch();
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await route.fulfill({ response });
+  });
   await page.goto(course);
   await signInAs(page, "lecturer");
   const sidebar = page.locator(".shell-navigation");

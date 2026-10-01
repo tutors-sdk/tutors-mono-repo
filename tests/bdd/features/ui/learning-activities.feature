@@ -51,6 +51,12 @@ Feature: Quizzes, notebooks and slides
       Then the notebook shows that heading's cell and the outline marks only that entry
       And scrolling on to the next heading moves the mark with it
 
+    Scenario: Notebook outline and pager stay in sync on phones
+      When a student selects an outline entry from the phone's course navigation
+      Then the notebook pager shows that cell
+      And the next cell button advances from the selected cell
+      And selecting the same outline entry again returns to its cell
+
   @rule-0050 @ears-state-driven
   Rule: While a slide deck has focus, the reader shall move to the next slide when the student presses the right arrow key.
 

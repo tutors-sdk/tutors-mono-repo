@@ -4,7 +4,7 @@
   import { t } from "@tutors/i18n";
   import { analyticsEnabled } from "@tutors/connect";
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
-  import type { LiveLab, LiveNotebook } from "@tutors/course/course";
+  import type { LiveLab, NotebookService } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
@@ -17,7 +17,7 @@
   let { showConnect = true, mobile = false, current = "" } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
-  const notebook = $derived((page.data as { notebook?: LiveNotebook }).notebook);
+  const notebook = $derived((page.data as { notebook?: NotebookService }).notebook);
   const parentTopic = $derived((lab?.lab ?? notebook?.notebook)?.breadCrumbs?.findLast(lo => lo.type === "topic"));
   const companionLabels: Record<string, string> = { moodle: "Moodle", youtube: "YouTube", slack: "Slack", zoom: "Zoom", teams: "Teams", podcast: "Podcast" };
 </script>
@@ -43,7 +43,7 @@
     <p class="ui-muted text-sm">{t("shell.outline")} · {notebook.outline.length}</p>
     <ol class="steps" aria-label={t("shell.outline")}>
       {#each notebook.outline as entry, i}
-        <li><a class="nav-row" href={`#notebook-cell-${entry.index}`} aria-current={currentNotebookCellIndex.value === entry.index ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{entry.title}</a></li>
+        <li><a class="nav-row" href={`#notebook-cell-${entry.index}`} onclick={() => notebook.setActiveCell(entry.index)} aria-current={currentNotebookCellIndex.value === entry.index ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{entry.title}</a></li>
       {/each}
     </ol>
     <hr />

@@ -2,7 +2,7 @@
   import { afterNavigate } from "$app/navigation";
   import { prefersReducedMotion } from "@tutors/a11y";
   import { currentNotebookCellIndex } from "@tutors/runes";
-  import type { LiveNotebook } from "@tutors/course/course";
+  import type { NotebookService } from "@tutors/course/course";
   import { currentCodeTheme } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { copyCode } from "@tutors/course/markdown";
@@ -10,7 +10,7 @@
   import "./notebook-styles.css";
 
   interface Props {
-    notebook: LiveNotebook;
+    notebook: NotebookService;
   }
   let { notebook }: Props = $props();
 
@@ -18,7 +18,7 @@
   const HEADING_REACHED_TOP = 120;
 
   let loaded = false;
-  let activeIndex = $state(0);
+  const activeIndex = $derived(notebook.activeCellIndex);
   let revealedOutputs = $state<Record<number, boolean>>({});
   let revealedSolutions = $state<Record<number, boolean>>({});
 
@@ -38,7 +38,6 @@
   }
 
   function handleCellClick(index: number) {
-    activeIndex = index;
     notebook.setActiveCell(index);
     document.getElementById(`notebook-cell-${index}`)?.focus({ preventScroll: true });
     scrollToCell(index);
@@ -122,7 +121,7 @@
               solutionRevealed={revealedSolutions[i] ?? false}
               onToggleOutput={() => toggleOutput(i)}
               onToggleSolution={() => toggleSolution(i)}
-              onClick={() => { activeIndex = i; notebook.setActiveCell(i); }}
+              onClick={() => notebook.setActiveCell(i)}
               kernelLanguage={notebook.notebook.kernelLanguage}
             />
           {/each}
