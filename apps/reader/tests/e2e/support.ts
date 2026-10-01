@@ -66,6 +66,41 @@ export async function signInAs(page: Page, role: "student" | "lecturer", locked:
 }
 
 /**
+ * Opens a notebook whose markdown cells carry no heading, which no published course has: the notebook is
+ * read once to fill the course service's cache, its headings are stripped there, and it is opened again so
+ * the cache hit renders the stripped copy. Nothing is written anywhere.
+ */
+export async function openNotebookWithoutHeadings(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await page.locator("#notebook-cell-0").waitFor();
+  const stripped = await page.evaluate(async path => {
+    const modules = performance.getEntriesByType("resource").map(entry => entry.name);
+    const { courseService } = await import(modules.find(url => url.includes("/course/src/course/services/course.svelte.ts"))!);
+    const notebook = courseService.notebooks.get(path);
+    if (!notebook) return 0;
+    let count = 0;
+    for (const cell of notebook.cells) {
+      if (cell.cellType !== "markdown") continue;
+      cell.source = cell.source.replace(/^#+[ \t]*/, "");
+      count += 1;
+    }
+    // The outline is derived once, when the notebook is first read, so the cached copy is dropped and
+    // built again from the stripped cells on the way back in.
+    courseService.notebooks.delete(path);
+    return count;
+  }, path);
+  expect(stripped).toBeGreaterThan(0);
+  // Stepping out and back through the app remounts the page against the stripped cells; a reload would
+  // discard them along with the rest of the module state.
+  await page.locator(".shell-navigation").getByRole("link", { name: /^←/ }).click();
+  // Wait for the step out to land: going back before it does lands back where we started.
+  await page.waitForURL(/\/topic\//);
+  await page.goBack();
+  await page.waitForURL(path);
+  await page.locator("#notebook-cell-0").waitFor();
+}
+
+/**
  * Locks routes on the loaded course the way the reader stores them without Supabase (localStorage, keyed by
  * course), marks the course as enrolled (locks only apply to enrolled courses) and reloads the locks.
  * `showLocked` turns on the lecturer's "show locked content to students" setting. Nothing leaves the browser.

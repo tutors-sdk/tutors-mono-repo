@@ -40,6 +40,7 @@ const it: Record<string, string> = {
   "shell.whiteboard": "Lavagna",
   "shell.preferences": "Preferenze",
   "shell.steps": "Passaggi",
+  "shell.outline": "Struttura",
   "shell.fullWidth": "Larghezza piena",
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Larghezza del contenuto",

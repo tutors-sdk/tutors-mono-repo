@@ -1,9 +1,23 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
+import { openNotebookWithoutHeadings } from "./support";
 
 // Proves tests/bdd/features/ui/learning-activities.feature: one test per scenario, titled and tagged to match.
 
 const quiz = "/quiz/reference-course/topic-07-reference/quiz-1";
 const talk = "/talk/python-fundmentals/topic-03-operators/unit-1/talk-1-operators";
+const notebook = "/notebook/python-fundmentals/topic-03-operators/unit-1/notebook-operators";
+
+/** The outline lives in the sidebar, which the shell only lays out from 1024px up. */
+function outlineOf(page: Page): Locator {
+  return page.locator(".shell-navigation").getByRole("list", { name: "Outline", exact: true });
+}
+
+async function openNotebookWide(page: Page): Promise<Locator> {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(notebook);
+  await page.locator("#notebook-cell-0").waitFor();
+  return outlineOf(page);
+}
 
 async function openDeckOnSlideTwo(page: Page) {
   await page.goto(talk);
@@ -53,6 +67,43 @@ test("Notebook shows the current cell", { tag: "@rule-0049" }, async ({ page }) 
   await expect(navigation).toContainText("Cell 2 of 19");
   await page.getByRole("button", { name: "Show saved output", exact: true }).first().click();
   await expect(page.getByRole("button", { name: /Hide output/i }).first()).toBeVisible();
+});
+
+test("Notebook headings fill the course navigation", { tag: "@rule-0226" }, async ({ page }) => {
+  const outline = await openNotebookWide(page);
+  await expect(outline.getByRole("link")).toHaveText([
+    "01Operator Playground",
+    "02Arithmetic Operators",
+    "03Comparison Operators",
+    "04Logical Operators and Short-Circuit Evaluation",
+    "05Assignment Operators and the Walrus Operator",
+    "06String Operations",
+    "07Operator Precedence Puzzles",
+    "08Exercise: Expression Evaluator",
+    "09Exercise: Time Converter"
+  ]);
+  // "# SOLUTION" and "# Puzzle 1: ..." head code cells: they are Python comments, not headings.
+  await expect(outline.getByRole("link", { name: /SOLUTION|Puzzle 1/i })).toHaveCount(0);
+});
+
+test("A notebook without headings falls back to its cells", { tag: "@rule-0226" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openNotebookWithoutHeadings(page, notebook);
+  await expect(outlineOf(page).getByRole("link")).toHaveCount(19);
+});
+
+test("Notebook outline follows the reader", { tag: "@rule-0227" }, async ({ page }) => {
+  // Reduced motion makes the scroll to a cell, and so the rect the observer reads, immediate.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const outline = await openNotebookWide(page);
+  const marked = outline.locator('[aria-current="step"]');
+  // The number is part of each entry's accessible name, as it is for a lab step.
+  await outline.getByRole("link", { name: "03 Comparison Operators", exact: true }).click();
+  // The third entry heads cell 3, not cell 2: code cells sit between the headings.
+  await expect(page.locator("#notebook-cell-3")).toBeInViewport();
+  await expect(marked).toHaveText("03Comparison Operators");
+  await page.locator("#notebook-cell-5").evaluate(cell => cell.scrollIntoView({ block: "start" }));
+  await expect(marked).toHaveText("04Logical Operators and Short-Circuit Evaluation");
 });
 
 test("Arrow keys move a focused slide deck", { tag: "@rule-0050" }, async ({ page }) => {

@@ -15,6 +15,7 @@ export const rune = <T>(initialValue: T) => {
 
 // Lazy initialization to avoid SSR issues
 let _currentLabStepIndex: ReturnType<typeof rune<number>> | null = null;
+let _currentNotebookCellIndex: ReturnType<typeof rune<number>> | null = null;
 let _adobeLoaded: ReturnType<typeof rune<boolean>> | null = null;
 let _animationDelay: ReturnType<typeof rune<number>> | null = null;
 let _currentLo: ReturnType<typeof rune<Lo | null>> | null = null;
@@ -23,6 +24,14 @@ let _courseProtocol: ReturnType<typeof rune<string>> | null = null;
 export const currentLabStepIndex = {
   get value() { return (_currentLabStepIndex ??= rune(0)).value; },
   set value(v) { (_currentLabStepIndex ??= rune(0)).value = v; }
+};
+
+// The cell of the notebook on screen. A lab's step comes from the route, but a notebook is one page, so
+// the page publishes it here for the course navigation to mark. It is not a lab step: EditCoursButton
+// builds a source path from currentLabStepIndex, and a notebook is a single file.
+export const currentNotebookCellIndex = {
+  get value() { return (_currentNotebookCellIndex ??= rune(0)).value; },
+  set value(v) { (_currentNotebookCellIndex ??= rune(0)).value = v; }
 };
 
 export const adobeLoaded = {

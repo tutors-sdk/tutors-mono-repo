@@ -1,5 +1,5 @@
 import type { Course, Notebook, NotebookCell } from "@tutors/tutors-model-lib";
-import type { NotebookService } from "../types.ts";
+import type { NotebookOutlineEntry, NotebookService } from "../types.ts";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -12,6 +12,7 @@ export class LiveNotebook implements NotebookService {
   cells: NotebookCell[];
   cellCount: number;
   activeCellIndex: number;
+  outline: NotebookOutlineEntry[];
   navbarHtml: string;
   horizontalNavbarHtml: string;
 
@@ -22,9 +23,29 @@ export class LiveNotebook implements NotebookService {
     this.cells = notebook.cells ?? [];
     this.cellCount = this.cells.length;
     this.activeCellIndex = 0;
+    this.outline = this.deriveOutline();
     this.navbarHtml = "";
     this.horizontalNavbarHtml = "";
     this.refreshNav();
+  }
+
+  /**
+   * The notebook's outline for the course navigation: its markdown headings, down to level 3, which is the
+   * depth a note's table of contents uses. The cell type is part of the test because "#" opens a Python
+   * comment as well as a heading, and most code cells here start with one ("# SOLUTION"); matching on the
+   * "#" alone would fill the outline with them.
+   *
+   * A notebook with no headings has no structure to list, so every cell is listed instead.
+   */
+  deriveOutline(): NotebookOutlineEntry[] {
+    const headings: NotebookOutlineEntry[] = [];
+    this.cells.forEach((cell, index) => {
+      if (cell.cellType !== "markdown") return;
+      const heading = /^#{1,3}[ \t]+(\S.*)$/.exec((cell.source ?? "").trimStart().split("\n")[0].trim());
+      if (heading) headings.push({ index, title: heading[1].trim() });
+    });
+    if (headings.length > 0) return headings;
+    return this.cells.map((cell, index) => ({ index, title: this.getCellLabel(cell, index) }));
   }
 
   setActiveCell(index: number): void {
