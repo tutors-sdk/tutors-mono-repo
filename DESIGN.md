@@ -451,6 +451,9 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Menus and popovers:** surface, hairline, 16px radius (flush to the header when anchored to
   it), 16px padding, shadow. Rows are 44px with 8px radius and selected-grey hover.
   Section headings are 12px uppercase muted labels.
+- **Course navigation:** Learn first, then Activity, then Companions. An optional whiteboard
+  group sits between Learn and Activity; external companions close the list. Desktop navigation
+  and the phone drawer share this order.
 - **Dialogs:** course tree, course info, calendar, online students and search. On phones they
   fill the screen; on desktop they are centred. Closing one returns focus to the control that
   opened it. The search dialog's type chips are one sideways-scrolling row on phones.
