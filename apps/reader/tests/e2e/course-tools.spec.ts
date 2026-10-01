@@ -237,6 +237,17 @@ test("Learn section ends with Educator Control for an educator", { tag: "@rule-0
   await expect(panel.getByRole("tab", { name: "Course Info", exact: true })).toHaveCount(0);
 });
 
+test("Side menu runs Learn, Activity, Companions", { tag: "@rule-0240" }, async ({ page }) => {
+  await seedOneOnline(page);
+  // Course tools holds only the whiteboard, which this course has not got, so that heading stays hidden
+  // and the sections a reader sees are the three the order is about.
+  await expect(page.locator(".shell-navigation .nav-section:visible")).toHaveText(["Learn", "Activity", "Companions"]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+  const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
+  await expect(navigation.locator(".nav-section:visible")).toHaveText(["Learn", "Activity", "Companions"]);
+});
+
 test("Learn section withholds Educator Control from a student", { tag: "@rule-0217" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(course);
