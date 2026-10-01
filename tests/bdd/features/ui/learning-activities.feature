@@ -31,7 +31,7 @@ Feature: Quizzes, notebooks and slides
       Then the cell navigation reads "Cell 2 of 19"
       And saved output can be shown and hidden
 
-  @rule-0226 @ears-ubiquitous
+  @rule-0232 @ears-ubiquitous
   Rule: The reader shall list a notebook's markdown headings in the course navigation in the notebook's order, falling back to every cell when the notebook has no markdown headings.
 
     Scenario: Notebook headings fill the course navigation
@@ -43,7 +43,7 @@ Feature: Quizzes, notebooks and slides
       When a student opens a notebook whose markdown cells carry no heading
       Then the course navigation lists one entry per cell
 
-  @rule-0227 @ears-event-driven
+  @rule-0233 @ears-event-driven
   Rule: When a student moves through a notebook by scrolling, by the outline or by the cell pager, the reader shall mark only the cell being read in the outline.
 
     Scenario: Notebook outline follows the reader

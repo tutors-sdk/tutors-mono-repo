@@ -69,7 +69,7 @@ test("Notebook shows the current cell", { tag: "@rule-0049" }, async ({ page }) 
   await expect(page.getByRole("button", { name: /Hide output/i }).first()).toBeVisible();
 });
 
-test("Notebook headings fill the course navigation", { tag: "@rule-0226" }, async ({ page }) => {
+test("Notebook headings fill the course navigation", { tag: "@rule-0232" }, async ({ page }) => {
   const outline = await openNotebookWide(page);
   await expect(outline.getByRole("link")).toHaveText([
     "01Operator Playground",
@@ -86,13 +86,13 @@ test("Notebook headings fill the course navigation", { tag: "@rule-0226" }, asyn
   await expect(outline.getByRole("link", { name: /SOLUTION|Puzzle 1/i })).toHaveCount(0);
 });
 
-test("A notebook without headings falls back to its cells", { tag: "@rule-0226" }, async ({ page }) => {
+test("A notebook without headings falls back to its cells", { tag: "@rule-0232" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openNotebookWithoutHeadings(page, notebook);
   await expect(outlineOf(page).getByRole("link")).toHaveCount(19);
 });
 
-test("Notebook outline follows the reader", { tag: "@rule-0227" }, async ({ page }) => {
+test("Notebook outline follows the reader", { tag: "@rule-0233" }, async ({ page }) => {
   // Reduced motion makes the scroll to a cell, and so the rect the observer reads, immediate.
   await page.emulateMedia({ reducedMotion: "reduce" });
   const outline = await openNotebookWide(page);
