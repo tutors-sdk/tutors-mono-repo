@@ -40,6 +40,8 @@ test("Course tree counts stay aligned when a branch opens", { tag: "@rule-0041" 
     const title = row.querySelector(".tree-section-title")!.getBoundingClientRect();
     return { right: count.right, arrowX: chevron.x, offset: Math.abs(count.y + count.height / 2 - chevron.y - chevron.height / 2), titleOffset: Math.abs(count.y + count.height / 2 - title.y - title.height / 2) };
   }));
+  // Take the baseline after the same layout stability check as the click below.
+  await sections.nth(1).click({ trial: true });
   const before = await positions();
   await sections.nth(1).click();
   for (const row of await positions()) {
@@ -196,6 +198,12 @@ async function learnRows(page: Page): Promise<string[]> {
 
 test("Learn section ends with Educator Control for an educator", { tag: "@rule-0217" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  // Keep course loading slower than the role seed's stability check, as it can be on CI.
+  await page.route("https://reference-course.netlify.app/tutors.json", async route => {
+    const response = await route.fetch();
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await route.fulfill({ response });
+  });
   await page.goto(course);
   await signInAs(page, "lecturer");
   const sidebar = page.locator(".shell-navigation");

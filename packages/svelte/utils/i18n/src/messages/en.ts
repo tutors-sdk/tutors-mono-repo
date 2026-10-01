@@ -40,6 +40,7 @@ const en = {
   "shell.whiteboard": "Whiteboard",
   "shell.preferences": "Preferences",
   "shell.steps": "Steps",
+  "shell.outline": "Outline",
   "shell.fullWidth": "Full width",
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Content width",

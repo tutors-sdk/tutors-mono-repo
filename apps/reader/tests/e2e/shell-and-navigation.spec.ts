@@ -113,7 +113,9 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   await expect(navigation.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "View Calendar for this course", exact: true })).toBeVisible();
   await expect(navigation.locator(".calendar-week")).toContainText("This week");
+  await expect.poll(() => navigation.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");
+  await expect(navigation).not.toBeVisible();
   await expect(menu).toBeFocused();
 });
 
