@@ -8,7 +8,7 @@ import { signOut } from "@auth/sveltekit/client";
 import { signIn } from "@auth/sveltekit/client";
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
-import type { Course } from "@tutors/tutors-model-lib";
+import type { Course, TutorsId } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
 import { env } from "$env/dynamic/public";
@@ -18,7 +18,7 @@ import { rbacService } from "@tutors/rbac";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
-import { type CourseVisit, type TutorsConnectService, type TutorsId } from "../types.ts";
+import { type CourseVisit, type TutorsConnectService } from "../types.ts";
 import { supabaseProfile } from "./supabaseProfile.svelte.ts";
 import {
   addOrUpdateStudent,

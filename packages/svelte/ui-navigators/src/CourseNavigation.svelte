@@ -1,14 +1,15 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { currentCourse, currentLo, currentLabStepIndex, isEducator, tutorsId } from "@tutors/runes";
+  import { currentCourse, currentLo, currentLabStepIndex, currentNotebookCellIndex, isEducator, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import { analyticsEnabled } from "@tutors/connect";
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
-  import type { LiveLab } from "@tutors/course/course";
+  import type { LiveLab, NotebookService } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
   import InfoButton from "./buttons/InfoButton.svelte";
+  import EducatorControlButton from "./buttons/EducatorControlButton.svelte";
   import TocButton from "./buttons/TocButton.svelte";
   import WhiteboardButton from "./buttons/WhiteboardButton.svelte";
   import EditCoursButton from "./buttons/EditCoursButton.svelte";
@@ -16,7 +17,8 @@
   let { showConnect = true, mobile = false, current = "" } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
-  const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
+  const notebook = $derived((page.data as { notebook?: NotebookService }).notebook);
+  const parentTopic = $derived((lab?.lab ?? notebook?.notebook)?.breadCrumbs?.findLast(lo => lo.type === "topic"));
   const companionLabels: Record<string, string> = { moodle: "Moodle", youtube: "YouTube", slack: "Slack", zoom: "Zoom", teams: "Teams", podcast: "Podcast" };
 </script>
 <!-- Unnamed: the complementary landmark around it (or the dialog on phones) already carries "Course navigation". Rule 0170. -->
@@ -33,12 +35,29 @@
     </ol>
     <hr />
   {/if}
+  <!-- A notebook's outline is derived structure, like a lab's steps, so it belongs to the shell. A note's
+       table of contents is the author's own ([[toc]]) and part of the prose, so it stays in the prose. -->
+  {#if notebook}
+    <a class="nav-row" href={parentTopic?.route ?? notebook.notebook.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? notebook.notebook.parentLo?.title ?? course?.title}</a>
+    <h2>{notebook.notebook.title}</h2>
+    <p class="ui-muted text-sm">{t("shell.outline")} · {notebook.outline.length}</p>
+    <ol class="steps" aria-label={t("shell.outline")}>
+      {#each notebook.outline as entry, i}
+        <li><a class="nav-row" href={`#notebook-cell-${entry.index}`} onclick={() => notebook.setActiveCell(entry.index)} aria-current={currentNotebookCellIndex.value === entry.index ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{entry.title}</a></li>
+      {/each}
+    </ol>
+    <hr />
+  {/if}
   {#if course}
-    <!-- Learn holds every way into the course's own content: its front page, its tree, its search, its
-         calendar, its machine-readable copy and its source. They are ways of reading one course, so
-         they read as one list rather than as content in Learn and its index under Tools. -->
+    <!-- Learn holds every way into the course's own content: its front page, its summary, its tree, its
+         search, its calendar, its machine-readable copy, its source, and - for an educator - the controls
+         that administer it. They are ways of reading or running one course, so they read as one list
+         rather than as content in Learn and its index under Tools. -->
     <p class="nav-section">{t("shell.learn")}</p>
     <a class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
+    <!-- The same summary for everyone. It used to sit in the header, where an educator never saw it:
+         the header handed them Educator Control instead, with the summary buried in a tab of it. -->
+    <InfoButton labelled />
     {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
     {#if !course.isPortfolio}
       <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
@@ -46,15 +65,11 @@
     {#if showConnect}<CalendarButton labelled />{/if}
     {#if showConnect && course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
     {#if course.properties.github}<EditCoursButton labelled />{/if}
-    {#if course.companions?.show && course.companions.bar.length > 0}
-      <p class="nav-section">{t("shell.links")}</p>
-      {#each course.companions.bar as item}
-        <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
-      {/each}
-    {/if}
+    <!-- An educator's administration of the course they are reading, so it closes the Learn list rather
+         than opening a group of its own. Gated here, not inside: it reads the course's locks. -->
+    {#if isEducator.value}<EducatorControlButton labelled />{/if}
     <div class="tool-section">
     <p class="nav-section">{t("shell.tools")}</p>
-    {#if mobile}<InfoButton showEducatorPanel={isEducator.value} labelled />{/if}
     {#if showConnect && course.hasWhiteboard}<WhiteboardButton labelled />{/if}
     </div>
     <!-- Tutors Time is one product with several views, so its links are one group rather than rows
@@ -73,6 +88,14 @@
       <a class="nav-row" href={`${siteUrls.live}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
       <OnlineButton />
       </div>
+    {/if}
+    <!-- Companions lead out of the course, to Moodle, a playlist, a chat. Everything above leads further
+         into it, so they close the list rather than splitting Learn from Activity (#372). -->
+    {#if course.companions?.show && course.companions.bar.length > 0}
+      <p class="nav-section">{t("shell.links")}</p>
+      {#each course.companions.bar as item}
+        <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
+      {/each}
     {/if}
     {#if currentLo.value?.parentTopic && !lab}
       <details><summary class="nav-row">{currentLo.value.parentTopic.title}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary><LoContextTree lo={currentLo.value.parentTopic} expandAll={false} /></details>

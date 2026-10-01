@@ -1,5 +1,6 @@
-import type { Course, Notebook, NotebookCell } from "@tutors/tutors-model-lib";
-import type { NotebookService } from "../types.ts";
+import { markdownIt, type Course, type Notebook, type NotebookCell } from "@tutors/tutors-model-lib";
+import { rune } from "@tutors/runes";
+import type { NotebookOutlineEntry, NotebookService } from "../types.ts";
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -11,7 +12,9 @@ export class LiveNotebook implements NotebookService {
   url: string;
   cells: NotebookCell[];
   cellCount: number;
-  activeCellIndex: number;
+  private activeCell = rune(0);
+  get activeCellIndex(): number { return this.activeCell.value; }
+  outline: NotebookOutlineEntry[];
   navbarHtml: string;
   horizontalNavbarHtml: string;
 
@@ -21,15 +24,38 @@ export class LiveNotebook implements NotebookService {
     this.url = notebookId;
     this.cells = notebook.cells ?? [];
     this.cellCount = this.cells.length;
-    this.activeCellIndex = 0;
+    this.outline = this.deriveOutline();
     this.navbarHtml = "";
     this.horizontalNavbarHtml = "";
     this.refreshNav();
   }
 
+  /**
+   * The notebook's outline for the course navigation: its markdown headings, down to level 3, which is the
+   * depth a note's table of contents uses. The cell type is part of the test because "#" opens a Python
+   * comment as well as a heading, and most code cells here start with one ("# SOLUTION"); matching on the
+   * "#" alone would fill the outline with them.
+   *
+   * A notebook with no headings has no structure to list, so every cell is listed instead.
+   */
+  deriveOutline(): NotebookOutlineEntry[] {
+    const headings: NotebookOutlineEntry[] = [];
+    this.cells.forEach((cell, index) => {
+      if (cell.cellType !== "markdown") return;
+      const tokens = markdownIt.parse(cell.source ?? "", {});
+      const heading = tokens.findIndex(token => token.type === "heading_open" && ["h1", "h2", "h3"].includes(token.tag));
+      if (heading >= 0) {
+        const title = tokens[heading + 1].children!.filter(token => token.type !== "html_inline").map(token => token.content).join("");
+        headings.push({ index, title });
+      }
+    });
+    if (headings.length > 0) return headings;
+    return this.cells.map((cell, index) => ({ index, title: this.getCellLabel(cell, index) }));
+  }
+
   setActiveCell(index: number): void {
-    if (index >= 0 && index < this.cellCount) {
-      this.activeCellIndex = index;
+    if (Number.isInteger(index) && index >= 0 && index < this.cellCount) {
+      this.activeCell.value = index;
       this.refreshNav();
     }
   }

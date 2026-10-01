@@ -40,6 +40,7 @@ const it: Record<string, string> = {
   "shell.whiteboard": "Lavagna",
   "shell.preferences": "Preferenze",
   "shell.steps": "Passaggi",
+  "shell.outline": "Struttura",
   "shell.fullWidth": "Larghezza piena",
   "shell.standardWidth": "Standard",
   "shell.contentWidth": "Larghezza del contenuto",
@@ -215,8 +216,8 @@ Tutors è un'applicazione open source: il componente di raccolta dati [si trova 
 
   // Accessibility
   // Lecturer panel
-  "lecturer.panel.title": "Pannello docente",
-  "lecturer.panel.tip": "Apri pannello docente",
+  "lecturer.panel.title": "Controllo docente",
+  "lecturer.panel.tip": "Apri controllo docente",
   "lecturer.locks.title": "Blocchi di contenuto",
   "lecturer.locks.lock": "Blocca",
   "lecturer.locks.unlock": "Sblocca",

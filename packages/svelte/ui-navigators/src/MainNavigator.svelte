@@ -2,7 +2,7 @@
   import type { Snippet } from "svelte";
   import { page } from "$app/state";
   import Image from "@tutors/ui-primitives/components/Image.svelte";
-  import { currentCourse, isEducator, tutorsId } from "@tutors/runes";
+  import { currentCourse, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import TutorsIcon from "@tutors/ui-primitives/components/TutorsIcon.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
@@ -10,7 +10,6 @@
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import CourseNavigation from "./CourseNavigation.svelte";
   import LayoutMenu from "./LayoutMenu.svelte";
-  import InfoButton from "./buttons/InfoButton.svelte";
   import TocButton from "./buttons/TocButton.svelte";
   import SearchButton from "./buttons/SearchButton.svelte";
   import ConnectedProfile from "./tutors-connect/ConnectedProfile.svelte";
@@ -33,7 +32,6 @@
       <svelte:element this={isCourseHome ? "h1" : "div"} class="course-title">
         <a data-tour="course-title" title={currentCourse.value?.title} href={currentCourse.value?.route ?? titleHref ?? "/"}>{currentCourse.value?.title ?? title ?? (showConnect ? t("shell.myCourses") : "Tutors")}</a>
       </svelte:element>
-      {#if currentCourse.value}<div class="course-info"><InfoButton showEducatorPanel={isEducator.value} /></div>{/if}
     </div>
     {#if currentCourse.value}
       {#if !currentCourse.value.isPortfolio}<div class="mobile-tree"><TocButton /></div>{/if}
@@ -54,11 +52,6 @@
   .course-title-row { display: flex; flex: 1; min-width: 0; align-items: center; gap: var(--space-2); }
   .course-artwork { display: flex; }
   .course-title { min-width: 0; font-size: var(--font-heading); font-weight: var(--weight-semibold); line-height: var(--leading-heading); color: var(--ui-ink); overflow-wrap: anywhere; }
-  .course-info :global(svg) { width: 24px; height: 24px; }
-  .course-info { flex-shrink: 0; }
-  .course-info :global(button) { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: var(--radius-control); }
-  .course-info :global(button:hover) { background: var(--ui-selected); }
-  .course-info :global(.nav-row) { display: flex; }
   .mobile-tree { display: none; }
   .header-actions { display: flex; align-self: stretch; align-items: center; gap: var(--space-2); margin-left: auto; }
   .header-actions :global([data-tour="profile"]) { display: flex; align-self: stretch; }
@@ -70,7 +63,7 @@
     .main-navigation { min-height: 64px; gap: var(--space-2); padding-inline: var(--space-4); }
     .course-heading { gap: var(--space-1); }
     .course-title { flex: 1; font-size: var(--font-section); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: normal; }
-    .course-artwork, .course-info, .without-course { display: none; }
+    .course-artwork, .without-course { display: none; }
     .brand + .course-heading { margin-left: var(--space-2); padding-left: var(--space-3); border-left: 1px solid var(--ui-border); }
     .mobile-tree { display: block; flex-shrink: 0; }
     .mobile-tree :global(button) { width: 44px; height: 44px; border-radius: var(--radius-control); color: var(--ui-ink); }

@@ -59,6 +59,9 @@ jobs:
       - name: Type check (live)
         run: pnpm --filter tutors-live check
 
+      - name: Type check (time)
+        run: pnpm --filter tutors-time check
+
       - name: Lint
         run: pnpm lint
 

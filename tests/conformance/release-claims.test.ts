@@ -6,9 +6,9 @@ import { rulesInWorkingTree } from "../../scripts/checks/lib/rules-index.ts";
 import { ARTEFACTS, isBroad, parseArgs, validateClaimsText } from "../../scripts/checks/release-claims.ts";
 
 /**
- * A snapshot of ARTEFACTS in tutors-release-harness src/types.ts, as of harness 1.3.0 (contract 1.3.0;
- * the vocabulary has been unchanged since 1.2.0, where `bus`, `image-manifest`, `sbom`, `vulns`,
- * `runtime` and `startup` were added). It is copied, never fetched: the harness is not reachable at test
+ * A snapshot of ARTEFACTS in tutors-release-harness src/types.ts, as of harness 1.28.0 (`bus`,
+ * `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` were added in contract 1.2.0, the policy
+ * family `image-hardening`, `build-provenance` and `vuln-ceiling` in 1.22.0, `timing-tolerance` in 1.26.0, `asset-graph` in 1.27.0 and `replay` in 1.28.0). It is copied, never fetched: the harness is not reachable at test
  * time. When the harness changes its list, this fails on purpose: update this snapshot and ARTEFACTS in
  * scripts/checks/release-claims.ts together, then the tables in release/README.md, CONTRIBUTING.md,
  * CHANGELOG.md and release/claims.yaml.
@@ -17,7 +17,9 @@ const HARNESS_ARTEFACTS = [
   "dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing",
   "persistence", "bus", "migration", "upgrade",
   "image-manifest", "sbom", "vulns",
-  "runtime", "startup"
+  "runtime", "startup",
+  "image-hardening", "build-provenance", "vuln-ceiling",
+  "timing-tolerance", "asset-graph", "replay"
 ] as const;
 
 describe("release claims shape check", () => {

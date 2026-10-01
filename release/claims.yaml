@@ -15,7 +15,9 @@
 #   - artefact: dom                  # dom | screenshot | network | console | headers | axe
 #                                    # | focus | metrics | logs | timing | persistence
 #                                    # | bus | migration | upgrade | image-manifest | sbom | vulns
-#                                    # | runtime | startup | "*"
+#                                    # | runtime | startup | image-hardening
+#                                    # | build-provenance | vuln-ceiling | timing-tolerance
+#                                    # | asset-graph | replay | "*"
 #     scope: "reader:lab-step*"      # glob over the page key, its route, "<METHOD> <route>",
 #                                    # "<page key>/<header>" or "<app>/<series>"
 #     reason: "Rule 0031: lab steps shall show estimated reading time"
@@ -24,6 +26,10 @@
 #                                    # `pnpm release:rules`; then `reason` may be left out. An older
 #                                    # harness ignores the key and still needs the `reason`
 #     approvedBy: "a person"         # only for a broad claim (artefact "*", scope "*" or "**")
+#     until: "16.3.0"               # optional (harness 1.25.1): the last release, or day "2026-11-30",
+#                                    # the claim is meant for; after it the claim is reported expired
+#     digests:                       # optional (harness 1.25.1): the images it was written against
+#       reader: "sha256:..."         # by app (reader, catalogue, live, time); another image expires it
 #
 # Each CHANGELOG line names the artefacts it expects to move, e.g. "(axe, dom)":
 # one claim per artefact, reason "CHANGELOG <version>: <the entry>" (CONTRIBUTING.md).
@@ -73,3 +79,12 @@ claims:
     scope: "reference:note"
     rule: "0036"
     reason: "code block copy buttons are named \"Copy code\" (button-name, critical) fixed by #313"
+  # PR #143 (commit 4070315) dropped npm, npx, corepack and yarn from the runtime image: npm's bundled tar and
+  # brace-expansion failed the Trivy gate, and the runtime only runs `node build/index.js`. The SBOM of each of the
+  # four images loses the same 174 packages (696 diffs). One claim, the exact package list, generated from the
+  # Main-to-RC report with the jq in the harness's claims/README.md ("A tool removed from an image"). The 72
+  # advisories that left with npm are vulns info hunks and need no claim.
+  - artefact: sbom
+    scope: "*/{@isaacs/cliui,@isaacs/fs-minipass,@isaacs/string-locale-compare,@npmcli/agent,@npmcli/arborist,@npmcli/config,@npmcli/fs,@npmcli/git,@npmcli/installed-package-contents,@npmcli/map-workspaces,@npmcli/metavuln-calculator,@npmcli/name-from-folder,@npmcli/node-gyp,@npmcli/package-json,@npmcli/promise-spawn,@npmcli/query,@npmcli/redact,@npmcli/run-script,@pkgjs/parseargs,@sigstore/bundle,@sigstore/core,@sigstore/protobuf-specs,@sigstore/sign,@sigstore/tuf,@sigstore/verify,@tufjs/canonical-json,@tufjs/models,abbrev,agent-base,ansi-regex,ansi-styles,aproba,archy,balanced-match,bin-links,binary-extensions,brace-expansion,cacache,chalk,chownr,ci-info,cidr-regex,cli-columns,cmd-shim,color-convert,color-name,common-ancestor-path,corepack,cross-spawn,cssesc,debug,diff,eastasianwidth,emoji-regex,encoding,env-paths,err-code,exponential-backoff,fastest-levenshtein,fdir,foreground-child,fs-minipass,glob,graceful-fs,hosted-git-info,http-cache-semantics,http-proxy-agent,https-proxy-agent,iconv-lite,ignore-walk,imurmurhash,ini,init-package-json,ip-address,ip-regex,is-cidr,is-fullwidth-code-point,isexe,jackspeak,json-parse-even-better-errors,json-stringify-nice,jsonparse,just-diff,just-diff-apply,libnpmaccess,libnpmdiff,libnpmexec,libnpmfund,libnpmhook,libnpmorg,libnpmpack,libnpmpublish,libnpmsearch,libnpmteam,libnpmversion,lru-cache,make-fetch-happen,minimatch,minipass,minipass-collect,minipass-fetch,minipass-flush,minipass-pipeline,minipass-sized,minizlib,ms,mute-stream,negotiator,node-gyp,nopt,normalize-package-data,npm,npm-audit-report,npm-bundled,npm-install-checks,npm-normalize-package-bin,npm-package-arg,npm-packlist,npm-pick-manifest,npm-profile,npm-registry-fetch,npm-user-validate,p-map,package-json-from-dist,pacote,parse-conflict-json,path-key,path-scurry,picomatch,postcss-selector-parser,proc-log,proggy,promise-all-reject-late,promise-call-limit,promise-retry,promzard,qrcode-terminal,read,read-cmd-shim,read-package-json-fast,retry,safer-buffer,semver,shebang-command,shebang-regex,signal-exit,sigstore,smart-buffer,socks,socks-proxy-agent,spdx-correct,spdx-exceptions,spdx-expression-parse,spdx-license-ids,ssri,string-width,strip-ansi,supports-color,text-table,tiny-relative-date,tinyglobby,treeverse,tuf-js,unique-filename,unique-slug,util-deprecate,validate-npm-package-license,validate-npm-package-name,walk-up-path,which,wrap-ansi,write-file-atomic,yallist,yarn}"
+    rule: "0220"
+    reason: "runtime image ships no package manager: npm, npx, corepack and yarn removed by #143 (4070315), rationale in tests/bdd/features/developer/runtime-image.feature"
