@@ -49,7 +49,7 @@ Feature: Release claims with a lifetime and the policy checks
       When the maintainer checks the claims file
       Then the check shall accept the claims file
 
-  @rule-0232 @ears-event-driven
+  @rule-0235 @ears-event-driven
   Rule: When a maintainer checks a claim in release/claims.yaml that carries digests, tutors shall accept a mapping from one or more of reader, catalogue, live and time to an image digest written sha256: and 64 lowercase hex characters.
 
     Scenario: A claim written against two images is accepted
@@ -59,7 +59,7 @@ Feature: Release claims with a lifetime and the policy checks
       When the maintainer checks the claims file
       Then the check shall accept the claims file
 
-  @rule-0233 @ears-unwanted
+  @rule-0236 @ears-unwanted
   Rule: If a claim's until is not a calendar day or a release, or its digests name another app or a value that is not an image digest, then tutors shall reject the file and name the claim and the field.
 
     Scenario: An until in words is rejected
