@@ -38,6 +38,6 @@
   /* Geometry comes from .ui-grid.card-grid in paper-ui.css: online students are the same fixed card as
      everywhere else, wrapped and centred. Only the top gap is local to the dialog. */
   .online-grid { margin-top: var(--space-2); }
-  /* The same pill the avatar wore, ending the row the way an external link's arrow does. */
-  .online-count { flex-shrink: 0; margin-left: auto; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding-inline: 4px; border-radius: 999px; background: var(--ui-danger); color: var(--ui-on-brand); font-size: var(--font-caption); font-weight: var(--weight-bold); line-height: 1; font-variant-numeric: tabular-nums; }
+  /* Presence is a neutral count, ending the row the way an external link's arrow does. */
+  .online-count { flex-shrink: 0; margin-left: auto; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding-inline: 4px; border-radius: 999px; background: var(--ui-selected); color: var(--ui-ink); font-size: var(--font-caption); font-weight: var(--weight-bold); line-height: 1; font-variant-numeric: tabular-nums; }
 </style>

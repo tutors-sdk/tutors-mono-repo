@@ -429,6 +429,9 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
   teal inset underline. Disabled buttons are neutral grey, never a faded teal.
 - **Header actions:** icon plus label (Search, Preferences), 44px, no border, selected-grey on
   hover. Search and Preferences share one style exactly.
+- **Online count:** a neutral presence counter belongs beside "View Online" in course navigation,
+  with the count in the button's accessible name. It is absent when nobody is online; the avatar
+  shows only the reader's sharing status. On phones the count travels with the navigation drawer.
 - **Resource cards:** portrait. The title (19px, two lines) and type icon share the top row,
   the artwork is centred below, and the centred summary (three lines) sits under it. The artwork
   takes whatever height the text leaves, from 180px down to 80px, so the summary never touches

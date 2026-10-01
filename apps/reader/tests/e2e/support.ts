@@ -27,7 +27,10 @@ export async function seedOneOnline(page: Page, { educator = false, online = 1 }
   await page.getByRole("heading", { name: "Reference Course", exact: true }).waitFor();
   // Opening Preferences loads the presence module, so its URL is known before seeding.
   await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
+  await expect.poll(() => preferences.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");
+  await expect(preferences).not.toBeVisible();
   // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
   // runner), so seed, wait a moment, and seed again until the identity holds.
   await expect(async () => {
