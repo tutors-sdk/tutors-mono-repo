@@ -123,7 +123,7 @@ The repository has several test tiers. You are expected to run three things befo
 ```bash
 pnpm lint                        # ESLint
 pnpm test                        # vitest: unit, BDD steps, component, contract and the repo-level checks
-pnpm check                       # svelte-check on the reader, catalogue and live apps
+pnpm check                       # svelte-check on the reader, catalogue, live and time apps
 ```
 
 The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
