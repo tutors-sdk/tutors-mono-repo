@@ -16,7 +16,8 @@
 #                                    # | focus | metrics | logs | timing | persistence
 #                                    # | bus | migration | upgrade | image-manifest | sbom | vulns
 #                                    # | runtime | startup | image-hardening
-#                                    # | build-provenance | vuln-ceiling | "*"
+#                                    # | build-provenance | vuln-ceiling | timing-tolerance
+#                                    # | asset-graph | replay | "*"
 #     scope: "reader:lab-step*"      # glob over the page key, its route, "<METHOD> <route>",
 #                                    # "<page key>/<header>" or "<app>/<series>"
 #     reason: "Rule 0031: lab steps shall show estimated reading time"

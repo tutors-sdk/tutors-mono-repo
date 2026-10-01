@@ -10,7 +10,8 @@
 > The vocabulary (`dom`, `screenshot`, `network`, `console`, `headers`, `axe`,
 > `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`,
 > `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, and the policy checks
-> `image-hardening`, `build-provenance`, `vuln-ceiling`) and how an entry
+> `image-hardening`, `build-provenance`, `vuln-ceiling`, and the informing checks
+> `timing-tolerance`, `asset-graph`, `replay`) and how an entry
 > becomes a release claim are in [CONTRIBUTING.md](CONTRIBUTING.md#changelog-entries).
 > Earlier entries carry no hints and are not rewritten.
 

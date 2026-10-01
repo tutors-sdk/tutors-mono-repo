@@ -9,7 +9,8 @@ Feature: Release claims with a lifetime and the policy checks
   checks on the candidate alone, image-hardening, build-provenance and vuln-ceiling, which a claim names as
   its artefact. Harness 1.25.1 added a claim's lifetime: until, the last day (YYYY-MM-DD) or release (X.Y.Z)
   it is meant for, and digests, the image of each app it was written against. The harness reports an expired
-  claim and, from harness 2.0, stops it covering anything.
+  claim and, from harness 2.0, stops it covering anything. Harness 1.26.0 to 1.28.0 added three informing checks,
+  timing-tolerance, asset-graph and replay, which report without gating until harness 2.0 and can be claimed ahead.
 
   @rule-0230 @ears-event-driven
   Rule: When a maintainer checks release/claims.yaml, tutors shall accept a claim whose artefact is one of the release harness's policy checks, image-hardening, build-provenance or vuln-ceiling.
@@ -18,6 +19,16 @@ Feature: Release claims with a lifetime and the policy checks
       Given a claims file with a claim on "image-hardening" for "reader/healthcheck" because "fix(image): the healthcheck lands in the next release"
       And the file also has a claim on "build-provenance" for "reader/slsa" because "fix(image): image-build.yml publishes SLSA provenance next"
       And the file has a third claim on "vuln-ceiling" for "reader/GHSA-phwq-j96m-2c2q" because "CHANGELOG 16.3.0: ejs is bumped in the next patch release"
+      When the maintainer checks the claims file
+      Then the check shall accept the claims file
+
+  @rule-0234 @ears-event-driven
+  Rule: When a maintainer checks release/claims.yaml, tutors shall accept a claim whose artefact is one of the release harness's informing checks, timing-tolerance, asset-graph or replay.
+
+    Scenario: A claim on each informing check is accepted
+      Given a claims file with a claim on "timing-tolerance" for "reader:course" because "CHANGELOG 16.3.0: the course page renders its cards on the server"
+      And the file also has a claim on "asset-graph" for "reader" because "chore(build): the course chunk is split in two"
+      And the file has a third claim on "replay" for "replay:note-*" because "CHANGELOG 16.3.0: notes send a stricter content security policy"
       When the maintainer checks the claims file
       Then the check shall accept the claims file
 

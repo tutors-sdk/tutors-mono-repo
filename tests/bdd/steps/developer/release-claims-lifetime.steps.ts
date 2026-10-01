@@ -49,6 +49,16 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
     });
   });
 
+  Rule("When a maintainer checks release/claims.yaml, tutors shall accept a claim whose artefact is one of the release harness's informing checks, timing-tolerance, asset-graph or replay.", ({ RuleScenario }) => {
+    RuleScenario("A claim on each informing check is accepted", ({ Given, And, When, Then }) => {
+      Given("a claims file with a claim on {string} for {string} because {string}", claim);
+      And("the file also has a claim on {string} for {string} because {string}", claim);
+      And("the file has a third claim on {string} for {string} because {string}", claim);
+      When("the maintainer checks the claims file", check);
+      Then("the check shall accept the claims file", accepted);
+    });
+  });
+
   Rule("When a maintainer checks a claim in release/claims.yaml that carries until, tutors shall accept a calendar day written YYYY-MM-DD or a release written X.Y.Z or vX.Y.Z.", ({ RuleScenario }) => {
     RuleScenario("A claim meant until a day is accepted", ({ Given, And, When, Then }) => {
       Given("a claims file with a claim on {string} for {string} because {string}", claim);
