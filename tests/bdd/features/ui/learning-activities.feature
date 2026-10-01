@@ -42,7 +42,8 @@ Feature: Quizzes, notebooks and slides
     Scenario: A solution waits until a student asks for it
       Given a student opens a notebook with exercise cells
       Then the solution's code is out of sight
-      And selecting "Show Solution" reveals the code and its saved output
+      And selecting "Show Solution" reveals the code
+      And selecting "Show saved output" reveals its saved output
 
   @rule-0235 @ears-event-driven
   Rule: When a student runs a notebook's exercise cell, the reader shall run the code the student has in front of them, in their browser, and show what it printed.
@@ -51,6 +52,7 @@ Feature: Quizzes, notebooks and slides
       Given a student opens a notebook with exercise cells
       When the student selects "Run" on the exercise cell as the author left it
       Then the output is what that unfinished code prints, not the saved output of the solution
+      And editing the code and running it again shows what the student's edit prints
   @rule-0232 @ears-ubiquitous
   Rule: The reader shall list a notebook's markdown headings in the course navigation in the notebook's order, falling back to every cell when the notebook has no markdown headings.
 

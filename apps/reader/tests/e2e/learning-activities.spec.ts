@@ -89,12 +89,11 @@ test("A solution waits until a student asks for it", { tag: "@rule-0234" }, asyn
   await page.goto(exerciseNotebook);
   const solution = page.locator("#notebook-cell-15");
   await expect(solution).not.toContainText("word[0].upper()");
-  // A solution's disclosures carry their open/shut arrow in the label, so it is part of the name.
-  await solution.getByRole("button", { name: /Show Solution/ }).click();
+  await solution.getByRole("button", { name: "Show Solution", exact: true }).click();
   await expect(solution).toContainText("word[0].upper()");
   // The saved output waits behind a second ask, so the answer does not arrive with the code.
   await expect(solution).not.toContainText("G.B.M.H.");
-  await solution.getByRole("button", { name: /Show saved output/ }).click();
+  await solution.getByRole("button", { name: "Show saved output", exact: true }).click();
   await expect(solution).toContainText("G.B.M.H.");
 });
 
@@ -109,6 +108,10 @@ test("Running an exercise cell shows what the student's own code printed", { tag
   const output = exercise.getByRole("status", { name: "Python output", exact: true });
   await expect(output).toContainText("None\nNone", { timeout: 90_000 });
   await expect(output).not.toContainText("A.L.");
+  await exercise.getByRole("textbox", { name: "python exercise code", exact: true }).fill('print("student edit")');
+  await exercise.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(output).toContainText("student edit");
+  await expect(output).not.toContainText("None");
 });
 
 test("Notebook headings fill the course navigation", { tag: "@rule-0232" }, async ({ page }) => {
