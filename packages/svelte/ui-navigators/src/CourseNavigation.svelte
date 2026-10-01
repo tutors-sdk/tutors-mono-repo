@@ -1,10 +1,10 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { currentCourse, currentLo, currentLabStepIndex, isEducator, tutorsId } from "@tutors/runes";
+  import { currentCourse, currentLo, currentLabStepIndex, currentNotebookCellIndex, isEducator, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import { analyticsEnabled } from "@tutors/connect";
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
-  import type { LiveLab } from "@tutors/course/course";
+  import type { LiveLab, NotebookService } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
@@ -17,7 +17,8 @@
   let { showConnect = true, mobile = false, current = "" } = $props();
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
-  const parentTopic = $derived(lab?.lab.breadCrumbs?.findLast(lo => lo.type === "topic"));
+  const notebook = $derived((page.data as { notebook?: NotebookService }).notebook);
+  const parentTopic = $derived((lab?.lab ?? notebook?.notebook)?.breadCrumbs?.findLast(lo => lo.type === "topic"));
   const companionLabels: Record<string, string> = { moodle: "Moodle", youtube: "YouTube", slack: "Slack", zoom: "Zoom", teams: "Teams", podcast: "Podcast" };
 </script>
 <!-- Unnamed: the complementary landmark around it (or the dialog on phones) already carries "Course navigation". Rule 0170. -->
@@ -30,6 +31,19 @@
     <ol class="steps" aria-label={t("shell.steps")}>
       {#each lab.lab.los as step, i}
         <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={currentLabStepIndex.value === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}</a></li>
+      {/each}
+    </ol>
+    <hr />
+  {/if}
+  <!-- A notebook's outline is derived structure, like a lab's steps, so it belongs to the shell. A note's
+       table of contents is the author's own ([[toc]]) and part of the prose, so it stays in the prose. -->
+  {#if notebook}
+    <a class="nav-row" href={parentTopic?.route ?? notebook.notebook.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? notebook.notebook.parentLo?.title ?? course?.title}</a>
+    <h2>{notebook.notebook.title}</h2>
+    <p class="ui-muted text-sm">{t("shell.outline")} · {notebook.outline.length}</p>
+    <ol class="steps" aria-label={t("shell.outline")}>
+      {#each notebook.outline as entry, i}
+        <li><a class="nav-row" href={`#notebook-cell-${entry.index}`} onclick={() => notebook.setActiveCell(entry.index)} aria-current={currentNotebookCellIndex.value === entry.index ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{entry.title}</a></li>
       {/each}
     </ol>
     <hr />
