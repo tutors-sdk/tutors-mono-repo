@@ -182,6 +182,12 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `vulns` | the known vulnerabilities in an image, one per advisory |
 | `runtime` | how a container runs: user, privileges, read-only root filesystem, capabilities, writes outside `/tmp` |
 | `startup` | how a container starts: root, time to ready, boot |
+| `image-hardening` | a policy check on the candidate's image alone: root user, no `HEALTHCHECK`, a secret in its environment or layers |
+| `build-provenance` | a policy check: the candidate's image has no SLSA provenance from `image-build.yml` |
+| `vuln-ceiling` | a policy check: a critical or high advisory with a fix available in the candidate's image |
+| `timing-tolerance` | informing until harness 2.0: a page, journey or load p95 significantly slower on the candidate by 10% or more |
+| `asset-graph` | informing until harness 2.0: an app's build chunks under `/_app/immutable/` changed, one finding per app (scope `<app>`) |
+| `replay` | informing until harness 2.0: status, headers or network of a URL in the harness's replay set (scope `replay:<key>...`) |
 
 Rules of thumb:
 
