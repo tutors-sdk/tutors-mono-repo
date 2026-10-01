@@ -4,5 +4,4 @@
  */
 
 export { tutorsConnectService, analyticsEnabled } from "./services/connect.svelte.ts";
-export type { TutorsId, CourseVisit, CourseSentimentId } from "./types.ts";
-export { COURSE_SENTIMENT_IDS } from "./types.ts";
+export type { CourseVisit } from "./types.ts";
