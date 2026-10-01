@@ -1,13 +1,4 @@
-import type { Course, IconType } from "@tutors/tutors-model-lib";
-import type { TutorsId as TutorsIdType, CourseSentimentId as CourseSentimentIdType } from "@tutors/tutors-model-lib";
-import { COURSE_SENTIMENT_IDS as SENTIMENT_IDS } from "@tutors/tutors-model-lib";
-
-/**
- * Re-exports from @tutors/types for backward compatibility
- */
-export type { TutorsIdType as TutorsId };
-export type { CourseSentimentIdType as CourseSentimentId };
-export { SENTIMENT_IDS as COURSE_SENTIMENT_IDS };
+import type { Course, IconType, TutorsId } from "@tutors/tutors-model-lib";
 
 /**
  * Record of a user's interaction with a course
@@ -49,7 +40,7 @@ export interface TutorsConnectService {
   anonMode: boolean;
 
   connect(redirectStr: string): void;
-  reconnect(user: TutorsIdType): void;
+  reconnect(user: TutorsId): void;
   disconnect(redirectStr: string): void;
   toggleShare(): void;
   /** Persists sentiment locally and, when signed in, in tutors-connect-users. */
