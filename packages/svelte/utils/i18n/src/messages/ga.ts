@@ -40,6 +40,7 @@ const ga = {
   "shell.whiteboard": "Clár bán",
   "shell.preferences": "Sainroghanna",
   "shell.steps": "Céimeanna",
+  "shell.outline": "Imlíne",
   "shell.fullWidth": "Leithead iomlán",
   "shell.standardWidth": "Caighdeánach",
   "shell.contentWidth": "Leithead an ábhair",

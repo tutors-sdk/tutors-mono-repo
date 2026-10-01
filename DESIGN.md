@@ -364,7 +364,7 @@ The reader is an application shell: a 248px sidebar and a full-width header over
 main column.
 
 - **Shell:** the header spans the top (surface fill, bottom hairline). The sidebar holds course
-  navigation, companions, course tools or a lab's steps. Below 1024px the sidebar disappears
+  navigation, companions, course tools, a lab's steps or a notebook's outline. Below 1024px the sidebar disappears
   and its contents open as a dialog from a "Course navigation" button in the header, next to a
   "Course Tree" button. On phones (below 768px) the header is compact - a 56px bar over a course row, about
   116px in all - and floats over the page: it slides away as the reader scrolls down and back
@@ -457,7 +457,11 @@ Resource cards add one distinctive edge: an 8px band of the type colour at the t
 - **Keyboard hints:** shortcut hints (the ⌘K / Ctrl K beside Search, the key legend in the search
   dialog) show only on a wide screen with a mouse or trackpad. On touch screens the dialog's
   esc hint becomes a close button.
-- **Disclosures:** a lab's steps on narrow screens, a notebook's outline and a note's contents
+- **Notebook outline:** heading cells appear in the course navigation, always open like a lab's
+  steps, with the current entry marked. A notebook without headings lists every cell. Below
+  1024px the outline opens in the Course navigation drawer; choosing an entry also updates the
+  cell pager.
+- **Disclosures:** a lab's steps on narrow screens and a note's contents
   open from a full-width 44px summary row with a chevron that turns, not the browser's triangle.
 - **Selects:** 44px, 8px radius, with a muted chevron drawn in the field.
 - **Breadcrumbs:** "My courses / parent course title / course / page", muted with teal links.

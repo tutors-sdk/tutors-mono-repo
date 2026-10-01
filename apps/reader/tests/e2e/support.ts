@@ -48,6 +48,8 @@ export async function seedOneOnline(page: Page, { educator = false } = {}): Prom
  * dev server has loaded. Locks save only to this browser (no Supabase in dev or CI); nothing is written anywhere.
  */
 export async function signInAs(page: Page, role: "student" | "lecturer", locked: string[] = []): Promise<void> {
+  // A loaded rune module does not mean the course has mounted: its first visit clears the role.
+  await page.locator(".shell-navigation").getByRole("link", { name: "Course home", exact: true }).waitFor({ state: "attached" });
   // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
   // runner), so seed, wait a moment, and seed again until the role holds.
   await expect(async () => {
@@ -63,6 +65,41 @@ export async function signInAs(page: Page, role: "student" | "lecturer", locked:
     }, { role, locked });
     expect(held).toBe(true);
   }).toPass({ timeout: 20_000 });
+}
+
+/**
+ * Opens a notebook whose markdown cells carry no heading, which no published course has: the notebook is
+ * read once to fill the course service's cache, its headings are stripped there, and it is opened again so
+ * the cache hit renders the stripped copy. Nothing is written anywhere.
+ */
+export async function openNotebookWithoutHeadings(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await page.locator("#notebook-cell-0").waitFor();
+  const stripped = await page.evaluate(async path => {
+    const modules = performance.getEntriesByType("resource").map(entry => entry.name);
+    const { courseService } = await import(modules.find(url => url.includes("/course/src/course/services/course.svelte.ts"))!);
+    const notebook = courseService.notebooks.get(path);
+    if (!notebook) return 0;
+    let count = 0;
+    for (const cell of notebook.cells) {
+      if (cell.cellType !== "markdown") continue;
+      cell.source = cell.source.replace(/^#+[ \t]*/, "");
+      count += 1;
+    }
+    // The outline is derived once, when the notebook is first read, so the cached copy is dropped and
+    // built again from the stripped cells on the way back in.
+    courseService.notebooks.delete(path);
+    return count;
+  }, path);
+  expect(stripped).toBeGreaterThan(0);
+  // Stepping out and back through the app remounts the page against the stripped cells; a reload would
+  // discard them along with the rest of the module state.
+  await page.locator(".shell-navigation").getByRole("link", { name: /^←/ }).click();
+  // Wait for the step out to land: going back before it does lands back where we started.
+  await page.waitForURL(/\/topic\//);
+  await page.goBack();
+  await page.waitForURL(path);
+  await page.locator("#notebook-cell-0").waitFor();
 }
 
 /**
