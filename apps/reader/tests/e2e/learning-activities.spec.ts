@@ -71,7 +71,7 @@ test("Notebook shows the current cell", { tag: "@rule-0049" }, async ({ page }) 
   await expect(page.getByRole("button", { name: /Hide output/i }).first()).toBeVisible();
 });
 
-test("An exercise cell is editable, a plain code cell is not", { tag: "@rule-0234" }, async ({ page }) => {
+test("An exercise cell is editable, a plain code cell is not", { tag: "@rule-0237" }, async ({ page }) => {
   await page.goto(exerciseNotebook);
   const plain = page.locator("#notebook-cell-2");
   await expect(plain.getByRole("button", { name: "Show saved output", exact: true })).toBeVisible();
@@ -85,7 +85,7 @@ test("An exercise cell is editable, a plain code cell is not", { tag: "@rule-023
   await expect(exercise.getByRole("button", { name: /Show saved output/ })).toHaveCount(0);
 });
 
-test("A solution waits until a student asks for it", { tag: "@rule-0234" }, async ({ page }) => {
+test("A solution waits until a student asks for it", { tag: "@rule-0237" }, async ({ page }) => {
   await page.goto(exerciseNotebook);
   const solution = page.locator("#notebook-cell-15");
   await expect(solution).not.toContainText("word[0].upper()");
@@ -97,7 +97,7 @@ test("A solution waits until a student asks for it", { tag: "@rule-0234" }, asyn
   await expect(solution).toContainText("G.B.M.H.");
 });
 
-test("Running an exercise cell shows what the student's own code printed", { tag: "@rule-0235" }, async ({ page }) => {
+test("Running an exercise cell shows what the student's own code printed", { tag: "@rule-0238" }, async ({ page }) => {
   // The first run fetches a Python runtime from a CDN and starts it, which outlasts the default timeout.
   test.slow();
   await page.goto(exerciseNotebook);
