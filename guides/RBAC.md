@@ -73,7 +73,7 @@ Educators can lock and unlock top-level learning objects (topics, units) to hide
 
 1. When an educator visits a course, content locks are loaded from Supabase (`tutors_content_locks` table) with a localStorage fallback.
 2. The educator panel (integrated into the Info sidebar) shows a **Locks** tab with toggle switches for each top-level learning object.
-3. When a lock is toggled, the change is applied immediately to the reactive `contentLocks` map, persisted to localStorage, and upserted to Supabase.
+3. When a lock is toggled, the change is applied immediately to the reactive `contentLocks` map, persisted to localStorage, and saved through the reader's `/api/locks`. The server checks the course's `enrollment.yaml` itself (or `PRIVATE_TUTORS_ADMINS`) and answers 403 to anyone else (Rule 0065).
 4. Locked content is **completely hidden** from students — not blurred or greyed out.
 5. A `locksLoaded` rune prevents locked content from flashing briefly before the lock state is fetched.
 
@@ -115,6 +115,16 @@ When a course has auth level >= 1 and a whitelist, the system checks access on c
 
 ## Architecture
 
+### On the server
+
+The browser's role decides what the UI shows; the server decides what is allowed. The reader's data
+API asks one function, `can(actor, action, resource)` in
+`apps/reader/src/lib/server/api/authorization.ts`, which reads the course's `enrollment.yaml`
+educators from its published `tutors.json` (or `PRIVATE_TUTORS_ADMINS`) and the permission table in
+`src/permissions.ts` below. When the course's host cannot be read it answers from a copy read within
+the hour, else refuses with 503 rather than calling anyone a student (Rules 0073, 0074). See
+[SERVER-WRITES.md](SERVER-WRITES.md#who-may-do-what-one-authorization-module).
+
 ### Package: `@tutors/rbac`
 
 Located at `packages/svelte/utils/rbac/`. Contains:
@@ -123,7 +133,7 @@ Located at `packages/svelte/utils/rbac/`. Contains:
 |------|---------|
 | `src/types.ts` | `Role`, `Permission`, and `ContentLock` type definitions |
 | `src/permissions.ts` | Static role-to-permission mapping and query functions |
-| `src/lock-store.ts` | Supabase CRUD operations for `tutors_content_locks` table |
+| `src/lock-store.ts` | Reads `tutors_content_locks` (public); locks and unlocks through the reader's `PUT`/`DELETE /api/locks`, which only an educator of the course may call ([SERVER-WRITES.md](SERVER-WRITES.md)) |
 | `src/rbac-service.svelte.ts` | Main service: role resolution, lock management, educator status, `isLoRouteLocked` / `isLoLocked` |
 | `src/index.ts` | Public exports (`rbacService`, `isLoRouteLocked`) |
 

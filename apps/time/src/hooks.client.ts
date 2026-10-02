@@ -1,16 +1,10 @@
 import type { HandleClientError } from "@sveltejs/kit";
-import { env } from "$env/dynamic/public";
 import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
-(globalThis as any).__TUTORS_TIME_SUPABASE_INIT__ = {
-  url: env.PUBLIC_SUPABASE_URL,
-  key: env.PUBLIC_SUPABASE_ANON_KEY
-};
+import { useReaderTimeSource } from "$lib/time-source";
 
-import { initSupabase } from "@tutors/tutors-time-lib";
-
-initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+useReaderTimeSource();
 
 setAppName("tutors-time");
 addTransport(createSupabaseErrorTransport("tutors-time"));

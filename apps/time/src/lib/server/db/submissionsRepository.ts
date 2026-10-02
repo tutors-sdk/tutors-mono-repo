@@ -1,4 +1,5 @@
 import { env } from "$env/dynamic/public";
+import { env as privateEnv } from "$env/dynamic/private";
 import { createClient } from "@supabase/supabase-js";
 import { now } from "@tutors/runtime";
 import type { MoodleAssignSubmission, MoodleModule } from "$lib/server/api/moodle";
@@ -85,7 +86,9 @@ function toSubmissionRow(
 }
 
 function getClient() {
-  return createClient(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+  const key = privateEnv.PRIVATE_SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!key) throw new Error("PRIVATE_SUPABASE_SERVICE_ROLE_KEY is not set; the Moodle sync cannot write");
+  return createClient(env.PUBLIC_SUPABASE_URL ?? "", key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 export async function getLastSyncedAt(courseId: string): Promise<string | null> {

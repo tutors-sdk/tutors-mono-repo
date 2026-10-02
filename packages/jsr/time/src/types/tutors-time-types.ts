@@ -80,7 +80,7 @@ export type TutorsTimeStudent = {
  * TutorsTime is the default implementation.
  */
 export interface TutorsTimeService {
-  getStudentDisplayInfo(studentId: string): Promise<StudentDisplayInfo>;
+  getStudentDisplayInfo(studentId: string, courseId?: string): Promise<StudentDisplayInfo>;
   getCourseDisplayInfo(courseId: string): Promise<CourseDisplayInfo>;
   loadCourseTime(
     id: string,

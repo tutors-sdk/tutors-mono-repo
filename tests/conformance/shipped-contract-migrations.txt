@@ -1,0 +1,9 @@
+# Contract steps that have shipped: destructive statements in supabase/migrations that were claimed
+# in release/claims.yaml by the release that added them (guides/MIGRATIONS.md, "Shipping a contract
+# migration"). claims.yaml is reset for every release, so this file is the lasting record that lets
+# tests/conformance/migrations.test.ts tell a reviewed contract step from an accidental one.
+#
+# Format: `<file> <scope> | <the claim's reason>`. The test fails on an entry that matches nothing.
+# Changes are owned through CODEOWNERS like release/claims.yaml: an entry waives a failure.
+
+20260925100100_restrict_app_errors_reads.sql app_errors:anon_select_app_errors | CHANGELOG Unreleased: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod
