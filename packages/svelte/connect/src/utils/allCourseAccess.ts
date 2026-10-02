@@ -1,10 +1,10 @@
 import type { Course, IconType } from "@tutors/tutors-model-lib";
-import { readerApi } from "@tutors/community/utils/reader-api";
+import { dataApi } from "@tutors/data-api";
 import type { CourseVisit } from "../types.ts";
 
 export async function updateCourseList(course: Course): Promise<void> {
   if (!isValidCourseName(course.courseId)) return;
-  await readerApi("POST", "/api/courses/visit", { courseId: course.courseId, courseRecord: getCourseRecord(course) });
+  await dataApi.reportCourseVisit({ courseId: course.courseId, courseRecord: getCourseRecord(course) as unknown as Record<string, unknown> });
 }
 
 /**

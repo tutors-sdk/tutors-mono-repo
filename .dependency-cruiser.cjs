@@ -15,7 +15,7 @@ const LAYERS = [
   { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/svelte/utils/logger", "packages/svelte/utils/metrics"] },
   {
     name: "core",
-    paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/utils/a11y", "packages/svelte/utils/i18n"]
+    paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/data-api", "packages/svelte/utils/a11y", "packages/svelte/utils/i18n"]
   },
   {
     name: "feature",
@@ -69,12 +69,23 @@ module.exports = {
       to: { dependencyTypes: ["local"], dependencyTypesNot: ["aliased"], pathNot: "^$1/" }
     },
     {
+      name: "no-database-client-in-browser-code",
+      comment:
+        "Browser code reaches data through @tutors/data-api (the reader's /api routes), never through the database client, so the database behind it can change without touching a browser package. Exceptions: the anon client factory for Realtime and public reads (packages/svelte/community/src/utils/supabase-client.ts), server-only code, and type-only imports. See guides/SERVER-WRITES.md.",
+      severity: "error",
+      from: {
+        path: "^(packages/svelte|apps/[^/]+/src)/",
+        pathNot: "^packages/svelte/community/src/utils/supabase-client\\.ts$|^apps/[^/]+/src/(lib/server/|hooks\\.server\\.ts$)|^apps/[^/]+/src/routes/.*\\+(server|page\\.server|layout\\.server)\\.ts$"
+      },
+      to: { path: "@supabase/supabase-js($|/)", dependencyTypesNot: ["type-only"] }
+    },
+    {
       name: "ui-primitives-no-data-features",
       comment:
-        "UI primitives are low-level presentational components: they take users, events and permissions as props or context, and never reach into the data and access packages (community, connect, rbac) themselves. Theme and tour services stay allowed.",
+        "UI primitives are low-level presentational components: they take users, events and permissions as props or context, and never reach into the data and access packages (community, connect, data-api, rbac) themselves. Theme and tour services stay allowed.",
       severity: "error",
       from: { path: "^packages/svelte/ui-primitives/" },
-      to: { path: "^packages/svelte/(community|connect|utils/rbac)/" }
+      to: { path: "^packages/svelte/(community|connect|data-api|utils/rbac)/" }
     },
     {
       name: "no-cross-package-cycle",
@@ -86,9 +97,11 @@ module.exports = {
     }
   ],
   options: {
+    // Dependencies are recorded as leaves, never walked: no-database-client-in-browser-code needs the edge.
     doNotFollow: { path: "node_modules" },
     exclude: {
-      path: "(^|/)(node_modules|\\.svelte-kit|build|dist|__tests__|test|tests)/|\\.(test|spec)\\.ts$"
+      // Build output of our own workspaces only: a dependency resolves into its own dist/.
+      path: "(^|/)(\\.svelte-kit|__tests__|test|tests)/|^(apps|packages/jsr|packages/svelte|packages/svelte/utils)/[^/]+/(build|dist)/|\\.(test|spec)\\.ts$"
     },
     tsPreCompilationDeps: true,
     // Workspace packages resolve through node_modules symlinks to their source.

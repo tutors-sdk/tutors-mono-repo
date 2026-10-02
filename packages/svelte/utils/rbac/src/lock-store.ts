@@ -1,5 +1,5 @@
 import { supabase } from "@tutors/community";
-import { readerApi } from "@tutors/community/utils/reader-api";
+import { dataApi } from "@tutors/data-api";
 import log from "@tutors/logger";
 import type { ContentLock } from "./types.ts";
 
@@ -22,7 +22,7 @@ export async function getLocksForCourse(courseId: string): Promise<ContentLock[]
 
 export async function upsertLock(courseId: string, loRoute: string, locked: boolean): Promise<boolean> {
   if (!courseId || !loRoute) return false;
-  const response = await readerApi("PUT", "/api/locks", { courseId, loRoute, locked });
+  const response = await dataApi.setLock({ courseId, loRoute, locked });
   if (!response?.ok) {
     log.error("upsertLock failed:", { status: response?.status ?? null });
     return false;
@@ -32,7 +32,7 @@ export async function upsertLock(courseId: string, loRoute: string, locked: bool
 
 export async function removeLock(courseId: string, loRoute: string): Promise<boolean> {
   if (!courseId || !loRoute) return false;
-  const response = await readerApi("DELETE", "/api/locks", { courseId, loRoute });
+  const response = await dataApi.removeLock({ courseId, loRoute });
   if (!response?.ok) {
     log.error("removeLock failed:", { status: response?.status ?? null });
     return false;
