@@ -15,6 +15,13 @@ export const courseHeaderSteps: TourStep[] = [
   { target: "[data-tour='profile']", titleKey: "tour.profile.title", descriptionKey: "tour.profile.description", placement: "bottom" }
 ];
 
+export const openMenuStep: TourStep = {
+  target: ".mobile-menu button",
+  titleKey: "tour.openMenu.title",
+  descriptionKey: "tour.openMenu.description",
+  placement: "bottom"
+};
+
 /** The sidebar, top to bottom: Learn, then Course tools, then Activity, then Companions (Rule 0235). */
 export const courseSidebarSteps: TourStep[] = [
   { target: "[data-tour='overview']", titleKey: "tour.overview.title", descriptionKey: "tour.overview.description", placement: "right" },
@@ -38,6 +45,7 @@ export const homeSteps: TourStep[] = [
   { target: "[data-tour='brand']", titleKey: "tour.brand.title", descriptionKey: "tour.brand.description", placement: "bottom" },
   { target: "[data-tour='layout']", titleKey: "tour.layout.title", descriptionKey: "tour.layout.description", placement: "bottom" },
   { target: "[data-tour='profile']", titleKey: "tour.profile.title", descriptionKey: "tour.profile.description", placement: "bottom" },
+  openMenuStep,
   { target: "[data-tour='my-courses']", titleKey: "tour.myCourses.title", descriptionKey: "tour.myCourses.description", placement: "right" },
   { target: "[data-tour='catalogue']", titleKey: "tour.catalogue.title", descriptionKey: "tour.catalogue.description", placement: "right" },
   { target: "[data-tour='live']", titleKey: "tour.live.title", descriptionKey: "tour.live.description", placement: "right" },
@@ -52,7 +60,7 @@ export const homeSteps: TourStep[] = [
 const cardTypeAliases: Record<string, string> = { paneltalk: "talk", panelnote: "note", panelvideo: "video", reference: "web" };
 
 /** The types the tour can speak about by name. Anything else gets the generic card step. */
-const describedCardTypes = ["course", "topic", "unit", "side", "lab", "note", "talk", "video", "web", "github", "archive", "notebook", "quiz", "podcast", "book", "tutorial"];
+const describedCardTypes = ["course", "topic", "unit", "side", "lab", "note", "talk", "video", "web", "github", "archive", "notebook", "quiz", "podcast", "book", "tutorial", "whiteboard"];
 
 /** The step that explains one kind of card, pointed at the first card of that kind on the canvas. */
 export function cardStepForType(type: string): TourStep {
@@ -67,4 +75,4 @@ export function cardStepForType(type: string): TourStep {
 }
 
 /** Kept for callers that want the menus alone; the service appends the canvas's cards to it. */
-export const courseReaderSteps: TourStep[] = [...courseHeaderSteps, ...courseSidebarSteps];
+export const courseReaderSteps: TourStep[] = [...courseHeaderSteps, openMenuStep, ...courseSidebarSteps];

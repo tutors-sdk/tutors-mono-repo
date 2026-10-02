@@ -115,6 +115,9 @@ Feature: Course tools
       When a student starts the tour on the Reference Course home
       Then the steps run "Course Title", "Search", "Theme & Layout", "Your Profile", then the side menu from "Overview" down to "Companions", then "Topic Card"
       And no step is offered for a control this reader cannot see
+      And on phones and tablets the tour waits for the student to open the menu before explaining its controls
+      And the drawer closes when the tour reaches the cards
+      And Back returns to the menu prompt without opening the drawer and Escape leaves it closed
 
   @rule-0242 @ears-event-driven
   Rule: When a student starts the guided tour on a page showing cards, the reader shall offer one step for each kind of card on that page, named for that kind.
@@ -122,6 +125,7 @@ Feature: Course tools
     Scenario: Tour explains each kind of card on the page once
       When a student starts the tour on a topic page of talks, labs, notebooks, tutorials, notes, web links and archives
       Then the tour ends with one step for each kind, in the order the kinds first appear, and none repeated
+      And whiteboard cards have a named Whiteboard Card step
 
   @rule-0243 @ears-event-driven
   Rule: When a visitor starts the guided tour away from any course, the reader shall tour the home page's header, its side menu and its course list.
@@ -130,3 +134,4 @@ Feature: Course tools
       When a visitor starts the tour on the home page
       Then the steps run "Tutors", "Theme & Layout", "Your Profile", the side menu from "My Courses" to "Documentation", then "Your Courses"
       And no step speaks about a course, since the visitor is not reading one
+      And on phones the visitor opens the menu themselves before its controls are explained
