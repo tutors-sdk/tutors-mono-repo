@@ -71,6 +71,26 @@ test("This week focuses the current week", { tag: "@rule-0043" }, async ({ page 
   await expect(page).toHaveURL(/\/course\/reference-course$/);
 });
 
+/** How many steps the open tour holds, read off its own "n / total" counter. */
+async function tourStepCount(page: Page): Promise<number> {
+  const counter = page.locator(".tour-tooltip span").first();
+  await expect(counter).toBeVisible();
+  return Number((await counter.textContent())!.split("/")[1]);
+}
+
+/**
+ * Walks the open tour forward until it reaches the step with this title. Which number that step is
+ * depends on what the reader can see, so the test asks for the step by name rather than by count.
+ */
+async function advanceTo(page: Page, title: string) {
+  const tour = page.getByRole("dialog", { name: "Guided tour", exact: true });
+  const heading = tour.getByRole("heading", { name: title, exact: true });
+  for (let step = 0; step < 40 && !(await heading.isVisible()); step++) {
+    await tour.getByRole("button", { name: "Next", exact: true }).click();
+  }
+  await expect(heading).toBeVisible();
+}
+
 test("Tour points at the visible course tree control", { tag: "@rule-0044" }, async ({ page }) => {
   await page.goto(manual);
   const preferences = page.getByRole("button", { name: "Open Theme Menu", exact: true });
@@ -86,8 +106,7 @@ test("Tour points at the visible course tree control", { tag: "@rule-0044" }, as
     await preferences.click();
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.getByRole("button", { name: "Start Tour", exact: true }).click();
-    for (let step = 0; step < 4; step++) await tour.getByRole("button", { name: "Next", exact: true }).click();
-    await expect(tour.getByRole("heading", { name: "Course Tree", exact: true })).toBeVisible();
+    await advanceTo(page, "Course Tree");
     const target = (await page.locator('[data-tour="toc"]:visible').boundingBox())!;
     const tooltip = page.locator(".tour-tooltip");
     await expect.poll(async () => Math.abs((await tooltip.boundingBox())!.x - target.x - target.width - 12), theme).toBeLessThan(1);
@@ -95,16 +114,24 @@ test("Tour points at the visible course tree control", { tag: "@rule-0044" }, as
     expect(box.y).toBeGreaterThanOrEqual(16);
     expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height - 14);
     expect(await tooltip.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-    await tour.getByRole("button", { name: "Done", exact: true }).focus();
+    await tour.getByRole("button", { name: "Next", exact: true }).focus();
     await page.keyboard.press("Tab");
     await expect(tour.locator('button:not([tabindex="-1"])').first()).toBeFocused();
-    await tour.getByRole("button", { name: "Done", exact: true }).click();
+    await page.keyboard.press("Escape");
     await expect(tour).not.toBeVisible();
   }
   await page.setViewportSize({ width: 320, height: 640 });
   await preferences.click();
   await page.getByRole("button", { name: "Start Tour", exact: true }).click();
-  for (let step = 0; step < 4; step++) await tour.getByRole("button", { name: "Next", exact: true }).click();
+  // The narrowest viewport and the last step together: the step a long tour ends on is the one with the
+  // least room left for its tooltip.
+  const steps = await tourStepCount(page);
+  for (let step = 1; step < steps; step++) {
+    if (await tour.getByRole("heading", { name: "Open the Menu", exact: true }).isVisible()) {
+      await page.locator(".mobile-menu button").click();
+      await expect(tour.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
+    } else await tour.getByRole("button", { name: "Next", exact: true }).click();
+  }
   await expect(tour.getByRole("button", { name: "Done", exact: true })).toBeVisible();
   expect(await page.locator(".tour-tooltip").evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await page.keyboard.press("Escape");
@@ -258,4 +285,119 @@ test("Learn section withholds Educator Control from a student", { tag: "@rule-02
   const rows = await learnRows(page);
   expect(rows).toContain("Course Info");
   expect(rows).not.toContain("Educator Control");
+});
+
+/**
+ * Starts the tour and reads the title of every step, pressing Next until the last. The tooltip shows
+ * "n / total", so the count comes from the tour itself rather than from a number this file guesses.
+ */
+async function tourStepTitles(page: Page): Promise<string[]> {
+  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Start Tour", exact: true }).click();
+  const tour = page.getByRole("dialog", { name: "Guided tour", exact: true });
+  await expect(tour).toBeVisible();
+  const total = await tourStepCount(page);
+  const titles: string[] = [];
+  for (let step = 0; step < total; step++) {
+    const title = (await tour.getByRole("heading").textContent())!.trim();
+    titles.push(title);
+    if (title === "Open the Menu") {
+      const trigger = page.locator(".mobile-menu button");
+      await expect(page.getByRole("dialog", { name: "Course navigation", exact: true })).not.toBeVisible();
+      await expect(tour.getByRole("button", { name: "Next", exact: true })).toBeDisabled();
+      await expect(trigger).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(tour.getByRole("heading", { name: title, exact: true })).toBeVisible();
+      await page.keyboard.press("Tab");
+      await expect(tour.locator(".tour-tooltip").getByRole("button", { name: "Skip", exact: true })).toBeFocused();
+      await page.keyboard.press("Shift+Tab");
+      await expect(trigger).toBeFocused();
+      await page.keyboard.press("Enter");
+      await expect(tour.getByRole("heading", { name: title, exact: true })).not.toBeVisible();
+    } else {
+      if (title.endsWith("Card") || title === "Your Courses") {
+        await expect(page.getByRole("dialog", { name: "Course navigation", exact: true })).not.toBeVisible();
+      }
+      await tour.getByRole("button", { name: step === total - 1 ? "Done" : "Next", exact: true }).click();
+    }
+  }
+  await expect(tour).not.toBeVisible();
+  return titles;
+}
+
+test("Tour crosses the header, descends the side menu, then reaches the cards", { tag: "@rule-0244" }, async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  // Header left to right, then the side menu top to bottom, then the one kind of card a course home
+  // shows. An anonymous reader gets no Educator Control, no whiteboard and no activity rows, and this
+  // course has no whiteboard either, so none of those steps is offered.
+  for (const width of [1440, 1023, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(course);
+    await expect(page.locator(".resource-card[data-lo-type='topic']").first()).toBeVisible();
+    const mobile = width <= 1023;
+    expect(await tourStepTitles(page)).toEqual([
+      "Course Title", ...(mobile ? ["Course Tree"] : []), "Search", "Theme & Layout", "Your Profile",
+      ...(mobile ? ["Open the Menu"] : []), "Overview", "Course Info", ...(!mobile ? ["Course Tree"] : []),
+      "Resources", "Calendar", "LLM Export", "Edit this Course", "Companions", "Topic Card"
+    ]);
+  }
+  // Back never opens the drawer for the reader; cancellation restores its closed state.
+  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Start Tour", exact: true }).click();
+  const tour = page.getByRole("dialog", { name: "Guided tour", exact: true });
+  await advanceTo(page, "Open the Menu");
+  await page.locator(".mobile-menu button").click();
+  await expect(tour.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
+  await tour.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(tour.getByRole("heading", { name: "Open the Menu", exact: true })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Course navigation", exact: true })).not.toBeVisible();
+  await page.locator(".mobile-menu button").click();
+  await expect(tour.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
+  await advanceTo(page, "Topic Card");
+  await page.keyboard.press("ArrowLeft");
+  await expect(tour.getByRole("heading", { name: "Open the Menu", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(tour).not.toBeVisible();
+  await expect(page.locator(".mobile-menu button")).toHaveAttribute("aria-expanded", "false");
+});
+
+test("Tour explains each kind of card on the page once", { tag: "@rule-0242" }, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/topic/reference-course/topic-01-typical");
+  await expect(page.locator(".resource-card[data-lo-type]").first()).toBeVisible();
+  // The kinds the page actually draws, in the order they first appear - read from the canvas, so the
+  // expectation cannot drift from the course content the way a written list would.
+  const kinds = await page.locator(".resource-card[data-lo-type]").evaluateAll(cards => [...new Set(cards.map(card => (card as HTMLElement).dataset.loType))]);
+  expect(kinds).toEqual(["talk", "lab", "notebook", "tutorial", "note", "web", "archive"]);
+  // This published topic has no whiteboard; two copies exercise its name and deduplication.
+  await page.locator(".resource-card").last().evaluate(card => {
+    for (let i = 0; i < 2; i++) {
+      const whiteboard = card.cloneNode(true) as HTMLElement;
+      whiteboard.dataset.loType = "whiteboard";
+      card.parentElement!.parentElement!.append(whiteboard);
+    }
+  });
+  const titles = await tourStepTitles(page);
+  expect(titles.slice(-kinds.length - 1)).toEqual(["Slides Card", "Lab Card", "Notebook Card", "Tutorial Card", "Note Card", "Web Link Card", "Archive Card", "Whiteboard Card"]);
+  expect(new Set(titles).size).toBe(titles.length);
+});
+
+test("Home page has a tour of its own", { tag: "@rule-0243" }, async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  // A course in the visit history gives the list a card to point at. A step whose target is not drawn
+  // is dropped before the tour opens, so with an empty history the card step would never be offered.
+  await page.addInitScript(() =>
+    localStorage.setItem("courseVisits", JSON.stringify([{ id: "reference-course", title: "Reference Course", lastVisit: new Date().toISOString(), credits: "10", visits: 1 }]))
+  );
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/");
+    await expect(page.locator('[data-tour="course-card"]').first()).toBeVisible();
+    expect(await tourStepTitles(page)).toEqual([
+      "Tutors", "Theme & Layout", "Your Profile", ...(width <= 1023 ? ["Open the Menu"] : []),
+      "My Courses", "Catalogue", "Live", "Time", "Create a Course", "Documentation",
+      "Your Courses", "A Course Card"
+    ]);
+  }
 });

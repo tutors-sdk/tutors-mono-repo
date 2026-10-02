@@ -4,6 +4,7 @@
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
+  import { tourService } from "@tutors/tour";
   import TutorsIcon from "@tutors/ui-primitives/components/TutorsIcon.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
@@ -22,9 +23,9 @@
 {#snippet menuSelector()}<span class="menu-toggle"><Icon icon="lucide:menu" height="22" /></span>{/snippet}
 {#snippet sidebarContent()}<div class="mobile-course-navigation">{#if navigation}{@render navigation()}{:else}<CourseNavigation {showConnect} {current} mobile />{/if}</div>{/snippet}
 <nav class="main-navigation" aria-label={t("a11y.mainNavigation")}>
-  <div class="mobile-menu"><Sidebar position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
+  <div class="mobile-menu"><Sidebar bind:open={tourService.navigationOpen.value} position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
   {#if !currentCourse.value}
-    <a class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label={t("shell.tutorsHome")}><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
+    <a data-tour="brand" class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label={t("shell.tutorsHome")}><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
   {/if}
   <div class="course-heading" class:without-course={!currentCourse.value && !title}>
     {#if currentCourse.value}<span class="course-artwork"><Image lo={currentCourse.value} miniImage /></span>{/if}

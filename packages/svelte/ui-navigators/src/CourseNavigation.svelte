@@ -54,16 +54,16 @@
          that administer it. They are ways of reading or running one course, so they read as one list
          rather than as content in Learn and its index under Tools. -->
     <p class="nav-section">{t("shell.learn")}</p>
-    <a class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
+    <a data-tour="overview" class="nav-row" href={course.route} aria-current={page.url.pathname === course.route ? "page" : undefined}><Icon icon="lucide:book-open" height="20" />{t("shell.overview")}</a>
     <!-- The same summary for everyone. It used to sit in the header, where an educator never saw it:
          the header handed them Educator Control instead, with the summary buried in a tab of it. -->
     <InfoButton labelled />
     {#if !mobile && !course.isPortfolio}<TocButton labelled />{/if}
     {#if !course.isPortfolio}
-      <a class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
+      <a data-tour="resources" class="nav-row" href={`/search/${course.courseId}`} aria-current={page.url.pathname.includes("/search/") ? "page" : undefined}><Icon icon="lucide:search" height="20" />{t("shell.resources")}</a>
     {/if}
     {#if showConnect}<CalendarButton labelled />{/if}
-    {#if showConnect && course.llm === 2}<a class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
+    {#if showConnect && course.llm === 2}<a data-tour="llm" class="nav-row" href={`/llm/${course.courseId}`}><Icon type="llm" />{t("nav.llms.tip")}</a>{/if}
     {#if course.properties.github}<EditCoursButton labelled />{/if}
     <!-- An educator's administration of the course they are reading, so it closes the Learn list rather
          than opening a group of its own. Gated here, not inside: it reads the course's locks. -->
@@ -78,39 +78,43 @@
     {#if showConnect && tutorsId.value?.login && tutorsId.value.share === "true"}
       <div class="tool-section">
       <p class="nav-section">{t("shell.activity")}</p>
-      {#if analyticsEnabled}<a class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>{/if}
+      {#if analyticsEnabled}<a data-tour="my-time" class="nav-row" href={`/time/${course.courseId}`}><Icon type="tutorsTime" />{t("shell.myTime")}</a>{/if}
       <!-- The class's activity is an educator's view of everyone, so an educator is exactly who sees it.
            It replaces a gate on the course's authLevel, which let a link to a dashboard a student cannot
            read appear for the whole class. -->
       {#if isEducator.value}
-        <a class="nav-row" href={`${siteUrls.time}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
+        <a data-tour="class-activity" class="nav-row" href={`${siteUrls.time}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="tutorsTime" />{t("shell.classActivity")}<span class="external" aria-hidden="true">↗</span></a>
       {/if}
-      <a class="nav-row" href={`${siteUrls.live}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
+      <a data-tour="live-now" class="nav-row" href={`${siteUrls.live}/${course.courseId}`} target="_blank" rel="noopener noreferrer"><Icon type="live" />{t("shell.liveNow")}<span class="external" aria-hidden="true">↗</span></a>
       <OnlineButton />
       </div>
     {/if}
     <!-- Companions lead out of the course, to Moodle, a playlist, a chat. Everything above leads further
          into it, so they close the list rather than splitting Learn from Activity (#372). -->
     {#if course.companions?.show && course.companions.bar.length > 0}
-      <p class="nav-section">{t("shell.links")}</p>
-      {#each course.companions.bar as item}
-        <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
-      {/each}
+      <!-- A real box, not the tool-section's `display: contents`: which companions a course offers is the
+           author's choice, so the tour speaks about the group and needs something to point at. -->
+      <div class="nav-group" data-tour="companions">
+        <p class="nav-section">{t("shell.links")}</p>
+        {#each course.companions.bar as item}
+          <a class="nav-row" href={item.link} target={item.target} rel={item.target === "_blank" ? "noopener noreferrer" : undefined}><Icon type={item.type} /><span>{companionLabels[item.type] ?? item.tip}</span><span class="external" aria-hidden="true">↗</span></a>
+        {/each}
+      </div>
     {/if}
     {#if currentLo.value?.parentTopic && !lab}
       <details><summary class="nav-row">{currentLo.value.parentTopic.title}<span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span></summary><LoContextTree lo={currentLo.value.parentTopic} expandAll={false} /></details>
     {/if}
   {:else}
     <p class="nav-section">Tutors</p>
-    <a class="nav-row" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
-    {#if current === "catalogue"}<a class="nav-row" href="/" aria-current="page"><Icon type="topic" />{t("home.catalogue")}</a>
-    {:else}<a class="nav-row" href={siteUrls.catalogue} target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>{/if}
-    {#if current === "live"}<a class="nav-row" href="/" aria-current={page.url.pathname === "/" ? "page" : "location"}><Icon type="live" />{t("home.live")}</a>
-    {:else}<a class="nav-row" href={siteUrls.live} target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>{/if}
-    {#if current === "time"}<a class="nav-row" href="/" aria-current="page"><Icon type="tutorsTime" />{t("classTime.app")}</a>
-    {:else}<a class="nav-row" href={siteUrls.time} target="_blank" rel="noreferrer"><Icon type="tutorsTime" />{t("classTime.app")} ↗</a>{/if}
-    <a class="nav-row" href={showConnect ? "/create" : `${siteUrls.reader}/create`} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
-    <a class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : `${siteUrls.reader}/course/tutors-reference-manual`}><Icon type="note" />{t("home.docs")}</a>
+    <a data-tour="my-courses" class="nav-row" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-current={showConnect && page.url.pathname === "/" ? "page" : undefined}><Icon type="course" />{t("shell.myCourses")}</a>
+    {#if current === "catalogue"}<a data-tour="catalogue" class="nav-row" href="/" aria-current="page"><Icon type="topic" />{t("home.catalogue")}</a>
+    {:else}<a data-tour="catalogue" class="nav-row" href={siteUrls.catalogue} target="_blank" rel="noreferrer"><Icon type="topic" />{t("home.catalogue")} ↗</a>{/if}
+    {#if current === "live"}<a data-tour="live" class="nav-row" href="/" aria-current={page.url.pathname === "/" ? "page" : "location"}><Icon type="live" />{t("home.live")}</a>
+    {:else}<a data-tour="live" class="nav-row" href={siteUrls.live} target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>{/if}
+    {#if current === "time"}<a data-tour="time" class="nav-row" href="/" aria-current="page"><Icon type="tutorsTime" />{t("classTime.app")}</a>
+    {:else}<a data-tour="time" class="nav-row" href={siteUrls.time} target="_blank" rel="noreferrer"><Icon type="tutorsTime" />{t("classTime.app")} ↗</a>{/if}
+    <a data-tour="create" class="nav-row" href={showConnect ? "/create" : `${siteUrls.reader}/create`} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
+    <a data-tour="docs" class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : `${siteUrls.reader}/course/tutors-reference-manual`}><Icon type="note" />{t("home.docs")}</a>
   {/if}
   </div>
 </nav>
@@ -118,9 +122,11 @@
   .course-navigation { display: flex; flex-direction: column; height: 100%; min-height: 0; font-size: var(--font-label); line-height: var(--leading-ui); }
   .navigation-scroll { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: var(--space-1); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6) var(--space-4); }
   /* Keep each row at its content height; short sidebars scroll instead of compressing buttons. */
-  .navigation-scroll > :global(*), .tool-section > :global(*) { flex-shrink: 0; }
+  .navigation-scroll > :global(*), .tool-section > :global(*), .nav-group > :global(*) { flex-shrink: 0; }
   .nav-section { margin: var(--space-6) var(--space-3) var(--space-2); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); font-size: var(--font-small); font-weight: var(--weight-semibold); }
   .navigation-scroll > .nav-section:first-child { margin-top: 0; }
+  /* Lays its rows out exactly as the scroll does, so wrapping them changes nothing a reader sees. */
+  .nav-group { display: flex; flex-direction: column; gap: var(--space-1); }
   .tool-section { display: contents; }
   .tool-section:not(:has(:global(.nav-row))) { display: none; }
   .course-navigation :global(.nav-row) { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-3); border-radius: var(--radius-control); color: var(--ui-ink); text-decoration: none; overflow-wrap: anywhere; }
