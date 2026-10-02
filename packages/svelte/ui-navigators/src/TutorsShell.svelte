@@ -52,7 +52,7 @@
   .tutors-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: 100dvh; background: var(--ui-canvas); }
   .shell-header { grid-column: 1 / -1; z-index: 30; background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
   .shell-navigation { min-height: 0; overflow: hidden; border-right: 1px solid var(--ui-border); background: var(--ui-surface); }
-  .shell-main { min-width: 0; overflow-y: auto; scroll-padding-block: var(--space-6); }
+  .shell-main { display: grid; grid-template-rows: 1fr auto; min-width: 0; overflow-y: auto; scroll-padding-block: var(--space-6); }
   main { min-width: 0; outline: none; }
   footer { margin-top: var(--space-12); border-top: 1px solid var(--ui-border); }
   .without-navigation { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
