@@ -37,7 +37,7 @@
 </script>
 
 {#snippet menuSelector()}
-  <div class="nav-row">
+  <div class="nav-row" data-tour="educator-control">
     <Icon type="educator" tip={t("lecturer.panel.tip")} height="20" />
     {#if labelled}<span>{t("lecturer.panel.title")}</span>{/if}
   </div>
