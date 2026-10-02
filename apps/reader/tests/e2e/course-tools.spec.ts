@@ -325,7 +325,7 @@ async function tourStepTitles(page: Page): Promise<string[]> {
   return titles;
 }
 
-test("Tour crosses the header, descends the side menu, then reaches the cards", { tag: "@rule-0241" }, async ({ page }) => {
+test("Tour crosses the header, descends the side menu, then reaches the cards", { tag: "@rule-0244" }, async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   // Header left to right, then the side menu top to bottom, then the one kind of card a course home
   // shows. An anonymous reader gets no Educator Control, no whiteboard and no activity rows, and this

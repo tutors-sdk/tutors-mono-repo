@@ -218,6 +218,28 @@ async function scrollMain(page: Page, top: number) {
   await page.locator(".shell-main").evaluate((main, to) => main.scrollTo({ top: to }), top);
 }
 
+test("Footer fills short pages and follows long content", { tag: "@rule-0241" }, async ({ page }) => {
+  await page.goto("/llm/tutors-reference-manual");
+  await expect(page.getByRole("heading", { name: "Docs for LLMs", exact: true })).toBeVisible();
+  const footer = page.getByRole("contentinfo", { name: "Site footer", exact: true });
+  const scroller = page.locator(".shell-main");
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 2000 });
+    await scrollMain(page, 0);
+    await expect.poll(() => footer.evaluate(el => Math.round(el.getBoundingClientRect().bottom)), `${width}px short page`).toBe(2000);
+    expect(await scroller.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+
+    await page.setViewportSize({ width, height: 400 });
+    await scrollMain(page, 0);
+    await expect(footer).not.toBeInViewport();
+    const mainBox = (await page.getByRole("main").boundingBox())!;
+    expect((await footer.boundingBox())!.y).toBeGreaterThanOrEqual(mainBox.y + mainBox.height);
+    await scrollMain(page, 1_000_000);
+    await expect(footer).toBeInViewport();
+    await expect.poll(() => footer.evaluate(el => Math.round(el.getBoundingClientRect().bottom)), `${width}px long page`).toBe(400);
+  }
+});
+
 test("Phone header hides on scroll down and returns on scroll up", { tag: "@rule-0062" }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(course);

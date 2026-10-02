@@ -108,7 +108,7 @@ Feature: Course tools
       Then the side menu's section headings read "Learn", "Activity" then "Companions"
       And the phone navigation drawer has the same section order
 
-  @rule-0241 @ears-ubiquitous
+  @rule-0244 @ears-ubiquitous
   Rule: The reader shall order the guided tour across the header from left to right, then down the side menu from top to bottom, then through the kinds of card on the page.
 
     Scenario: Tour crosses the header, descends the side menu, then reaches the cards
