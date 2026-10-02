@@ -12,23 +12,23 @@ A toolbar sits above the whiteboard with three controls:
 
 | Button | Description |
 |--------|-------------|
-| **Edit** | Switches from read-only SVG view to the full Excalidraw editor with real-time collaboration via Supabase Realtime. Click again to return to view mode. |
+| **Edit** | Switches from read-only SVG view to the full Excalidraw editor. Shared rooms collaborate through Supabase Realtime; personal rooms save privately. Click again to return to view mode. |
 | **Personal / Shared** | Visible in edit mode only. Toggles between a personal whiteboard (unique to the current user) and a shared whiteboard (all users collaborate on the same canvas). Uses a lock/unlock icon. Switching reloads the editor into the other room. |
 | **Fullscreen** | Expands the whiteboard to fill the browser viewport. |
 
 ### View Mode vs Edit Mode
 
 - **View mode** always renders the course author's original `.excalidraw` file as a static SVG. This is the canonical reference content.
-- **Edit mode** connects to a Supabase Realtime broadcast channel where edits are synced in real time and persisted to the `whiteboard_scenes` table through the reader's `/api/whiteboard` route. Saving needs a signed-in student; an anonymous visitor can draw and export but nothing is saved. A personal board is saved in a room the server derives from the session, so only its owner can read or overwrite it (Rule 0068). Edits in the collaboration room are independent of the source `.excalidraw` file.
+- **Edit mode** persists edits to `whiteboard_scenes` through the reader's `/api/whiteboard` route. Shared boards also sync through a public Supabase Realtime channel. Personal boards never join that channel; their stored room is derived from the session, so only its owner can read or overwrite it (Rule 0068). Saving needs a signed-in student; an anonymous visitor can draw and export but nothing is saved.
 - Switching from edit back to view returns to the original course content. This is intentional — the course author's whiteboard is the reference, and collaboration edits live separately.
 
 ### Personal vs Shared
 
-- **Personal** (lock icon): Each user gets their own isolated channel. Edits are private and persist across sessions for that user.
+- **Personal** (lock icon): Each user gets their own stored scene. Edits stay in the browser until the authenticated save; no public Realtime channel is joined.
 - **Shared** (unlock icon, green): All users connect to the same channel. Edits are visible to everyone in real time, with remote cursors showing collaborator positions.
 
 Room IDs follow the pattern:
-- Personal: `wb-{courseId}-{route}-{userId}`
+- Personal: `wb-personal:{encodedCourseId}:{encodedRoute}:{encodedUserId}` (stored scene only)
 - Shared: `wb-{courseId}-{route}`
 
 ## Course Whiteboard (Toolbar Button)
