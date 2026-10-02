@@ -13,6 +13,7 @@
 </script>
 
 <div
+  data-tour="course-card"
   transition:scale|local={scaleTransition}
   style:--resource-accent={accentFor(courseVisit.icon?.color)}
   class="course-visit-card ui-lift"

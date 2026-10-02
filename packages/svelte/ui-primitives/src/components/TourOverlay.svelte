@@ -5,11 +5,15 @@
   import { browser } from "$app/environment";
   import { afterNavigate } from "$app/navigation";
   import type { TourPlacement } from "@tutors/tour";
+  import { tick } from "svelte";
+  import { Portal } from "@skeletonlabs/skeleton-svelte";
 
   let tooltipHeight = $state(160);
   let targetRect = $state<DOMRect | null>(null);
   let nextButton: HTMLButtonElement | undefined = $state();
   let previousActiveElement: Element | null = null;
+  let tourDialog: HTMLDivElement | undefined = $state();
+  let portalTarget: HTMLElement | undefined = $state();
 
   interface TooltipPos {
     top: string;
@@ -61,31 +65,53 @@
   }
 
   $effect(() => {
+    if (tourService.isOpen.value && tourService.isMenuStep && tourService.navigationOpen.value) {
+      tick().then(() => tourService.menuOpened());
+    }
+  });
+
+  $effect(() => {
     if (!tourService.isOpen.value) return;
     if (!previousActiveElement) {
       previousActiveElement = document.activeElement;
     }
 
     const step = tourService.currentStep;
+    const menuStep = tourService.isMenuStep;
+    const navigationOpen = tourService.navigationOpen.value;
     if (!step || !browser) return;
 
-    const el = findTourTarget(step.target);
-    if (el) {
+    let cancelled = false;
+    tick().then(() => {
+      if (cancelled) return;
+      const el = findTourTarget(step.target);
+      if (!el) {
+        targetRect = null;
+        return;
+      }
+      // Keep the tour inside the drawer's modal boundary while explaining its controls.
+      portalTarget = (navigationOpen ? el.closest<HTMLElement>(".paper-drawer") : null) ?? document.body;
       el.scrollIntoView({ behavior: prefersReducedMotion.value ? "auto" : "smooth", block: "nearest" });
       requestAnimationFrame(() => {
+        if (cancelled) return;
         targetRect = el.getBoundingClientRect();
-        setTimeout(() => nextButton?.focus(), 50);
+        tick().then(() => {
+          if (!cancelled) (menuStep ? el as HTMLElement : nextButton)?.focus();
+        });
       });
-    }
+    });
 
     const onResize = () => updateTargetRect();
     const onScroll = () => updateTargetRect();
     window.addEventListener("resize", onResize);
     window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("animationend", onResize);
 
     return () => {
+      cancelled = true;
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("animationend", onResize);
     };
   });
 
@@ -103,8 +129,17 @@
   });
 
   function onKeydown(e: KeyboardEvent) {
+    if (!tourService.isOpen.value || !tourDialog) return;
     if (e.key === "Tab") {
-      const buttons = Array.from((e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("button:not([tabindex='-1'])"));
+      const buttons = Array.from(tourDialog.querySelectorAll<HTMLElement>("button:not([tabindex='-1']):not(:disabled)"));
+      if (tourService.isMenuStep) {
+        const trigger = findTourTarget(tourService.currentStep!.target) as HTMLElement;
+        if (trigger) buttons.unshift(trigger);
+        e.preventDefault();
+        const index = buttons.indexOf(document.activeElement as HTMLElement);
+        buttons[(index + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
+        return;
+      }
       const first = buttons[0];
       const last = buttons.at(-1);
       if (e.shiftKey && document.activeElement === first) {
@@ -127,15 +162,18 @@
   }
 </script>
 
+<svelte:window onkeydown={onKeydown} />
+
 {#if tourService.isOpen.value && targetRect && tourService.currentStep}
   {@const step = tourService.currentStep}
   {@const pos = computeTooltipPosition(targetRect, step.placement)}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <Portal target={portalTarget}>
   <div
-    class="fixed inset-0 z-[9999]"
-    onkeydown={onKeydown}
+    bind:this={tourDialog}
+    class="fixed inset-0 z-[10000]"
+    class:pointer-events-none={tourService.isMenuStep}
     role="dialog"
-    aria-modal="true"
+    aria-modal={!tourService.isMenuStep}
     aria-label={t("tour.ariaLabel")}
     tabindex="-1"
   >
@@ -152,15 +190,16 @@
     ></div>
 
     <button
-      class="absolute inset-0 cursor-default"
+      class="absolute inset-0 cursor-default pointer-events-auto"
       onclick={() => tourService.skip()}
+      style:clip-path={tourService.isMenuStep ? `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${targetRect.left}px ${targetRect.top}px, ${targetRect.right}px ${targetRect.top}px, ${targetRect.right}px ${targetRect.bottom}px, ${targetRect.left}px ${targetRect.bottom}px, ${targetRect.left}px ${targetRect.top}px)` : undefined}
       tabindex="-1"
       aria-label={t("tour.skip")}
     ></button>
 
     <div
       bind:clientHeight={tooltipHeight}
-      class="tour-tooltip absolute z-10 w-80 max-w-[calc(100vw-32px)] rounded-[var(--radius-panel)] border border-[var(--ui-border)] bg-[var(--ui-surface)] shadow-2xl"
+      class="tour-tooltip absolute z-10 w-80 max-w-[calc(100vw-32px)] rounded-[var(--radius-panel)] border border-[var(--ui-border)] bg-[var(--ui-surface)] shadow-2xl pointer-events-auto"
       style="top: {pos.top}; left: {pos.left}; transition: {prefersReducedMotion.value ? 'none' : 'top 0.3s ease, left 0.3s ease'};"
     >
       <div class="p-4">
@@ -192,6 +231,7 @@
               bind:this={nextButton}
               class="ui-button ui-button-primary"
               onclick={() => tourService.next()}
+              disabled={tourService.isMenuStep}
             >
               {tourService.isLastStep ? t("tour.finish") : t("tour.next")}
             </button>
@@ -200,6 +240,7 @@
       </div>
     </div>
   </div>
+  </Portal>
 {/if}
 
 <style>

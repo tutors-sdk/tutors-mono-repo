@@ -67,7 +67,7 @@
 
 {#if currentCourse?.value}
   <button onclick={openEditor} aria-label={t("shell.whiteboard")}>
-    <div class="nav-row">
+    <div class="nav-row" data-tour="whiteboard">
       <Icon type="whiteboard" />
       {#if labelled}<span>{t("shell.whiteboard")}</span>{/if}
     </div>
