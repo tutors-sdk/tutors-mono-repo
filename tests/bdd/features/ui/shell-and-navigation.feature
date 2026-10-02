@@ -116,6 +116,15 @@ Feature: Reader shell and navigation
       When a student opens "/course/nonexistent-course-id-12345"
       Then the page shows "404", "Page Not Found" and a "Go Home" link
 
+  @rule-0241 @ears-ubiquitous
+  Rule: The reader shall place the site footer at the bottom of the viewport when content fits, and after the content in the same scroll area when content exceeds the viewport.
+
+    Scenario: Footer fills short pages and follows long content
+      Given a student opens Docs for LLMs for the Tutors Reference Manual
+      When the viewport is 320, 768 and 1440 pixels wide in turn
+      Then the footer reaches the viewport bottom in a window 2000 pixels tall without scrolling
+      And in a window 400 pixels tall the footer follows the content and is reached by scrolling
+
   @rule-0062 @ears-state-driven
   Rule: While the viewport is narrower than 768 pixels, the reader shall slide the header out of view as a student scrolls down a page and back into view as the student scrolls up.
 
