@@ -15,7 +15,7 @@
 {#snippet menuSelector()}
   <!-- The badge used to sit on the account avatar, where a bare number had nothing to say what it
        counted (#370). Here it reads against the row that names it. -->
-  <span class="nav-row"><Icon type="listOnline" /><span>{label}</span>{#if count > 0}<span class="online-count">{count}</span>{/if}</span>
+  <span class="nav-row" data-tour="online"><Icon type="listOnline" /><span>{label}</span>{#if count > 0}<span class="online-count">{count}</span>{/if}</span>
 {/snippet}
 {#snippet sidebarContent()}
   <div class="ui-grid card-grid online-grid">

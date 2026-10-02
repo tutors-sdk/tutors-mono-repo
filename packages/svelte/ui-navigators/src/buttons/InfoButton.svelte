@@ -9,7 +9,9 @@
 </script>
 
 {#snippet menuSelector()}
-  <div class="nav-row">
+  <!-- The tour's Course Info step has always named this target; until now nothing carried it, so the
+       step was filtered out of every run before a reader saw it. -->
+  <div class="nav-row" data-tour="info">
     <Icon type="info" tip={t("nav.info.tip")} height="20" />
     {#if labelled}<span>{t("nav.info.title")}</span>{/if}
   </div>
