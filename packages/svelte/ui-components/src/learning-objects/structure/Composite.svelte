@@ -4,11 +4,9 @@
   import Panels from "../layout/Panels.svelte";
   import Units, { hasVisibleLos } from "../layout/Units.svelte";
   import Cards from "../layout/Cards.svelte";
-  import Image from "@tutors/ui-primitives/components/Image.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import { t } from "@tutors/i18n";
   import { rbacService } from "@tutors/rbac";
-  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   let { composite }: { composite: Composite } = $props();
   // Side units the viewer can see: when a student can see none (all hidden or locked), no side column is reserved.
   const sides = $derived((composite?.units?.sides ?? []).filter(hasVisibleLos));
@@ -53,12 +51,8 @@
 <SecondaryNavigator lo={composite} parentCourse={composite?.parentCourse?.properties?.parent} />
 {#if composite}
   <div class="ui-page composite-page">
-    {#if composite.type !== "course"}
-    <header class="composite-heading">
-      <div><p class="ui-eyebrow">{composite.type}</p><h1 class="ui-title">{composite.title}</h1><div class="ui-muted summary">{@html sanitizeHtml(composite.summary ?? "")}</div></div>
-      <Image lo={composite} />
-    </header>
-    {/if}
+    <!-- No heading here: the side menu's card names the topic, pictures it and summarises it (#399),
+         so repeating all three above the cards only pushed them down. -->
     <div class="composite-columns" class:with-sides={sides.length > 0} use:layoutCards>
       <div class="main-group">
         <Panels panels={composite.panels} />
@@ -76,12 +70,7 @@
 {/if}
 <style>
   .composite-page { padding-top: 0; container-type: inline-size; }
-  .composite-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-6); }
-  .composite-heading > div { min-width: 0; }
-  h1 { margin-top: var(--space-2); }
-  .summary { margin-top: var(--space-2); }
   h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); }
-  .composite-heading + .composite-columns { margin-top: var(--space-6); }
   .main-group, .side-groups { min-width: 0; }
   /* The columns already sit 24px below the header, so the "Course topics" heading adds no margin of its own:
      it lines up with the top of the side column instead of starting 32px below it. */
@@ -94,5 +83,4 @@
   .with-sides > .side-groups { grid-column: 2; }
   .with-sides:global([data-stacked="true"]) { grid-template-columns: minmax(0, 1fr); }
   .with-sides:global([data-stacked="true"]) > :is(.main-group, .side-groups) { grid-column: auto; }
-  @media (max-width: 767px) { .composite-heading > :global(.lo-artwork) { display: none; } }
 </style>

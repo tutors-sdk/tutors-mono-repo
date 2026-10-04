@@ -259,3 +259,62 @@ test("Desktop header stays while scrolling", { tag: "@rule-0062" }, async ({ pag
   await page.waitForTimeout(300);
   expect((await page.locator(".shell-header").boundingBox())!.y).toBe(0);
 });
+
+test("The side menu leads with a card for what is open", { tag: "@rule-0250" }, async ({ page }) => {
+  await page.goto("/topic/reference-course/topic-01-typical");
+  const column = page.locator(".shell-navigation .navigation-scroll");
+  const card = column.locator(".lo-card");
+  await expect(card).toBeVisible();
+  await expect(column.locator("> *").first()).toHaveClass(/lo-card/);
+  // Title, artwork and summary: the three things the canvas heading used to carry.
+  await expect(card.getByRole("heading")).toHaveText("Simple");
+  await expect(card.locator(".lo-artwork")).toBeVisible();
+  await expect(card.locator(".lo-card-summary")).toHaveText("Units with presentations, labs + resources");
+  // Scaled to the column: as wide as the menu allows, and no wider.
+  const [cardBox, columnBox] = [(await card.boundingBox())!, (await column.boundingBox())!];
+  expect(Math.round(cardBox.width)).toBeLessThanOrEqual(Math.round(columnBox.width));
+  expect(cardBox.width).toBeGreaterThan(columnBox.width * 0.8);
+  // The way out sits right under the card. From a topic that is the course.
+  const back = column.locator(".back-link");
+  await expect(back).toHaveText("← Reference Course");
+  await expect(back).toHaveAttribute("href", course);
+  expect((await back.boundingBox())!.y).toBeGreaterThan(cardBox.y + cardBox.height - 1);
+  // And the canvas no longer repeats it: its own headings name the units, not the topic.
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Simple", exact: true })).toHaveCount(0);
+  // Opening a note swaps the card for that note's.
+  await page.goto("/note/tutors-reference-manual/unit-1-getting-started/note-a-getting-started");
+  await expect(card.getByRole("heading")).toHaveText("Getting Started");
+  await expect(card.locator(".lo-card-summary")).toHaveText("The basic model of Tutors");
+});
+
+test("Every kind of resource gets the same way back", { tag: "@rule-0250" }, async ({ page }) => {
+  const topic = "/topic/reference-course/topic-01-typical";
+  const column = page.locator(".shell-navigation .navigation-scroll");
+  const back = column.locator(".back-link");
+  // A lab has always had a way back; it now comes from the card above it rather than from the step list.
+  await page.goto(`${topic}/unit-1/book-a`.replace("/topic/", "/lab/"));
+  await expect(column.locator(".lo-card").getByRole("heading")).toHaveText("Lab-01-(md)");
+  await expect(back).toHaveText("← Simple");
+  await expect(back).toHaveAttribute("href", topic);
+  expect((await back.boundingBox())!.y).toBeLessThan((await column.locator(".steps").boundingBox())!.y);
+  // The kinds that never had one get the same link to the same place.
+  for (const route of [`${topic}/unit-1/notebook-a`.replace("/topic/", "/notebook/"), `${topic}/unit-1/talk-1-intro`.replace("/topic/", "/talk/")]) {
+    await page.goto(route);
+    await expect(back, route).toHaveText("← Simple");
+    await expect(back, route).toHaveAttribute("href", topic);
+  }
+});
+
+test("Away from a course the navigation leads with its own sections", { tag: "@rule-0250" }, async ({ page }) => {
+  const column = page.locator(".shell-navigation .navigation-scroll");
+  // The course's own front page: the header names and pictures the course, so the menu does not repeat it.
+  await page.goto(course);
+  await expect(column.locator("> *").first()).toHaveText("Learn");
+  await expect(column.locator(".lo-card")).toHaveCount(0);
+  await page.goto("/topic/reference-course/topic-01-typical");
+  await expect(column.locator(".lo-card")).toBeVisible();
+  // currentLo survives leaving the course, so the home page is where a stale card would show up.
+  await page.goto("/");
+  await expect(column.locator("> *").first()).toHaveText("Tutors");
+  await expect(column.locator(".lo-card")).toHaveCount(0);
+});

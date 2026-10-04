@@ -140,3 +140,27 @@ Feature: Reader shell and navigation
       Given the viewport is 1440 pixels wide
       When a student scrolls down the course home
       Then the header stays in view
+
+  @rule-0250 @ears-state-driven
+  Rule: While a learning object of a course is open, the reader shall lead the course navigation with a card carrying that object's title, artwork and summary, followed by a link back to its parent, in place of a heading on the canvas.
+
+    @active
+    Scenario: The side menu leads with a card for what is open
+      Given a student opens a topic in the Reference Course
+      Then the course navigation's first element is a card naming that topic, picturing it and summarising it
+      And a link back to the course follows the card
+      And no heading repeats the topic above its cards on the canvas
+      And opening a note puts a card for the note at the head of the navigation instead
+
+    @active
+    Scenario: Every kind of resource gets the same way back
+      Given a student opens a lab in the Reference Course
+      Then the card for that lab is followed by a link back to the topic it belongs to, above the step list
+      And opening a notebook and then a slide deck in that topic gives each the same link back to the topic
+
+    @inactive
+    Scenario: Away from a course the navigation leads with its own sections
+      Given a student has opened a course in this session
+      When they return to the home page
+      Then the course navigation leads with its own first section and carries no learning object card
+      And the course's own front page carries no card either, its header already naming and picturing the course

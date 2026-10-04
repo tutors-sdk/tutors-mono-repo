@@ -6,6 +6,9 @@
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
   import type { LiveLab, NotebookService } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import Image from "@tutors/ui-primitives/components/Image.svelte";
+  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
+  import { loTypeColour, themeService } from "@tutors/themes";
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import CalendarButton from "./buttons/CalendarButton.svelte";
   import InfoButton from "./buttons/InfoButton.svelte";
@@ -18,16 +21,52 @@
   const course = $derived(currentCourse.value);
   const lab = $derived((page.data as { lab?: LiveLab }).lab);
   const notebook = $derived((page.data as { notebook?: NotebookService }).notebook);
-  const parentTopic = $derived((lab?.lab ?? notebook?.notebook)?.breadCrumbs?.findLast(lo => lo.type === "topic"));
+  // Whatever the reader has open. A lab and a notebook carry a service around their Lo, so those come
+  // from page.data; everything else is just the Lo the route resolved to.
+  const openLo = $derived(lab?.lab ?? notebook?.notebook ?? currentLo.value);
+  /**
+   * Where "back" goes from whatever is open. The topic it belongs to is the useful destination - a lab,
+   * a note and a notebook all came from one - falling back to its immediate parent and then to the
+   * course. A topic's own breadcrumbs end in itself, so a self-reference is stepped over.
+   */
+  const backTo = $derived.by(() => {
+    if (!course || !openLo || openLo.route === course.route) return undefined;
+    const topic = openLo.breadCrumbs?.findLast(crumb => crumb.type === "topic" && crumb.route !== openLo.route);
+    const parent = openLo.parentLo?.route === openLo.route ? undefined : openLo.parentLo;
+    const target = topic ?? parent ?? course;
+    // A top-level unit is drawn on the course's own front page, so a link to it is a link to the
+    // course: name it after the course rather than after the unit the reader never saw a page for.
+    return target.route === course.route ? course : target;
+  });
   const companionLabels: Record<string, string> = { moodle: "Moodle", youtube: "YouTube", slack: "Slack", zoom: "Zoom", teams: "Teams", podcast: "Podcast" };
 </script>
 <!-- Unnamed: the complementary landmark around it (or the dialog on phones) already carries "Course navigation". Rule 0170. -->
 <nav class="course-navigation">
   <div class="navigation-scroll">
+  <!-- Whatever is open, drawn as its own card: title, artwork and summary, in the colours of its type
+       (#399). It is the cue for where you are, and it carries what the canvas heading used to say, which
+       is why that heading is gone. It leads the column on every page rather than sitting above Learn,
+       because on a lab Learn comes after the step list and a cue you have to scroll to is no cue.
+       Not a link: it pictures the page you are already on. Two guards: the Tutors home page draws this
+       same menu and currentLo still holds the last course read, and on the course's own front page the
+       header already names and pictures the course, so a card there would say it a second time. -->
+  {#if course && openLo && openLo.route !== course.route}
+    {@const colour = loTypeColour(openLo.type)}
+    <article class="lo-card" data-lo-card={openLo.type} style:--resource-accent={colour.border} style:--resource-background={colour.background}>
+      <div class="lo-card-heading">
+        <h2>{openLo.title}</h2>
+        <span class="lo-card-type" title={openLo.type}><Icon icon={themeService.getIcon(openLo.type).type} color="var(--resource-accent)" height="26" /></span>
+      </div>
+      <!-- Image falls back to the type icon where the author set no artwork. -->
+      <Image lo={openLo} />
+      {#if openLo.summary}<div class="lo-card-summary">{@html sanitizeHtml(openLo.summary)}</div>{/if}
+    </article>
+    <!-- The way out, under the card that says where you are. Labs and notebooks have always had one;
+         every other resource is just as deep in the course and now gets the same link. -->
+    {#if backTo}<a class="nav-row back-link" href={backTo.route}>← {backTo.title}</a>{/if}
+  {/if}
   {#if lab && !lab.lab.pdf}
-    <a class="nav-row" href={parentTopic?.route ?? lab.lab.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? lab.lab.parentLo?.title ?? course?.title}</a>
-    <h2>{lab.lab.title}</h2>
-    <p class="ui-muted text-sm">{t("shell.steps")} · {currentLabStepIndex.value + 1} / {lab.steps.length}</p>
+    <p class="ui-muted text-sm list-count">{t("shell.steps")} · {currentLabStepIndex.value + 1} / {lab.steps.length}</p>
     <ol class="steps" aria-label={t("shell.steps")}>
       {#each lab.lab.los as step, i}
         <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={currentLabStepIndex.value === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}</a></li>
@@ -38,9 +77,7 @@
   <!-- A notebook's outline is derived structure, like a lab's steps, so it belongs to the shell. A note's
        table of contents is the author's own ([[toc]]) and part of the prose, so it stays in the prose. -->
   {#if notebook}
-    <a class="nav-row" href={parentTopic?.route ?? notebook.notebook.parentLo?.route ?? course?.route}>← {parentTopic?.title ?? notebook.notebook.parentLo?.title ?? course?.title}</a>
-    <h2>{notebook.notebook.title}</h2>
-    <p class="ui-muted text-sm">{t("shell.outline")} · {notebook.outline.length}</p>
+    <p class="ui-muted text-sm list-count">{t("shell.outline")} · {notebook.outline.length}</p>
     <ol class="steps" aria-label={t("shell.outline")}>
       {#each notebook.outline as entry, i}
         <li><a class="nav-row" href={`#notebook-cell-${entry.index}`} onclick={() => notebook.setActiveCell(entry.index)} aria-current={currentNotebookCellIndex.value === entry.index ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{entry.title}</a></li>
@@ -125,6 +162,20 @@
   .navigation-scroll > :global(*), .tool-section > :global(*), .nav-group > :global(*) { flex-shrink: 0; }
   .nav-section { margin: var(--space-6) var(--space-3) var(--space-2); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); font-size: var(--font-small); font-weight: var(--weight-semibold); }
   .navigation-scroll > .nav-section:first-child { margin-top: 0; }
+  /* Drawn like a canvas card so a reader recognises it, but sized to the column rather than to
+     --card-width: it takes the menu's full width and only as much height as its three parts need, so a
+     narrow menu gets a smaller card instead of a stretched one and the Learn list stays above the fold.
+     Padding and the colour bands come down a step from the canvas card's to match. */
+  .lo-card { display: flex; flex-direction: column; width: 100%; overflow: hidden; padding: var(--space-4); background: color-mix(in srgb, var(--resource-background) 72%, var(--ui-surface)); border: 1px solid var(--resource-accent); border-block-width: 6px; border-radius: var(--radius-panel); }
+  .lo-card-heading { display: flex; flex: none; min-width: 0; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+  /* Clamped like the canvas card's, so a long title or summary cannot grow the card past its box. */
+  .lo-card h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-block: 0; font-size: var(--font-body); line-height: var(--leading-ui); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+  .lo-card-type { display: inline-flex; flex-shrink: 0; align-items: center; color: var(--resource-accent); }
+  .lo-card-summary { flex: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
+  /* Square, and as wide as the canvas card's artwork unless the menu is narrower than that, in which
+     case it shrinks with the column rather than letterboxing inside a fixed box. */
+  .lo-card :global(.lo-artwork) { flex: none; align-self: center; width: min(var(--card-artwork), 100%); height: auto; aspect-ratio: 1; margin-block: var(--space-3); }
+  .lo-card :global(.lo-artwork svg) { width: 100%; height: 100%; }
   /* Lays its rows out exactly as the scroll does, so wrapping them changes nothing a reader sees. */
   .nav-group { display: flex; flex-direction: column; gap: var(--space-1); }
   .tool-section { display: contents; }
@@ -136,8 +187,10 @@
   .course-navigation :global(.nav-row svg) { width: 24px; height: 24px; flex-shrink: 0; }
   .external { margin-left: auto; color: var(--ui-muted); }
 
-  h2 { font-size: var(--font-section); font-weight: var(--weight-semibold); margin-block: var(--space-5) var(--space-2); overflow-wrap: anywhere; }
-  .steps { display: grid; gap: var(--space-1); margin-block: var(--space-5); }
+  /* The step and outline counts used to sit under a heading that repeated the lab's title; the card
+     above says it now, so the count carries that heading's spacing instead. */
+  .list-count { margin-top: var(--space-5); }
+  .steps { display: grid; gap: var(--space-1); margin-block: var(--space-2) var(--space-5); }
   .steps .nav-row { align-items: baseline; }
   .step-number { flex-shrink: 0; min-width: 2ch; font-variant-numeric: tabular-nums; color: var(--ui-muted); font-size: var(--font-caption); }
   hr { border-color: var(--ui-border); }
