@@ -4,6 +4,10 @@
 
 A modern monorepo for the Tutors educational platform - an open-source course reader and learning management system built with Svelte 5, SvelteKit, and TypeScript.
 
+## Release readiness
+
+Before cutting a release, read the [daily A3](https://tutors-sdk.github.io/tutors-release-harness/a3.html) and the [overnight readiness page](https://tutors-sdk.github.io/tutors-release-harness/readiness.html) from the [release harness](https://github.com/tutors-sdk/tutors-release-harness). Both rebuild every night after the nightly A/A and Main to RC runs, with no manual step.
+
 ## Quick start
 
 Ten minutes from clone to a rendered course. Requires Node.js >= 22.12.0 and pnpm >= 8.
