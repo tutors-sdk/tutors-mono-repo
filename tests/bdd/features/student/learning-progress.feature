@@ -46,3 +46,18 @@ Feature: Learning Progress Tracking
       | web-dev-101   | 2   | 1          |
       | databases-101 | 1   | 2          |
     And the records shall be grouped by course, 2 for "web-dev-101" and 1 for "databases-101"
+
+  @rule-0251 @ears-event-driven
+  Rule: When a student opens a learning object, the reader shall report one learning event for it.
+
+    Scenario: Page data settling does not report the view again
+      When the student views lab 1 of the course 1 times
+      And the course, the learning object and the identity of the student settle
+      Then the system shall increment the page load count for the lab to 1
+      And the reader shall have reported 1 learning event for "Alice"
+
+    Scenario: A change of mood on the same page is still reported
+      When the student views lab 1 of the course 1 times
+      And the student changes their sentiment to "confused"
+      Then the reader shall have reported 2 learning events for "Alice"
+      And the last reported event shall carry the sentiment "confused"

@@ -19,7 +19,7 @@ import { tutorsConnectService } from "../../../../packages/svelte/connect/src/se
 
 const feature = await loadFeature("tests/bdd/features/student/live-presence.feature");
 
-describeFeature(feature, ({ Background, Scenario }) => {
+describeFeature(feature, ({ Background, Scenario, Rule }) => {
   let course: Course;
 
   const lab = (n: number) => labsOf(course)[n - 1];
@@ -101,6 +101,32 @@ describeFeature(feature, ({ Background, Scenario }) => {
       // The listener is up (the student still sees others); their own page view never reached it.
       expect(presenceService.listeningTo).toBe(course.courseId);
       expect(names()).toEqual([]);
+    });
+  });
+
+  Rule("If a learning event is published for a course the student is not reading, then the reader shall not receive it.", ({ RuleScenario }) => {
+    RuleScenario("Events from another course never reach the reader", ({ Given, When, Then, And }) => {
+      Given("{string} has opened lab {number} of the course", opens);
+      When("a learning event for the course {string} is published platform-wide", (_ctx, otherCourseId: string) => {
+        const other = publishedCourse(otherCourseId, 1);
+        loEventArrives(ALL_COURSES_CHANNEL, "Bob", other, labsOf(other)[0]);
+      });
+      Then("the online list shall be {string}", (_ctx, list: string) => {
+        expect(names()).toEqual(list.split(", "));
+      });
+      // The guard itself: the reader holds the channel to publish on, but never joined it, so the
+      // platform's events are not delivered to it and Supabase is not billed for delivering them.
+      And("the reader shall hold no joined platform-wide channel", () => {
+        expect(recorder.joined(ALL_COURSES_CHANNEL)).toEqual([]);
+      });
+    });
+
+    RuleScenario("The reader still publishes platform-wide for the live dashboard", ({ Given, Then }) => {
+      Given("{string} has opened lab {number} of the course", opens);
+      Then("the platform-wide channel shall carry {number} event for {string}", (_ctx, count: number, name: string) => {
+        const published = recorder.sentOn(ALL_COURSES_CHANNEL).map((message) => message.payload as LoRecord);
+        expect(published.filter((payload) => payload.user?.fullName === name)).toHaveLength(count);
+      });
     });
   });
 });

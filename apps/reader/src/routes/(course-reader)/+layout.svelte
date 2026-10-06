@@ -40,6 +40,10 @@
   });
 
   afterNavigate(({ to }) => {
+    // The effect above runs again whenever any of the course, the learning object or the id resolves.
+    // This is the one signal that says the student actually went somewhere, so it is what separates a
+    // second visit to a page from the same visit being re-reported.
+    tutorsConnectService.navigated();
     if (
       currentCourse.value?.hasEnrollment &&
       !isEducator.value &&

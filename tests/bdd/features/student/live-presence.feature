@@ -38,3 +38,16 @@ Feature: Live Presence
     Then the system shall mark "alice" as "offline"
     And the system shall not broadcast their activity to others
     And their name shall not appear in the online list
+
+  @rule-0250 @ears-unwanted
+  Rule: If a learning event is published for a course the student is not reading, then the reader shall not receive it.
+
+    Scenario: Events from another course never reach the reader
+      Given "Alice" has opened lab 1 of the course
+      When a learning event for the course "databases-101" is published platform-wide
+      Then the online list shall be "Alice"
+      And the reader shall hold no joined platform-wide channel
+
+    Scenario: The reader still publishes platform-wide for the live dashboard
+      Given "Alice" has opened lab 1 of the course
+      Then the platform-wide channel shall carry 1 event for "Alice"

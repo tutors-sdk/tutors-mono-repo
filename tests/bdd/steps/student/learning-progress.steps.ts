@@ -12,9 +12,10 @@ vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/
 vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
 vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
-import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
+import type { LoRecord } from "../../../../packages/svelte/community/src/types.svelte.ts";
 import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
 import { CourseTime } from "../../../../packages/jsr/time/src/services/course-time.ts";
 import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
@@ -27,7 +28,7 @@ const feature = await loadFeature("tests/bdd/features/student/learning-progress.
 
 type TableRow = Record<string, string>;
 
-describeFeature(feature, ({ Background, Scenario }) => {
+describeFeature(feature, ({ Background, Scenario, Rule }) => {
   const courses = new Map<string, Course>();
   let course: Course;
   let login: string;
@@ -159,6 +160,41 @@ describeFeature(feature, ({ Background, Scenario }) => {
     And("the records shall be grouped by course, {number} for {string} and {number} for {string}", (_ctx, n1: number, c1: string, n2: number, c2: string) => {
       const perCourse = (courseId: string) => recorder.rows("learning_records").filter((r) => r.course_id === courseId).length;
       expect([perCourse(c1), perCourse(c2)]).toEqual([n1, n2]);
+    });
+  });
+
+  Rule("When a student opens a learning object, the reader shall report one learning event for it.", ({ RuleScenario }) => {
+    /** Every event the reader published for `name`, in order. */
+    const reported = (name: string) => recorder.sentOn(ALL_COURSES_CHANNEL).map((message) => message.payload as LoRecord).filter((payload) => payload.user?.fullName === name);
+    const viewLab = (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
+    const countedViews = (_ctx: unknown, count: number) => expect(learningRecord(course.courseId, 1)).toMatchObject({ count });
+    const reportedCount = (_ctx: unknown, count: number, name: string) => expect(reported(name)).toHaveLength(count);
+
+    RuleScenario("Page data settling does not report the view again", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      // The course layout reports from an `$effect` tracking the course, the learning object and the
+      // id, so it runs again each time one of those resolves. Nothing about the page has changed.
+      And("the course, the learning object and the identity of the student settle", async () => {
+        tutorsConnectService.learningEvent({});
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the system shall increment the page load count for the lab to {number}", countedViews);
+      And("the reader shall have reported {number} learning event for {string}", reportedCount);
+    });
+
+    RuleScenario("A change of mood on the same page is still reported", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student changes their sentiment to {string}", async (_ctx, sentiment: string) => {
+        await tutorsConnectService.updateSentiment(sentiment);
+        // The id rune changed, so the layout's effect runs again - this time with something to say.
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the reader shall have reported {number} learning events for {string}", reportedCount);
+      And("the last reported event shall carry the sentiment {string}", (_ctx, sentiment: string) => {
+        expect(reported("Alice").at(-1)?.user?.sentiment).toBe(sentiment);
+      });
     });
   });
 });

@@ -188,13 +188,39 @@ export const tutorsConnectService: TutorsConnectService = {
     return this.profile.getCourseVisits();
   },
 
+  lastLearningEvent: "",
+  /** The first page of a session is arrived at, so there is a navigation to report from the start. */
+  pendingNavigation: true,
+
+  navigated(): void {
+    this.pendingNavigation = true;
+  },
+
   /**
    * Records a learning event and broadcasts if sharing enabled
+   *
+   * Reports once per page the student arrives at. The course layout calls this from an `$effect`
+   * tracking the course, the learning object and the id, so one navigation runs it several times as
+   * those resolve: once with the previous learning object still in place, again when the new one
+   * arrives, again when the id settles. Each repeat cost a page-load count the student had not made
+   * and a broadcast to every other student in the course.
+   *
+   * Two things make an event worth reporting, and payload alone cannot tell them apart. A navigation
+   * means the student went somewhere, including back to a page they had already read, which is a
+   * second genuine page load. A change in the payload - a new learning object, or a mood Tutors Live
+   * renders - means something worth telling others even with no navigation. A repeat of the same
+   * payload with no navigation behind it is neither, and is the only case dropped here.
+   *
    * @param params - Event parameters to record
    */
   learningEvent(params: Record<string, string>): void {
     if (anonMode) return;
     if (currentCourse.value && currentLo.value && tutorsId.value) {
+      const identity = [params.loid ?? "", currentLo.value.route, tutorsId.value.login ?? "", tutorsId.value.sentiment ?? "", tutorsId.value.share ?? ""].join("|");
+      if (!this.pendingNavigation && identity === this.lastLearningEvent) return;
+      this.pendingNavigation = false;
+      this.lastLearningEvent = identity;
+
       if (analyticsEnabled) analyticsService.learningEvent(currentCourse.value, params, currentLo.value, tutorsId.value);
       if (tutorsId.value.share === "true" && !currentCourse.value.isPrivate) {
         presenceService.sendLoEvent(currentCourse.value, currentLo.value, tutorsId.value);

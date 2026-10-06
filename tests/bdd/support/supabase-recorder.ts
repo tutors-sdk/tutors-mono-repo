@@ -142,6 +142,21 @@ export class RecordingChannel {
     this.db.relay(this.name, message);
     return Promise.resolve("ok");
   }
+
+  /**
+   * The REST path, for publishing to a channel this client never joined.
+   *
+   * Takes the event and payload as separate arguments where `send` takes one message, and resolves
+   * rather than returning a status, so it is a real seam and not an alias. Relayed like `send`: the
+   * server fans a REST broadcast out to subscribers just the same, which is what lets the Tutors Live
+   * scenarios see events a reader published without joining.
+   */
+  httpSend(event: string, payload: unknown) {
+    const message: BroadcastMessage = { type: "broadcast", event, payload };
+    this.sent.push(message);
+    this.db.relay(this.name, message);
+    return Promise.resolve({ success: true });
+  }
 }
 
 export class RecordingSupabase {
@@ -205,6 +220,14 @@ export class RecordingSupabase {
   /** Everything product code broadcast on the named channel. */
   sentOn(name: string): BroadcastMessage[] {
     return this.channels.filter((c) => c.name === name).flatMap((c) => c.sent);
+  }
+
+  /**
+   * The channels of this name product code actually joined, and so is billed for receiving on.
+   * Holding a channel to publish to is not joining it.
+   */
+  joined(name: string): RecordingChannel[] {
+    return this.channels.filter((c) => c.name === name && c.subscribed);
   }
 
   upserts(table: string): Row[] {

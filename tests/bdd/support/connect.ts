@@ -34,6 +34,7 @@ export function freshBrowser(): void {
   currentCourse.value = null;
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
+  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true });
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];
 
@@ -89,6 +90,9 @@ export async function openLo(course: Course, lo: Lo): Promise<void> {
     tutorsConnectService.checkWhiteList();
     tutorsConnectService.courseVisit(course);
   }
+  // Opening a page is a navigation, which is what the layout reports on; calling `learningEvent`
+  // again without this is the layout's effect re-running, not the student going anywhere.
+  tutorsConnectService.navigated();
   tutorsConnectService.learningEvent({});
   await settle();
 }

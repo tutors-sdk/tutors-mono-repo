@@ -6,6 +6,7 @@ import { rune, tutorsId } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
+import log from "@tutors/logger";
 
 const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
 
@@ -32,11 +33,18 @@ export const presenceService: PresenceService = {
     }
   },
 
+  /**
+   * The platform-wide channel is published to, never joined.
+   *
+   * Joining it delivered every learning event on the platform to every reader, and Supabase bills each
+   * delivery: one navigation cost as many messages as there were readers online, so the bill grew with
+   * the square of the audience. The reader never registered a handler for any of it. The only listener
+   * that wants this channel is Tutors Live's landing page, so the reader keeps publishing and stops
+   * listening, and the cost falls to one message per event per dashboard watching.
+   */
   connectToAllCourseAccess(): void {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
-    this.channelAll = supabase
-      .channel("tutors-all-course-access", BROADCAST_CONFIG)
-      .subscribe();
+    this.channelAll = supabase.channel("tutors-all-course-access", BROADCAST_CONFIG);
   },
 
   startPresenceListener(courseId: string) {
@@ -74,7 +82,16 @@ export const presenceService: PresenceService = {
       loRecord.icon = lo.icon;
     }
 
-    this.channelAll?.send({ type: "broadcast", event: "lo-event", payload: loRecord });
+    // httpSend, not send: the channel above is deliberately unjoined, and send() only reaches an unjoined
+    // channel through a fallback it warns is deprecated. Fire-and-forget - Tutors Live losing an event must
+    // not stop the course channel or the upsert below, but it should say so in the log rather than go quiet.
+    // Both arms are needed: httpSend rejects on a failed POST, and throws outright where the Realtime client
+    // is too old to have it at all (it landed in 2.97.0).
+    try {
+      void this.channelAll?.httpSend("lo-event", loRecord).catch((error) => log.error("Broadcast to tutors-all-course-access failed:", error));
+    } catch (error) {
+      log.error("Broadcast to tutors-all-course-access failed:", error);
+    }
     if (this.listeningTo !== "") {
       this.channelCourse?.send({ type: "broadcast", event: "lo-event", payload: loRecord });
     }
