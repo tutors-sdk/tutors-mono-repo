@@ -8,6 +8,12 @@
 
 ## Reader (`tutors-reader`)
 
+### v16.2.3 (2026-10)
+
+#### Fixes
+
+- Presence: the reader no longer joins the platform-wide `tutors-all-course-access` channel. It had subscribed with no handler, so every reader received every learning event from every course and discarded it — and because Supabase bills each delivery, one navigation cost as many messages as there were readers online. The reader still publishes to the channel, over HTTP rather than a socket, so Tutors Live's landing page is unchanged. No student-visible behaviour changes
+
 ### v16.2.2 (2026-09)
 
 #### Fixes
