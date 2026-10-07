@@ -1,0 +1,15 @@
+# Generated, vendored or owned by another formatter.
+pnpm-lock.yaml
+deno.lock
+**/node_modules/
+**/.svelte-kit/
+**/build/
+**/dist/
+**/coverage/
+**/test-results/
+**/playwright-report/
+reports/
+# packages/jsr is formatted by deno fmt (see deno.json).
+packages/jsr/
+supabase/migrations/
+CHANGELOG.md
