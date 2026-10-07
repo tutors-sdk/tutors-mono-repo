@@ -55,7 +55,7 @@ export type CourseVisit = { id: string; title: string; img?: string; icon?: Cour
 export type LearnerDisplay = { id: string; fullName: string; avatar: string; sentiment: Sentiment; };
 
 // (from src/events.ts)
-export type LearningEvent = | { kind: "page-load"; courseId: string; loId: string; loType: LoType; day: CalendarDay };
+export type LearningEvent = PageLoadEvent | TickEvent;
 
 // (from src/events.ts)
 export type LearningEventKind = LearningEvent["kind"];
@@ -73,10 +73,16 @@ export type LoType = (typeof LO_TYPES)[number];
 export type OnlineStatus = (typeof ONLINE_STATUSES)[number];
 
 // (from src/events.ts)
+export type PageLoadEvent = { kind: "page-load"; courseId: string; loId: string; loType: LoType; day: CalendarDay };
+
+// (from src/events.ts)
 export type PresenceEvent = { courseId: string; courseUrl: string; courseTitle: string; loRoute: string; title: string; img?: string; icon?: CourseIcon; isPrivate: boolean; user?: LearnerDisplay; type: LoType; };
 
 // (from src/learner.ts)
 export type Sentiment = (typeof SENTIMENTS)[number];
+
+// (from src/events.ts)
+export type TickEvent = { kind: "tick"; courseId: string; loId: string | null; day: CalendarDay };
 
 // (from src/rows.ts)
 export type TutorsTableName = keyof TutorsTables;
@@ -112,19 +118,19 @@ export function parseSharing(value: unknown) : boolean | null;
 export const DEFAULT_SENTIMENT: Sentiment;
 
 // (from src/learning-objects.ts)
-export const LO_COMPOSITE_TYPES: ReadonlySet<string>;
+export const LO_COMPOSITE_TYPES;
 
 // (from src/learning-objects.ts)
-export const LO_SIMPLE_TYPES: ReadonlySet<string>;
+export const LO_SIMPLE_TYPES;
 
 // (from src/learning-objects.ts)
-export const LO_TYPES: ReadonlySet<string>;
+export const LO_TYPES;
 
 // (from src/learner.ts)
 export const ONLINE_STATUSES;
 
 // (from src/learner.ts)
-export const SENTIMENTS: Sentiment;
+export const SENTIMENTS;
 
 ```
 
@@ -135,5 +141,5 @@ export const SENTIMENTS: Sentiment;
 | const | 6 |
 | function | 6 |
 | interface | 10 |
-| type | 14 |
-| **Total** | **36** |
+| type | 16 |
+| **Total** | **38** |

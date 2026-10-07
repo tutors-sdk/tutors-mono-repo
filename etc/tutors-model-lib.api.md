@@ -259,10 +259,10 @@ export const assetTypes: string[];
 export const COURSE_SENTIMENT_IDS;
 
 // (from src/types/media-types.ts)
-export const imageTypes: string[];
+export const imageTypes;
 
 // (from src/types/type-utils.ts)
-export const loCompositeTypes: string[];
+export const loCompositeTypes;
 
 // (from src/types/type-utils.ts)
 export const loTypes: string[];
@@ -274,7 +274,7 @@ export const markdownIt: MarkdownItInstance;
 export const preOrder: Map<string, number>;
 
 // (from src/types/type-utils.ts)
-export const simpleTypes: string[];
+export const simpleTypes;
 
 ```
 

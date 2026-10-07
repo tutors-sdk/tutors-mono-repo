@@ -501,8 +501,9 @@ function extractExportsFromFile(
     const kind = varMatch[1] as "const" | "let";
     const name = varMatch[2];
     // Extract just the declaration part (type annotation)
-    const afterDecl = cleaned.slice(varMatch.index);
-    const colonMatch = afterDecl.match(/(?:const|let|var)\s+\w+\s*:\s*([^=]+?)(?:\s*=|$)/);
+    // Only the declaration's own line: an unannotated `const X = [` must not borrow a later declaration's type.
+    const declLine = cleaned.slice(varMatch.index).split("\n", 1)[0];
+    const colonMatch = declLine.match(/(?:const|let|var)\s+\w+\s*:\s*([^=]+?)(?:\s*=|$)/);
     const typeAnnotation = colonMatch ? colonMatch[1].trim() : "";
 
     symbols.push({
