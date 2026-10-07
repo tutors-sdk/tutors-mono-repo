@@ -9,7 +9,14 @@ deno.lock
 **/test-results/
 **/playwright-report/
 reports/
-# packages/jsr is formatted by deno fmt (see deno.json).
-packages/jsr/
+# Vendored, minified bundles (e.g. the pdf.js workers under apps/*/static).
+*.min.js
+*.min.mjs
+*.min.css
+# deno fmt owns these (the fmt.include list in deno.json); the other jsr packages use Prettier.
+packages/jsr/gen/src/
+packages/jsr/model/src/
+packages/jsr/tutors/
+packages/jsr/tutors-lite/
 supabase/migrations/
 CHANGELOG.md

@@ -129,7 +129,7 @@ pnpm check                       # svelte-check on the reader, catalogue, live a
 
 The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
 
-Formatting follows the root `.editorconfig` and `.prettierrc` (2 spaces, double quotes, 180 columns, matching `deno fmt` for `packages/jsr`). Your editor picks them up; `pnpm format:check` lists files that drift and `pnpm format` rewrites them. Existing files have not been reformatted in bulk, so format only the files you touch.
+Formatting follows the root `.editorconfig` and `.prettierrc` (2 spaces, double quotes, 180 columns, the same settings `deno fmt` applies to the jsr packages listed in `deno.json`). Your editor picks them up; `pnpm format:check` lists files that drift and `pnpm format` rewrites them. Existing files have not been reformatted in bulk, so format only the files you touch.
 
 Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation` and `pnpm test:mutation:nightly`, both nightly), the browser journeys against built images (`pnpm test:e2e:stack`), the reader's UI contract (`pnpm test:e2e:reader`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 
