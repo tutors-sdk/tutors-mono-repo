@@ -72,6 +72,7 @@ describeFeature(feature, ({ Background, Rule }) => {
     expect(page.user).toBeUndefined();
   };
   const sentTo = (_ctx: unknown, url: string) => {
+    expect(last.location).toBeTruthy();
     const location = new URL(last.location!, READER_ORIGIN);
     const expected = new URL(url);
     expect(location.origin + location.pathname).toBe(expected.origin + expected.pathname);
@@ -217,6 +218,10 @@ describeFeature(feature, ({ Background, Rule }) => {
       });
       Then("I should not hold a session", noSession);
       And("I should be sent to a page on {string}", (_ctx, origin: string) => {
+        // A redirect, not an error page served in place: a plain 500 here is the bug this Rule caught.
+        expect(last.status).toBeGreaterThanOrEqual(300);
+        expect(last.status).toBeLessThan(400);
+        expect(last.location).toBeTruthy();
         expect(new URL(last.location!, READER_ORIGIN).origin).toBe(origin);
       });
     });
