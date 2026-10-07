@@ -92,13 +92,25 @@ const localeHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
+function setSecurityHeaders(headers: Headers): void {
+  headers.set("X-Frame-Options", "SAMEORIGIN");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+}
+
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
-  response.headers.set("X-Frame-Options", "SAMEORIGIN");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  return response;
+  try {
+    setSecurityHeaders(response.headers);
+    return response;
+  } catch {
+    // A `Response.redirect()` has immutable headers. Auth.js answers a failed sign-in with one,
+    // so without a copy "GitHub said no" would become a 500 (Rule 0255).
+    const copy = new Response(response.body, response);
+    setSecurityHeaders(copy.headers);
+    return copy;
+  }
 };
 
 // Without a secret Auth.js throws MissingSecret from the root layout on every
