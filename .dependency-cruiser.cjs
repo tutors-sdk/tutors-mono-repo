@@ -77,6 +77,14 @@ module.exports = {
       to: { path: "^packages/svelte/(community|connect|utils/rbac)/" }
     },
     {
+      name: "tutors-types-self-contained",
+      comment:
+        "@tutors/tutors-types is the vocabulary every layer shares, so it imports nothing outside its own files: no other workspace, no npm package, no Node built-in (Rule 0130).",
+      severity: "error",
+      from: { path: "^packages/jsr/types/" },
+      to: { pathNot: "^packages/jsr/types/" }
+    },
+    {
       name: "no-cross-package-cycle",
       comment:
         "A cycle that leaves a workspace and comes back makes the layering meaningless; invert one edge through a seam. Cycles inside one package (a recursive component, for instance) are allowed.",

@@ -13,6 +13,7 @@
  *   - @tutors/tutors-model-lib (packages/jsr/model)
  *   - @tutors/tutors-gen-lib   (packages/jsr/gen)
  *   - @tutors/tutors-time-lib  (packages/jsr/time)
+ *   - @tutors/tutors-types     (packages/jsr/types)
  */
 
 import * as fs from "fs";
@@ -52,6 +53,12 @@ const TRACKED_PACKAGES: PackageConfig[] = [
     dir: "packages/jsr/time",
     entry: "src/index.ts",
     reportFile: "tutors-time-lib.api.md",
+  },
+  {
+    name: "@tutors/tutors-types",
+    dir: "packages/jsr/types",
+    entry: "src/index.ts",
+    reportFile: "tutors-types.api.md",
   },
 ];
 

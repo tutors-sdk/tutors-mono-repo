@@ -506,6 +506,8 @@ importers:
         specifier: ^2.117.1
         version: 2.117.2(@opentelemetry/api@1.9.1)
 
+  packages/jsr/types: {}
+
   packages/svelte/app-config:
     dependencies:
       '@sveltejs/adapter-auto':
