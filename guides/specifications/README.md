@@ -15,7 +15,7 @@ file can call.
 |---|---|---|---|
 | [accessibility.md](./accessibility.md) | 5 | Focus order, landmarks and contrast need a rendered page | Rule 0051 (WCAG 2.1 AA axe audits) and 0038 (contrast), in part; no skip link or high contrast theme exists |
 | [analytics-lab.md](./analytics-lab.md) | 2 | Column sorting is ag-grid in the browser; a lab nobody opened is never listed | Nothing: the time app has no journeys |
-| [auth-integration.md](./auth-integration.md) | 6 | The Auth.js OAuth flow, in a browser | Tier M cookie and CSRF contracts; nothing signs in or out |
+| [auth-integration.md](./auth-integration.md) | 2 | The profile in the header, and a network failure during sign-in, need a browser | Rules 0250–0259 (`shared/sign-in-session`) cover the rest of the OAuth flow over HTTP |
 | [authentication.md](./authentication.md) | 1 | The avatar and name are rendered by a Svelte component | Nothing |
 | [calendar-analytics.md](./calendar-analytics.md) | 5 | Duplicates of the bound `instructor/analytics-calendar`, plus a click-through | The bound feature and `tests/unit/time` |
 | [course-authoring.md](./course-authoring.md) | 1 | Rendering one component per learning object type | Tier G; loading each type is bound in `course/course-loading` |

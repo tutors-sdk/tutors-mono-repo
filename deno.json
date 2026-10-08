@@ -6,10 +6,11 @@
     "./packages/jsr/model",
     "./packages/jsr/gen",
     "./packages/jsr/time",
-    "./packages/jsr/create"
+    "./packages/jsr/create",
+    "./packages/jsr/types"
   ],
   "fmt": {
-    "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/", "./packages/jsr/tutors-lite/"],
+    "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/", "./packages/jsr/tutors-lite/", "./packages/jsr/types/"],
     "useTabs": false,
     "lineWidth": 180,
     "indentWidth": 2,

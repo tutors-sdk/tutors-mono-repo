@@ -324,7 +324,8 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 - Theming
 
 Reader layout, navigation, themes and accessibility need a browser and are `@ui` Rules in
-`features/ui/`, proved by Playwright. The OAuth flow is still prose in
+`features/ui/`, proved by Playwright. The OAuth flow is bound over HTTP in
+`shared/sign-in-session.feature` (Rules 0250–0259); only its browser-rendered parts are still prose in
 [specifications/](../specifications/README.md). `course/`, `live/` and `time/` hold features that
 predate the EARS tags.
 
