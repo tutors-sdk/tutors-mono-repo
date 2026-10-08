@@ -62,10 +62,14 @@ Feature: Course JSON from the generator
         | enrollment | enrollment.yaml |
 
   @rule-0268 @ears-ubiquitous
-  Rule: Tutors shall leave out of tutors.json every folder whose name starts with no learning-object kind.
+  Rule: Tutors shall leave out of tutors.json every folder at the top of a course whose name starts with no learning-object kind.
 
     Scenario: A drafts folder is left out
       Then no learning object in the tutors.json has the id "drafts"
+
+    # Deeper down this does not hold today: a folder of no kind inside a topic or unit takes the kind of its
+    # nearest typed ancestor (topic-1/drafts is written as a topic, unit-1/old-stuff as a unit). Tracked separately;
+    # this Rule pins only what holds.
 
   @rule-0269 @ears-event-driven
   Rule: When a pull request changes the generator, tutors shall fail the generator differential unless every difference in the corpus output is claimed in tests/generator/claims.yaml.
