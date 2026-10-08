@@ -94,7 +94,7 @@ export type TutorsJsonLo = TutorsJsonLoBase & { los?: (TutorsJsonLo | TutorsJson
 export type TutorsJsonLoBase = { type: string; id: string; title: string; summary: string; contentMd: string; frontMatter: Record<string, unknown>; route: string; img: string; imgFile: string; video: string; videoids: TutorsJsonVideoIds; hide: boolean; authLevel: number; };
 
 // (from src/tutors-json.ts)
-export type TutorsJsonNotebookCell = { cellType: "markdown" | "code" | "raw"; source: string; outputs: { outputType: "stream" | "execute_result" | "display_data" | "error"; text?: string; data?: Record<string, string>; traceback?: string[]; name?: string; executionCount?: number | null; }[]; executionCount: number | null; metadata: Record<string, unknown>; id: string; };
+export type TutorsJsonNotebookCell = { cellType: "markdown" | "code" | "raw"; source: string; outputs: { outputType: "stream" | "execute_result" | "display_data" | "error"; text?: string; data?: Record<string, unknown>; traceback?: string[]; name?: string; executionCount?: number | null; }[]; executionCount: number | null; metadata: Record<string, unknown>; id: string; };
 
 // (from src/tutors-json.ts)
 export type TutorsJsonStep = { type: "step"; id: string; title: string; shortTitle: string; contentMd: string; route: string; };

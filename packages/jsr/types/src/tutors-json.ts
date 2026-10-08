@@ -55,7 +55,8 @@ export type TutorsJsonNotebookCell = {
   outputs: {
     outputType: "stream" | "execute_result" | "display_data" | "error";
     text?: string;
-    data?: Record<string, string>;
+    /** One entry per MIME type, as the .ipynb has it: text types are joined into a string; JSON types such as application/json stay objects. */
+    data?: Record<string, unknown>;
     traceback?: string[];
     name?: string;
     executionCount?: number | null;
@@ -154,7 +155,7 @@ export const TUTORS_JSON_SCHEMA = {
             properties: {
               outputType: { enum: ["stream", "execute_result", "display_data", "error"] },
               text: string,
-              data: { type: "object", additionalProperties: string },
+              data: { type: "object" },
               traceback: { type: "array", items: string },
               name: string,
               executionCount: { type: ["number", "null"] }
