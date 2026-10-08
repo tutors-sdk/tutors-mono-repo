@@ -27,6 +27,17 @@ patches:
       - op: replace
         path: /data/ORIGIN
         value: "https://reader.tutors.dev"
+      # The time dashboard reads /api/time with the reader's session cookie.
+      - op: add
+        path: /data/PRIVATE_API_ALLOWED_ORIGINS
+        value: "https://time.tutors.dev"
+      # Logins that are educators of every course, and extra course hosts; usually empty.
+      - op: add
+        path: /data/PRIVATE_TUTORS_ADMINS
+        value: ""
+      - op: add
+        path: /data/PRIVATE_COURSE_HOSTS
+        value: ""
 
   # GitHub OAuth credentials for Auth.js. Create from secrets.yaml.example;
   # the secret is deliberately not managed by this kustomization.

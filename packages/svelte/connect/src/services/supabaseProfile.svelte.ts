@@ -1,11 +1,4 @@
-/**
- * @service SupabaseProfile
- * Service for managing user course visit history and preferences in Supabase
- * Implements the ProfileStore interface for server-side persistence
- * Requires authenticated user context from tutorsConnectService
- */
-
-import { supabase } from "@tutors/community";
+import { readerApi, readerApiJson } from "@tutors/community/utils/reader-api";
 import { tutorsId } from "@tutors/runes";
 import log from "@tutors/logger";
 
@@ -22,9 +15,9 @@ export const supabaseProfile: ProfileStore = {
    */
   async reload() {
     if (tutorsId.value?.login) {
-      const { data: profile } = await supabase.from("tutors-connect-profiles").select("profile").eq("tutorId", tutorsId.value?.login);
-      if (profile && profile.length > 0) {
-        this.courseVisits = profile[0].profile as unknown as CourseVisit[];
+      const profile = await readerApiJson<{ courseVisits: CourseVisit[] }>("/api/profile");
+      if (profile && profile.courseVisits.length > 0) {
+        this.courseVisits = profile.courseVisits;
       }
     }
   },
@@ -37,9 +30,9 @@ export const supabaseProfile: ProfileStore = {
   async save() {
     const id = tutorsId.value?.login;
     if (id) {
-      const { error } = await supabase.from("tutors-connect-profiles").upsert({ tutorId: tutorsId.value?.login, profile: this.courseVisits });
-      if (error) {
-        log.error("Failed to save profile:", error);
+      const response = await readerApi("PUT", "/api/profile", { courseVisits: this.courseVisits });
+      if (response && !response.ok) {
+        log.error("Failed to save profile:", { status: response.status });
       }
     }
   },

@@ -15,7 +15,8 @@ type BroadcastHandler = (message: BroadcastMessage) => void;
 
 export type TableCall = {
   table: string;
-  op: "select" | "upsert" | "update";
+  op: "select" | "upsert" | "update" | "delete";
+  key?: string;
   columns?: string;
   row?: Row;
   options?: { onConflict?: string };
@@ -23,7 +24,7 @@ export type TableCall = {
   order?: { column: string; ascending: boolean };
 };
 
-export type RpcCall = { fn: string; args: Row };
+export type RpcCall = { fn: string; args: Row; key?: string };
 
 class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | null }> {
   private mode: "many" | "single" | "maybeSingle" = "many";
@@ -51,6 +52,18 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     this.call.row = row;
     return this;
   }
+
+  delete() {
+    this.call.op = "delete";
+    return this;
+  }
+
+  range(from: number) {
+    this.from = from;
+    return this;
+  }
+
+  private from = 0;
 
   eq(column: string, value: unknown) {
     this.call.filters.push({ column, value, op: "eq" });
@@ -103,6 +116,12 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       for (const row of rows.filter((r) => this.matches(r))) Object.assign(row, this.call.row);
       return { data: null, error: null };
     }
+    if (this.call.op === "delete") {
+      const kept = rows.filter((r) => !this.matches(r));
+      rows.splice(0, rows.length, ...kept);
+      return { data: null, error: null };
+    }
+    if (this.from > 0) return { data: [], error: null };
 
     const found = rows.filter((r) => this.matches(r));
     const order = this.call.order;
@@ -168,16 +187,26 @@ export class RecordingSupabase {
     this.rows(table).push(...rows);
   }
 
-  from(table: string) {
-    return new RecordingQuery(this, { table, op: "select", filters: [] });
+  from(table: string, key?: string) {
+    return new RecordingQuery(this, { table, op: "select", filters: [], key });
   }
 
-  /**
-   * The two counters the reader uses. `get_count_learning_records` reports the
-   * stored value of a learning record field; `increment_calendar` is only logged.
-   */
-  rpc(fn: string, args: Row) {
-    this.rpcCalls.push({ fn, args });
+  client(key: string) {
+    return {
+      from: (table: string) => this.from(table, key),
+      rpc: (fn: string, args: Row = {}) => this.rpc(fn, args, key),
+      channel: (name: string) => this.channel(name),
+      removeChannel: (channel: RecordingChannel) => this.removeChannel(channel)
+    };
+  }
+
+  callsWith(key: string): (TableCall | RpcCall)[] {
+    return [...this.tableCalls.filter((c) => c.key === key), ...this.rpcCalls.filter((c) => c.key === key)];
+  }
+
+  rpc(fn: string, args: Row = {}, key?: string) {
+    this.rpcCalls.push({ fn, args, key });
+    if (fn === "get_student_count") return Promise.resolve({ data: this.rows("tutors-connect-profiles").length, error: null });
     if (fn === "get_count_learning_records") {
       const record = this.rows("learning_records").find((r) => r.course_id === args.course_base && r.student_id === args.user_name && r.lo_id === args.lo_key);
       return Promise.resolve({ data: record ? [{ increment: record[args.field_name as string] }] : null, error: null });
@@ -215,14 +244,19 @@ export class RecordingSupabase {
 /** The one client every product module receives from the mocked `createClient`. */
 export const recorder = new RecordingSupabase();
 
-/** Stands in for `createClient` from `@supabase/supabase-js`. */
-export const createClient = (): RecordingSupabase => recorder;
+export const createClient = (_url?: string, key?: string) => (key ? recorder.client(key) : recorder);
 
 /** `$env/dynamic/public` as a configured, signed-in deployment. */
 export const publicEnv: Record<string, string> = {
   PUBLIC_SUPABASE_URL: "https://supabase.invalid",
   PUBLIC_SUPABASE_ANON_KEY: "anon-key",
   PUBLIC_ANON_MODE: "FALSE"
+};
+
+export const privateEnv: Record<string, string> = {
+  PRIVATE_SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+  PRIVATE_API_ALLOWED_ORIGINS: "https://time.test",
+  PRIVATE_TUTORS_ADMINS: ""
 };
 
 /** A `Storage` that coerces values to strings, as the browser's does. */
@@ -246,7 +280,11 @@ export function browserStorage(): Storage {
   });
 }
 
-/** Let fire-and-forget product promises (analytics writes, profile saves) run to completion. */
 export async function settle(): Promise<void> {
-  for (let i = 0; i < 3; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+  const { readerBusy, readerIdle } = await import("./reader-api.ts");
+  for (let round = 0; round < 20; round++) {
+    for (let i = 0; i < 3; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    if (!readerBusy()) return;
+    await readerIdle();
+  }
 }

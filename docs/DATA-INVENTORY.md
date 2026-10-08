@@ -184,6 +184,10 @@ Client/server error aggregation for observability. Authoritative columns from `s
 **Legal basis:** Legitimate interest (platform reliability/observability)
 **Consent required:** No — but retention should be time-bounded given free-text/URL fields may capture personal data
 **Deletion impact:** Removes error records attributable to the user
+**Access:** browsers may insert rows with the anon key; since `20260925100100_restrict_app_errors_reads.sql` nobody holding the anon key can read them (Rule 0069). `/healthz` reads per-app counts only, through `get_error_counts`.
+
+### Who can reach student rows
+Every write and every read of a student's own data goes through the reader's `/api` routes, which check the Auth.js session and use the service_role key ([guides/SERVER-WRITES.md](../guides/SERVER-WRITES.md)). The old anon access is removed by `supabase/contracts/revoke_anon_student_data.sql` in the release after that, once no older pod or tab uses it; until then the anon key can still reach these tables.
 
 ### Legacy tables (unused)
 `students`, `studentsinteraction`, `course`, `learningobject`, `users` and `"tutors-connect_moodle"` predate Tutors Connect and are not read or written by any current app, nor are the 19 functions over them (`get_lab_data`, `get_topic_data`, `get_learner_records` and others). They may still hold student data from earlier deployments. Since `supabase/migrations/20260924_enable_rls_public_tables.sql` they have RLS on with no policy, so the anon key cannot reach them; only `service_role` or a direct Postgres role can. Export anything worth keeping before a later contract migration drops them.

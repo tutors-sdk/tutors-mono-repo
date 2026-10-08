@@ -3,7 +3,7 @@
   import { env } from "$env/dynamic/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
-  import { supabase } from "@tutors/community/utils/supabase-client";
+  import { readerApi, readerApiJson } from "@tutors/community/utils/reader-api";
   import log from "@tutors/logger";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { themeService } from "@tutors/themes";
@@ -39,41 +39,30 @@
     return `wb-${courseId}-${route}-${getUserId()}`;
   }
 
-  async function loadSceneFromDb(roomId: string): Promise<any | null> {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return null;
-    try {
-      const { data } = await supabase
-        .from("whiteboard_scenes")
-        .select("elements, app_state, files")
-        .eq("room_id", roomId)
-        .single();
-      if (data) {
-        return { elements: data.elements, appState: data.app_state, files: data.files };
-      }
-    } catch {
-      // fall through to static file
-    }
-    return null;
+  function sceneQuery(): URLSearchParams {
+    return new URLSearchParams({ courseId: lo.parentCourse?.courseId || "unknown", route: lo.route, shared: String(isShared) });
   }
 
-  function saveSceneToDb(roomId: string, elements: any[]) {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) { saveStatus = "Edits are not saved in this session."; return; }
+  const canSave = () => env.PUBLIC_ANON_MODE !== "TRUE" && !!tutorsId.value?.login;
+
+  async function loadSceneFromDb(): Promise<any | null> {
+    if (env.PUBLIC_ANON_MODE === "TRUE" || (!isShared && !tutorsId.value?.login)) return null;
+    const saved = await readerApiJson<{ scene: { elements: unknown; appState: unknown; files: unknown } | null }>(`/api/whiteboard?${sceneQuery()}`);
+    return saved?.scene ?? null;
+  }
+
+  function saveSceneToDb(elements: any[]) {
+    if (!canSave()) { saveStatus = "Sign in to save your edits. Use the export menu to keep a copy."; return; }
     if (saveTimer) clearTimeout(saveTimer);
     saveStatus = "Saving…";
     saveTimer = setTimeout(async () => {
-      try {
-        const { error: saveError } = await supabase.from("whiteboard_scenes").upsert({
-          room_id: roomId,
-          elements,
-          app_state: { viewBackgroundColor: "#ffffff" },
-          files: {},
-          updated_at: new Date().toISOString(),
-        });
-        if (saveError) throw saveError;
-        saveStatus = "Drawing changes saved";
-      } catch {
-        saveStatus = "Changes could not be saved. Keep this whiteboard open and export your work.";
-      }
+      const response = await readerApi("PUT", "/api/whiteboard", {
+        courseId: lo.parentCourse?.courseId || "unknown",
+        route: lo.route,
+        shared: isShared,
+        elements,
+      });
+      saveStatus = response?.ok ? "Drawing changes saved" : "Changes could not be saved. Keep this whiteboard open and export your work.";
     }, 2000);
   }
 
@@ -125,7 +114,7 @@
       postViewerScene();
     } else if (type === "editor-ready" && isEditing) {
       const roomId = getWhiteboardRoomId();
-      const savedScene = await loadSceneFromDb(roomId);
+      const savedScene = await loadSceneFromDb();
       iframe?.contentWindow?.postMessage({
         type: "init-editor",
         supabaseUrl: env.PUBLIC_SUPABASE_URL,
@@ -141,7 +130,7 @@
       }, window.location.origin);
       loading = false;
     } else if (type === "scene-changed" && isEditing) {
-      saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
+      saveSceneToDb(event.data.elements);
     }
   }
 
@@ -198,7 +187,7 @@
       {/if}
       <button class="ui-button fullscreen" aria-pressed={isFullscreen} onclick={toggleFullscreen}><Icon icon={isFullscreen ? "lucide:minimize-2" : "lucide:maximize-2"} height="16" />{isFullscreen ? "Exit fullscreen" : "Fullscreen"}</button>
     </div>
-    {#if isEditing}<p class="whiteboard-status ui-muted" role="status">{saveStatus || (env.PUBLIC_ANON_MODE === "TRUE" || !supabase ? "Edits are not saved in this session." : "Use the whiteboard export menu to keep a copy of your work.")}</p>{/if}
+    {#if isEditing}<p class="whiteboard-status ui-muted" role="status">{saveStatus || (canSave() ? "Use the whiteboard export menu to keep a copy of your work." : "Sign in to save your edits. Use the export menu to keep a copy.")}</p>{/if}
     <div class="whiteboard-canvas" class:editing={isEditing}>
       {#if loading}<p class="whiteboard-loading ui-muted" role="status">Loading whiteboard…</p>{/if}
       {#if cachedScene}

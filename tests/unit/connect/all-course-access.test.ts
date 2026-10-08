@@ -1,34 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MockSupabaseClient } from "../../bdd/support/mocks";
 
+vi.mock("../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
+vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
 vi.mock("$env/dynamic/public", () => ({
-  env: {
-    PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-    PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-    PUBLIC_ANON_MODE: "TRUE"
-  }
+  env: { PUBLIC_SUPABASE_URL: "https://mock.supabase.co", PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key", PUBLIC_ANON_MODE: "FALSE" }
 }));
+vi.mock("$env/dynamic/private", async () => ({ env: (await import("../../bdd/support/supabase-recorder.ts")).privateEnv }));
 
-vi.mock("@tutors/community/utils/supabase-client", async () => {
-  const { MockSupabaseClient } = await import("../../bdd/support/mocks");
-  return { supabase: new MockSupabaseClient() };
-});
-
-vi.mock("@tutors/logger", () => ({
-  default: {
-    error: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn()
-  }
-}));
-
-import { supabase } from "@tutors/community/utils/supabase-client";
-import { updateCourseList } from "../../../packages/svelte/connect/src/utils/allCourseAccess";
 import type { Course } from "@tutors/tutors-model-lib";
-import log from "@tutors/logger";
-
-const mockClient = supabase as unknown as MockSupabaseClient;
+import { updateCourseList } from "../../../packages/svelte/connect/src/utils/allCourseAccess";
+import { POST } from "../../../apps/reader/src/routes/api/courses/visit/+server.ts";
+import { recorder } from "../../bdd/support/supabase-recorder.ts";
 
 function createMockCourse(overrides: Partial<Course> = {}): Course {
   return {
@@ -36,195 +18,129 @@ function createMockCourse(overrides: Partial<Course> = {}): Course {
     courseId: overrides.courseId ?? "valid-course-1",
     title: overrides.title ?? "Test Course",
     img: overrides.img ?? "https://example.com/img.png",
-    properties: {
-      credits: "5",
-      ...(overrides.properties ?? {})
-    },
+    properties: { credits: "5", ...(overrides.properties ?? {}) },
     isPrivate: overrides.isPrivate ?? false,
     ...overrides
   } as Course;
 }
 
-describe("allCourseAccess: updateCourseList with valid course names", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockClient.clearAllErrors();
-    mockClient.setTableData("tutors-connect-courses", []);
+let sent: { courseId: string; courseRecord: Record<string, unknown> }[];
+
+const published = new Map<string, unknown>([
+  ["valid-course-1", { title: "Published Title", properties: { credits: "Published Credits", private: 0 } }],
+  ["private-course", { title: "Private Course", properties: { credits: "Staff", private: 1 } }]
+]);
+
+function courseHost(input: RequestInfo | URL): Response {
+  const url = new URL(String(input));
+  const id = url.hostname.replace(/\.netlify\.app$/, "");
+  const json = published.get(id);
+  return json ? new Response(JSON.stringify(json), { status: 200 }) : new Response("Not Found", { status: 404 });
+}
+
+async function visit(courseId: string, courseRecord: Record<string, unknown> = {}): Promise<Response> {
+  const request = new Request("https://reader.test/api/courses/visit", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ courseId, courseRecord })
   });
-
-  it("inserts a new course with visit_count 1 when course does not exist", async () => {
-    const course = createMockCourse({ courseId: "new-course" });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store).toHaveLength(1);
-    expect(store[0].course_id).toBe("new-course");
-    expect(store[0].visit_count).toBe(1);
+  return POST({ request } as Parameters<typeof POST>[0]).catch((e: { status?: number }) => {
+    if (typeof e.status !== "number") throw e;
+    return new Response(null, { status: e.status });
   });
+}
 
-  it("increments visit_count when course already exists", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      { course_id: "existing-course", visit_count: 5 }
-    ]);
-
-    const course = createMockCourse({ courseId: "existing-course" });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store).toHaveLength(1);
-    expect(store[0].visit_count).toBe(6);
-  });
-
-  it("includes visited_at timestamp in the upserted record", async () => {
-    const before = new Date();
-    const course = createMockCourse();
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    const visitedAt = new Date(store[0].visited_at);
-    expect(visitedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
-  });
-
-  it("includes course_record with correct id and title", async () => {
-    const course = createMockCourse({ courseId: "record-course", title: "Record Course" });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store[0].course_record.id).toBe("record-course");
-    expect(store[0].course_record.title).toBe("Record Course");
-  });
-
-  it("includes credits in the course_record", async () => {
-    const course = createMockCourse({ properties: { credits: "10" } as any });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store[0].course_record.credits).toBe("10");
-  });
-
-  it("includes img in course_record when course has no icon", async () => {
-    const course = createMockCourse({
-      img: "https://example.com/thumb.png",
-      properties: { credits: "5" } as any
-    });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store[0].course_record.img).toBe("https://example.com/thumb.png");
-    expect(store[0].course_record.icon).toBeUndefined();
-  });
-
-  it("includes icon in course_record when course has icon property", async () => {
-    const course = createMockCourse({
-      properties: { credits: "5", icon: "mdi:school" } as any
-    });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store[0].course_record.icon).toBe("mdi:school");
-  });
-
-  it("includes isPrivate flag in the course_record", async () => {
-    const course = createMockCourse({ isPrivate: true });
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store[0].course_record.private).toBe(true);
-  });
-
-  it("passes onConflict course_id to upsert", async () => {
-    const course = createMockCourse({ courseId: "conflict-test" });
-
-    await updateCourseList(course);
-    await updateCourseList(course);
-
-    const store = mockClient.getTableData("tutors-connect-courses") as any[];
-    expect(store).toHaveLength(1);
+beforeEach(() => {
+  recorder.reset();
+  sent = [];
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === "/api/courses/visit") {
+      sent.push(JSON.parse(String(init?.body)));
+      return new Response(null, { status: 204 });
+    }
+    return courseHost(input);
   });
 });
 
-describe("allCourseAccess: isValidCourseName rejects invalid names", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockClient.clearAllErrors();
-    mockClient.setTableData("tutors-connect-courses", []);
+describe("allCourseAccess: updateCourseList sends the visit to the reader", () => {
+  it("posts the course id and its card record", async () => {
+    await updateCourseList(createMockCourse({ courseId: "record-course", title: "Record Course", properties: { credits: "10" } as never }));
+
+    expect(sent).toEqual([{ courseId: "record-course", courseRecord: expect.objectContaining({ id: "record-course", title: "Record Course", credits: "10", private: false }) }]);
   });
 
-  it("rejects course names starting with main--", async () => {
-    const course = createMockCourse({ courseId: "main--some-branch" });
-    await updateCourseList(course);
+  it("sends the image when the course has no icon, and the icon when it has one", async () => {
+    await updateCourseList(createMockCourse({ img: "https://example.com/thumb.png" }));
+    await updateCourseList(createMockCourse({ properties: { credits: "5", icon: { type: "mdi:school", color: "red" } } as never }));
 
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
+    expect(sent[0].courseRecord).toMatchObject({ img: "https://example.com/thumb.png" });
+    expect(sent[0].courseRecord.icon).toBeUndefined();
+    expect(sent[1].courseRecord).toMatchObject({ icon: { type: "mdi:school", color: "red" } });
   });
 
-  it("rejects course names starting with master--", async () => {
-    const course = createMockCourse({ courseId: "master--some-branch" });
-    await updateCourseList(course);
+  it.each(["main--some-branch", "master--some-branch", "deploy-preview--123", "some--invalid--name"])("sends nothing for the branch or preview build %s", async (courseId) => {
+    await updateCourseList(createMockCourse({ courseId }));
 
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
+    expect(sent).toEqual([]);
   });
 
-  it("rejects course names starting with deploy-preview--", async () => {
-    const course = createMockCourse({ courseId: "deploy-preview--123" });
-    await updateCourseList(course);
+  it.each(["web-development-2025", "intro-to-programming"])("sends a visit for %s", async (courseId) => {
+    await updateCourseList(createMockCourse({ courseId }));
 
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
-  });
-
-  it("rejects course names containing double hyphens anywhere", async () => {
-    const course = createMockCourse({ courseId: "some--invalid--name" });
-    await updateCourseList(course);
-
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
-  });
-
-  it("accepts a normal course name", async () => {
-    const course = createMockCourse({ courseId: "web-development-2025" });
-    await updateCourseList(course);
-
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(1);
-  });
-
-  it("accepts a course name with single hyphens", async () => {
-    const course = createMockCourse({ courseId: "intro-to-programming" });
-    await updateCourseList(course);
-
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(1);
+    expect(sent.map((s) => s.courseId)).toEqual([courseId]);
   });
 });
 
-describe("allCourseAccess: error handling", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockClient.clearAllErrors();
-    mockClient.setTableData("tutors-connect-courses", []);
-  });
+describe("POST /api/courses/visit on the reader's server", () => {
+  it("inserts a new course with visit_count 1, titled from the published course", async () => {
+    const response = await visit("valid-course-1", { title: "A title the browser made up", credits: "made up" });
 
-  it("logs error and does not upsert when select fails with non-PGRST116 error", async () => {
-    mockClient.setTableError("tutors-connect-courses", { code: "UNEXPECTED", message: "DB error" });
-
-    const course = createMockCourse();
-    await updateCourseList(course);
-
-    expect(log.error).toHaveBeenCalledWith("Error fetching row:", expect.objectContaining({ code: "UNEXPECTED" }));
-    expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(0);
-  });
-
-  it("does not log error when select returns PGRST116 (row not found)", async () => {
-    const course = createMockCourse();
-    await updateCourseList(course);
-
-    expect(log.error).not.toHaveBeenCalled();
-  });
-
-  it("does not log error when upsert succeeds", async () => {
-    mockClient.setTableData("tutors-connect-courses", [
-      { course_id: "valid-course-1", visit_count: 3 }
+    expect(response.status).toBe(204);
+    expect(recorder.rows("tutors-connect-courses")).toMatchObject([
+      { course_id: "valid-course-1", visit_count: 1, course_record: { id: "valid-course-1", title: "Published Title", credits: "Published Credits", private: false } }
     ]);
+  });
 
-    const course = createMockCourse();
-    await updateCourseList(course);
+  it("increments visit_count when the course is already in the catalogue", async () => {
+    recorder.seed("tutors-connect-courses", [{ course_id: "valid-course-1", visit_count: 5 }]);
 
-    expect(log.error).not.toHaveBeenCalled();
+    await visit("valid-course-1");
+
+    expect(recorder.rows("tutors-connect-courses")).toMatchObject([{ course_id: "valid-course-1", visit_count: 6 }]);
+  });
+
+  it("marks a private course private whatever the browser says", async () => {
+    await visit("private-course", { private: false });
+
+    expect(recorder.rows("tutors-connect-courses")[0]).toMatchObject({ course_record: { private: true } });
+  });
+
+  it("keeps an https image or an icon from the browser, and drops anything else", async () => {
+    await visit("valid-course-1", { img: "javascript:alert(1)" });
+    expect(recorder.rows("tutors-connect-courses")[0].course_record).not.toHaveProperty("img");
+
+    await visit("valid-course-1", { img: "https://example.com/thumb.png" });
+    expect(recorder.rows("tutors-connect-courses")[0].course_record).toMatchObject({ img: "https://example.com/thumb.png" });
+  });
+
+  it("refuses a course its host does not publish, and writes nothing", async () => {
+    const response = await visit("no-such-course");
+
+    expect(response.status).toBe(404);
+    expect(recorder.rows("tutors-connect-courses")).toEqual([]);
+  });
+
+  it("never fetches a host other than the course's Netlify site", async () => {
+    const response = await visit("attacker.example");
+
+    expect(response.status).toBe(404);
+    expect(recorder.tableCalls).toEqual([]);
+  });
+
+  it("counts nothing for branch and preview builds", async () => {
+    const response = await visit("deploy-preview--123");
+
+    expect(response.status).toBe(204);
+    expect(recorder.tableCalls).toEqual([]);
   });
 });
