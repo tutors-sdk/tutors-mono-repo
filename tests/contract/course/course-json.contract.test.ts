@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { TUTORS_JSON_SCHEMA } from "../../../packages/jsr/types/src/tutors-json.ts";
+import { TUTORS_JSON_SCHEMA, type TutorsJsonLo } from "../../../packages/jsr/types/src/tutors-json.ts";
 import { tutorsJsonErrors } from "../../../scripts/checks/lib/tutors-json.ts";
 import { schemaText } from "../../../scripts/generate-tutors-json-schema.ts";
 import { REPO_ROOT } from "../../../scripts/checks/lib/repo.ts";
-import { syntheticTutorsJson } from "../../support/synthetic-course.ts";
+import { descendants, syntheticTutorsJson } from "../../support/synthetic-course.ts";
 
 /**
  * The tutors.json contract, held against what the generator really writes.
@@ -23,6 +23,13 @@ describe("tutors.json contract", () => {
     const published = readFileSync(join(REPO_ROOT, "packages/jsr/types/tutors-json.schema.json"), "utf8");
     expect(published.replaceAll("\r\n", "\n")).toBe(schemaText());
     expect(JSON.parse(published)).toEqual(TUTORS_JSON_SCHEMA);
+  });
+
+  it("accepts notebook output data that is JSON rather than text, as the generator copies it from the .ipynb", () => {
+    const json = syntheticTutorsJson().json;
+    const notebook = descendants(json).find((lo) => lo.type === "notebook") as TutorsJsonLo;
+    notebook.cells![0].outputs = [{ outputType: "display_data", data: { "application/json": { a: [1, 2] }, "text/plain": "{'a': [1, 2]}" } }];
+    expect(tutorsJsonErrors(json)).toEqual([]);
   });
 
   describe("refuses what the reader cannot rely on", () => {

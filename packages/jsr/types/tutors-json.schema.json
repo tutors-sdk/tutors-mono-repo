@@ -177,10 +177,7 @@
                 "type": "string"
               },
               "data": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
+                "type": "object"
               },
               "traceback": {
                 "type": "array",
