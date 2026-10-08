@@ -279,8 +279,8 @@ test("The side menu leads with a card for what is open", { tag: "@rule-0260" }, 
   await expect(back).toHaveText("← Reference Course");
   await expect(back).toHaveAttribute("href", course);
   expect((await back.boundingBox())!.y).toBeGreaterThan(cardBox.y + cardBox.height - 1);
-  // And the canvas no longer repeats it: its own headings name the units, not the topic.
-  await expect(page.locator("#main-content").getByRole("heading", { name: "Simple", exact: true })).toHaveCount(0);
+  // And the canvas no longer shows it: its only heading naming the topic is the hidden level-1 one (Rule 0262).
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Simple", exact: true, level: 2 })).toHaveCount(0);
   // Opening a note swaps the card for that note's.
   await page.goto("/note/tutors-reference-manual/unit-1-getting-started/note-a-getting-started");
   await expect(card.getByRole("heading")).toHaveText("Getting Started");
@@ -345,6 +345,17 @@ test("Every kind of resource gets the same way back", { tag: "@rule-0260" }, asy
     await expect(back, route).toHaveText("← Simple");
     await expect(back, route).toHaveAttribute("href", topic);
   }
+});
+
+test("A topic page keeps a hidden level-1 heading", { tag: "@rule-0262" }, async ({ page }) => {
+  await page.goto("/topic/reference-course/topic-01-typical");
+  const h1 = page.getByRole("heading", { level: 1 });
+  await expect(h1).toHaveCount(1);
+  await expect(h1).toHaveText("Simple");
+  // Present for screen readers and heading navigation, but not drawn: the side menu's card shows the title.
+  const box = (await h1.boundingBox())!;
+  expect(box.width * box.height).toBeLessThanOrEqual(1);
+  await expect(page.locator(".shell-navigation .lo-card").getByRole("heading")).toHaveText("Simple");
 });
 
 const CREDITS = "A reference course containing all supported learning objects";

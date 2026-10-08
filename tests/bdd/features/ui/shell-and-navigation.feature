@@ -174,6 +174,15 @@ Feature: Reader shell and navigation
       Then the course navigation leads with its own first section and carries no learning object card
       And the course's own front page carries no card either, its header already naming and picturing the course
 
+  @rule-0262 @ears-event-driven
+  Rule: When a student opens a topic, the reader shall give the page a level-1 heading naming the topic, visually hidden because the side menu's card already shows the title.
+
+    @active
+    Scenario: A topic page keeps a hidden level-1 heading
+      Given a student opens a topic in the Reference Course
+      Then the page has exactly one level-1 heading, and it names the topic
+      And that heading is not drawn on the canvas, the side menu's card showing the title instead
+
   @rule-0261 @ears-state-driven
   Rule: While a course naming credits in its properties is open on a screen at least 1024 pixels wide, the reader shall follow the course title in the header with those credits in a font smaller than the title's, truncated rather than wrapped.
 

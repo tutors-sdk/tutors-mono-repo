@@ -51,8 +51,10 @@
 <SecondaryNavigator lo={composite} parentCourse={composite?.parentCourse?.properties?.parent} />
 {#if composite}
   <div class="ui-page composite-page">
-    <!-- No heading here: the side menu's card names the topic, pictures it and summarises it (#399),
-         so repeating all three above the cards only pushed them down. -->
+    <!-- No visible heading here: the side menu's card names the topic, pictures it and summarises it (#399),
+         so repeating all three above the cards only pushed them down. The page still needs a level-1 heading
+         for screen readers and heading navigation (Rule 0262), so it keeps one, visually hidden. -->
+    {#if composite.type !== "course"}<h1 class="sr-only">{composite.title}</h1>{/if}
     <div class="composite-columns" class:with-sides={sides.length > 0} use:layoutCards>
       <div class="main-group">
         <Panels panels={composite.panels} />
