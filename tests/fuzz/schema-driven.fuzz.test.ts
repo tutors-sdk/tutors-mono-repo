@@ -257,7 +257,7 @@ describe("Schema-Driven Fuzz: snapshot stability", () => {
     const expectedSchemas = [
       "LearningRecord", "CalendarEntry", "ConnectUser", "ConnectProfile",
       "ConnectCourse", "ConnectLatest", "LoRecord", "RealtimeChannel",
-      "CourseJson", "IncrementCalendarParams", "GetCountLearningRecordsParams",
+      "IncrementCalendarParams", "GetCountLearningRecordsParams",
     ];
     for (const name of expectedSchemas) {
       expect(SCHEMA_SNAPSHOTS[name]).toBeDefined();

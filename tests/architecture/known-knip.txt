@@ -75,7 +75,6 @@ types: tests/contract/support/schemas.ts: ConnectCourse
 types: tests/contract/support/schemas.ts: ConnectLatest
 types: tests/contract/support/schemas.ts: ConnectProfile
 types: tests/contract/support/schemas.ts: ConnectUser
-types: tests/contract/support/schemas.ts: CourseJson
 types: tests/contract/support/schemas.ts: LearningRecord
 types: tests/contract/support/schemas.ts: LoRecord
 types: tests/contract/support/schemas.ts: WhiteboardCursorUpdate

@@ -1,148 +1,84 @@
-import { describe, it, expect } from "vitest";
-import { CourseJsonSchema } from "../support/schemas";
-import { validateAgainstSchema, assertSchemaMatch } from "../support/validators";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { TUTORS_JSON_SCHEMA } from "../../../packages/jsr/types/src/tutors-json.ts";
+import { tutorsJsonErrors } from "../../../scripts/checks/lib/tutors-json.ts";
+import { schemaText } from "../../../scripts/generate-tutors-json-schema.ts";
+import { REPO_ROOT } from "../../../scripts/checks/lib/repo.ts";
+import { syntheticTutorsJson } from "../../support/synthetic-course.ts";
 
-const validLoBase = {
-  type: "lab",
-  id: "lab-01",
-  title: "Getting Started",
-  summary: "An introductory lab",
-  contentMd: "# Lab 01\nWelcome...",
-  route: "/cs101/topic-01/lab-01",
-  authLevel: 0,
-  img: "https://example.com/lab01.png",
-  video: "",
-  hide: false,
-};
-
-const validTopic = {
-  type: "topic" as const,
-  id: "topic-01",
-  title: "Introduction",
-  route: "/cs101/topic-01",
-  los: [validLoBase],
-};
-
-const validCourseJson = {
-  type: "course" as const,
-  id: "cs101-2025",
-  title: "Introduction to Computer Science",
-  summary: "A first course in CS",
-  route: "/cs101",
-  courseId: "cs101-2025",
-  courseUrl: "https://tutors.dev/cs101-2025",
-  authLevel: 0,
-  isPortfolio: false,
-  isPrivate: false,
-  los: [validTopic],
-};
-
-describe("course JSON structure contract", () => {
-  it("valid course JSON passes full schema", () => {
-    const result = validateAgainstSchema(validCourseJson, CourseJsonSchema);
-    expect(result.valid).toBe(true);
-    expect(result.errors).toHaveLength(0);
+/**
+ * The tutors.json contract, held against what the generator really writes.
+ *
+ * The producer is packages/jsr/gen (parseCourse, then JSON.stringify in generateDynamicCourse); the
+ * consumer is the reader's course service. The schema is TUTORS_JSON_SCHEMA in @tutors/tutors-types.
+ * Rule 0262 states the requirement; these tests pin the schema's edges.
+ */
+describe("tutors.json contract", () => {
+  it("the generator's output for the synthetic corpus course conforms", () => {
+    expect(tutorsJsonErrors(syntheticTutorsJson().json)).toEqual([]);
   });
 
-  it("course type must be 'course'", () => {
-    const course = { ...validCourseJson, type: "module" };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("type"))).toBe(true);
+  it("the published tutors-json.schema.json is the schema in @tutors/tutors-types (pnpm generate:tutors-json-schema)", () => {
+    const published = readFileSync(join(REPO_ROOT, "packages/jsr/types/tutors-json.schema.json"), "utf8");
+    expect(published.replaceAll("\r\n", "\n")).toBe(schemaText());
+    expect(JSON.parse(published)).toEqual(TUTORS_JSON_SCHEMA);
   });
 
-  it("required field id must be present", () => {
-    const { id, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-  });
+  describe("refuses what the reader cannot rely on", () => {
+    const course = () => syntheticTutorsJson().json;
+    const find = (json: ReturnType<typeof course>, id: string) => json.los.flatMap((topic) => [topic, ...(topic.los ?? [])]).find((lo) => lo.id === id)!;
 
-  it("required field title must be present", () => {
-    const { title, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-  });
+    it("a course whose root is not a course at route /", () => {
+      const json = course() as Record<string, unknown>;
+      json.type = "topic";
+      json.route = "/topic/x";
+      expect(tutorsJsonErrors(json)).toEqual(["/type must be equal to constant", "/route must be equal to constant"]);
+    });
 
-  it("required field courseId must be present", () => {
-    const { courseId, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-  });
+    it("a learning object of a kind no reader knows", () => {
+      const json = course();
+      json.los[0].type = "module";
+      expect(tutorsJsonErrors(json)).toContain("/los/[topic-01-typical]/type must be equal to one of the allowed values");
+    });
 
-  it("required field courseUrl must be present", () => {
-    const { courseUrl, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-  });
+    it("a course nested inside a course", () => {
+      const json = course();
+      json.los[0].type = "course";
+      expect(tutorsJsonErrors(json)).toContain("/los/[topic-01-typical]/type must be equal to one of the allowed values");
+    });
 
-  it("isPortfolio must be boolean", () => {
-    const course = { ...validCourseJson, isPortfolio: "true" };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("isPortfolio"))).toBe(true);
-  });
+    it("a field that belongs to another kind, such as a pdf on a note", () => {
+      const json = course();
+      (find(json, "unit-2").los!.find((lo) => lo.id === "note-1") as Record<string, unknown>).pdf = "https://{{COURSEURL}}/x.pdf";
+      expect(tutorsJsonErrors(json)).toEqual(["/los/[topic-01-typical]/los/[unit-2]/los/[note-1] has a field the schema does not allow: pdf"]);
+    });
 
-  it("isPrivate must be boolean", () => {
-    const course = { ...validCourseJson, isPrivate: 1 };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("isPrivate"))).toBe(true);
-  });
+    it("a talk without its pdf fields", () => {
+      const json = course();
+      delete (find(json, "unit-1").los!.find((lo) => lo.id === "talk-1") as Record<string, unknown>).pdfFile;
+      expect(tutorsJsonErrors(json)).toEqual(["/los/[topic-01-typical]/los/[unit-1]/los/[talk-1] must have required property 'pdfFile'"]);
+    });
 
-  it("authLevel must be a number", () => {
-    const course = { ...validCourseJson, authLevel: "public" };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("authLevel"))).toBe(true);
-  });
+    it("a lab step with a field of its own", () => {
+      const json = course();
+      const lab = find(json, "unit-1").los!.find((lo) => lo.id === "book-a")!;
+      (lab.los![0] as Record<string, unknown>).order = 1;
+      expect(tutorsJsonErrors(json)).toEqual(["/los/[topic-01-typical]/los/[unit-1]/los/[book-a]/los/[Lab-1] has a field the schema does not allow: order"]);
+    });
 
-  it("los array can contain topic objects", () => {
-    const course = { ...validCourseJson, los: [validTopic] };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(true);
-  });
+    it("a learning object whose hide is not a boolean or whose authLevel is not a number", () => {
+      const json = course() as unknown as { los: Record<string, unknown>[] };
+      json.los[1].hide = "false";
+      json.los[1].authLevel = "0";
+      expect(tutorsJsonErrors(json)).toEqual(["/los/[topic-02-side]/hide must be boolean", "/los/[topic-02-side]/authLevel must be number"]);
+    });
 
-  it("los array can contain simple LO objects", () => {
-    const course = { ...validCourseJson, los: [validLoBase] };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("los array can contain mixed topic and LO objects", () => {
-    const course = { ...validCourseJson, los: [validTopic, validLoBase] };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("empty los array is valid", () => {
-    const course = { ...validCourseJson, los: [] };
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("missing title fails", () => {
-    const { title, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("title"))).toBe(true);
-  });
-
-  it("assertSchemaMatch returns parsed course on valid data", () => {
-    const parsed = assertSchemaMatch(validCourseJson, CourseJsonSchema, "course json");
-    expect(parsed.type).toBe("course");
-    expect(parsed.courseId).toBe("cs101-2025");
-    expect(parsed.los).toHaveLength(1);
-  });
-
-  it("missing summary fails", () => {
-    const { summary, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("missing los array fails", () => {
-    const { los, ...course } = validCourseJson;
-    const result = validateAgainstSchema(course, CourseJsonSchema);
-    expect(result.valid).toBe(false);
+    it("leaves author-written YAML and front matter open", () => {
+      const json = course();
+      json.properties = { ...json.properties, anyNewKey: { nested: [1, 2] } };
+      json.los[0].frontMatter = { order: 3, custom: "yes" };
+      expect(tutorsJsonErrors(json)).toEqual([]);
+    });
   });
 });

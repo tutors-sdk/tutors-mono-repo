@@ -19,3 +19,17 @@ corpus:
     commit: 78b771238c58bcb3d97d6ef3eb8fa41c02359a23
     generators: [tutors, tutors-lite]
     nightly: true
+
+  # Committed portfolio: properties.yaml sets portfolio, and the topics hold web links to module
+  # courses, the shape of the harness's standard course (wit-hdip-comp-sci-2024). No public portfolio
+  # source repo is in tutors-sdk to pin, so it is synthetic.
+  - name: synthetic-portfolio
+    path: tests/generator/corpus/synthetic-portfolio
+    generators: [tutors, tutors-lite]
+
+  # A real module course: notebooks, labs with numbered steps, a calendar. Pinned only; it changes
+  # often upstream, so it is left out of the nightly upstream-HEAD comparison.
+  - name: python
+    repo: https://github.com/tutors-sdk/python.git
+    commit: ab84bc06743b2b968222f5a2a3c05c3ec2ae02e6
+    generators: [tutors, tutors-lite]
