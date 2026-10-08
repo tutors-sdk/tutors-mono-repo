@@ -84,6 +84,24 @@ export type Sentiment = (typeof SENTIMENTS)[number];
 // (from src/events.ts)
 export type TickEvent = { kind: "tick"; courseId: string; loId: string | null; day: CalendarDay };
 
+// (from src/tutors-json.ts)
+export type TutorsJsonCourse = TutorsJsonLoBase & { type: "course"; route: "/"; los: TutorsJsonLo[]; properties?: Record<string, unknown>; calendar?: Record<string, unknown>; enrollment?: Record<string, unknown>; };
+
+// (from src/tutors-json.ts)
+export type TutorsJsonLo = TutorsJsonLoBase & { los?: (TutorsJsonLo | TutorsJsonStep)[]; pdf?: string; pdfFile?: string; archiveFile?: string; episode?: { service: string; id: string }; cells?: TutorsJsonNotebookCell[]; kernelLanguage?: string; kernelName?: string; excalidraw?: string; excalidrawFile?: string; };
+
+// (from src/tutors-json.ts)
+export type TutorsJsonLoBase = { type: string; id: string; title: string; summary: string; contentMd: string; frontMatter: Record<string, unknown>; route: string; img: string; imgFile: string; video: string; videoids: TutorsJsonVideoIds; hide: boolean; authLevel: number; };
+
+// (from src/tutors-json.ts)
+export type TutorsJsonNotebookCell = { cellType: "markdown" | "code" | "raw"; source: string; outputs: { outputType: "stream" | "execute_result" | "display_data" | "error"; text?: string; data?: Record<string, unknown>; traceback?: string[]; name?: string; executionCount?: number | null; }[]; executionCount: number | null; metadata: Record<string, unknown>; id: string; };
+
+// (from src/tutors-json.ts)
+export type TutorsJsonStep = { type: "step"; id: string; title: string; shortTitle: string; contentMd: string; route: string; };
+
+// (from src/tutors-json.ts)
+export type TutorsJsonVideoIds = { videoid: string; videoIds: { service: string; id: string; url?: string; externalUrl?: string }[]; };
+
 // (from src/rows.ts)
 export type TutorsTableName = keyof TutorsTables;
 
@@ -132,14 +150,17 @@ export const ONLINE_STATUSES;
 // (from src/learner.ts)
 export const SENTIMENTS;
 
+// (from src/tutors-json.ts)
+export const TUTORS_JSON_SCHEMA;
+
 ```
 
 ### Summary
 
 | Kind | Count |
 |------|-------|
-| const | 6 |
+| const | 7 |
 | function | 6 |
 | interface | 10 |
-| type | 16 |
-| **Total** | **38** |
+| type | 22 |
+| **Total** | **45** |

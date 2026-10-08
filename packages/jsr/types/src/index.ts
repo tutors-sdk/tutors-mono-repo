@@ -14,3 +14,4 @@ export * from "./learner.ts";
 export * from "./events.ts";
 export * from "./rows.ts";
 export * from "./ports.ts";
+export * from "./tutors-json.ts";

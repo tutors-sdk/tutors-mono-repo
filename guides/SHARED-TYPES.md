@@ -39,6 +39,7 @@ learner-facing ones are mostly `string`:
 | `events.ts` | `LearningEvent` (page-load, tick), `PresenceEvent`, `CalendarDay` | community `LoRecord` as data, #327's `AnalyticsEvent` |
 | `rows.ts` | `TutorsConnectUserRow`, `TutorsConnectCourseRow`, `TutorsConnectLatestRow`, `CalendarDbRow`, `LearningRecordRow`, `AppErrorRow`, `TutorsTables` | time-lib's hand-written rows, inline casts in `supabase-client.ts` |
 | `ports.ts` | `PresencePort`, `ProfilePort`, `LearningEventSink`, `Unsubscribe` | community `PresenceService`, connect `ProfileStore` |
+| `tutors-json.ts` | `TUTORS_JSON_SCHEMA` (JSON Schema 2020-12) and `TutorsJsonCourse`, `TutorsJsonLo`, `TutorsJsonStep`: tutors.json as the generator writes it | the hand-written Zod `CourseJsonSchema` in tests/contract, which described the reader's decorated course and was never checked against real output |
 
 Conventions:
 
@@ -52,7 +53,10 @@ What it deliberately leaves out:
 - **Identity.** Users, sessions and sign-in providers belong with the identity port proposed in issue
   #416. Whether those types end up in `@tutors/identity` or here is that work's decision. `TutorsId`
   stays in model-lib until then.
-- **The learning-object model** (`Lo`, `Course`, `Lab`…). This stays in model-lib for now; see step 6.
+- **The learning-object model** (`Lo`, `Course`, `Lab`…). This stays in model-lib for now; see step 6. The tutors.json *file* is
+  here because it is a wire format between two packages (the generator writes it, the reader fetches it) and
+  outside tools read it too: `pnpm generate:tutors-json-schema` writes `packages/jsr/types/tutors-json.schema.json`
+  for the release harness. Rules 0263-0269 hold the generator to it.
 
 Rule 0131 keeps the lists equal to model-lib's while both exist. `tests/unit/types/fixtures/compat.ts`
 proves at compile time that every shape already in use (model-lib, time-lib, connect) fits the
