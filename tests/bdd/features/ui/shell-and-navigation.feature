@@ -140,3 +140,55 @@ Feature: Reader shell and navigation
       Given the viewport is 1440 pixels wide
       When a student scrolls down the course home
       Then the header stays in view
+
+  @rule-0260 @ears-state-driven
+  Rule: While a learning object of a course is open, the reader shall lead the course navigation with that object's title and artwork followed by a parent link, showing its full title, artwork and summary card on request for labs and notebooks and immediately for other resources, in place of a heading on the canvas.
+
+    @active
+    Scenario: The side menu leads with a card for what is open
+      Given a student opens a topic in the Reference Course
+      Then the course navigation's first element is a card naming that topic, picturing it and summarising it
+      And a link back to the course follows the card
+      And no heading repeats the topic above its cards on the canvas
+      And opening a note puts a card for the note at the head of the navigation instead
+
+    @active
+    Scenario: Labs and notebooks keep their context compact
+      Given a student opens a lab or notebook on a desktop or phone
+      Then the course navigation leads with a compact title and 48 pixel artwork row
+      And the parent link and steps or outline follow the row
+      And the full card is hidden until the student expands the row with the keyboard
+      And collapsing the row hides the full card again
+      And selecting a step or outline entry closes the phone navigation
+
+    @active
+    Scenario: Every kind of resource gets the same way back
+      Given a student opens a lab in the Reference Course
+      Then the compact context for that lab is followed by a link back to the topic it belongs to, above the step list
+      And opening a notebook and then a slide deck in that topic gives each the same link back to the topic
+
+    @inactive
+    Scenario: Away from a course the navigation leads with its own sections
+      Given a student has opened a course in this session
+      When they return to the home page
+      Then the course navigation leads with its own first section and carries no learning object card
+      And the course's own front page carries no card either, its header already naming and picturing the course
+
+  @rule-0261 @ears-state-driven
+  Rule: While a course naming credits in its properties is open on a screen at least 1024 pixels wide, the reader shall follow the course title in the header with those credits in a font smaller than the title's, truncated rather than wrapped.
+
+    @active
+    Scenario: Credits follow the course title in the header
+      Given a student opens the Reference Course on a 1440 pixel wide screen
+      Then the header names the course's credits after its title
+      And the credits are in a smaller font than the title
+      And opening a lab in that course keeps the credits beside the title
+      And a credit too long for the header is cut off rather than wrapped, and the header still fits the viewport
+
+    @inactive
+    Scenario: A narrow header carries the title alone
+      Given the viewport is 1023 pixels wide
+      When a student opens the Reference Course
+      Then the header names the course and carries no credits
+      And a phone at 390 pixels carries no credits either
+      But the same course at 1024 pixels does name them, so the narrow header is hiding them
