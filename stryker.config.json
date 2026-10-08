@@ -20,7 +20,9 @@
     "packages/jsr/time/src/services/base-lab-model.ts",
     "packages/jsr/time/src/utils/lab-utils.ts",
     "packages/jsr/gen/src/utils/lr-utils.ts",
-    "packages/jsr/gen/src/templates/utils.ts"
+    "packages/jsr/gen/src/templates/utils.ts",
+    "packages/jsr/gen/src/services/course-builder.ts",
+    "packages/jsr/gen/src/services/resource-builder.ts"
   ],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
