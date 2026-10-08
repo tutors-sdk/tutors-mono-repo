@@ -65,10 +65,10 @@ panels, media, empty and hidden units, Unicode filenames. `corpus/synthetic-port
 portfolio of web links to module courses. `corpus.yaml` lists them and pins the public courses
 (the reference course and the python module course); the nightly regenerates the `nightly: true`
 ones at upstream HEAD. Every tutors.json the candidate generator writes must also conform to
-`TUTORS_JSON_SCHEMA` in `@tutors/tutors-types` (Rule 0262; the generator's Rules are in
+`TUTORS_JSON_SCHEMA` in `@tutors/tutors-types` (Rule 0263; the generator's Rules are in
 `bdd/features/generator/course-json.feature`). `fixtures/tutors-json-history/` holds the
 tutors.json each published generator release wrote for the synthetic course, which the reader
-must still open (Rule 0269). `claims.yaml` holds a claim for every intended
+must still open (Rule 0270). `claims.yaml` holds a claim for every intended
 difference — an unclaimed hunk fails the PR job, and a claim broad enough to hide unrelated
 change needs the `approve-broad-claim` label. `pnpm check:generator-diff --plant` is the
 self-test that a one-character template change is caught.

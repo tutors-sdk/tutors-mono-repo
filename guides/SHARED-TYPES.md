@@ -56,7 +56,7 @@ What it deliberately leaves out:
 - **The learning-object model** (`Lo`, `Course`, `Lab`…). This stays in model-lib for now; see step 6. The tutors.json *file* is
   here because it is a wire format between two packages (the generator writes it, the reader fetches it) and
   outside tools read it too: `pnpm generate:tutors-json-schema` writes `packages/jsr/types/tutors-json.schema.json`
-  for the release harness. Rules 0262-0268 hold the generator to it.
+  for the release harness. Rules 0263-0269 hold the generator to it.
 
 Rule 0131 keeps the lists equal to model-lib's while both exist. `tests/unit/types/fixtures/compat.ts`
 proves at compile time that every shape already in use (model-lib, time-lib, connect) fits the

@@ -12,7 +12,7 @@
  * every hunk to be claimed in tests/generator/claims.yaml.
  *
  * The candidate's tutors.json must also conform to TUTORS_JSON_SCHEMA in
- * @tutors/tutors-types (Rule 0262), in both modes; the base is not held to it,
+ * @tutors/tutors-types (Rule 0263), in both modes; the base is not held to it,
  * so a base from before the schema still compares.
  *
  * Nightly mode regenerates the `nightly: true` courses at their upstream HEAD
@@ -222,7 +222,7 @@ function generate(tree: string, generator: GeneratorName, source: string, corpus
   return snapshot;
 }
 
-/** Rule 0262: the tutors.json a candidate generator writes conforms to the schema in @tutors/tutors-types. */
+/** Rule 0263: the tutors.json a candidate generator writes conforms to the schema in @tutors/tutors-types. */
 function assertConforms(file: string, label: string) {
   const errors = tutorsJsonErrors(JSON.parse(readFileSync(file, "utf8")));
   if (errors.length === 0) return;

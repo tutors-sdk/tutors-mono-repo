@@ -1,7 +1,7 @@
 /**
  * Validates a tutors.json against TUTORS_JSON_SCHEMA (packages/jsr/types/src/tutors-json.ts).
  *
- * Shared by the generator differential (Rules 0262 and 0268), the generator's EARS steps and the unit tests,
+ * Shared by the generator differential (Rules 0263 and 0269), the generator's EARS steps and the unit tests,
  * so all three hold the generator to the same contract.
  */
 import { Ajv2020 } from "ajv/dist/2020.js";

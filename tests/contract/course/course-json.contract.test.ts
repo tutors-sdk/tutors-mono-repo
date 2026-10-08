@@ -12,7 +12,7 @@ import { syntheticTutorsJson } from "../../support/synthetic-course.ts";
  *
  * The producer is packages/jsr/gen (parseCourse, then JSON.stringify in generateDynamicCourse); the
  * consumer is the reader's course service. The schema is TUTORS_JSON_SCHEMA in @tutors/tutors-types.
- * Rule 0262 states the requirement; these tests pin the schema's edges.
+ * Rule 0263 states the requirement; these tests pin the schema's edges.
  */
 describe("tutors.json contract", () => {
   it("the generator's output for the synthetic corpus course conforms", () => {

@@ -13,7 +13,7 @@ Feature: Course JSON from earlier generator releases
   Units and sides share their topic's route and are reached through it; lab steps through their lab. Web, GitHub,
   video and archive routes leave the course, so they are not looked up by route.
 
-  @rule-0269 @ears-event-driven
+  @rule-0270 @ears-event-driven
   Rule: When a student opens a course whose tutors.json a published generator release wrote, the reader shall load it and reach every learning object by its route.
 
     Scenario Outline: Open the synthetic course as generator <release> wrote it

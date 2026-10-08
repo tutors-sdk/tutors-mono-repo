@@ -4,7 +4,7 @@
  * This is the file on disk, before the reader decorates it. model-lib's `Course` is the decorated
  * object (courseId, courseUrl, isPortfolio, the indexes and walls are added by `decorateCourseTree`),
  * so it cannot describe the file. `TUTORS_JSON_SCHEMA` is the contract: the generator differential
- * validates every corpus course against it (Rule 0262) and the release harness can validate captured
+ * validates every corpus course against it (Rule 0263) and the release harness can validate captured
  * live courses against the same schema, published as tutors-json.schema.json beside this package.
  *
  * The schema is strict for learning objects (`unevaluatedProperties: false`), so a generator change
