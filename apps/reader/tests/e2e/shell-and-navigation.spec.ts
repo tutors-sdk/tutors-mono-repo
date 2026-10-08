@@ -260,7 +260,7 @@ test("Desktop header stays while scrolling", { tag: "@rule-0062" }, async ({ pag
   expect((await page.locator(".shell-header").boundingBox())!.y).toBe(0);
 });
 
-test("The side menu leads with a card for what is open", { tag: "@rule-0250" }, async ({ page }) => {
+test("The side menu leads with a card for what is open", { tag: "@rule-0260" }, async ({ page }) => {
   await page.goto("/topic/reference-course/topic-01-typical");
   const column = page.locator(".shell-navigation .navigation-scroll");
   const card = column.locator(".lo-card");
@@ -287,7 +287,7 @@ test("The side menu leads with a card for what is open", { tag: "@rule-0250" }, 
   await expect(card.locator(".lo-card-summary")).toHaveText("The basic model of Tutors");
 });
 
-test("Labs and notebooks keep their context compact", { tag: "@rule-0250" }, async ({ page }) => {
+test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, async ({ page }) => {
   const notebook = "/notebook/reference-course/topic-01-typical/unit-1/notebook-a";
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 720 });
@@ -329,7 +329,7 @@ test("Labs and notebooks keep their context compact", { tag: "@rule-0250" }, asy
   }
 });
 
-test("Every kind of resource gets the same way back", { tag: "@rule-0250" }, async ({ page }) => {
+test("Every kind of resource gets the same way back", { tag: "@rule-0260" }, async ({ page }) => {
   const topic = "/topic/reference-course/topic-01-typical";
   const column = page.locator(".shell-navigation .navigation-scroll");
   const back = column.locator(".back-link");
@@ -347,7 +347,7 @@ test("Every kind of resource gets the same way back", { tag: "@rule-0250" }, asy
   }
 });
 
-test("Away from a course the navigation leads with its own sections", { tag: "@rule-0250" }, async ({ page }) => {
+test("Away from a course the navigation leads with its own sections", { tag: "@rule-0260" }, async ({ page }) => {
   const column = page.locator(".shell-navigation .navigation-scroll");
   // The course's own front page: the header names and pictures the course, so the menu does not repeat it.
   await page.goto(course);

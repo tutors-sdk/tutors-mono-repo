@@ -141,7 +141,7 @@ Feature: Reader shell and navigation
       When a student scrolls down the course home
       Then the header stays in view
 
-  @rule-0250 @ears-state-driven
+  @rule-0260 @ears-state-driven
   Rule: While a learning object of a course is open, the reader shall lead the course navigation with that object's title and artwork followed by a parent link, showing its full title, artwork and summary card on request for labs and notebooks and immediately for other resources, in place of a heading on the canvas.
 
     @active
