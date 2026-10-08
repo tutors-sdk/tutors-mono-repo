@@ -43,15 +43,11 @@
 <!-- Unnamed: the complementary landmark around it (or the dialog on phones) already carries "Course navigation". Rule 0170. -->
 <nav class="course-navigation">
   <div class="navigation-scroll">
-  <!-- Whatever is open, drawn as its own card: title, artwork and summary, in the colours of its type
-       (#399). It is the cue for where you are, and it carries what the canvas heading used to say, which
-       is why that heading is gone. It leads the column on every page rather than sitting above Learn,
-       because on a lab Learn comes after the step list and a cue you have to scroll to is no cue.
-       Not a link: it pictures the page you are already on. Two guards: the Tutors home page draws this
-       same menu and currentLo still holds the last course read, and on the course's own front page the
-       header already names and pictures the course, so a card there would say it a second time. -->
+  <!-- Labs and notebooks lead with compact context so their steps and outline have room. Other
+       resources show the full card. The course header already covers the course's own front page. -->
   {#if course && openLo && openLo.route !== course.route}
     {@const colour = loTypeColour(openLo.type)}
+    {#snippet resourceCard()}
     <article class="lo-card" data-lo-card={openLo.type} style:--resource-accent={colour.border} style:--resource-background={colour.background}>
       <div class="lo-card-heading">
         <h2>{openLo.title}</h2>
@@ -61,6 +57,24 @@
       <Image lo={openLo} />
       {#if openLo.summary}<div class="lo-card-summary">{@html sanitizeHtml(openLo.summary)}</div>{/if}
     </article>
+    {/snippet}
+    {#if openLo.type === "lab" || openLo.type === "notebook"}
+      {#key openLo.route}
+      <details class="lo-context" style:--resource-accent={colour.border}>
+        <summary class="lo-context-heading">
+          <span aria-hidden="true"><Image lo={openLo} miniImage /></span>
+          <span class="lo-context-copy">
+            <strong>{openLo.title}</strong>
+            <span class="lo-context-type"><Icon icon={themeService.getIcon(openLo.type).type} color="var(--resource-accent)" height="14" />{openLo.type}</span>
+          </span>
+          <span class="nav-chevron"><Icon icon="lucide:chevron-down" height="20" /></span>
+        </summary>
+        <div class="lo-context-card">{@render resourceCard()}</div>
+      </details>
+      {/key}
+    {:else}
+      {@render resourceCard()}
+    {/if}
     <!-- The way out, under the card that says where you are. Labs and notebooks have always had one;
          every other resource is just as deep in the course and now gets the same link. -->
     {#if backTo}<a class="nav-row back-link" href={backTo.route}>← {backTo.title}</a>{/if}
@@ -162,6 +176,14 @@
   .navigation-scroll > :global(*), .tool-section > :global(*), .nav-group > :global(*) { flex-shrink: 0; }
   .nav-section { margin: var(--space-6) var(--space-3) var(--space-2); color: var(--ui-muted); text-transform: var(--ui-label-transform); letter-spacing: var(--ui-label-spacing); font-size: var(--font-small); font-weight: var(--weight-semibold); }
   .navigation-scroll > .nav-section:first-child { margin-top: 0; }
+  .lo-context { border: 1px solid var(--ui-border); border-radius: var(--radius-control); background: var(--ui-surface); }
+  .lo-context-heading { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; padding: var(--space-3); list-style: none; border-radius: var(--radius-control); }
+  .lo-context-heading::-webkit-details-marker { display: none; }
+  .lo-context-heading:hover { background: var(--ui-selected); }
+  .lo-context-copy { flex: 1; min-width: 0; }
+  .lo-context-copy strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: var(--font-label); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+  .lo-context-type { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-1); font-size: var(--font-caption); color: var(--ui-muted); text-transform: capitalize; }
+  .lo-context-card { padding: 0 var(--space-3) var(--space-3); }
   /* Drawn like a canvas card so a reader recognises it, but sized to the column rather than to
      --card-width: it takes the menu's full width and only as much height as its three parts need, so a
      narrow menu gets a smaller card instead of a stretched one and the Learn list stays above the fold.

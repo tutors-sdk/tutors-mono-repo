@@ -287,13 +287,55 @@ test("The side menu leads with a card for what is open", { tag: "@rule-0250" }, 
   await expect(card.locator(".lo-card-summary")).toHaveText("The basic model of Tutors");
 });
 
+test("Labs and notebooks keep their context compact", { tag: "@rule-0250" }, async ({ page }) => {
+  const notebook = "/notebook/reference-course/topic-01-typical/unit-1/notebook-a";
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 720 });
+    for (const route of [lab, notebook]) {
+      await page.goto(route);
+      if (width < 1024) await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+      const column = page.locator(width < 1024 ? ".drawer-body .navigation-scroll" : ".shell-navigation .navigation-scroll");
+      const context = column.locator(".lo-context");
+      const heading = context.locator("summary");
+      const card = context.locator(".lo-card");
+      await expect(column.locator("> *").first()).toHaveClass(/lo-context/);
+      await expect(heading).toBeVisible();
+      await expect(card).toBeHidden();
+      const artwork = (await heading.locator(".lo-artwork").boundingBox())!;
+      expect(artwork.width).toBe(48);
+      expect(artwork.height).toBe(48);
+      const headingBox = (await heading.boundingBox())!;
+      expect(headingBox.height).toBeGreaterThanOrEqual(44);
+      expect(headingBox.height).toBeLessThan(160);
+      expect((await column.locator(".back-link").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
+      expect((await column.locator(".steps").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
+      expect(await fitsViewport(page), `${route} at ${width}px`).toBe(true);
+      // Native disclosure works with a keyboard and exposes the existing full card.
+      const title = await heading.locator("strong").textContent();
+      await heading.focus();
+      await page.keyboard.press("Space");
+      await expect(context).toHaveAttribute("open", "");
+      await expect(card).toBeVisible();
+      await expect(card.getByRole("heading")).toHaveText(title!);
+      await expect(card.locator(".lo-card-summary")).toBeVisible();
+      await page.keyboard.press("Enter");
+      await expect(context).not.toHaveAttribute("open");
+      await expect(card).toBeHidden();
+      if (width < 1024) {
+        await column.locator(".steps a").first().click();
+        await expect(page.getByRole("dialog", { name: "Course navigation", exact: true })).toBeHidden();
+      }
+    }
+  }
+});
+
 test("Every kind of resource gets the same way back", { tag: "@rule-0250" }, async ({ page }) => {
   const topic = "/topic/reference-course/topic-01-typical";
   const column = page.locator(".shell-navigation .navigation-scroll");
   const back = column.locator(".back-link");
-  // A lab has always had a way back; it now comes from the card above it rather than from the step list.
+  // A lab's compact context keeps the same way back above the step list.
   await page.goto(`${topic}/unit-1/book-a`.replace("/topic/", "/lab/"));
-  await expect(column.locator(".lo-card").getByRole("heading")).toHaveText("Lab-01-(md)");
+  await expect(column.locator(".lo-context-heading strong")).toHaveText("Lab-01-(md)");
   await expect(back).toHaveText("← Simple");
   await expect(back).toHaveAttribute("href", topic);
   expect((await back.boundingBox())!.y).toBeLessThan((await column.locator(".steps").boundingBox())!.y);
@@ -310,11 +352,11 @@ test("Away from a course the navigation leads with its own sections", { tag: "@r
   // The course's own front page: the header names and pictures the course, so the menu does not repeat it.
   await page.goto(course);
   await expect(column.locator("> *").first()).toHaveText("Learn");
-  await expect(column.locator(".lo-card")).toHaveCount(0);
+  await expect(column.locator(".lo-card, .lo-context")).toHaveCount(0);
   await page.goto("/topic/reference-course/topic-01-typical");
   await expect(column.locator(".lo-card")).toBeVisible();
   // currentLo survives leaving the course, so the home page is where a stale card would show up.
   await page.goto("/");
   await expect(column.locator("> *").first()).toHaveText("Tutors");
-  await expect(column.locator(".lo-card")).toHaveCount(0);
+  await expect(column.locator(".lo-card, .lo-context")).toHaveCount(0);
 });

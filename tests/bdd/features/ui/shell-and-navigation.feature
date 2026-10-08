@@ -142,7 +142,7 @@ Feature: Reader shell and navigation
       Then the header stays in view
 
   @rule-0250 @ears-state-driven
-  Rule: While a learning object of a course is open, the reader shall lead the course navigation with a card carrying that object's title, artwork and summary, followed by a link back to its parent, in place of a heading on the canvas.
+  Rule: While a learning object of a course is open, the reader shall lead the course navigation with that object's title and artwork followed by a parent link, showing its full title, artwork and summary card on request for labs and notebooks and immediately for other resources, in place of a heading on the canvas.
 
     @active
     Scenario: The side menu leads with a card for what is open
@@ -153,9 +153,18 @@ Feature: Reader shell and navigation
       And opening a note puts a card for the note at the head of the navigation instead
 
     @active
+    Scenario: Labs and notebooks keep their context compact
+      Given a student opens a lab or notebook on a desktop or phone
+      Then the course navigation leads with a compact title and 48 pixel artwork row
+      And the parent link and steps or outline follow the row
+      And the full card is hidden until the student expands the row with the keyboard
+      And collapsing the row hides the full card again
+      And selecting a step or outline entry closes the phone navigation
+
+    @active
     Scenario: Every kind of resource gets the same way back
       Given a student opens a lab in the Reference Course
-      Then the card for that lab is followed by a link back to the topic it belongs to, above the step list
+      Then the compact context for that lab is followed by a link back to the topic it belongs to, above the step list
       And opening a notebook and then a slide deck in that topic gives each the same link back to the topic
 
     @inactive
