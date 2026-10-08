@@ -173,3 +173,22 @@ Feature: Reader shell and navigation
       When they return to the home page
       Then the course navigation leads with its own first section and carries no learning object card
       And the course's own front page carries no card either, its header already naming and picturing the course
+
+  @rule-0261 @ears-state-driven
+  Rule: While a course naming credits in its properties is open on a screen at least 1024 pixels wide, the reader shall follow the course title in the header with those credits in a font smaller than the title's, truncated rather than wrapped.
+
+    @active
+    Scenario: Credits follow the course title in the header
+      Given a student opens the Reference Course on a 1440 pixel wide screen
+      Then the header names the course's credits after its title
+      And the credits are in a smaller font than the title
+      And opening a lab in that course keeps the credits beside the title
+      And a credit too long for the header is cut off rather than wrapped, and the header still fits the viewport
+
+    @inactive
+    Scenario: A narrow header carries the title alone
+      Given the viewport is 1023 pixels wide
+      When a student opens the Reference Course
+      Then the header names the course and carries no credits
+      And a phone at 390 pixels carries no credits either
+      But the same course at 1024 pixels does name them, so the narrow header is hiding them

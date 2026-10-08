@@ -347,6 +347,44 @@ test("Every kind of resource gets the same way back", { tag: "@rule-0260" }, asy
   }
 });
 
+const CREDITS = "A reference course containing all supported learning objects";
+
+test("Credits follow the course title in the header", { tag: "@rule-0261" }, async ({ page }) => {
+  const title = page.locator(".shell-header .course-title");
+  const credits = page.locator(".shell-header .course-credits");
+  const fontSize = (what: typeof title) => what.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(course);
+  await expect(title).toHaveText("Reference Course");
+  await expect(credits).toHaveText(CREDITS);
+  // After the title, and quieter than it.
+  const titleBox = (await title.boundingBox())!;
+  expect((await credits.boundingBox())!.x).toBeGreaterThanOrEqual(titleBox.x + titleBox.width);
+  expect(await fontSize(credits)).toBeLessThan(await fontSize(title));
+  // The credits belong to the course, so they travel with its title rather than staying on its front page.
+  await page.goto(lab);
+  await expect(credits).toHaveText(CREDITS);
+  // Too long for the header: one line, cut off at the end, and nothing scrolls sideways.
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const shape = await credits.evaluate((el) => ({ lines: el.scrollHeight / parseFloat(getComputedStyle(el).lineHeight), clipped: el.scrollWidth > el.clientWidth }));
+  expect(shape.lines).toBeLessThan(2);
+  expect(shape.clipped).toBe(true);
+  expect(await fitsViewport(page)).toBe(true);
+});
+
+test("A narrow header carries the title alone", { tag: "@rule-0261" }, async ({ page }) => {
+  const credits = page.locator(".shell-header .course-credits");
+  for (const width of [1023, 390]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(course);
+    await expect(page.locator(".shell-header .course-title"), `${width}px`).toHaveText("Reference Course");
+    await expect(credits, `${width}px`).toBeHidden();
+  }
+  // The same course one pixel wider does name them, so the narrow header is hiding the credits, not missing them.
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await expect(credits).toHaveText(CREDITS);
+});
+
 test("Away from a course the navigation leads with its own sections", { tag: "@rule-0260" }, async ({ page }) => {
   const column = page.locator(".shell-navigation .navigation-scroll");
   // The course's own front page: the header names and pictures the course, so the menu does not repeat it.
