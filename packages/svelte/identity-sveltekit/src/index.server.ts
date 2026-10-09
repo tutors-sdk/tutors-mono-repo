@@ -29,7 +29,7 @@ export function createIdentityHandle(options: IdentityOptions): Handle {
     const forwarded = new Headers(response.headers);
     // getSession refreshes outside the auth route; forward every cookie, including deletion/chunks.
     for (const cookie of headers.getSetCookie()) forwarded.append("set-cookie", cookie);
-    if (session) forwarded.set("cache-control", "private, no-store");
+    if (session || headers.has("set-cookie")) forwarded.set("cache-control", "private, no-store");
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers: forwarded });
   };
   return async (input) => {

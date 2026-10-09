@@ -51,7 +51,7 @@ export function parseSetCookie(header: string): SetCookie {
 }
 
 /** What the reader answered: status, where it sends the browser, and the cookies it set. */
-export type ReaderResponse = { status: number; location: string | null; cookies: SetCookie[]; body: string };
+export type ReaderResponse = { status: number; location: string | null; cookies: SetCookie[]; body: string; headers: Headers };
 
 /** A browser's cookie jar for the reader's origin. */
 export class Browser {
@@ -161,7 +161,14 @@ export async function send(
   if (!location && response.headers.get("content-type")?.includes("application/json")) {
     location = (JSON.parse(text) as { url?: string }).url ?? null;
   }
-  const result = { status: response.status, location, cookies: [...response.headers.getSetCookie().map(parseSetCookie), ...pageCookies], body: text, page };
+  const result = {
+    status: response.status,
+    location,
+    cookies: [...response.headers.getSetCookie().map(parseSetCookie), ...pageCookies],
+    body: text,
+    headers: response.headers,
+    page
+  };
   browser.keep(result);
   return result;
 }

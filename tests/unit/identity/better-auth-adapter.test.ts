@@ -100,6 +100,29 @@ describe("Better Auth identity boundary", () => {
     expect(later.session.expiresAt).toBe(original.session.expiresAt);
   });
 
+  it.each(["expired", "malformed", "mismatched"])("marks cookie-clearing pages as non-cacheable when the session is %s", async (invalid) => {
+    const browser = new Browser();
+    await signInThroughGithub(browser, "/");
+    if (invalid === "expired") vi.useFakeTimers({ now: Date.now() + 31 * 86400000, toFake: ["Date"] });
+    else if (invalid === "malformed") browser.jar.set("__Secure-better-auth.session_data", "forged");
+    else {
+      const other = new Browser();
+      await signInThroughGithub(other, "/");
+      browser.jar.set("__Secure-better-auth.session_token", other.jar.get("__Secure-better-auth.session_token")!);
+    }
+    const response = await send(browser, "GET", "/");
+    expect(response.page?.actor).toBeNull();
+    expect(response.cookies.some((cookie) => cookie.attributes["max-age"] === "0")).toBe(true);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+  });
+
+  it("preserves an anonymous page's cache policy when the SDK sends no cookies", async () => {
+    const response = await send(new Browser(), "GET", "/");
+    expect(response.page?.actor).toBeNull();
+    expect(response.cookies).toEqual([]);
+    expect(response.headers.has("cache-control")).toBe(false);
+  });
+
   it("keeps concurrent signed-in and signed-out requests isolated", async () => {
     const alice = new Browser();
     await signInThroughGithub(alice, "/");
