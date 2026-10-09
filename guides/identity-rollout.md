@@ -87,15 +87,17 @@ Record the deployment URL, GitHub OAuth app, commit, image digest, operator and 
 step. Local fixture tests do not count as live GitHub or deployment evidence.
 
 1. **Choose an isolated rehearsal deployment on Kit 2.** Use a separate GitHub OAuth app with
-   that deployment's hostname. GitHub OAuth apps have one configured callback; do not change
-   the production app for a preview. Record the current production callback, client id, secret
-   references, auth flag, hosting origin/proxy configuration and previous image digest.
+   that deployment's hostname. [GitHub OAuth apps support up to 10 callback URLs](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app);
+   isolate the preview's credentials and settings in its own app. Record the current production
+   callback URL list, token-expiry settings, client id, secret references, auth flag, hosting
+   origin/proxy configuration and previous image digest.
 2. **Deploy with Auth.js selected first.** Verify the deployment is the expected commit/image,
    HTTPS origin and cookie flags. With representative existing student and educator accounts,
    confirm GitHub login, numeric id, course return URL, profile, personal data and enrollment.
    Record the login-based records used for comparison, without storing tokens or secrets.
-3. **Rehearse the switch on that same Kit 2 deployment.** Change the rehearsal GitHub app's
-   callback to `/api/auth/callback/github`, keep its matching client id/secret, then set
+3. **Rehearse the switch on that same Kit 2 deployment.** Register `/api/auth/callback/github`
+   on the rehearsal GitHub app, retaining `/auth/callback/github` for rollback when possible.
+   Keep its matching client id/secret, then set
    `PRIVATE_AUTH_ADAPTER=better-auth` and restart all instances. Avoid mixed-adapter replicas
    and finish or abandon in-flight OAuth flows. Tell participants they must sign in again.
 4. **Use live GitHub, including refusal.** Repeat the student/educator checks, navigation and
@@ -103,8 +105,9 @@ step. Local fixture tests do not count as live GitHub or deployment evidence.
    actual subject against the account's numeric GitHub id and the unchanged login-keyed
    student/enrollment records. Check response headers, HTTPS callback and forwarded renewal
    cookies at the public edge. Record successes and failures; do not paste cookie contents.
-5. **Rehearse rollback before production cutover.** Restore the GitHub app's original
-   `/auth/callback/github`, original client id/secret references, origin/hosting configuration,
+5. **Rehearse rollback before production cutover.** Restore the recorded GitHub callback
+   configuration, ensuring `/auth/callback/github` is registered, plus the original client
+   id/secret references, origin/hosting configuration,
    `PRIVATE_AUTH_ADAPTER=authjs` and the known Kit 2 image. Restart every instance and reauthenticate
    both accounts. Verify sign-in, protected/personal data, course roles and logout again.
    **The flag alone is insufficient:** the OAuth callback/configuration and image must agree.
