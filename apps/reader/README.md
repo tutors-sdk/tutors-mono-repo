@@ -43,6 +43,6 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
 - `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
-- `@tutors/app-config` provides the shared `vite.config.ts` and `svelte.config.js` (build time only)
+- `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 
 [docs/COURSE-PAGE-WALKTHROUGH.md](../../docs/COURSE-PAGE-WALKTHROUGH.md) walks through how a course page is rendered.
