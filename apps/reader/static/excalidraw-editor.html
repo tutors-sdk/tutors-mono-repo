@@ -58,6 +58,7 @@
       const channelRef = useRef(null);
       const collaboratorsRef = useRef(new Map());
       const lastVersionsRef = useRef(new Map());
+      const pendingSceneRef = useRef(new Map());
       const isRemoteUpdateRef = useRef(false);
       const debounceTimerRef = useRef(null);
       const cursorTimerRef = useRef(null);
@@ -128,6 +129,15 @@
           .on("presence", { event: "sync" }, () => {
             const state = channel.presenceState();
             hasPeersRef.current = Object.keys(state).some(key => key !== presenceKey);
+            // Presence can lag behind subscription, so replay edits suppressed while alone.
+            if (hasPeersRef.current && pendingSceneRef.current.size > 0) {
+              channel.send({
+                type: "broadcast",
+                event: "scene-update",
+                payload: { elements: Array.from(pendingSceneRef.current.values()) },
+              });
+              pendingSceneRef.current.clear();
+            }
             const activeUserIds = new Set();
             for (const [, presences] of Object.entries(state)) {
               for (const p of presences) {
@@ -171,6 +181,7 @@
           debounceTimerRef.current = null;
           cursorTimerRef.current = null;
           pendingCursorRef.current = null;
+          pendingSceneRef.current.clear();
           subscribedRef.current = false;
           hasPeersRef.current = false;
           channelRef.current = null;
@@ -207,6 +218,8 @@
               event: "scene-update",
               payload: { elements: changed },
             });
+          } else {
+            for (const el of changed) pendingSceneRef.current.set(el.id, el);
           }
 
           window.parent.postMessage({

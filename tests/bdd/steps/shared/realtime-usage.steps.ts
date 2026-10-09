@@ -376,4 +376,70 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("the scene is sent to the parent for saving", saves);
     });
   });
+  Rule("When a whiteboard peer becomes visible in Presence, the reader shall broadcast scene deltas suppressed while the editor was alone.", ({ RuleScenario }) => {
+    const alone = () => {
+      mountEditor(true);
+      whiteboard!.participants(1);
+    };
+    const peerArrives = () => whiteboard!.participants(2);
+    const noDuplicate = () => {
+      peerArrives();
+      expect(whiteboard!.channel.send).toHaveBeenCalledTimes(1);
+    };
+    RuleScenario("An edit is replayed when a peer's delayed Presence update arrives", ({ Given, And, When, Then }) => {
+      Given("a subscribed whiteboard editor with no visible peer", alone);
+      And("a scene edit has been saved without broadcasting", () => {
+        whiteboard!.editor.onChange([{ id: "shape-1", version: 1 }]);
+        vi.advanceTimersByTime(100);
+        expect(whiteboard!.postMessage).toHaveBeenCalledWith({ type: "scene-changed", elements: [{ id: "shape-1", version: 1 }] }, "https://reader.invalid");
+        expect(whiteboard!.channel.send).not.toHaveBeenCalled();
+      });
+      When("another editor becomes visible in Presence", peerArrives);
+      Then("one scene broadcast contains the skipped edit", () => {
+        expect(whiteboard!.channel.send).toHaveBeenCalledExactlyOnceWith({
+          type: "broadcast",
+          event: "scene-update",
+          payload: { elements: [{ id: "shape-1", version: 1 }] }
+        });
+      });
+      And("another Presence sync sends no duplicate scene broadcast", noDuplicate);
+    });
+    RuleScenario("Several solo edits replay the latest version and deletion together", ({ Given, And, When, Then }) => {
+      Given("a subscribed whiteboard editor with no visible peer", alone);
+      And("an element is edited twice and another is deleted while alone", () => {
+        for (const elements of [
+          [
+            { id: "shape-1", version: 1 },
+            { id: "shape-2", version: 1 }
+          ],
+          [
+            { id: "shape-1", version: 2 },
+            { id: "shape-2", version: 1 }
+          ],
+          [
+            { id: "shape-1", version: 2 },
+            { id: "shape-2", version: 2, isDeleted: true }
+          ]
+        ]) {
+          whiteboard!.editor.onChange(elements);
+          vi.advanceTimersByTime(100);
+        }
+        expect(whiteboard!.channel.send).not.toHaveBeenCalled();
+      });
+      When("another editor becomes visible in Presence", peerArrives);
+      Then("one scene broadcast contains the latest edit and deletion", () => {
+        expect(whiteboard!.channel.send).toHaveBeenCalledExactlyOnceWith({
+          type: "broadcast",
+          event: "scene-update",
+          payload: {
+            elements: [
+              { id: "shape-1", version: 2 },
+              { id: "shape-2", version: 2, isDeleted: true }
+            ]
+          }
+        });
+      });
+      And("another Presence sync sends no duplicate scene broadcast", noDuplicate);
+    });
+  });
 });

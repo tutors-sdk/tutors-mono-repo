@@ -181,3 +181,20 @@ Feature: Realtime resource usage
       And 100 milliseconds elapse
       Then a scene broadcast and a cursor broadcast are sent
       And the scene is sent to the parent for saving
+
+  @rule-0282 @ears-event-driven
+  Rule: When a whiteboard peer becomes visible in Presence, the reader shall broadcast scene deltas suppressed while the editor was alone.
+
+    Scenario: An edit is replayed when a peer's delayed Presence update arrives
+      Given a subscribed whiteboard editor with no visible peer
+      And a scene edit has been saved without broadcasting
+      When another editor becomes visible in Presence
+      Then one scene broadcast contains the skipped edit
+      And another Presence sync sends no duplicate scene broadcast
+
+    Scenario: Several solo edits replay the latest version and deletion together
+      Given a subscribed whiteboard editor with no visible peer
+      And an element is edited twice and another is deleted while alone
+      When another editor becomes visible in Presence
+      Then one scene broadcast contains the latest edit and deletion
+      And another Presence sync sends no duplicate scene broadcast
