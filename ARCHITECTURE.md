@@ -149,7 +149,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 **Backend Services**:
 - **Supabase**: Database, authentication, analytics
 - **Supabase Realtime**: Real-time broadcast communication (presence, live activity)
-- **Auth.js**: GitHub OAuth integration
+- **Better Auth**: GitHub OAuth integration
 
 **JSR Ecosystem** (Deno-first):
 - **Vento**: Template engine for HTML generation
@@ -1667,7 +1667,7 @@ UI Updates
 - Live student count
 - Current page views
 
-**Auth.js (OAuth)**:
+**Better Auth (OAuth)**:
 - User authentication
 - Session tokens
 

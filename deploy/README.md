@@ -243,7 +243,6 @@ Environment variables the server reads at startup:
 | `PROTOCOL_HEADER`, `HOST_HEADER`, `ADDRESS_HEADER`, `XFF_DEPTH` | Trust proxy headers when behind a Route or Ingress |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
-| `PRIVATE_AUTH_ADAPTER` | Reader adapter: `authjs` (default) or `better-auth`; coordinate the [OAuth callback and rollback](../guides/identity-rollout.md) before switching |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
 | `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
@@ -265,7 +264,7 @@ every comparison. The image keeps that to a known, short list:
   rendered into every course page) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
   an ISO 8601 instant (`2026-09-16T09:05:00.000Z`) it answers that instant;
   otherwise the system clock. Log timestamps, metrics, request durations and
-  everything Auth.js does with session expiry stay on the real clock: the seam
+  identity session expiry stay on the real clock: the seam
   never patches `Date`, so a frozen clock cannot keep an expired session alive.
   The image always runs with `NODE_ENV=production`, so the guard against
   running frozen by accident is that nothing sets the variable: it is absent

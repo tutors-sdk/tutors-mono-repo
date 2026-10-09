@@ -441,13 +441,12 @@ production configuration. #320's personal-data route should replace this fixture
 merged. The three ports must be free; an existing dev server is never reused.
 
 ```bash
-pnpm test:e2e:reader --project=chromium              # the whole contract, Auth.js default
-PRIVATE_AUTH_ADAPTER=better-auth pnpm test:e2e:reader --project=chromium
-SVELTEKIT_ADAPTER=node pnpm build && pnpm test:identity:built # both adapters in the built reader
+pnpm test:e2e:reader --project=chromium              # the whole contract
+SVELTEKIT_ADAPTER=node pnpm build && pnpm test:identity:built # built reader and preceding-session compatibility
 pnpm test:e2e:reader --project=chromium -g @rule-0032  # one Rule
 ```
 
-**When.** Every pull request targeting `main` runs the contract in Chromium for both adapters (`ui-contract` in `ci.yml`), and it
+**When.** Every pull request targeting `main` runs the contract in Chromium (`ui-contract` in `ci.yml`), and it
 and the audit are required by `ci-success`. Release candidates run it in Chromium, Firefox and
 WebKit.
 
@@ -503,7 +502,7 @@ exist.
 |---|---|
 | `build-and-test` | Install, copy `.env.example` into the four apps, `svelte-kit sync`, `pnpm build`, `pnpm api-report:check`, three `check` steps (`continue-on-error`, [#53](https://github.com/tutors-sdk/tutors-mono-repo/issues/53)), `pnpm lint`, `pnpm check:knip`, `vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz` |
 | `platform-conformance` | `pnpm check:k8s --out rendered`, kubeconform against the rendered manifests, and kubeconform must reject the invalid-manifest fixture |
-| `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …`; the reader a second time with `--env PUBLIC_ANON_MODE=FALSE` so its sign-in pages are probed with Auth.js on |
+| `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …`; the reader a second time with `--env PUBLIC_ANON_MODE=FALSE` so its sign-in pages are probed with authentication enabled |
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
 | `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
 | `e2e-stack` | Build reader, catalogue and live images, build the fixture course, bring the stack up, run the journeys on chromium and webkit, then the baseline stale-line check; uploads the report and compose logs on failure |

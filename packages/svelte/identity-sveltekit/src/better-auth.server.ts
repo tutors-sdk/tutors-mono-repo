@@ -48,7 +48,7 @@ export function createBetterAuth(options: IdentityOptions, origin: string) {
         }
       }),
       after: createAuthMiddleware(async (ctx) => {
-        // Cache refresh alone retains the original session expiry; Auth.js renews it on each visit.
+        // Cache refresh alone retains the original expiry; visits must renew the inactivity window.
         if (ctx.path !== "/get-session" || ctx.query?.disableRefresh || ctx.context.returned == null || !ctx.context.session) return;
         const current = ctx.context.session;
         if (current.session.expiresAt.getTime() <= Date.now()) return;

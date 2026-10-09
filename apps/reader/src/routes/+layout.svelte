@@ -16,7 +16,7 @@
 
   untrack(() => {
     if (browser) {
-      tutorsConnectService.identityClient = createIdentityClient(data.identityAdapter);
+      tutorsConnectService.identityClient = createIdentityClient();
       if (data?.user) {
         void tutorsConnectService.reconnect(data.user);
       }
