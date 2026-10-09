@@ -7,7 +7,6 @@ vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-j
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
 vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
-vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
 import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, type RecordingChannel } from "../../support/supabase-recorder.ts";

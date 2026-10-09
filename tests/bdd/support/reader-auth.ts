@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import type { Actor } from "@tutors/identity";
 
 /**
  * Drives the reader's sign-in over HTTP, the way a browser and GitHub would, so the
@@ -104,13 +105,14 @@ async function reader(): Promise<{ handle: Handle; load: LayoutLoad }> {
 }
 
 /** What the root layout hands the page, captured when a request reaches SvelteKit's router. */
-export type PageData = { loggedIn: boolean; user?: Record<string, unknown> };
+export type PageData = { actor: Actor | null; loggedIn: boolean; user?: Record<string, unknown> };
 
 export async function send(
   browser: Browser,
   method: "GET" | "POST",
   path: string,
-  form?: Record<string, string>
+  form?: Record<string, string>,
+  json?: unknown
 ): Promise<ReaderResponse & { page?: PageData }> {
   const { handle, load } = await reader();
   const url = new URL(path, READER_ORIGIN);
@@ -123,6 +125,10 @@ export async function send(
     // library-specific: Auth.js's client asks for the redirect as JSON rather than a 302.
     headers.set("x-auth-return-redirect", "1");
     body = new URLSearchParams(form).toString();
+  }
+  if (json !== undefined) {
+    headers.set("content-type", "application/json");
+    body = JSON.stringify(json);
   }
   const request = new Request(url, { method, headers, body });
   // SvelteKit's `event.cookies`: what the hooks set here reaches the browser as Set-Cookie.

@@ -13,11 +13,9 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@auth/core": "^0.41.3",
     "dompurify": "^3.4.14"
   },
   "devDependencies": {
-    "@auth/sveltekit": "^1.11.3",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/state": "^6.7.1",
     "@codemirror/theme-one-dark": "^6.1.3",
@@ -55,6 +53,8 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
-    "zod": "^4.6.2"
+    "zod": "^4.6.2",
+    "@tutors/identity": "workspace:*",
+    "@tutors/identity-sveltekit": "workspace:*"
   }
 }
