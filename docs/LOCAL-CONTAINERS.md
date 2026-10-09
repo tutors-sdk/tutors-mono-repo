@@ -20,7 +20,7 @@ From the repository root:
 docker compose up --build
 ```
 
-This builds all four images and starts them. Wait for each service to report `healthy`, then open:
+This builds all four images and starts them behind the pinned local HTTP proxy. Wait for each service to report `healthy`, then open:
 
 | App | URL |
 |-----|-----|
@@ -34,7 +34,7 @@ Press `Ctrl+C` to stop, or run detached with `docker compose up --build -d` and 
 To build and run only one app:
 
 ```bash
-docker compose up --build reader
+docker compose up --build reader proxy
 ```
 
 ## If a port is already in use
@@ -45,7 +45,7 @@ Each host port can be overridden with an environment variable: `READER_PORT`, `C
 READER_PORT=3010 docker compose up --build
 ```
 
-The reader is then at http://localhost:3010. The variables also set `ORIGIN` for the app, so links and form actions keep working on the new port.
+The reader is then at http://localhost:3010. The local Caddy proxy preserves that host and port and sets the protocol header used for OAuth and form checks. App ports are internal to the Compose network.
 
 ## Checking a container is healthy
 
@@ -96,9 +96,11 @@ The GitHub OAuth app's callback URL must match the port you are using, for examp
 The single `Dockerfile` builds any app; pick it with a build argument:
 
 ```bash
-docker build --build-arg APP_NAME=reader -t tutors/reader .
-docker run --rm -p 3000:3000 -e ORIGIN=http://localhost:3000 -e PUBLIC_ANON_MODE=TRUE tutors/reader
+docker build --build-arg APP_NAME=reader -t tutors/reader:local .
+docker compose up --no-build reader proxy
 ```
+
+SvelteKit 3 defaults to HTTPS when no protocol header is supplied. For plain HTTP, use the proxy above; for production HTTPS, use a trusted edge that overwrites `X-Forwarded-Proto` and `X-Forwarded-Host`, and keep the app port private. Runtime `ORIGIN` is no longer supported.
 
 Useful extra arguments: `NODE_VERSION` (default `22`), and `GIT_SHA` / `BUILD_DATE` for the OCI labels.
 

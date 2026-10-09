@@ -4,7 +4,7 @@
   import { tutorsConnectService } from "@tutors/connect";
   import { createIdentityClient } from "@tutors/identity-sveltekit/client";
   import type { LayoutData } from "./$types";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { themeService } from "@tutors/themes";
   import { locale, SUPPORTED_LOCALES } from "@tutors/i18n";
 

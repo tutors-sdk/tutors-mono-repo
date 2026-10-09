@@ -88,7 +88,7 @@ function freePort(): Promise<number> {
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
 async function get(url: string, timeoutMs = 15_000): Promise<number> {
-  const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
+  const response = await fetch(url, { headers: { "x-forwarded-proto": "http" }, redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
   await response.arrayBuffer();
   return response.status;
 }
@@ -107,7 +107,7 @@ async function probeApp(app: string, appDir: string, paths: string[], startupBud
       NODE_ENV: "production",
       HOST: "127.0.0.1",
       PORT: String(port),
-      ORIGIN: base
+      PROTOCOL_HEADER: "x-forwarded-proto"
     },
     stdio: ["ignore", "pipe", "pipe"]
   });

@@ -25,7 +25,7 @@ patches:
       name: tutors-app-config
     patch: |
       - op: replace
-        path: /data/ORIGIN
+        path: /data/TUTORS_ORIGIN
         value: "https://time.tutors.dev"
       # Moodle sync. MOODLE_WS_TOKEN is a secret: see secrets.yaml.example.
       - op: add

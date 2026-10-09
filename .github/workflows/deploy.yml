@@ -104,7 +104,7 @@ jobs:
           echo "version=$(jq -r '.version' pins.json)" >> "$GITHUB_OUTPUT"
           echo "digests=$(jq -c '{reader: .images.reader.digest, catalogue: .images.catalogue.digest, live: .images.live.digest, time: .images.time.digest}' pins.json)" >> "$GITHUB_OUTPUT"
 
-      # A push that touched an overlay for another reason (an ORIGIN, a patch) is
+      # A push that touched an overlay for another reason (a TUTORS_ORIGIN, a patch) is
       # not a deployment. Compare newTag and digest with the previous main tip.
       - name: Did this push change a pin?
         id: changed

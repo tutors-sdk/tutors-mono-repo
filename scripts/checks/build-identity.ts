@@ -138,7 +138,7 @@ const kindOf = (path: string, contentType: string): BodyKind => {
 };
 
 async function sampleOf(base: string, path: string): Promise<Sample> {
-  const response = await fetch(`${base}${path}`, { redirect: "manual", signal: AbortSignal.timeout(20_000) });
+  const response = await fetch(`${base}${path}`, { headers: { "x-forwarded-proto": "http" }, redirect: "manual", signal: AbortSignal.timeout(20_000) });
   const contentType = response.headers.get("content-type") ?? "";
   const binary = /^(?:image|font|audio|video)\//.test(contentType) && !contentType.includes("svg");
   const body = binary ? "" : await response.text();
@@ -220,7 +220,7 @@ async function serve(app: string, env: Record<string, string>): Promise<{ base: 
   let output = "";
   const child = spawn(process.execPath, ["build/index.js"], {
     cwd: join(REPO_ROOT, "apps", app),
-    env: { ...process.env, NODE_ENV: "production", HOST: "127.0.0.1", PORT: String(port), ORIGIN: base, PUBLIC_ANON_MODE: "TRUE", LOG_LEVEL: "error", ...env },
+    env: { ...process.env, NODE_ENV: "production", HOST: "127.0.0.1", PORT: String(port), PROTOCOL_HEADER: "x-forwarded-proto", PUBLIC_ANON_MODE: "TRUE", LOG_LEVEL: "error", ...env },
     stdio: ["ignore", "pipe", "pipe"]
   });
   child.stdout?.on("data", (chunk) => (output += chunk));

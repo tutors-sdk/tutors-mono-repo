@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { variables } from "../../packages/svelte/app-config/src/env.js";
 import { createSvelteKitOptions } from "../../packages/svelte/app-config/src/svelte.js";
 import {
   APPS,
@@ -59,6 +60,17 @@ describe("GET /version on every app", () => {
 const SHARED_SVELTE_CONFIG = "packages/svelte/app-config/src/svelte.js";
 
 describe("shared SvelteKit options", () => {
+  it("declares environment variables as dynamic, with only PUBLIC_ values exposed", () => {
+    for (const [name, config] of Object.entries(variables)) {
+      expect("static" in config).toBe(false);
+      expect("public" in config && config.public).toBe(name.startsWith("PUBLIC_"));
+      expect(config.schema).toBeDefined();
+    }
+    expect(variables.PRIVATE_AUTH_SECRET).toBeDefined();
+    for (const app of APPS) {
+      expect(readText(join(REPO_ROOT, "apps", app, "src/env.js"))).toContain("@tutors/app-config/env");
+    }
+  });
   it("preserves the Node/auto choice, repo environment and warning handler", () => {
     const saved = process.env.SVELTEKIT_ADAPTER;
     try {
@@ -69,10 +81,10 @@ describe("shared SvelteKit options", () => {
       expect(options.adapter?.name).toBe("@sveltejs/adapter-node");
       expect(options.env).toEqual({ dir: "../.." });
       const warn = vi.fn();
-      options.vitePlugin?.onwarn?.({ code: "state_referenced_locally" }, warn);
+      options.onwarn?.({ code: "state_referenced_locally" }, warn);
       expect(warn).not.toHaveBeenCalled();
       const warning = { code: "other" };
-      options.vitePlugin?.onwarn?.(warning, warn);
+      options.onwarn?.(warning, warn);
       expect(warn).toHaveBeenCalledWith(warning);
       expect(createSvelteKitOptions({ env: { dir: "/fixture" } }).env).toEqual({ dir: "/fixture" });
     } finally {

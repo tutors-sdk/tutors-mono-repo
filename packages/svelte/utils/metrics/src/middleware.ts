@@ -1,4 +1,4 @@
-import type { Handle } from "@sveltejs/kit";
+import type { Handle } from "@sveltejs/kit/hooks";
 import { httpRequestDuration, httpRequestsTotal, httpRequestsInFlight } from "./metrics.ts";
 
 /** Scraped or probed continuously; instrumenting them would only add noise. */

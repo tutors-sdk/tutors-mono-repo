@@ -14,8 +14,12 @@ minimumReleaseAgeExclude:
   - dompurify@3.4.14
   - happy-dom@20.11.6
   - vite@8.2.2
+# Better Auth 1.7.7 publishes a Kit 2 peer; the built-session/browser contracts cover this exact Kit 3 pairing.
+peerDependencyRules:
+  allowedVersions:
+    "better-auth@1.7.7>@sveltejs/kit": "3.0.1"
 overrides:
-  cookie: ">=0.7.0 <1.0.0"
+  cookie@<0.7.0: ">=0.7.0 <1.0.0"
   # Security advisory remediation. Ranges are bounded to the same major so
   # consumers pinned to a major (e.g. packages/jsr/gen -> npm:js-yaml@^4.1.1)
   # keep resolving.

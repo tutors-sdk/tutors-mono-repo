@@ -1,6 +1,6 @@
 import { rune } from "@tutors/runes";
 
-// Check if we're in a browser environment (avoiding $app/environment for package compatibility)
+// Check if we're in a browser environment (avoiding $app/env for package compatibility)
 const browser = typeof window !== "undefined";
 
 function getReducedMotion(): boolean {

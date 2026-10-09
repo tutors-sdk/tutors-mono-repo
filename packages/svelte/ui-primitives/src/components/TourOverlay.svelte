@@ -2,7 +2,7 @@
   import { tourService, findTourTarget } from "@tutors/tour";
   import { t } from "@tutors/i18n";
   import { prefersReducedMotion } from "@tutors/a11y";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { afterNavigate } from "$app/navigation";
   import type { TourPlacement } from "@tutors/tour";
   import { tick } from "svelte";

@@ -200,8 +200,7 @@ IMAGE_TAG=16.3.0-rc.1 docker compose up -d
 docker compose pull && docker compose up -d   # roll forward
 ```
 
-Set each `*_ORIGIN` to the URL users reach the app on; adapter-node uses it
-for absolute URLs and CSRF checks.
+The default Compose stack uses the pinned local Caddy proxy for HTTP. It preserves the public host/port and supplies `X-Forwarded-Proto` and `X-Forwarded-Host`. For HTTPS, replace its mounted Caddyfile with your TLS configuration or attach the private app services to your trusted TLS edge. The edge must overwrite those headers; do not publish app ports directly. Kit 3 has removed runtime `ORIGIN`.
 Set `PUBLIC_*_ORIGIN` to those same four URLs so navigation stays inside the
 stack. These are runtime environment values; changing them does not rebuild an image.
 
@@ -212,13 +211,13 @@ A step-by-step walkthrough, including troubleshooting, is in
 
 ```bash
 docker compose up --build          # all four apps on ports 3000-3003
-docker compose up --build reader   # one app
+docker compose up --build reader proxy # one app
 ```
 
 Compose reads an optional `.env` in the repo root (see `.env.example`).
 Without one the apps start in anonymous mode (`PUBLIC_ANON_MODE=TRUE`), which
 needs no Supabase project. If a host port is taken, override it, for example
-`READER_PORT=3010 docker compose up reader`.
+`READER_PORT=3010 docker compose up reader proxy`.
 
 ## Image contract
 
@@ -234,11 +233,11 @@ needs no Supabase project. If a host port is taken, override it, for example
 | Request id | `x-request-id` response header (echoes a well-formed incoming one); the only per-request value in any header besides `Date` |
 | Entrypoint | `node build/index.js` (SvelteKit adapter-node) |
 
-Environment variables the server reads at startup:
+Runtime configuration and overlay metadata:
 
 | Variable | Purpose |
 | --- | --- |
-| `ORIGIN` | Public URL of the app, required for correct absolute URLs and CSRF checks |
+| `TUTORS_ORIGIN` | Overlay metadata for the Route/Ingress host; request origins come from trusted proxy headers |
 | `PUBLIC_READER_ORIGIN`, `PUBLIC_CATALOGUE_ORIGIN`, `PUBLIC_LIVE_ORIGIN`, `PUBLIC_TIME_ORIGIN` | Destinations for links between the four apps |
 | `PROTOCOL_HEADER`, `HOST_HEADER`, `ADDRESS_HEADER`, `XFF_DEPTH` | Trust proxy headers when behind a Route or Ingress |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
@@ -434,13 +433,13 @@ log line.
 
 `deploy/k8s/base` holds a shared Deployment, Service, ConfigMap and
 PodDisruptionBudget. Each overlay under `deploy/k8s/overlays/<app>` sets the
-image, the name prefix, labels and the public `ORIGIN`.
+image, the name prefix, labels and the public `TUTORS_ORIGIN`.
 
 For the parallel `next` deployment, use `deploy/k8s/next/<app>` or its
 `deploy/k8s/variants/<substrate>/next-<app>` entry point. It reuses each
 production overlay's pinned image and sets runtime ConfigMap URLs:
 
-| App | `ORIGIN` |
+| App | `TUTORS_ORIGIN` |
 | --- | --- |
 | reader | `https://next.tutors.dev` |
 | catalogue | `https://next.catalogue.tutors.dev` |
@@ -544,7 +543,7 @@ oc apply -k deploy/k8s/variants/openshift/reader
 | `components/route` | `route.openshift.io/v1` Route, edge TLS with the router's certificate, plain HTTP redirected, to the Service's `http` port |
 | `components/ingress` | `networking.k8s.io/v1` Ingress, `ingressClassName: nginx`, no TLS block, to the Service's `http` port |
 
-The host is stated once, in the overlay's `ORIGIN`. The component copies the
+The host is stated once, in the overlay's `TUTORS_ORIGIN`. The component copies the
 host out of it (`https://reader.tutors.dev` becomes `reader.tutors.dev`) and
 takes its name, labels and backend from the rendered Service. For that it has
 to sit one layer above the overlay, as the variants do:
@@ -561,14 +560,14 @@ component before that kustomization's patches and `namePrefix`, so the host
 would be the base `tutors.dev` and the backend the unprefixed Service.
 `pnpm check:k8s` fails such a rendering (`host-not-origin`,
 `backend-service-not-rendered`). The same ordering applies to a changed host:
-patch `ORIGIN` in a layer below the component (a kustomization over the
-overlay, then one that adds the component), or patch both `ORIGIN` and the
+patch `TUTORS_ORIGIN` in a layer below the component (a kustomization over the
+overlay, then one that adds the component), or patch both `TUTORS_ORIGIN` and the
 host in a kustomization over the variant and let the check confirm they agree.
-An `ORIGIN` with a port needs the second form, since a host cannot carry one.
+A `TUTORS_ORIGIN` with a port needs the second form, since a host cannot carry one.
 
-adapter-node uses `ORIGIN` as given, so an `https://` origin needs TLS in
+The proxy must supply the public protocol, so an `https://` origin needs TLS in
 front of the pod: the Route terminates it, while the Ingress needs either a
-TLS block or an `http://` `ORIGIN`. Another class or TLS is a patch in a
+TLS block or an `http://` `TUTORS_ORIGIN`. Another class or TLS is a patch in a
 kustomization over `variants/kind/<app>`:
 
 ```yaml
@@ -593,7 +592,7 @@ survive one proxy hop; raise `XFF_DEPTH` if a load balancer in front adds
 another.
 
 `pnpm check:k8s` renders the variants along with the overlays and adds entry
-point policies: the host equals the `ORIGIN` host, the backend is a rendered
+point policies: the host equals the `TUTORS_ORIGIN` host, the backend is a rendered
 Service and port, a Route terminates TLS and redirects plain HTTP, an Ingress
 names its class and any TLS block covers its host. kubeconform skips the Route
 kind only, as it is not in the Kubernetes schemas.

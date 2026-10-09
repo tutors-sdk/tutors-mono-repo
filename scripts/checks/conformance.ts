@@ -245,8 +245,8 @@ const asList = (value: unknown): Obj[] => (Array.isArray(value) ? (value as Obj[
 
 /**
  * Policies for the external entry point (OpenShift Route or Ingress) of one
- * rendered kustomization. adapter-node builds absolute URLs and checks form
- * posts against `ORIGIN`, so the exposed host must be the `ORIGIN` host; the
+ * rendered kustomization. The trusted proxy supplies the request origin, so its
+ * host must match `TUTORS_ORIGIN` deployment metadata; the
  * backend must be a Service port that is actually rendered (a component applied
  * inside an overlay misses the name prefix); a Route must terminate TLS and
  * redirect plain HTTP. Findings are `rule: Kind/name: detail`.
@@ -256,7 +256,7 @@ export function entryPointPolicyFindings(docs: Obj[]): string[] {
   const objects = docs.filter((doc) => doc && typeof doc === "object");
   const origins = objects
     .filter((doc) => doc.kind === "ConfigMap")
-    .map((doc) => (doc.data as Obj | undefined)?.ORIGIN)
+    .map((doc) => (doc.data as Obj | undefined)?.TUTORS_ORIGIN)
     .filter((origin): origin is string => typeof origin === "string" && origin !== "");
   const originHosts = new Set(origins.map((origin) => (URL.canParse(origin) ? new URL(origin).hostname : origin)));
   const servicePorts = new Map<string, Set<string>>();
@@ -267,7 +267,7 @@ export function entryPointPolicyFindings(docs: Obj[]): string[] {
 
   const checkHost = (name: string, host: unknown) => {
     if (typeof host !== "string" || host === "") findings.push(`entry-point-without-host: ${name}`);
-    else if (!originHosts.has(host)) findings.push(`host-not-origin: ${name}: ${host} (ORIGIN is ${origins.join(", ") || "not set"})`);
+    else if (!originHosts.has(host)) findings.push(`host-not-origin: ${name}: ${host} (TUTORS_ORIGIN is ${origins.join(", ") || "not set"})`);
   };
   const checkBackend = (name: string, service: unknown, port: unknown) => {
     const ports = servicePorts.get(String(service));
@@ -294,7 +294,7 @@ export function entryPointPolicyFindings(docs: Obj[]): string[] {
       if (!spec.ingressClassName) findings.push(`ingress-without-class: ${name}`);
       const rules = asList(spec.rules);
       if (rules.length === 0) findings.push(`entry-point-without-host: ${name}`);
-      if (spec.defaultBackend) findings.push(`ingress-default-backend: ${name}: answers for every host, not only ORIGIN`);
+      if (spec.defaultBackend) findings.push(`ingress-default-backend: ${name}: answers for every host, not only TUTORS_ORIGIN`);
       for (const rule of rules) {
         checkHost(name, rule.host);
         for (const path of asList((rule.http as Obj | undefined)?.paths)) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { env } from "$env/dynamic/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";

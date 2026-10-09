@@ -154,7 +154,7 @@ describe("platform conformance (runway tier J)", () => {
         }
       };
       const docs: Obj[] = [
-        { kind: "ConfigMap", metadata: { name: "reader-tutors-app-config" }, data: { ORIGIN: "https://reader.tutors.dev" } },
+        { kind: "ConfigMap", metadata: { name: "reader-tutors-app-config" }, data: { TUTORS_ORIGIN: "https://reader.tutors.dev" } },
         { kind: "Service", metadata: { name: "reader-tutors-app" }, spec: { ports: [{ name: "http", port: 80, targetPort: "http" }] } },
         route,
         ingress
@@ -162,13 +162,13 @@ describe("platform conformance (runway tier J)", () => {
       return { route, ingress, docs };
     }
 
-    it("accept a Route and an Ingress on the ORIGIN host that target a rendered Service port", () => {
+    it("accept a Route and an Ingress on the TUTORS_ORIGIN host that target a rendered Service port", () => {
       expect(entryPointPolicyFindings(compliantEntryPoints().docs)).toEqual([]);
       expect(entryPointPolicyFindings([compliantDeployment()])).toEqual([]);
     });
 
     it.each<[string, (route: Obj, ingress: Obj) => void]>([
-      ["host-not-origin: Route/reader-tutors-app: tutors.dev (ORIGIN is https://reader.tutors.dev)", (route) => (route.host = "tutors.dev")],
+      ["host-not-origin: Route/reader-tutors-app: tutors.dev (TUTORS_ORIGIN is https://reader.tutors.dev)", (route) => (route.host = "tutors.dev")],
       ["entry-point-without-host: Route/reader-tutors-app", (route) => delete route.host],
       // What a component applied inside the overlay renders: the backend misses the name prefix.
       ["backend-service-not-rendered: Route/reader-tutors-app: tutors-app", (route) => ((route.to as Obj).name = "tutors-app")],
@@ -176,7 +176,7 @@ describe("platform conformance (runway tier J)", () => {
       ["route-without-tls: Route/reader-tutors-app", (route) => delete route.tls],
       ["route-insecure-not-redirected: Route/reader-tutors-app: Allow", (route) => ((route.tls as Obj).insecureEdgeTerminationPolicy = "Allow")],
       ["route-insecure-not-redirected: Route/reader-tutors-app: unset", (route) => delete (route.tls as Obj).insecureEdgeTerminationPolicy],
-      ["host-not-origin: Ingress/reader-tutors-app: tutors.dev (ORIGIN is https://reader.tutors.dev)", (_, ingress) => ((ingress.rules as Obj[])[0].host = "tutors.dev")],
+      ["host-not-origin: Ingress/reader-tutors-app: tutors.dev (TUTORS_ORIGIN is https://reader.tutors.dev)", (_, ingress) => ((ingress.rules as Obj[])[0].host = "tutors.dev")],
       ["entry-point-without-host: Ingress/reader-tutors-app", (_, ingress) => delete (ingress.rules as Obj[])[0].host],
       [
         "backend-service-not-rendered: Ingress/reader-tutors-app: tutors-app",
@@ -184,7 +184,7 @@ describe("platform conformance (runway tier J)", () => {
       ],
       ["ingress-without-class: Ingress/reader-tutors-app", (_, ingress) => delete ingress.ingressClassName],
       [
-        "ingress-default-backend: Ingress/reader-tutors-app: answers for every host, not only ORIGIN",
+        "ingress-default-backend: Ingress/reader-tutors-app: answers for every host, not only TUTORS_ORIGIN",
         (_, ingress) => (ingress.defaultBackend = { service: { name: "reader-tutors-app", port: { name: "http" } } })
       ],
       ["ingress-tls-host-mismatch: Ingress/reader-tutors-app: reader.tutors.dev not in tls hosts", (_, ingress) => ((ingress.tls as Obj[])[0].hosts = ["tutors.dev"])],
@@ -229,7 +229,7 @@ describe("platform conformance (runway tier J)", () => {
         const production = yaml.loadAll(renderKustomization(join(REPO_ROOT, "deploy/k8s/overlays", app))) as Obj[];
         const next = yaml.loadAll(renderKustomization(join(REPO_ROOT, "deploy/k8s/next", app))) as Obj[];
         const config = next.find((doc) => doc.kind === "ConfigMap")!.data as Record<string, string>;
-        expect(config.ORIGIN).toBe(`https://${hosts[app]}`);
+        expect(config.TUTORS_ORIGIN).toBe(`https://${hosts[app]}`);
         for (const [name, host] of Object.entries(hosts)) expect(config[`PUBLIC_${name.toUpperCase()}_ORIGIN`]).toBe(`https://${host}`);
         const deployment = (docs: Obj[]) => docs.find((doc) => doc.kind === "Deployment")!;
         const pod = (docs: Obj[]) => ((((deployment(docs).spec as Obj).template as Obj).spec as Obj).containers as Obj[])[0];
@@ -265,10 +265,10 @@ describe("platform conformance (runway tier J)", () => {
     it("collects keys from dotenv files, ConfigMaps, Secrets and overlay patches", () => {
       expect([...dotenvKeys("# comment\nA=1\nexport B=\n  C=x\nlower=no\n")]).toEqual(["A", "B", "C"]);
       const keys = k8sEnvKeys([
-        { file: "cm.yaml", text: "kind: ConfigMap\ndata:\n  ORIGIN: x\n---\nkind: Secret\nstringData:\n  TOKEN: y\n" },
+        { file: "cm.yaml", text: "kind: ConfigMap\ndata:\n  TUTORS_ORIGIN: x\n---\nkind: Secret\nstringData:\n  TOKEN: y\n" },
         { file: "kustomization.yaml", text: "patches:\n  - patch: |\n      - op: add\n        path: /data/EXTRA\n" }
       ]);
-      expect([...keys].sort()).toEqual(["EXTRA", "ORIGIN", "TOKEN"]);
+      expect([...keys].sort()).toEqual(["EXTRA", "TOKEN", "TUTORS_ORIGIN"]);
     });
 
     it("negative fixture: a variable read in code but documented in neither place is reported twice", () => {

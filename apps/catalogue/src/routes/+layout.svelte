@@ -4,7 +4,7 @@
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
   import { initLocaleFromCookie, locale, t } from "@tutors/i18n";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import type { Snippet } from "svelte";
 
   type Props = { children: Snippet };

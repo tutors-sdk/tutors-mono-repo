@@ -21,10 +21,10 @@
   $effect(() => { searchTerm = query; currentLo.value = data.course; });
   onMount(() => searchInputElement?.focus());
   function search(filter = type, term = searchTerm) {
-    const url = new URL(page.url);
+    const url = new URL(page.url.href);
     term.trim() ? url.searchParams.set("q", term.trim()) : url.searchParams.delete("q");
     filter ? url.searchParams.set("type", filter) : url.searchParams.delete("type");
-    void goto(url, { keepFocus: true, noScroll: true });
+    void goto(url, { reset: false });
   }
 </script>
 <SecondaryNavigator lo={data.course} />

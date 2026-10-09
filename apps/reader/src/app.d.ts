@@ -1,4 +1,4 @@
-/// <reference types="@sveltejs/kit" />
+/// <reference types="$app/types" />
 
 import type { Actor } from "@tutors/identity";
 
