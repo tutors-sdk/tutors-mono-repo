@@ -41,6 +41,8 @@ services:
     user: "1001:1001"
     read_only: true
     cap_drop: [ALL]
+    # The official Caddy binary carries a file capability and needs it in the bounding set to execute.
+    cap_add: [NET_BIND_SERVICE]
     security_opt: [no-new-privileges:true]
     tmpfs:
       - /data:uid=1001,gid=1001
