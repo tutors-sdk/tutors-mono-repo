@@ -21,9 +21,9 @@ const list = (csv: string) => csv.split(",").map((item) => item.trim());
 describeFeature(feature, ({ Scenario }) => {
   Scenario("Display courses with active students", ({ Given, When, Then, And }) => {
     // The home page of the live app: one listener on the channel every reader broadcasts to.
-    Given("I am viewing the live dashboard", () => {
+    Given("I am viewing the live dashboard", async () => {
       freshBrowser();
-      liveService.startGlobalPresenceService();
+      await liveService.startGlobalPresenceService();
     });
     // Each student signs in to the reader and opens a lab; what reaches the dashboard is the reader's own broadcast.
     When("{number} students come online across the courses {string}", async (_ctx, count: number, courseIds: string) => {
@@ -42,9 +42,9 @@ describeFeature(feature, ({ Scenario }) => {
   Scenario("Display individual student on a course", ({ Given, When, Then, And }) => {
     const course = publishedCourse("web-dev-101");
     // The course page of the live app listens through the presence service, on the channel of that course.
-    Given("I am viewing the course detail for {string}", (_ctx, courseId: string) => {
+    Given("I am viewing the course detail for {string}", async (_ctx, courseId: string) => {
       freshBrowser();
-      presenceService.startPresenceListener(courseId);
+      await presenceService.startPresenceListener(courseId);
     });
     When("a student {string} becomes active on {string}", (_ctx, name: string, courseId: string) => {
       loEventArrives(courseId, name, course, labsOf(course)[0]);

@@ -24,6 +24,8 @@ export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
 /** A browser tab with nobody signed in, no course open and nobody online. */
 export function freshBrowser(): void {
   vi.clearAllMocks();
+  liveService.stopGlobalPresenceService();
+  presenceService.stopPresenceListener();
   recorder.reset();
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);

@@ -1,14 +1,14 @@
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import { env } from "$env/dynamic/public";
 
 import type { Course, Lo } from "@tutors/tutors-model-lib";
-import { rune, tutorsId } from "@tutors/runes";
+import { rune } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
 import log from "@tutors/logger";
 
-const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
+const BROADCAST_CONFIG = { config: { broadcast: { self: false } } };
+let courseChannelRemoval: Promise<unknown> | null = null;
 
 export const presenceService: PresenceService = {
   channelAll: null,
@@ -19,7 +19,7 @@ export const presenceService: PresenceService = {
 
   studentListener(payload: { type: string; event: string; [key: string]: any }) {
     const nextCourseEvent = payload.payload as LoRecord;
-    if (!nextCourseEvent?.courseId) return;
+    if (!nextCourseEvent?.courseId || !nextCourseEvent.user?.id) return;
 
     if (nextCourseEvent.courseId === this.listeningTo) {
       const studentEvent = this.studentEventMap.get(nextCourseEvent.user!.id);
@@ -33,35 +33,34 @@ export const presenceService: PresenceService = {
     }
   },
 
-  /**
-   * The platform-wide channel is published to, never joined.
-   *
-   * Joining it delivered every learning event on the platform to every reader, and Supabase bills each
-   * delivery: one navigation cost as many messages as there were readers online, so the bill grew with
-   * the square of the audience. The reader never registered a handler for any of it. The only listener
-   * that wants this channel is Tutors Live's landing page, so the reader keeps publishing and stops
-   * listening, and the cost falls to one message per event per dashboard watching.
+  /** Publish-only: joining here multiplies billed platform-wide deliveries by every reader.
+   * Only Tutors Live's landing page subscribes to this feed.
    */
   connectToAllCourseAccess(): void {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (this.channelAll) return;
     this.channelAll = supabase.channel("tutors-all-course-access", BROADCAST_CONFIG);
   },
 
-  startPresenceListener(courseId: string) {
+  async startPresenceListener(courseId: string) {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (this.listeningTo === courseId) return;
 
-    if (this.channelCourse) {
-      supabase.removeChannel(this.channelCourse);
-    }
+    this.stopPresenceListener();
+    this.listeningTo = courseId;
+    // Supabase reuses channels by topic, so wait until the previous instance has left.
+    if (courseChannelRemoval) await courseChannelRemoval;
+    if (this.listeningTo !== courseId || this.channelCourse) return;
 
+    this.channelCourse = supabase.channel(courseId, BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.studentListener.bind(this)).subscribe();
+  },
+
+  stopPresenceListener() {
+    if (this.channelCourse && supabase) courseChannelRemoval = supabase.removeChannel(this.channelCourse);
+    this.channelCourse = null;
+    this.listeningTo = "";
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
-    this.listeningTo = courseId;
-
-    this.channelCourse = supabase
-      .channel(courseId, BROADCAST_CONFIG)
-      .on("broadcast", { event: "lo-event" }, this.studentListener.bind(this))
-      .subscribe();
   },
 
   sendLoEvent(course: Course, lo: Lo, student: TutorsId) {
@@ -82,18 +81,27 @@ export const presenceService: PresenceService = {
       loRecord.icon = lo.icon;
     }
 
-    // httpSend, not send: the channel above is deliberately unjoined, and send() only reaches an unjoined
-    // channel through a fallback it warns is deprecated. Fire-and-forget - Tutors Live losing an event must
-    // not stop the course channel or the upsert below, but it should say so in the log rather than go quiet.
-    // Both arms are needed: httpSend rejects on a failed POST, and throws outright where the Realtime client
-    // is too old to have it at all (it landed in 2.97.0).
+    // Publish by HTTP because the global channel is deliberately never joined.
     try {
       void this.channelAll?.httpSend("lo-event", loRecord).catch((error) => log.error("Broadcast to tutors-all-course-access failed:", error));
     } catch (error) {
       log.error("Broadcast to tutors-all-course-access failed:", error);
     }
-    if (this.listeningTo !== "") {
-      this.channelCourse?.send({ type: "broadcast", event: "lo-event", payload: loRecord });
+    const message = { type: "broadcast" as const, event: "lo-event", payload: loRecord };
+    this.studentListener(message);
+    try {
+      const channel = this.listeningTo === course.courseId ? this.channelCourse : null;
+      if (channel) {
+        void channel.send(message);
+      } else {
+        // Navigation can report activity before the old course channel has finished leaving.
+        void supabase
+          .channel(course.courseId, BROADCAST_CONFIG)
+          .httpSend("lo-event", loRecord)
+          .catch((error) => log.error("Broadcast to course failed:", error));
+      }
+    } catch (error) {
+      log.error("Broadcast to course failed:", error);
     }
 
     void upsertTutorsConnectLatestLo(loRecord);

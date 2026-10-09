@@ -52,7 +52,6 @@
     }
 
     const loadingEl = document.getElementById("loading");
-    const BROADCAST_CONFIG = { config: { broadcast: { self: false }, presence: { key: "" } } };
 
     function ExcalidrawEditor({ config }) {
       const excalidrawAPIRef = useRef(null);
@@ -61,6 +60,10 @@
       const lastVersionsRef = useRef(new Map());
       const isRemoteUpdateRef = useRef(false);
       const debounceTimerRef = useRef(null);
+      const cursorTimerRef = useRef(null);
+      const pendingCursorRef = useRef(null);
+      const subscribedRef = useRef(false);
+      const hasPeersRef = useRef(true);
       const [collaborators, setCollaborators] = useState(new Map());
       // The reader's appearance: set by init-editor, then followed through "set-theme" messages.
       const [theme, setTheme] = useState(config.theme === "dark" ? "dark" : "light");
@@ -81,7 +84,10 @@
         const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
         const channelName = `wb:${config.roomId}`;
 
-        const channel = supabase.channel(channelName, BROADCAST_CONFIG);
+        const presenceKey = crypto.randomUUID();
+        const channel = supabase.channel(channelName, {
+          config: { broadcast: { self: false }, presence: { key: presenceKey } },
+        });
         channelRef.current = channel;
 
         channel
@@ -121,6 +127,7 @@
           })
           .on("presence", { event: "sync" }, () => {
             const state = channel.presenceState();
+            hasPeersRef.current = Object.keys(state).some(key => key !== presenceKey);
             const activeUserIds = new Set();
             for (const [, presences] of Object.entries(state)) {
               for (const p of presences) {
@@ -137,6 +144,7 @@
             setCollaborators(new Map(collabs));
           })
           .subscribe(async (status) => {
+            subscribedRef.current = status === "SUBSCRIBED";
             if (status === "SUBSCRIBED") {
               await channel.track({
                 userId: config.user.id,
@@ -158,7 +166,15 @@
           });
 
         return () => {
-          channel.unsubscribe();
+          clearTimeout(debounceTimerRef.current);
+          clearTimeout(cursorTimerRef.current);
+          debounceTimerRef.current = null;
+          cursorTimerRef.current = null;
+          pendingCursorRef.current = null;
+          subscribedRef.current = false;
+          hasPeersRef.current = false;
+          channelRef.current = null;
+          void supabase.removeChannel(channel);
         };
       }, [config]);
 
@@ -185,11 +201,13 @@
             versionMap.set(el.id, el.version);
           }
 
-          channel.send({
-            type: "broadcast",
-            event: "scene-update",
-            payload: { elements: changed },
-          });
+          if (hasPeersRef.current) {
+            channel.send({
+              type: "broadcast",
+              event: "scene-update",
+              payload: { elements: changed },
+            });
+          }
 
           window.parent.postMessage({
             type: "scene-changed",
@@ -199,21 +217,27 @@
       }, []);
 
       const handlePointerUpdate = useCallback((payload) => {
-        const channel = channelRef.current;
-        if (!channel) return;
+        if (!channelRef.current || !subscribedRef.current || !hasPeersRef.current) return;
+        pendingCursorRef.current = { pointer: payload.pointer, button: payload.button };
+        if (cursorTimerRef.current !== null) return;
 
-        const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
-        channel.send({
-          type: "broadcast",
-          event: "cursor-update",
-          payload: {
-            userId: config.user.id,
-            userName: config.user.name,
-            color: myColor,
-            pointer: payload.pointer,
-            button: payload.button,
-          },
-        });
+        // Coalesce pointer events to 20 broadcasts per second, keeping the final position.
+        cursorTimerRef.current = setTimeout(() => {
+          cursorTimerRef.current = null;
+          const channel = channelRef.current;
+          if (!channel || !subscribedRef.current || !hasPeersRef.current) return;
+          const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
+          channel.send({
+            type: "broadcast",
+            event: "cursor-update",
+            payload: {
+              userId: config.user.id,
+              userName: config.user.name,
+              color: myColor,
+              ...pendingCursorRef.current,
+            },
+          });
+        }, 50);
       }, [config.user]);
 
       return createElement(Excalidraw, {

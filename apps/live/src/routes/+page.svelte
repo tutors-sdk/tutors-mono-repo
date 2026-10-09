@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { t } from "@tutors/i18n";
   import { liveService } from "@tutors/community";
   import Courses from "@tutors/ui-components/time/Courses.svelte";
@@ -6,7 +7,10 @@
   import Students from "@tutors/ui-components/time/Students.svelte";
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
 
-  liveService.startGlobalPresenceService();
+  onMount(() => {
+    liveService.startGlobalPresenceService();
+    return () => liveService.stopGlobalPresenceService();
+  });
 </script>
 
 <div class="ui-page">
