@@ -1,5 +1,5 @@
 import type { ICellRendererComp, ICellRendererParams } from "ag-grid-community";
-import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
+import type { ConnectUserFieldsRow } from "#lib/connectUserFieldsRow.ts";
 import { mount, unmount } from "svelte";
 import { t } from "@tutors/i18n";
 import Icon from "@tutors/ui-primitives/components/Icon.svelte";

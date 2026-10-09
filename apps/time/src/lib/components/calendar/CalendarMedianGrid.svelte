@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { GridApi } from "ag-grid-community";
-  import { GridCalendarModel } from "$lib/components/calendar/GridCalendarModel";
+  import { GridCalendarModel } from "#lib/components/calendar/GridCalendarModel.ts";
   import type { CalendarMedianRow, TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   ModuleRegistry.registerModules([AllCommunityModule]);

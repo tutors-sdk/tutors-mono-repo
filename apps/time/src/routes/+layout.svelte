@@ -4,7 +4,7 @@
   import { initLocaleFromCookie, locale, t } from "@tutors/i18n";
   import { browser } from "$app/environment";
   import TutorsShell from "@tutors/ui-navigators/TutorsShell.svelte";
-  import Navigation from "$lib/components/Navigation.svelte";
+  import Navigation from "#lib/components/Navigation.svelte";
 
   let { children, data } = $props();
 

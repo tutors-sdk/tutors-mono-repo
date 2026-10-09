@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "@tutors/i18n";
-  import CourseIdDialog from "$lib/components/CourseIdDialog.svelte";
+  import CourseIdDialog from "#lib/components/CourseIdDialog.svelte";
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import { goto } from "$app/navigation";
   import log from "@tutors/logger";

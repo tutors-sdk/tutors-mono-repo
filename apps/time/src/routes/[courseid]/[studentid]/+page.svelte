@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TutorsTimeStudent } from "@tutors/tutors-time-lib";
-  import PinDialog from "$lib/components/PinDialog.svelte";
+  import PinDialog from "#lib/components/PinDialog.svelte";
   import HeatMaps from "@tutors/ui-components/time/HeatMaps.svelte";
   import Tables from "@tutors/ui-components/time/Tables.svelte";
   import { t } from "@tutors/i18n";

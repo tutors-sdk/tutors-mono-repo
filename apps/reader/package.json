@@ -56,5 +56,8 @@
     "zod": "^4.6.2",
     "@tutors/identity": "workspace:*",
     "@tutors/identity-sveltekit": "workspace:*"
+  },
+  "imports": {
+    "#lib/*": "./src/lib/*"
   }
 }

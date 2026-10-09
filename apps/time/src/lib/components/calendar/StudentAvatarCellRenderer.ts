@@ -1,7 +1,7 @@
 import type { ICellRendererComp, ICellRendererParams } from "ag-grid-community";
-import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
+import type { ConnectUserFieldsRow } from "#lib/connectUserFieldsRow.ts";
 import { mount, unmount } from "svelte";
-import StudentAvatar from "$lib/components/StudentAvatar.svelte";
+import StudentAvatar from "#lib/components/StudentAvatar.svelte";
 
 const GRID_AVATAR_SIZE = "size-8";
 const GRID_AVATAR_INITIAL = "text-xs";

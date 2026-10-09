@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MediansView from "$lib/components/MediansView.svelte";
+  import MediansView from "#lib/components/MediansView.svelte";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   interface Props {

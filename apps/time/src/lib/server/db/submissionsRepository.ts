@@ -1,7 +1,7 @@
 import { env } from "$env/dynamic/public";
 import { createClient } from "@supabase/supabase-js";
 import { now } from "@tutors/runtime";
-import type { MoodleAssignSubmission, MoodleModule } from "$lib/server/api/moodle";
+import type { MoodleAssignSubmission, MoodleModule } from "#lib/server/api/moodle.ts";
 
 export interface AssignmentRow {
   courseid: string;
