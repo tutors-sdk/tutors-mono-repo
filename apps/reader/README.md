@@ -22,7 +22,7 @@ The `.env` file sits at the repository root, not in this folder. With `PUBLIC_AN
 |---|---|
 | `PUBLIC_ANON_MODE` | `TRUE` turns off auth, presence and analytics |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Learning records and presence |
-| `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub sign-in (Auth.js) |
+| `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub sign-in (Better Auth) |
 | `PUBLIC_PDF_KEY` | The Adobe PDF viewer for talks |
 | `METRICS_TOKEN`, `LOG_LEVEL` | Guarding `/metrics` and the log level |
 
@@ -38,7 +38,7 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 
 - `@tutors/ui-primitives`, `@tutors/ui-navigators`, `@tutors/ui-components` provide the interface
 - `@tutors/course`, `@tutors/tutors-model-lib` load and model courses
-- `@tutors/identity`, `@tutors/identity-sveltekit` provide verified identity contracts and the Auth.js adapter
+- `@tutors/identity`, `@tutors/identity-sveltekit` provide verified identity contracts and the Better Auth adapter
 - `@tutors/connect`, `@tutors/community`, `@tutors/rbac`, `@tutors/runes` handle sign-in, presence, roles and shared state
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views

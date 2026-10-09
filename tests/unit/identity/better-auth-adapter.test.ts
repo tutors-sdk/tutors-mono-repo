@@ -13,11 +13,11 @@ vi.mock("../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index
       handles.reduceRight<(event: unknown) => unknown>((next, handle) => (event) => handle({ event, resolve: next }), resolve)(event)
 }));
 
-import { Browser, configureReader, githubAccount, githubKnows, openPage, privateEnv, send, startSignIn, signInThroughGithub } from "../../bdd/support/reader-auth.ts";
+import { Browser, configureReader, githubAccount, githubKnows, openPage, send, signInThroughGithub } from "../../bdd/support/reader-auth.ts";
 
 describe("Better Auth identity boundary", () => {
   beforeEach(() => {
-    configureReader("better-auth");
+    configureReader();
     githubKnows(githubAccount("Alice", 12345));
   });
   afterEach(() => {
@@ -39,7 +39,7 @@ describe("Better Auth identity boundary", () => {
     async (body) => {
       const browser = new Browser();
       await signInThroughGithub(browser, "/");
-      expect((await send(browser, "POST", "/api/auth/update-user", undefined, body)).status).toBe(403);
+      expect((await send(browser, "POST", "/api/auth/update-user", body)).status).toBe(403);
       expect((await openPage(browser)).actor).toMatchObject({ subject: "github:12345", login: "alice", name: "Alice" });
     }
   );
@@ -47,13 +47,13 @@ describe("Better Auth identity boundary", () => {
   it("allows a display-name update without changing the GitHub identity", async () => {
     const browser = new Browser();
     await signInThroughGithub(browser, "/");
-    expect((await send(browser, "POST", "/api/auth/update-user", undefined, { name: "Alice Updated" })).status).toBe(200);
+    expect((await send(browser, "POST", "/api/auth/update-user", { name: "Alice Updated" })).status).toBe(200);
     expect((await openPage(browser)).actor).toMatchObject({ subject: "github:12345", login: "alice", name: "Alice Updated" });
   });
 
   it("ignores OAuth additionalData that attempts to forge the provider identity", async () => {
     const browser = new Browser();
-    const started = await send(browser, "POST", "/api/auth/sign-in/social", undefined, {
+    const started = await send(browser, "POST", "/api/auth/sign-in/social", {
       provider: "github",
       callbackURL: "/",
       additionalData: { githubId: "666", login: "mallory" }
@@ -76,17 +76,15 @@ describe("Better Auth identity boundary", () => {
       { provider: "github", callbackURL: "https://attacker.test" },
       { provider: "github", errorCallbackURL: "//attacker.test" }
     ]) {
-      expect((await send(new Browser(), "POST", "/api/auth/sign-in/social", undefined, body)).status).toBe(403);
+      expect((await send(new Browser(), "POST", "/api/auth/sign-in/social", body)).status).toBe(403);
     }
-    expect((await send(new Browser(), "POST", "/api/auth/sign-in/social", undefined, { provider: "github", callbackURL: "/" }, { origin: "https://attacker.test" })).status).toBe(
-      403
-    );
+    expect((await send(new Browser(), "POST", "/api/auth/sign-in/social", { provider: "github", callbackURL: "/" }, { origin: "https://attacker.test" })).status).toBe(403);
   });
 
   it.each(["primitive", 42, null])("rejects malformed update bodies without a server error: %j", async (body) => {
     const browser = new Browser();
     await signInThroughGithub(browser, "/");
-    const response = await send(browser, "POST", "/api/auth/update-user", undefined, body);
+    const response = await send(browser, "POST", "/api/auth/update-user", body);
     expect(response.status).toBeGreaterThanOrEqual(400);
     expect(response.status).toBeLessThan(500);
   });
@@ -133,35 +131,10 @@ describe("Better Auth identity boundary", () => {
     expect(pages.map(({ actor }) => actor?.subject ?? null)).toEqual(["github:12345", "github:67890", null, "github:12345"]);
   });
 
-  it("never falls back to Auth.js, including after a malformed Better Auth cookie", async () => {
-    configureReader();
-    const browser = new Browser();
-    await signInThroughGithub(browser, "/");
-    configureReader("better-auth");
-    browser.jar.set("__Secure-better-auth.session_data", "forged");
-    expect((await openPage(browser)).actor).toBeNull();
-    expect([...browser.jar.keys()].some((name) => name.includes("authjs."))).toBe(false);
-  });
-
-  it("clears retired Better Auth cookies when switching back to Auth.js", async () => {
-    const browser = new Browser();
-    await signInThroughGithub(browser, "/");
-    configureReader("authjs");
-    expect((await openPage(browser)).actor).toBeNull();
-    expect([...browser.jar.keys()].some((name) => name.includes("better-auth."))).toBe(false);
-  });
-
-  it("rejects an invalid adapter flag and defaults an omitted flag to Auth.js", async () => {
-    privateEnv.PRIVATE_AUTH_ADAPTER = "typo";
-    await expect(openPage(new Browser())).rejects.toThrow("PRIVATE_AUTH_ADAPTER");
-    delete privateEnv.PRIVATE_AUTH_ADAPTER;
-    expect((await startSignIn(new Browser(), "/")).location).toContain("%2Fauth%2Fcallback%2Fgithub");
-  });
-
   it.each(["sign-up/email", "sign-in/email", "link-social", "unlink-account", "change-email", "update-session", "get-access-token", "delete-user"])(
     "does not expose the unused SDK endpoint %s",
     async (path) => {
-      expect((await send(new Browser(), "POST", `/api/auth/${path}`, undefined, {})).status).toBe(404);
+      expect((await send(new Browser(), "POST", `/api/auth/${path}`, {})).status).toBe(404);
     }
   );
 });

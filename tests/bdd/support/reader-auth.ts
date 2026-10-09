@@ -25,9 +25,8 @@ export const READER_ORIGIN = "https://tutors.test";
 export const privateEnv: Record<string, string | undefined> = {};
 export const publicEnv: Record<string, string | undefined> = {};
 
-export function configureReader(adapter: "authjs" | "better-auth" = "authjs"): void {
+export function configureReader(): void {
   Object.assign(privateEnv, {
-    PRIVATE_AUTH_ADAPTER: adapter,
     PRIVATE_AUTH_SECRET: AUTH_SECRET,
     PRIVATE_AUTH_GITHUB_ID: GITHUB_CLIENT_ID,
     PRIVATE_AUTH_GITHUB_SECRET: GITHUB_CLIENT_SECRET
@@ -97,7 +96,6 @@ export async function send(
   browser: Browser,
   method: "GET" | "POST",
   path: string,
-  form?: Record<string, string>,
   json?: unknown,
   requestHeaders?: Record<string, string>
 ): Promise<ReaderResponse & { page?: PageData }> {
@@ -107,12 +105,6 @@ export async function send(
   const cookie = browser.header();
   if (cookie) headers.set("cookie", cookie);
   let body: string | undefined;
-  if (form) {
-    headers.set("content-type", "application/x-www-form-urlencoded");
-    // library-specific: Auth.js's client asks for the redirect as JSON rather than a 302.
-    headers.set("x-auth-return-redirect", "1");
-    body = new URLSearchParams(form).toString();
-  }
   if (json !== undefined) {
     headers.set("content-type", "application/json");
     body = JSON.stringify(json);
@@ -122,8 +114,6 @@ export async function send(
   const pageCookies: SetCookie[] = [];
   const cookies = {
     get: (name: string) => browser.jar.get(name),
-    serialize: (name: string, value: string, options: { path: string; maxAge: number }) =>
-      `${name}=${encodeURIComponent(value)}; Path=${options.path}; Max-Age=${options.maxAge}; HttpOnly; Secure; SameSite=Lax`,
     getAll: () => [...browser.jar].map(([name, value]) => ({ name, value })),
     set: (name: string, value: string, options: Record<string, unknown> = {}) => {
       const attributes: Record<string, string | true> = {};
@@ -174,13 +164,12 @@ export async function send(
 }
 
 export function startSignIn(browser: Browser, returnTo: string) {
-  const request = signInRequest(privateEnv.PRIVATE_AUTH_ADAPTER === "better-auth" ? "better-auth" : "authjs", returnTo);
-  return send(browser, "POST", request.path, request.form, request.json);
+  const request = signInRequest(returnTo);
+  return send(browser, "POST", request.path, request.json);
 }
 
 export async function signOut(browser: Browser, returnTo: string) {
-  if (privateEnv.PRIVATE_AUTH_ADAPTER !== "better-auth") return send(browser, "POST", "/auth/signout", { callbackUrl: returnTo });
-  const response = await send(browser, "POST", "/api/auth/sign-out", undefined, {});
+  const response = await send(browser, "POST", "/api/auth/sign-out", {});
   // Better Auth returns success JSON; the browser port navigates only after that success.
   if (response.status === 200 && JSON.parse(response.body).success) response.location = new URL(returnTo, READER_ORIGIN).href;
   return response;

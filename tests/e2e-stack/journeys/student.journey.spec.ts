@@ -49,7 +49,7 @@ test.describe("anonymous student", () => {
 
 test.describe("reader with no auth configuration", () => {
   // The root compose.yaml with no .env: PUBLIC_ANON_MODE and no PRIVATE_AUTH_SECRET.
-  // Auth.js used to throw MissingSecret from the root layout and every page was a 500 (#252).
+  // The reader used to answer 500 on every page when the session secret was missing (#252).
   test("serves its home page in anonymous mode", async ({ page }) => {
     const errors = collectPageErrors(page);
     await page.goto(`${stack.readerUnconfigured}/`);

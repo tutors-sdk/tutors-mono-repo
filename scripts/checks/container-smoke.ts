@@ -226,7 +226,7 @@ async function securityFindings(app: string, base: string): Promise<string[]> {
   const gaps = new Set<string>();
   const cookies = new Set<string>();
   for (const path of paths) {
-    // As the router would forward it, so Auth.js issues the cookies it would issue in production.
+    // As the router would forward it, so the identity adapter issues the cookies it would issue in production.
     const response = await fetchWithTimeout(`${base}${path}`, { redirect: "manual", headers: { "x-forwarded-proto": "https" } }, 15_000);
     if (response.status >= 500) gaps.add(`server-error: ${app}: GET ${path}`);
     headerFindings(app, response.headers, contract).forEach((gap) => gaps.add(gap));

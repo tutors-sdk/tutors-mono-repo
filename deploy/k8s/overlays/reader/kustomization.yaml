@@ -28,7 +28,7 @@ patches:
         path: /data/ORIGIN
         value: "https://reader.tutors.dev"
 
-  # GitHub OAuth credentials for Auth.js. Create from secrets.yaml.example;
+  # GitHub OAuth credentials for Better Auth. Create from secrets.yaml.example;
   # the secret is deliberately not managed by this kustomization.
   - target:
       kind: Deployment

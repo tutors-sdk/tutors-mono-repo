@@ -54,7 +54,7 @@ describeFeature(feature, ({ Background, Rule }) => {
           expect(provider).toBe("github");
           expect(authSignIn.mock.calls).toEqual([[path]]);
         });
-        // Auth.js owns the GitHub round trip; the reader takes over again when the session arrives.
+        // The identity adapter owns the GitHub round trip; the reader takes over again when the session arrives.
         And("after authentication as {string} the reader should know me by my profile name {string}", async (_ctx, user: string, name: string) => {
           await signIn(githubUser(user));
           expect(tutorsId.value?.name).toBe(name);

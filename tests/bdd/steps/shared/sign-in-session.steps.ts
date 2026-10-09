@@ -46,7 +46,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const cookieExpiry = (cookie: SetCookie, issuedAt: number) =>
   cookie.attributes.expires ? Date.parse(String(cookie.attributes.expires)) : issuedAt + Number(cookie.attributes["max-age"]) * 1000;
 
-describe.each(["authjs", "better-auth"] as const)("%s", (adapter) => {
+describe("reader identity", () => {
   describeFeature(feature, ({ Background, Rule }) => {
     let browser: Browser;
     let last: ReaderResponse;
@@ -87,7 +87,7 @@ describe.each(["authjs", "better-auth"] as const)("%s", (adapter) => {
         vi.useRealTimers();
         for (const key of Object.keys(privateEnv)) delete privateEnv[key];
         for (const key of Object.keys(publicEnv)) delete publicEnv[key];
-        configureReader(adapter);
+        configureReader();
         browser = new Browser();
         sessionCookie = undefined;
       });

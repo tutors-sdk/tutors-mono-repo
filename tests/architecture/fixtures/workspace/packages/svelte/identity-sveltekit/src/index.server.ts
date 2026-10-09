@@ -1,1 +1,1 @@
-export { provider } from "@auth/sveltekit";
+export { provider } from "better-auth";
