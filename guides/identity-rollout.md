@@ -90,6 +90,9 @@ pnpm check:server
 pnpm check:bundle
 pnpm check:build-identity
 pnpm check:k8s
+NETLIFY=true SVELTEKIT_ADAPTER=auto pnpm --filter tutors-reader... --filter tutors-catalogue... --filter tutors-live... --filter tutors-time... build
+docker build --build-arg APP_NAME=reader -t tutors/reader:local .
+pnpm check:container --image tutors/reader:local --app reader
 ```
 
 Rules 0250–0259 use one HTTP driver. The built-reader checks exercise actual Node output and
@@ -112,8 +115,17 @@ forgery test needs Vite's module URLs and runs in the complete dev suite; built 
 independently cover forged/tampered cookies. Netlify adapters are pinned in each app because adapter-auto resolves from the app directory.
 The app-scoped Knip declaration records this dynamic dependency; no audit allowances are added.
 
-Eight real hook checks ensure expected app,
-framework and validation errors retain their messages/status and avoid unexpected-error logs.
+Eight real hook checks ensure expected app, framework and validation errors retain their
+messages/status and avoid unexpected-error logs. Local validation also covers all four generated
+Netlify handlers, the reader's HTTPS callback/port and secure cookies, and the production reader
+image as an arbitrary non-root UID with a read-only filesystem. The Compose proxy check covers
+HTTP OAuth state/refusal, custom ports, overwritten spoofed headers, JSON/form CSRF, expected 404s,
+build identity and switching the same image to anonymous mode through startup configuration.
+These local checks do not replace the deferred deployment rehearsal.
+
+The diff-aware dependency audit adds no advisories against #443. Five inherited advisories remain
+(KaTeX, source-map-js, sprintf-js, smol-toml and postcss-selector-parser); no allowances or baselines
+were changed. Supported `$env/dynamic` imports still emit Kit 3 deprecation warnings.
 
 CI targeting `main` runs built HTTP and browser identity checks and the Chromium UI contract. Stacked PRs do not trigger
 that workflow until retargeted to `main`.
