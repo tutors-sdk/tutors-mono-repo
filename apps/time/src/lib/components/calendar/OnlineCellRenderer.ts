@@ -1,7 +1,7 @@
 import type { ICellRendererComp, ICellRendererParams } from "ag-grid-community";
-import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
+import type { ConnectUserFieldsRow } from "#lib/connectUserFieldsRow.ts";
 import { mount, unmount } from "svelte";
-import OnlineIcon from "$lib/components/OnlineIcon.svelte";
+import OnlineIcon from "#lib/components/OnlineIcon.svelte";
 
 const GRID_ONLINE_ICON_SIZE = "size-6";
 

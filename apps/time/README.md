@@ -37,3 +37,5 @@ Runs on http://localhost:5176
 - `@tutors/community` for Supabase access
 - `@tutors/logger`, `@tutors/metrics` and `@tutors/runtime` for logs, `GET /metrics`, the server clock seam (`HARNESS_NOW`) and `GET /version`
 - AG Grid, Heat.js, Tailwind CSS v4 + Skeleton UI
+
+App-local imports use `#lib/*` from this app's `package.json`, with explicit file extensions. Root tests use the importing app's mapping; there is no global `#lib` alias. Neither app has a library index, so a bare `#lib` mapping is unnecessary.
