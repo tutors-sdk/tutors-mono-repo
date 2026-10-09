@@ -45,7 +45,7 @@
   // cancelled one never reaches afterNavigate, so its rejection releases the hold.
   beforeNavigate(({ willUnload, from, to, complete }) => {
     if (willUnload) return;
-    const attempt = tutorsConnectService.navigating(from?.url.pathname, to?.url.pathname);
+    const attempt = tutorsConnectService.navigating(from?.url?.pathname, to?.url?.pathname);
     complete.catch(() => tutorsConnectService.navigationAbandoned(attempt));
   });
 
@@ -54,7 +54,7 @@
     // This is the one signal that says the student actually went somewhere, so it is what separates a
     // second visit to a page from the same visit being re-reported. The effect may have run its last
     // time while the navigation was in flight, so the arrival is reported here.
-    tutorsConnectService.navigated(from?.url.pathname, to?.url.pathname);
+    tutorsConnectService.navigated(from?.url?.pathname, to?.url?.pathname);
     tutorsConnectService.learningEvent(page.params);
     if (
       currentCourse.value?.hasEnrollment &&
