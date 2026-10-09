@@ -1,5 +1,9 @@
 import { vi } from "vitest";
 import type { Actor } from "@tutors/identity";
+import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, githubResponse } from "./reader-oauth.mjs";
+import type { GithubAccount } from "./reader-oauth.mjs";
+export { GITHUB_CLIENT_ID, githubAccount } from "./reader-oauth.mjs";
+export type { GithubAccount } from "./reader-oauth.mjs";
 
 /**
  * Drives the reader's sign-in over HTTP, the way a browser and GitHub would, so the
@@ -16,7 +20,6 @@ import type { Actor } from "@tutors/identity";
  */
 
 export const READER_ORIGIN = "https://tutors.test";
-export const GITHUB_CLIENT_ID = "tutors-oauth-app";
 
 /** The reader's private and public env, read on every request. Steps change them to switch modes. */
 export const privateEnv: Record<string, string | undefined> = {};
@@ -24,19 +27,11 @@ export const publicEnv: Record<string, string | undefined> = {};
 
 export function configureReader(): void {
   Object.assign(privateEnv, {
-    PRIVATE_AUTH_SECRET: "a-test-secret-that-is-at-least-thirty-two-chars",
+    PRIVATE_AUTH_SECRET: AUTH_SECRET,
     PRIVATE_AUTH_GITHUB_ID: GITHUB_CLIENT_ID,
-    PRIVATE_AUTH_GITHUB_SECRET: "tutors-oauth-secret"
+    PRIVATE_AUTH_GITHUB_SECRET: GITHUB_CLIENT_SECRET
   });
   Object.assign(publicEnv, { PUBLIC_ANON_MODE: "FALSE" });
-}
-
-/** A GitHub account as GitHub's `/user` endpoint returns it. */
-export type GithubAccount = { id: number; login: string; name: string; email: string; avatar_url: string };
-
-export function githubAccount(name: string, id = 1000): GithubAccount {
-  const login = name.toLowerCase();
-  return { id, login, name, email: `${login}@example.com`, avatar_url: `https://avatars.example/${login}.png` };
 }
 
 /** One cookie as the reader set it, with its attributes. */
@@ -74,23 +69,12 @@ export class Browser {
   }
 }
 
-let github: GithubAccount | null = null;
-let githubRefuses = false;
-
 /** GitHub's side of the OAuth round trip: it knows one account, and either grants or refuses. */
 export function githubKnows(account: GithubAccount | null, { refuses = false } = {}): void {
-  github = account;
-  githubRefuses = refuses;
   vi.stubGlobal("fetch", async (input: string | URL | Request, init?: { method?: string }) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
-    if (url.origin === "https://github.com" && url.pathname === "/login/oauth/access_token") {
-      if (githubRefuses || !github) return Response.json({ error: "bad_verification_code" }, { status: 400 });
-      return Response.json({ access_token: "gho_test", token_type: "bearer", scope: "read:user,user:email" });
-    }
-    if (url.origin === "https://api.github.com" && url.pathname === "/user" && github) return Response.json(github);
-    if (url.origin === "https://api.github.com" && url.pathname === "/user/emails" && github) {
-      return Response.json([{ email: github.email, primary: true, verified: true }]);
-    }
+    const response = githubResponse(url, account, refuses);
+    if (response) return response;
     throw new Error(`unexpected request from the reader to ${url} (${init?.method ?? "GET"})`);
   });
 }
@@ -172,9 +156,7 @@ export const signOut = (browser: Browser, returnTo: string) => send(browser, "PO
 
 /** GitHub sends the browser back to the reader's callback, with a code or with the refusal. */
 export function returnFromGithub(browser: Browser, authorizeUrl: string, { refused = false } = {}) {
-  const callback = new URL(new URL(authorizeUrl).searchParams.get("redirect_uri")!);
-  if (refused) callback.searchParams.set("error", "access_denied");
-  else callback.searchParams.set("code", "github-code");
+  const callback = githubCallback(authorizeUrl, "github-code", refused);
   return send(browser, "GET", callback.pathname + callback.search);
 }
 

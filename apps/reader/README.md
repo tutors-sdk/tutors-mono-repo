@@ -28,7 +28,11 @@ The `.env` file sits at the repository root, not in this folder. With `PUBLIC_AN
 
 ## Tests
 
-The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm test:e2e:reader`. The config starts `pnpm dev` itself. Unit and BDD tests for the packages the reader uses are under the root `tests/`.
+The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm test:e2e:reader`. The config starts an isolated `pnpm dev` itself with authentication enabled, fixture OAuth credentials, and Supabase directed to a local discard fixture; it never reuses your running dev server. Ports 5173, 5178 and 5179 must be free.
+
+`signInAs` obtains signed session cookies through the real `/auth` routes and installs them in the browser. The server's GitHub fetches use the same provider responses as `tests/bdd/support/reader-auth.ts`, via a test-only Node preload that refuses production mode or different credentials. Lecturer role comes from intercepted course enrollment, not a client role override. Store seeding remains for rendering/presence previews and the explicit forged-identity regression.
+
+`authentication.spec.ts` covers the real sign-in button, navigation, reload, UI logout, forged identity/cookies and rejection under a different production secret. Its protected route lives in an unshipped SvelteKit fixture that runs the reader's actual hooks. It tests session resolution; replace it with #320's personal-data route when that lands to cover that route's access policy. Unit and BDD tests for the packages the reader uses are under the root `tests/`.
 
 ## Workspace packages
 
