@@ -30,6 +30,7 @@ export const init: ServerInit = async () => {
 
 const authHandle = createIdentityHandle({
   enabled: () => currentAuthMode() === "enabled",
+  adapter: () => env.PRIVATE_AUTH_ADAPTER,
   secret: env.PRIVATE_AUTH_SECRET,
   githubId: env.PRIVATE_AUTH_GITHUB_ID,
   githubSecret: env.PRIVATE_AUTH_GITHUB_SECRET

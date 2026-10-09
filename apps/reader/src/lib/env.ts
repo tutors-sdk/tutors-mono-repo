@@ -7,6 +7,7 @@ export const publicEnvSchema = z.object({
 });
 
 export const privateEnvSchema = z.object({
+  PRIVATE_AUTH_ADAPTER: z.enum(["authjs", "better-auth"]).optional(),
   PRIVATE_AUTH_GITHUB_ID: z.string().min(1, "PRIVATE_AUTH_GITHUB_ID must not be empty"),
   PRIVATE_AUTH_GITHUB_SECRET: z.string().min(1, "PRIVATE_AUTH_GITHUB_SECRET must not be empty"),
   PRIVATE_AUTH_SECRET: z.string().min(32, "PRIVATE_AUTH_SECRET must be at least 32 characters")
