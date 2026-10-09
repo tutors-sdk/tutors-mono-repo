@@ -1,7 +1,22 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
+import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } from "../../tests/bdd/support/reader-oauth.mjs";
+
+const sessionEnv = {
+  PUBLIC_ANON_MODE: "FALSE",
+  PUBLIC_SUPABASE_URL: "http://localhost:5178",
+  PUBLIC_SUPABASE_ANON_KEY: "fixture-anon-key",
+  PRIVATE_AUTH_SECRET: AUTH_SECRET,
+  PRIVATE_AUTH_GITHUB_ID: GITHUB_CLIENT_ID,
+  PRIVATE_AUTH_GITHUB_SECRET: GITHUB_CLIENT_SECRET
+};
+const oauthEnv = {
+  ...sessionEnv, NODE_ENV: "test",
+  NODE_OPTIONS: `--import=${new URL("./tests/e2e/oauth-preload.mjs", import.meta.url).href}`
+};
 
 export default defineConfig({
-  // Every test here proves a scenario of a @ui Rule in tests/bdd/features/ui (see `pnpm test:ears:audit`).
+  // Tagged tests prove @ui Rules; authentication.spec.ts also checks the server/browser session boundary.
   testDir: "./tests/e2e",
   timeout: 90_000,
   expect: { timeout: 30_000 },
@@ -20,9 +35,10 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } }
   ],
-  webServer: {
-    command: "pnpm dev",
-    port: 5173,
-    reuseExistingServer: !process.env.CI
-  }
+  webServer: [
+    { command: "pnpm dev --strictPort", cwd: fileURLToPath(new URL("../..", import.meta.url)), port: 5173, reuseExistingServer: false, env: oauthEnv },
+    { command: "node ../../tests/fixtures/reader-session/serve.mjs 5178", url: "http://localhost:5178/auth/providers", reuseExistingServer: false, env: oauthEnv },
+    { command: "node ../../tests/fixtures/reader-session/serve.mjs 5179", url: "http://localhost:5179/auth/providers", reuseExistingServer: false,
+      env: { ...sessionEnv, NODE_ENV: "production", NODE_OPTIONS: "", PRIVATE_AUTH_SECRET: "a-production-secret-distinct-from-the-test-fixture" } }
+  ]
 });
