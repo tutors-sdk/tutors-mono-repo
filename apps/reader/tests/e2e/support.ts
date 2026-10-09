@@ -1,4 +1,6 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, request, type Page } from "@playwright/test";
+
+import { githubCallback } from "../../../../tests/bdd/support/reader-oauth.mjs";
 
 export const course = "/course/reference-course";
 export const lab = "/lab/reference-course/topic-01-typical/unit-1/book-a";
@@ -12,13 +14,11 @@ export async function fitsViewport(page: Page): Promise<boolean> {
 }
 
 /**
- * Signs this browser in as "UI Preview" with one student online, by seeding the UI stores the dev
- * server has already loaded. No sign-in or presence writes are made.
- * `educator` seeds the same reader as an educator of the course, which is what the activity group's
- * class activity link is gated on. `online: 0` seeds the same signed-in sharing reader with the
- * course empty, which is the state no live course reaches on demand.
+ * Seeds a rendering/presence preview in the browser. This does not authenticate the browser
+ * or prove access to a server route. No sign-in or presence writes are made.
+ * `online: 0` renders the sharing preview with an empty course, which no live course reaches on demand.
  */
-export async function seedOneOnline(page: Page, { educator = false, online = 1 } = {}): Promise<void> {
+export async function seedOneOnline(page: Page, { online = 1 } = {}): Promise<void> {
   // The presence module is fetched as a preload, which leaves no "resource" timing entry in every
   // browser, so its URL is taken from the requests the page makes rather than from performance.
   const modules: string[] = [];
@@ -34,41 +34,48 @@ export async function seedOneOnline(page: Page, { educator = false, online = 1 }
   // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
   // runner), so seed, wait a moment, and seed again until the identity holds.
   await expect(async () => {
-    const held = await page.evaluate(async ({ urls, educator, online }) => {
+    const held = await page.evaluate(async ({ urls, online }) => {
       const { tutorsId, isEducator } = await import(urls.find(url => url.includes("/runes/src/index.svelte.ts"))!);
       const { presenceService } = await import(urls.find(url => url.includes("/community/src/services/presence.svelte.ts"))!);
       tutorsId.value = { login: "ui-preview", name: "UI Preview", share: "true", sentiment: "neutral" };
-      isEducator.value = educator;
+      isEducator.value = false;
       presenceService.studentsOnline.value = Array.from({ length: online }, () => ({ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }));
       await new Promise(resolve => setTimeout(resolve, 750));
-      return tutorsId.value?.share === "true" && isEducator.value === educator && presenceService.studentsOnline.value.length === online;
-    }, { urls: modules, educator, online });
+      return tutorsId.value?.share === "true" && isEducator.value === false && presenceService.studentsOnline.value.length === online;
+    }, { urls: modules, online });
     expect(held).toBe(true);
   }).toPass({ timeout: 20_000 });
 }
 
-/**
- * Signs this browser in as a student or a lecturer, and optionally locks routes, by seeding the UI stores the
- * dev server has loaded. Locks save only to this browser (no Supabase in dev or CI); nothing is written anywhere.
- */
-export async function signInAs(page: Page, role: "student" | "lecturer", locked: string[] = []): Promise<void> {
-  // A loaded rune module does not mean the course has mounted: its first visit clears the role.
-  await page.locator(".shell-navigation").getByRole("link", { name: "Course home", exact: true }).waitFor({ state: "attached" });
-  // The course visit can reset these stores after the page looks ready (rbacService.clear() on a slow
-  // runner), so seed, wait a moment, and seed again until the role holds.
-  await expect(async () => {
-    const held = await page.evaluate(async ({ role, locked }) => {
-      const runes = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/runes/src/index.svelte.ts"))!;
-      const { tutorsId, isEducator, contentLocks, locksLoaded } = await import(runes);
-      tutorsId.value = { login: `ui-${role}`, name: `UI ${role}`, share: "false", sentiment: "neutral" };
-      isEducator.value = role === "lecturer";
-      if (locked.length) contentLocks.value = new Map(locked.map(route => [route, true]));
-      locksLoaded.value = true;
-      await new Promise(resolve => setTimeout(resolve, 750));
-      return isEducator.value === (role === "lecturer") && tutorsId.value?.login === `ui-${role}`;
-    }, { role, locked });
-    expect(held).toBe(true);
-  }).toPass({ timeout: 20_000 });
+/** Obtains signed cookies through the reader's real OAuth routes, then hydrates its normal layout. */
+export async function signInAs(page: Page, role: "student" | "lecturer"): Promise<void> {
+  // Enrollment is course content, not a browser identity/role override.
+  await page.route("https://reference-course.netlify.app/tutors.json", async route => {
+    const response = await route.fetch();
+    const content = await response.json();
+    await route.fulfill({ response, json: { ...content, enrollment: { educators: ["lecturer"] } } });
+  });
+  const origin = new URL(page.url()).origin;
+  const http = await request.newContext({ baseURL: origin });
+  try {
+    // library-specific: Auth.js's client sign-in protocol, also exercised by reader-auth.ts.
+    const started = await http.post("/auth/signin/github", {
+      headers: { origin, "x-auth-return-redirect": "1" }, form: { callbackUrl: page.url() }
+    });
+    expect(started.ok()).toBe(true);
+    const { url } = await started.json();
+    const callback = githubCallback(url, role);
+    const completed = await http.get(callback.href, { maxRedirects: 0 });
+    expect(completed.status()).toBe(302);
+    expect(completed.headers().location).toBe(page.url());
+    const { cookies } = await http.storageState();
+    expect(cookies.some(cookie => cookie.name.endsWith("authjs.session-token"))).toBe(true);
+    await page.context().addCookies(cookies);
+  } finally {
+    await http.dispose();
+  }
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Profile menu", exact: true })).toBeVisible();
 }
 
 /**

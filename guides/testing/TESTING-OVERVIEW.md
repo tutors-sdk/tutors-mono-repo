@@ -59,7 +59,7 @@ Every command below exists in the root `package.json`.
 | `pnpm test:mutation` | Stryker over the twelve targeted modules (break at 90%), then `pnpm check:mutation-floors` |
 | `pnpm test:mutation:nightly` | Stryker over every library source file against the unit, BDD and contract suites, in place (`stryker.nightly.config.json`) |
 | `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
-| `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
+| `pnpm test:e2e:reader` | The reader's UI contract plus signed-session browser regressions. Uses isolated OAuth fixtures; runs on PRs targeting `main` in Chromium |
 | `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |
 | `pnpm e2e:stack:fixture` | Builds the fixture course (needs Deno) |
 | `pnpm e2e:stack:up` / `:down` | The tier G compose stack |
