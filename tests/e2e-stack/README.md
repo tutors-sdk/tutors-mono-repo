@@ -12,6 +12,8 @@ pnpm test:e2e:stack:ratchet            # fail on stale baseline lines
 pnpm e2e:stack:down
 ```
 
+The shared Caddy proxy owns the public HTTP ports and supplies trusted origin headers to the private Kit 3 app services.
+
 Ports in use locally? Every published port has an override
 (`READER_PORT`, `CATALOGUE_PORT`, `LIVE_PORT`, `READER_UNCONFIGURED_PORT`,
 `COURSE_PORT`, `BROKEN_COURSE_PORT`), and the journeys read the matching URLs
@@ -23,7 +25,7 @@ Ports in use locally? Every published port has an override
 | --- | --- |
 | `fixture-course/build.ts` | Builds the course with the repo's scaffolder (`packages/jsr/create`) and generator (`packages/jsr/gen`) |
 | `fixture-course/serve.mjs` | Static server with CORS; `FIXTURE_FAULT=500` makes `tutors.json` fail |
-| `compose.yaml` | The stack: `reader`, `reader-unconfigured`, `catalogue`, `live`, `course`, `course-broken` |
+| `compose.yaml` | The stack: `proxy`, `reader`, `reader-unconfigured`, `catalogue`, `live`, `course`, `course-broken` |
 | `journeys/journeys.ts` | The journeys, role and accessible-name selectors only, calling `onPage(key)` at each page |
 | `journeys/student.journey.spec.ts` | Runs the journeys with axe and reduced-motion audits at every page |
 | `journeys/negative.journey.spec.ts` | `test.fail()` journeys: prove a journey can fail, and pin known product bugs |

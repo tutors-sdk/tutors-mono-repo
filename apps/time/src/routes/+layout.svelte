@@ -2,7 +2,7 @@
   import "../app.css";
   import { themeService } from "@tutors/themes";
   import { initLocaleFromCookie, locale, t } from "@tutors/i18n";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import TutorsShell from "@tutors/ui-navigators/TutorsShell.svelte";
   import Navigation from "#lib/components/Navigation.svelte";
 

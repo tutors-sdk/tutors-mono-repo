@@ -38,7 +38,7 @@ jobs:
       - name: Create .env for SvelteKit apps
         run: cp .env.example .env
 
-      # Generates each app's .svelte-kit/tsconfig.json, which the app tsconfigs extend.
+      # Generates Kit 3 route types and manifests; tsconfigs extend $app/tsconfig.
       # Tests import app source files (e.g. legacy hooks), so every app must be synced,
       # not only the ones that get type-checked below.
       - name: Sync SvelteKit apps
@@ -543,6 +543,14 @@ jobs:
 
       - name: Prove every @ui scenario
         run: pnpm test:e2e:reader --project=chromium
+
+      - name: Build reader for the identity browser regression
+        run: SVELTEKIT_ADAPTER=node pnpm build
+
+      - name: Built reader sign-in, reload and logout
+        run: pnpm test:e2e:reader authentication.spec.ts --project=chromium --grep-invert="Forged browser identity"
+        env:
+          TEST_READER_BUILT: "1"
 
       - name: Upload report
         if: failure()

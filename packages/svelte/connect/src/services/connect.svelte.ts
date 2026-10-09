@@ -4,7 +4,7 @@
  * Supports both authenticated and anonymous modes.
  */
 
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { goto } from "$app/navigation";
 import type { Course } from "@tutors/tutors-model-lib";
 

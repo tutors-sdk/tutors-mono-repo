@@ -4,7 +4,7 @@
 # Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time>.
 #
 #   docker build --build-arg APP_NAME=reader -t tutors/reader .
-#   docker run --rm -p 3000:3000 -e ORIGIN=http://localhost:3000 tutors/reader
+#   docker compose up --no-build reader proxy # local HTTP origin headers
 #
 # Published images live at quay.io/tutors-sdk/tutors-<app> (Quay repositories
 # are exactly <org>/<repo>, so the app is part of the repository name):

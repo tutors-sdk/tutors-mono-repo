@@ -61,7 +61,7 @@
         ? rbacService.isLoLocked(lo)
         : isLoRouteLocked(pathname, contentLocks.value);
       if (blocked) {
-        void goto(courseHome, { replaceState: true });
+        void goto(courseHome, { replace: true });
         return;
       }
     }

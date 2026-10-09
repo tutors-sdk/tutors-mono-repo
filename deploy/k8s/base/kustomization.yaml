@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Shared template for every Tutors app. Each overlay sets the image, the
-# public ORIGIN and any app-specific secrets.
+# public TUTORS_ORIGIN and any app-specific secrets.
 resources:
   - deployment.yaml
   - service.yaml

@@ -25,7 +25,7 @@ patches:
       name: tutors-app-config
     patch: |
       - op: replace
-        path: /data/ORIGIN
+        path: /data/TUTORS_ORIGIN
         value: "https://reader.tutors.dev"
 
   # GitHub OAuth credentials for Better Auth. Create from secrets.yaml.example;

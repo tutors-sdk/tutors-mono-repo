@@ -1,7 +1,7 @@
 # Local stack: builds and runs all four apps from this checkout.
 #
 #   docker compose up --build            # all apps
-#   docker compose up --build reader     # just one
+#   docker compose up --build reader proxy # just one
 #
 # Runtime configuration comes from an optional .env file in the repo root
 # (see .env.example). With no .env the apps start in anonymous mode.
@@ -47,6 +47,23 @@ x-app: &app
     start_period: 10s
 
 services:
+  proxy:
+    image: docker.io/library/caddy:2@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
+    user: "1001:1001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /data:uid=1001,gid=1001
+      - /config:uid=1001,gid=1001
+    volumes:
+      - ./deploy/local/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "${READER_PORT:-3000}:3000"
+      - "${CATALOGUE_PORT:-3001}:3001"
+      - "${LIVE_PORT:-3002}:3002"
+      - "${TIME_PORT:-3003}:3003"
+
   reader:
     <<: *app
     image: ${TUTORS_IMAGE_PREFIX:-tutors/}reader:${TUTORS_TAG:-local}
@@ -55,10 +72,9 @@ services:
       args:
         <<: *build-args
         APP_NAME: reader
-    ports:
-      - "${READER_PORT:-3000}:3000"
     environment:
-      ORIGIN: http://localhost:${READER_PORT:-3000}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
 
   catalogue:
@@ -69,10 +85,9 @@ services:
       args:
         <<: *build-args
         APP_NAME: catalogue
-    ports:
-      - "${CATALOGUE_PORT:-3001}:3000"
     environment:
-      ORIGIN: http://localhost:${CATALOGUE_PORT:-3001}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
 
   live:
@@ -83,10 +98,9 @@ services:
       args:
         <<: *build-args
         APP_NAME: live
-    ports:
-      - "${LIVE_PORT:-3002}:3000"
     environment:
-      ORIGIN: http://localhost:${LIVE_PORT:-3002}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
 
   time:
@@ -97,8 +111,7 @@ services:
       args:
         <<: *build-args
         APP_NAME: time
-    ports:
-      - "${TIME_PORT:-3003}:3000"
     environment:
-      ORIGIN: http://localhost:${TIME_PORT:-3003}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}

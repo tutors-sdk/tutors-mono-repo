@@ -15,7 +15,7 @@ vi.mock("$env/dynamic/public", () => ({
   }
 }));
 
-vi.mock("$app/environment", () => ({ browser: false }));
+vi.mock("$app/env", () => ({ browser: false }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
 vi.mock("../../../packages/svelte/community/src/index.ts", () => ({

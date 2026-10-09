@@ -7,7 +7,7 @@ import { cardStepForType, homeSteps, openMenuStep } from "../../../../packages/s
 
 vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 const environment = vi.hoisted(() => ({ browser: true }));
-vi.mock("$app/environment", () => environment);
+vi.mock("$app/env", () => environment);
 
 const feature = await loadFeature("tests/bdd/features/developer/guided-tour.feature");
 

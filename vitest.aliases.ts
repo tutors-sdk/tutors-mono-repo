@@ -33,7 +33,7 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/logger": resolve(root, "packages/svelte/utils/logger/src/index.ts"),
   "@tutors/metrics": resolve(root, "packages/svelte/utils/metrics/src/index.ts"),
   "@tutors/runtime": resolve(root, "packages/svelte/utils/runtime/src/index.ts"),
-  "$app/environment": resolve(root, "tests/support/sveltekit-stubs.ts"),
+  "$app/env": resolve(root, "tests/support/sveltekit-stubs.ts"),
   "$app/navigation": resolve(root, "tests/support/sveltekit-stubs.ts"),
   "$app/paths": resolve(root, "tests/support/sveltekit-stubs.ts"),
   // gen-lib's npm imports (plain and Deno `npm:` specifiers)

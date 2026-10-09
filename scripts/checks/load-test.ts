@@ -246,7 +246,6 @@ async function main() {
       "--env-file", join(REPO_ROOT, ".env.example"),
       "--env", "LOG_LEVEL=warn",
       "--env", "PUBLIC_ANON_MODE=TRUE",
-      "--env", `ORIGIN=http://${app}:3000`,
       options.image
     ]);
     await waitHealthy(network, app);
