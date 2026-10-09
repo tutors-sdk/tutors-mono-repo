@@ -56,6 +56,10 @@ export interface TutorsConnectService {
   lastLearningEvent: string;
   /** Set by {@link TutorsConnectService.navigated}; makes the next learning event report. */
   pendingNavigation: boolean;
+  /** True from {@link TutorsConnectService.navigating} until {@link TutorsConnectService.navigated}; no learning event reports meanwhile. */
+  navigationInFlight: boolean;
+  /** Tells the service a navigation has started, so nothing is reported until it lands. */
+  navigating(): void;
   /** Tells the service the student arrived at a page, so the next report is a genuine page load. */
   navigated(): void;
   learningEvent(params: Record<string, string>): void;

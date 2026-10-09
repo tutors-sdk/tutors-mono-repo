@@ -21,6 +21,7 @@ import { CourseTime } from "../../../../packages/jsr/time/src/services/course-ti
 import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
 import { formatDate } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
+import { currentLo } from "../../../../packages/svelte/runes/src/index.svelte.ts";
 import { supabaseProfile } from "../../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
 import type { CourseVisit } from "../../../../packages/svelte/connect/src/types.ts";
 
@@ -195,6 +196,36 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
       And("the last reported event shall carry the sentiment {string}", (_ctx, sentiment: string) => {
         expect(reported("Alice").at(-1)?.user?.sentiment).toBe(sentiment);
       });
+    });
+  });
+
+  Rule("When a student moves to another learning object, the reader shall report one learning event, for the learning object they arrive at.", ({ RuleScenario }) => {
+    const reported = (name: string) => recorder.sentOn(ALL_COURSES_CHANNEL).map((message) => message.payload as LoRecord).filter((payload) => payload.user?.fullName === name);
+    /** The route params SvelteKit gives a lab page: `/lab/[courseid]/[...loid]`. */
+    const paramsOf = (lab: number) => {
+      const [, , courseid, ...loid] = labsOf(course)[lab - 1].route.split("/");
+      return { courseid, loid: loid.join("/") };
+    };
+
+    RuleScenario("The learning object loading before the address changes is not reported as a page", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", (_ctx, lab: number, times: number) => view(course.courseId, lab, times));
+      // What the course layout sees on a client-side move: navigation starts, the destination's load sets
+      // `currentLo` while `page.params` still names the page being left, so the layout's effect runs with
+      // the old address and the new learning object. Only when SvelteKit commits do the params catch up.
+      And("the student moves to lab {number}, which loads before the address changes", async (_ctx, lab: number) => {
+        const leaving = paramsOf(lab - 1);
+        tutorsConnectService.navigating();
+        currentLo.value = labsOf(course)[lab - 1];
+        tutorsConnectService.learningEvent(leaving);
+        tutorsConnectService.navigated();
+        tutorsConnectService.learningEvent(paramsOf(lab));
+        await settle();
+      });
+      Then("the system shall count {number} page load for lab {number} and {number} for lab {number}", (_ctx, first: number, firstLab: number, second: number, secondLab: number) => {
+        expect(learningRecord(course.courseId, firstLab)).toMatchObject({ count: first });
+        expect(learningRecord(course.courseId, secondLab)).toMatchObject({ count: second });
+      });
+      And("the reader shall have reported {number} learning events for {string}", (_ctx, count: number, name: string) => expect(reported(name)).toHaveLength(count));
     });
   });
 });

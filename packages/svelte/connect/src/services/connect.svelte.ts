@@ -192,7 +192,20 @@ export const tutorsConnectService: TutorsConnectService = {
   /** The first page of a session is arrived at, so there is a navigation to report from the start. */
   pendingNavigation: true,
 
+  /**
+   * Nothing is reported while a navigation is in flight. The destination's load sets `currentLo` before
+   * SvelteKit commits the new `page.params`, so a report taken mid-flight pairs the page being left with
+   * the learning object being arrived at, and counts a page load nobody made. Starts true: the first page
+   * of a session is still being arrived at until the layout's first `afterNavigate`.
+   */
+  navigationInFlight: true,
+
+  navigating(): void {
+    this.navigationInFlight = true;
+  },
+
   navigated(): void {
+    this.navigationInFlight = false;
     this.pendingNavigation = true;
   },
 
@@ -214,7 +227,7 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param params - Event parameters to record
    */
   learningEvent(params: Record<string, string>): void {
-    if (anonMode) return;
+    if (anonMode || this.navigationInFlight) return;
     if (currentCourse.value && currentLo.value && tutorsId.value) {
       const identity = [params.loid ?? "", currentLo.value.route, tutorsId.value.login ?? "", tutorsId.value.sentiment ?? "", tutorsId.value.share ?? ""].join("|");
       if (!this.pendingNavigation && identity === this.lastLearningEvent) return;
