@@ -53,6 +53,12 @@ Feature: Sign-in and session
       And the page should show me signed in 29 days from now
       And the page should show me signed out 31 days from now
 
+    Scenario: Visiting a page renews the session for another 30 days
+      Given I have signed in through GitHub as "Alice"
+      When I visit the reader 29 days later
+      Then my renewed session cookie should expire another 30 days later
+      And the page should show me signed in 31 days after the original sign-in
+
   @rule-0254 @ears-unwanted
   Rule: If a request carries a session cookie that the reader did not issue, then the reader shall treat the visitor as signed out.
 

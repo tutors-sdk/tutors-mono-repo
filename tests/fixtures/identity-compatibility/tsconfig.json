@@ -1,0 +1,6 @@
+{
+  "extends": "$app/tsconfig",
+  "include": ["src", "vite.config.js"],
+  "exclude": ["src/service-worker"],
+  "compilerOptions": { "strict": true, "skipLibCheck": true, "types": ["$app/types", "node"] }
+}

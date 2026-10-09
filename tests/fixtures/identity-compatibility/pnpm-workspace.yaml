@@ -1,0 +1,8 @@
+strictPeerDependencies: true
+allowBuilds:
+  esbuild: true
+peerDependencyRules:
+  allowedVersions:
+    "better-auth@1.7.7>@sveltejs/kit": "3.0.1"
+minimumReleaseAgeExclude:
+  - vite@8.3.4
