@@ -37,6 +37,12 @@
 # Reset to `claims: []` when the next release branch is cut. Field reference:
 # release/README.md here, claims/README.md in the harness repository.
 claims:
+  - artefact: dom
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
+  - artefact: screenshot
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
   # Accessibility fixes the Paper rebuild (#313) made. axe found each on production
   # (16.2.2) and not on main, and the Main-to-RC run listed them as unclaimed.
   - artefact: axe
