@@ -3,13 +3,16 @@ import adapterAuto from '@sveltejs/adapter-auto';
 import adapterNode from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
+// Kit 2 forwards vitePlugin.onwarn but omits it from PluginOptions; Kit 3 accepts onwarn directly.
+/** @typedef {NonNullable<Parameters<typeof import('@sveltejs/kit/vite').sveltekit>[0]> & { vitePlugin?: Pick<import('@sveltejs/vite-plugin-svelte').Options, 'onwarn'> }} SvelteKitOptions */
+
 /**
  * The SvelteKit config every Tutors app shares.
  *
- * @param {import('@sveltejs/kit').Config} [overrides] top-level keys replace the base; `kit` is merged key by key
- * @returns {import('@sveltejs/kit').Config}
+ * @param {SvelteKitOptions} [overrides] options replace shared defaults
+ * @returns {SvelteKitOptions}
  */
-export function createSvelteConfig(overrides = {}) {
+export function createSvelteKitOptions(overrides = {}) {
   // SVELTEKIT_ADAPTER=node produces a self-contained Node server (build/index.js)
   // for the container image. Anything else keeps adapter-auto, which detects the
   // hosting platform (Netlify) at build time.
@@ -27,21 +30,16 @@ export function createSvelteConfig(overrides = {}) {
   return {
     preprocess: vitePreprocess(),
 
-    onwarn(warning, defaultHandler) {
-      // Ignore state_referenced_locally warning globally
-      // These are Svelte 5 best practice warnings about reactivity
-      // The code works correctly but could be improved by using $derived/$effect
-      if (warning.code === 'state_referenced_locally') return;
-      defaultHandler(warning);
+    vitePlugin: {
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'state_referenced_locally') return;
+        defaultHandler(warning);
+      }
     },
 
-    ...overrides,
-
-    kit: {
-      adapter,
-      ...(buildName ? { version: { name: buildName } } : {}),
-      env: { dir: '../..' },
-      ...overrides.kit
-    }
+    adapter,
+    ...(buildName ? { version: { name: buildName } } : {}),
+    env: { dir: '../..' },
+    ...overrides
   };
 }

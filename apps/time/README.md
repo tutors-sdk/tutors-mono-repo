@@ -30,7 +30,7 @@ Runs on http://localhost:5176
 ## Technology
 
 - SvelteKit + Svelte 5
-- `@tutors/app-config` for the shared `vite.config.ts` / `svelte.config.js` (build time only)
+- `@tutors/app-config` for the shared Vite-based SvelteKit configuration (build time only)
 - `@tutors/tutors-time-lib` for course time, calendar and lab models
 - `@tutors/ui-navigators`, `@tutors/ui-components` and `@tutors/ui-primitives` for the shell, heatmaps, tables and icons
 - `@tutors/themes` and `@tutors/i18n` for themes and interface text

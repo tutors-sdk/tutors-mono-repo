@@ -102,7 +102,7 @@ describe("security contracts (runway tier M)", () => {
     });
 
     it.each(APPS)("apps/%s keeps SvelteKit's cross-site form check on", (app) => {
-      const file = `apps/${app}/svelte.config.js`;
+      const file = `apps/${app}/vite.config.ts`;
       expect(csrfConfigFindings(file, readText(join(REPO_ROOT, file)))).toEqual([]);
     });
 
