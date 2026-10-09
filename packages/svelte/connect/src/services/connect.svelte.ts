@@ -81,6 +81,9 @@ export const tutorsConnectService: TutorsConnectService = {
           localStorage.removeItem("loginCourse");
           goto(`/course/${courseId}`);
         }
+        if (currentCourse.value && tutorsId.value.share === "true") {
+          void presenceService.startPresenceListener(currentCourse.value.courseId);
+        }
       }
     }
   },
@@ -105,6 +108,11 @@ export const tutorsConnectService: TutorsConnectService = {
         localStorage.share = tutorsId.value.share = "true";
       }
       const login = tutorsId.value.login;
+      if (tutorsId.value.share === "true" && login && currentCourse.value) {
+        void presenceService.startPresenceListener(currentCourse.value.courseId);
+      } else {
+        presenceService.stopPresenceListener();
+      }
       if (login && !anonMode) {
         const onlineStatus = tutorsId.value.share === "true" ? "online" : "offline";
         void updateTutorsConnectUserOnlineStatus(login, onlineStatus).catch((err) => log.error("Failed to update online status:", err));
@@ -145,7 +153,11 @@ export const tutorsConnectService: TutorsConnectService = {
       updateCourseList(course);
       this.profile.logCourseVisit(course);
     }
-    presenceService.startPresenceListener(course.courseId);
+    if (tutorsId.value?.login && tutorsId.value.share === "true") {
+      void presenceService.startPresenceListener(course.courseId);
+    } else {
+      presenceService.stopPresenceListener();
+    }
     if (course.authLevel! > 0 && !tutorsId.value?.login) {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);

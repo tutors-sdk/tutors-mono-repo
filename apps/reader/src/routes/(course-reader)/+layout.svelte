@@ -1,7 +1,8 @@
 <script lang="ts">
   import CourseShell from "@tutors/ui-navigators/TutorsShell.svelte";
-  import type { Snippet } from "svelte";
+  import { onDestroy, type Snippet } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
+  import { presenceService } from "@tutors/community";
   import { page } from "$app/state";
   import { currentCourse, isEducator, contentLocks, locksLoaded, tutorsId } from "@tutors/runes";
   import { rbacService, isLoRouteLocked } from "@tutors/rbac";
@@ -13,12 +14,11 @@
 
 
   tutorsConnectService.startTimer();
+  onDestroy(() => presenceService.stopPresenceListener());
 
   let lastCourseId = "";
   let roleLoadedForCourse = "";
   $effect(() => {
-    tutorsConnectService.learningEvent(page.params);
-
     const course = currentCourse.value;
     const courseId = course?.courseId;
     if (!courseId) return;
@@ -28,9 +28,11 @@
       tutorsConnectService.courseVisit(course);
       lastCourseId = courseId;
       roleLoadedForCourse = "";
+      tutorsConnectService.learningEvent(page.params);
       return;
     }
 
+    tutorsConnectService.learningEvent(page.params);
     const login = tutorsId.value?.login;
     if (course.hasEnrollment && login && roleLoadedForCourse !== courseId) {
       rbacService.loadRole(login, courseId, course);
