@@ -42,6 +42,18 @@ describe("GET /version on every app", () => {
     const apps = walk(join(REPO_ROOT, "apps"), (name) => name === "package.json").map((file) => toPosix(join(file, ".."), join(REPO_ROOT, "apps")));
     expect([...apps].sort()).toEqual([...APPS].sort());
   });
+
+  it("every app reports the release version, because each bakes APP_VERSION from its own manifest", () => {
+    // `createViteConfig` reads the calling app's package.json, so a release that bumps only the root
+    // manifest ships apps that report the version before it - in /version, in the footer and in the
+    // startup log. 16.2.3 went out that way. The overlay tags are checked elsewhere; this is the half
+    // of the version that the running app speaks for itself.
+    const version = (manifest: string) => JSON.parse(readText(join(REPO_ROOT, manifest))).version as string;
+    const release = version("package.json");
+    expect(Object.fromEntries(APPS.map((app) => [app, version(join("apps", app, "package.json"))]))).toEqual(
+      Object.fromEntries(APPS.map((app) => [app, release]))
+    );
+  });
 });
 
 const SHARED_SVELTE_CONFIG = "packages/svelte/app-config/src/svelte.js";

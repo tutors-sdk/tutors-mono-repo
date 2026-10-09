@@ -52,6 +52,12 @@ export interface TutorsConnectService {
   favouriteCourse(courseId: string): void;
   unfavouriteCourse(courseId: string): void;
 
+  /** Identity of the last reported learning event, so a repeat of it can be dropped. */
+  lastLearningEvent: string;
+  /** Set by {@link TutorsConnectService.navigated}; makes the next learning event report. */
+  pendingNavigation: boolean;
+  /** Tells the service the student arrived at a page, so the next report is a genuine page load. */
+  navigated(): void;
   learningEvent(params: Record<string, string>): void;
   startTimer(): void;
   stopTimer(): void;
