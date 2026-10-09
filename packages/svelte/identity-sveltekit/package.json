@@ -13,7 +13,8 @@
     "@auth/core": "^0.41.3",
     "@auth/sveltekit": "^1.11.3",
     "@tutors/identity": "workspace:*",
-    "@tutors/logger": "workspace:*"
+    "@tutors/logger": "workspace:*",
+    "better-auth": "1.7.7"
   },
   "peerDependencies": {
     "@sveltejs/kit": "^2.70.3"

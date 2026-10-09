@@ -2,7 +2,10 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } from "../../tests/bdd/support/reader-oauth.mjs";
 
+const adapter = process.env.PRIVATE_AUTH_ADAPTER || "authjs";
+if (adapter !== "authjs" && adapter !== "better-auth") throw new Error("Invalid test auth adapter");
 const sessionEnv = {
+  PRIVATE_AUTH_ADAPTER: adapter,
   PUBLIC_ANON_MODE: "FALSE",
   PUBLIC_SUPABASE_URL: "http://localhost:5178",
   PUBLIC_SUPABASE_ANON_KEY: "fixture-anon-key",
@@ -37,8 +40,8 @@ export default defineConfig({
   ],
   webServer: [
     { command: "pnpm dev --strictPort", cwd: fileURLToPath(new URL("../..", import.meta.url)), port: 5173, reuseExistingServer: false, env: oauthEnv },
-    { command: "node ../../tests/fixtures/reader-session/serve.mjs 5178", url: "http://localhost:5178/auth/providers", reuseExistingServer: false, env: oauthEnv },
-    { command: "node ../../tests/fixtures/reader-session/serve.mjs 5179", url: "http://localhost:5179/auth/providers", reuseExistingServer: false,
+    { command: "node ../../tests/fixtures/reader-session/serve.mjs 5178", url: "http://localhost:5178/rest/v1/ready", reuseExistingServer: false, env: oauthEnv },
+    { command: "node ../../tests/fixtures/reader-session/serve.mjs 5179", url: "http://localhost:5179/rest/v1/ready", reuseExistingServer: false,
       env: { ...sessionEnv, NODE_ENV: "production", NODE_OPTIONS: "", PRIVATE_AUTH_SECRET: "a-production-secret-distinct-from-the-test-fixture" } }
   ]
 });

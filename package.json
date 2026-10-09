@@ -23,6 +23,7 @@
     "test:mutation": "npx stryker run",
     "test:mutation:nightly": "stryker run stryker.nightly.config.json",
     "test:e2e": "pnpm test:e2e:reader && pnpm test:e2e:catalogue && pnpm test:e2e:live",
+    "test:identity:built": "node tests/fixtures/reader-session/built.mjs",
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",

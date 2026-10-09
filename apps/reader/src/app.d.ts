@@ -10,6 +10,7 @@ declare global {
       locale: string;
       /** Verified identity for this request, resolved by the server adapter. */
       actor: Actor | null;
+      identityAdapter: "authjs" | "better-auth";
       /** Correlation id set by the request logger hook; echoed as x-request-id. */
       requestId?: string;
     }

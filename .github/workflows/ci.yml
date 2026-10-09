@@ -403,6 +403,9 @@ jobs:
       - name: Smoke test the built servers
         run: pnpm check:server
 
+      - name: Prove both identity adapters against the built reader
+        run: pnpm test:identity:built
+
       # Starts each built server with the commit above and a sentinel build date and looks for them
       # anywhere but GET /version: headers, pages, the error page, /_app/version.json and every built file.
       - name: Check build identity is answered by /version only
@@ -514,9 +517,13 @@ jobs:
   # The reader's @ui Rules (tests/bdd/features/ui): every scenario is a Playwright test in
   # apps/reader/tests/e2e, run against the dev server. Release candidates add Firefox and WebKit.
   ui-contract:
-    name: UI contract (reader, Chromium)
+    name: UI contract (reader, Chromium, ${{ matrix.adapter }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        adapter: [authjs, better-auth]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -540,12 +547,14 @@ jobs:
 
       - name: Prove every @ui scenario
         run: pnpm test:e2e:reader --project=chromium
+        env:
+          PRIVATE_AUTH_ADAPTER: ${{ matrix.adapter }}
 
       - name: Upload report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ui-contract-report
+          name: ui-contract-report-${{ matrix.adapter }}
           path: apps/reader/playwright-report/
           retention-days: 14
 

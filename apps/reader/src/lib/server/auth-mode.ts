@@ -1,9 +1,9 @@
 /**
- * Whether the reader runs Auth.js for this deployment.
+ * Whether the reader runs authentication for this deployment.
  *
  * - `enabled`: normal sign-in with GitHub.
  * - `anonymous`: `PUBLIC_ANON_MODE=TRUE` turns authentication off entirely.
- * - `unconfigured`: no `PRIVATE_AUTH_SECRET`. Auth.js would throw `MissingSecret`
+ * - `unconfigured`: no `PRIVATE_AUTH_SECRET`. The provider cannot verify sessions
  *   from the root layout on every request, so the reader serves courses
  *   anonymously instead and logs the misconfiguration once at startup.
  */

@@ -1,6 +1,6 @@
 import { expect, request, type Page } from "@playwright/test";
 
-import { githubCallback } from "../../../../tests/bdd/support/reader-oauth.mjs";
+import { githubCallback, signInRequest, isSessionCookie } from "../../../../tests/bdd/support/reader-oauth.mjs";
 
 export const course = "/course/reference-course";
 export const lab = "/lab/reference-course/topic-01-typical/unit-1/book-a";
@@ -58,9 +58,10 @@ export async function signInAs(page: Page, role: "student" | "lecturer"): Promis
   const origin = new URL(page.url()).origin;
   const http = await request.newContext({ baseURL: origin });
   try {
-    // library-specific: Auth.js's client sign-in protocol, also exercised by reader-auth.ts.
-    const started = await http.post("/auth/signin/github", {
-      headers: { origin, "x-auth-return-redirect": "1" }, form: { callbackUrl: page.url() }
+    const adapter = process.env.PRIVATE_AUTH_ADAPTER === "better-auth" ? "better-auth" : "authjs";
+    const start = signInRequest(adapter, page.url());
+    const started = await http.post(start.path, {
+      headers: { origin, "x-auth-return-redirect": "1" }, form: start.form, data: start.json
     });
     expect(started.ok()).toBe(true);
     const { url } = await started.json();
@@ -69,7 +70,7 @@ export async function signInAs(page: Page, role: "student" | "lecturer"): Promis
     expect(completed.status()).toBe(302);
     expect(completed.headers().location).toBe(page.url());
     const { cookies } = await http.storageState();
-    expect(cookies.some(cookie => cookie.name.endsWith("authjs.session-token"))).toBe(true);
+    expect(cookies.some(cookie => isSessionCookie(cookie.name))).toBe(true);
     await page.context().addCookies(cookies);
   } finally {
     await http.dispose();
