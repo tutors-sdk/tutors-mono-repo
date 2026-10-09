@@ -13,7 +13,7 @@
  *      isomorphic-dompurify, in v16.2.0) throws the first time a route
  *      imports it. Static, so it names the chunk.
  *   2. http-5xx: `node build/index.js` is started with only the placeholder
- *      values from .env.example and PUBLIC_ANON_MODE=FALSE (Auth.js on), and
+ *      values from .env.example and PUBLIC_ANON_MODE=FALSE (authentication enabled), and
  *      every path in tests/security/header-contract.json for the app must
  *      answer below 500. That list includes /auth and /auth/<courseid>, which
  *      answered 500 on the v16.2.0 reader image. Dynamic, so it also catches
@@ -102,7 +102,7 @@ async function probeApp(app: string, appDir: string, paths: string[], startupBud
     env: {
       ...process.env,
       ...parseEnvFile(readText(join(REPO_ROOT, ".env.example"))),
-      // Auth.js on: the anonymous mode never reaches the sign-in code paths.
+      // authentication enabled: the anonymous mode never reaches the sign-in code paths.
       PUBLIC_ANON_MODE: "FALSE",
       NODE_ENV: "production",
       HOST: "127.0.0.1",

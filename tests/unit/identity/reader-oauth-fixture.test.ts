@@ -8,8 +8,8 @@ const env = { ...process.env, NODE_OPTIONS: "", NODE_ENV: "test", PRIVATE_AUTH_S
 
 describe("shared reader OAuth fixture", () => {
   it("echoes state and preserves the callback URL for success and refusal", () => {
-    const authorize = "https://github.com/login/oauth/authorize?redirect_uri=https%3A%2F%2Ftutors.test%2Fauth%2Fcallback%2Fgithub&state=opaque-state";
-    expect(githubCallback(authorize, "student").href).toBe("https://tutors.test/auth/callback/github?code=student&state=opaque-state");
+    const authorize = "https://github.com/login/oauth/authorize?redirect_uri=https%3A%2F%2Ftutors.test%2Fapi%2Fauth%2Fcallback%2Fgithub&state=opaque-state";
+    expect(githubCallback(authorize, "student").href).toBe("https://tutors.test/api/auth/callback/github?code=student&state=opaque-state");
     expect(githubCallback(authorize, "ignored", true).searchParams.get("error")).toBe("access_denied");
     expect(() => githubCallback("https://github.com/login/oauth/authorize")).toThrow("redirect_uri");
   });

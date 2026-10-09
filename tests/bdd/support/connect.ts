@@ -53,7 +53,7 @@ export function freshBrowser(): void {
   liveService.courseEventMap.clear();
 }
 
-/** The identity Auth.js hands the reader for a GitHub user. */
+/** The identity the identity adapter hands the reader for a GitHub user. */
 export function githubUser(name: string): TutorsId {
   const login = name.toLowerCase();
   return { name, login, email: `${login}@example.com`, image: `https://avatars.example/${login}.png`, share: "true", sentiment: "neutral" };
@@ -78,7 +78,7 @@ export function labsOf(course: Course): Lo[] {
   return [...new Set(course.loIndex.values())].filter((lo) => lo.type === "lab");
 }
 
-/** What the reader's root layout does once Auth.js reports a session. */
+/** What the reader's root layout does once the identity adapter reports a session. */
 export async function signIn(user: TutorsId): Promise<void> {
   await tutorsConnectService.reconnect(user);
   await settle();

@@ -56,10 +56,10 @@ module.exports = {
     ...layerRules,
     {
       name: "identity-provider-only-in-adapter",
-      comment: "Auth.js and Better Auth belong to the identity adapter; consumers depend on identity contracts.",
+      comment: "Better Auth belongs to the identity adapter; consumers depend on identity contracts.",
       severity: "error",
       from: { path: "^(apps|packages)/", pathNot: "^packages/svelte/identity-sveltekit/" },
-      to: { path: "(^|/)(@auth/|@better-auth/|better-auth(/|$))" }
+      to: { path: "(^|/)(@better-auth/|better-auth(/|$))" }
     },
     {
       name: "identity-contracts-self-contained",
@@ -73,7 +73,7 @@ module.exports = {
       comment: "Browser entry points cannot reach server adapters or private environment modules, even through a shared barrel.",
       severity: "error",
       from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/svelte/identity-sveltekit/src/client\\.ts$)" },
-      to: { path: "(\\.server\\.[jt]s$|/server/|\\$env/(static|dynamic)/private|(^|/)(?:better-auth/(?:dist/)?(?:auth/|api/|cookies/|integrations/|index\\.)|@auth/(core/|sveltekit/(?!dist/client\\.))))", reachable: true }
+      to: { path: "(\\.server\\.[jt]s$|/server/|\\$env/(static|dynamic)/private|(^|/)(?:better-auth/(?:dist/)?(?:auth/|api/|cookies/|integrations/|index\\.)))", reachable: true }
     },
     {
       name: "no-app-to-app",

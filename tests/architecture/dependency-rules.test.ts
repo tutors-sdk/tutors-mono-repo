@@ -14,7 +14,6 @@ const FIXTURE_ALIASES = {
   "@tutors/runes": fixture("packages/svelte/runes/src/index.ts"),
   "@tutors/themes": fixture("packages/svelte/themes/src/index.ts"),
   "@tutors/connect": fixture("packages/svelte/connect/src/index.ts"),
-  "@auth/sveltekit": fixture("external/@auth/sveltekit/index.ts"),
   "better-auth": fixture("external/better-auth/index.ts"),
   "@sveltejs/kit": fixture("external/sveltekit.ts"),
   "@supabase/supabase-js": fixture("external/supabase.ts"),
@@ -39,14 +38,13 @@ describe("architecture rules (runway tier A)", () => {
     }, 60_000);
 
     it.each([
-      ["identity-provider-only-in-adapter", "apps/reader/src/lib/provider.ts", "external/@auth/sveltekit/index.ts"],
+      ["identity-provider-only-in-adapter", "apps/reader/src/lib/provider.ts", "external/better-auth/index.ts"],
       ["identity-provider-only-in-adapter", "packages/svelte/connect/src/provider.ts", "external/better-auth/index.ts"],
       ["identity-contracts-self-contained", "packages/jsr/identity/src/framework.ts", "external/sveltekit.ts"],
       ["identity-contracts-self-contained", "packages/jsr/identity/src/database.ts", "external/supabase.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/leak.client.ts", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/Leak.svelte", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/secret.client.ts", "external/$env/dynamic/private.ts"],
-      ["identity-no-server-in-browser", "packages/svelte/identity-sveltekit/src/provider.client.ts", "external/@auth/sveltekit/index.ts"],
       ["identity-no-server-in-browser", "packages/svelte/identity-sveltekit/src/better-auth.client.ts", "external/better-auth/index.ts"],
       ["layer-foundation", "packages/jsr/model/src/reaches-up.ts", "packages/svelte/runes/src/index.ts"],
       ["layer-core", "packages/svelte/course/src/tree.ts", "packages/svelte/themes/src/index.ts"],

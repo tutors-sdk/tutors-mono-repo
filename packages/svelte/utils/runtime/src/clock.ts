@@ -11,7 +11,7 @@
  * session expiry, or any other security decision. Those must follow real time;
  * a frozen clock there would hide latency or keep an expired session alive.
  * Nothing in this module patches `Date`, so code that does not import it (all
- * of Auth.js, for one) is unaffected.
+ * of the identity SDK, for one) is unaffected.
  */
 
 export const CLOCK_ENV = "HARNESS_NOW";

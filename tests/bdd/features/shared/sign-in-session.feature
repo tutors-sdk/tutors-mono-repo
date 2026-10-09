@@ -3,8 +3,8 @@ Feature: Sign-in and session
   I want to sign in with GitHub and stay signed in
   So that the reader knows who I am on every page
 
-  These Rules pin what the reader does today, over HTTP, so that moving from Auth.js
-  to another auth library (issue #416) can be checked against them. Only the driver in
+  These Rules pin what the reader does today, over HTTP, so that changes
+  to the identity implementation (issue #416) can be checked against them. Only the driver in
   tests/bdd/support/reader-auth.ts knows which library is behind the reader.
 
   Background:

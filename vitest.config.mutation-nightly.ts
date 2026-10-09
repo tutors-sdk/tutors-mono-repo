@@ -10,7 +10,6 @@ export default defineConfig({
     ],
     exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**"],
     setupFiles: ["tests/support/no-network.ts"],
-    server: { deps: { inline: ["@auth/sveltekit"] } },
   },
   resolve: { alias: workspaceAliases },
 });

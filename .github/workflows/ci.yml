@@ -177,7 +177,7 @@ jobs:
           MATRIX_APP: ${{ matrix.app }}
 
       # .env.example runs the image anonymously. The reader is the only app with a
-      # sign-in flow, so probe it again with Auth.js on: the release harness found
+      # sign-in flow, so probe it again with authentication enabled: the release harness found
       # /auth/<courseid> answering 500 (jsdom's __dirname in the ESM server bundle)
       # in exactly this mode.
       - name: Smoke test the image with authentication enabled
@@ -397,7 +397,7 @@ jobs:
       - name: Check bundle budgets
         run: pnpm check:bundle
 
-      # The built server, run with Auth.js on: no CommonJS globals in the ES module
+      # The built server, run with authentication enabled: no CommonJS globals in the ES module
       # bundle, and no 5xx on the routes in tests/security/header-contract.json
       # (v16.2.0 answered 500 on /auth/<courseid>). Needs no Docker.
       - name: Smoke test the built servers
@@ -517,13 +517,9 @@ jobs:
   # The reader's @ui Rules (tests/bdd/features/ui): every scenario is a Playwright test in
   # apps/reader/tests/e2e, run against the dev server. Release candidates add Firefox and WebKit.
   ui-contract:
-    name: UI contract (reader, Chromium, ${{ matrix.adapter }})
+    name: UI contract (reader, Chromium)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        adapter: [authjs, better-auth]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -547,14 +543,12 @@ jobs:
 
       - name: Prove every @ui scenario
         run: pnpm test:e2e:reader --project=chromium
-        env:
-          PRIVATE_AUTH_ADAPTER: ${{ matrix.adapter }}
 
       - name: Upload report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ui-contract-report-${{ matrix.adapter }}
+          name: ui-contract-report
           path: apps/reader/playwright-report/
           retention-days: 14
 
