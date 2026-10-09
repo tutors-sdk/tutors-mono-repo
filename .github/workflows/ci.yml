@@ -430,7 +430,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-)'; then
+          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model|types)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-|scripts/checks/lib/tutors-json\.ts)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"

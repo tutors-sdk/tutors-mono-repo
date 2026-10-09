@@ -36,3 +36,9 @@ changed from June 2026 on, with its charts and the scripts that measure them.
 |---|---|
 | [RBAC.md](RBAC.md) | Set up educator roles and content locking with `enrollment.yaml` |
 | [WHITEBOARD.md](WHITEBOARD.md) | Embed and use collaborative whiteboards |
+
+## Architecture
+
+| Guide | Read it to |
+|---|---|
+| [SHARED-TYPES.md](SHARED-TYPES.md) | Use `@tutors/tutors-types`, and see the plan for moving existing code onto it |

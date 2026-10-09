@@ -11,6 +11,10 @@
  * and their reasons: MASKS in generator-compare.ts), diffs them and requires
  * every hunk to be claimed in tests/generator/claims.yaml.
  *
+ * The candidate's tutors.json must also conform to TUTORS_JSON_SCHEMA in
+ * @tutors/tutors-types (Rule 0263), in both modes; the base is not held to it,
+ * so a base from before the schema still compares.
+ *
  * Nightly mode regenerates the `nightly: true` courses at their upstream HEAD
  * with the working-tree generator and diffs against the snapshot stored by the
  * previous night, so upstream content changes are seen before a lecturer
@@ -41,6 +45,7 @@ import {
   type Snapshot
 } from "./generator-compare.ts";
 import { REPO_ROOT } from "./lib/repo.ts";
+import { tutorsJsonErrors } from "./lib/tutors-json.ts";
 
 // Outside tests/ so Vitest never collects the materialised generator trees.
 const WORK = join(REPO_ROOT, ".generator-diff");
@@ -186,7 +191,7 @@ function sourceFor(entry: CorpusEntry, upstreamHead = false): { dir: string; rev
  */
 const COURSES = join(tmpdir(), "tutors-generator-diff");
 
-function generate(tree: string, generator: GeneratorName, source: string, corpus: string): Snapshot {
+function generate(tree: string, generator: GeneratorName, source: string, corpus: string, { conform = false } = {}): Snapshot {
   const course = join(COURSES, corpus);
   if (course.includes(".")) {
     throw new Error(`course path ${course} contains a "." and would trip the lab step id bug in older base generators; set TMPDIR to a dot-free directory`);
@@ -213,7 +218,20 @@ function generate(tree: string, generator: GeneratorName, source: string, corpus
   if (!existsSync(output)) throw new Error(`${corpus}/${generator} produced no ${outputFolder(generator)}/ folder`);
   const snapshot = snapshotDirectory(output, course);
   if (generator === "tutors-lite") assertLocalTemplates(tree, snapshot, `${corpus}/${generator}`);
+  if (conform && generator === "tutors") assertConforms(join(output, "tutors.json"), `${corpus}/${generator}`);
   return snapshot;
+}
+
+/** Rule 0263: the tutors.json a candidate generator writes conforms to the schema in @tutors/tutors-types. */
+function assertConforms(file: string, label: string) {
+  const errors = tutorsJsonErrors(JSON.parse(readFileSync(file, "utf8")));
+  if (errors.length === 0) return;
+  const shown = errors.slice(0, 20).map((error) => `  tutors.json${error}`).join("\n");
+  const more = errors.length > 20 ? `\n  ... and ${errors.length - 20} more` : "";
+  throw new Error(
+    `${label} wrote a tutors.json that does not conform to TUTORS_JSON_SCHEMA (packages/jsr/types/src/tutors-json.ts). ` +
+      `Change the schema with the generator, then pnpm generate:tutors-json-schema:\n${shown}${more}`
+  );
 }
 
 /**
@@ -279,7 +297,7 @@ function runDifferential(options: Options): number {
         annotate("warning", message.split("\n")[0]);
       }
       try {
-        const candidate = generate(candidateTree, generator, dir, entry.name);
+        const candidate = generate(candidateTree, generator, dir, entry.name, { conform: true });
         saveSnapshot(join(options.report, "candidate"), entry.name, generator, candidate);
         const found = base ? diffSnapshots(entry.name, generator, base, candidate) : [];
         hunks.push(...found);
@@ -373,7 +391,7 @@ function runNightly(options: Options): number {
     (meta.upstream as Record<string, string>)[entry.name] = revision;
     for (const generator of generatorsFor(entry, options)) {
       try {
-        const snapshot = generate(candidateTree, generator, dir, entry.name);
+        const snapshot = generate(candidateTree, generator, dir, entry.name, { conform: true });
         saveSnapshot(current, entry.name, generator, snapshot);
         const before = loadSnapshot(previous, entry.name, generator);
         if (!before) {

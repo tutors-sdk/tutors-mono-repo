@@ -1,6 +1,8 @@
 # Authentication Integration
 
-These scenarios are specification prose, not executed. Every one of them describes the GitHub OAuth flow as a person sees it: a click on "Sign in with GitHub", a redirect to GitHub, the callback, a session cookie, a redirect to the sign-in page, a profile in the header. In the reader that flow is Auth.js (`@auth/sveltekit`) wired up in `apps/reader/src/hooks.server.ts` and the `(auth)` routes; it needs a running SvelteKit server, a browser and a GitHub OAuth counterpart, none of which exist in Node Vitest, and the product holds no Node-callable function that decides any of these outcomes. The only authentication logic the reader owns outright is whether Auth.js runs at all, and that is covered: `tests/unit/reader/auth-mode.test.ts` drives `authMode()` in `apps/reader/src/lib/server/auth-mode.ts`, and tier G (`tests/e2e-stack/journeys/student.journey.spec.ts`, "reader with no auth configuration") proves the reader serves pages when no secret is set. Tier M (`tests/security/security.test.ts`) checks the flags of the cookies Auth.js sets and the CSRF origin check, as static contracts. `apps/reader/tests/e2e/smoke.spec.ts` opens the auth page. Beyond that, no tier covers this today: nothing signs in through GitHub, signs out, returns an OAuth callback error, expires a session or fails the network during sign-in.
+These two scenarios are specification prose, not executed. The rest of the GitHub OAuth flow is now executable: `tests/bdd/features/shared/sign-in-session.feature` (Rules 0250–0259) drives the reader's `hooks.server.ts` over HTTP with GitHub stubbed at `fetch`, covering starting sign-in, the callback, the session the pages see, its 30-day lifetime, forged and tampered cookies, a refused sign-in, sign-out, anonymous mode, a missing secret and the session cookie's flags. Those Rules were written to pin today's behaviour before the move off Auth.js (issue #416).
+
+What stays here needs a browser: the profile in the header is rendered by a Svelte component, and nothing in the reader detects or retries a network failure during sign-in. Tier M (`tests/security/security.test.ts`) still checks the cookie flags and the CSRF origin check as static contracts.
 
 ```gherkin
 @developer @ears-event-driven @ears-unwanted
@@ -8,30 +10,6 @@ Feature: Authentication Integration
   As a developer
   I want GitHub OAuth authentication to work reliably
   So that users can connect their identities to the platform
-
-  @ears-event-driven
-  Scenario: Sign in with GitHub
-    When a user clicks "Sign in with GitHub"
-    Then the system shall redirect to GitHub's OAuth flow
-    And upon successful authorisation the system shall create a session
-
-  @ears-event-driven
-  Scenario: Sign out clears session
-    When an authenticated user clicks disconnect
-    Then the system shall clear the session
-    And the system shall redirect to the home page
-
-  @ears-unwanted
-  Scenario: Handle OAuth callback error
-    If GitHub returns an error during the OAuth callback
-    Then the system shall display an error message
-    And the system shall not create a session
-
-  @ears-unwanted
-  Scenario: Handle expired session
-    If a user's session token has expired
-    Then the system shall redirect to the sign-in page
-    And the system shall not display protected content
 
   @ears-event-driven
   Scenario: Session persists across page navigation

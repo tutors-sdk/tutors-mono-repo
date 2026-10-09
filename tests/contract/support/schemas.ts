@@ -95,49 +95,9 @@ export const RealtimeChannelSchema = z.object({
   type: z.enum(["global", "course"]),
 });
 
-const LoBaseSchema = z.object({
-  type: z.string(),
-  id: z.string(),
-  title: z.string(),
-  summary: z.string(),
-  contentMd: z.string(),
-  route: z.string(),
-  authLevel: z.number(),
-  img: z.string(),
-  video: z.string(),
-  hide: z.boolean(),
-});
-
-const LabStepSchema = z.object({
-  title: z.string(),
-  shortTitle: z.string(),
-  contentMd: z.string(),
-  route: z.string(),
-  id: z.string(),
-  type: z.string(),
-});
-
-const TopicSchema = z.object({
-  type: z.literal("topic"),
-  id: z.string(),
-  title: z.string(),
-  route: z.string(),
-  los: z.array(LoBaseSchema),
-});
-
-export const CourseJsonSchema = z.object({
-  type: z.literal("course"),
-  id: z.string(),
-  title: z.string(),
-  summary: z.string(),
-  route: z.string(),
-  courseId: z.string(),
-  courseUrl: z.string(),
-  authLevel: z.number(),
-  isPortfolio: z.boolean(),
-  isPrivate: z.boolean(),
-  los: z.array(z.union([TopicSchema, LoBaseSchema])),
-});
+// tutors.json is not described here: its contract is TUTORS_JSON_SCHEMA in @tutors/tutors-types
+// (packages/jsr/types/src/tutors-json.ts), checked against real generator output in
+// tests/contract/course/course-json.contract.test.ts.
 
 // ---------------------------------------------------------------------------
 // Whiteboard collaboration schemas
@@ -240,7 +200,6 @@ export type ConnectProfile = z.infer<typeof ConnectProfileSchema>;
 export type ConnectCourse = z.infer<typeof ConnectCourseSchema>;
 export type ConnectLatest = z.infer<typeof ConnectLatestSchema>;
 export type LoRecord = z.infer<typeof LoRecordSchema>;
-export type CourseJson = z.infer<typeof CourseJsonSchema>;
 export type WhiteboardSceneInit = z.infer<typeof WhiteboardSceneInitSchema>;
 export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
 export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
