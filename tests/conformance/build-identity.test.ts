@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createSvelteKitOptions } from "../../packages/svelte/app-config/src/svelte.js";
 import {
   APPS,
   buildIdentityFindings,
@@ -58,6 +58,30 @@ describe("GET /version on every app", () => {
 
 const SHARED_SVELTE_CONFIG = "packages/svelte/app-config/src/svelte.js";
 
+describe("shared SvelteKit options", () => {
+  it("preserves the Node/auto choice, repo environment and warning handler", () => {
+    const saved = process.env.SVELTEKIT_ADAPTER;
+    try {
+      delete process.env.SVELTEKIT_ADAPTER;
+      expect(createSvelteKitOptions().adapter?.name).toBe("@sveltejs/adapter-auto");
+      process.env.SVELTEKIT_ADAPTER = "node";
+      const options = createSvelteKitOptions();
+      expect(options.adapter?.name).toBe("@sveltejs/adapter-node");
+      expect(options.env).toEqual({ dir: "../.." });
+      const warn = vi.fn();
+      options.vitePlugin?.onwarn?.({ code: "state_referenced_locally" }, warn);
+      expect(warn).not.toHaveBeenCalled();
+      const warning = { code: "other" };
+      options.vitePlugin?.onwarn?.(warning, warn);
+      expect(warn).toHaveBeenCalledWith(warning);
+      expect(createSvelteKitOptions({ env: { dir: "/fixture" } }).env).toEqual({ dir: "/fixture" });
+    } finally {
+      if (saved === undefined) delete process.env.SVELTEKIT_ADAPTER;
+      else process.env.SVELTEKIT_ADAPTER = saved;
+    }
+  });
+});
+
 describe("the sources that read build identity", () => {
   const isSource = (name: string) => /\.(ts|svelte|js)$/.test(name);
   const sources = [...walk(join(REPO_ROOT, "apps"), isSource), ...walk(join(REPO_ROOT, "packages"), isSource)]
@@ -72,8 +96,8 @@ describe("the sources that read build identity", () => {
   });
 
   it.each(APPS)("%s takes its SvelteKit config from the shared helper", (app) => {
-    const config = readText(join(REPO_ROOT, "apps", app, "svelte.config.js"));
-    expect(config).toContain("from '@tutors/app-config/svelte'");
+    const config = readText(join(REPO_ROOT, "apps", app, "vite.config.ts"));
+    expect(config).toContain("from '@tutors/app-config/vite'");
     expect(config).not.toMatch(/\bkit\s*:/);
   });
 
@@ -85,17 +109,15 @@ describe("the sources that read build identity", () => {
     expect(config).toMatch(/version:\s*\{\s*name:\s*buildName\s*\}/);
   });
 
-  it.each(APPS)("%s names a Netlify build after its commit too (COMMIT_REF when there is no GIT_SHA)", async (app) => {
+  it("names a Netlify build after its commit too (COMMIT_REF when there is no GIT_SHA)", async () => {
     // tutors.dev is deployed by hand from Netlify; without this its build is named after the clock and says nothing
     // about what it runs (release harness rollback report, tutors-sdk/tutors-release-harness#38).
-    const configFile = join(REPO_ROOT, "apps", app, "svelte.config.js");
     const load = async (env: Record<string, string | undefined>) => {
       const saved = { GIT_SHA: process.env.GIT_SHA, COMMIT_REF: process.env.COMMIT_REF };
       Object.assign(process.env, env);
       for (const [k, v] of Object.entries(env)) if (v === undefined) delete process.env[k];
       try {
-        const mod = await import(`${pathToFileURL(configFile).href}?${Math.random()}`);
-        return mod.default.kit.version?.name as string | undefined;
+        return createSvelteKitOptions().version?.name;
       } finally {
         for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
       }
