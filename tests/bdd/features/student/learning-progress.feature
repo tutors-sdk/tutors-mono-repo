@@ -70,3 +70,15 @@ Feature: Learning Progress Tracking
       And the student moves to lab 2, which loads before the address changes
       Then the system shall count 1 page load for lab 1 and 1 for lab 2
       And the reader shall have reported 2 learning events for "Alice"
+
+    Scenario: A jump within the same page is not a new page load
+      When the student views lab 1 of the course 1 times
+      And the student jumps to a heading on the same page
+      Then the system shall increment the page load count for the lab to 1
+      And the reader shall have reported 1 learning event for "Alice"
+
+    Scenario: A move the student cancels does not hold back later reports
+      When the student views lab 1 of the course 1 times
+      And the student starts to move to lab 2 but cancels
+      And the student changes their sentiment to "confused"
+      Then the reader shall have reported 2 learning events for "Alice"

@@ -41,16 +41,20 @@
 
   // Mid-flight, the destination's learning object is in place before `page.params` is, so the effect above
   // would report the page being left paired with the one being arrived at. Hold reports until it lands.
-  beforeNavigate(({ willUnload }) => {
-    if (!willUnload) tutorsConnectService.navigating();
+  // A navigation can still be cancelled after this (the quiz asks before a student leaves it), and a
+  // cancelled one never reaches afterNavigate, so its rejection releases the hold.
+  beforeNavigate(({ willUnload, from, to, complete }) => {
+    if (willUnload) return;
+    const attempt = tutorsConnectService.navigating(from?.url.pathname, to?.url.pathname);
+    complete.catch(() => tutorsConnectService.navigationAbandoned(attempt));
   });
 
-  afterNavigate(({ to }) => {
+  afterNavigate(({ from, to }) => {
     // The effect above runs again whenever any of the course, the learning object or the id resolves.
     // This is the one signal that says the student actually went somewhere, so it is what separates a
     // second visit to a page from the same visit being re-reported. The effect may have run its last
     // time while the navigation was in flight, so the arrival is reported here.
-    tutorsConnectService.navigated();
+    tutorsConnectService.navigated(from?.url.pathname, to?.url.pathname);
     tutorsConnectService.learningEvent(page.params);
     if (
       currentCourse.value?.hasEnrollment &&

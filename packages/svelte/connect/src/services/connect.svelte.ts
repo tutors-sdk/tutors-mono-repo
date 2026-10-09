@@ -199,13 +199,26 @@ export const tutorsConnectService: TutorsConnectService = {
    * of a session is still being arrived at until the layout's first `afterNavigate`.
    */
   navigationInFlight: true,
+  navigationAttempt: 0,
 
-  navigating(): void {
+  /**
+   * A navigation has started. One that keeps the path - an anchor, the skip link, a search filter - is
+   * not a move to another page, so it holds nothing. Returns the attempt, for {@link navigationAbandoned}.
+   */
+  navigating(from?: string, to?: string): number {
+    if (from !== undefined && from === to) return this.navigationAttempt;
     this.navigationInFlight = true;
+    return ++this.navigationAttempt;
   },
 
-  navigated(): void {
+  /** A navigation was cancelled before it landed, so no `afterNavigate` will release the hold it set. */
+  navigationAbandoned(attempt: number): void {
+    if (attempt === this.navigationAttempt) this.navigationInFlight = false;
+  },
+
+  navigated(from?: string, to?: string): void {
     this.navigationInFlight = false;
+    if (from !== undefined && from === to) return;
     this.pendingNavigation = true;
   },
 
