@@ -39,7 +39,7 @@ Feature: Live Presence
     And the system shall not broadcast their activity to others
     And their name shall not appear in the online list
 
-  @rule-0250 @ears-unwanted
+  @rule-0271 @ears-unwanted
   Rule: If a learning event is published for a course the student is not reading, then the reader shall not receive it.
 
     Scenario: Events from another course never reach the reader
