@@ -25,5 +25,5 @@ patches:
       name: tutors-app-config
     patch: |
       - op: replace
-        path: /data/ORIGIN
+        path: /data/TUTORS_ORIGIN
         value: "https://live.tutors.dev"

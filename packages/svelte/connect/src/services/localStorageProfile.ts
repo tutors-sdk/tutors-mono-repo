@@ -4,7 +4,7 @@
  * Implements the ProfileStore interface for persistent client-side storage
  */
 
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import type { Course, IconType } from "@tutors/tutors-model-lib";
 import type { CourseVisit, ProfileStore } from "../types.ts";
 
