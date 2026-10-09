@@ -1144,7 +1144,6 @@ app/
 │   ├── app.html          # HTML template
 │   └── app.d.ts          # TypeScript definitions
 ├── static/               # Static assets
-├── svelte.config.js
 ├── vite.config.ts
 └── package.json
 ```
@@ -1810,7 +1809,7 @@ pnpm build
 # Outputs to build/
 ```
 
-**Build Configuration** (`vite.config.ts`, `svelte.config.js`):
+**Build Configuration** (`vite.config.ts`):
 
 Every app builds on the shared helpers in `@tutors/app-config` (`packages/svelte/app-config`) and overrides only what is unique to it:
 
@@ -1818,13 +1817,9 @@ Every app builds on the shared helpers in `@tutors/app-config` (`packages/svelte
 // vite.config.ts
 import { createViteConfig } from "@tutors/app-config/vite";
 export default createViteConfig(import.meta.url /*, { ...vite overrides } */);
-
-// svelte.config.js
-import { createSvelteConfig } from "@tutors/app-config/svelte";
-export default createSvelteConfig(/* { kit: { ...overrides } } */);
 ```
 
-`createViteConfig` reads `.env` from the repo root, sets `APP_VERSION` from the app's `package.json`, the Tailwind and SvelteKit plugins, and bundles every `@tutors/*` package into the server build (`ssr.noExternal`). `createSvelteConfig` picks the adapter: `adapter-auto` (detects Netlify, Vercel, Cloudflare) by default, `adapter-node` when `SVELTEKIT_ADAPTER=node`, which is what the container image sets. It also reads `.env` from the repo root and, when the build has a `GIT_SHA`, names the SvelteKit build after a hash of it so two builds of one commit are identical.
+`createViteConfig` reads `.env` from the repo root, sets `APP_VERSION` from the app's `package.json`, adds the Tailwind and SvelteKit plugins, and bundles every `@tutors/*` package into the server build (`ssr.noExternal`). It supplies the plugin options from `createSvelteKitOptions` in `@tutors/app-config/svelte`: `adapter-auto` (detects Netlify, Vercel, Cloudflare) by default, or `adapter-node` when `SVELTEKIT_ADAPTER=node`, which is what the container image sets. The shared options also read `.env` from the repo root and, when the build has a `GIT_SHA`, name the SvelteKit build after a hash of it so two builds of one commit are identical. Vite overrides are the helper's second argument; flattened SvelteKit option overrides are its third argument.
 
 **Environment Variables** (production):
 
