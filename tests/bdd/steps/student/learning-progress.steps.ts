@@ -21,6 +21,7 @@ import { CourseTime } from "../../../../packages/jsr/time/src/services/course-ti
 import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
 import { formatDate } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
+import { currentLo } from "../../../../packages/svelte/runes/src/index.svelte.ts";
 import { supabaseProfile } from "../../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
 import type { CourseVisit } from "../../../../packages/svelte/connect/src/types.ts";
 
@@ -195,6 +196,69 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
       And("the last reported event shall carry the sentiment {string}", (_ctx, sentiment: string) => {
         expect(reported("Alice").at(-1)?.user?.sentiment).toBe(sentiment);
       });
+    });
+  });
+
+  Rule("When a student moves to another learning object, the reader shall report one learning event, for the learning object they arrive at.", ({ RuleScenario }) => {
+    const reported = (name: string) => recorder.sentOn(ALL_COURSES_CHANNEL).map((message) => message.payload as LoRecord).filter((payload) => payload.user?.fullName === name);
+    const reportedCount = (_ctx: unknown, count: number, name: string) => expect(reported(name)).toHaveLength(count);
+    const viewLab = (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
+    /** The route params SvelteKit gives a lab page: `/lab/[courseid]/[...loid]`. */
+    const paramsOf = (lab: number) => {
+      const [, , courseid, ...loid] = labsOf(course)[lab - 1].route.split("/");
+      return { courseid, loid: loid.join("/") };
+    };
+
+    RuleScenario("The learning object loading before the address changes is not reported as a page", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      // What the course layout sees on a client-side move: navigation starts, the destination's load sets
+      // `currentLo` while `page.params` still names the page being left, so the layout's effect runs with
+      // the old address and the new learning object. Only when SvelteKit commits do the params catch up.
+      And("the student moves to lab {number}, which loads before the address changes", async (_ctx, lab: number) => {
+        const leaving = paramsOf(lab - 1);
+        tutorsConnectService.navigating(labsOf(course)[lab - 2].route, labsOf(course)[lab - 1].route);
+        currentLo.value = labsOf(course)[lab - 1];
+        tutorsConnectService.learningEvent(leaving);
+        tutorsConnectService.navigated();
+        tutorsConnectService.learningEvent(paramsOf(lab));
+        await settle();
+      });
+      Then("the system shall count {number} page load for lab {number} and {number} for lab {number}", (_ctx, first: number, firstLab: number, second: number, secondLab: number) => {
+        expect(learningRecord(course.courseId, firstLab)).toMatchObject({ count: first });
+        expect(learningRecord(course.courseId, secondLab)).toMatchObject({ count: second });
+      });
+      And("the reader shall have reported {number} learning events for {string}", reportedCount);
+    });
+
+    // An anchor link, the skip link or a search filter changes the hash or query, which SvelteKit treats
+    // as a navigation, but the student is still on the same page.
+    RuleScenario("A jump within the same page is not a new page load", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student jumps to a heading on the same page", async () => {
+        const path = labsOf(course)[0].route;
+        tutorsConnectService.navigating(path, path);
+        tutorsConnectService.navigated(path, path);
+        // The same params `openLo` reported the view with: the page has not changed.
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the system shall increment the page load count for the lab to {number}", (_ctx, count: number) => expect(learningRecord(course.courseId, 1)).toMatchObject({ count }));
+      And("the reader shall have reported {number} learning event for {string}", reportedCount);
+    });
+
+    // The quiz asks before a student leaves it; declining cancels the navigation, so no `afterNavigate` follows.
+    RuleScenario("A move the student cancels does not hold back later reports", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student starts to move to lab {number} but cancels", (_ctx, lab: number) => {
+        const attempt = tutorsConnectService.navigating(labsOf(course)[0].route, labsOf(course)[lab - 1].route);
+        tutorsConnectService.navigationAbandoned(attempt);
+      });
+      And("the student changes their sentiment to {string}", async (_ctx, sentiment: string) => {
+        await tutorsConnectService.updateSentiment(sentiment);
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the reader shall have reported {number} learning events for {string}", reportedCount);
     });
   });
 });

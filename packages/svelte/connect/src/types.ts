@@ -56,8 +56,16 @@ export interface TutorsConnectService {
   lastLearningEvent: string;
   /** Set by {@link TutorsConnectService.navigated}; makes the next learning event report. */
   pendingNavigation: boolean;
-  /** Tells the service the student arrived at a page, so the next report is a genuine page load. */
-  navigated(): void;
+  /** True from {@link TutorsConnectService.navigating} until {@link TutorsConnectService.navigated}; no learning event reports meanwhile. */
+  navigationInFlight: boolean;
+  /** Number of the latest navigation that changes page, so a stale cancellation releases nothing. */
+  navigationAttempt: number;
+  /** Tells the service a navigation from one path to another has started, so nothing is reported until it lands. */
+  navigating(from?: string, to?: string): number;
+  /** Releases the hold {@link TutorsConnectService.navigating} set, when that navigation was cancelled. */
+  navigationAbandoned(attempt: number): void;
+  /** Tells the service the student arrived at a page, so the next report is a genuine page load; a same-path arrival is not one. */
+  navigated(from?: string, to?: string): void;
   learningEvent(params: Record<string, string>): void;
   startTimer(): void;
   stopTimer(): void;
