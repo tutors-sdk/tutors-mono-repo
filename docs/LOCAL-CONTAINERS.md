@@ -89,7 +89,7 @@ PRIVATE_AUTH_SECRET=...   # at least 32 chars: openssl rand -base64 32
 
 Leave `PUBLIC_ANON_MODE` empty (or unset) to enable authentication; set it to `TRUE` to disable it again. Restart the stack after editing `.env`. No rebuild is needed: configuration is read when the container starts, not when the image is built.
 
-The GitHub OAuth app's callback URL must match the port you are using, for example `http://localhost:3000/auth/callback/github`.
+The GitHub OAuth app's callback URL must match the port you are using, for example `http://localhost:3000/api/auth/callback/github`.
 
 ## Building an image by hand
 
