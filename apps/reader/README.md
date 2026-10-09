@@ -46,3 +46,5 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 - `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 
 [docs/COURSE-PAGE-WALKTHROUGH.md](../../docs/COURSE-PAGE-WALKTHROUGH.md) walks through how a course page is rendered.
+
+App-local imports use `#lib/*` from this app's `package.json`, with explicit file extensions. Root tests use the importing app's mapping; there is no global `#lib` alias. Neither app has a library index, so a bare `#lib` mapping is unnecessary.

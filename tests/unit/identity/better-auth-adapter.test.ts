@@ -5,7 +5,6 @@ vi.hoisted(() => {
 });
 vi.mock("$env/dynamic/private", () => import("../../bdd/support/reader-auth.ts").then(({ privateEnv }) => ({ env: privateEnv })));
 vi.mock("$env/dynamic/public", () => import("../../bdd/support/reader-auth.ts").then(({ publicEnv }) => ({ env: publicEnv })));
-vi.mock("$lib/server/auth-mode", () => import("../../../apps/reader/src/lib/server/auth-mode.ts"));
 vi.mock("../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index.js", () => ({
   sequence:
     (...handles: Array<(input: { event: unknown; resolve: (event: unknown) => unknown }) => unknown>) =>

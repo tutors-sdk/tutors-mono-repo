@@ -9,9 +9,9 @@ import {
   extractLabIdentifier,
   extractStepName
 } from "@tutors/tutors-time-lib";
-import { OnlineCellRenderer } from "$lib/components/calendar/OnlineCellRenderer";
-import { SentimentCellRenderer } from "$lib/components/calendar/SentimentCellRenderer";
-import { StudentAvatarCellRenderer } from "$lib/components/calendar/StudentAvatarCellRenderer";
+import { OnlineCellRenderer } from "#lib/components/calendar/OnlineCellRenderer.ts";
+import { SentimentCellRenderer } from "#lib/components/calendar/SentimentCellRenderer.ts";
+import { StudentAvatarCellRenderer } from "#lib/components/calendar/StudentAvatarCellRenderer.ts";
 
 /** Header mode: "lab" = book segment, "step" = step name (last segment), "raw" = full id. */
 type LabColumnHeaderMode = "lab" | "step" | "raw";

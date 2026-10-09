@@ -7,9 +7,9 @@ import {
   heatColor,
   minutesOf
 } from "@tutors/tutors-time-lib";
-import { OnlineCellRenderer } from "$lib/components/calendar/OnlineCellRenderer";
-import { SentimentCellRenderer } from "$lib/components/calendar/SentimentCellRenderer";
-import { StudentAvatarCellRenderer } from "$lib/components/calendar/StudentAvatarCellRenderer";
+import { OnlineCellRenderer } from "#lib/components/calendar/OnlineCellRenderer.ts";
+import { SentimentCellRenderer } from "#lib/components/calendar/SentimentCellRenderer.ts";
+import { StudentAvatarCellRenderer } from "#lib/components/calendar/StudentAvatarCellRenderer.ts";
 
 /** Grid-ready calendar table with ColDef-typed columns for ag-grid. */
 export type GridCalendarTable = {
