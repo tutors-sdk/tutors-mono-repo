@@ -17,7 +17,6 @@ vi.mock("$env/dynamic/public", () => ({
 
 vi.mock("$app/environment", () => ({ browser: false }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
-vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
 vi.mock("../../../packages/svelte/community/src/index.ts", () => ({
   analyticsService: { learningEvent: vi.fn(), reportPageLoad: vi.fn(), updatePageCount: vi.fn(), updateLogin: vi.fn() },
@@ -91,5 +90,30 @@ describe("courseVisit in anonymous mode", () => {
     tutorsConnectService.courseVisit(enrolledCourse);
     expect(rbacService.loadRole).not.toHaveBeenCalled();
     expect(rbacService.checkLecturerStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe("injected identity client", () => {
+  it("delegates sign-in and sign-out without adding provider options", async () => {
+    const signIn = vi.fn(async () => {});
+    const signOut = vi.fn(async () => {});
+    tutorsConnectService.identityClient = { signIn, signOut };
+    await tutorsConnectService.connect("/course/cs101");
+    await tutorsConnectService.disconnect("/");
+    expect(signIn).toHaveBeenCalledWith("/course/cs101");
+    expect(signOut).toHaveBeenCalledWith("/");
+  });
+
+  it("propagates provider errors to the caller", async () => {
+    const error = new Error("Sign-in failed");
+    tutorsConnectService.identityClient = { signIn: vi.fn().mockRejectedValue(error), signOut: vi.fn().mockRejectedValue(error) };
+    await expect(tutorsConnectService.connect("/")).rejects.toBe(error);
+    await expect(tutorsConnectService.disconnect("/")).rejects.toBe(error);
+  });
+
+  it("requires the application to configure a client", async () => {
+    tutorsConnectService.identityClient = null;
+    await expect(tutorsConnectService.connect("/")).rejects.toThrow("Identity client is not configured");
+    await expect(tutorsConnectService.disconnect("/")).rejects.toThrow("Identity client is not configured");
   });
 });

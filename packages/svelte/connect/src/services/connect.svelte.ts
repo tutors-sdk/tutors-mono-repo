@@ -4,11 +4,9 @@
  * Supports both authenticated and anonymous modes.
  */
 
-import { signOut } from "@auth/sveltekit/client";
-import { signIn } from "@auth/sveltekit/client";
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
-import type { Course, TutorsId } from "@tutors/tutors-model-lib";
+import type { Course } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
 import { env } from "$env/dynamic/public";
@@ -18,7 +16,7 @@ import { rbacService } from "@tutors/rbac";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
-import { type CourseVisit, type TutorsConnectService } from "../types.ts";
+import { type ConnectUser, type CourseVisit, type TutorsConnectService } from "../types.ts";
 import { supabaseProfile } from "./supabaseProfile.svelte.ts";
 import {
   addOrUpdateStudent,
@@ -42,6 +40,7 @@ if (env.PUBLIC_ANON_MODE === "TRUE") {
 export const tutorsConnectService: TutorsConnectService = {
   /** Active user profile implementation */
   profile: localStorageProfile,
+  identityClient: null,
   /** Timer ID for analytics updates */
   intervalId: null,
   /** Local anonymous mode flag */
@@ -53,7 +52,8 @@ export const tutorsConnectService: TutorsConnectService = {
    * @returns Promise from auth provider
    */
   async connect(redirectStr: string) {
-    return await signIn("github", { callbackUrl: redirectStr });
+    if (!this.identityClient) throw new Error("Identity client is not configured");
+    return this.identityClient.signIn(redirectStr);
   },
 
   /**
@@ -62,15 +62,15 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param user - User identity to reconnect
    */
 
-  async reconnect(user: TutorsId) {
+  async reconnect(user: ConnectUser) {
     if (anonMode) return;
     presenceService.connectToAllCourseAccess();
     if (user) {
       this.profile = supabaseProfile;
-      tutorsId.value = user;
+      tutorsId.value = { ...user, share: "true", sentiment: "neutral" };
       tutorsId.value.sentiment! = (await getTutorsConnectUserSentiment(user.login)) ?? "neutral";
       tutorsId.value.share = (await getTutorsConnectUserOnlineStatus(user.login)) ?? "online";
-      addOrUpdateStudent(user).catch((err) => log.error("Failed to update student record:", err));
+      addOrUpdateStudent(tutorsId.value).catch((err) => log.error("Failed to update student record:", err));
       if (browser) {
         if (!localStorage.share) {
           localStorage.share = true;
@@ -92,8 +92,9 @@ export const tutorsConnectService: TutorsConnectService = {
    * Terminates user session
    * @param redirectStr - URL to redirect to after logout
    */
-  disconnect(redirectStr: string) {
-    signOut({ callbackUrl: redirectStr });
+  async disconnect(redirectStr: string) {
+    if (!this.identityClient) throw new Error("Identity client is not configured");
+    return this.identityClient.signOut(redirectStr);
   },
 
   /**

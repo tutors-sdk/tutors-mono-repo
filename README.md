@@ -61,6 +61,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/jsr/tutors` | `@tutors/tutors` | The generator that turns a course folder into `tutors.json` |
 | `packages/jsr/tutors-lite` | `@tutors/tutors-lite` | Static HTML course generator |
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
+| `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
 
 **Foundation layer, Svelte.**
 
@@ -86,7 +87,8 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
 | `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
-| `packages/svelte/connect` | `@tutors/connect` | Authentication and user management |
+| `packages/svelte/connect` | `@tutors/connect` | User profiles, course activity and injected sign-in/sign-out |
+| `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Auth.js server and browser adapters |
 | `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
 | `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
 | `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
@@ -195,6 +197,8 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 5. **UI Navigators** → Navigation chrome (MainNavigator, Footer, TutorsShell)
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
+
+Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 

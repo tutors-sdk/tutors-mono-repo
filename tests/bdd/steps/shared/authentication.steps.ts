@@ -2,15 +2,14 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
-// SvelteKit and Auth.js. Everything between them is product code.
+// SvelteKit and the injected identity client. Everything between them is product code.
 vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
 // `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
-// Auth.js is mocked by the path the connect package resolves, so the step can read what the reader asked of it.
+// The application injects this client into connect.
 const authSignIn = vi.hoisted(() => vi.fn());
-vi.mock("../../../../packages/svelte/connect/node_modules/@auth/sveltekit/dist/client.js", () => ({ signIn: authSignIn, signOut: vi.fn() }));
 
 import { goto } from "$app/navigation";
 import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
@@ -40,6 +39,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   Background(({ Given }) => {
     Given("the course {string} is published with {number} labs", (_ctx, courseId: string, labCount: number) => {
       freshBrowser();
+      tutorsConnectService.identityClient = { signIn: authSignIn, signOut: vi.fn() };
       course = publishedCourse(courseId, labCount);
     });
   });
@@ -51,7 +51,8 @@ describeFeature(feature, ({ Background, Rule }) => {
         Given("I am not authenticated", notAuthenticated);
         When("I choose to sign in from {string}", (_ctx, path: string) => tutorsConnectService.connect(path));
         Then("the reader should start the {string} sign-in flow, returning to {string}", (_ctx, provider: string, path: string) => {
-          expect(authSignIn.mock.calls).toEqual([[provider, { callbackUrl: path }]]);
+          expect(provider).toBe("github");
+          expect(authSignIn.mock.calls).toEqual([[path]]);
         });
         // Auth.js owns the GitHub round trip; the reader takes over again when the session arrives.
         And("after authentication as {string} the reader should know me by my profile name {string}", async (_ctx, user: string, name: string) => {

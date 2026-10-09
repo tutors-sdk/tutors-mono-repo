@@ -34,6 +34,7 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 
 - `@tutors/ui-primitives`, `@tutors/ui-navigators`, `@tutors/ui-components` provide the interface
 - `@tutors/course`, `@tutors/tutors-model-lib` load and model courses
+- `@tutors/identity`, `@tutors/identity-sveltekit` provide verified identity contracts and the Auth.js adapter
 - `@tutors/connect`, `@tutors/community`, `@tutors/rbac`, `@tutors/runes` handle sign-in, presence, roles and shared state
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views

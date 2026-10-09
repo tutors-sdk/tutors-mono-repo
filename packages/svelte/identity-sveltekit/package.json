@@ -1,0 +1,21 @@
+{
+  "name": "@tutors/identity-sveltekit",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "SvelteKit identity adapter with separate server and browser entry points",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./src/index.server.ts",
+    "./client": "./src/client.ts"
+  },
+  "dependencies": {
+    "@auth/core": "^0.41.3",
+    "@auth/sveltekit": "^1.11.3",
+    "@tutors/identity": "workspace:*",
+    "@tutors/logger": "workspace:*"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": "^2.70.3"
+  }
+}
