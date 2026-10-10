@@ -209,6 +209,27 @@ describe("buildTree: what the generator reads", () => {
     expect(json.los[0].los!.map((lo) => lo.id)).toEqual(["note-a", "note-b"]);
   });
 
+  it("leaves out a folder of no kind inside a topic or unit, but still copies its assets (#424)", () => {
+    const root = folder({
+      "topic-1/topic.md": "# T\n",
+      "topic-1/drafts/readme.md": "# Draft\n",
+      "topic-1/drafts/sketch.png": PNG,
+      "topic-1/unit-1/unit.md": "# U\n",
+      "topic-1/unit-1/old/readme.md": "# Old\n",
+      "topic-1/unit-1/note-1/note.md": "# N\n",
+      "topic-1/unit-1/lab-1/01.Step.md": "# Step\n",
+      "topic-1/unit-1/lab-1/img/shot.png": PNG
+    });
+    const [course, lr] = parseCourse(root, true);
+    const json = JSON.parse(JSON.stringify(course)) as TutorsJsonCourse;
+    expect(json.los[0].los!.map((lo) => lo.id)).toEqual(["unit-1"]);
+    expect(json.los[0].los![0].los!.map((lo) => lo.id)).toEqual(["lab-1", "note-1"]);
+    const out = join(root, "json");
+    copyAssets(lr, out);
+    expect(existsSync(join(out, "topic-1/drafts/sketch.png"))).toBe(true);
+    expect(existsSync(join(out, "topic-1/unit-1/lab-1/img/shot.png"))).toBe(true);
+  });
+
   it("a book folder is a lab", () => {
     expect(build({ "topic-1/topic.md": "# T\n", "topic-1/book-1/01.Step.md": "# Step\n" }).byId("book-1").type).toBe("lab");
   });

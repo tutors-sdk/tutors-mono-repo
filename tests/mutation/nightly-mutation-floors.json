@@ -9,7 +9,7 @@
     "packages/jsr/gen/src/services/course-builder.ts": 94,
     "packages/jsr/gen/src/services/course-emitter.ts": 0,
     "packages/jsr/gen/src/services/marp-renderer.ts": 0,
-    "packages/jsr/gen/src/services/resource-builder.ts": 72,
+    "packages/jsr/gen/src/services/resource-builder.ts": 74,
     "packages/jsr/gen/src/templates/template-downloader.ts": 0,
     "packages/jsr/gen/src/templates/template-engine.ts": 0,
     "packages/jsr/gen/src/tutors.ts": 10,

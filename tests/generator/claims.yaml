@@ -33,3 +33,14 @@ claims:
   - generator: tutors-lite
     path: "vento/Note.vto"
     reason: "CHANGELOG Shared Packages, Unreleased: note pages lose a stray s"
+  # The synthetic course gained topic-01-typical/old-ideas and unit-2/scratch to pin it; the base publishes both.
+  - corpus: synthetic
+    generator: tutors
+    path: "tutors.json"
+    pointer: "/los/[topic-01-typical]/los/[old-ideas]"
+    reason: "#424 Rule 0268: a folder of no kind inside a topic is left out of tutors.json"
+  - corpus: synthetic
+    generator: tutors
+    path: "tutors.json"
+    pointer: "/los/[topic-01-typical]/los/[unit-2]/los/[scratch]"
+    reason: "#424 Rule 0268: a folder of no kind inside a unit is left out of tutors.json"
