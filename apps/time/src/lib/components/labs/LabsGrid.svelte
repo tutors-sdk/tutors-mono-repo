@@ -3,7 +3,7 @@
   import { invalidateAll } from "$app/navigation";
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { GridApi } from "ag-grid-community";
-  import { GridLabModel } from "$lib/components/labs/GridLabModel";
+  import { GridLabModel } from "#lib/components/labs/GridLabModel.ts";
   import type { LabRow, LabMedianRow, LabViewMode, TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   ModuleRegistry.registerModules([AllCommunityModule]);

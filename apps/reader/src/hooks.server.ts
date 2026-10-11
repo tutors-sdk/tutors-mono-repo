@@ -9,7 +9,7 @@ import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 import { announceClock } from "@tutors/runtime";
-import { authMode } from "$lib/server/auth-mode";
+import { authMode } from "#lib/server/auth-mode.ts";
 
 setAppName("tutors-reader");
 // From here on every stdout/stderr line of the running server is one JSON object: stray console
