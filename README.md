@@ -88,7 +88,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
 | `packages/svelte/connect` | `@tutors/connect` | User profiles, course activity and injected sign-in/sign-out |
-| `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Auth.js server and browser adapters |
+| `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Auth.js and Better Auth server and browser adapters |
 | `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
 | `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
 | `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
@@ -199,6 +199,8 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 7. **Applications** → Consume packages as needed
 
 Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
+
+The reader defaults to Auth.js; `PRIVATE_AUTH_ADAPTER=better-auth` selects the GitHub-only stateless adapter. See [identity rollout](guides/identity-rollout.md) for validation, callback changes, reauthentication and the deferred deployment/rollback checkpoints.
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 

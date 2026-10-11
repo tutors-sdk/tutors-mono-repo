@@ -2,7 +2,7 @@
   import "../app.css";
   import { untrack } from "svelte";
   import { tutorsConnectService } from "@tutors/connect";
-  import { identityClient } from "@tutors/identity-sveltekit/client";
+  import { createIdentityClient } from "@tutors/identity-sveltekit/client";
   import type { LayoutData } from "./$types";
   import { browser } from "$app/environment";
   import { themeService } from "@tutors/themes";
@@ -16,7 +16,7 @@
 
   untrack(() => {
     if (browser) {
-      tutorsConnectService.identityClient = identityClient;
+      tutorsConnectService.identityClient = createIdentityClient(data.identityAdapter);
       if (data?.user) {
         void tutorsConnectService.reconnect(data.user);
       }

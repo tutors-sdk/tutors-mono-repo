@@ -304,11 +304,14 @@ test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, asy
       const artwork = (await heading.locator(".lo-artwork").boundingBox())!;
       expect(artwork.width).toBe(48);
       expect(artwork.height).toBe(48);
-      const headingBox = (await heading.boundingBox())!;
+      // Read one layout snapshot: icon/font hydration can reflow between separate boundingBox calls.
+      const [headingBox, backBox, stepsBox] = await column.locator(".lo-context > summary, .back-link, .steps").evaluateAll(elements =>
+        elements.map(el => { const { y, height } = el.getBoundingClientRect(); return { y, height }; })
+      );
       expect(headingBox.height).toBeGreaterThanOrEqual(44);
       expect(headingBox.height).toBeLessThan(160);
-      expect((await column.locator(".back-link").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
-      expect((await column.locator(".steps").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
+      expect(backBox.y).toBeGreaterThan(headingBox.y + headingBox.height);
+      expect(stepsBox.y).toBeGreaterThan(headingBox.y + headingBox.height);
       expect(await fitsViewport(page), `${route} at ${width}px`).toBe(true);
       // Native disclosure works with a keyboard and exposes the existing full card.
       const title = await heading.locator("strong").textContent();

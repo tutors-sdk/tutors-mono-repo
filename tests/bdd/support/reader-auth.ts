@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import type { Actor } from "@tutors/identity";
-import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, githubResponse } from "./reader-oauth.mjs";
+import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, githubResponse, signInRequest, isClaimsCookie } from "./reader-oauth.mjs";
 import type { GithubAccount } from "./reader-oauth.mjs";
 export { GITHUB_CLIENT_ID, githubAccount } from "./reader-oauth.mjs";
 export type { GithubAccount } from "./reader-oauth.mjs";
@@ -25,8 +25,9 @@ export const READER_ORIGIN = "https://tutors.test";
 export const privateEnv: Record<string, string | undefined> = {};
 export const publicEnv: Record<string, string | undefined> = {};
 
-export function configureReader(): void {
+export function configureReader(adapter: "authjs" | "better-auth" = "authjs"): void {
   Object.assign(privateEnv, {
+    PRIVATE_AUTH_ADAPTER: adapter,
     PRIVATE_AUTH_SECRET: AUTH_SECRET,
     PRIVATE_AUTH_GITHUB_ID: GITHUB_CLIENT_ID,
     PRIVATE_AUTH_GITHUB_SECRET: GITHUB_CLIENT_SECRET
@@ -50,7 +51,7 @@ export function parseSetCookie(header: string): SetCookie {
 }
 
 /** What the reader answered: status, where it sends the browser, and the cookies it set. */
-export type ReaderResponse = { status: number; location: string | null; cookies: SetCookie[]; body: string };
+export type ReaderResponse = { status: number; location: string | null; cookies: SetCookie[]; body: string; headers: Headers };
 
 /** A browser's cookie jar for the reader's origin. */
 export class Browser {
@@ -58,7 +59,8 @@ export class Browser {
 
   keep(response: ReaderResponse): void {
     for (const cookie of response.cookies) {
-      const expired = cookie.value === "" || cookie.attributes["max-age"] === "0" || (typeof cookie.attributes.expires === "string" && Date.parse(cookie.attributes.expires) <= Date.now());
+      const expired =
+        cookie.value === "" || cookie.attributes["max-age"] === "0" || (typeof cookie.attributes.expires === "string" && Date.parse(cookie.attributes.expires) <= Date.now());
       if (expired) this.jar.delete(cookie.name);
       else this.jar.set(cookie.name, cookie.value);
     }
@@ -96,11 +98,12 @@ export async function send(
   method: "GET" | "POST",
   path: string,
   form?: Record<string, string>,
-  json?: unknown
+  json?: unknown,
+  requestHeaders?: Record<string, string>
 ): Promise<ReaderResponse & { page?: PageData }> {
   const { handle, load } = await reader();
   const url = new URL(path, READER_ORIGIN);
-  const headers = new Headers({ origin: READER_ORIGIN });
+  const headers = new Headers({ origin: READER_ORIGIN, ...requestHeaders });
   const cookie = browser.header();
   if (cookie) headers.set("cookie", cookie);
   let body: string | undefined;
@@ -119,6 +122,8 @@ export async function send(
   const pageCookies: SetCookie[] = [];
   const cookies = {
     get: (name: string) => browser.jar.get(name),
+    serialize: (name: string, value: string, options: { path: string; maxAge: number }) =>
+      `${name}=${encodeURIComponent(value)}; Path=${options.path}; Max-Age=${options.maxAge}; HttpOnly; Secure; SameSite=Lax`,
     getAll: () => [...browser.jar].map(([name, value]) => ({ name, value })),
     set: (name: string, value: string, options: Record<string, unknown> = {}) => {
       const attributes: Record<string, string | true> = {};
@@ -131,7 +136,18 @@ export async function send(
     },
     delete: (name: string) => pageCookies.push({ name, value: "", attributes: { "max-age": "0" } })
   };
-  const event = { url, request, cookies, locals: {} as Record<string, unknown>, params: {}, route: { id: null }, getClientAddress: () => "127.0.0.1", setHeaders() {}, isDataRequest: false, isSubRequest: false };
+  const event = {
+    url,
+    request,
+    cookies,
+    locals: {} as Record<string, unknown>,
+    params: {},
+    route: { id: null },
+    getClientAddress: () => "127.0.0.1",
+    setHeaders() {},
+    isDataRequest: false,
+    isSubRequest: false
+  };
   let page: PageData | undefined;
   const response = await handle({
     event,
@@ -145,14 +161,30 @@ export async function send(
   if (!location && response.headers.get("content-type")?.includes("application/json")) {
     location = (JSON.parse(text) as { url?: string }).url ?? null;
   }
-  const result = { status: response.status, location, cookies: [...response.headers.getSetCookie().map(parseSetCookie), ...pageCookies], body: text, page };
+  const result = {
+    status: response.status,
+    location,
+    cookies: [...response.headers.getSetCookie().map(parseSetCookie), ...pageCookies],
+    body: text,
+    headers: response.headers,
+    page
+  };
   browser.keep(result);
   return result;
 }
 
-// library-specific: Auth.js's routes under basePath "/auth".
-export const startSignIn = (browser: Browser, returnTo: string) => send(browser, "POST", "/auth/signin/github", { callbackUrl: returnTo });
-export const signOut = (browser: Browser, returnTo: string) => send(browser, "POST", "/auth/signout", { callbackUrl: returnTo });
+export function startSignIn(browser: Browser, returnTo: string) {
+  const request = signInRequest(privateEnv.PRIVATE_AUTH_ADAPTER === "better-auth" ? "better-auth" : "authjs", returnTo);
+  return send(browser, "POST", request.path, request.form, request.json);
+}
+
+export async function signOut(browser: Browser, returnTo: string) {
+  if (privateEnv.PRIVATE_AUTH_ADAPTER !== "better-auth") return send(browser, "POST", "/auth/signout", { callbackUrl: returnTo });
+  const response = await send(browser, "POST", "/api/auth/sign-out", undefined, {});
+  // Better Auth returns success JSON; the browser port navigates only after that success.
+  if (response.status === 200 && JSON.parse(response.body).success) response.location = new URL(returnTo, READER_ORIGIN).href;
+  return response;
+}
 
 /** GitHub sends the browser back to the reader's callback, with a code or with the refusal. */
 export function returnFromGithub(browser: Browser, authorizeUrl: string, { refused = false } = {}) {
@@ -172,11 +204,11 @@ export async function openPage(browser: Browser, path = "/"): Promise<PageData> 
   return page!;
 }
 
-/** The cookie that holds the session. library-specific: Auth.js names it `*authjs.session-token`. */
+/** The encrypted claims cookie for the selected SDK. */
 export function sessionCookieOf(response: ReaderResponse): SetCookie | undefined {
-  return response.cookies.find((cookie) => cookie.name.endsWith("authjs.session-token") && cookie.value !== "");
+  return response.cookies.find((cookie) => isClaimsCookie(cookie.name) && cookie.value !== "");
 }
 
 export function sessionInJar(browser: Browser): [string, string] | undefined {
-  return [...browser.jar].find(([name]) => name.endsWith("authjs.session-token"));
+  return [...browser.jar].find(([name]) => isClaimsCookie(name));
 }
