@@ -55,6 +55,8 @@ now has three multi-window burn-rate alerts for its app alone, labelled `slo: <i
 | `slo-<id>-ticket` | 1 × the budget | 3d and 6h | on course to spend it all | ticket (`warning`) |
 
 The short window stops an alert soon after the burn does. No traffic is no burn (`noDataState: OK`).
+Pages go to the Grafana contact point `tutors-oncall`; tickets (`severity: warning`) are routed to
+`tutors-tickets` instead (`notification-policies.yml`), so a ticket never pages anyone.
 `healthz-failing` stays as it was: an app that is down altogether.
 
 ## Error-budget policy
