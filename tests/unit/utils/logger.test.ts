@@ -3,6 +3,7 @@ import { createLogger, addTransport, removeTransport } from "../../../packages/s
 import type { LogEntry } from "../../../packages/jsr/logger-core/src/types.ts";
 import {
   formatJson,
+  formatCli,
   formatPretty,
 } from "../../../packages/jsr/logger-core/src/formatter.ts";
 
@@ -403,5 +404,21 @@ describe("formatter: formatPretty", () => {
     };
     const result = formatPretty(entry);
     expect(result).toContain('{"courseId":"cs101"}');
+  });
+});
+
+describe("logger: CLI format", () => {
+  const entry = (fields: Record<string, unknown>): LogEntry => ({ timestamp: "t", level: "error", message: "m", ...fields });
+
+  it("prints the tool, level, message, error and the remaining values, hiding runtime fields", () => {
+    expect(formatCli(entry({ app: "tutors", message: "Error copying file", error: "EACCES", stack: "s", pid: 1, src: "a", dest: "b" }))).toBe(
+      "tutors error: Error copying file: EACCES (src=a, dest=b)"
+    );
+  });
+
+  it("falls back to tutors and keeps one entry on one line", () => {
+    expect(formatCli(entry({ message: "bad yaml", error: "line one\nline two\r\nthree", note: "x\ry" }))).toBe(
+      "tutors error: bad yaml: line one\\nline two\\nthree (note=x\\ny)"
+    );
   });
 });

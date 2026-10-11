@@ -42,5 +42,6 @@ export function formatCli(entry: LogEntry): string {
     .filter(([key, value]) => !CLI_HIDDEN_KEYS.has(key) && value !== null && value !== undefined)
     .map(([key, value]) => `${key}=${typeof value === "string" ? value : safeStringify(value)}`);
   const context = fields.length > 0 ? ` (${fields.join(", ")})` : "";
-  return `${scope} ${entry.level}: ${entry.message}${detail}${context}`;
+  // One entry, one line: a multi-line parser error must not leave unprefixed lines behind.
+  return `${scope} ${entry.level}: ${entry.message}${detail}${context}`.replace(/\r?\n|\r/g, "\\n");
 }
