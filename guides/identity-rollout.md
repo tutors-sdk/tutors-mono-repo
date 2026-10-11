@@ -1,59 +1,59 @@
-# Reader identity rollout (#432, feature #416)
+# Reader identity rollout (#432–#433, feature #416)
 
-This PR adds Better Auth on **SvelteKit 2** behind the existing identity port. It keeps
-`PRIVATE_AUTH_ADAPTER=authjs` as the default. Deployment, live GitHub rehearsal, production
-cutover and rollback rehearsal are **pending**, by the maintainer's instruction to deploy later.
-Do not remove Auth.js or move this deployment to Kit 3 until the checkpoints below are recorded.
+The reader now uses **Better Auth only on SvelteKit 2**. #433 removes the previous adapter
+and its temporary selector without changing Better Auth's session configuration or data keys.
+**Merge/deployment gate:** complete #432's live GitHub rehearsal, production Better Auth
+activation and rollback rehearsal first. Those checkpoints remain pending by the maintainer's
+instruction to deploy later; this cleanup PR prepares the code and does not supply live evidence.
+
+For #432's earlier two-adapter cutover, use the
+[rollout guide in #440 at afca918](https://github.com/tutors-sdk/tutors-mono-repo/blob/afca918055f9d21d55f1f930e8479fa3c6fef198/guides/identity-rollout.md).
+Its selector applies to that previous image only.
 
 ## Exact local baseline
 
 | Component | Tested version |
 | --- | --- |
 | Better Auth | 1.7.7 (exact dependency) |
-| Auth.js core / SvelteKit integration | 0.41.3 / 1.11.3 |
 | SvelteKit / Node adapter | 2.70.3 / 5.5.7 |
 | Svelte / Vite / Svelte Vite plugin | 5.57.0 / 8.3.0 / 7.3.0 |
 | Node / pnpm / TypeScript | 22.17.1 / 11.24.0 / 6.0.3 |
 
-Kit 3's separate compatibility spike (#437) is evidence only. This implementation needs no
-peer-range exception. Re-run the identity checks when changing Better Auth: 1.7.7 needs the
-protected-field and rolling-expiry hooks described below.
+Kit 3's compatibility spike (#437) is evidence only. This cleanup includes no framework or
+Better Auth version upgrade and needs no peer-range exception.
 
 ## Configuration and behavior
 
-- `PRIVATE_AUTH_ADAPTER`: `authjs` or `better-auth`. Omitted/empty selects Auth.js. Any other
-  value fails the request; an auth failure never retries another adapter.
 - Keep `PRIVATE_AUTH_SECRET` (at least 32 random characters), `PRIVATE_AUTH_GITHUB_ID` and
-  `PRIVATE_AUTH_GITHUB_SECRET` server-only. No new database, migration or identity table is needed.
-- Set the Node server's `ORIGIN` to its canonical public HTTPS origin. On other hosting platforms,
+  `PRIVATE_AUTH_GITHUB_SECRET` server-only and unchanged from the proven Better Auth deployment.
+  The adapter selector has been removed; remove it from deployment environment/configuration.
+- Keep the Node server's `ORIGIN` at its canonical public HTTPS origin. On other platforms,
   verify SvelteKit's request origin at the deployed callback; do not trust arbitrary proxy headers.
-  Better Auth uses that origin for its base URL, trusted-origin checks and secure cookies.
-- Auth.js's GitHub callback is `https://<reader-host>/auth/callback/github`.
-  Better Auth's callback is `https://<reader-host>/api/auth/callback/github`.
-  `/auth` and `/auth/<courseid>` stay sign-in pages. GitHub scopes stay `read:user user:email`.
-- GitHub's verified numeric account id supplies `Actor.subject=github:<id>`. Login stays the
-  existing student-record, analytics and enrollment key. A renamed login keeps its numeric
-  subject, but existing login-keyed records retain their current behavior; this does not migrate
-  them. No UUID conversion, RLS, SSO or auth-service extraction is included.
-- Better Auth uses signed/encrypted stateless cookies and cookie-held OAuth state/accounts.
-  Both the signed session token and encrypted claims must be valid. Each request creates a
-  fresh SDK instance so its fallback memory adapter cannot become an accidental session store.
-  SDK rate limits use its process-level memory store; replicas do not share those limits.
-- The 30-day inactivity window rolls on page loads, including SvelteKit data requests. The
-  hook extends both the embedded expiry and the cookie expiry and forwards every Set-Cookie
-  header. Failed or expired verification never renews a session. An explicitly disabled
-  refresh stays disabled.
-- 1.7.7 drops provider-mapped fields with `input:false`, so `githubId` and `login` are input-enabled
-  and the before-hook rejects either key at `/update-user`, including null and mixed updates.
-  OAuth `additionalData` cannot replace the provider mapping. Only the GitHub flow, session,
-  guarded profile update and error endpoints are exposed. New plugins or identity-write paths
-  require another audit. Origin/CSRF checks are explicit, including before the first cookie exists.
-- Switching adapters requires signing in again. Cookie formats are incompatible. The selected
-  adapter clears the retired namespace (including chunks), so an old cookie cannot restore a
-  pre-cutover session after logout and rollback. There is no dual-provider verification.
-- Logout clears this browser's cookies. As with the previous JWT design, a copied stateless
-  cookie cannot be centrally revoked and remains valid until expiry. GitHub OAuth tokens are
-  held only in encrypted HTTP-only account cookies; this does not log the user out of GitHub.
+  Better Auth uses this origin for its base URL, trusted-origin checks and secure cookies.
+- Keep GitHub's callback at `https://<reader-host>/api/auth/callback/github` and the scopes at
+  `read:user user:email`. `/auth` and `/auth/<courseid>` remain sign-in pages.
+- GitHub's verified numeric id supplies `Actor.subject=github:<id>`. Login remains the existing
+  student-record, analytics and enrollment key. No rows, UUIDs, authorization policies, RLS,
+  SSO configuration or auth service are migrated by this cleanup.
+- Signed/encrypted stateless cookies, their names/attributes and the cookie-held OAuth
+  state/account configuration stay unchanged. Both the signed token and encrypted claims must
+  be valid. A fresh SDK instance per request prevents its fallback memory adapter becoming a
+  session store. SDK rate limits are process-local and are not shared between replicas.
+- The 30-day inactivity window rolls on page and SvelteKit data requests. The hook extends
+  embedded and cookie expiry and forwards every Set-Cookie header. Session-bearing or
+  cookie-clearing responses use `private, no-store`. Failed/expired verification never renews
+  a session; explicitly disabled refresh stays disabled.
+- In 1.7.7, provider mapping requires input-enabled `githubId` and `login`. The update hook
+  rejects either key, including null and mixed updates. OAuth `additionalData` cannot replace
+  the provider mapping. Only the GitHub flow, session, guarded profile and error endpoints are
+  exposed. Origin/CSRF checks are explicit before the first cookie exists. Audit new plugins
+  or identity-write endpoints separately.
+- Existing **Better Auth sessions need no reauthentication for this cleanup** if origin,
+  signing secret and cookie configuration remain unchanged. Sessions from the removed provider
+  are not accepted. Complete the preceding cutover/reauthentication before this release.
+- Logout clears this browser's cookies. Copied stateless cookies cannot be centrally revoked
+  and remain valid until expiry. GitHub tokens stay in encrypted HTTP-only account cookies;
+  signing out of the reader does not sign out of GitHub.
 
 ## Automated local evidence
 
@@ -64,60 +64,47 @@ pnpm lint
 pnpm check
 SVELTEKIT_ADAPTER=node pnpm build
 pnpm test:identity:built
-PRIVATE_AUTH_ADAPTER=authjs pnpm test:e2e:reader --project=chromium
-PRIVATE_AUTH_ADAPTER=better-auth pnpm test:e2e:reader --project=chromium
+pnpm test:e2e:reader --project=chromium
+pnpm test:e2e:reader --project=firefox tests/e2e/authentication.spec.ts
 ```
 
-Rules 0250–0259 run for both adapters through one HTTP driver. The built-reader check uses the
-actual Node output and root layout data, advances an isolated test clock, restarts the process,
-and verifies identity, inactive/rolling expiry, malformed cookies, protected fields, safe
-redirects, OAuth state, secure flags, header forwarding, logout and disabled modes. GitHub is
-stubbed only by an explicit test-credential-guarded Node preload; production imports no fixture.
-Browser checks obtain real SDK cookies and cover profile navigation/reload/logout and existing
-student/educator controls. Supabase writes go to an unshipped local discard fixture.
+Rules 0250–0259 use one HTTP driver. The built-reader checks exercise actual Node output and
+root layout data, time advancement, restart, trusted identity, inactive/rolling expiry, tampered
+cookies, protected claims, safe redirects, OAuth state, flags, headers, logout and disabled modes.
+`tests/fixtures/reader-session/better-auth-session-before-cleanup.json` contains cookies captured
+from #440's built reader at `afca918`, using only the public test credentials. The compatibility
+check advances the isolated fixture clock to day 29 and then day 31, proving the preceding
+session survives cleanup and renews past its original expiry. Do not regenerate that fixture
+from the cleanup implementation: it must continue to represent the preceding deployment.
 
-CI targeting `main` runs the built check and both Chromium UI matrices. Stacked PRs do not
-trigger that workflow until retargeted to `main`. The browser protected-route check currently
-uses an unshipped fixture with the reader's actual hooks. Replace it with #320/#327's production
-route when that route lands, and recheck its actor/role guard with both adapters.
+GitHub is stubbed only by an explicit test-credential-guarded preload; production imports no
+fixture. Browser checks obtain real SDK cookies. Supabase writes go to an unshipped discard
+fixture. The protected-route fixture uses the reader's actual hooks; replace it with #320/#327's
+production route when it lands. Local fixtures do not prove live GitHub or deployed rollback.
+
+CI targeting `main` runs the built check and Chromium UI contract. Stacked PRs do not trigger
+that workflow until retargeted to `main`.
 
 ## Deferred deployment checklist
 
-Record the deployment URL, GitHub OAuth app, commit, image digest, operator and date for each
-step. Local fixture tests do not count as live GitHub or deployment evidence.
-
-1. **Choose an isolated rehearsal deployment on Kit 2.** Use a separate GitHub OAuth app with
-   that deployment's hostname. [GitHub OAuth apps support up to 10 callback URLs](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app);
-   isolate the preview's credentials and settings in its own app. Record the current production
-   callback URL list, token-expiry settings, client id, secret references, auth flag, hosting
-   origin/proxy configuration and previous image digest.
-2. **Deploy with Auth.js selected first.** Verify the deployment is the expected commit/image,
-   HTTPS origin and cookie flags. With representative existing student and educator accounts,
-   confirm GitHub login, numeric id, course return URL, profile, personal data and enrollment.
-   Record the login-based records used for comparison, without storing tokens or secrets.
-3. **Rehearse the switch on that same Kit 2 deployment.** Register `/api/auth/callback/github`
-   on the rehearsal GitHub app, retaining `/auth/callback/github` for rollback when possible.
-   Keep its matching client id/secret, then set
-   `PRIVATE_AUTH_ADAPTER=better-auth` and restart all instances. Avoid mixed-adapter replicas
-   and finish or abandon in-flight OAuth flows. Tell participants they must sign in again.
-4. **Use live GitHub, including refusal.** Repeat the student/educator checks, navigation and
-   reload, a returning login and a fresh sign-in, and logout followed by reload. Verify the
-   actual subject against the account's numeric GitHub id and the unchanged login-keyed
-   student/enrollment records. Check response headers, HTTPS callback and forwarded renewal
-   cookies at the public edge. Record successes and failures; do not paste cookie contents.
-5. **Rehearse rollback before production cutover.** Restore the recorded GitHub callback
-   configuration, ensuring `/auth/callback/github` is registered, plus the original client
-   id/secret references, origin/hosting configuration,
-   `PRIVATE_AUTH_ADAPTER=authjs` and the known Kit 2 image. Restart every instance and reauthenticate
-   both accounts. Verify sign-in, protected/personal data, course roles and logout again.
-   **The flag alone is insufficient:** the OAuth callback/configuration and image must agree.
-6. **Schedule production cutover after evidence is accepted.** Preserve the recorded Auth.js
-   configuration and image digest; announce reauthentication. Perform the callback/flag change
-   together and repeat step 4 on representative production accounts. Roll back using step 5
-   if callback failures, missing actors, profile/enrollment changes or cookie/renewal failures appear.
-7. **Retain the proven Better Auth + Kit 2 image and configuration.** Record its immutable digest
-   as the rollback target for the later Kit 3 upgrade. Keep Auth.js until the live rehearsal,
-   production Better Auth activation and rehearsed rollback are recorded on #432/#416.
+1. **Complete #432 on the preceding image.** Follow its recorded cutover guide with real
+   student and educator accounts. Record target URL, OAuth app, canonical origin, operator/date,
+   commit/image digest and live identity/profile/enrollment/logout/renewal results. Do not store
+   cookies or secrets in the release record.
+2. **Retain the proven Better Auth + Kit 2 image and configuration.** Record its immutable
+   digest and secret references. This is the rollback target for cleanup and the later Kit 3
+   upgrade. A provider rollback must never reopen secured data APIs or database policies.
+3. **Release the cleanup after the gate is accepted.** Keep the same signing secret, cookie
+   configuration, OAuth credentials, callback and origin. Remove the temporary selector from
+   configuration. Finish or abandon in-flight OAuth flows before replacing all instances.
+4. **Verify an existing session and a fresh sign-in at the public edge.** Check representative
+   student/educator profile, course return URL, personal data, roles, navigation, reload, rolling
+   renewal, refusal and logout. Record that a pre-cleanup Better Auth session stays signed in.
+5. **Rehearse image rollback.** Restore the recorded Better Auth + Kit 2 image with its exact
+   prior environment (including its Better Auth selector if that older image requires it),
+   origin, credentials and cookie secret. Verify existing sessions and fresh sign-in again.
+   Do not add an in-code provider fallback or weaken data access/policies. Preserve the proven
+   image and release evidence before the later framework upgrade.
 
 Pending record: rehearsal target **not selected**; live GitHub **not run**; production activation
 **not performed**; deployment rollback **not rehearsed**; retained Kit 2 image digest **not recorded**.

@@ -2,10 +2,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } from "../../tests/bdd/support/reader-oauth.mjs";
 
-const adapter = process.env.PRIVATE_AUTH_ADAPTER || "authjs";
-if (adapter !== "authjs" && adapter !== "better-auth") throw new Error("Invalid test auth adapter");
 const sessionEnv = {
-  PRIVATE_AUTH_ADAPTER: adapter,
   PUBLIC_ANON_MODE: "FALSE",
   PUBLIC_SUPABASE_URL: "http://localhost:5178",
   PUBLIC_SUPABASE_ANON_KEY: "fixture-anon-key",

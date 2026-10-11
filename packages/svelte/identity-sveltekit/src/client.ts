@@ -1,7 +1,5 @@
-import { signIn, signOut } from "@auth/sveltekit/client";
 import { createAuthClient } from "better-auth/client";
 import type { IdentityClient } from "@tutors/identity";
-import type { IdentityAdapter } from "./options.ts";
 
 function returnUrl(returnTo: string): string {
   const url = new URL(returnTo, window.location.origin);
@@ -9,12 +7,7 @@ function returnUrl(returnTo: string): string {
   return url.href;
 }
 
-export function createIdentityClient(adapter: IdentityAdapter): IdentityClient {
-  if (adapter === "authjs")
-    return {
-      signIn: (returnTo) => signIn("github", { callbackUrl: returnUrl(returnTo) }),
-      signOut: (returnTo) => signOut({ callbackUrl: returnUrl(returnTo) })
-    };
+export function createIdentityClient(): IdentityClient {
   const auth = createAuthClient({ basePath: "/api/auth" });
   return {
     async signIn(returnTo) {

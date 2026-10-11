@@ -58,10 +58,9 @@ export async function signInAs(page: Page, role: "student" | "lecturer"): Promis
   const origin = new URL(page.url()).origin;
   const http = await request.newContext({ baseURL: origin });
   try {
-    const adapter = process.env.PRIVATE_AUTH_ADAPTER === "better-auth" ? "better-auth" : "authjs";
-    const start = signInRequest(adapter, page.url());
+    const start = signInRequest(page.url());
     const started = await http.post(start.path, {
-      headers: { origin, "x-auth-return-redirect": "1" }, form: start.form, data: start.json
+      headers: { origin }, data: start.json
     });
     expect(started.ok()).toBe(true);
     const { url } = await started.json();

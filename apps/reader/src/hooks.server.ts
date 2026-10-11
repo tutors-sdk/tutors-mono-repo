@@ -30,7 +30,6 @@ export const init: ServerInit = async () => {
 
 const authHandle = createIdentityHandle({
   enabled: () => currentAuthMode() === "enabled",
-  adapter: () => env.PRIVATE_AUTH_ADAPTER,
   secret: env.PRIVATE_AUTH_SECRET,
   githubId: env.PRIVATE_AUTH_GITHUB_ID,
   githubSecret: env.PRIVATE_AUTH_GITHUB_SECRET
@@ -58,7 +57,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
     setSecurityHeaders(response.headers);
     return response;
   } catch {
-    // A `Response.redirect()` has immutable headers. Auth.js answers a failed sign-in with one,
+    // A `Response.redirect()` has immutable headers. OAuth can answer a failed sign-in with one,
     // so without a copy "GitHub said no" would become a 500 (Rule 0255).
     const copy = new Response(response.body, response);
     setSecurityHeaders(copy.headers);

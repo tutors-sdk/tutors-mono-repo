@@ -22,7 +22,5 @@ data:
   PUBLIC_SUPABASE_URL: ""
   PUBLIC_SUPABASE_ANON_KEY: ""
   PUBLIC_ANON_MODE: ""
-  # Reader only; keep Auth.js until guides/identity-rollout.md is rehearsed.
-  PRIVATE_AUTH_ADAPTER: "authjs"
   PUBLIC_PDF_KEY: ""
   LOG_LEVEL: "info"
