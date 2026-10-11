@@ -69,7 +69,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
-| `packages/svelte/app-config` | `@tutors/app-config` | Build-time only: the `vite.config.ts` and `svelte.config.js` every app shares |
+| `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 
 **Core services.**
 
@@ -110,7 +110,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` sets `envDir` to the root, and its `svelte.config.js` sets `kit.env.dir` to match so the `$env` modules resolve from the same file. There is nothing further to copy.
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so the `$env` modules resolve from the same file. There is nothing further to copy.
 
 Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 

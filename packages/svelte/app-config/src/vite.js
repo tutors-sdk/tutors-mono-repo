@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, mergeConfig } from 'vite';
+import { createSvelteKitOptions } from './svelte.js';
 
 // Workspace packages ship uncompiled .ts/.svelte source, so Vite has to bundle
 // them into the server build rather than leave them as external imports.
@@ -15,9 +16,10 @@ const NO_EXTERNAL = [/^@tutors\//];
  *
  * @param {string} appUrl the calling config's `import.meta.url`, used to find the app's package.json
  * @param {import('vite').UserConfig} [overrides] merged over the base with Vite's `mergeConfig` (arrays concatenate)
+ * @param {Parameters<typeof createSvelteKitOptions>[0]} [svelteOptions] fixture-specific SvelteKit options
  * @returns {import('vite').UserConfig}
  */
-export function createViteConfig(appUrl, overrides = {}) {
+export function createViteConfig(appUrl, overrides = {}, svelteOptions = {}) {
   const file = fileURLToPath(new URL('package.json', appUrl));
   const pkg = JSON.parse(readFileSync(file, 'utf8'));
 
@@ -28,7 +30,7 @@ export function createViteConfig(appUrl, overrides = {}) {
         define: {
           APP_VERSION: JSON.stringify(pkg.version)
         },
-        plugins: [tailwindcss(), sveltekit()],
+        plugins: [tailwindcss(), sveltekit(createSvelteKitOptions(svelteOptions))],
         ssr: {
           noExternal: NO_EXTERNAL
         }
