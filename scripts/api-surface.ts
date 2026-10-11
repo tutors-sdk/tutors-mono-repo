@@ -14,6 +14,7 @@
  *   - @tutors/tutors-gen-lib   (packages/jsr/gen)
  *   - @tutors/tutors-time-lib  (packages/jsr/time)
  *   - @tutors/tutors-types     (packages/jsr/types)
+ *   - @tutors/identity         (packages/jsr/identity)
  */
 
 import * as fs from "fs";
@@ -36,6 +37,12 @@ interface PackageConfig {
 }
 
 const TRACKED_PACKAGES: PackageConfig[] = [
+  {
+    name: "@tutors/identity",
+    dir: "packages/jsr/identity",
+    entry: "src/index.ts",
+    reportFile: "identity.api.md",
+  },
   {
     name: "@tutors/tutors-model-lib",
     dir: "packages/jsr/model",

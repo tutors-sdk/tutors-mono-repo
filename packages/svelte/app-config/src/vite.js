@@ -6,7 +6,8 @@ import { defineConfig, mergeConfig } from 'vite';
 
 // Workspace packages ship uncompiled .ts/.svelte source, so Vite has to bundle
 // them into the server build rather than leave them as external imports.
-const NO_EXTERNAL = [/^@tutors\//];
+// Auth.js also imports SvelteKit virtual modules ($env/$app), including through the identity adapter.
+const NO_EXTERNAL = [/^@tutors\//, '@auth/sveltekit'];
 
 /**
  * The Vite config every Tutors app shares: the repo-root .env, APP_VERSION from

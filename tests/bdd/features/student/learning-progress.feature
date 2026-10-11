@@ -62,7 +62,7 @@ Feature: Learning Progress Tracking
       Then the reader shall have reported 2 learning events for "Alice"
       And the last reported event shall carry the sentiment "confused"
 
-  @rule-0273 @ears-event-driven
+  @rule-0283 @ears-event-driven
   Rule: When a student moves to another learning object, the reader shall report one learning event, for the learning object they arrive at.
 
     Scenario: The learning object loading before the address changes is not reported as a page

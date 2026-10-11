@@ -8,7 +8,6 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
 // `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
-vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
 
 import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
@@ -98,8 +97,9 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
       expect(recorder.rows("tutors-connect-latest")).toEqual([]);
     });
     And("their name shall not appear in the online list", () => {
-      // The listener is up (the student still sees others); their own page view never reached it.
-      expect(presenceService.listeningTo).toBe(course.courseId);
+      // Activity controls are hidden while sharing is disabled, so there is no reader to deliver to.
+      expect(presenceService.listeningTo).toBe("");
+      expect(recorder.joined(course.courseId)).toHaveLength(0);
       expect(names()).toEqual([]);
     });
   });

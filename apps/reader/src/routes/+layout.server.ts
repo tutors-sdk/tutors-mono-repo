@@ -1,10 +1,11 @@
-export const load = async ({ locals }) => {
-  const session = await locals?.auth();
-  const loggedIn = !!session?.user;
-  const user = session?.user;
+import type { LayoutServerLoad } from "./$types";
+
+export const load: LayoutServerLoad = ({ locals }) => {
+  const actor = locals.actor;
   return {
-    loggedIn,
-    user,
+    actor,
+    loggedIn: actor !== null,
+    user: actor ? { login: actor.login, name: actor.name ?? actor.login, email: actor.email ?? "", image: actor.image ?? "" } : undefined,
     locale: locals.locale
   };
 };

@@ -23,6 +23,7 @@ const LAYERS = [
       "packages/svelte/themes",
       "packages/svelte/community",
       "packages/svelte/connect",
+      "packages/svelte/identity-sveltekit",
       "packages/svelte/utils/rbac",
       "packages/svelte/utils/privacy",
       "packages/svelte/utils/tour"
@@ -53,6 +54,27 @@ const layerRules = LAYERS.slice(0, -1).map((layer, index) => ({
 module.exports = {
   forbidden: [
     ...layerRules,
+    {
+      name: "identity-provider-only-in-adapter",
+      comment: "Auth.js and Better Auth belong to the identity adapter; consumers depend on identity contracts.",
+      severity: "error",
+      from: { path: "^(apps|packages)/", pathNot: "^packages/svelte/identity-sveltekit/" },
+      to: { path: "(^|/)(@auth/|better-auth(/|$))" }
+    },
+    {
+      name: "identity-contracts-self-contained",
+      comment: "Identity contracts import no framework, database, provider or other package.",
+      severity: "error",
+      from: { path: "^packages/jsr/identity/" },
+      to: { pathNot: "^packages/jsr/identity/" }
+    },
+    {
+      name: "identity-no-server-in-browser",
+      comment: "Browser entry points cannot reach server adapters or private environment modules, even through a shared barrel.",
+      severity: "error",
+      from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/svelte/identity-sveltekit/src/client\\.ts$)" },
+      to: { path: "(\\.server\\.[jt]s$|/server/|\\$env/(static|dynamic)/private|(^|/)@auth/(core/|sveltekit/(?!dist/client\\.)))", reachable: true }
+    },
     {
       name: "no-app-to-app",
       comment: "Apps are deployed separately; share code through a package instead of importing another app.",

@@ -74,7 +74,7 @@ export interface PresenceService {
   sendLoEvent(course: Course, lo: Lo, student: TutorsId): void;
 
   /**
-   * Begin monitoring platform-wide course activity
+   * Prepare the publish-only channel for platform-wide course activity
    */
   connectToAllCourseAccess(): void;
 
@@ -82,7 +82,10 @@ export interface PresenceService {
    * Begin monitoring activity in a specific course
    * @param courseId - Identifier of course to monitor
    */
-  startPresenceListener(courseId: string): void;
+  startPresenceListener(courseId: string): Promise<void>;
+
+  /** Stop monitoring the current course and clear its activity. */
+  stopPresenceListener(): void;
 }
 
 /**
@@ -126,7 +129,10 @@ export interface LiveService {
   /**
    * Begin monitoring platform-wide activity
    */
-  startGlobalPresenceService(): void;
+  startGlobalPresenceService(): Promise<void>;
+
+  /** Stop monitoring platform-wide activity and clear its records. */
+  stopGlobalPresenceService(): void;
 
   /**
    * Begin monitoring activity in a specific course

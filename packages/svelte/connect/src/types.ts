@@ -1,4 +1,7 @@
+import type { IdentityClient } from "@tutors/identity";
 import type { Course, IconType, TutorsId } from "@tutors/tutors-model-lib";
+
+export type ConnectUser = Pick<TutorsId, "login" | "name" | "email" | "image">;
 
 /**
  * Record of a user's interaction with a course
@@ -36,12 +39,13 @@ export interface ProfileStore {
  */
 export interface TutorsConnectService {
   profile: ProfileStore;
+  identityClient: IdentityClient | null;
   intervalId: any;
   anonMode: boolean;
 
-  connect(redirectStr: string): void;
-  reconnect(user: TutorsId): void;
-  disconnect(redirectStr: string): void;
+  connect(redirectStr: string): Promise<void>;
+  reconnect(user: ConnectUser): Promise<void>;
+  disconnect(redirectStr: string): Promise<void>;
   toggleShare(): void;
   /** Persists sentiment locally and, when signed in, in tutors-connect-users. */
   updateSentiment(sentiment: string): Promise<void>;

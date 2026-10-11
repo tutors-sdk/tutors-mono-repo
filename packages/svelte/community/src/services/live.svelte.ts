@@ -8,6 +8,7 @@ import { supabase } from "../utils/supabase-client.ts";
 const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
 
 let channelAll: RealtimeChannel | null = null;
+let globalChannelRemoval: Promise<unknown> | null = null;
 
 export const liveService: LiveService = {
   listeningForCourse: rune<string>(""),
@@ -53,20 +54,30 @@ export const liveService: LiveService = {
     this.studentListener(payload);
   },
 
-  startGlobalPresenceService() {
+  async startGlobalPresenceService() {
     if (this.listeningAll) return;
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
-    channelAll = supabase
-      .channel("tutors-all-course-access", BROADCAST_CONFIG)
-      .on("broadcast", { event: "lo-event" }, this.broadcastListener.bind(this))
-      .subscribe();
-
     this.listeningAll = true;
+    if (globalChannelRemoval) await globalChannelRemoval;
+    if (!this.listeningAll || channelAll) return;
+
+    channelAll = supabase.channel("tutors-all-course-access", BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.broadcastListener.bind(this)).subscribe();
+  },
+
+  stopGlobalPresenceService() {
+    if (channelAll && supabase) globalChannelRemoval = supabase.removeChannel(channelAll);
+    channelAll = null;
+    this.listeningAll = false;
+    this.coursesOnline.value = [];
+    this.studentsOnline.value = [];
+    this.courseEventMap.clear();
+    this.studentEventMap.clear();
   },
 
   startCoursePresenceListener(courseId: string) {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (this.channelCourse && this.listeningForCourse.value === courseId) return;
 
     if (this.channelCourse) {
       supabase.removeChannel(this.channelCourse);
@@ -76,9 +87,6 @@ export const liveService: LiveService = {
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
 
-    this.channelCourse = supabase
-      .channel(courseId, BROADCAST_CONFIG)
-      .on("broadcast", { event: "lo-event" }, this.studentListener.bind(this))
-      .subscribe();
+    this.channelCourse = supabase.channel(courseId, BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.studentListener.bind(this)).subscribe();
   }
 };

@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import "../../bdd/support/svelte-runes-shim.ts";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 
 /**
  * The platform-wide broadcast is fire-and-forget: Tutors Live losing an event must not stop the
  * course channel or the latest-LO upsert behind it, and the loss must reach the log. `httpSend`
  * fails two ways - it rejects on a failed POST, and throws synchronously where the Realtime client
- * predates 2.97.0 - and each has its own arm in `sendLoEvent`.
+ * has no `httpSend` - and each has its own arm in `sendLoEvent`.
  */
 
 const { mockUpsert, mockChannel, allChannel, courseChannel } = vi.hoisted(() => {
@@ -52,12 +53,12 @@ async function sendAndSettle() {
 }
 
 describe("presence-service: a failed platform-wide broadcast does not stop the rest", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     // An anonymous id is minted from localStorage even for a student who shares their name.
     vi.stubGlobal("window", { localStorage: { tutorsTimeId: "anon-1" } });
     presenceService.connectToAllCourseAccess();
-    presenceService.startPresenceListener("web-dev");
+    await presenceService.startPresenceListener("web-dev");
   });
 
   afterEach(() => {

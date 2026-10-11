@@ -173,6 +173,32 @@ describeFeature(feature, ({ Background, Rule }) => {
       And("the page should show me signed in 29 days from now", async () => expect((await pageOnDay(29)).loggedIn).toBe(true));
       And("the page should show me signed out 31 days from now", async () => expect((await pageOnDay(31)).loggedIn).toBe(false));
     });
+
+    RuleScenario("Visiting a page renews the session for another 30 days", ({ Given, When, Then, And }) => {
+      let signedInAt = 0;
+      Given("I have signed in through GitHub as {string}", async (_ctx, name: string) => {
+        signedInAt = Date.now();
+        await signedInAs(_ctx, name);
+      });
+      When("I visit the reader 29 days later", async () => {
+        vi.useFakeTimers({ now: signedInAt + 29 * DAY, toFake: ["Date"] });
+        last = await send(browser, "GET", "/course/web-dev-101");
+        expect(last.page?.loggedIn).toBe(true);
+      });
+      Then("my renewed session cookie should expire another 30 days later", () => {
+        const cookie = sessionCookieOf(last);
+        expect(cookie).toBeDefined();
+        expect(Math.abs(Date.parse(String(cookie!.attributes.expires)) - (signedInAt + 59 * DAY))).toBeLessThan(60_000);
+      });
+      And("the page should show me signed in 31 days after the original sign-in", async () => {
+        vi.setSystemTime(signedInAt + 31 * DAY);
+        try {
+          expect((await openPage(browser)).loggedIn).toBe(true);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+    });
   });
 
   Rule("If a request carries a session cookie that the reader did not issue, then the reader shall treat the visitor as signed out.", ({ RuleScenario }) => {

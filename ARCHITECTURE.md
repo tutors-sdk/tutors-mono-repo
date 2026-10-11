@@ -1274,12 +1274,14 @@ Real-time features use **Supabase Realtime Broadcast channels**, which are part 
 
 #### Client Usage
 
+Readers subscribe to their current course only while activity sharing is enabled, update their own activity locally without a server echo, and leave the channel when the course view closes. Tutors Live subscribes to the platform-wide feed only while its landing page is mounted. Reader broadcasts to that feed use HTTP without joining it.
+
 ```typescript
 import { supabase } from "../utils/supabase-client";
 
 // Subscribe to a channel (equivalent to joining a room)
 const channel = supabase
-  .channel(courseId, { config: { broadcast: { self: true } } })
+  .channel(courseId, { config: { broadcast: { self: false } } })
   .on("broadcast", { event: "lo-event" }, (payload) => {
     const data = payload.payload;
     // Handle presence update

@@ -120,10 +120,12 @@ export class RecordingChannel {
   readonly sent: BroadcastMessage[] = [];
   readonly handlers = new Map<string, BroadcastHandler[]>();
   subscribed = false;
+  subscriptions = 0;
 
   constructor(
     private readonly db: RecordingSupabase,
-    readonly name: string
+    readonly name: string,
+    readonly options: { config?: { broadcast?: { self?: boolean } } } = {}
   ) {}
 
   on(_type: "broadcast", filter: { event: string }, handler: BroadcastHandler) {
@@ -133,13 +135,14 @@ export class RecordingChannel {
 
   subscribe() {
     this.subscribed = true;
+    this.subscriptions++;
     return this;
   }
 
-  /** Product code broadcasting: logged, then relayed as the realtime server would (`self: true`). */
+  /** Product code broadcasting: logged, then relayed with the configured sender-echo behaviour. */
   send(message: BroadcastMessage) {
     this.sent.push(message);
-    this.db.relay(this.name, message);
+    this.db.relay(this.name, message, this.options.config?.broadcast?.self === false ? this : undefined);
     return Promise.resolve("ok");
   }
 
@@ -200,19 +203,23 @@ export class RecordingSupabase {
     return Promise.resolve({ data: null, error: null });
   }
 
-  channel(name: string) {
-    const channel = new RecordingChannel(this, name);
+  channel(name: string, options?: RecordingChannel["options"]) {
+    const existing = this.channels.find((channel) => channel.name === name);
+    if (existing) return existing;
+    const channel = new RecordingChannel(this, name, options);
     this.channels.push(channel);
     return channel;
   }
 
   removeChannel(channel: RecordingChannel) {
     this.channels = this.channels.filter((c) => c !== channel);
+    channel.subscribed = false;
+    return Promise.resolve("ok");
   }
 
   /** Deliver a broadcast to every subscribed listener on the named channel. */
-  relay(name: string, message: BroadcastMessage) {
-    for (const channel of this.channels.filter((c) => c.name === name && c.subscribed)) {
+  relay(name: string, message: BroadcastMessage, sender?: RecordingChannel) {
+    for (const channel of this.channels.filter((c) => c.name === name && c.subscribed && c !== sender)) {
       for (const handler of channel.handlers.get(message.event) ?? []) handler(message);
     }
   }

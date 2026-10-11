@@ -15,7 +15,7 @@ import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
  * Drives the reader's connect, analytics, presence and live services the way
  * the reader's layouts do. A steps file that imports this must first mock
  * `@supabase/supabase-js` (returning `recorder`), `$env/dynamic/public`,
- * `$app/environment`, `$app/navigation` and `@auth/sveltekit/client`; every
+ * `$app/environment`, `$app/navigation` and an injected `IdentityClient`; every
  * module between those seams is the real product code.
  */
 
@@ -24,6 +24,8 @@ export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
 /** A browser tab with nobody signed in, no course open and nobody online. */
 export function freshBrowser(): void {
   vi.clearAllMocks();
+  liveService.stopGlobalPresenceService();
+  presenceService.stopPresenceListener();
   recorder.reset();
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);
@@ -34,6 +36,7 @@ export function freshBrowser(): void {
   currentCourse.value = null;
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
+  tutorsConnectService.identityClient = { signIn: vi.fn(), signOut: vi.fn() };
   Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true, navigationInFlight: true, navigationAttempt: 0 });
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];
