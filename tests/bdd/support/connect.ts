@@ -15,7 +15,7 @@ import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
  * Drives the reader's connect, analytics, presence and live services the way
  * the reader's layouts do. A steps file that imports this must first mock
  * `@supabase/supabase-js` (returning `recorder`), `$env/dynamic/public`,
- * `$app/environment`, `$app/navigation` and `@auth/sveltekit/client`; every
+ * `$app/environment`, `$app/navigation` and an injected `IdentityClient`; every
  * module between those seams is the real product code.
  */
 
@@ -36,6 +36,7 @@ export function freshBrowser(): void {
   currentCourse.value = null;
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
+  tutorsConnectService.identityClient = { signIn: vi.fn(), signOut: vi.fn() };
   Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true });
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];

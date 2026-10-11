@@ -23,3 +23,13 @@ Feature: Authentication Integration
     Then the system shall display a connection error
     And the system shall allow retry
 ```
+
+## Identity boundary
+
+`@tutors/identity` defines `Actor`, request-scoped `SessionPort` and `IdentityClient` without framework or database imports. `@tutors/identity-sveltekit/server` owns Auth.js configuration, `/auth` endpoints and session renewal cookies. The reader keeps `authMode()` and passes its credentials and enabled predicate into the adapter. Anonymous and unconfigured requests resolve `locals.actor` to `null`.
+
+The adapter records the verified OAuth account’s numeric GitHub id in the JWT and derives `Actor.subject` as `github:<numeric account id>`. Auth.js generates a UUID for `sub`, so previously issued JWTs have no numeric GitHub id. They remain signed in with `authjs:<uuid>` until the next GitHub sign-in, which supplies the trusted numeric id. Never resolve an old login through GitHub’s public lookup: a renamed login could belong to someone else. The secret, cookie names, `/auth` path, JWT strategy and rolling 30-day expiry stay unchanged. The root server layout exposes only the actor and a typed profile; nullable profile fields become strings there. GitHub login remains the key for existing student records, analytics and enrollment. No stored rows or identifiers are migrated.
+
+The browser layout injects `@tutors/identity-sveltekit/client` into connect and reconnects the profile only in the browser. Connect has no provider imports; sharing, sentiment, presence, course roles and privacy remain its existing services' responsibility. To replace Auth.js, implement the same two adapter exports and retain the contracts and behavioral rules.
+
+Dependency-cruiser enforces provider ownership, self-contained contracts and transitive browser/server separation. Negative fixtures exercise forbidden provider, framework, database and secret imports. Identity regression tests cover legacy JWTs, trusted account ids, missing claims and isolation between concurrent requests. Rules 0250–0259 remain the provider-independent behavioral baseline.

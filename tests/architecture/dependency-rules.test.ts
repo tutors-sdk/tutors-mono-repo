@@ -14,6 +14,12 @@ const FIXTURE_ALIASES = {
   "@tutors/runes": fixture("packages/svelte/runes/src/index.ts"),
   "@tutors/themes": fixture("packages/svelte/themes/src/index.ts"),
   "@tutors/connect": fixture("packages/svelte/connect/src/index.ts"),
+  "@auth/sveltekit": fixture("external/@auth/sveltekit/index.ts"),
+  "better-auth": fixture("external/better-auth/index.ts"),
+  "@sveltejs/kit": fixture("external/sveltekit.ts"),
+  "@supabase/supabase-js": fixture("external/supabase.ts"),
+  "$env/dynamic/private": fixture("external/$env/dynamic/private.ts"),
+  "@tutors/identity-sveltekit/server": fixture("packages/svelte/identity-sveltekit/src/index.server.ts"),
   "@tutors/rbac": fixture("packages/svelte/utils/rbac/src/index.ts"),
   "@tutors/ui-primitives": fixture("packages/svelte/ui-primitives/src/index.ts"),
   "@tutors/ui-navigators": fixture("packages/svelte/ui-navigators/src/index.ts"),
@@ -33,6 +39,14 @@ describe("architecture rules (runway tier A)", () => {
     }, 60_000);
 
     it.each([
+      ["identity-provider-only-in-adapter", "apps/reader/src/lib/provider.ts", "external/@auth/sveltekit/index.ts"],
+      ["identity-provider-only-in-adapter", "packages/svelte/connect/src/provider.ts", "external/better-auth/index.ts"],
+      ["identity-contracts-self-contained", "packages/jsr/identity/src/framework.ts", "external/sveltekit.ts"],
+      ["identity-contracts-self-contained", "packages/jsr/identity/src/database.ts", "external/supabase.ts"],
+      ["identity-no-server-in-browser", "apps/reader/src/lib/leak.client.ts", "packages/svelte/identity-sveltekit/src/index.server.ts"],
+      ["identity-no-server-in-browser", "apps/reader/src/lib/Leak.svelte", "packages/svelte/identity-sveltekit/src/index.server.ts"],
+      ["identity-no-server-in-browser", "apps/reader/src/lib/secret.client.ts", "external/$env/dynamic/private.ts"],
+      ["identity-no-server-in-browser", "packages/svelte/identity-sveltekit/src/provider.client.ts", "external/@auth/sveltekit/index.ts"],
       ["layer-foundation", "packages/jsr/model/src/reaches-up.ts", "packages/svelte/runes/src/index.ts"],
       ["layer-core", "packages/svelte/course/src/tree.ts", "packages/svelte/themes/src/index.ts"],
       ["layer-feature", "packages/svelte/themes/src/reaches-up.ts", "packages/svelte/ui-primitives/src/index.ts"],
@@ -58,7 +72,8 @@ describe("architecture rules (runway tier A)", () => {
         "packages/svelte/ui-primitives/src/index.ts",
         "packages/svelte/ui-components/src/tree/Node.ts",
         "packages/svelte/ui-components/src/tree/Children.ts",
-        "apps/catalogue/src/lib/page.ts"
+        "apps/catalogue/src/lib/page.ts",
+        "packages/svelte/identity-sveltekit/src/index.server.ts"
       ];
       const falsePositives = violations.filter((line) => cleanSources.some((source) => line.includes(`: ${source} -> `)));
       expect(falsePositives).toEqual([]);

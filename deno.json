@@ -7,10 +7,18 @@
     "./packages/jsr/gen",
     "./packages/jsr/time",
     "./packages/jsr/create",
-    "./packages/jsr/types"
+    "./packages/jsr/types",
+    "./packages/jsr/identity"
   ],
   "fmt": {
-    "include": ["./packages/jsr/gen/src/", "./packages/jsr/model/src/", "./packages/jsr/tutors/", "./packages/jsr/tutors-lite/", "./packages/jsr/types/"],
+    "include": [
+      "./packages/jsr/gen/src/",
+      "./packages/jsr/model/src/",
+      "./packages/jsr/tutors/",
+      "./packages/jsr/tutors-lite/",
+      "./packages/jsr/types/",
+      "./packages/jsr/identity/"
+    ],
     "useTabs": false,
     "lineWidth": 180,
     "indentWidth": 2,
