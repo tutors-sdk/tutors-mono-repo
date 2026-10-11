@@ -14,6 +14,6 @@
     "better-auth": "1.7.7"
   },
   "peerDependencies": {
-    "@sveltejs/kit": "^2.70.3"
+    "@sveltejs/kit": "^3.0.1"
   }
 }

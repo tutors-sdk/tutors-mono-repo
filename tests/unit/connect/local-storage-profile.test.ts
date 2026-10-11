@@ -4,11 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * LocalStorageProfile tests.
  *
  * The localStorageProfile service manages course visit history and preferences
- * in browser localStorage. These tests mock the $app/environment module and
+ * in browser localStorage. These tests mock the $app/env module and
  * the global localStorage to verify all ProfileStore methods work correctly.
  */
 
-vi.mock("$app/environment", () => ({
+vi.mock("$app/env", () => ({
   browser: true
 }));
 

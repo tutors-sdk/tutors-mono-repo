@@ -3,14 +3,11 @@ import adapterAuto from '@sveltejs/adapter-auto';
 import adapterNode from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
-// Kit 2 forwards vitePlugin.onwarn but omits it from PluginOptions; Kit 3 accepts onwarn directly.
-/** @typedef {NonNullable<Parameters<typeof import('@sveltejs/kit/vite').sveltekit>[0]> & { vitePlugin?: Pick<import('@sveltejs/vite-plugin-svelte').Options, 'onwarn'> }} SvelteKitOptions */
-
 /**
  * The SvelteKit config every Tutors app shares.
  *
- * @param {SvelteKitOptions} [overrides] options replace shared defaults
- * @returns {SvelteKitOptions}
+ * @param {NonNullable<Parameters<typeof import('@sveltejs/kit/vite').sveltekit>[0]>} [overrides] options replace shared defaults
+ * @returns {NonNullable<Parameters<typeof import('@sveltejs/kit/vite').sveltekit>[0]>}
  */
 export function createSvelteKitOptions(overrides = {}) {
   // SVELTEKIT_ADAPTER=node produces a self-contained Node server (build/index.js)
@@ -30,11 +27,9 @@ export function createSvelteKitOptions(overrides = {}) {
   return {
     preprocess: vitePreprocess(),
 
-    vitePlugin: {
-      onwarn(warning, defaultHandler) {
-        if (warning.code === 'state_referenced_locally') return;
-        defaultHandler(warning);
-      }
+    onwarn(warning, defaultHandler) {
+      if (warning.code === 'state_referenced_locally') return;
+      defaultHandler(warning);
     },
 
     adapter,

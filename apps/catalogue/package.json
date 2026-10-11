@@ -12,11 +12,11 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
-  "dependencies": {},
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.1",
-    "@sveltejs/kit": "^2.70.3",
+    "@sveltejs/adapter-netlify": "7.0.1",
+    "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
@@ -26,17 +26,20 @@
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
-    "@tutors/runtime": "workspace:*",
     "@tutors/runes": "workspace:*",
+    "@tutors/runtime": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@tutors/ui-components": "workspace:*",
     "@tutors/ui-navigators": "workspace:*",
     "@tutors/ui-primitives": "workspace:*",
-    "svelte": "^5.57.0",
+    "svelte": "5.57.2",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "1.9.1"
   }
 }

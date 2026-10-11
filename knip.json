@@ -35,10 +35,14 @@
       "entry": [
         "src/routes/**/+*.{ts,svelte}",
         "src/hooks.{server,client}.ts",
-        "tests/**/*.spec.ts"
+        "tests/**/*.spec.ts",
+        "src/env.{js,ts}"
       ],
       "project": [
         "src/**/*.{ts,svelte}"
+      ],
+      "ignoreDependencies": [
+        "@sveltejs/adapter-netlify"
       ]
     },
     "packages/svelte/*": {

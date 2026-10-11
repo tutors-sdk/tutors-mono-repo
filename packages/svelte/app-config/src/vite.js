@@ -32,7 +32,9 @@ export function createViteConfig(appUrl, overrides = {}, svelteOptions = {}) {
         },
         plugins: [tailwindcss(), sveltekit(createSvelteKitOptions(svelteOptions))],
         ssr: {
-          noExternal: NO_EXTERNAL
+          noExternal: NO_EXTERNAL,
+          // jsdom reads files relative to its CommonJS module; preserve its Node package and assets.
+          external: ['isomorphic-dompurify']
         }
       },
       overrides

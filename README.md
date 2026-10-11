@@ -10,7 +10,7 @@ Before cutting a release, read the [daily A3](https://tutors-sdk.github.io/tutor
 
 ## Quick start
 
-Ten minutes from clone to a rendered course. Requires Node.js >= 22.12.0 and pnpm >= 8.
+Ten minutes from clone to a rendered course. Requires Node.js >= 22.17.0 and pnpm >= 8.
 
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
@@ -105,7 +105,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Prerequisites
 
-- Node.js >= 22.12.0
+- Node.js >= 22.17.0
 - pnpm >= 8.0.0
 
 ### Installation
