@@ -39,7 +39,9 @@ createServer((req, res) => {
       .writeHead(200, { "content-type": "text/plain" })
       .end(
         `http_requests_total{method="GET",route="/",status_code="200"} ${requests}\n` +
-          `http_request_duration_seconds_bucket{le="+Inf"} ${requests}\n`
+          `http_request_duration_seconds_bucket{le="+Inf"} ${requests}\n` +
+          `http_request_duration_seconds_sum 0\n` +
+          `http_request_duration_seconds_count ${requests}\n`
       );
   }
   requests++;
