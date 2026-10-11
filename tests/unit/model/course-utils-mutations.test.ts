@@ -8,6 +8,7 @@ import {
   pluraliseLoType,
 } from "../../../packages/jsr/model/src/utils/course-utils";
 import type { Course } from "../../../packages/jsr/model/src/types/index";
+import log from "@tutors/logger-core";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -347,7 +348,7 @@ describe("initCalendar — mutation killing", () => {
   });
 
   it("does nothing and logs nothing when there is no calendar", () => {
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const spy = vi.spyOn(log, "error").mockImplementation(() => {});
     const course = makeCourse();
     initCalendar(course, 0);
     expect(course.courseCalendar).toBeUndefined();
@@ -355,7 +356,7 @@ describe("initCalendar — mutation killing", () => {
   });
 
   it("produces an empty week list when weeks is not an array", () => {
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const spy = vi.spyOn(log, "error").mockImplementation(() => {});
     const course = makeCourse({ calendar: { title: "T", weeks: "nope" } });
     initCalendar(course, 0);
     expect(course.courseCalendar).toEqual({ title: "T", year: undefined, weeks: [], currentWeek: undefined });
@@ -429,7 +430,7 @@ describe("initCalendar — mutation killing", () => {
   });
 
   it("still builds the calendar when today is after the last week", () => {
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const spy = vi.spyOn(log, "error").mockImplementation(() => {});
     const course = makeCourse({ calendar: { weeks } });
     initCalendar(course, Date.parse("2030-01-01"));
     expect(course.courseCalendar!.weeks).toHaveLength(2);
@@ -437,12 +438,12 @@ describe("initCalendar — mutation killing", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("reports a malformed calendar on stderr instead of throwing", () => {
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  it("reports a malformed calendar through the logger instead of throwing", () => {
+    const spy = vi.spyOn(log, "error").mockImplementation(() => {});
     const course = makeCourse({ calendar: { weeks: [{}] } });
     expect(() => initCalendar(course, 0)).not.toThrow();
     expect(course.courseCalendar).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(String(spy.mock.calls[0][0])).toMatch(/^Error loading calendar: .+\n$/);
+    expect(spy).toHaveBeenCalledWith("Error loading calendar", expect.any(Error));
   });
 });

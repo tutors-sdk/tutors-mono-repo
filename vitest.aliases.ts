@@ -30,6 +30,7 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/identity": resolve(root, "packages/jsr/identity/src/index.ts"),
   "@tutors/identity-sveltekit/server": resolve(root, "packages/svelte/identity-sveltekit/src/index.server.ts"),
   "@tutors/identity-sveltekit/client": resolve(root, "packages/svelte/identity-sveltekit/src/client.ts"),
+  "@tutors/logger-core": resolve(root, "packages/jsr/logger-core/src/index.ts"),
   "@tutors/logger": resolve(root, "packages/svelte/utils/logger/src/index.ts"),
   "@tutors/metrics": resolve(root, "packages/svelte/utils/metrics/src/index.ts"),
   "@tutors/runtime": resolve(root, "packages/svelte/utils/runtime/src/index.ts"),

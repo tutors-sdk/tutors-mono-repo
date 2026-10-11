@@ -77,15 +77,15 @@ export default tseslint.config(
     },
   },
 
-  // no-console rule (issue #211) — ban console.* across the codebase
-  // except in the @tutors/logger package, which owns the console surface
+  // no-console rule (issues #211, #210) — ban console.* across the codebase,
+  // the Deno packages included, except in @tutors/logger-core, which owns the console surface
   {
     rules: {
       "no-console": "error",
     },
   },
   {
-    files: ["packages/svelte/utils/logger/**"],
+    files: ["packages/jsr/logger-core/**"],
     rules: {
       "no-console": "off",
     },
@@ -100,7 +100,6 @@ export default tseslint.config(
       "**/.svelte-kit/**",
       "**/coverage/**",
       "**/static/**",
-      "packages/jsr/**",
       "services/**",
       ".claude/**",
       ".generator-diff/**",

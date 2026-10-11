@@ -1,10 +1,10 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { createLogger, addTransport, removeTransport } from "../../../packages/svelte/utils/logger/src/index.ts";
-import type { LogEntry } from "../../../packages/svelte/utils/logger/src/types.ts";
+import type { LogEntry } from "../../../packages/jsr/logger-core/src/types.ts";
 import {
   formatJson,
   formatPretty,
-} from "../../../packages/svelte/utils/logger/src/formatter.ts";
+} from "../../../packages/jsr/logger-core/src/formatter.ts";
 
 function createTestLogger(overrides: Record<string, unknown> = {}) {
   const entries: LogEntry[] = [];

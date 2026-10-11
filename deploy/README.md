@@ -398,7 +398,7 @@ The fields whose value differs between two runs of one image under the same
 traffic are exactly `timestamp`, `hostname`, `pid`, `requestId`,
 `duration_ms`, `slow` and `stack` (frames name content-hashed build files).
 They are listed in code as `VARIABLE_LOG_FIELDS`, next to `CORE_LOG_KEYS` and
-`LOG_EVENT_FIELDS` in `packages/svelte/utils/logger/src`. Key names, key
+`LOG_EVENT_FIELDS` in `packages/jsr/logger-core/src` and `packages/svelte/utils/logger/src`. Key names, key
 order, types, `event`, `message`, `level` (apart from the `slow` case) and
 line counts per event are stable. `pnpm check:container` checks the contract
 against real container output.

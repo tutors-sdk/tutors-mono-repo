@@ -140,6 +140,7 @@ function extractPackages(): PackageInfo[] {
     { dir: "packages/jsr/gen", category: "jsr" as const },
     { dir: "packages/jsr/time", category: "jsr" as const },
     { dir: "packages/jsr/tutors", category: "jsr" as const },
+    { dir: "packages/jsr/logger-core", category: "jsr" as const },
     { dir: "packages/svelte/course", category: "svelte" as const },
     { dir: "packages/svelte/runes", category: "svelte" as const },
     { dir: "packages/svelte/community", category: "svelte" as const },
