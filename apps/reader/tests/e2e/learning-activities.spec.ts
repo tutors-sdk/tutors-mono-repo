@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { openNotebookWithoutHeadings } from "./support";
 
 // Proves tests/bdd/features/ui/learning-activities.feature: one test per scenario, titled and tagged to match.
@@ -186,4 +187,35 @@ test("Arrow keys leave an unfocused slide deck alone", { tag: "@rule-0050" }, as
   await page.locator("#main-content").focus();
   await page.keyboard.press("ArrowRight");
   await expect(slides).toContainText("2 of 11");
+});
+
+// Adobe's viewer cannot load here (its client id is tied to the live domain), so a stand-in SDK records
+// each container it is asked to render into and writes the talk's PDF url there.
+const adobeStandIn = `
+  window.__adobeContainers = [];
+  window.AdobeDC = { View: class {
+    constructor(options) { this.divId = options.divId; window.__adobeContainers.push(options.divId); }
+    previewFile(file) { document.getElementById(this.divId).textContent = "Adobe viewer: " + file.content.location.url; }
+  } };
+  document.dispatchEvent(new Event("adobe_dc_view_sdk.ready"));
+`;
+
+test("Switching from the browser reader back to Adobe shows the talk again", { tag: "@rule-0285" }, async ({ page }) => {
+  // A course from the generator corpus, which opens talks in Adobe's viewer (the default).
+  const corpus = readFileSync(new URL("../../../../tests/fixtures/tutors-json-history/5.3.0/tutors.json", import.meta.url), "utf8");
+  await page.route("**/adobe-talk-course.netlify.app/tutors.json", route => route.fulfill({ contentType: "application/json", body: corpus }));
+  await page.route("**/view-sdk/viewer.js", route => route.fulfill({ contentType: "text/javascript", body: adobeStandIn }));
+  await page.goto("/talk/adobe-talk-course/topic-01-typical/unit-1/talk-1");
+  const reader = page.getByRole("combobox", { name: "PDF reader" });
+  const adobe = page.locator("[id^=adobe-pdf-viewer-]");
+  await expect(reader).toHaveValue("adobe");
+  await expect(adobe).toContainText("Adobe viewer: https://adobe-talk-course.netlify.app/topic-01-typical/unit-1/talk-1/talk.pdf");
+  await reader.selectOption("mozilla");
+  await expect(adobe).toHaveCount(0);
+  await reader.selectOption("adobe");
+  await expect(adobe).toContainText("Adobe viewer: https://adobe-talk-course.netlify.app/topic-01-typical/unit-1/talk-1/talk.pdf");
+  const containers = await page.evaluate(() => (window as unknown as { __adobeContainers: string[] }).__adobeContainers);
+  expect(containers).toHaveLength(2);
+  expect(containers[1]).not.toBe(containers[0]);
+  expect(await adobe.getAttribute("id")).toBe(containers[1]);
 });
