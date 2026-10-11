@@ -45,7 +45,7 @@ Feature: Course Loading
 
   # Issue #427. The Calendar button is drawn from the calendar the reader loads (CalendarButton.svelte),
   # so a course the reader gives no calendar shows no button.
-  @rule-0283 @ears-optional
+  @rule-0284 @ears-optional
   Rule: Where a course's calendar.yaml lists at least one week, the reader shall load that course's calendar.
 
     @active

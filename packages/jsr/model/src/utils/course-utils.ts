@@ -235,7 +235,7 @@ export function initCalendar(course: Course, today: number = Date.now()) {
     }
 
     // A calendar with no weeks has nothing to show, so the course gets no calendar and the
-    // reader offers no Calendar button for it (Rule 0283, issue #427).
+    // reader offers no Calendar button for it (Rule 0284, issue #427).
     if (weeks.length === 0) return;
 
     const currentWeek = weeks.find(
