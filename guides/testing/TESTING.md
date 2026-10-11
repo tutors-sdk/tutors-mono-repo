@@ -429,15 +429,23 @@ Rule id.
 **How.** `pnpm test:ears:audit` binds the two statically: a scenario with no test
 (`unproved-scenario`), a test whose title or Rule id matches no scenario (`orphan-ui-test`) and
 a skipped test (`rule-not-run`) fail it. The tests run with `apps/reader/playwright.config.ts`
-against `vite dev` on port 5173; the reader needs its `.env` (copy `.env.example` into
-`apps/reader/`).
+against an isolated `vite dev` on port 5173 with authentication enabled and Supabase directed to
+a local discard fixture.
+The config supplies test OAuth credentials and explicitly preloads the shared GitHub stub into the
+server process. No production login endpoint or trusted identity header is added. Auth-dependent
+specs call `signInAs` to obtain real signed cookies through HTTP; store seeding is limited to
+rendering/presence fixtures and the deliberate forgery test. `authentication.spec.ts` additionally
+checks navigation, reload and logout against the reader hooks. Unshipped protected-route fixtures
+on ports 5178/5179 prove server rejection of browser forgery and a fixture-secret cookie under a
+production configuration. #320's personal-data route should replace this fixture assertion once
+merged. The three ports must be free; an existing dev server is never reused.
 
 ```bash
 pnpm test:e2e:reader --project=chromium              # the whole contract
 pnpm test:e2e:reader --project=chromium -g @rule-0032  # one Rule
 ```
 
-**When.** Every pull request runs the contract in Chromium (`ui-contract` in `ci.yml`), and it
+**When.** Every pull request targeting `main` runs the contract in Chromium (`ui-contract` in `ci.yml`), and it
 and the audit are required by `ci-success`. Release candidates run it in Chromium, Firefox and
 WebKit.
 
