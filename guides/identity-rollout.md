@@ -76,10 +76,25 @@ stubbed only by an explicit test-credential-guarded Node preload; production imp
 Browser checks obtain real SDK cookies and cover profile navigation/reload/logout and existing
 student/educator controls. Supabase writes go to an unshipped local discard fixture.
 
-CI targeting `main` runs the built check and both Chromium UI matrices. Stacked PRs do not
-trigger that workflow until retargeted to `main`. The browser protected-route check currently
+CI runs the built check and both Chromium UI matrices for every layer of the registered
+native GitHub stack rooted at `main`; each PR keeps its own diff and testing results. The browser protected-route check currently
 uses an unshipped fixture with the reader's actual hooks. Replace it with #320/#327's production
 route when that route lands, and recheck its actor/role guard with both adapters.
+
+## Current production and database isolation
+
+The release branches `release/16.2.2` and `release/16.2.3` use Auth.js with `/auth` callbacks.
+Better Auth does not accept those cookies: enabling it requires reauthentication. A Better Auth
+cookie fixture proves continuity between Better Auth versions, not migration of production
+Auth.js sessions. Record the actual live commit/image and hosting branch before any cutover;
+repository release metadata alone does not establish what `tutors.dev` runs.
+
+This migration adds no SQL or identity database adapter. Normal sign-in/reconnect and course
+visits still write existing Supabase user/profile/learning data. Rehearsal and preview deployments
+must use an isolated Supabase project and test accounts; a preview using production environment
+values can write to production. Keep #320/#327's data API/RLS work separate and verify its guards
+when available. Do not change production OAuth callbacks, secrets, database policies or GitOps
+configuration while preparing this stack.
 
 ## Deferred deployment checklist
 
