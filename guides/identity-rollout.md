@@ -124,9 +124,11 @@ HTTP OAuth state/refusal, custom ports, overwritten spoofed headers, JSON/form C
 build identity and switching the same image to anonymous mode through startup configuration.
 These local checks do not replace the deferred deployment rehearsal.
 
-The diff-aware dependency audit adds no advisories against #443. Five inherited advisories remain
-(KaTeX, source-map-js, sprintf-js, smol-toml and postcss-selector-parser); no allowances or baselines
-were changed. Production source no longer imports the deprecated `$env/dynamic` modules.
+The diff-aware dependency audit adds no advisories against #443. The external sanitizer is a
+production dependency in all four apps, so pruned runtime installs include its package/assets.
+The source-map-js security override selects the patched 1.2.2 release; four inherited advisories
+remain (KaTeX, sprintf-js, smol-toml and postcss-selector-parser). No audit allowance or baseline
+is relaxed. Production source no longer imports the deprecated `$env/dynamic` modules.
 
 CI runs the built check and Chromium UI contract for every layer of the registered native
 GitHub stack rooted at `main`; each PR keeps its own diff and testing results.
