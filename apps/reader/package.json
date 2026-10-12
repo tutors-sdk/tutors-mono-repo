@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
-    "dompurify": "^3.4.14"
+    "dompurify": "^3.4.14",
+    "isomorphic-dompurify": "^4.4.0"
   },
   "devDependencies": {
     "@codemirror/lang-python": "^6.2.1",

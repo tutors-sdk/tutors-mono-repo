@@ -111,6 +111,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
+      isomorphic-dompurify:
+        specifier: ^4.4.0
+        version: 4.4.0(@noble/hashes@2.4.0)
     devDependencies:
       '@skeletonlabs/skeleton':
         specifier: ^5.0.1
@@ -193,6 +196,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
+      isomorphic-dompurify:
+        specifier: ^4.4.0
+        version: 4.4.0(@noble/hashes@2.4.0)
     devDependencies:
       '@skeletonlabs/skeleton':
         specifier: ^5.0.1
@@ -278,6 +284,9 @@ importers:
       dompurify:
         specifier: '>=3.4.16 <4'
         version: 3.4.16
+      isomorphic-dompurify:
+        specifier: ^4.4.0
+        version: 4.4.0(@noble/hashes@2.4.0)
     devDependencies:
       '@codemirror/lang-python':
         specifier: ^6.2.1
@@ -411,6 +420,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.117.1
         version: 2.117.2(@opentelemetry/api@1.9.1)
+      isomorphic-dompurify:
+        specifier: ^4.4.0
+        version: 4.4.0(@noble/hashes@2.4.0)
     devDependencies:
       '@iconify/svelte':
         specifier: ^5.2.2

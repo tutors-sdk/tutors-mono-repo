@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
-    "@supabase/supabase-js": "^2.117.1"
+    "@supabase/supabase-js": "^2.117.1",
+    "isomorphic-dompurify": "^4.4.0"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.2",

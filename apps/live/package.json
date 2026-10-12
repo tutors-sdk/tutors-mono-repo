@@ -40,6 +40,7 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
-    "@opentelemetry/api": "1.9.1"
+    "@opentelemetry/api": "1.9.1",
+    "isomorphic-dompurify": "^4.4.0"
   }
 }
