@@ -307,8 +307,14 @@ test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, asy
       const headingBox = (await heading.boundingBox())!;
       expect(headingBox.height).toBeGreaterThanOrEqual(44);
       expect(headingBox.height).toBeLessThan(160);
-      expect((await column.locator(".back-link").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
-      expect((await column.locator(".steps").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
+      // Measure together so hydration or font loading cannot leave a stale heading position.
+      await expect.poll(() => column.evaluate(el => {
+        const bottom = el.querySelector(".lo-context summary")!.getBoundingClientRect().bottom;
+        return Math.min(
+          el.querySelector(".back-link")!.getBoundingClientRect().top - bottom,
+          el.querySelector(".steps")!.getBoundingClientRect().top - bottom
+        );
+      })).toBeGreaterThan(0);
       expect(await fitsViewport(page), `${route} at ${width}px`).toBe(true);
       // Native disclosure works with a keyboard and exposes the existing full card.
       const title = await heading.locator("strong").textContent();
