@@ -7,11 +7,9 @@ vi.mock(
   }),
 );
 
-vi.mock("$env/dynamic/public", () => ({
-  env: {
-    PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-    PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-  },
+vi.mock("$app/env/public", () => ({
+  PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+  PUBLIC_SUPABASE_ANON_KEY: "anon-key",
 }));
 
 import { createSupabaseErrorTransport } from "../../../packages/svelte/community/src/utils/error-transport.ts";

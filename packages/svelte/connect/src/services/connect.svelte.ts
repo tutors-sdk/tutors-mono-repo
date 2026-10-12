@@ -9,7 +9,7 @@ import { goto } from "$app/navigation";
 import type { Course } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";

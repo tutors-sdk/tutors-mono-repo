@@ -28,7 +28,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   return { rune, tutorsId: rune(null) };
 });
 
-vi.mock("$env/dynamic/public", () => ({ env: { PUBLIC_ANON_MODE: "FALSE" } }));
+vi.mock("$app/env/public", () => ({ PUBLIC_ANON_MODE: "FALSE" }));
 
 vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
   supabase: { channel: mockChannel, removeChannel: vi.fn() },

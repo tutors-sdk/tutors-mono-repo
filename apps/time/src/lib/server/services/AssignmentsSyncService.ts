@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { nowMs } from "@tutors/runtime";
 import { AssignmentsService, type MoodleModule } from "#lib/server/services/AssignmentsService.ts";
 import { getLastSyncedAt, upsertAssignments, upsertSubmissions } from "#lib/server/db/submissionsRepository.ts";

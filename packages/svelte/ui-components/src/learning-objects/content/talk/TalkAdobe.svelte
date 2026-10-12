@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { env } from "$env/dynamic/public";
+  import * as env from "$app/env/public";
   import { adobeLoaded, currentCourse } from "@tutors/runes";
   import type { Talk } from "@tutors/tutors-model-lib";
   import { onMount } from "svelte";

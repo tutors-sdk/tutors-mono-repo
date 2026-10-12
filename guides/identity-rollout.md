@@ -46,7 +46,8 @@ It is a source checkpoint, not a recorded or deployed image digest.
   build-time `paths.origin`: the same image must promote between environments.
 - Shared `src/env.js` declarations keep the existing public/private variables dynamic and
   optional, preserving anonymous/missing-secret operation without a build-time `.env`.
-  Existing supported `$env/dynamic` consumers remain until a separate API cleanup.
+  Runtime consumers import `$app/env/public` and `$app/env/private` as namespaces. Kit 3
+  generates their declarations through `$app/tsconfig`; stale Kit 2 ambient includes are removed.
 - Keep GitHub's callback at `https://<reader-host>/api/auth/callback/github` and the scopes at
   `read:user user:email`. `/auth` and `/auth/<courseid>` remain sign-in pages.
 - GitHub's verified numeric id supplies `Actor.subject=github:<id>`. Login remains the existing
@@ -125,7 +126,7 @@ These local checks do not replace the deferred deployment rehearsal.
 
 The diff-aware dependency audit adds no advisories against #443. Five inherited advisories remain
 (KaTeX, source-map-js, sprintf-js, smol-toml and postcss-selector-parser); no allowances or baselines
-were changed. Supported `$env/dynamic` imports still emit Kit 3 deprecation warnings.
+were changed. Production source no longer imports the deprecated `$env/dynamic` modules.
 
 CI runs the built check and Chromium UI contract for every layer of the registered native
 GitHub stack rooted at `main`; each PR keeps its own diff and testing results.

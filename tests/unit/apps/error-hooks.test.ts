@@ -2,8 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 
 const logs = vi.hoisted(() => ({ error: vi.fn(), request: vi.fn() }));
 vi.mock("$app/env", () => ({ building: true }));
-vi.mock("$env/dynamic/private", () => ({ env: {} }));
-vi.mock("$env/dynamic/public", () => ({ env: {} }));
+vi.mock("$app/env/private", () => ({ PRIVATE_AUTH_SECRET: undefined, PRIVATE_AUTH_GITHUB_ID: undefined, PRIVATE_AUTH_GITHUB_SECRET: undefined }));
+vi.mock("$app/env/public", () => ({ PUBLIC_ANON_MODE: undefined, PUBLIC_SUPABASE_URL: undefined, PUBLIC_SUPABASE_ANON_KEY: undefined }));
 vi.mock("@tutors/logger", () => ({
   default: { error: logs.error }, logRequestError: logs.request,
   setAppName: vi.fn(), addTransport: vi.fn(), createRequestLogger: vi.fn(),

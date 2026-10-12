@@ -1,5 +1,5 @@
 import type { HandleClientError } from "@sveltejs/kit/hooks";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 

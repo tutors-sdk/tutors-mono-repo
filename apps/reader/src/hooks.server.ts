@@ -3,8 +3,8 @@ import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks"
 import { sequence } from "@sveltejs/kit/hooks";
 import { building } from "$app/env";
 import { createIdentityHandle } from "@tutors/identity-sveltekit/server";
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
+import * as env from "$app/env/private";
+import * as publicEnv from "$app/env/public";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";

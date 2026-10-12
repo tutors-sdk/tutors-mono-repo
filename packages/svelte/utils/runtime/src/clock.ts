@@ -31,7 +31,7 @@ export type ClockStatus =
   /** `HARNESS_NOW` was set but is not an ISO instant; it is ignored and the system clock is used. */
   | { mode: "system"; rejected: string };
 
-/** How the clock is configured. Read at call time, never cached: `$env/dynamic` semantics. */
+/** How the clock is configured. Read at call time, never cached: `$app/env` live binding semantics. */
 export function clockStatus(env: Env = serverEnv()): ClockStatus {
   const raw = env[CLOCK_ENV]?.trim();
   if (!raw) return { mode: "system" };
