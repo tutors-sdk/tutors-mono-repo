@@ -850,9 +850,6 @@ importers:
       '@tutors/a11y':
         specifier: workspace:*
         version: link:../utils/a11y
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n

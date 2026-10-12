@@ -1,4 +1,5 @@
-import { resolve } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { checkArchitecture, formatViolation } from "../../scripts/checks/architecture.ts";
 import { describeRatchet, ratchet } from "../../scripts/checks/lib/ratchet.ts";
@@ -85,4 +86,27 @@ describe("architecture rules (runway tier A)", () => {
     const result = ratchet(current, readBaseline(resolve(REPO_ROOT, BASELINE)));
     expect(result, describeRatchet("dependency-cruiser", BASELINE, result)).toEqual({ added: [], stale: [] });
   }, 120_000);
+});
+
+/**
+ * dependency-cruiser reads a .svelte file after the Svelte compiler has stripped its type-only
+ * imports, so `import type { X } from "@tutors/community"` in a primitive is invisible to the rule
+ * above. This reads the source instead, so a type import cannot cross the same line unseen.
+ */
+describe("ui-primitives import no data or access package, not even a type", () => {
+  const sources = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap(e =>
+      e.isDirectory() ? sources(join(dir, e.name)) : /\.(svelte|ts)$/.test(e.name) ? [join(dir, e.name)] : []
+    );
+
+  it("names no @tutors/community, @tutors/connect or @tutors/rbac import beyond the baseline", () => {
+    const baseline = readBaseline(resolve(REPO_ROOT, BASELINE)).filter(line => line.startsWith("ui-primitives-no-data-features:"));
+    const found = sources(resolve(REPO_ROOT, "packages/svelte/ui-primitives/src")).flatMap(file =>
+      [...readFileSync(file, "utf8").matchAll(/^\s*import\s[^;]*?from\s+"@tutors\/(community|connect|rbac)"/gm)].map(
+        m => `${relative(REPO_ROOT, file)} -> @tutors/${m[1]}`
+      )
+    );
+    const unlisted = found.filter(edge => !baseline.some(line => line.includes(edge.split(" -> ")[0]!)));
+    expect(unlisted).toEqual([]);
+  });
 });

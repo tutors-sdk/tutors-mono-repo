@@ -20,7 +20,7 @@ The existing workflow stages commits on a `development` branch for extended peri
 - **No incremental feedback loop.** Changes are not validated against `main` until the batch merge, meaning integration bugs are discovered late.
 - **Unclear release state.** It is difficult to answer "what is in production?" or "when will this feature ship?" when the pipeline is a single long-lived branch.
 - **Rollback granularity is lost.** If a batch merge introduces a regression, reverting means reverting the entire batch rather than a single scoped change.
-- **Changelog and version gaps.** The changelog currently stops at v11.3.0 while `package.json` reports v15.2.0, indicating version bumps happened without corresponding release documentation.
+- **Changelog and version gaps.** When this strategy was written, the changelog stopped at v11.3.0 while `package.json` reported v15.2.0, indicating version bumps happened without corresponding release documentation.
 
 ## Branching Model
 
@@ -266,7 +266,7 @@ If the run has not finished after 45 minutes the comment says **PENDING** with t
   ```
 
   The workflow matches a title that names the candidate as a whole tag (`release 16.3.0-rc.1`; `rc.10` does not match `rc.1`). **Without it** the workflow falls back to time: the only `repository_dispatch` run that started within 15 minutes after the dispatch is taken, and the comment says it was matched by time. It then refuses to post when the report's side b does not name the candidate, and takes nothing when two runs qualify (two release branches pushed in the same minutes), because guessing which harness run belongs to which release would put the wrong verdict on a pull request.
-- **The artifact name `release-report`**, uploaded from the `release` job with the run's whole `out/` directory, so that `<timestamp>-release/report.json` is inside it. It is in the harness's `docs/contract/workflows.json` (`artifacts.release-report`, 30 days) and is what `release.yml` uploads today; renaming it is a breaking change of that contract.
+- **The artifact name `release-report`**, uploaded from the `release` job with the run's whole `out/` directory, so that `<timestamp>-release/report.json` is inside it. It is in `docs/contract/workflows.json` in tutors-sdk/tutors-release-harness (`artifacts.release-report`, 30 days) and is what `release.yml` uploads today; renaming it is a breaking change of that contract.
 
 #### Setup
 
@@ -351,7 +351,7 @@ Transitioning from the `development` branch model:
 2. **Break into PRs.** Decompose the ready changes into scoped PRs against `main`. Each PR should be independently reviewable and mergeable.
 3. **Discard or re-branch WIP.** Incomplete work should be rebased onto `main` as new `feature/*` branches, not carried forward as a lump.
 4. **Archive and delete.** Once all valuable work is extracted, archive `development` (tag it as `archive/development-final` for reference) and delete the branch.
-5. **Align version and changelog.** The current `package.json` version (15.2.0) and last changelog entry (11.3.0) are out of sync. As part of the first release under this strategy, reconcile these: update the changelog to reflect what shipped between 11.3.0 and the current state, and cut the next release with a clean semver baseline.
+5. **Align version and changelog.** When this strategy was written, the `package.json` version (15.2.0) and last changelog entry (11.3.0) were out of sync. As part of the first release under this strategy, reconcile these: update the changelog to reflect what shipped between 11.3.0 and the current state, and cut the next release with a clean semver baseline.
 
 ## Release Cadence
 

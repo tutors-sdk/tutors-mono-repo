@@ -130,7 +130,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 
 **Runtime Environments**:
 - **Deno**: For JSR packages and CLI tools
-- **Node.js 18+**: For Svelte packages and applications
+- **Node.js 22.12+**: For Svelte packages and applications (`engines.node` in `package.json`)
 - **Browser**: For client-side applications
 
 **Frontend Framework**:
@@ -170,7 +170,10 @@ tutors-mono-repo/
 │   │   ├── time/               # @tutors/tutors-time-lib
 │   │   ├── gen/                # @tutors/tutors-gen-lib
 │   │   ├── tutors/             # @tutors/tutors (JSON course generator CLI)
-│   │   └── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
+│   │   ├── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
+│   │   ├── create/             # @tutors/tutors-create (course scaffolder)
+│   │   ├── types/              # @tutors/tutors-types (shared types)
+│   │   └── identity/           # @tutors/identity (identity contracts)
 │   │
 │   └── svelte/                 # Svelte-specific packages
 │       ├── runes/              # @tutors/runes

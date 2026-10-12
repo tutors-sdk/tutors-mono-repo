@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@tutors/a11y": "workspace:*",
-    "@tutors/community": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
