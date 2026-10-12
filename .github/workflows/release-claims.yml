@@ -59,6 +59,11 @@ jobs:
       - name: Check release/openvex.json
         run: pnpm check:openvex
 
+      # The SLOs beside the claims (Rule 0299): the release harness judges each candidate against them and refuses a
+      # file it cannot use; the alerts generated from them must not have drifted (scripts/checks/slo.ts).
+      - name: Check release/slo.yaml
+        run: pnpm check:slo
+
   migrations:
     name: supabase/migrations follow expand/contract
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
