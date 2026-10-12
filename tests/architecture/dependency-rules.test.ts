@@ -106,7 +106,14 @@ describe("ui-primitives import no data or access package, not even a type", () =
         m => `${relative(REPO_ROOT, file)} -> @tutors/${m[1]}`
       )
     );
-    const unlisted = found.filter(edge => !baseline.some(line => line.includes(edge.split(" -> ")[0]!)));
+    // A baseline line names the file and the package's directory, so an edge is listed only when both match.
+    const packageDir = { community: "packages/svelte/community/", connect: "packages/svelte/connect/", rbac: "packages/svelte/utils/rbac/" };
+    const listed = (edge: string) => {
+      const [from, to] = edge.split(" -> ") as [string, string];
+      const dir = packageDir[to.replace("@tutors/", "") as keyof typeof packageDir];
+      return baseline.some(line => line.includes(`: ${from} -> ${dir}`));
+    };
+    const unlisted = found.filter(edge => !listed(edge));
     expect(unlisted).toEqual([]);
   });
 });
