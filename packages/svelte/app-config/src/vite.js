@@ -34,7 +34,8 @@ export function createViteConfig(appUrl, overrides = {}, svelteOptions = {}) {
         ssr: {
           noExternal: NO_EXTERNAL,
           // jsdom reads files relative to its CommonJS module; preserve its Node package and assets.
-          external: ['isomorphic-dompurify']
+          // Keep prom-client's OpenTelemetry require visible to Netlify's function tracer.
+          external: ['isomorphic-dompurify', '@prometheus-io/client']
         }
       },
       overrides

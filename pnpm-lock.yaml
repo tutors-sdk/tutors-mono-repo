@@ -112,6 +112,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
+      '@prometheus-io/client':
+        specifier: ^0.16.1
+        version: 0.16.1
       isomorphic-dompurify:
         specifier: ^4.4.0
         version: 4.4.0(@noble/hashes@2.4.0)
@@ -197,6 +200,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
+      '@prometheus-io/client':
+        specifier: ^0.16.1
+        version: 0.16.1
       isomorphic-dompurify:
         specifier: ^4.4.0
         version: 4.4.0(@noble/hashes@2.4.0)
@@ -282,6 +288,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
+      '@prometheus-io/client':
+        specifier: ^0.16.1
+        version: 0.16.1
       dompurify:
         specifier: '>=3.4.16 <4'
         version: 3.4.16
@@ -418,6 +427,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.1
         version: 1.9.1
+      '@prometheus-io/client':
+        specifier: ^0.16.1
+        version: 0.16.1
       '@supabase/supabase-js':
         specifier: ^2.117.1
         version: 2.117.2(@opentelemetry/api@1.9.1)
