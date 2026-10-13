@@ -441,11 +441,13 @@ production configuration. #320's personal-data route should replace this fixture
 merged. The three ports must be free; an existing dev server is never reused.
 
 ```bash
-pnpm test:e2e:reader --project=chromium              # the whole contract
+pnpm test:e2e:reader --project=chromium              # the whole contract, Auth.js default
+PRIVATE_AUTH_ADAPTER=better-auth pnpm test:e2e:reader --project=chromium
+SVELTEKIT_ADAPTER=node pnpm build && pnpm test:identity:built # both adapters in the built reader
 pnpm test:e2e:reader --project=chromium -g @rule-0032  # one Rule
 ```
 
-**When.** Every pull request targeting `main` runs the contract in Chromium (`ui-contract` in `ci.yml`), and it
+**When.** Every pull request targeting `main` runs the contract in Chromium for both adapters (`ui-contract` in `ci.yml`), and it
 and the audit are required by `ci-success`. Release candidates run it in Chromium, Firefox and
 WebKit.
 

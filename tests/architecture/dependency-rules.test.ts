@@ -47,6 +47,7 @@ describe("architecture rules (runway tier A)", () => {
       ["identity-no-server-in-browser", "apps/reader/src/lib/Leak.svelte", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/secret.client.ts", "external/$env/dynamic/private.ts"],
       ["identity-no-server-in-browser", "packages/svelte/identity-sveltekit/src/provider.client.ts", "external/@auth/sveltekit/index.ts"],
+      ["identity-no-server-in-browser", "packages/svelte/identity-sveltekit/src/better-auth.client.ts", "external/better-auth/index.ts"],
       ["layer-foundation", "packages/jsr/model/src/reaches-up.ts", "packages/svelte/runes/src/index.ts"],
       ["layer-core", "packages/svelte/course/src/tree.ts", "packages/svelte/themes/src/index.ts"],
       ["layer-feature", "packages/svelte/themes/src/reaches-up.ts", "packages/svelte/ui-primitives/src/index.ts"],
