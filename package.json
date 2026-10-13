@@ -81,7 +81,7 @@
     "ajv": "^8.20.0",
     "clsx": "^2.1.1",
     "dependency-cruiser": "^18.5.0",
-    "eslint": "^10.11.0",
+    "eslint": "^10.12.0",
     "eslint-plugin-svelte": "^3.23.0",
     "esm-env": "^1.2.2",
     "fast-check": "^4.10.2",
