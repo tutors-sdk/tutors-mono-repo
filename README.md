@@ -61,6 +61,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/jsr/tutors` | `@tutors/tutors` | The generator that turns a course folder into `tutors.json` |
 | `packages/jsr/tutors-lite` | `@tutors/tutors-lite` | Static HTML course generator |
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
+| `packages/jsr/types` | `@tutors/tutors-types` | The shared types every layer uses; imports nothing outside itself (see `guides/SHARED-TYPES.md`) |
 | `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
 
 **Foundation layer, Svelte.**
