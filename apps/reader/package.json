@@ -52,7 +52,7 @@
     "codemirror": "^6.0.2",
     "fflate": "^0.8.3",
     "file-saver": "^2.0.5",
-    "pdfjs-dist": "^6.3.289",
+    "pdfjs-dist": "^6.4.299",
     "svelte": "5.57.2",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
