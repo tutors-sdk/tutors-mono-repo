@@ -1,7 +1,7 @@
 import type { LayoutLoad } from "./$types";
 import { initSupabase, TutorsTime } from "@tutors/tutors-time-lib";
 import { env } from "$env/dynamic/public";
-import { enrichCourseUserFields } from "$lib/enrichCourseUserFields";
+import { enrichCourseUserFields } from "#lib/enrichCourseUserFields.ts";
 
 export const load: LayoutLoad = async ({ params }) => {
   initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");

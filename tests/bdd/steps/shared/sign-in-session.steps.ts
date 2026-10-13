@@ -7,11 +7,10 @@ vi.hoisted(() => {
   process.env.LOG_LEVEL = "warn";
 });
 
-// The seams: the reader's env, its `$lib` alias, and SvelteKit's `sequence`, which needs a live
+// The seams: the reader's env and SvelteKit's `sequence`, which needs a live
 // SvelteKit request store. Everything from hooks.server.ts down is product code.
 vi.mock("$env/dynamic/private", async () => ({ env: (await import("../../support/reader-auth.ts")).privateEnv }));
 vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/reader-auth.ts")).publicEnv }));
-vi.mock("$lib/server/auth-mode", () => import("../../../../apps/reader/src/lib/server/auth-mode.ts"));
 vi.mock("../../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index.js", () => ({
   sequence:
     (...handles: Array<(input: { event: unknown; resolve: (event: unknown) => unknown }) => unknown>) =>

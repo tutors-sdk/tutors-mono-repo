@@ -5,7 +5,7 @@ import {
   type MoodleAssignSubmissionsResponse,
   type MoodleModule,
   type CourseContentsOptions
-} from "$lib/server/api/moodle";
+} from "#lib/server/api/moodle.ts";
 
 export type { MoodleAssignSubmission, MoodleAssignSubmissionsResponse, MoodleModule };
 
