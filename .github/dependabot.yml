@@ -20,6 +20,11 @@ updates:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-patch"
+      # TypeScript 7 (the native compiler) has no JS API yet: svelte2tsx refuses it
+      # ("emitDts is not compatible with TypeScript 7"), so svelte-package and svelte-check
+      # cannot run. Lift this once the Svelte tooling supports 7.
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
     groups:
       # Security updates are grouped per ecosystem, outside the weekly batch.
       npm-security:
