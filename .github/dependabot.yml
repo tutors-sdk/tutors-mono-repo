@@ -4,6 +4,7 @@ multi-ecosystem-groups:
     schedule:
       interval: "weekly"
       day: "monday"
+    open-pull-requests-limit: 1
 
 updates:
   - package-ecosystem: "npm"
@@ -13,7 +14,6 @@ updates:
     multi-ecosystem-group: "dependencies"
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 10
     labels:
       - "dependencies"
     ignore:
@@ -34,7 +34,6 @@ updates:
     multi-ecosystem-group: "dependencies"
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "ci"
