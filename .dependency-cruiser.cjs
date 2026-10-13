@@ -24,6 +24,7 @@ const LAYERS = [
       "packages/svelte/community",
       "packages/svelte/connect",
       "packages/svelte/identity-sveltekit",
+      "packages/svelte/realtime-supabase",
       "packages/svelte/utils/rbac",
       "packages/svelte/utils/privacy",
       "packages/svelte/utils/tour"
@@ -67,6 +68,13 @@ module.exports = {
       severity: "error",
       from: { path: "^packages/jsr/identity/" },
       to: { pathNot: "^packages/jsr/identity/" }
+    },
+    {
+      name: "realtime-contracts-self-contained",
+      comment: "The Realtime port imports no framework, broker client or other package; adapters depend on it, not the reverse.",
+      severity: "error",
+      from: { path: "^packages/jsr/realtime/" },
+      to: { pathNot: "^packages/jsr/realtime/" }
     },
     {
       name: "identity-no-server-in-browser",

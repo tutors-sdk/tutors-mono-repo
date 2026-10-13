@@ -83,7 +83,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
     whiteboard = undefined;
     liveService.stopGlobalPresenceService();
     presenceService.stopPresenceListener();
-    if (liveService.channelCourse) void recorder.removeChannel(liveService.channelCourse as unknown as RecordingChannel);
+    void liveService.courseSubscription?.close();
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -123,9 +123,9 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       When("the live service is asked to monitor {string} again", (_ctx, courseId: string) => liveService.startCoursePresenceListener(courseId));
       Then("the original live course channel remains subscribed", () => expect(recorder.joined(course.courseId)).toEqual([original]));
     });
-    RuleScenario("Repeating global publisher setup creates one publish-only channel", ({ When, Then }) => {
-      When("the global publisher is prepared {number} times", (_ctx, count: number) => {
-        for (let i = 0; i < count; i++) presenceService.connectToAllCourseAccess();
+    RuleScenario("Repeated global publishing reuses one publish-only channel", ({ When, Then }) => {
+      When("course activity is published {number} times", (_ctx, count: number) => {
+        for (let i = 0; i < count; i++) presenceService.sendLoEvent(course, labsOf(course)[0], githubUser("Alice"));
       });
       Then("one global channel exists without a subscription", () => {
         expect(recorder.channels.filter((channel) => channel.name === ALL_COURSES_CHANNEL)).toHaveLength(1);
@@ -171,6 +171,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("completing removal creates one replacement subscription", async () => {
         finishRemoval();
         await restarting;
+        // The replacement joins once the removal it waits on has settled.
+        await settle();
         expect(recorder.joined(course.courseId)).toHaveLength(1);
         expect(recorder.joined(course.courseId)[0]).not.toBe(original);
       });
@@ -189,6 +191,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("completing removal creates one replacement global subscription", async () => {
         finishRemoval();
         await restarting;
+        // The replacement joins once the removal it waits on has settled.
+        await settle();
         expect(recorder.joined(ALL_COURSES_CHANNEL)).toHaveLength(1);
         expect(recorder.joined(ALL_COURSES_CHANNEL)[0]).not.toBe(original);
       });
@@ -435,24 +439,27 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("another Presence sync sends no duplicate scene broadcast", noDuplicate);
     });
   });
-  Rule("When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.", ({ RuleScenario }) => {
-    RuleScenario("Entering a course lists classmates from stored activity", ({ Given, And, When, Then }) => {
-      Given("{string} was active in the course {number} minutes ago", wasActive);
-      And("{string} is signed in with sharing {word}", signInWithSharing);
-      When("the student enters the course", enterCourse);
-      Then("the online list is {string}", onlineListIs);
-      And("no course channel remains subscribed", noCourseChannel);
-    });
-    RuleScenario("The student's activity is published to the course without joining it", ({ Given, When, Then, And }) => {
-      Given("{string} is signed in with sharing {word}", signInWithSharing);
-      When("the student enters the course", enterCourse);
-      Then("the course activity is published through HTTP", () => {
-        const published = recorder.sentOn(course.courseId).map((message) => message.payload as { courseId?: string; user?: { fullName?: string } });
-        expect(published).toEqual([expect.objectContaining({ courseId: course.courseId, user: expect.objectContaining({ fullName: "Alice" }) })]);
+  Rule(
+    "When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.",
+    ({ RuleScenario }) => {
+      RuleScenario("Entering a course lists classmates from stored activity", ({ Given, And, When, Then }) => {
+        Given("{string} was active in the course {number} minutes ago", wasActive);
+        And("{string} is signed in with sharing {word}", signInWithSharing);
+        When("the student enters the course", enterCourse);
+        Then("the online list is {string}", onlineListIs);
+        And("no course channel remains subscribed", noCourseChannel);
       });
-      And("no course channel remains subscribed", noCourseChannel);
-    });
-  });
+      RuleScenario("The student's activity is published to the course without joining it", ({ Given, When, Then, And }) => {
+        Given("{string} is signed in with sharing {word}", signInWithSharing);
+        When("the student enters the course", enterCourse);
+        Then("the course activity is published through HTTP", () => {
+          const published = recorder.sentOn(course.courseId).map((message) => message.payload as { courseId?: string; user?: { fullName?: string } });
+          expect(published).toEqual([expect.objectContaining({ courseId: course.courseId, user: expect.objectContaining({ fullName: "Alice" }) })]);
+        });
+        And("no course channel remains subscribed", noCourseChannel);
+      });
+    }
+  );
 
   Rule("While the course tab is visible, the reader shall refresh the course online list every 60 seconds.", ({ RuleScenario }) => {
     RuleScenario("A classmate who arrives appears on the next refresh", ({ Given, And, When, Then }) => {

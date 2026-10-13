@@ -192,6 +192,7 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `asset-graph` | informing until harness 2.0: an app's build chunks under `/_app/immutable/` changed, one finding per app (scope `<app>`) |
 | `replay` | informing until harness 2.0: status, headers or network of a URL in the harness's replay set (scope `replay:<key>...`) |
 | `slo` | informing until harness 2.0: the candidate misses a service level objective (the stricter of `release/slo.yaml` and the harness's floors), or regressed against production (scope `<objective id>`, `<id>/load`, `<id>/regression`) |
+| `realtime` | informing until harness 2.0: a reader page opened a Realtime websocket on the candidate, or Realtime messages per reader page view rose against production (scope `<page>/websocket`, `<app>/messages`) |
 
 Rules of thumb:
 

@@ -64,7 +64,6 @@ export const tutorsConnectService: TutorsConnectService = {
 
   async reconnect(user: ConnectUser) {
     if (anonMode) return;
-    presenceService.connectToAllCourseAccess();
     if (user) {
       this.profile = supabaseProfile;
       tutorsId.value = { ...user, share: "true", sentiment: "neutral" };

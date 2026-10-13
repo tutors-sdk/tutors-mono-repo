@@ -29,6 +29,7 @@ export function mountWhiteboardEditor() {
     removeChannel: vi.fn(() => Promise.resolve("ok"))
   };
   const postMessage = vi.fn();
+  let clientOptions: { realtime?: { reconnectAfterMs?: (tries: number) => number } } | undefined;
   const Editor = runInNewContext(`${script}\nExcalidrawEditor;`, {
     createElement: (_component: unknown, props: unknown) => props,
     Excalidraw: {},
@@ -36,7 +37,12 @@ export function mountWhiteboardEditor() {
     useState: (initial: unknown) => [initial, vi.fn()],
     useCallback: (callback: unknown) => callback,
     useEffect: (effect: () => void | (() => void)) => effects.push(effect),
-    createClient: () => supabase,
+    createClient: (_url: string, _key: string, options: typeof clientOptions) => {
+      clientOptions = options;
+      return supabase;
+    },
+    // The editor's own Math, so a test can fix the jitter draw.
+    Math,
     window: { addEventListener: vi.fn(), removeEventListener: vi.fn(), parent: { postMessage } },
     document: { getElementById: () => ({ classList: { add: vi.fn(), toggle: vi.fn() } }) },
     location: { origin: "https://reader.invalid" },
@@ -60,6 +66,7 @@ export function mountWhiteboardEditor() {
     supabase,
     postMessage,
     status: (status: string) => subscription(status),
+    clientOptions: () => clientOptions,
     participants: (count: number, sameUser = false) => {
       const ownKey = supabase.channel.mock.lastCall![1].config.presence.key || "session-alice";
       const state = Object.fromEntries(

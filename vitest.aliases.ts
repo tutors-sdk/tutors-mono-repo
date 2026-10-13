@@ -28,6 +28,8 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/tutors-types": resolve(root, "packages/jsr/types/src/index.ts"),
   "@tutors/community/utils/supabase-client": resolve(root, "packages/svelte/community/src/utils/supabase-client.ts"),
   "@tutors/identity": resolve(root, "packages/jsr/identity/src/index.ts"),
+  "@tutors/realtime": resolve(root, "packages/jsr/realtime/src/index.ts"),
+  "@tutors/realtime-supabase": resolve(root, "packages/svelte/realtime-supabase/src/index.ts"),
   "@tutors/identity-sveltekit/server": resolve(root, "packages/svelte/identity-sveltekit/src/index.server.ts"),
   "@tutors/identity-sveltekit/client": resolve(root, "packages/svelte/identity-sveltekit/src/client.ts"),
   "@tutors/logger": resolve(root, "packages/svelte/utils/logger/src/index.ts"),

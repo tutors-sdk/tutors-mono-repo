@@ -25,21 +25,42 @@ import { REPO_ROOT } from "./lib/repo.ts";
 import { rulesAtRef, rulesInWorkingTree } from "./lib/rules-index.ts";
 
 /**
- * The harness's vocabulary (ARTEFACTS in src/types.ts there), in its order, as of harness 1.34.0. The first
+ * The harness's vocabulary (ARTEFACTS in src/types.ts there), in its order, as of harness 1.36.0. The first
  * ten are what a student can observe; `persistence`, `bus`, `migration` and `upgrade` are its stubs and
  * rehearsals; `image-manifest`, `sbom`, `vulns`, `runtime` and `startup` (contract 1.2.0) are read from the
  * images and the running containers; `image-hardening`, `build-provenance` and `vuln-ceiling` (contract
  * 1.22.0) are the policy family, checks on the candidate alone; `timing-tolerance` (1.26.0),
- * `asset-graph` (1.27.0), `replay` (1.28.0) and `slo` (1.34.0, release/slo.yaml) are informing checks until harness 2.0. tests/conformance/release-claims.test.ts
+ * `asset-graph` (1.27.0), `replay` (1.28.0), `slo` (1.34.0, release/slo.yaml) and `realtime` (1.36.0) are informing checks until harness 2.0. tests/conformance/release-claims.test.ts
  * holds a snapshot of the harness list and fails when this one drifts from it.
  */
 export const ARTEFACTS = [
-  "dom", "screenshot", "network", "console", "headers", "axe", "focus", "metrics", "logs", "timing",
-  "persistence", "bus", "migration", "upgrade",
-  "image-manifest", "sbom", "vulns",
-  "runtime", "startup",
-  "image-hardening", "build-provenance", "vuln-ceiling",
-  "timing-tolerance", "asset-graph", "replay", "slo"
+  "dom",
+  "screenshot",
+  "network",
+  "console",
+  "headers",
+  "axe",
+  "focus",
+  "metrics",
+  "logs",
+  "timing",
+  "persistence",
+  "bus",
+  "migration",
+  "upgrade",
+  "image-manifest",
+  "sbom",
+  "vulns",
+  "runtime",
+  "startup",
+  "image-hardening",
+  "build-provenance",
+  "vuln-ceiling",
+  "timing-tolerance",
+  "asset-graph",
+  "replay",
+  "slo",
+  "realtime"
 ] as const;
 
 /** The apps whose images a claim's `digests` may name (APPS in the harness's src/image-ref.ts). */

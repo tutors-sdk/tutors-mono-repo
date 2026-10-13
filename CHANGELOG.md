@@ -11,7 +11,7 @@
 > `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`,
 > `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, and the policy checks
 > `image-hardening`, `build-provenance`, `vuln-ceiling`, and the informing checks
-> `timing-tolerance`, `asset-graph`, `replay`, `slo`) and how an entry
+> `timing-tolerance`, `asset-graph`, `replay`, `slo`, `realtime`) and how an entry
 > becomes a release claim are in [CONTRIBUTING.md](CONTRIBUTING.md#changelog-entries).
 > Earlier entries carry no hints and are not rewritten.
 

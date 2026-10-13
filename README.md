@@ -63,6 +63,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
 | `packages/jsr/types` | `@tutors/tutors-types` | The shared types every layer uses; imports nothing outside itself (see `guides/SHARED-TYPES.md`) |
 | `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
+| `packages/jsr/realtime` | `@tutors/realtime` | Realtime port: topics, the adapter contract and a budgeted gateway, with no broker imports |
 
 **Foundation layer, Svelte.**
 
@@ -90,6 +91,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
 | `packages/svelte/connect` | `@tutors/connect` | User profiles, course activity and injected sign-in/sign-out |
 | `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Better Auth server and browser adapter |
+| `packages/svelte/realtime-supabase` | `@tutors/realtime-supabase` | Supabase Realtime adapter for `@tutors/realtime` |
 | `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
 | `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
 | `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
@@ -198,6 +200,8 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 5. **UI Navigators** → Navigation chrome (MainNavigator, Footer, TutorsShell)
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
+
+Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts.
 
 Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 
