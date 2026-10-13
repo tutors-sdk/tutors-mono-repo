@@ -1,0 +1,138 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "f87f0f9a8a6f8c8a1823d4a117e53eb9ced19f0d",
+  "release-type": "simple",
+  "include-component-in-tag": true,
+  "separate-pull-requests": false,
+  "bump-minor-pre-major": true,
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance"
+    },
+    {
+      "type": "refactor",
+      "section": "Changed"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation",
+      "hidden": true
+    },
+    {
+      "type": "chore",
+      "section": "Changed",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "Testing",
+      "hidden": true
+    }
+  ],
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "jsr-libraries",
+      "components": [
+        "tutors-model-lib",
+        "tutors-time-lib",
+        "tutors-gen-lib",
+        "tutors-create",
+        "tutors-lite",
+        "tutors"
+      ]
+    }
+  ],
+  "packages": {
+    "packages/jsr/model": {
+      "component": "tutors-model-lib",
+      "package-name": "@tutors/tutors-model-lib",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "deno.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "packages/jsr/time": {
+      "component": "tutors-time-lib",
+      "package-name": "@tutors/tutors-time-lib",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "deno.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "packages/jsr/gen": {
+      "component": "tutors-gen-lib",
+      "package-name": "@tutors/tutors-gen-lib",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "deno.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "packages/jsr/create": {
+      "component": "tutors-create",
+      "package-name": "@tutors/tutors-create",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "deno.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "packages/jsr/tutors-lite": {
+      "component": "tutors-lite",
+      "package-name": "@tutors/tutors-lite",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "deno.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+    "packages/jsr/tutors": {
+      "component": "tutors",
+      "package-name": "@tutors/tutors",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "deno.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}
