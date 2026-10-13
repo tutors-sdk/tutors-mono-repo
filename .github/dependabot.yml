@@ -1,10 +1,16 @@
 version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+multi-ecosystem-groups:
+  dependencies:
     schedule:
       interval: "weekly"
       day: "monday"
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "dependencies"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
@@ -13,31 +19,17 @@ updates:
         update-types:
           - "version-update:semver-patch"
     groups:
-      svelte:
+      # Security updates are grouped per ecosystem, outside the weekly batch.
+      npm-security:
+        applies-to: "security-updates"
         patterns:
-          - "svelte*"
-          - "@sveltejs/*"
-        update-types:
-          - "minor"
-      skeleton:
-        patterns:
-          - "@skeletonlabs/*"
-        update-types:
-          - "minor"
-      testing:
-        patterns:
-          - "vitest"
-          - "@vitest/*"
-          - "playwright*"
-          - "@playwright/*"
-        update-types:
-          - "minor"
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "dependencies"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -47,9 +39,7 @@ updates:
         update-types:
           - "version-update:semver-patch"
     groups:
-      actions:
+      actions-security:
+        applies-to: "security-updates"
         patterns:
           - "*"
-        update-types:
-          - "minor"
-          - "major"
