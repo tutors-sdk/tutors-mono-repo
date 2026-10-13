@@ -70,14 +70,14 @@
     "release:report-comment": "tsx scripts/release-report-comment.ts"
   },
   "devDependencies": {
-    "@amiceli/vitest-cucumber": "7.0.0",
+    "@amiceli/vitest-cucumber": "8.0.0",
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.0",
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",
     "@testing-library/svelte": "^5.4.2",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.3",
     "ajv": "^8.20.0",
     "clsx": "^2.1.1",
     "dependency-cruiser": "^18.5.0",
@@ -95,7 +95,7 @@
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.3",
     "zod": "^4.6.2"
   },
   "engines": {

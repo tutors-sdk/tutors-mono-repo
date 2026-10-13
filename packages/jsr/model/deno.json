@@ -11,7 +11,7 @@
     "@types/markdown-it": "npm:@types/markdown-it@^14.1.2",
     "markdown-it": "npm:markdown-it@^14.2.0",
     "markdown-it-anchor": "npm:markdown-it-anchor@^9.2.0",
-    "markdown-it-deflist": "npm:markdown-it-deflist@^3.0.0",
+    "markdown-it-deflist": "npm:markdown-it-deflist@^4.0.0",
     "markdown-it-emoji": "npm:markdown-it-emoji@^3.0.0",
     "markdown-it-footnote": "npm:markdown-it-footnote@^4.0.0",
     "markdown-it-mark": "npm:markdown-it-mark@^4.0.0",
