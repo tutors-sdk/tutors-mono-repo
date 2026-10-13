@@ -221,6 +221,14 @@ Feature: Realtime resource usage
       Then 2 cursor broadcasts have been sent
       And the final broadcast carries the final position
 
+    Scenario: A cursor queued before the room grows waits for the longer interval
+      Given a subscribed whiteboard editor
+      And 3 participants are present in the room
+      When a cursor position is queued and the room grows to 8 participants
+      And 499 milliseconds elapse
+      Then no cursor broadcast has been sent
+      And at 500 milliseconds one broadcast carries the final position
+
   @rule-0308 @ears-state-driven
   Rule: While a whiteboard room has more than 8 participants, the reader shall not send cursor broadcasts.
 

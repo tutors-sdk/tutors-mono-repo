@@ -457,6 +457,21 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
           Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
         });
       }
+      RuleScenario("A cursor queued before the room grows waits for the longer interval", ({ Given, And, When, Then }) => {
+        Given("a subscribed whiteboard editor", () => mountEditor(true));
+        And("{number} participants are present in the room", roomOf);
+        When("a cursor position is queued and the room grows to {number} participants", (_ctx, count: number) => {
+          cursor(1);
+          whiteboard!.participants(count);
+        });
+        And("{number} milliseconds elapse", (_ctx, duration: number) => vi.advanceTimersByTime(duration));
+        Then("no cursor broadcast has been sent", () => expect(sent("cursor-update")).toHaveLength(0));
+        And("at {number} milliseconds one broadcast carries the final position", () => {
+          vi.advanceTimersByTime(1);
+          expect(sent("cursor-update")).toHaveLength(1);
+          finalPosition();
+        });
+      });
       RuleScenario("Eight participants share cursors twice a second", ({ Given, And, When, Then }) => {
         Given("a subscribed whiteboard editor", () => mountEditor(true));
         And("{number} participants are present in the room", roomOf);

@@ -79,6 +79,7 @@
       const participantsRef = useRef(2);
       const latestElementsRef = useRef(null);
       const lastCursorRef = useRef(null);
+      const cursorArmedAtRef = useRef(0);
       const [collaborators, setCollaborators] = useState(new Map());
       // The reader's appearance: set by init-editor, then followed through "set-theme" messages.
       const [theme, setTheme] = useState(config.theme === "dark" ? "dark" : "light");
@@ -144,6 +145,15 @@
             const state = channel.presenceState();
             hasPeersRef.current = Object.keys(state).some(key => key !== presenceKey);
             participantsRef.current = Math.max(Object.keys(state).length, 1);
+            // A queued cursor keeps to the interval of the room it is now in, not the one it was queued in.
+            if (cursorTimerRef.current !== null) {
+              clearTimeout(cursorTimerRef.current);
+              cursorTimerRef.current = null;
+              const interval = cursorInterval(participantsRef.current);
+              if (interval !== null) {
+                cursorTimerRef.current = setTimeout(sendQueuedCursor, Math.max(0, cursorArmedAtRef.current + interval - Date.now()));
+              }
+            }
             // Presence can lag behind subscription, so replay edits suppressed while alone.
             if (hasPeersRef.current && pendingSceneRef.current.size > 0) {
               channel.send({
@@ -248,6 +258,29 @@
         }, SCENE_BATCH_MS);
       }, []);
 
+      function sendQueuedCursor() {
+        cursorTimerRef.current = null;
+        const channel = channelRef.current;
+        if (!channel || !subscribedRef.current || !hasPeersRef.current) return;
+        if (cursorInterval(participantsRef.current) === null) return;
+        const next = pendingCursorRef.current;
+        const last = lastCursorRef.current;
+        if (last && next.button === last.button &&
+            Math.hypot(next.pointer.x - last.pointer.x, next.pointer.y - last.pointer.y) < CURSOR_MIN_MOVE_PX) return;
+        lastCursorRef.current = next;
+        const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
+        channel.send({
+          type: "broadcast",
+          event: "cursor-update",
+          payload: {
+            userId: config.user.id,
+            userName: config.user.name,
+            color: myColor,
+            ...next,
+          },
+        });
+      }
+
       const handlePointerUpdate = useCallback((payload) => {
         if (!channelRef.current || !subscribedRef.current || !hasPeersRef.current) return;
         const interval = cursorInterval(participantsRef.current);
@@ -256,28 +289,8 @@
         if (cursorTimerRef.current !== null) return;
 
         // Coalesce pointer events to one broadcast per interval, keeping the final position.
-        cursorTimerRef.current = setTimeout(() => {
-          cursorTimerRef.current = null;
-          const channel = channelRef.current;
-          if (!channel || !subscribedRef.current || !hasPeersRef.current) return;
-          if (cursorInterval(participantsRef.current) === null) return;
-          const next = pendingCursorRef.current;
-          const last = lastCursorRef.current;
-          if (last && next.button === last.button &&
-              Math.hypot(next.pointer.x - last.pointer.x, next.pointer.y - last.pointer.y) < CURSOR_MIN_MOVE_PX) return;
-          lastCursorRef.current = next;
-          const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
-          channel.send({
-            type: "broadcast",
-            event: "cursor-update",
-            payload: {
-              userId: config.user.id,
-              userName: config.user.name,
-              color: myColor,
-              ...pendingCursorRef.current,
-            },
-          });
-        }, interval);
+        cursorArmedAtRef.current = Date.now();
+        cursorTimerRef.current = setTimeout(sendQueuedCursor, interval);
       }, [config.user]);
 
       return createElement(Excalidraw, {
