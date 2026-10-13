@@ -16,7 +16,7 @@ import {
   withRequestId,
   type LogEntry
 } from "../../../packages/svelte/utils/logger/src/index.ts";
-import { formatJson } from "../../../packages/svelte/utils/logger/src/formatter.ts";
+import { formatJson } from "../../../packages/jsr/logger-core/src/formatter.ts";
 
 /** A structured logger (the server production shape) that captures entries. */
 function capture() {

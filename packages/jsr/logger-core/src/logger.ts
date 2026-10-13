@@ -1,5 +1,5 @@
-import type { LogLevel, LogEntry, Logger, LoggerOptions, RuntimeOptions, Transport } from "./types.ts";
-import { formatJson, formatPretty } from "./formatter.ts";
+import type { LogEntry, Logger, LoggerOptions, LogLevel, RuntimeOptions, Transport } from "./types.ts";
+import { formatCli, formatJson, formatPretty } from "./formatter.ts";
 import { currentRequestId } from "./context.ts";
 import { serializeError } from "./errors.ts";
 
@@ -49,8 +49,24 @@ function isServer(): boolean {
   return typeof process !== "undefined" && typeof process.versions?.node === "string";
 }
 
+interface DenoPermissions {
+  permissions?: { querySync?(descriptor: { name: "env" }): { state: string } };
+}
+
+/**
+ * The environment, or nothing when reading it is not allowed. Deno exposes
+ * `process.env` but throws (or prompts at a terminal) when the program was not
+ * started with `--allow-env`, and a CLI such as `tutors-create` runs without it.
+ */
 function serverEnv(): Record<string, string | undefined> {
-  return isServer() ? process.env : {};
+  if (!isServer()) return {};
+  const deno = (globalThis as { Deno?: DenoPermissions }).Deno;
+  try {
+    if (deno?.permissions?.querySync && deno.permissions.querySync({ name: "env" }).state !== "granted") return {};
+    return process.env;
+  } catch {
+    return {};
+  }
 }
 
 /**
@@ -200,6 +216,19 @@ export function setRawConsole(methods: Partial<Record<ConsoleMethod, ConsoleWrit
   rawConsole = methods;
 }
 
+let cliOutput = false;
+
+/**
+ * Call once from a command-line entry point (`tutors`, `tutors-lite`, `create`).
+ * Every logger that writes to the console then prints one short human line per
+ * entry (see `formatCli`) and tags entries with `app`; transports still receive
+ * the full entry. Pass `false` to go back to the JSON or pretty format.
+ */
+export function useCliOutput(app: string | false): void {
+  cliOutput = app !== false;
+  if (app !== false) setAppName(app);
+}
+
 export class TutorsLogger implements Logger {
   readonly level: LogLevel;
   private readonly threshold: number;
@@ -224,7 +253,7 @@ export class TutorsLogger implements Logger {
     const format = dev ? formatPretty : formatJson;
     return (entry: LogEntry) => {
       const method = CONSOLE_METHOD[entry.level as LogLevel];
-      const line = format(entry);
+      const line = cliOutput ? formatCli(entry) : format(entry);
       const raw = rawConsole?.[method];
       if (raw) raw(line);
       else console[method](line);
@@ -266,7 +295,9 @@ export class TutorsLogger implements Logger {
     }
     this.outputFn(entry);
     for (const transport of globalTransports) {
-      try { transport(entry); } catch { /* transport failures must never crash the app */ }
+      try {
+        transport(entry);
+      } catch { /* transport failures must never crash the app */ }
     }
   }
 

@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as yaml from "npm:js-yaml@^4";
 import archiver from "npm:archiver@^7";
-
+import log, { serializeError } from "@tutors/logger-core";
 
 
 export function removeFirstLine(str: string): string {
@@ -77,7 +77,7 @@ export function readWholeFile(path: string): string {
     const array = fs.readFileSync(path).toString();
     return array;
   } else {
-    process.stderr.write(`unable to locate ${path}\n`);
+    log.warn("unable to locate file", { path });
   }
   return "";
 }
@@ -87,7 +87,7 @@ export function readFirstLineFromFile(path: string): string {
     const array = fs.readFileSync(path).toString().split("\n");
     return array[0].replace("\r", "");
   } else {
-    process.stderr.write(`unable to locate ${path}\n`);
+    log.warn("unable to locate file", { path });
   }
   return "";
 }
@@ -134,8 +134,7 @@ export function copyFolder(src: string, dest: string): void {
       fs.copyFileSync(src, dest);
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error copying folder from ${src} to ${dest}: ${message}\n`);
+    log.error("Error copying folder", { src, dest, ...serializeError(error) });
     throw error;
   }
 }
@@ -144,8 +143,7 @@ export function copyFile(src: string, dest: string): void {
   try {
     fs.cpSync(src, dest, { force: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error copying file from ${src} to ${dest}: ${message}\n`);
+    log.error("Error copying file", { src, dest, ...serializeError(error) });
     throw error;
   }
 }
@@ -160,8 +158,7 @@ export function copyFileToFolder(src: string, dest: string): void {
       });
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error copying file from ${src} to folder ${dest}: ${message}\n`);
+    log.error("Error copying file to folder", { src, dest, ...serializeError(error) });
     throw error;
   }
 }

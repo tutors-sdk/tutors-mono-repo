@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import log, { serializeError } from "@tutors/logger-core";
 import { copyFolder } from "../utils/file-utils.ts";
 
 let destVentoDir = "";
@@ -53,8 +54,7 @@ async function downloadFile(filePath: string) {
     fs.writeFileSync(targetPath, content);
   }
   catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    process.stderr.write(`Error downloading ${filePath}: ${errorMessage}\n`);
+    log.error("Error downloading template", { filePath, ...serializeError(error) });
     throw error;
   }
 }
@@ -68,8 +68,7 @@ export async function downloadVentoTemplates(folder: string, srcVentoFolder: str
     destVentoDir = path.join(folder, 'vento');
     await Promise.all(filesToDownload.map(downloadFile));
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error downloading vento templates: ${message}\n`);
+    log.error("Error downloading vento templates", error);
     throw error;
   }
 }

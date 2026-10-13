@@ -1,6 +1,7 @@
 // import { themeService } from "$lib/services/themes/services/themes.svelte";
 import type { Composite, Course, IconNav, Lo, LoType, Topic, WeekType } from "../types/index.ts";
 import { filterByType, setShowHide } from "../utils/lo-utils.ts";
+import log from "@tutors/logger-core";
 
 export function createToc(course: Course) {
   course.los.forEach((lo) => {
@@ -246,7 +247,6 @@ export function initCalendar(course: Course, today: number = Date.now()) {
       currentWeek,
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error loading calendar: ${message}\n`);
+    log.error("Error loading calendar", error);
   }
 }

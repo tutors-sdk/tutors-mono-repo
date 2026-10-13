@@ -6,7 +6,7 @@ import denoConfig from "../deno.json" with { type: "json" };
 function promptRequired(message: string): string {
   const value = prompt(message);
   if (!value || value.trim().length === 0) {
-    process.stderr.write("This field is required.\n");
+    process.stdout.write("This field is required.\n");
     return promptRequired(message);
   }
   return value.trim();
@@ -17,7 +17,7 @@ function promptNumber(message: string, min: number, max: number, fallback: numbe
   if (!value) return fallback;
   const n = parseInt(value, 10);
   if (isNaN(n) || n < min || n > max) {
-    process.stderr.write(`Please enter a number between ${min} and ${max}.\n`);;
+    process.stdout.write(`Please enter a number between ${min} and ${max}.\n`);
     return promptNumber(message, min, max, fallback);
   }
   return n;
