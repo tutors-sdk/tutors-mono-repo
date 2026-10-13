@@ -5,9 +5,9 @@ import { expect, vi } from "vitest";
 // SvelteKit and the identity adapter. Everything between them is product code.
 vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
-vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
-// `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
-vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
+// `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
+vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
 import { freshBrowser, labsOf, loEventArrives, publishedCourse, studentOpensLab } from "../../support/connect.ts";
 import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";

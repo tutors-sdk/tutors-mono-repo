@@ -46,7 +46,8 @@ async function start(overrides = {}) {
     NODE_ENV: "test",
     HOST: "127.0.0.1",
     PORT: String(port),
-    ORIGIN,
+    PROTOCOL_HEADER: "x-forwarded-proto",
+    HOST_HEADER: "x-forwarded-host",
     PUBLIC_ANON_MODE: "FALSE",
     PUBLIC_SUPABASE_URL: "",
     PUBLIC_SUPABASE_ANON_KEY: "",
@@ -93,6 +94,8 @@ class Browser {
       signal: AbortSignal.timeout(15000),
       headers: {
         origin: ORIGIN,
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "tutors.test",
         ...(this.jar.size ? { cookie: [...this.jar].map(([name, value]) => `${name}=${value}`).join("; ") } : {}),
         ...(body === undefined ? {} : { "content-type": "application/json" }),
         ...headers
@@ -300,7 +303,18 @@ try {
     assert.equal(await browser.actor(), null);
     assert.equal((await browser.send("/auth/reference-course")).status, 200);
   });
-  process.stdout.write(`\n${count} checks passed against the built Kit 2 reader.\n`);
+  await check("trusted proxy headers preserve the public port and reject invalid protocols", async () => {
+    await start();
+    const portOrigin = "https://tutors.test:8443";
+    const response = await new Browser().send("/api/auth/sign-in/social", { provider: "github", callbackURL: "/auth" }, {
+      origin: portOrigin, "x-forwarded-host": "tutors.test:8443"
+    });
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.equal(new URL((await response.json()).url).searchParams.get("redirect_uri"), `${portOrigin}/api/auth/callback/github`);
+    const invalid = await fetch(`http://127.0.0.1:${port}/healthz/live`, { headers: { "x-forwarded-proto": "https://evil.test" } });
+    assert.equal(invalid.status, 400);
+  });
+  process.stdout.write(`\n${count} checks passed against the built Kit 3 reader.\n`);
 } catch (error) {
   process.stderr.write(logs);
   throw error;

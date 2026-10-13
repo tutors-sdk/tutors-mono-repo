@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import { TutorsTime, initSupabase } from "@tutors/tutors-time-lib";
 
 // Run before any load functions. Hooks modules load at app startup.

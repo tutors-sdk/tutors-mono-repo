@@ -1,5 +1,5 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import { refreshLoRecord } from "./presence.svelte.ts";
 import { rune } from "@tutors/runes";
 import { LoRecord, type LiveService } from "../types.svelte.ts";

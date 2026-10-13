@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { currentCourse } from "@tutors/runes";
   import TalkAdobe from "./TalkAdobe.svelte";
   import type { Talk } from "@tutors/tutors-model-lib";

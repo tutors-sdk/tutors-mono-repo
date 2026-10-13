@@ -5,7 +5,7 @@
  * them. Individual tests can still `vi.mock` these specifiers for assertions.
  */
 
-/** `$app/environment` */
+/** `$app/env` */
 export const browser = false;
 export const dev = true;
 export const building = false;

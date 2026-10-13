@@ -6,7 +6,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";

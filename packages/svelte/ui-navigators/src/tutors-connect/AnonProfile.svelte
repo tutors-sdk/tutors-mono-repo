@@ -2,7 +2,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
 
-  import { env } from "$env/dynamic/public";
+  import * as env from "$app/env/public";
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
   import { t } from "@tutors/i18n";
 

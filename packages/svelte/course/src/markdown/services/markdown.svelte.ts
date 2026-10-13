@@ -49,7 +49,7 @@ import r from "shiki/langs/r.mjs";
 import shell from "shiki/langs/shell.mjs";
 import xml from "shiki/langs/xml.mjs";
 import vue from "shiki/langs/vue.mjs";
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import type { MarkdownService } from "../types.ts";
 import { courseProtocol, rune } from "@tutors/runes";
 

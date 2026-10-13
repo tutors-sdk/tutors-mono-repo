@@ -206,7 +206,7 @@ function startImage(image: string): { baseUrl: string; stop: () => void } {
   ]);
   const port = execFileSync("docker", ["port", name, "3000/tcp"], { encoding: "utf8" }).trim().split("\n")[0].split(":").pop();
   const baseUrl = `http://127.0.0.1:${port}`;
-  // ORIGIN only matters for form posts; Lighthouse only issues GETs.
+  // Lighthouse only issues GETs; form-origin checks run in the container smoke.
   return { baseUrl, stop: () => void spawnSync("docker", ["rm", "--force", name], { stdio: "ignore" }) };
 }
 

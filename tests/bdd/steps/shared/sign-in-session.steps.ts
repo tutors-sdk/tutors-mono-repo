@@ -9,8 +9,8 @@ vi.hoisted(() => {
 
 // The seams: the reader's env and SvelteKit's `sequence`, which needs a live
 // SvelteKit request store. Everything from hooks.server.ts down is product code.
-vi.mock("$env/dynamic/private", async () => ({ env: (await import("../../support/reader-auth.ts")).privateEnv }));
-vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/reader-auth.ts")).publicEnv }));
+vi.mock("$app/env/private", async () => (await import("../../support/reader-auth.ts")).privateEnv);
+vi.mock("$app/env/public", async () => (await import("../../support/reader-auth.ts")).publicEnv);
 vi.mock("../../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index.js", () => ({
   sequence:
     (...handles: Array<(input: { event: unknown; resolve: (event: unknown) => unknown }) => unknown>) =>
@@ -84,8 +84,8 @@ describe("reader identity", () => {
     Background(({ Given, And }) => {
       Given("the reader is configured for GitHub sign-in", () => {
         vi.useRealTimers();
-        for (const key of Object.keys(privateEnv)) delete privateEnv[key];
-        for (const key of Object.keys(publicEnv)) delete publicEnv[key];
+        for (const key of Object.keys(privateEnv)) privateEnv[key] = undefined;
+        for (const key of Object.keys(publicEnv)) publicEnv[key] = undefined;
         configureReader();
         browser = new Browser();
         sessionCookie = undefined;
@@ -284,7 +284,7 @@ describe("reader identity", () => {
     Rule("If no session secret is configured, then the reader shall serve its pages with every visitor signed out.", ({ RuleScenario }) => {
       RuleScenario("A reader without a secret still serves pages", ({ Given, When, Then, And }) => {
         Given("the reader has no session secret", () => {
-          delete privateEnv.PRIVATE_AUTH_SECRET;
+          privateEnv.PRIVATE_AUTH_SECRET = undefined;
         });
         When("I open the page {string}", openThePage);
         Then("the page should be served", () => expect(last.status).toBe(200));
