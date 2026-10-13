@@ -250,3 +250,14 @@ Feature: Realtime resource usage
       And 120 seconds pass
       Then the online list is "Alice"
       And the online list has been loaded 3 times
+
+  @rule-0306 @ears-unwanted
+  Rule: If the course online list cannot be loaded, then the reader shall keep the last loaded list.
+
+    Scenario: A failed refresh keeps classmates listed
+      Given "Bob" was active in the course 1 minutes ago
+      And "Alice" is signed in with sharing enabled
+      And the student has entered the course
+      And the stored activity cannot be read
+      When 60 seconds pass
+      Then the online list is "Alice, Bob"

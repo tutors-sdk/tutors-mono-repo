@@ -140,8 +140,9 @@ export async function getTutorsConnectLatestLosByCourseId(courseId: string): Pro
 /**
  * Stored Lo snapshots for a course received at or after `sinceIso`: the students active recently.
  * Sorted by `received_at` descending (most recently updated first).
+ * @returns null when the read fails, so a caller can tell a failure from a course nobody is in
  */
-export async function getTutorsConnectRecentLosByCourseId(courseId: string, sinceIso: string): Promise<TutorsConnectLatestRow[]> {
+export async function getTutorsConnectRecentLosByCourseId(courseId: string, sinceIso: string): Promise<TutorsConnectLatestRow[] | null> {
   if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
 
   const id = courseId?.trim();
@@ -156,7 +157,7 @@ export async function getTutorsConnectRecentLosByCourseId(courseId: string, sinc
 
   if (error) {
     log.error("getTutorsConnectRecentLosByCourseId failed:", error);
-    return [];
+    return null;
   }
 
   return (data ?? []) as TutorsConnectLatestRow[];

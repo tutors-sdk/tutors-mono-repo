@@ -491,4 +491,14 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("the online list has been loaded {number} times", loadedTimes);
     });
   });
+  Rule("If the course online list cannot be loaded, then the reader shall keep the last loaded list.", ({ RuleScenario }) => {
+    RuleScenario("A failed refresh keeps classmates listed", ({ Given, And, When, Then }) => {
+      Given("{string} was active in the course {number} minutes ago", wasActive);
+      And("{string} is signed in with sharing {word}", signInWithSharing);
+      And("the student has entered the course", enterCourse);
+      And("the stored activity cannot be read", () => recorder.tableErrors.set("tutors-connect-latest", { message: "connection reset" }));
+      When("{number} seconds pass", secondsPass);
+      Then("the online list is {string}", onlineListIs);
+    });
+  });
 });

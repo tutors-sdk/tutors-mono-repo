@@ -88,7 +88,8 @@ export const presenceService: PresenceService = {
     const generation = ++rosterGeneration;
     const since = new Date(Date.now() - ROSTER_WINDOW_MS).toISOString();
     const rows = await getTutorsConnectRecentLosByCourseId(courseId, since);
-    if (generation !== rosterGeneration || this.listeningTo !== courseId) return;
+    // A failed read keeps the last list rather than emptying it until the next refresh.
+    if (!rows || generation !== rosterGeneration || this.listeningTo !== courseId) return;
 
     const recent = new Set<string>();
     for (const row of rows) {
