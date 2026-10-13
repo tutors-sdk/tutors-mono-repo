@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
+    "@prometheus-io/client": "^0.16.1",
     "isomorphic-dompurify": "^4.4.0"
   }
 }
