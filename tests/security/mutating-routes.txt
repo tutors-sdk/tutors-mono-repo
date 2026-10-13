@@ -8,8 +8,6 @@
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
 time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one)
-reader POST /auth/signin/github | hook | who: anyone; Auth.js starts GitHub OAuth, SvelteKit checks cross-site form origins
-reader POST /auth/signout | hook | who: anyone clearing their browser cookies; SvelteKit checks cross-site form origins
 reader POST /api/auth/sign-in/social | hook | who: anyone; GitHub only, Better Auth verifies origin and return URL
 reader POST /api/auth/callback/github | hook | who: OAuth callback holder; Better Auth verifies signed state (GitHub normally uses GET)
 reader POST /api/auth/sign-out | hook | who: session holder; Better Auth verifies origin and deletes browser cookies

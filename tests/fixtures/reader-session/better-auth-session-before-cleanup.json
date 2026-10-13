@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "afca918055f9d21d55f1f930e8479fa3c6fef198",
+  "betterAuth": "1.7.7",
+  "origin": "https://tutors.test",
+  "issuedAt": 1791556992667,
+  "actor": {
+    "subject": "github:1001",
+    "login": "student",
+    "name": "Student",
+    "email": "student@example.com",
+    "image": "https://avatars.example/student.png"
+  },
+  "cookies": [
+    ["__Secure-better-auth.session_token", "AyGg86YvZsrbbOq8sOdfH6YSNs08TM31.5hIKyxSQ%2B06oyEp6kaStDfjqQtWcReLBBmCnc9NPF0M%3D"],
+    [
+      "__Secure-better-auth.session_data",
+      "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoidm81a0RPYVUtSGEzU3BpTTNTdzh3SlkxSndoZ2dDS2Y2YTZQdnRCRU9jTSJ9..Mj8v4-d-5HT7OeaI0kL7rw.ucTSKkG-JmVtXHQ10aZtayAWFdok9nbh0BzzPixC_sRRmrOzXrTDBUlMCdW-010GnIht9zvDMkDa2XxX6AmqrxYGvEPYlzvx_SLBCnVkgGkvvX0Rv62YMVQeyu19BRts0Pwt0ojTTnY10uOIfjb0K5ZvP4_jYgNjL3DKn1rMh2z5ckohqFlsWzW7l5PpuLcfkRb86_Waa5qpDbJZ1QCNghQzdlpxfQVV2SOFVtDr_N-rNrC6-cdvcpJOevZae8WmMoumVeY-5koaOYtqy9waozPE6zvp1-BTuCWlKcaO4_C71eRACIs9Pj6hBSIHm6LQpuZYEefWzoLUm3GDoqIfqUjhVdJALOMkozIqpHUMSZfXldlwDcxIZ1Ojc-Y3x5ZVKNEwApoOIQTuIgKKLiTGuzif2lpYCpqs1Gr36MDgg3E0QYkCF8HnJhHLRGKrqo_L0yTmsYAFJnGd6YkP_XcXwubCz7tCCUb2ixFd_6o8GRqTNudrtIN0vd8ybq2j4i3Is3Hxh_atlnpMlo5wnzyJKUzWfGXplMjlD4d6FWC8F5FFIgk58mLubDSCHzCcr_eGecalpSSchoy91EXfcMeBl9dD8cYFHaVFzAEeb9pR9nNg7gA5aLtSaMTpWt90nWEymEgiO8-bcNkfAkry5ZNw6W47RCSGjZil42G4VYxsoZUBHDQssa78ju95UbCtBRDWY9sspkoBiP33wxqSLkHApLkIW0RbPzQFmHeodplmp6e0ldKNrD2dEJ1K568tOooDls2FmQqKOa__O8huBOBRHdsu8-vblXXexMlJK_WTuP6zoon8stIUNEbs8C2TK3XF0I8diRVhQgZyhinvC4eYrsK9_cOpnDa4S7RHEPIKc8_Gc9ky3Jt7Uf56MXI842VybzF6QZKMcwTBiBWl80soTKEGV87iJTQb1XsHmhlSJDw.4wFP1fXxCD-vq6Ehsnv90opdO__4yygcHJxnfwWcid8"
+    ]
+  ]
+}

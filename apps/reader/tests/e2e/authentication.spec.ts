@@ -53,7 +53,7 @@ test("Forged browser identity and a forged cookie cannot authorize a server requ
   });
   await expect(page.getByRole("img", { name: "Lecturer", exact: true })).toBeVisible();
   expect((await page.request.get(protectedUrl)).status()).toBe(401);
-  await page.context().addCookies([{ name: process.env.PRIVATE_AUTH_ADAPTER === "better-auth" ? "better-auth.session_data" : "authjs.session-token", value: "forged", url: "http://localhost:5173", httpOnly: true, sameSite: "Lax" }]);
+  await page.context().addCookies([{ name: "better-auth.session_data", value: "forged", url: "http://localhost:5173", httpOnly: true, sameSite: "Lax" }]);
   expect((await page.request.get(protectedUrl)).status()).toBe(401);
 });
 

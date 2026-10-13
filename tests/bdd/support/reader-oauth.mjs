@@ -36,16 +36,12 @@ export function githubCallback(authorizeUrl, code = "github-code", refused = fal
   return callback;
 }
 
-/** The SDK-specific request shape used by both HTTP and browser drivers.
- * @param {"authjs" | "better-auth"} adapter @param {string} returnTo
- */
-export function signInRequest(adapter, returnTo) {
-  return adapter === "authjs"
-    ? { path: "/auth/signin/github", form: { callbackUrl: returnTo } }
-    : { path: "/api/auth/sign-in/social", json: { provider: "github", callbackURL: returnTo, errorCallbackURL: "/auth?error=denied" } };
+/** The request shape shared by the HTTP and browser drivers. @param {string} returnTo */
+export function signInRequest(returnTo) {
+  return { path: "/api/auth/sign-in/social", json: { provider: "github", callbackURL: returnTo, errorCallbackURL: "/auth?error=denied" } };
 }
 
 /** @param {string} name */
-export const isSessionCookie = (name) => /(?:authjs\.session-token|better-auth\.session_(?:data|token))$/.test(name);
+export const isSessionCookie = (name) => /better-auth\.session_(?:data|token)$/.test(name);
 /** The encrypted claims cookie; Better Auth also requires its signed session_token. @param {string} name */
-export const isClaimsCookie = (name) => /(?:authjs\.session-token|better-auth\.session_data)$/.test(name);
+export const isClaimsCookie = (name) => /better-auth\.session_data$/.test(name);
