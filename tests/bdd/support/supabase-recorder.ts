@@ -8,7 +8,7 @@
  */
 
 type Row = Record<string, unknown>;
-type Filter = { column: string; value: unknown; op: "eq" | "in" };
+type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" };
 type DbError = { message: string; code?: string };
 type BroadcastMessage = { type: string; event: string; payload: unknown };
 type BroadcastHandler = (message: BroadcastMessage) => void;
@@ -57,6 +57,12 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
+  /** Compares as strings, which orders ISO timestamps correctly. */
+  gte(column: string, value: unknown) {
+    this.call.filters.push({ column, value, op: "gte" });
+    return this;
+  }
+
   in(column: string, value: unknown[]) {
     this.call.filters.push({ column, value, op: "in" });
     return this;
@@ -82,7 +88,11 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
   }
 
   private matches(row: Row): boolean {
-    return this.call.filters.every((f) => (f.op === "eq" ? row[f.column] === f.value : (f.value as unknown[]).includes(row[f.column])));
+    return this.call.filters.every((f) => {
+      if (f.op === "eq") return row[f.column] === f.value;
+      if (f.op === "gte") return String(row[f.column]) >= String(f.value);
+      return (f.value as unknown[]).includes(row[f.column]);
+    });
   }
 
   private run(): { data: unknown; error: DbError | null } {

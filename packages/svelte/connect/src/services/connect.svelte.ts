@@ -82,7 +82,7 @@ export const tutorsConnectService: TutorsConnectService = {
           goto(`/course/${courseId}`);
         }
         if (currentCourse.value && tutorsId.value.share === "true") {
-          void presenceService.startPresenceListener(currentCourse.value.courseId);
+          void presenceService.startCourseRoster(currentCourse.value.courseId);
         }
       }
     }
@@ -110,7 +110,7 @@ export const tutorsConnectService: TutorsConnectService = {
       }
       const login = tutorsId.value.login;
       if (tutorsId.value.share === "true" && login && currentCourse.value) {
-        void presenceService.startPresenceListener(currentCourse.value.courseId);
+        void presenceService.startCourseRoster(currentCourse.value.courseId);
       } else {
         presenceService.stopPresenceListener();
       }
@@ -155,7 +155,7 @@ export const tutorsConnectService: TutorsConnectService = {
       this.profile.logCourseVisit(course);
     }
     if (tutorsId.value?.login && tutorsId.value.share === "true") {
-      void presenceService.startPresenceListener(course.courseId);
+      void presenceService.startCourseRoster(course.courseId);
     } else {
       presenceService.stopPresenceListener();
     }

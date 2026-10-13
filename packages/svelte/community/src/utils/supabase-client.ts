@@ -138,6 +138,31 @@ export async function getTutorsConnectLatestLosByCourseId(courseId: string): Pro
 }
 
 /**
+ * Stored Lo snapshots for a course received at or after `sinceIso`: the students active recently.
+ * Sorted by `received_at` descending (most recently updated first).
+ */
+export async function getTutorsConnectRecentLosByCourseId(courseId: string, sinceIso: string): Promise<TutorsConnectLatestRow[]> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
+
+  const id = courseId?.trim();
+  if (!id) return [];
+
+  const { data, error } = await supabase
+    .from("tutors-connect-latest")
+    .select("course_id, student_id, payload, received_at")
+    .eq("course_id", id)
+    .gte("received_at", sinceIso)
+    .order("received_at", { ascending: false });
+
+  if (error) {
+    log.error("getTutorsConnectRecentLosByCourseId failed:", error);
+    return [];
+  }
+
+  return (data ?? []) as TutorsConnectLatestRow[];
+}
+
+/**
  * Retrieves the number of learning record increments for a specific field
  * @async
  * @param fieldName - Name of the field to count increments for

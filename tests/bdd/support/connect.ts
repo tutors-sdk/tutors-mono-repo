@@ -131,3 +131,36 @@ export function loEventArrives(channel: string, name: string, course: Course, lo
     }
   });
 }
+
+/**
+ * Another student's latest activity as the database holds it: the row `sendLoEvent` upserts into
+ * `tutors-connect-latest` from their browser, stamped `minutesAgo` before the reader's clock.
+ */
+export function storedActivity(name: string, course: Course, lo: Lo, minutesAgo: number): void {
+  const user = githubUser(name);
+  const row = {
+    course_id: course.courseId,
+    student_id: user.login,
+    payload: {
+      courseId: course.courseId,
+      courseUrl: course.courseUrl,
+      courseTitle: course.title,
+      img: lo.img,
+      title: lo.title,
+      loRoute: lo.route,
+      type: lo.type,
+      isPrivate: false,
+      user: { fullName: user.name, avatar: user.image, id: user.login, sentiment: user.sentiment }
+    },
+    received_at: new Date(Date.now() - minutesAgo * 60_000).toISOString()
+  };
+  const rows = recorder.rows("tutors-connect-latest");
+  const at = rows.findIndex((existing) => existing.course_id === row.course_id && existing.student_id === row.student_id);
+  if (at >= 0) rows[at] = row;
+  else rows.push(row);
+}
+
+/** How many times the reader asked the database for a course's online list. */
+export function onlineListLoads(): number {
+  return recorder.tableCalls.filter((call) => call.table === "tutors-connect-latest" && call.op === "select").length;
+}
