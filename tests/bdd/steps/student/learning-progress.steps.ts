@@ -82,32 +82,40 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     });
   });
 
+  let durationBefore: number;
+  let timeActiveBefore: number;
+  const today = () => recorder.rows("calendar").find((r) => r.id === formatDate(new Date()) && r.studentid === login && r.courseid === course.courseId);
+  const viewLab = async (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
+  const staysOnPage = async (_ctx: unknown, seconds: number) => {
+    durationBefore = learningRecord(course.courseId, 1)!.duration as number;
+    timeActiveBefore = today()!.timeactive as number;
+    vi.useFakeTimers();
+    tutorsConnectService.startTimer();
+    await vi.advanceTimersByTimeAsync(seconds * 1000);
+    tutorsConnectService.stopTimer();
+    vi.useRealTimers();
+    await settle();
+  };
+  const recordedBlocks = (_ctx: unknown, blocks: number) => {
+    expect((learningRecord(course.courseId, 1)!.duration as number) - durationBefore).toBe(blocks);
+    expect((today()!.timeactive as number) - timeActiveBefore).toBe(blocks);
+  };
+  const countedPageLoads = (_ctx: unknown, count: number) => {
+    expect(learningRecord(course.courseId, 1)).toMatchObject({ count, type: "lab" });
+    expect(recorder.rows("calendar")).toMatchObject([{ id: formatDate(new Date()), studentid: login, courseid: course.courseId, pageloads: count }]);
+  };
+  const LEGACY_FUNCTIONS = ["get_count_learning_records", "increment_calendar"];
+  const requests = (_ctx: unknown, count: number, fn: string) => {
+    expect(recorder.rpcCalls.filter((call) => call.fn === fn)).toHaveLength(count);
+    expect(recorder.rpcCalls.filter((call) => LEGACY_FUNCTIONS.includes(call.fn))).toEqual([]);
+    expect(recorder.tableCalls.filter((call) => call.table === "learning_records" || call.table === "calendar")).toEqual([]);
+  };
+
   Scenario("Record learning activity", ({ When, Then, And }) => {
-    let durationBefore: number;
-    When("the student views lab {number} of the course {number} times", async (_ctx, lab: number, times: number) => {
-      await view(course.courseId, lab, times);
-    });
-    And("the student stays on that page for {number} seconds", async (_ctx, seconds: number) => {
-      durationBefore = learningRecord(course.courseId, 1)!.duration as number;
-      vi.useFakeTimers();
-      tutorsConnectService.startTimer();
-      await vi.advanceTimersByTimeAsync(seconds * 1000);
-      tutorsConnectService.stopTimer();
-      vi.useRealTimers();
-      await settle();
-    });
-    Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", (_ctx, blocks: number) => {
-      expect((learningRecord(course.courseId, 1)!.duration as number) - durationBefore).toBe(blocks);
-      const increments = recorder.rpcCalls.filter((call) => call.fn === "increment_calendar");
-      expect(increments).toHaveLength(blocks);
-      for (const call of increments) {
-        expect(call.args).toEqual({ field_name: "timeactive", row_id: formatDate(new Date()), student_id_value: login, course_id_value: course.courseId });
-      }
-    });
-    And("the system shall increment the page load count for the lab to {number}", (_ctx, count: number) => {
-      expect(learningRecord(course.courseId, 1)).toMatchObject({ count, type: "lab" });
-      expect(recorder.rows("calendar")).toMatchObject([{ id: formatDate(new Date()), studentid: login, courseid: course.courseId, pageloads: count }]);
-    });
+    When("the student views lab {number} of the course {number} times", viewLab);
+    And("the student stays on that page for {number} seconds", staysOnPage);
+    Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
   });
 
   Scenario("Resume from last accessed position", ({ Given, When, Then, And }) => {
@@ -193,6 +201,47 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
       Then("the reader shall have reported {number} learning events for {string}", reportedCount);
       And("the last reported event shall carry the sentiment {string}", (_ctx, sentiment: string) => {
         expect(reported("Alice").at(-1)?.user?.sentiment).toBe(sentiment);
+      });
+    });
+  });
+  Rule("When a student opens a learning object, the reader shall record the page view against the learning object and the day's calendar in one database request.", ({ RuleScenario }) => {
+    RuleScenario("A page view is one request", ({ When, Then, And }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      Then("the reader shall have made {number} page-view requests and no other learning record or calendar requests", (ctx, count: number) => requests(ctx, count, "record_page_view"));
+      And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
+    });
+  });
+
+  Rule("While a course page is visible, the reader shall record each 30 seconds of activity in one database request.", ({ RuleScenario }) => {
+    const activityRequests = (ctx: unknown, count: number) => requests(ctx, count, "record_heartbeat");
+    RuleScenario("Time on a visible page is one request per 30 seconds", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", activityRequests);
+      And("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    });
+    RuleScenario("Time on a hidden page is not recorded", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the page is hidden", () => vi.stubGlobal("document", { hidden: true }));
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", activityRequests);
+      And("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    });
+  });
+
+  Rule("If the database lacks the single-request recording functions, then the reader shall record page views and activity with the per-table requests.", ({ RuleScenario }) => {
+    RuleScenario("Recording falls back before the migration is applied", ({ Given, When, And, Then }) => {
+      Given("the database lacks the single-request recording functions", () => {
+        recorder.missingFunctions.add("record_page_view");
+        recorder.missingFunctions.add("record_heartbeat");
+      });
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+      And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
+      // Both functions ship in one migration, so the first missing answer settles it for the tab.
+      And("the reader shall have asked for a recording function once", () => {
+        expect(recorder.rpcCalls.filter((call) => call.fn === "record_page_view" || call.fn === "record_heartbeat")).toHaveLength(1);
       });
     });
   });
