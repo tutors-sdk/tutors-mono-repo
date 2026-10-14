@@ -71,12 +71,12 @@ describeFeature(feature, ({ Background, Rule }) => {
       Given("I am authenticated as {string}", (_ctx, name: string) => signIn(githubUser(name)));
       When("I navigate to a lab in {string}", navigateToLab);
       Then("my activity should be recorded to the analytics service", () => {
-        expect(recorder.upserts("learning_records")).toHaveLength(1);
-        expect(recorder.upserts("calendar")).toHaveLength(1);
+        expect(recorder.rows("learning_records")).toHaveLength(1);
+        expect(recorder.rows("calendar")).toHaveLength(1);
       });
       And("the record should include my user ID {string} and the lab route", (_ctx, login: string) => {
-        expect(recorder.upserts("learning_records")[0]).toMatchObject({ course_id: course.courseId, student_id: login, lo_id: lab().route, type: "lab", count: 1 });
-        expect(recorder.upserts("calendar")[0]).toMatchObject({ studentid: login, courseid: course.courseId, pageloads: 1 });
+        expect(recorder.rows("learning_records")[0]).toMatchObject({ course_id: course.courseId, student_id: login, lo_id: lab().route, type: "lab", count: 1 });
+        expect(recorder.rows("calendar")[0]).toMatchObject({ studentid: login, courseid: course.courseId, pageloads: 1 });
       });
     });
 

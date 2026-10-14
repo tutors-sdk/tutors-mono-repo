@@ -82,3 +82,40 @@ Feature: Learning Progress Tracking
       And the student starts to move to lab 2 but cancels
       And the student changes their sentiment to "confused"
       Then the reader shall have reported 2 learning events for "Alice"
+
+  @rule-0303 @ears-event-driven
+  Rule: When a student opens a learning object, the reader shall record the page view against the learning object and the day's calendar in one database request.
+
+    Scenario: A page view is one request
+      When the student views lab 1 of the course 2 times
+      Then the reader shall have made 2 page-view requests and no other learning record or calendar requests
+      And the system shall increment the page load count for the lab to 2
+
+  @rule-0304 @ears-state-driven
+  Rule: While a course page is visible, the reader shall record each 30 seconds of activity in one database request.
+
+    @active
+    Scenario: Time on a visible page is one request per 30 seconds
+      When the student views lab 1 of the course 1 times
+      And the student stays on that page for 60 seconds
+      Then the reader shall have made 2 activity requests and no other learning record or calendar requests
+      And the system shall record 2 more blocks of time active against the lab and against the calendar for today
+
+    @inactive
+    Scenario: Time on a hidden page is not recorded
+      When the student views lab 1 of the course 1 times
+      And the page is hidden
+      And the student stays on that page for 60 seconds
+      Then the reader shall have made 0 activity requests and no other learning record or calendar requests
+      And the system shall record 0 more blocks of time active against the lab and against the calendar for today
+
+  @rule-0305 @ears-unwanted
+  Rule: If the database lacks the single-request recording functions, then the reader shall record page views and activity with the per-table requests.
+
+    Scenario: Recording falls back before the migration is applied
+      Given the database lacks the single-request recording functions
+      When the student views lab 1 of the course 2 times
+      And the student stays on that page for 60 seconds
+      Then the system shall record 2 more blocks of time active against the lab and against the calendar for today
+      And the system shall increment the page load count for the lab to 2
+      And the reader shall have asked for a recording function once

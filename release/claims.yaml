@@ -64,3 +64,23 @@ claims:
     scope: "*/{@isaacs/cliui,@isaacs/fs-minipass,@isaacs/string-locale-compare,@npmcli/agent,@npmcli/arborist,@npmcli/config,@npmcli/fs,@npmcli/git,@npmcli/installed-package-contents,@npmcli/map-workspaces,@npmcli/metavuln-calculator,@npmcli/name-from-folder,@npmcli/node-gyp,@npmcli/package-json,@npmcli/promise-spawn,@npmcli/query,@npmcli/redact,@npmcli/run-script,@pkgjs/parseargs,@sigstore/bundle,@sigstore/core,@sigstore/protobuf-specs,@sigstore/sign,@sigstore/tuf,@sigstore/verify,@tufjs/canonical-json,@tufjs/models,abbrev,agent-base,ansi-regex,ansi-styles,aproba,archy,balanced-match,bin-links,binary-extensions,brace-expansion,cacache,chalk,chownr,ci-info,cidr-regex,cli-columns,cmd-shim,color-convert,color-name,common-ancestor-path,corepack,cross-spawn,cssesc,debug,diff,eastasianwidth,emoji-regex,encoding,env-paths,err-code,exponential-backoff,fastest-levenshtein,fdir,foreground-child,fs-minipass,glob,graceful-fs,hosted-git-info,http-cache-semantics,http-proxy-agent,https-proxy-agent,iconv-lite,ignore-walk,imurmurhash,ini,init-package-json,ip-address,ip-regex,is-cidr,is-fullwidth-code-point,isexe,jackspeak,json-parse-even-better-errors,json-stringify-nice,jsonparse,just-diff,just-diff-apply,libnpmaccess,libnpmdiff,libnpmexec,libnpmfund,libnpmhook,libnpmorg,libnpmpack,libnpmpublish,libnpmsearch,libnpmteam,libnpmversion,lru-cache,make-fetch-happen,minimatch,minipass,minipass-collect,minipass-fetch,minipass-flush,minipass-pipeline,minipass-sized,minizlib,ms,mute-stream,negotiator,node-gyp,nopt,normalize-package-data,npm,npm-audit-report,npm-bundled,npm-install-checks,npm-normalize-package-bin,npm-package-arg,npm-packlist,npm-pick-manifest,npm-profile,npm-registry-fetch,npm-user-validate,p-map,package-json-from-dist,pacote,parse-conflict-json,path-key,path-scurry,picomatch,postcss-selector-parser,proc-log,proggy,promise-all-reject-late,promise-call-limit,promise-retry,promzard,qrcode-terminal,read,read-cmd-shim,read-package-json-fast,retry,safer-buffer,semver,shebang-command,shebang-regex,signal-exit,sigstore,smart-buffer,socks,socks-proxy-agent,spdx-correct,spdx-exceptions,spdx-expression-parse,spdx-license-ids,ssri,string-width,strip-ansi,supports-color,text-table,tiny-relative-date,tinyglobby,treeverse,tuf-js,unique-filename,unique-slug,util-deprecate,validate-npm-package-license,validate-npm-package-name,walk-up-path,which,wrap-ansi,write-file-atomic,yallist,yarn}"
     rule: "0220"
     reason: "runtime image ships no package manager: npm, npx, corepack and yarn removed by #143 (4070315), rationale in tests/bdd/features/developer/runtime-image.feature"
+  # PR #475: each page view and each 30 seconds of activity is one database function call
+  # (record_page_view, record_heartbeat) instead of several read-then-write requests. The signed-in journey's
+  # writes move from the per-table requests to the two functions; both functions ship in
+  # supabase/migrations/20261013_record_page_view_and_heartbeat.sql (additions only).
+  - artefact: persistence
+    scope: "*/record_page_view"
+    rule: "0303"
+    reason: "a page view is recorded against the learning object and the day's calendar in one request (#475)"
+  - artefact: persistence
+    scope: "*/{learning_records,calendar,get_count_learning_records}"
+    rule: "0303"
+    reason: "the per-table page-view requests are replaced by record_page_view (#475)"
+  - artefact: persistence
+    scope: "*/record_heartbeat"
+    rule: "0304"
+    reason: "each 30 seconds of activity on a visible course page is one request (#475)"
+  - artefact: persistence
+    scope: "*/increment_calendar"
+    rule: "0304"
+    reason: "the calendar's time-active increment is replaced by record_heartbeat (#475)"
