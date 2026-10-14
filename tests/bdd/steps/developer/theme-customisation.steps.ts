@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { convertMdToHtml, initHighlighter } from "../../../../packages/jsr/model/src/utils/markdown-utils.ts";
+import { convertMdToHtml, initHighlighter } from "../../../../packages/adapters/driven/render-markdown/src/markdown-utils.ts";
 import { themeService } from "../../../../packages/adapters/driving/themes/src/services/themes.svelte.ts";
 import { startLaterSession, startWithNoStoredPreferences } from "../../support/theme.ts";
 

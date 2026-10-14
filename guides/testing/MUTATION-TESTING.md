@@ -16,16 +16,16 @@ Mutation testing focuses on high-value computation logic where undetected bugs w
 
 | Module | File | Why |
 |---|---|---|
-| Search | `packages/jsr/model/src/services/search.ts` | Fenced code detection, index calculation — off-by-ones corrupt results |
-| LO Utils | `packages/jsr/model/src/utils/lo-utils.ts` | Tree traversal, sorting, filtering — wrong order breaks course display |
-| Type Utils | `packages/jsr/model/src/types/type-utils.ts` | Type guards, composite detection — wrong type silently misroutes LOs |
-| Calendar Model | `packages/jsr/time/src/services/base-calendar-model.ts` | Median calculation, pivoting — wrong math corrupts instructor analytics |
-| Calendar Utils | `packages/jsr/time/src/utils/calendar-utils.ts` | Date formatting, colour grading — visual bugs in heatmaps |
-| LO Tree | `packages/jsr/model/src/services/lo-tree.ts` | Parent links, breadcrumbs, composite panels — a wrong link breaks navigation |
-| Course Utils | `packages/jsr/model/src/utils/course-utils.ts` | Table of contents, companions, walls, calendar — wrong grouping hides content |
-| Markdown Utils | `packages/jsr/model/src/utils/markdown-utils.ts` | Markdown to HTML, course URL rewriting — broken links and images |
-| Lab Model | `packages/jsr/time/src/services/base-lab-model.ts` | Lab and step pivots, medians — wrong numbers in lab analytics |
-| Lab Utils | `packages/jsr/time/src/utils/lab-utils.ts` | Lab record aggregation — wrong totals per student |
+| Search | `packages/domain/src/course/services/search.ts` | Fenced code detection, index calculation — off-by-ones corrupt results |
+| LO Utils | `packages/domain/src/course/utils/lo-utils.ts` | Tree traversal, sorting, filtering — wrong order breaks course display |
+| Type Utils | `packages/domain/src/course/types/type-utils.ts` | Type guards, composite detection — wrong type silently misroutes LOs |
+| Calendar Model | `packages/domain/src/learning/services/base-calendar-model.ts` | Median calculation, pivoting — wrong math corrupts instructor analytics |
+| Calendar Utils | `packages/domain/src/learning/utils/calendar-utils.ts` | Date formatting, colour grading — visual bugs in heatmaps |
+| LO Tree | `packages/domain/src/course/services/lo-tree.ts` | Parent links, breadcrumbs, composite panels — a wrong link breaks navigation |
+| Course Utils | `packages/domain/src/course/utils/course-utils.ts` | Table of contents, companions, walls, calendar — wrong grouping hides content |
+| Markdown Utils | `packages/adapters/driven/render-markdown/src/markdown-utils.ts` | Markdown to HTML, course URL rewriting — broken links and images |
+| Lab Model | `packages/domain/src/learning/services/base-lab-model.ts` | Lab and step pivots, medians — wrong numbers in lab analytics |
+| Lab Utils | `packages/domain/src/learning/utils/lab-utils.ts` | Lab record aggregation — wrong totals per student |
 | LR Utils | `packages/jsr/gen/src/utils/lr-utils.ts` | Learning-resource discovery, video ids, front matter — missing resources in generated courses |
 | Template Utils | `packages/jsr/gen/src/templates/utils.ts` | Generated page helpers — broken links in the generated site |
 

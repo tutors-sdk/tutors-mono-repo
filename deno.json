@@ -1,6 +1,9 @@
 {
   "nodeModulesDir": "auto",
   "workspace": [
+    "./packages/domain",
+    "./packages/application",
+    "./packages/adapters/driven/render-markdown",
     "./packages/jsr/tutors",
     "./packages/jsr/tutors-lite",
     "./packages/jsr/model",
@@ -12,6 +15,9 @@
   ],
   "fmt": {
     "include": [
+      "./packages/domain/src/",
+      "./packages/application/src/",
+      "./packages/adapters/driven/render-markdown/src/",
       "./packages/jsr/gen/src/",
       "./packages/jsr/model/src/",
       "./packages/jsr/tutors/",

@@ -5,10 +5,10 @@ import type {
   CalendarModel,
   LabModel,
   TutorsConnectUser
-} from "../types/index.ts";
-import { BaseCalendarModel } from "./base-calendar-model.ts";
-import { BaseLabModel } from "./base-lab-model.ts";
-import { filterByDateRange } from "../utils/index.ts";
+} from "@tutors/domain/learning";
+import { BaseCalendarModel } from "@tutors/domain/learning";
+import { BaseLabModel } from "@tutors/domain/learning";
+import { filterByDateRange } from "@tutors/domain/learning";
 import { getSupabase } from "./supabase.ts";
 
 export class CourseTime implements TutorsTimeCourse {

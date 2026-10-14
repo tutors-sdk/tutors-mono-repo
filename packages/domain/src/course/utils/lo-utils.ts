@@ -213,12 +213,27 @@ function resolvePanoptoHostAndId(id: string): { host: string; sessionId: string 
     const [host, sessionId] = trimmed.split("|", 2);
     return { host, sessionId };
   }
-  try {
-    const url = new URL(trimmed);
-    return { host: url.hostname, sessionId: url.searchParams.get("id") ?? "" };
-  } catch {
-    return { host: "", sessionId: trimmed };
+  const url = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]*)[^?#]*(?:\?([^#]*))?/i.exec(trimmed);
+  if (!url) return { host: "", sessionId: trimmed };
+  // The host without credentials or a port, as URL.hostname gives it.
+  const host = url[1].replace(/^.*@/, "").replace(/:\d*$/, "").toLowerCase();
+  return { host, sessionId: queryParam(url[2] ?? "", "id") };
+}
+
+/** The first value of `name` in a query string, decoded; "" when absent. The domain stays free of URL globals. */
+function queryParam(query: string, name: string): string {
+  for (const pair of query.split("&")) {
+    const eq = pair.indexOf("=");
+    const key = eq < 0 ? pair : pair.slice(0, eq);
+    if (decodeURIComponent(key.replace(/\+/g, " ")) !== name) continue;
+    const value = eq < 0 ? "" : pair.slice(eq + 1);
+    try {
+      return decodeURIComponent(value.replace(/\+/g, " "));
+    } catch {
+      return value;
+    }
   }
+  return "";
 }
 
 const HOSTED_VIDEO_SERVICES = new Set(["heanet", "vimp", "panopto"]);

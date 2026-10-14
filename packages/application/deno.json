@@ -1,0 +1,10 @@
+{
+  "name": "@tutors/application",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ports": "./src/ports/index.ts",
+    "./testing": "./src/testing/index.ts"
+  }
+}

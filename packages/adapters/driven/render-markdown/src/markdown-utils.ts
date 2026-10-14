@@ -17,7 +17,7 @@ import footnote from "markdown-it-footnote";
 // @ts-ignore no types available
 import deflist from "markdown-it-deflist";
 import { addCopyButton } from "shiki-transformer-copy-button";
-import type { Course, Lab, Lo, Note } from "../types/index.ts";
+import type { Course, Lab, Lo, Note } from "@tutors/domain/course";
 import { link_open, type MarkdownItInstance, podcastPlayer, quote_close, quote_open, videoPlayer } from "./markdown-plugins.ts";
 
 const options = {

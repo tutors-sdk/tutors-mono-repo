@@ -22,6 +22,19 @@ const jsYaml = require.resolve("js-yaml");
 const ventoStub = resolve(root, "tests/support/vento-stub.ts");
 
 export const workspaceAliases: Record<string, string> = {
+  // Rings. Subpaths come before their package so the longer alias matches first.
+  "@tutors/domain/course/vocabulary": resolve(root, "packages/domain/src/course/vocabulary.ts"),
+  "@tutors/domain/course": resolve(root, "packages/domain/src/course/index.ts"),
+  "@tutors/domain/learning": resolve(root, "packages/domain/src/learning/index.ts"),
+  "@tutors/domain/presence": resolve(root, "packages/domain/src/presence/index.ts"),
+  "@tutors/domain/access": resolve(root, "packages/domain/src/access/index.ts"),
+  "@tutors/domain/pedagogy": resolve(root, "packages/domain/src/pedagogy/index.ts"),
+  "@tutors/domain/quiz": resolve(root, "packages/domain/src/quiz/index.ts"),
+  "@tutors/domain": resolve(root, "packages/domain/src/index.ts"),
+  "@tutors/application/ports": resolve(root, "packages/application/src/ports/index.ts"),
+  "@tutors/application/testing": resolve(root, "packages/application/src/testing/index.ts"),
+  "@tutors/application": resolve(root, "packages/application/src/index.ts"),
+  "@tutors/render-markdown": resolve(root, "packages/adapters/driven/render-markdown/src/index.ts"),
   "@tutors/tutors-model-lib": resolve(root, "packages/jsr/model/src/tutors.ts"),
   "@tutors/tutors-gen-lib": resolve(root, "packages/jsr/gen/src/tutors.ts"),
   "@tutors/tutors-time-lib": resolve(root, "packages/jsr/time/src/index.ts"),

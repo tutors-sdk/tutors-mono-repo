@@ -7,7 +7,7 @@ import {
   convertNoteToHtml,
   initHighlighter,
   mayContainMath,
-} from "../../../packages/jsr/model/src/utils/markdown-utils";
+} from "../../../packages/adapters/driven/render-markdown/src/markdown-utils";
 
 // ---------------------------------------------------------------------------
 // Helpers

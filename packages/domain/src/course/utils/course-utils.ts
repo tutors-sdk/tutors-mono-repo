@@ -251,6 +251,7 @@ export function initCalendar(course: Course, today: number = Date.now()) {
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error loading calendar: ${message}\n`);
+    // The domain has no logger; a malformed calendar is reported on stderr where one exists.
+    (globalThis as { process?: { stderr?: { write(s: string): unknown } } }).process?.stderr?.write(`Error loading calendar: ${message}\n`);
   }
 }

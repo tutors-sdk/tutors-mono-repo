@@ -13,7 +13,7 @@ const mutants = (killed: number, survived: number, other: string[] = []) => ({
 });
 const input = (over: Partial<QualityInput> = {}): QualityInput => ({
   commit: COMMIT,
-  report: { files: { "packages/jsr/model/src/utils/lo-utils.ts": mutants(3, 1) } },
+  report: { files: { "packages/domain/src/course/utils/lo-utils.ts": mutants(3, 1) } },
   deployed: { tag: "16.2.2", deployedAt: "2026-09-21T10:57:28Z", commit: "caa53d021e63004ad6e52a76428f8acd95a87c21" },
   diff: () => [],
   generatedAt: "2026-09-30T03:00:00Z",
@@ -30,7 +30,7 @@ describe("moduleStatuses", () => {
 
 describe("packageOf", () => {
   it("is the nearest package.json, nested packages included", () => {
-    expect(packageOf("packages/jsr/model/src/utils/lo-utils.ts")).toEqual({ name: "@tutors/tutors-model-lib", path: "packages/jsr/model" });
+    expect(packageOf("packages/domain/src/course/utils/lo-utils.ts")).toEqual({ name: "@tutors/tutors-model-lib", path: "packages/jsr/model" });
     expect(packageOf("packages/adapters/driving/a11y/src/index.ts").path).toBe("packages/adapters/driving/a11y");
   });
 
@@ -90,8 +90,8 @@ describe("qualityRecord", () => {
       input({
         report: {
           files: {
-            "packages/jsr/model/src/utils/lo-utils.ts": mutants(1, 0),
-            "packages/jsr/model/src/services/search.ts": mutants(0, 2, ["CompileError", "Ignored"]),
+            "packages/domain/src/course/utils/lo-utils.ts": mutants(1, 0),
+            "packages/domain/src/course/services/search.ts": mutants(0, 2, ["CompileError", "Ignored"]),
             "packages/jsr/model/src/tutors.ts": { mutants: [{ status: "Timeout" }] }
           }
         }

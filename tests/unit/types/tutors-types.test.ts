@@ -14,7 +14,7 @@ import {
   parseSharing,
   SENTIMENTS
 } from "../../../packages/jsr/types/src/index.ts";
-import { COURSE_SENTIMENT_IDS, loCompositeTypes, simpleTypes } from "../../../packages/jsr/model/src/types/index.ts";
+import { COURSE_SENTIMENT_IDS, loCompositeTypes, simpleTypes } from "../../../packages/domain/src/course/types/index.ts";
 import { REPO_ROOT } from "../../../scripts/checks/lib/repo.ts";
 
 describe("@tutors/tutors-types vocabularies", () => {
@@ -91,7 +91,7 @@ describe("@tutors/tutors-types type checks", () => {
       types: [],
       skipLibCheck: true,
       // connect's types import model-lib by name; point it at the type files, not the markdown runtime.
-      paths: { "@tutors/tutors-model-lib": [resolve(REPO_ROOT, "packages/jsr/model/src/types/index.ts")] }
+      paths: { "@tutors/tutors-model-lib": [resolve(REPO_ROOT, "packages/domain/src/course/types/index.ts")] }
     });
     const diagnostics = ts.getPreEmitDiagnostics(program).map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
     expect(diagnostics).toEqual([]);

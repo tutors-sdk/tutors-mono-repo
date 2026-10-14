@@ -1,19 +1,6 @@
-/** Verified identity only; course roles, sharing and sentiment belong to their own services. */
-export interface Actor {
-  /** Provider namespace and its stable account id, for example github:12345. */
-  readonly subject: string;
-  readonly login: string;
-  readonly name: string | null;
-  readonly email: string | null;
-  readonly image: string | null;
-}
-
-/** Created for one request; resolves only the session verified by the active adapter. */
-export interface SessionPort {
-  getActor(): Promise<Actor | null>;
-}
-
-export interface IdentityClient {
-  signIn(returnTo: string): Promise<void>;
-  signOut(returnTo: string): Promise<void>;
-}
+/**
+ * @tutors/identity is a facade: the verified actor is defined in @tutors/domain/access and the
+ * session and sign-in ports in @tutors/application/ports. The names here are unchanged.
+ */
+export type { Actor } from "@tutors/domain/access";
+export type { SessionPort, IdentityClient } from "@tutors/application/ports";

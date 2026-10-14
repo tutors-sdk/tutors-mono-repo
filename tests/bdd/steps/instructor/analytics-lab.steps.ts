@@ -1,8 +1,8 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
-import type { LabRow, LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
-import { heatColor } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { BaseLabModel } from "../../../../packages/domain/src/learning/services/base-lab-model.ts";
+import type { LabRow, LearningRecord } from "../../../../packages/domain/src/learning/types/lab-types.ts";
+import { heatColor } from "../../../../packages/domain/src/learning/utils/calendar-utils.ts";
 import { cells, labRecords, stepColumn, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/analytics-lab.feature");

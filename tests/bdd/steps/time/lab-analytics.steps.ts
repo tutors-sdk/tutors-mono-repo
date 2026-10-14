@@ -1,7 +1,7 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
-import type { LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
+import { BaseLabModel } from "../../../../packages/domain/src/learning/services/base-lab-model.ts";
+import type { LearningRecord } from "../../../../packages/domain/src/learning/types/lab-types.ts";
 import { cells, labRecordsByStudent, stepColumn, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/time/lab-analytics.feature");

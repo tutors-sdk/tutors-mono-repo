@@ -15,9 +15,9 @@ import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishe
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import type { LoRecord } from "../../../../packages/adapters/driving/svelte-state/src/community/types.svelte.ts";
-import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
+import { BaseCalendarModel } from "../../../../packages/domain/src/learning/services/base-calendar-model.ts";
 import { CourseTime } from "../../../../packages/jsr/time/src/services/course-time.ts";
-import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { formatTimeNearestMinute } from "../../../../packages/domain/src/learning/utils/calendar-utils.ts";
 import { formatDate } from "../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
 import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
 import { currentLo } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";

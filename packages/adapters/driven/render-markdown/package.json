@@ -1,0 +1,25 @@
+{
+  "name": "@tutors/render-markdown",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Markdown rendering adapter for Tutors: markdown-it, Shiki and KaTeX behind the ContentRenderer port",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mdit/plugin-katex": "^1.1.0",
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
+    "markdown-it": "^15.0.1",
+    "markdown-it-anchor": "^10.0.0",
+    "markdown-it-deflist": "^4.0.0",
+    "markdown-it-emoji": "^3.1.0",
+    "markdown-it-footnote": "^4.0.0",
+    "markdown-it-mark": "^4.0.0",
+    "markdown-it-sub": "^2.0.0",
+    "markdown-it-sup": "^2.0.0",
+    "markdown-it-table-of-contents": "^1.2.0",
+    "shiki-transformer-copy-button": "^0.0.6"
+  }
+}

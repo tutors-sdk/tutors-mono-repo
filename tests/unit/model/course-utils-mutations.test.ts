@@ -6,8 +6,8 @@ import {
   initCalendar,
   loadPropertyFlags,
   pluraliseLoType,
-} from "../../../packages/jsr/model/src/utils/course-utils";
-import type { Course } from "../../../packages/jsr/model/src/types/index";
+} from "../../../packages/domain/src/course/utils/course-utils";
+import type { Course } from "../../../packages/domain/src/course/types/index";
 
 // ---------------------------------------------------------------------------
 // Helpers

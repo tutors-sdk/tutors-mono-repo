@@ -5,7 +5,7 @@
  * Who the learner is (name, login, email, avatar, session) is left to the identity port proposed
  * in issue #416, so this file does not define a user or session type.
  */
-import type { CourseIcon } from "./learning-objects.ts";
+import type { CourseIcon } from "../course/vocabulary.ts";
 
 /** How a learner says they feel about a course. Same members, in order, as model-lib's `COURSE_SENTIMENT_IDS`. */
 export const SENTIMENTS = ["neutral", "fine", "delighted", "confident", "overwhelmed", "confused", "drained"] as const;

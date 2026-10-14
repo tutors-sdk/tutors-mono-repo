@@ -21,7 +21,7 @@ Feature: Test quality ratchets
       Given the repository's coverage configuration
       Then the test file "packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree.test.ts" shall not be measured
       And the generated file "apps/reader/.svelte-kit/types/src/routes/proxy+layout.ts" shall not be measured
-      And the declaration file "packages/jsr/model/src/types/ambient.d.ts" shall not be measured
+      And the declaration file "packages/domain/src/course/types/ambient.d.ts" shall not be measured
 
   @rule-0111 @ears-unwanted
   Rule: If total or per-package test coverage falls below its recorded floor, then tutors shall fail the coverage check and name the scope and metric.
@@ -79,17 +79,17 @@ Feature: Test quality ratchets
   Rule: If a mutated module's mutation score is below its recorded floor, then tutors shall fail the mutation floor check and name the module.
 
     Scenario: A module below its floor fails the check
-      Given a recorded mutation floor of 85 percent for "packages/jsr/model/src/utils/lo-utils.ts"
-      When Stryker kills 84 and misses 16 of the mutants in "packages/jsr/model/src/utils/lo-utils.ts"
-      Then the mutation floor check shall report "below-floor: packages/jsr/model/src/utils/lo-utils.ts 84% < floor 85%"
+      Given a recorded mutation floor of 85 percent for "packages/domain/src/course/utils/lo-utils.ts"
+      When Stryker kills 84 and misses 16 of the mutants in "packages/domain/src/course/utils/lo-utils.ts"
+      Then the mutation floor check shall report "below-floor: packages/domain/src/course/utils/lo-utils.ts 84% < floor 85%"
 
     Scenario: A module whose score rose past the margin demands a raised floor
-      Given a recorded mutation floor of 85 percent for "packages/jsr/model/src/utils/lo-utils.ts"
-      When Stryker kills 90 and misses 10 of the mutants in "packages/jsr/model/src/utils/lo-utils.ts"
-      Then the mutation floor check shall report "stale-floor: packages/jsr/model/src/utils/lo-utils.ts 90% >= floor 85% + 2; raise it to 90"
+      Given a recorded mutation floor of 85 percent for "packages/domain/src/course/utils/lo-utils.ts"
+      When Stryker kills 90 and misses 10 of the mutants in "packages/domain/src/course/utils/lo-utils.ts"
+      Then the mutation floor check shall report "stale-floor: packages/domain/src/course/utils/lo-utils.ts 90% >= floor 85% + 2; raise it to 90"
 
     Scenario: A mutated module with no floor fails the check
-      Given a recorded mutation floor of 85 percent for "packages/jsr/model/src/utils/lo-utils.ts"
+      Given a recorded mutation floor of 85 percent for "packages/domain/src/course/utils/lo-utils.ts"
       When Stryker kills 5 and misses 5 of the mutants in "packages/jsr/gen/src/utils/lr-utils.ts"
       Then the mutation floor check shall report "unfloored: packages/jsr/gen/src/utils/lr-utils.ts scored 50% and has no floor"
 
