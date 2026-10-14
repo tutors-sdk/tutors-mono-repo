@@ -2,8 +2,8 @@
  * Quiz data model.
  *
  * Deliberately minimal: quizzes are authored by hand in course markdown, so
- * there is no authoring, session or persistence state to model yet. Later
- * phases add those types as they are actually needed.
+ * there is no authoring, session or persistence state to model yet; those
+ * types are added when they are actually needed.
  */
 
 export type QuestionType = "multiple-choice" | "true-false";
