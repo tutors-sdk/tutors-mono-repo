@@ -67,7 +67,7 @@ claims:
   # PR #475: each page view and each 30 seconds of activity is one database function call
   # (record_page_view, record_heartbeat) instead of several read-then-write requests. The signed-in journey's
   # writes move from the per-table requests to the two functions; both functions ship in
-  # supabase/migrations/20261013_record_page_view_and_heartbeat.sql (additions only).
+  # supabase/migrations/20261014_record_page_view_and_heartbeat.sql (additions only).
   - artefact: persistence
     scope: "*/record_page_view"
     rule: "0303"

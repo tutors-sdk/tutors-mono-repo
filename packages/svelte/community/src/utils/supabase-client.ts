@@ -373,7 +373,7 @@ const MISSING_FUNCTION = "PGRST202";
 export const recordingFunctions = { missing: false };
 
 /**
- * Calls one of the single-request recording functions (supabase/migrations/20261013_record_page_view_and_heartbeat.sql).
+ * Calls one of the single-request recording functions (supabase/migrations/20261014_record_page_view_and_heartbeat.sql).
  * Each replaces several read-then-write requests with one atomic write.
  * @returns true when the write is done (or failed and was logged); false when the caller should use the per-table requests
  */

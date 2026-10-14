@@ -206,7 +206,7 @@ export class RecordingSupabase {
    * The database functions the reader calls, doing what their SQL does. `get_count_learning_records`
    * reports the stored value of a learning record field; `increment_calendar` adds one to a calendar
    * field; `record_page_view` and `record_heartbeat` are the single-request writes in
-   * supabase/migrations/20261013_record_page_view_and_heartbeat.sql. A function named in
+   * supabase/migrations/20261014_record_page_view_and_heartbeat.sql. A function named in
    * `missingFunctions` answers as PostgREST does for one the database lacks.
    */
   rpc(fn: string, args: Row) {
