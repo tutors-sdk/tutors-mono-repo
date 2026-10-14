@@ -8,7 +8,7 @@
  */
 
 type Row = Record<string, unknown>;
-type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" };
+type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" };
 type DbError = { message: string; code?: string };
 type BroadcastMessage = { type: string; event: string; payload: unknown };
 type BroadcastHandler = (message: BroadcastMessage) => void;
@@ -20,6 +20,8 @@ export type TableCall = {
   row?: Row;
   options?: { onConflict?: string };
   filters: Filter[];
+  /** How many rows a select handed back, so a step can see what the database actually returned. */
+  returned?: number;
   order?: { column: string; ascending: boolean };
 };
 
@@ -63,6 +65,11 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
+  lte(column: string, value: unknown) {
+    this.call.filters.push({ column, value, op: "lte" });
+    return this;
+  }
+
   in(column: string, value: unknown[]) {
     this.call.filters.push({ column, value, op: "in" });
     return this;
@@ -91,6 +98,7 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this.call.filters.every((f) => {
       if (f.op === "eq") return row[f.column] === f.value;
       if (f.op === "gte") return String(row[f.column]) >= String(f.value);
+      if (f.op === "lte") return String(row[f.column]) <= String(f.value);
       return (f.value as unknown[]).includes(row[f.column]);
     });
   }
@@ -115,6 +123,7 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     }
 
     const found = rows.filter((r) => this.matches(r));
+    this.call.returned = found.length;
     const order = this.call.order;
     if (order) {
       const direction = order.ascending ? 1 : -1;
