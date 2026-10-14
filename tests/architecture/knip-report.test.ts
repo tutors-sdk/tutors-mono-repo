@@ -21,7 +21,7 @@ describe("knip report flattening (runway tier A)", () => {
     const report = {
       issues: [
         issue("apps/time/src/Old.svelte", { files: [{ name: "apps/time/src/Old.svelte" }] }),
-        issue("packages/adapters/driving/svelte-state/package.json", { dependencies: [{ name: "@tutors/svelte-state", line: 12 }] }),
+        issue("packages/adapters/driving/svelte-state/package.json", { dependencies: [{ name: "@tutors/missing", line: 12 }] }),
         issue("packages/platform/metrics/src/middleware.ts", { unlisted: [{ name: "@sveltejs/kit" }] }),
         issue("tests/contract/support/schemas.ts", {
           exports: [{ name: "WhiteboardUserSchema" }],

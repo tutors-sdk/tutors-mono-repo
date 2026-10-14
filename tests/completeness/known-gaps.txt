@@ -43,7 +43,6 @@ readme-unknown-package: apps/catalogue: @tutors/ui
 readme-unknown-package: apps/live: @tutors/ui
 readme-unlisted-package: apps/catalogue: @tutors/logger
 readme-unlisted-package: apps/catalogue: @tutors/metrics
-readme-unlisted-package: apps/catalogue: @tutors/svelte-state
 readme-unlisted-package: apps/catalogue: @tutors/themes
 readme-unlisted-package: apps/catalogue: @tutors/tutors-model-lib
 readme-unlisted-package: apps/catalogue: @tutors/ui-components
@@ -51,7 +50,6 @@ readme-unlisted-package: apps/catalogue: @tutors/ui-navigators
 readme-unlisted-package: apps/catalogue: @tutors/ui-primitives
 readme-unlisted-package: apps/live: @tutors/logger
 readme-unlisted-package: apps/live: @tutors/metrics
-readme-unlisted-package: apps/live: @tutors/svelte-state
 readme-unlisted-package: apps/live: @tutors/themes
 readme-unlisted-package: apps/live: @tutors/tutors-model-lib
 readme-unlisted-package: apps/live: @tutors/ui-components
