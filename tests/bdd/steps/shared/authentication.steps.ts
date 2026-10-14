@@ -12,7 +12,7 @@ vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 const authSignIn = vi.hoisted(() => vi.fn());
 
 import { goto } from "$app/navigation";
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, readerServer, signIn } from "../../support/connect.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
@@ -34,6 +34,7 @@ describeFeature(feature, ({ Background, Rule }) => {
     expect(recorder.rows("calendar")).toEqual([]);
     expect(recorder.rows("tutors-connect-latest")).toEqual([]);
     expect([...recorder.sentOn(course.courseId), ...recorder.sentOn(ALL_COURSES_CHANNEL)]).toEqual([]);
+    expect(readerServer.posts).toEqual([]);
   };
 
   Background(({ Given }) => {

@@ -21,6 +21,7 @@ Feature: Realtime resource usage
       Then the original live course channel remains subscribed
 
     Scenario: Repeated global publishing reuses one publish-only channel
+      Given a live dashboard is watching the platform feed
       When course activity is published 3 times
       Then one global channel exists without a subscription
 
@@ -206,7 +207,8 @@ Feature: Realtime resource usage
       And no course channel remains subscribed
 
     Scenario: The student's activity is published to the course without joining it
-      Given "Alice" is signed in with sharing enabled
+      Given a live dashboard is watching the course feed
+      And "Alice" is signed in with sharing enabled
       When the student enters the course
       Then the course activity is published through HTTP
       And no course channel remains subscribed

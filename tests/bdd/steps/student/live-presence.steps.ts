@@ -9,7 +9,7 @@ vi.mock("$app/env/public", async () => (await import("../../support/supabase-rec
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, liveWatcher, loEventArrives, openLo, readerServer, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { presenceService } from "../../../../packages/svelte/community/src/services/presence.svelte.ts";
@@ -25,7 +25,7 @@ describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => 
   const online = () => presenceService.studentsOnline.value;
   const card = (name: string) => online().find((lo) => lo.user?.fullName === name);
   const names = () => online().map((lo) => lo.user?.fullName);
-  /** Every lo-event this browser broadcast, on the course channel and the all-courses channel. */
+  /** Every lo-event broadcast for this browser's activity (by the reader's server), on the course channel and the all-courses channel. */
   const broadcasts = () => [...recorder.sentOn(course.courseId), ...recorder.sentOn(ALL_COURSES_CHANNEL)].map((message) => message.payload as LoRecord);
   const opens = (_ctx: unknown, _name: string, n: number) => openLo(course, lab(n));
   /** Another student's browser stores their activity, and the reader's next 60-second refresh reads it. */
@@ -47,6 +47,11 @@ describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => 
       course = publishedCourse(courseId, labCount);
     });
     And("the student {string} is signed in", (_ctx, name: string) => signIn(githubUser(name)));
+    // The reader's server publishes only to watched feeds, so what reaches other participants is observable.
+    And("a live dashboard is watching the course and the platform feeds", () => {
+      liveWatcher(course.courseId, "live-tab-1");
+      liveWatcher(ALL_COURSES_CHANNEL, "live-tab-2");
+    });
   });
 
   Scenario("See online students count", ({ Given, When, Then }) => {
@@ -105,6 +110,7 @@ describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => 
     });
     And("the system shall not broadcast their activity to others", () => {
       expect(broadcasts()).toEqual([]);
+      expect(readerServer.posts).toEqual([]);
       expect(recorder.rows("tutors-connect-latest")).toEqual([]);
     });
     And("their name shall not appear in the online list", () => {
@@ -125,7 +131,7 @@ describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => 
       Then("the online list shall be {string}", (_ctx, list: string) => {
         expect(names()).toEqual(list.split(", "));
       });
-      // The guard itself: the reader holds the channel to publish on, but never joined it, so the
+      // The guard itself: the reader never joins the platform channel (its server only publishes to it), so the
       // platform's events are not delivered to it and Supabase is not billed for delivering them.
       And("the reader shall hold no joined platform-wide channel", () => {
         expect(recorder.joined(ALL_COURSES_CHANNEL)).toEqual([]);

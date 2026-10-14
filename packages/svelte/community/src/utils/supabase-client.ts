@@ -165,6 +165,67 @@ export async function getTutorsConnectRecentLosByCourseId(courseId: string, sinc
 }
 
 /**
+ * Stored Lo snapshots across every course received at or after `sinceIso`, at most `limit` of them:
+ * Tutors Live's platform feed while it reads stored activity instead of Realtime.
+ * Sorted by `received_at` descending (most recently updated first).
+ * @returns null when the read fails
+ */
+export async function getTutorsConnectRecentLos(sinceIso: string, limit = 200): Promise<TutorsConnectLatestRow[] | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
+
+  const { data, error } = await supabase
+    .from("tutors-connect-latest")
+    .select("course_id, student_id, payload, received_at")
+    .gte("received_at", sinceIso)
+    .order("received_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    log.error("getTutorsConnectRecentLos failed:", error);
+    return null;
+  }
+
+  return (data ?? []) as TutorsConnectLatestRow[];
+}
+
+/** How much of the day's Live Realtime budget is spent: under 70%, from 70%, from 90% (supabase/migrations/20261016_realtime_live_budget.sql). */
+export type LiveBudgetTier = "normal" | "slow" | "paused";
+
+/**
+ * Reports this Tutors Live tab as a watcher of a Realtime topic, so the reader's server publishes to it.
+ * @returns the day's budget tier, or null when the report failed (including before the migration is applied)
+ */
+export async function watchLiveTopic(topic: string, watcher: string): Promise<LiveBudgetTier | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return null;
+
+  const { data, error } = await supabase.rpc("realtime_watch", { p_topic: topic, p_watcher: watcher });
+  if (error) {
+    log.warn("realtime_watch failed:", error);
+    return null;
+  }
+  const tier = (data as { tier?: string } | null)?.tier;
+  return tier === "normal" || tier === "slow" || tier === "paused" ? tier : null;
+}
+
+/**
+ * Asks the database which Realtime topics a course's learning event may be published to, and charges
+ * them to the day's Live budget. Called by the reader's server only.
+ * @returns the tier and topics, or null when the claim failed (the caller publishes nothing)
+ */
+export async function claimLivePublish(courseId: string): Promise<{ tier: LiveBudgetTier; topics: string[] } | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return null;
+
+  const { data, error } = await supabase.rpc("realtime_claim_live_publish", { p_course_id: courseId });
+  if (error) {
+    log.warn("realtime_claim_live_publish failed:", error);
+    return null;
+  }
+  const claim = data as { tier?: LiveBudgetTier; topics?: unknown } | null;
+  if (!claim?.tier || !Array.isArray(claim.topics)) return null;
+  return { tier: claim.tier, topics: claim.topics.filter((topic): topic is string => typeof topic === "string") };
+}
+
+/**
  * Retrieves the number of learning record increments for a specific field
  * @async
  * @param fieldName - Name of the field to count increments for
