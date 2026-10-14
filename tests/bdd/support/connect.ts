@@ -6,6 +6,7 @@ import { presenceService } from "../../../packages/svelte/community/src/services
 import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
 import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
+import { recordingFunctions } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
@@ -27,6 +28,7 @@ export function freshBrowser(): void {
   liveService.stopGlobalPresenceService();
   presenceService.stopPresenceListener();
   recorder.reset();
+  recordingFunctions.missing = false;
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("window", { localStorage: storage });
@@ -37,7 +39,7 @@ export function freshBrowser(): void {
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
   tutorsConnectService.identityClient = { signIn: vi.fn(), signOut: vi.fn() };
-  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true });
+  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true, navigationInFlight: true, navigationAttempt: 0 });
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];
 
@@ -130,4 +132,37 @@ export function loEventArrives(channel: string, name: string, course: Course, lo
       user: { fullName: user.name, avatar: user.image, id: user.login, sentiment: user.sentiment }
     }
   });
+}
+
+/**
+ * Another student's latest activity as the database holds it: the row `sendLoEvent` upserts into
+ * `tutors-connect-latest` from their browser, stamped `minutesAgo` before the reader's clock.
+ */
+export function storedActivity(name: string, course: Course, lo: Lo, minutesAgo: number): void {
+  const user = githubUser(name);
+  const row = {
+    course_id: course.courseId,
+    student_id: user.login,
+    payload: {
+      courseId: course.courseId,
+      courseUrl: course.courseUrl,
+      courseTitle: course.title,
+      img: lo.img,
+      title: lo.title,
+      loRoute: lo.route,
+      type: lo.type,
+      isPrivate: false,
+      user: { fullName: user.name, avatar: user.image, id: user.login, sentiment: user.sentiment }
+    },
+    received_at: new Date(Date.now() - minutesAgo * 60_000).toISOString()
+  };
+  const rows = recorder.rows("tutors-connect-latest");
+  const at = rows.findIndex((existing) => existing.course_id === row.course_id && existing.student_id === row.student_id);
+  if (at >= 0) rows[at] = row;
+  else rows.push(row);
+}
+
+/** How many times the reader asked the database for a course's online list. */
+export function onlineListLoads(): number {
+  return recorder.tableCalls.filter((call) => call.table === "tutors-connect-latest" && call.op === "select").length;
 }

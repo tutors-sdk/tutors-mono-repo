@@ -93,3 +93,11 @@ Feature: Quizzes, notebooks and slides
       Given a student is on slide 2 with the page focused
       When the student presses the right arrow key
       Then the deck still shows slide 2
+
+  @rule-0285 @ears-event-driven
+  Rule: When a student switches a talk's PDF reader back to Adobe, the reader shall show the talk in Adobe's viewer again.
+
+    Scenario: Switching from the browser reader back to Adobe shows the talk again
+      Given a student is reading a talk in Adobe's viewer
+      When the student switches the PDF reader to "Browser reader" and back to "Adobe"
+      Then Adobe's viewer shows the talk in a container it has not rendered into before

@@ -9,7 +9,7 @@ vi.mock("$app/env/public", async () => (await import("../../support/supabase-rec
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { presenceService } from "../../../../packages/svelte/community/src/services/presence.svelte.ts";
@@ -18,7 +18,7 @@ import { tutorsConnectService } from "../../../../packages/svelte/connect/src/se
 
 const feature = await loadFeature("tests/bdd/features/student/live-presence.feature");
 
-describeFeature(feature, ({ Background, Scenario, Rule }) => {
+describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => {
   let course: Course;
 
   const lab = (n: number) => labsOf(course)[n - 1];
@@ -28,10 +28,22 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
   /** Every lo-event this browser broadcast, on the course channel and the all-courses channel. */
   const broadcasts = () => [...recorder.sentOn(course.courseId), ...recorder.sentOn(ALL_COURSES_CHANNEL)].map((message) => message.payload as LoRecord);
   const opens = (_ctx: unknown, _name: string, n: number) => openLo(course, lab(n));
+  /** Another student's browser stores their activity, and the reader's next 60-second refresh reads it. */
+  const arrives = async (name: string, n: number) => {
+    storedActivity(name, course, lab(n), 0);
+    await vi.advanceTimersByTimeAsync(60_000);
+    await settle();
+  };
+
+  AfterEachScenario(() => {
+    presenceService.stopPresenceListener();
+    vi.useRealTimers();
+  });
 
   Background(({ Given, And }) => {
     Given("the course {string} is published with {number} labs", (_ctx, courseId: string, labCount: number) => {
       freshBrowser();
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
       course = publishedCourse(courseId, labCount);
     });
     And("the student {string} is signed in", (_ctx, name: string) => signIn(githubUser(name)));
@@ -39,8 +51,9 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
 
   Scenario("See online students count", ({ Given, When, Then }) => {
     Given("{string} has opened lab {number} of the course", opens);
-    When("{string} and {string} view lab {number} of the course", (_ctx, first: string, second: string, n: number) => {
-      for (const name of [first, second]) loEventArrives(course.courseId, name, course, lab(n));
+    When("{string} and {string} view lab {number} of the course", async (_ctx, first: string, second: string, n: number) => {
+      storedActivity(first, course, lab(n), 0);
+      await arrives(second, n);
     });
     Then("the system shall display {number} students currently online", (_ctx, count: number) => {
       expect(online()).toHaveLength(count);
@@ -48,19 +61,17 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     });
   });
 
-  Scenario("Receive real-time presence updates", ({ Given, When, Then, And }) => {
+  Scenario("Receive presence updates", ({ Given, When, Then, And }) => {
     Given("{string} has opened lab {number} of the course", opens);
-    When("another student {string} joins the course at lab {number}", (_ctx, name: string, n: number) => {
-      loEventArrives(course.courseId, name, course, lab(n));
-    });
+    When("another student {string} joins the course at lab {number}", (_ctx, name: string, n: number) => arrives(name, n));
     Then("the system shall update the online count to {number}", (_ctx, count: number) => {
       expect(online()).toHaveLength(count);
     });
     And("the online list shall be {string}", (_ctx, list: string) => {
       expect(names()).toEqual(list.split(", "));
     });
-    And("when {string} moves on to lab {number} the online count shall stay at {number} and show {string} at {string}", (_ctx, name: string, n: number, count: number, who: string, title: string) => {
-      loEventArrives(course.courseId, name, course, lab(n));
+    And("when {string} moves on to lab {number} the online count shall stay at {number} and show {string} at {string}", async (_ctx, name: string, n: number, count: number, who: string, title: string) => {
+      await arrives(name, n);
       expect(online()).toHaveLength(count);
       expect(card(who)).toMatchObject({ title, loRoute: lab(n).route });
     });

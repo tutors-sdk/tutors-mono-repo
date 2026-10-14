@@ -8,8 +8,8 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, openLo, publishedCourse, signIn } from "../../support/connect.ts";
-import { recorder, type RecordingChannel } from "../../support/supabase-recorder.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, onlineListLoads, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
+import { recorder, settle, type RecordingChannel } from "../../support/supabase-recorder.ts";
 import { mountWhiteboardEditor } from "../../support/whiteboard-editor.ts";
 import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";
 import { presenceService } from "../../../../packages/svelte/community/src/services/presence.svelte.ts";
@@ -26,7 +26,6 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
   let whiteboard: ReturnType<typeof mountWhiteboardEditor> | undefined;
   let lastPosition = 0;
   let malformedError: unknown;
-  let httpBroadcast: ReturnType<typeof vi.spyOn>;
 
   const monitor = async (_ctx: unknown, courseId: string) => {
     await presenceService.startPresenceListener(courseId);
@@ -75,6 +74,14 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
         })
     );
   };
+  const onlineNames = () => presenceService.studentsOnline.value.map((lo) => lo.user?.fullName).sort();
+  const onlineListIs = (_ctx: unknown, list: string) => expect(onlineNames()).toEqual(list.split(", ").sort());
+  const wasActive = (_ctx: unknown, name: string, minutesAgo: number) => storedActivity(name, course, labsOf(course)[0], minutesAgo);
+  const secondsPass = async (_ctx: unknown, seconds: number) => {
+    await vi.advanceTimersByTimeAsync(seconds * 1000);
+    await settle();
+  };
+  const loadedTimes = (_ctx: unknown, count: number) => expect(onlineListLoads()).toBe(count);
   const signInWithSharing = async (_ctx: unknown, name: string, sharing: string) => {
     await signIn(githubUser(name));
     if (sharing === "disabled") tutorsConnectService.toggleShare();
@@ -94,6 +101,9 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
   Background(({ Given }) => {
     Given("a fresh activity session", () => {
       freshBrowser();
+      // The online list refreshes on an interval and ages rows by the clock; timeouts stay real so
+      // fire-and-forget product promises still settle.
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"], now: new Date("2026-10-13T10:00:00Z") });
       course = publishedCourse("web-dev-101");
     });
   });
@@ -281,61 +291,45 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
     });
   });
 
-  Rule("While a student has disabled activity sharing, the reader shall hold no course activity subscription.", ({ RuleScenario }) => {
-    RuleScenario("Entering a course with sharing disabled opens no subscription", ({ Given, When, Then }) => {
+  Rule("While a student has disabled activity sharing, the reader shall not load the course online list.", ({ RuleScenario }) => {
+    RuleScenario("Entering a course with sharing disabled loads no online list", ({ Given, When, Then, And }) => {
       Given("{string} is signed in with sharing {word}", signInWithSharing);
       When("the student enters the course", enterCourse);
-      Then("no course channel remains subscribed", noCourseChannel);
+      Then("the online list has not been loaded", () => expect(onlineListLoads()).toBe(0));
+      And("no course channel remains subscribed", noCourseChannel);
     });
-    RuleScenario("Disabling sharing closes an existing course subscription", ({ Given, And, When, Then }) => {
+    RuleScenario("Disabling sharing stops refreshing the online list", ({ Given, And, When, Then }) => {
       Given("{string} is signed in with sharing {word}", signInWithSharing);
       And("the student has entered the course", enterCourse);
       When("the student disables sharing", () => tutorsConnectService.toggleShare());
-      Then("no course channel remains subscribed", noCourseChannel);
+      And("{number} seconds pass", secondsPass);
+      Then("the online list has been loaded {number} time", loadedTimes);
+      And("the course activity list is empty", () => expect(presenceService.studentsOnline.value).toEqual([]));
     });
-    RuleScenario("Enabling sharing opens the course subscription", ({ Given, And, When, Then }) => {
+    RuleScenario("Enabling sharing loads the online list", ({ Given, And, When, Then }) => {
       Given("{string} is signed in with sharing {word}", signInWithSharing);
       And("the student has entered the course", enterCourse);
-      When("the student enables sharing", () => tutorsConnectService.toggleShare());
-      Then("only {string} remains subscribed", onlyCourse);
+      When("the student enables sharing", async () => {
+        tutorsConnectService.toggleShare();
+        await settle();
+      });
+      Then("the online list has been loaded {number} time", loadedTimes);
+      And("no course channel remains subscribed", noCourseChannel);
     });
   });
 
-  Rule("When a student shares course activity, the reader shall update its own activity locally without requesting a broadcast echo.", ({ RuleScenario }) => {
-    RuleScenario("Sharing a learning event does not require a server echo", ({ Given, When, Then, And }) => {
+  Rule("When a student shares course activity, the reader shall add it to the student's own online list without waiting for a broadcast.", ({ RuleScenario }) => {
+    RuleScenario("Sharing a learning event updates the student's own list", ({ Given, When, Then, And }) => {
       Given("{string} is signed in with sharing {word}", signInWithSharing);
       When("the student enters the course", enterCourse);
-      Then("the course channel does not request broadcast echoes", () => expect(recorder.joined(course.courseId)[0].options.config?.broadcast?.self).toBe(false));
-      And("{string} appears once in the course activity list", (_ctx, name: string) => {
+      Then("{string} appears once in the course activity list", (_ctx, name: string) => {
         expect(presenceService.studentsOnline.value.map((lo) => lo.user?.fullName)).toEqual([name]);
         expect(tutorsId.value?.share).toBe("true");
       });
-    });
-    RuleScenario("Activity is published while a course channel is closing", ({ Given, And, When, Then }) => {
-      Given("{string} is signed in with sharing {word}", signInWithSharing);
-      And("the student has entered the course", async () => {
-        await enterCourse();
-        original = recorder.joined(course.courseId)[0];
-        httpBroadcast = vi.spyOn(original, "httpSend");
-      });
-      And("removing that channel is pending", delayRemoval);
-      When("the course is left and reopened and activity is reported before removal finishes", () => {
-        presenceService.stopPresenceListener();
-        restarting = presenceService.startPresenceListener(course.courseId);
-        presenceService.sendLoEvent(course, labsOf(course)[0], tutorsId.value!);
-      });
-      Then("the course activity is published through HTTP", () => {
-        expect(httpBroadcast).toHaveBeenCalledWith("lo-event", expect.objectContaining({ courseId: course.courseId }));
-        expect(presenceService.studentsOnline.value.map((lo) => lo.user?.fullName)).toEqual(["Alice"]);
-      });
-      And("completing removal creates one replacement subscription", async () => {
-        finishRemoval();
-        await restarting;
-        expect(recorder.joined(course.courseId)).toHaveLength(1);
-        expect(recorder.joined(course.courseId)[0]).not.toBe(original);
-      });
+      And("no course channel remains subscribed", noCourseChannel);
     });
   });
+
   Rule("While a whiteboard has no other participant, the reader shall save local edits without sending collaboration broadcasts.", ({ RuleScenario }) => {
     const queueUpdates = () => {
       whiteboard!.editor.onChange([{ id: "shape-1", version: 1 }]);
@@ -577,6 +571,73 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("the final scene broadcast carries the latest version", () => {
         expect(scenes().at(-1)![0].payload).toEqual({ elements: [{ id: "shape-1", version }] });
       });
+    });
+  });
+
+  Rule("When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.", ({ RuleScenario }) => {
+    RuleScenario("Entering a course lists classmates from stored activity", ({ Given, And, When, Then }) => {
+      Given("{string} was active in the course {number} minutes ago", wasActive);
+      And("{string} is signed in with sharing {word}", signInWithSharing);
+      When("the student enters the course", enterCourse);
+      Then("the online list is {string}", onlineListIs);
+      And("no course channel remains subscribed", noCourseChannel);
+    });
+    RuleScenario("The student's activity is published to the course without joining it", ({ Given, When, Then, And }) => {
+      Given("{string} is signed in with sharing {word}", signInWithSharing);
+      When("the student enters the course", enterCourse);
+      Then("the course activity is published through HTTP", () => {
+        const published = recorder.sentOn(course.courseId).map((message) => message.payload as { courseId?: string; user?: { fullName?: string } });
+        expect(published).toEqual([expect.objectContaining({ courseId: course.courseId, user: expect.objectContaining({ fullName: "Alice" }) })]);
+      });
+      And("no course channel remains subscribed", noCourseChannel);
+    });
+  });
+
+  Rule("While the course tab is visible, the reader shall refresh the course online list every 60 seconds.", ({ RuleScenario }) => {
+    RuleScenario("A classmate who arrives appears on the next refresh", ({ Given, And, When, Then }) => {
+      Given("{string} is signed in with sharing {word}", signInWithSharing);
+      And("the student has entered the course", enterCourse);
+      And("{string} was active in the course {number} minutes ago", wasActive);
+      When("{number} seconds pass", secondsPass);
+      Then("the online list is {string}", onlineListIs);
+      And("the online list has been loaded {number} times", loadedTimes);
+    });
+    RuleScenario("A hidden tab does not refresh the online list", ({ Given, And, When, Then }) => {
+      Given("{string} is signed in with sharing {word}", signInWithSharing);
+      And("the student has entered the course", enterCourse);
+      And("the course tab is hidden", () => vi.stubGlobal("document", { hidden: true }));
+      And("{string} was active in the course {number} minutes ago", wasActive);
+      When("{number} seconds pass", secondsPass);
+      Then("the online list is {string}", onlineListIs);
+      And("the online list has been loaded {number} time", loadedTimes);
+    });
+  });
+
+  Rule("When the course online list is loaded, the reader shall list the student and the classmates whose activity was stored in the last 5 minutes.", ({ RuleScenario }) => {
+    RuleScenario("A classmate inactive for more than 5 minutes is not listed", ({ Given, And, When, Then }) => {
+      Given("{string} was active in the course {number} minutes ago", wasActive);
+      And("{string} was active in the course {number} minutes ago", wasActive);
+      And("{string} is signed in with sharing {word}", signInWithSharing);
+      When("the student enters the course", enterCourse);
+      Then("the online list is {string}", onlineListIs);
+    });
+    RuleScenario("A classmate who leaves drops off while the student stays listed", ({ Given, And, When, Then }) => {
+      Given("{string} was active in the course {number} minutes ago", wasActive);
+      And("{string} is signed in with sharing {word}", signInWithSharing);
+      When("the student enters the course", enterCourse);
+      And("{number} seconds pass", secondsPass);
+      Then("the online list is {string}", onlineListIs);
+      And("the online list has been loaded {number} times", loadedTimes);
+    });
+  });
+  Rule("If the course online list cannot be loaded, then the reader shall keep the last loaded list.", ({ RuleScenario }) => {
+    RuleScenario("A failed refresh keeps classmates listed", ({ Given, And, When, Then }) => {
+      Given("{string} was active in the course {number} minutes ago", wasActive);
+      And("{string} is signed in with sharing {word}", signInWithSharing);
+      And("the student has entered the course", enterCourse);
+      And("the stored activity cannot be read", () => recorder.tableErrors.set("tutors-connect-latest", { message: "connection reset" }));
+      When("{number} seconds pass", secondsPass);
+      Then("the online list is {string}", onlineListIs);
     });
   });
 });
