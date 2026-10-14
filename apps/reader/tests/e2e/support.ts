@@ -88,7 +88,7 @@ export async function openNotebookWithoutHeadings(page: Page, path: string): Pro
   await page.locator("#notebook-cell-0").waitFor();
   const stripped = await page.evaluate(async path => {
     const modules = performance.getEntriesByType("resource").map(entry => entry.name);
-    const { courseService } = await import(modules.find(url => url.includes("/course/src/course/services/course.svelte.ts"))!);
+    const { courseService } = await import(modules.find(url => url.includes("/svelte-state/src/course/services/course.svelte.ts"))!);
     const notebook = courseService.notebooks.get(path);
     if (!notebook) return 0;
     let count = 0;
@@ -122,7 +122,7 @@ export async function seedEnrolledLocks(page: Page, locked: string[], showLocked
   await page.evaluate(async ({ locked, showLocked }) => {
     const modules = performance.getEntriesByType("resource").map(entry => entry.name);
     const { currentCourse } = await import(modules.find(url => url.includes("/svelte-state/src/index.svelte.ts"))!);
-    const { rbacService, SHOW_LOCKED_KEY } = await import(modules.find(url => url.includes("/rbac/src/rbac-service.svelte.ts"))!);
+    const { rbacService, SHOW_LOCKED_KEY } = await import(modules.find(url => url.includes("/svelte-state/src/rbac/rbac-service.svelte.ts"))!);
     const course = currentCourse.value;
     const entries = Object.fromEntries(locked.map(route => [route, true]));
     if (showLocked) entries[SHOW_LOCKED_KEY] = true;
