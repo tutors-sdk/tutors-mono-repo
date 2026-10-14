@@ -330,8 +330,65 @@ async function handleInteractionData(courseId: string, studentId: string, loId: 
  * @param student - Student data
  */
 export async function storeStudentCourseLearningObjectInSupabase(course: Course, loid: string, lo: Lo, student: TutorsId) {
-  await handleInteractionData(course.courseId, student.login, loid, lo);
-  await insertOrUpdateCalendar(student.login, course.courseId);
+  const courseId = course.courseId;
+  const studentId = student.login;
+  if (courseId && studentId && loid) {
+    const recorded = await callRecordingFunction("record_page_view", {
+      p_course_id: courseId,
+      p_student_id: studentId,
+      p_lo_id: loid,
+      p_lo_type: lo.type,
+      p_day: formatDate(new Date())
+    });
+    if (recorded) return;
+  }
+  await handleInteractionData(courseId, studentId, loid, lo);
+  await insertOrUpdateCalendar(studentId, courseId);
+}
+
+/**
+ * Records 30 seconds of activity against the learning object (when there is one) and the day's calendar.
+ * @param courseId - Identifier of the course
+ * @param studentId - Identifier of the student
+ * @param loId - Identifier of the learning object, or null when the page has none
+ */
+export async function recordHeartbeat(courseId: string, studentId: string, loId: string | null) {
+  if (!courseId || !studentId) return;
+  const recorded = await callRecordingFunction("record_heartbeat", {
+    p_course_id: courseId,
+    p_student_id: studentId,
+    p_lo_id: loId || null,
+    p_day: formatDate(new Date())
+  });
+  if (recorded) return;
+  if (loId) await updateLearningRecordsDuration(courseId, studentId, loId);
+  await updateCalendarDuration(formatDate(new Date()), studentId, courseId);
+}
+
+/** PostgREST's code for a function its schema cache does not hold: the migration is not applied yet. */
+const MISSING_FUNCTION = "PGRST202";
+/**
+ * Both functions ship in one migration, so once the database answers that one is missing, this tab
+ * uses the per-table requests until it reloads, without asking again.
+ */
+export const recordingFunctions = { missing: false };
+
+/**
+ * Calls one of the single-request recording functions (supabase/migrations/20261014_record_page_view_and_heartbeat.sql).
+ * Each replaces several read-then-write requests with one atomic write.
+ * @returns true when the write is done (or failed and was logged); false when the caller should use the per-table requests
+ */
+async function callRecordingFunction(fn: "record_page_view" | "record_heartbeat", args: Record<string, unknown>): Promise<boolean> {
+  if (recordingFunctions.missing) return false;
+  const { error } = await supabase.rpc(fn, args);
+  if (!error) return true;
+  if (error.code === MISSING_FUNCTION) {
+    recordingFunctions.missing = true;
+    log.warn("Single-request recording functions are missing; using per-table requests");
+    return false;
+  }
+  log.error("Single-request recording failed:", fn, error);
+  return true;
 }
 
 /**

@@ -4,6 +4,9 @@ import coverageFloors from "./tests/suite-health/coverage-floors.json" with { ty
 
 export default defineConfig({
   test: {
+    // Vitest 5 clears every mock before each test by default. A vitest-cucumber step is its own
+    // test, so a When step's calls must survive into its Then step: keep Vitest 4's behaviour.
+    clearMocks: false,
     include: ["tests/**/*.test.ts", "tests/**/*.steps.ts"],
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
     // Replaces Vitest's default exclude, so node_modules must be listed again (the isolated

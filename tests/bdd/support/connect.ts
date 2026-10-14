@@ -7,6 +7,7 @@ import { realtime } from "../../../packages/svelte/community/src/services/realti
 import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
 import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
+import { recordingFunctions } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
@@ -29,6 +30,7 @@ export function freshBrowser(): void {
   presenceService.stopPresenceListener();
   void realtime.reset();
   recorder.reset();
+  recordingFunctions.missing = false;
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("window", { localStorage: storage });
@@ -39,7 +41,7 @@ export function freshBrowser(): void {
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
   tutorsConnectService.identityClient = { signIn: vi.fn(), signOut: vi.fn() };
-  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true });
+  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true, navigationInFlight: true, navigationAttempt: 0 });
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];
 

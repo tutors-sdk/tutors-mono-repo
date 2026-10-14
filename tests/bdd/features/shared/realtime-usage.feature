@@ -195,7 +195,7 @@ Feature: Realtime resource usage
       Then one scene broadcast contains the latest edit and deletion
       And another Presence sync sends no duplicate scene broadcast
 
-  @rule-0300 @ears-event-driven
+  @rule-0317 @ears-event-driven
   Rule: When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.
 
     Scenario: Entering a course lists classmates from stored activity
@@ -211,7 +211,7 @@ Feature: Realtime resource usage
       Then the course activity is published through HTTP
       And no course channel remains subscribed
 
-  @rule-0301 @ears-state-driven
+  @rule-0318 @ears-state-driven
   Rule: While the course tab is visible, the reader shall refresh the course online list every 60 seconds.
 
     @active
