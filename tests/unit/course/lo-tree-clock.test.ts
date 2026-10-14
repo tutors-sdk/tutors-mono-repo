@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Course, Lo } from "../../../packages/jsr/model/src/tutors.ts";
-import { decorateCourseTree } from "../../../packages/svelte/course/src/course/services/lo-tree.ts";
+import { decorateCourseTree } from "../../../packages/adapters/driving/svelte-state/src/course/services/lo-tree.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the tree only reads `.value`.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(value: T) => ({ value });
   return { rune, courseProtocol: rune("https://") };
 });

@@ -1,15 +1,15 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";
-import { supabase } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { courseService } from "../../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { catalogueService } from "../../../../packages/adapters/driving/svelte-state/src/community/services/catalogue.ts";
+import { supabase } from "../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
+import { courseService } from "../../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
 import type { MockSupabaseClient } from "../../support/mocks.ts";
 import { captureLogs, courseHost, publishedCourseJson, type CourseHost, type LogCapture } from "../../support/reader-loading.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 // Supabase is the network: the in-memory client stands in for it, and the catalogue service under test is the real one.
-vi.mock("../../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts", async () => {
   const { MockSupabaseClient } = await import("../../support/mocks.ts");
   return { supabase: new MockSupabaseClient() };
 });

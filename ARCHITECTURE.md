@@ -176,7 +176,7 @@ tutors-mono-repo/
 │   │   └── identity/           # @tutors/identity (identity contracts)
 │   │
 │   └── svelte/                 # Svelte-specific packages
-│       ├── runes/              # @tutors/runes
+│       ├── runes/              # @tutors/svelte-state
 │       ├── course/             # @tutors/course
 │       ├── themes/             # @tutors/themes
 │       ├── community/          # @tutors/community
@@ -694,9 +694,9 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 - `ui-navigators` - Navigation components (MainNavigator, SecondaryNavigator, Footer, TutorsShell, buttons, layout switchers)
 - `ui-components` - Domain UI components (learning objects, time views) + pre-compiled CSS
 
-### 1. Runes Package (`packages/svelte/runes`)
+### 1. Runes Package (`packages/adapters/driving/svelte-state`)
 
-**Package Name**: `@tutors/runes`  
+**Package Name**: `@tutors/svelte-state`  
 **Purpose**: Global reactive state using Svelte 5 runes
 
 #### Key Exports
@@ -760,7 +760,7 @@ export const currentCourse = {
 
 ```svelte
 <script lang="ts">
-  import { currentCourse } from "@tutors/runes";
+  import { currentCourse } from "@tutors/svelte-state";
 
   $effect(() => {
     if (currentCourse.value) {
@@ -772,7 +772,7 @@ export const currentCourse = {
 <h1>{currentCourse.value?.title}</h1>
 ```
 
-### 2. Course Package (`packages/svelte/course`)
+### 2. Course Package (`packages/adapters/driving/svelte-state`)
 
 **Package Name**: `@tutors/course`  
 **Purpose**: Course loading, processing, and markdown rendering
@@ -810,7 +810,7 @@ export const currentCourse = {
 #### File Structure
 
 ```
-packages/svelte/course/src/
+packages/adapters/driving/svelte-state/src/
 ├── course/
 │   ├── index.ts
 │   ├── types.ts
@@ -834,7 +834,7 @@ packages/svelte/course/src/
 #### Usage Example
 
 ```typescript
-import { courseService } from "@tutors/course";
+import { courseService } from "@tutors/svelte-state";
 
 // Load course
 const course = await courseService.readCourse("my-course-id", fetch);
@@ -844,11 +844,11 @@ const lab = await courseService.readLab(course, "lab-01", fetch);
 await lab.loadStep("01");
 
 // Render markdown
-import { markdownService } from "@tutors/course";
+import { markdownService } from "@tutors/svelte-state";
 const html = await markdownService.renderMarkdown(content);
 ```
 
-### 3. Themes Package (`packages/svelte/themes`)
+### 3. Themes Package (`packages/adapters/driving/themes`)
 
 **Package Name**: `@tutors/themes`  
 **Purpose**: UI theming, icons, and display modes
@@ -892,7 +892,7 @@ export const themeService: ThemeService = {
 #### File Structure
 
 ```
-packages/svelte/themes/src/
+packages/adapters/driving/themes/src/
 ├── index.ts
 ├── types.ts
 ├── services/
@@ -914,9 +914,9 @@ packages/svelte/themes/src/
     └── snow.ts
 ```
 
-### 4. Community Package (`packages/svelte/community`)
+### 4. Community Package (`packages/adapters/driving/svelte-state`)
 
-**Package Name**: `@tutors/community`  
+**Package Name**: `@tutors/svelte-state/community`  
 **Purpose**: Analytics, real-time presence, and social features
 
 #### Sub-services
@@ -940,7 +940,7 @@ packages/svelte/themes/src/
 #### File Structure
 
 ```
-packages/svelte/community/src/
+packages/adapters/driving/svelte-state/src/community/
 ├── index.ts
 ├── types.svelte.ts
 ├── services/
@@ -952,9 +952,9 @@ packages/svelte/community/src/
     └── supabase-client.ts
 ```
 
-### 5. Connect Package (`packages/svelte/connect`)
+### 5. Connect Package (`packages/adapters/driving/svelte-state`)
 
-**Package Name**: `@tutors/connect`  
+**Package Name**: `@tutors/svelte-state/connect`  
 **Purpose**: User authentication and session management
 
 #### Features
@@ -967,7 +967,7 @@ packages/svelte/community/src/
 #### File Structure
 
 ```
-packages/svelte/connect/src/
+packages/adapters/driving/svelte-state/src/connect/
 ├── index.ts
 ├── types.ts
 ├── services/
@@ -978,7 +978,7 @@ packages/svelte/connect/src/
     └── allCourseAccess.ts
 ```
 
-### 6. UI Primitives Package (`packages/svelte/ui-primitives`)
+### 6. UI Primitives Package (`packages/adapters/driving/ui-primitives`)
 
 **Package Name**: `@tutors/ui-primitives`  
 **Purpose**: Low-level, reusable primitive UI components and shared components
@@ -1005,7 +1005,7 @@ packages/svelte/connect/src/
 #### File Structure
 
 ```
-packages/svelte/ui-primitives/src/
+packages/adapters/driving/ui-primitives/src/
 ├── index.ts
 ├── _safelist.svelte
 ├── components/
@@ -1025,7 +1025,7 @@ packages/svelte/ui-primitives/src/
     └── sanitize.ts
 ```
 
-### 7. UI Navigators Package (`packages/svelte/ui-navigators`)
+### 7. UI Navigators Package (`packages/adapters/driving/ui-navigators`)
 
 **Package Name**: `@tutors/ui-navigators`  
 **Purpose**: Navigation and shell components
@@ -1052,7 +1052,7 @@ This package sits between `ui-primitives` and `ui-components` in the dependency 
 #### File Structure
 
 ```
-packages/svelte/ui-navigators/src/
+packages/adapters/driving/ui-navigators/src/
 ├── index.ts
 ├── TutorsShell.svelte
 ├── MainNavigator.svelte
@@ -1073,14 +1073,14 @@ packages/svelte/ui-navigators/src/
 - `@tutors/themes` - Theming and display modes
 - `@tutors/i18n` - Internationalization
 - `@tutors/a11y` - Accessibility
-- `@tutors/runes` - Reactive state
-- `@tutors/community` - Analytics and presence
-- `@tutors/connect` - Authentication
+- `@tutors/svelte-state` - Reactive state
+- `@tutors/svelte-state/community` - Analytics and presence
+- `@tutors/svelte-state/connect` - Authentication
 - `@tutors/course` - Course processing
 - `@tutors/logger` - Logging
 - `@tutors/tutors-model-lib` - Core data models
 
-### 8. UI Components Package (`packages/svelte/ui-components`)
+### 8. UI Components Package (`packages/adapters/driving/ui-components`)
 
 **Package Name**: `@tutors/ui-components`  
 **Purpose**: High-level, domain-specific UI components
@@ -1103,7 +1103,7 @@ This package depends on both `@tutors/ui-navigators` and `@tutors/ui-primitives`
 #### File Structure
 
 ```
-packages/svelte/ui-components/src/
+packages/adapters/driving/ui-components/src/
 ├── styles.css              # Tailwind/Skeleton entry point (with @source directives)
 ├── _dynamic-classes.css    # Safelist for @apply directives
 ├── _safelist.svelte        # Safelist for dynamic template classes
@@ -1546,13 +1546,13 @@ Applications (reader, catalogue, live, time)
         │   │   ├─► @tutors/connect
         │   │   │   ├─► @tutors/community
         │   │   │   ├─► @tutors/course
-        │   │   │   └─► @tutors/runes
+        │   │   │   └─► @tutors/svelte-state
         │   │   │
         │   │   ├─► @tutors/themes
         │   │   ├─► @tutors/community
         │   │   ├─► @tutors/i18n
         │   │   ├─► @tutors/a11y
-        │   │   ├─► @tutors/runes
+        │   │   ├─► @tutors/svelte-state
         │   │   ├─► @tutors/course
         │   │   ├─► @tutors/logger
         │   │   └─► @tutors/tutors-model-lib
@@ -1561,24 +1561,24 @@ Applications (reader, catalogue, live, time)
         │   │
         │   ├─► @tutors/community
         │   │   ├─► @tutors/course
-        │   │   │   ├─► @tutors/runes
+        │   │   │   ├─► @tutors/svelte-state
         │   │   │   │   └─► @tutors/tutors-model-lib
         │   │   │   ├─► @tutors/logger
         │   │   │   └─► @tutors/tutors-model-lib
-        │   │   ├─► @tutors/runes
+        │   │   ├─► @tutors/svelte-state
         │   │   └─► @tutors/logger
         │   │
         │   ├─► @tutors/themes
         │   │   ├─► @tutors/course
-        │   │   ├─► @tutors/runes
+        │   │   ├─► @tutors/svelte-state
         │   │   └─► @tutors/logger
         │   │
         │   ├─► @tutors/i18n
-        │   │   ├─► @tutors/runes
+        │   │   ├─► @tutors/svelte-state
         │   │   └─► @tutors/course
         │   │
         │   ├─► @tutors/a11y
-        │   │   ├─► @tutors/runes
+        │   │   ├─► @tutors/svelte-state
         │   │   └─► @tutors/course
         │   │
         │   └─► @tutors/tutors-model-lib
@@ -1598,7 +1598,7 @@ Applications (reader, catalogue, live, time)
 - `@tutors/logger`
 
 **Layer 1** (depends on foundation):
-- `@tutors/runes` → model
+- `@tutors/svelte-state` → model
 
 **Layer 2** (depends on runes + foundation):
 - `@tutors/course` → runes, runtime, logger, model
@@ -1607,10 +1607,10 @@ Applications (reader, catalogue, live, time)
 
 **Layer 3** (depends on course + lower):
 - `@tutors/themes` → course, runes, logger, model
-- `@tutors/community` → course, runes, logger, model
+- `@tutors/svelte-state/community` → course, runes, logger, model
 
 **Layer 4** (depends on community + lower):
-- `@tutors/connect` → community, course, runes, model
+- `@tutors/svelte-state/connect` → community, course, runes, model
 
 **Layer 5** (UI):
 - `@tutors/ui-primitives` → themes, i18n, model, runes, a11y, community
@@ -1814,7 +1814,7 @@ pnpm build
 
 **Build Configuration** (`vite.config.ts`):
 
-Every app builds on the shared helpers in `@tutors/app-config` (`packages/svelte/app-config`) and overrides only what is unique to it:
+Every app builds on the shared helpers in `@tutors/app-config` (`packages/platform/app-config`) and overrides only what is unique to it:
 
 ```javascript
 // vite.config.ts

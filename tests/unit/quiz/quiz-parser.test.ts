@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseQuizMarkdown } from "../../../packages/svelte/quiz/src/services/quiz-parser";
+import { parseQuizMarkdown } from "../../../packages/domain/src/quiz/services/quiz-parser";
 
 const MULTIPLE_CHOICE = `question: Which keyword is block-scoped?
 type: multiple-choice

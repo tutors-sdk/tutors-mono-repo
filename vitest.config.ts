@@ -20,7 +20,7 @@ export default defineConfig({
       reportsDirectory: "./coverage",
       // Measure every source file, not only the ones a test happens to import, so an
       // untested module counts as 0% rather than being invisible (Rule 0110).
-      include: ["packages/*/*/src/**/*.ts", "packages/*/*/*/src/**/*.ts", "apps/*/src/**/*.ts"],
+      include: ["packages/*/src/**/*.ts", "packages/*/*/src/**/*.ts", "packages/*/*/*/src/**/*.ts", "apps/*/src/**/*.ts"],
       exclude: ["**/__tests__/**", "**/*.d.ts", "**/.svelte-kit/**", "**/node_modules/**"],
       // Floors live in tests/suite-health/coverage-floors.json and only go up (Rules 0111, 0112).
       thresholds: { ...coverageFloors.global, ...coverageFloors.packages }

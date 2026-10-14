@@ -7,6 +7,7 @@
     "configFile": "vitest.config.mutation-nightly.ts"
   },
   "mutate": [
+    "packages/*/src/**/*.ts",
     "packages/*/*/src/**/*.ts",
     "packages/*/*/*/src/**/*.ts",
     "!**/*.d.ts",

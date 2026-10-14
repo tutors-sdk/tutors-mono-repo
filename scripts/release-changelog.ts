@@ -49,9 +49,10 @@ const SECTION_BY_PATH: readonly [RegExp, Section][] = [
   [/^apps\/live\//, "Live"],
   [/^apps\/catalogue\//, "Catalogue"],
   [/^apps\/time\//, "Time"],
-  // The Svelte packages ship inside the apps, and almost all of them inside the reader.
-  [/^packages\/svelte\//, "Reader"],
-  [/^packages\/jsr\//, "Shared Packages"],
+  // The adapters and platform packages ship inside the apps, and almost all of them inside the reader.
+  [/^packages\/(adapters|platform)\//, "Reader"],
+  // The rings and the JSR facades are shared by every app and the CLI.
+  [/^packages\/(domain|application|jsr)\//, "Shared Packages"],
   [/^(deploy|observability|supabase|etc)\/|^Dockerfile$|^compose\.yaml$|^\.github\/workflows\/(image-build|deploy|release-dispatch|release-harness-report)\.yml$/, "Infrastructure"]
 ];
 

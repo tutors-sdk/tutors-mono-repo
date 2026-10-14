@@ -32,7 +32,7 @@ Object.defineProperty(global.localStorage, "courseVisits", {
   configurable: true
 });
 
-import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile";
+import { localStorageProfile } from "../../../packages/adapters/driving/svelte-state/src/connect/services/localStorageProfile";
 import type { Course } from "@tutors/tutors-model-lib";
 
 function createMockCourse(overrides: Partial<Course> = {}): Course {

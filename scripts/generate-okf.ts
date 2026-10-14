@@ -140,16 +140,16 @@ function extractPackages(): PackageInfo[] {
     { dir: "packages/jsr/gen", category: "jsr" as const },
     { dir: "packages/jsr/time", category: "jsr" as const },
     { dir: "packages/jsr/tutors", category: "jsr" as const },
-    { dir: "packages/svelte/course", category: "svelte" as const },
-    { dir: "packages/svelte/runes", category: "svelte" as const },
-    { dir: "packages/svelte/community", category: "svelte" as const },
-    { dir: "packages/svelte/connect", category: "svelte" as const },
-    { dir: "packages/svelte/themes", category: "svelte" as const },
-    { dir: "packages/svelte/ui-primitives", category: "svelte" as const },
-    { dir: "packages/svelte/ui-components", category: "svelte" as const },
-    { dir: "packages/svelte/utils/logger", category: "svelte" as const },
-    { dir: "packages/svelte/utils/a11y", category: "svelte" as const },
-    { dir: "packages/svelte/utils/i18n", category: "svelte" as const },
+    { dir: "packages/adapters/driving/svelte-state", category: "svelte" as const },
+    { dir: "packages/adapters/driving/svelte-state", category: "svelte" as const },
+    { dir: "packages/adapters/driving/svelte-state", category: "svelte" as const },
+    { dir: "packages/adapters/driving/svelte-state", category: "svelte" as const },
+    { dir: "packages/adapters/driving/themes", category: "svelte" as const },
+    { dir: "packages/adapters/driving/ui-primitives", category: "svelte" as const },
+    { dir: "packages/adapters/driving/ui-components", category: "svelte" as const },
+    { dir: "packages/platform/logger", category: "svelte" as const },
+    { dir: "packages/adapters/driving/a11y", category: "svelte" as const },
+    { dir: "packages/adapters/driving/i18n", category: "svelte" as const },
     { dir: "apps/reader", category: "app" as const },
     { dir: "apps/catalogue", category: "app" as const },
     { dir: "apps/live", category: "app" as const },
@@ -222,8 +222,8 @@ function extractRoutes(): RouteInfo[] {
 function extractComponents(): ComponentInfo[] {
   const components: ComponentInfo[] = [];
   const componentDirs = [
-    { dir: "packages/svelte/ui-primitives/src", pkg: "ui-primitives" },
-    { dir: "packages/svelte/ui-components/src", pkg: "ui-components" },
+    { dir: "packages/adapters/driving/ui-primitives/src", pkg: "ui-primitives" },
+    { dir: "packages/adapters/driving/ui-components/src", pkg: "ui-components" },
   ];
 
   for (const { dir, pkg } of componentDirs) {
@@ -530,9 +530,9 @@ function extractSchemas(): SchemaInfo[] {
 function extractServices(): ServiceInfo[] {
   const services: ServiceInfo[] = [];
   const serviceDirs = [
-    { dir: "packages/svelte/community/src/services", pkg: "community" },
-    { dir: "packages/svelte/connect/src/services", pkg: "connect" },
-    { dir: "packages/svelte/course/src/course/services", pkg: "course" },
+    { dir: "packages/adapters/driving/svelte-state/src/community/services", pkg: "community" },
+    { dir: "packages/adapters/driving/svelte-state/src/connect/services", pkg: "connect" },
+    { dir: "packages/adapters/driving/svelte-state/src/course/services", pkg: "course" },
   ];
 
   for (const { dir, pkg } of serviceDirs) {

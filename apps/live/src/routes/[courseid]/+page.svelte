@@ -8,7 +8,7 @@
     isReceivedAtInLocalWeek,
     isReceivedAtInLocalYear,
     isReceivedAtOnLocalDay
-  } from "@tutors/community";
+  } from "@tutors/svelte-state/community";
   import ConnectLatestLosCards from "@tutors/ui-components/time/ConnectLatestLosCards.svelte";
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
   import { t } from "@tutors/i18n";

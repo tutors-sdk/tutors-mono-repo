@@ -31,7 +31,7 @@ describe("moduleStatuses", () => {
 describe("packageOf", () => {
   it("is the nearest package.json, nested packages included", () => {
     expect(packageOf("packages/jsr/model/src/utils/lo-utils.ts")).toEqual({ name: "@tutors/tutors-model-lib", path: "packages/jsr/model" });
-    expect(packageOf("packages/svelte/utils/a11y/src/index.ts").path).toBe("packages/svelte/utils/a11y");
+    expect(packageOf("packages/adapters/driving/a11y/src/index.ts").path).toBe("packages/adapters/driving/a11y");
   });
 
   it("falls back to the module itself below no package, never to the repository root", () => {
@@ -103,8 +103,8 @@ describe("qualityRecord", () => {
   it("sorts packages by name and matches a changed file by directory, not by prefix", () => {
     const record = qualityRecord(
       input({
-        report: { files: { "packages/svelte/utils/a11y/src/a.ts": mutants(1, 0), "packages/jsr/model/src/tutors.ts": mutants(1, 0) } },
-        diff: () => ["packages/jsr/modelling/x.ts", "packages/svelte/utils/a11y/src/a.ts"]
+        report: { files: { "packages/adapters/driving/a11y/src/a.ts": mutants(1, 0), "packages/jsr/model/src/tutors.ts": mutants(1, 0) } },
+        diff: () => ["packages/jsr/modelling/x.ts", "packages/adapters/driving/a11y/src/a.ts"]
       })
     );
     expect(record.packages!.map((p) => [p.path, p.changed])).toEqual(
@@ -112,7 +112,7 @@ describe("qualityRecord", () => {
     );
     expect(Object.fromEntries(record.packages!.map((p) => [p.path, p.changed]))).toEqual({
       "packages/jsr/model": false,
-      "packages/svelte/utils/a11y": true
+      "packages/adapters/driving/a11y": true
     });
   });
 

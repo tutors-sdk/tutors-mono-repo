@@ -1,6 +1,6 @@
-import { currentCourse, isEducator } from "@tutors/runes";
-import { courseService } from "@tutors/course/course";
-import { rbacService } from "@tutors/rbac";
+import { currentCourse, isEducator } from "@tutors/svelte-state";
+import { courseService } from "@tutors/svelte-state/course";
+import { rbacService } from "@tutors/svelte-state/rbac";
 import type { Lo } from "@tutors/tutors-model-lib";
 import { generateLlms } from "./llms";
 

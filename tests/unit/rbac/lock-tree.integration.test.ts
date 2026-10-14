@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Composite, Course, Lo } from "@tutors/tutors-model-lib";
 
-vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
+vi.mock("../../../packages/adapters/driving/svelte-state/src/rbac/lock-store.ts", () => ({
   getLocksForCourse: vi.fn(),
   upsertLock: vi.fn(),
   removeLock: vi.fn(),
 }));
 
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,
@@ -20,10 +20,10 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { contentLocks, courseProtocol } from "../../../packages/svelte/runes/src/index.svelte.ts";
-import { decorateCourseTree } from "../../../packages/svelte/course/src/course/services/lo-tree.ts";
+import { contentLocks, courseProtocol } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
+import { decorateCourseTree } from "../../../packages/adapters/driving/svelte-state/src/course/services/lo-tree.ts";
 import { filterByType, flattenLos } from "@tutors/tutors-model-lib";
-import { rbacService } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
+import { rbacService } from "../../../packages/adapters/driving/svelte-state/src/rbac/rbac-service.svelte.ts";
 
 function buildCourse(): Course {
   return {

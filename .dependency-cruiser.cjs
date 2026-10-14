@@ -12,26 +12,26 @@
 
 /** Workspace directories per layer, lowest first. Keep in step with README.md. */
 const LAYERS = [
-  { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/svelte/utils/logger", "packages/svelte/utils/metrics"] },
+  { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/platform/logger", "packages/platform/metrics"] },
   {
     name: "core",
-    paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/utils/a11y", "packages/svelte/utils/i18n"]
+    paths: ["packages/adapters/driving/svelte-state", "packages/adapters/driving/svelte-state", "packages/adapters/driving/a11y", "packages/adapters/driving/i18n"]
   },
   {
     name: "feature",
     paths: [
-      "packages/svelte/themes",
-      "packages/svelte/community",
-      "packages/svelte/connect",
-      "packages/svelte/identity-sveltekit",
-      "packages/svelte/utils/rbac",
-      "packages/svelte/utils/privacy",
-      "packages/svelte/utils/tour"
+      "packages/adapters/driving/themes",
+      "packages/adapters/driving/svelte-state",
+      "packages/adapters/driving/svelte-state",
+      "packages/adapters/driven/identity-better-auth",
+      "packages/adapters/driving/svelte-state",
+      "packages/adapters/driving/privacy",
+      "packages/adapters/driving/tour"
     ]
   },
-  { name: "ui-primitives", paths: ["packages/svelte/ui-primitives"] },
-  { name: "ui-navigators", paths: ["packages/svelte/ui-navigators"] },
-  { name: "ui-components", paths: ["packages/svelte/ui-components"] },
+  { name: "ui-primitives", paths: ["packages/adapters/driving/ui-primitives"] },
+  { name: "ui-navigators", paths: ["packages/adapters/driving/ui-navigators"] },
+  { name: "ui-components", paths: ["packages/adapters/driving/ui-components"] },
   { name: "apps", paths: ["apps/[^/]+"] }
 ];
 
@@ -58,7 +58,7 @@ module.exports = {
       name: "identity-provider-only-in-adapter",
       comment: "Better Auth belongs to the identity adapter; consumers depend on identity contracts.",
       severity: "error",
-      from: { path: "^(apps|packages)/", pathNot: "^packages/svelte/identity-sveltekit/" },
+      from: { path: "^(apps|packages)/", pathNot: "^packages/adapters/driven/identity-better-auth/" },
       to: { path: "(^|/)(@better-auth/|better-auth(/|$))" }
     },
     {
@@ -72,7 +72,7 @@ module.exports = {
       name: "identity-no-server-in-browser",
       comment: "Browser entry points cannot reach server adapters or private environment modules, even through a shared barrel.",
       severity: "error",
-      from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/svelte/identity-sveltekit/src/client\\.ts$)" },
+      from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/adapters/driven/identity-better-auth/src/client\\.ts$)" },
       to: { path: "(\\.server\\.[jt]s$|/server/|\\$env/(static|dynamic)/private|\\$app/env/private|(^|/)(?:better-auth/(?:dist/)?(?:auth/|api/|cookies/|integrations/|index\\.)))", reachable: true }
     },
     {
@@ -95,7 +95,7 @@ module.exports = {
       comment:
         "UI primitives are low-level presentational components: they take users, events and permissions as props or context, and never reach into the data and access packages (community, connect, rbac) themselves. Theme and tour services stay allowed.",
       severity: "error",
-      from: { path: "^packages/svelte/ui-primitives/" },
+      from: { path: "^packages/adapters/driving/ui-primitives/" },
       to: { path: "^packages/svelte/(community|connect|utils/rbac)/" }
     },
     {

@@ -1,5 +1,5 @@
 /**
- * Stand-in for `@tutors/runes` in executable features.
+ * Stand-in for `@tutors/svelte-state` in executable features.
  *
  * The real `rune()` wraps a value in Svelte's `$state`, which only exists once
  * the Svelte compiler has processed the file; the root Vitest config has no
@@ -8,8 +8,8 @@
  * (i18n, the theme service) load and run unchanged. Only reactivity is lost,
  * and no step asserts on reactivity.
  *
- * Use: `vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));`
- * (the path, not `@tutors/runes`: the bare name does not resolve from tests/, so the mock would not match).
+ * Use: `vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));`
+ * (the path, not `@tutors/svelte-state`: the bare name does not resolve from tests/, so the mock would not match).
  */
 export const rune = <T>(initialValue: T): { value: T } => ({ value: initialValue });
 

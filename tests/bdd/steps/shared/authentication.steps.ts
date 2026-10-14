@@ -3,7 +3,7 @@ import { expect, vi } from "vitest";
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
 // SvelteKit and the injected identity client. Everything between them is product code.
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../../packages/adapters/driving/svelte-state/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
@@ -15,8 +15,8 @@ import { goto } from "$app/navigation";
 import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
-import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
-import { tutorsId } from "../../../../packages/svelte/runes/src/index.svelte.ts";
+import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
+import { tutorsId } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 
 const feature = await loadFeature("tests/bdd/features/shared/authentication.feature");
 

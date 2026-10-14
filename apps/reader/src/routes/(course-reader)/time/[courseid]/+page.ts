@@ -1,5 +1,5 @@
-import { currentCourse } from "@tutors/runes";
-import { courseService } from "@tutors/course/course";
+import { currentCourse } from "@tutors/svelte-state";
+import { courseService } from "@tutors/svelte-state/course";
 
 export const ssr = false;
 

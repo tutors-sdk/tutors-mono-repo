@@ -22,9 +22,9 @@ Contributions are not limited to code. Here are some ways you can help:
 |------|----------|----------|
 | **Code** | Bug fixes, features, refactoring | Developers familiar with Svelte/TypeScript |
 | **Documentation** | Guides, API docs, README improvements | Writers, new contributors learning the codebase |
-| **Translation** | Adding new locales to `packages/svelte/utils/i18n` | Multilingual contributors |
+| **Translation** | Adding new locales to `packages/adapters/driving/i18n` | Multilingual contributors |
 | **Testing** | Writing tests, improving coverage, E2E scenarios | QA-focused contributors |
-| **Accessibility** | Auditing and improving a11y in `packages/svelte/utils/a11y` | UX and accessibility specialists |
+| **Accessibility** | Auditing and improving a11y in `packages/adapters/driving/a11y` | UX and accessibility specialists |
 | **Bug Reports** | Filing detailed, reproducible issues | Anyone using Tutors |
 | **Design** | UI/UX improvements, visual regression | Designers and frontend developers |
 
@@ -82,7 +82,7 @@ Package names differ from directory names. The tables in [README.md](README.md#s
 
 ### Rebuilding after a UI package change
 
-`pnpm dev` builds the UI packages once, at startup. If you edit anything under `packages/svelte/ui-primitives`, `ui-navigators` or `ui-components`, rebuild them (or restart `pnpm dev`):
+`pnpm dev` builds the UI packages once, at startup. If you edit anything under `packages/adapters/driving/ui-primitives`, `ui-navigators` or `ui-components`, rebuild them (or restart `pnpm dev`):
 
 ```bash
 pnpm --filter @tutors/ui-primitives build

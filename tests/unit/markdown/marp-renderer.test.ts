@@ -1,5 +1,5 @@
 import { beforeAll, describe, it, expect } from "vitest";
-import { isMarpContent, buildMarpMarkdown, renderMarpSlides } from "../../../packages/svelte/course/src/markdown/services/marp-renderer";
+import { isMarpContent, buildMarpMarkdown, renderMarpSlides } from "../../../packages/adapters/driving/svelte-state/src/markdown/services/marp-renderer";
 
 function makeLo(overrides: Record<string, any> = {}): any {
   return {

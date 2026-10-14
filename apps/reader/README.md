@@ -37,12 +37,12 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 ## Workspace packages
 
 - `@tutors/ui-primitives`, `@tutors/ui-navigators`, `@tutors/ui-components` provide the interface
-- `@tutors/course`, `@tutors/tutors-model-lib` load and model courses
-- `@tutors/identity`, `@tutors/identity-sveltekit` provide verified identity contracts and the Better Auth adapter
-- `@tutors/connect`, `@tutors/community`, `@tutors/rbac`, `@tutors/runes` handle sign-in, presence, roles and shared state
+- `@tutors/svelte-state/course`, `@tutors/tutors-model-lib` load and model courses
+- `@tutors/identity`, `@tutors/identity-better-auth` provide verified identity contracts and the Better Auth adapter
+- `@tutors/svelte-state/connect`, `@tutors/svelte-state/community`, `@tutors/svelte-state/rbac`, `@tutors/svelte-state` handle sign-in, presence, roles and shared state
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
-- `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
+- `@tutors/logger`, `@tutors/metrics`, `@tutors/clock` provide logging, `/metrics`, `/version` and the server clock seam
 - `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 
 [docs/COURSE-PAGE-WALKTHROUGH.md](../../docs/COURSE-PAGE-WALKTHROUGH.md) walks through how a course page is rendered.

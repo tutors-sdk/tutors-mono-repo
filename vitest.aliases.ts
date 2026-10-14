@@ -16,7 +16,7 @@ import { resolve } from "node:path";
 const root = __dirname;
 // `createRequire(import.meta.url)` + `require.resolve` is the form knip reads as a use of a root devDependency.
 const require = createRequire(import.meta.url);
-const fromCourse = createRequire(resolve(root, "packages/svelte/course/package.json"));
+const fromCourse = createRequire(resolve(root, "packages/adapters/driving/svelte-state/package.json"));
 
 const jsYaml = require.resolve("js-yaml");
 const ventoStub = resolve(root, "tests/support/vento-stub.ts");
@@ -26,13 +26,13 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/tutors-gen-lib": resolve(root, "packages/jsr/gen/src/tutors.ts"),
   "@tutors/tutors-time-lib": resolve(root, "packages/jsr/time/src/index.ts"),
   "@tutors/tutors-types": resolve(root, "packages/jsr/types/src/index.ts"),
-  "@tutors/community/utils/supabase-client": resolve(root, "packages/svelte/community/src/utils/supabase-client.ts"),
+  "@tutors/svelte-state/community/utils/supabase-client": resolve(root, "packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts"),
   "@tutors/identity": resolve(root, "packages/jsr/identity/src/index.ts"),
-  "@tutors/identity-sveltekit/server": resolve(root, "packages/svelte/identity-sveltekit/src/index.server.ts"),
-  "@tutors/identity-sveltekit/client": resolve(root, "packages/svelte/identity-sveltekit/src/client.ts"),
-  "@tutors/logger": resolve(root, "packages/svelte/utils/logger/src/index.ts"),
-  "@tutors/metrics": resolve(root, "packages/svelte/utils/metrics/src/index.ts"),
-  "@tutors/runtime": resolve(root, "packages/svelte/utils/runtime/src/index.ts"),
+  "@tutors/identity-better-auth/server": resolve(root, "packages/adapters/driven/identity-better-auth/src/index.server.ts"),
+  "@tutors/identity-better-auth/client": resolve(root, "packages/adapters/driven/identity-better-auth/src/client.ts"),
+  "@tutors/logger": resolve(root, "packages/platform/logger/src/index.ts"),
+  "@tutors/metrics": resolve(root, "packages/platform/metrics/src/index.ts"),
+  "@tutors/clock": resolve(root, "packages/adapters/driven/clock/src/index.ts"),
   "$app/env/public": resolve(root, "tests/support/public-env-stub.ts"),
   "$app/env/private": resolve(root, "tests/support/private-env-stub.ts"),
   "$app/env": resolve(root, "tests/support/sveltekit-stubs.ts"),

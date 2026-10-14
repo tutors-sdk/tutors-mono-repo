@@ -68,39 +68,39 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
-| `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
-| `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
+| `packages/platform/logger` | `@tutors/logger` | Logging utility and server request logger |
+| `packages/platform/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/platform/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 
 **Core services.**
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/svelte/runes` | `@tutors/runes` | Svelte 5 reactive state shared across packages |
-| `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
-| `packages/svelte/utils/a11y` | `@tutors/a11y` | Accessibility utilities |
-| `packages/svelte/utils/i18n` | `@tutors/i18n` | Internationalization (six locales) |
+| `packages/adapters/driving/svelte-state` | `@tutors/svelte-state` | Svelte 5 reactive state shared across packages |
+| `packages/adapters/driving/svelte-state` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
+| `packages/adapters/driving/a11y` | `@tutors/a11y` | Accessibility utilities |
+| `packages/adapters/driving/i18n` | `@tutors/i18n` | Internationalization (six locales) |
 
 **Feature services.**
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
-| `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
-| `packages/svelte/community` | `@tutors/community` | Presence and community features |
-| `packages/svelte/connect` | `@tutors/connect` | User profiles, course activity and injected sign-in/sign-out |
-| `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Better Auth server and browser adapter |
-| `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
-| `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
-| `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
+| `packages/adapters/driving/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
+| `packages/domain` | `@tutors/domain/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
+| `packages/adapters/driving/svelte-state` | `@tutors/svelte-state/community` | Presence and community features |
+| `packages/adapters/driving/svelte-state` | `@tutors/svelte-state/connect` | User profiles, course activity and injected sign-in/sign-out |
+| `packages/adapters/driven/identity-better-auth` | `@tutors/identity-better-auth` | Better Auth server and browser adapter |
+| `packages/adapters/driving/svelte-state` | `@tutors/svelte-state/rbac` | Role resolution and content locking |
+| `packages/adapters/driving/privacy` | `@tutors/privacy` | Consent management |
+| `packages/adapters/driving/tour` | `@tutors/tour` | Guided product tours |
 
 **UI layer.** Strict one-directional dependency: `ui-components → ui-navigators → ui-primitives`.
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/svelte/ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
-| `packages/svelte/ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
-| `packages/svelte/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
+| `packages/adapters/driving/ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
+| `packages/adapters/driving/ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
+| `packages/adapters/driving/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
 
 ## Getting Started
 
@@ -199,7 +199,7 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
 
-Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
+Only `@tutors/identity-better-auth` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 
 The reader uses the GitHub-only Better Auth stateless adapter. See [identity rollout](guides/identity-rollout.md) for configuration, session continuity and the required preceding rollout/rollback checkpoints before releasing the adapter cleanup.
 

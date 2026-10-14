@@ -3,7 +3,7 @@ import type { Composite, Course, Lo } from "@tutors/tutors-model-lib";
 
 // decorateCourseTree reaches themeService, which builds its runes at import time.
 // Substituting a plain rune keeps the tree walk testable outside a Svelte compile.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,
@@ -16,7 +16,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { decorateCourseTree } from "../../../packages/svelte/course/src/course/services/lo-tree.ts";
+import { decorateCourseTree } from "../../../packages/adapters/driving/svelte-state/src/course/services/lo-tree.ts";
 
 const SUMMARY_MD = "**bold** intro";
 

@@ -7,7 +7,7 @@ vi.mock("$app/env/public", () => ({
   PUBLIC_ANON_MODE: "TRUE"
 }));
 
-vi.mock("@tutors/community/utils/supabase-client", async () => {
+vi.mock("@tutors/svelte-state/community/utils/supabase-client", async () => {
   const { MockSupabaseClient } = await import("../../bdd/support/mocks");
   return { supabase: new MockSupabaseClient() };
 });
@@ -21,8 +21,8 @@ vi.mock("@tutors/logger", () => ({
   }
 }));
 
-import { supabase } from "@tutors/community/utils/supabase-client";
-import { updateCourseList } from "../../../packages/svelte/connect/src/utils/allCourseAccess";
+import { supabase } from "@tutors/svelte-state/community/utils/supabase-client";
+import { updateCourseList } from "../../../packages/adapters/driving/svelte-state/src/connect/utils/allCourseAccess";
 import type { Course } from "@tutors/tutors-model-lib";
 import log from "@tutors/logger";
 

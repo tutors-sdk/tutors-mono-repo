@@ -21,7 +21,7 @@ Every edge is tagged `EXTRACTED` (found directly in the source), `INFERRED` (the
 ## Known limits of this snapshot
 
 - **Svelte markup is only partly parsed.** 157 `.svelte` files hit tree-sitter syntax errors. Their `<script>` symbols and imports are captured, but template-level usage is not. As a result, component-to-component edges are thinner than in reality.
-- **SQL is not parsed.** The 3 migration files (`supabase/migrations/`, `packages/svelte/utils/rbac/sql/`) contributed nothing, because the optional `tree_sitter_sql` grammar was not installed.
+- **SQL is not parsed.** The 3 migration files (`supabase/migrations/`, `packages/adapters/driven/store-supabase/sql/`) contributed nothing, because the optional `tree_sitter_sql` grammar was not installed.
 - **Vendored bundles are excluded.** [`.graphifyignore`](../../.graphifyignore) skips `*.min.js` and `*.min.mjs`. Without it, the three copies of `pdf.worker.min.mjs` added about 10,000 nodes and swamped the real code.
 - **Excluded or dropped files.** The `deploy/k8s/**/secrets.yaml.example` files are skipped by graphify's sensitive-file filter. Anything in `.gitignore` is excluded too.
 - **Dangling edges.** 344 edges point at nodes outside the graph, mostly external npm and Deno packages. They were dropped when the graph was built.

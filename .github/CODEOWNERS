@@ -7,11 +7,14 @@
 /apps/live/ @tutors-sdk/maintainers
 /apps/time/ @tutors-sdk/maintainers
 
-# Foundation packages
-/packages/jsr/ @tutors-sdk/maintainers
+# Domain and application rings
+/packages/domain/ @tutors-sdk/maintainers
+/packages/application/ @tutors-sdk/maintainers
 
-# Svelte packages
-/packages/svelte/ @tutors-sdk/maintainers
+# Adapters, platform and the JSR facades
+/packages/adapters/ @tutors-sdk/maintainers
+/packages/platform/ @tutors-sdk/maintainers
+/packages/jsr/ @tutors-sdk/maintainers
 
 # Infrastructure and CI
 /.github/ @tutors-sdk/maintainers

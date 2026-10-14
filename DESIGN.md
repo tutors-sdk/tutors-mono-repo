@@ -4,7 +4,7 @@ name: Tutors Paper
 description: >-
   The Tutors reading and learning interface: calm neutral paper, one teal voice for action,
   and the original Tutors type colours for every learning resource. Light and dark are
-  equal citizens. Tokens mirror packages/svelte/themes/src/styles/paper-tokens.css, which is
+  equal citizens. Tokens mirror packages/adapters/driving/themes/src/styles/paper-tokens.css, which is
   the source of truth in code; the design file is https://app.paper.design/file/01M31N5QRJ6FCPM9X3XTG5SWEN.
 colors:
   # Light appearance

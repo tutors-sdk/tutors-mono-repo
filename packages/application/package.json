@@ -1,0 +1,15 @@
+{
+  "name": "@tutors/application",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "The Tutors application ring: ports, use cases, and the in-memory adapters and contract suites that prove them",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ports": "./src/ports/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "dependencies": {
+    "@tutors/domain": "workspace:*"
+  }
+}

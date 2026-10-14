@@ -23,24 +23,24 @@ const { mockUpsert, mockChannel, allChannel, courseChannel } = vi.hoisted(() => 
 });
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(value: T) => ({ value });
   return { rune, tutorsId: rune(null) };
 });
 
 vi.mock("$app/env/public", () => ({ PUBLIC_ANON_MODE: "FALSE" }));
 
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
+vi.mock("../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts", () => ({
   supabase: { channel: mockChannel, removeChannel: vi.fn() },
   upsertTutorsConnectLatestLo: mockUpsert
 }));
 
-vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
+vi.mock("../../../packages/platform/logger/src/index.ts", () => ({
   default: { error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), setDefaultLevel: vi.fn() }
 }));
 
-import { presenceService } from "../../../packages/svelte/community/src/services/presence.svelte.ts";
-import log from "../../../packages/svelte/utils/logger/src/index.ts";
+import { presenceService } from "../../../packages/adapters/driving/svelte-state/src/community/services/presence.svelte.ts";
+import log from "../../../packages/platform/logger/src/index.ts";
 
 const course = { courseId: "web-dev", courseUrl: "web-dev.netlify.app", title: "Web Development", properties: {} } as unknown as Course;
 const lo = { title: "Lab 1", route: "/lab/web-dev/lab-1", img: "lab-1.png", type: "lab" } as unknown as Lo;

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock(
-  "../../../packages/svelte/community/src/utils/supabase-client.ts",
+  "../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts",
   () => ({
     supabase: { from: () => ({ insert: vi.fn() }) },
   }),
@@ -12,7 +12,7 @@ vi.mock("$app/env/public", () => ({
   PUBLIC_SUPABASE_ANON_KEY: "anon-key",
 }));
 
-import { createSupabaseErrorTransport } from "../../../packages/svelte/community/src/utils/error-transport.ts";
+import { createSupabaseErrorTransport } from "../../../packages/adapters/driving/svelte-state/src/community/utils/error-transport.ts";
 
 // The flush on page unload: tutors.dev answered it with 400 because the URL carried `Prefer=return=none`,
 // which PostgREST parses as a filter (release harness rollback report, tutors-release-harness#38).

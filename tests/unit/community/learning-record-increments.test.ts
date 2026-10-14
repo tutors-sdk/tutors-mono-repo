@@ -32,7 +32,7 @@ vi.mock("$app/env/public", () => ({
   PUBLIC_ANON_MODE: "FALSE"
 }));
 
-import { updateLearningRecordsDuration } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
+import { updateLearningRecordsDuration } from "../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
 
 beforeEach(() => {
   net.updates = [];

@@ -1,3 +1,3 @@
 // Half of a cross-package cycle: connect -> rbac -> connect (same layer, so only the cycle rule fires).
-import { rbac } from "@tutors/rbac";
+import { rbac } from "@tutors/svelte-state/rbac";
 export const connect = () => rbac;

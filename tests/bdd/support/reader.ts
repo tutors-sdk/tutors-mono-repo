@@ -1,5 +1,5 @@
 import { decorateCourseTree, filterByType, type Course, type Lab, type Lo } from "../../../packages/jsr/model/src/tutors.ts";
-import { LiveLab } from "../../../packages/svelte/course/src/course/services/live-lab.ts";
+import { LiveLab } from "../../../packages/adapters/driving/svelte-state/src/course/services/live-lab.ts";
 import { materialiseCourse, type LoShape, type RawCourse } from "../../support/arbitraries/course-tree.ts";
 
 /**

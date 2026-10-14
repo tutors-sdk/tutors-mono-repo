@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Window } from "happy-dom";
 import type { Course, Notebook } from "@tutors/tutors-model-lib";
-import { currentLo } from "../../../packages/svelte/runes/src/index.svelte.ts";
-import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
-import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { currentLo } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
+import { addTransport, removeTransport, type LogEntry } from "../../../packages/platform/logger/src/index.ts";
+import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(value: T) => ({ value });
   return { rune, courseProtocol: rune("https://"), currentCourse: rune(null), currentLo: rune(null), isEducator: rune(false) };
 });

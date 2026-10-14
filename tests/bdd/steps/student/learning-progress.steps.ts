@@ -3,7 +3,7 @@ import { expect, vi } from "vitest";
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
 // SvelteKit and the identity adapter. Everything between them is product code.
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../../packages/adapters/driving/svelte-state/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 // The time library builds its own client; locally it resolves a different copy of supabase-js, so its seam is `getSupabase`.
 vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({ getSupabase: (await import("../../support/supabase-recorder.ts")).createClient }));
@@ -14,15 +14,15 @@ vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
-import type { LoRecord } from "../../../../packages/svelte/community/src/types.svelte.ts";
+import type { LoRecord } from "../../../../packages/adapters/driving/svelte-state/src/community/types.svelte.ts";
 import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
 import { CourseTime } from "../../../../packages/jsr/time/src/services/course-time.ts";
 import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
-import { formatDate } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
-import { currentLo } from "../../../../packages/svelte/runes/src/index.svelte.ts";
-import { supabaseProfile } from "../../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
-import type { CourseVisit } from "../../../../packages/svelte/connect/src/types.ts";
+import { formatDate } from "../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
+import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
+import { currentLo } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
+import { supabaseProfile } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/supabaseProfile.svelte.ts";
+import type { CourseVisit } from "../../../../packages/adapters/driving/svelte-state/src/connect/types.ts";
 
 const feature = await loadFeature("tests/bdd/features/student/learning-progress.feature");
 

@@ -1,0 +1,41 @@
+{
+  "name": "@tutors/ui-navigators",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Navigator components for Tutors (MainNavigator, SecondaryNavigator, Footer, buttons, layout switchers)",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./search/*": {
+      "types": "./src/search/*.ts",
+      "default": "./src/search/*.ts"
+    },
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "build": "svelte-package -i src -o dist",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tutors/a11y": "workspace:*",
+    "@tutors/i18n": "workspace:*",
+    "@tutors/logger": "workspace:*",
+    "@tutors/svelte-state": "workspace:*",
+    "@tutors/themes": "workspace:*",
+    "@tutors/tour": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*",
+    "@tutors/ui-primitives": "workspace:*"
+  },
+  "devDependencies": {
+    "@iconify/svelte": "^5.2.1",
+    "@skeletonlabs/skeleton-svelte": "^5.0.0",
+    "@sveltejs/package": "^3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "svelte": "5.57.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.57.2"
+  }
+}

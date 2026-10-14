@@ -1,4 +1,4 @@
-import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
+import { addTransport, removeTransport, type LogEntry } from "../../../packages/platform/logger/src/index.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
 

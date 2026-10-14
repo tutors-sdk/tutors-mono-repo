@@ -45,15 +45,22 @@
         "@sveltejs/adapter-netlify"
       ]
     },
-    "packages/svelte/*": {
-      "project": [
-        "src/**/*.{ts,svelte}"
-      ]
+    "packages/domain": {
+      "entry": ["src/index.ts", "src/*/index.ts"],
+      "project": ["src/**/*.ts"]
     },
-    "packages/svelte/utils/*": {
-      "project": [
-        "src/**/*.{ts,svelte}"
-      ]
+    "packages/application": {
+      "entry": ["src/index.ts", "src/*/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/adapters/driven/*": {
+      "project": ["src/**/*.{ts,svelte}"]
+    },
+    "packages/adapters/driving/*": {
+      "project": ["src/**/*.{ts,svelte}"]
+    },
+    "packages/platform/*": {
+      "project": ["src/**/*.{ts,js}"]
     },
     "packages/jsr/*": {
       "entry": [

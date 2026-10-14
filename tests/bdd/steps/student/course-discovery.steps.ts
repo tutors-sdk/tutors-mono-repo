@@ -3,16 +3,16 @@ import { expect, vi } from "vitest";
 import type { MockSupabaseClient } from "../../support/mocks.ts";
 
 // Supabase is the only stand-in: the catalogue service and the catalogue page's load function are the real ones.
-vi.mock("../../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts", async () => {
   const { MockSupabaseClient } = await import("../../support/mocks.ts");
   return { supabase: new MockSupabaseClient() };
 });
 // The catalogue app imports the service from the package index, which also pulls in rune-based services
 // that need the Svelte compiler. Point the index at the real catalogue service alone.
-vi.mock("../../../../packages/svelte/community/src/index.ts", async () => await import("../../../../packages/svelte/community/src/services/catalogue.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/community/index.ts", async () => await import("../../../../packages/adapters/driving/svelte-state/src/community/services/catalogue.ts"));
 
 import { flattenLos, type Composite, type Course, type Lo } from "../../../../packages/jsr/model/src/tutors.ts";
-import { supabase } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
+import { supabase } from "../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
 import { load as loadCataloguePage } from "../../../../apps/catalogue/src/routes/+page.ts";
 import type { LoShape } from "../../../support/arbitraries/course-tree.ts";
 import { labShape, loadCourse, shape } from "../../support/course.ts";

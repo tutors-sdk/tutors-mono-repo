@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MockSupabaseClient, createMockFetch } from "../../bdd/support/mocks";
 
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts", async () => {
   const { MockSupabaseClient } = await import("../../bdd/support/mocks");
   return { supabase: new MockSupabaseClient() };
 });
 
-vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
+vi.mock("../../../packages/platform/logger/src/index.ts", () => ({
   default: {
     error: vi.fn(),
     debug: vi.fn(),
@@ -16,9 +16,9 @@ vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
   }
 }));
 
-import { supabase } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { catalogueService } from "../../../packages/svelte/community/src/services/catalogue.ts";
-import log from "../../../packages/svelte/utils/logger/src/index.ts";
+import { supabase } from "../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
+import { catalogueService } from "../../../packages/adapters/driving/svelte-state/src/community/services/catalogue.ts";
+import log from "../../../packages/platform/logger/src/index.ts";
 
 const mockClient = supabase as unknown as MockSupabaseClient;
 

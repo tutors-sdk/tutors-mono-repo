@@ -1,0 +1,12 @@
+<script lang="ts">
+  import { currentCourse, tutorsId } from "@tutors/svelte-state";
+  import Icon from "@tutors/ui-primitives/components/Icon.svelte";
+  import { t } from "@tutors/i18n";
+  import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
+</script>
+
+{#if currentCourse?.value?.authLevel! > 0 && tutorsId?.value?.share === "true"}
+  <div class="hover:preset-tonal-secondary rounded-lg p-2">
+    <Icon link="{siteUrls.time}/{currentCourse?.value?.courseId}" type="tutorsTime" tip={t("nav.time.tip")} />
+  </div>
+{/if}

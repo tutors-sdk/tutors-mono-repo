@@ -1,6 +1,6 @@
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import log, { addTransport, setAppName } from "@tutors/logger";
-import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
+import { createSupabaseErrorTransport } from "@tutors/svelte-state/community/utils/error-transport";
 
 setAppName("tutors-catalogue");
 addTransport(createSupabaseErrorTransport("tutors-catalogue"));

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { expect, it, vi } from 'vitest';
-import { copyCode } from '../../../packages/svelte/course/src/markdown/actions/copy-code-action';
+import { copyCode } from '../../../packages/adapters/driving/svelte-state/src/markdown/actions/copy-code-action';
 
 it('labels sanitized copy buttons and reports success only after the clipboard write succeeds', async () => {
   const node = document.createElement('article');

@@ -1,0 +1,16 @@
+{
+  "name": "@tutors/domain",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "The Tutors domain: course, authoring, learning, presence, access, pedagogy and quiz rules as plain TypeScript with no dependencies",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./course": "./src/course/index.ts",
+    "./learning": "./src/learning/index.ts",
+    "./presence": "./src/presence/index.ts",
+    "./access": "./src/access/index.ts",
+    "./pedagogy": "./src/pedagogy/index.ts",
+    "./quiz": "./src/quiz/index.ts"
+  }
+}

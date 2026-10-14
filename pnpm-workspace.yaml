@@ -1,7 +1,10 @@
 packages:
+  - "packages/domain"
+  - "packages/application"
+  - "packages/adapters/driven/*"
+  - "packages/adapters/driving/*"
+  - "packages/platform/*"
   - "packages/jsr/*"
-  - "packages/svelte/*"
-  - "packages/svelte/utils/*"
   - "apps/*"
 allowBuilds:
   esbuild: true

@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import type { Whiteboard } from "@tutors/tutors-model-lib";
 import type { PageLoad } from "./$types";
-import { courseService } from "@tutors/course/course";
+import { courseService } from "@tutors/svelte-state/course";
 
 export const ssr = false;
 

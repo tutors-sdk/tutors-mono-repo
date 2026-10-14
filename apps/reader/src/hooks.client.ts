@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import * as env from "$app/env/public";
 import log, { addTransport, setAppName } from "@tutors/logger";
-import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
+import { createSupabaseErrorTransport } from "@tutors/svelte-state/community/utils/error-transport";
 
 (globalThis as any).__TUTORS_TIME_SUPABASE_INIT__ = {
   url: env.PUBLIC_SUPABASE_URL,
@@ -10,7 +10,7 @@ import { createSupabaseErrorTransport } from "@tutors/community/utils/error-tran
 };
 
 import { initSupabase } from "@tutors/tutors-time-lib";
-import { setCourseNotFoundHandler, setCourseUnreachableHandler } from "@tutors/course/course";
+import { setCourseNotFoundHandler, setCourseUnreachableHandler } from "@tutors/svelte-state/course";
 
 initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 

@@ -1,5 +1,5 @@
 import type { PageLoad } from "./$types";
-import { courseService } from "@tutors/course/course";
+import { courseService } from "@tutors/svelte-state/course";
 import type { Topic } from "@tutors/tutors-model-lib";
 
 export const ssr = false;

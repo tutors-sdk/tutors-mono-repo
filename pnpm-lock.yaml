@@ -142,43 +142,37 @@ importers:
         version: 0.5.20(tailwindcss@4.3.3)
       '@tutors/app-config':
         specifier: workspace:*
-        version: link:../../packages/svelte/app-config
-      '@tutors/community':
+        version: link:../../packages/platform/app-config
+      '@tutors/clock':
         specifier: workspace:*
-        version: link:../../packages/svelte/community
-      '@tutors/course':
-        specifier: workspace:*
-        version: link:../../packages/svelte/course
+        version: link:../../packages/adapters/driven/clock
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/i18n
+        version: link:../../packages/adapters/driving/i18n
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/platform/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
-      '@tutors/runes':
+        version: link:../../packages/platform/metrics
+      '@tutors/svelte-state':
         specifier: workspace:*
-        version: link:../../packages/svelte/runes
-      '@tutors/runtime':
-        specifier: workspace:*
-        version: link:../../packages/svelte/utils/runtime
+        version: link:../../packages/adapters/driving/svelte-state
       '@tutors/themes':
         specifier: workspace:*
-        version: link:../../packages/svelte/themes
+        version: link:../../packages/adapters/driving/themes
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/model
       '@tutors/ui-components':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-components
+        version: link:../../packages/adapters/driving/ui-components
       '@tutors/ui-navigators':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-navigators
+        version: link:../../packages/adapters/driving/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-primitives
+        version: link:../../packages/adapters/driving/ui-primitives
       svelte:
         specifier: 5.57.2
         version: 5.57.2(@typescript-eslint/types@8.71.0)
@@ -230,43 +224,37 @@ importers:
         version: 0.5.20(tailwindcss@4.3.3)
       '@tutors/app-config':
         specifier: workspace:*
-        version: link:../../packages/svelte/app-config
-      '@tutors/community':
+        version: link:../../packages/platform/app-config
+      '@tutors/clock':
         specifier: workspace:*
-        version: link:../../packages/svelte/community
-      '@tutors/course':
-        specifier: workspace:*
-        version: link:../../packages/svelte/course
+        version: link:../../packages/adapters/driven/clock
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/i18n
+        version: link:../../packages/adapters/driving/i18n
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/platform/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
-      '@tutors/runes':
+        version: link:../../packages/platform/metrics
+      '@tutors/svelte-state':
         specifier: workspace:*
-        version: link:../../packages/svelte/runes
-      '@tutors/runtime':
-        specifier: workspace:*
-        version: link:../../packages/svelte/utils/runtime
+        version: link:../../packages/adapters/driving/svelte-state
       '@tutors/themes':
         specifier: workspace:*
-        version: link:../../packages/svelte/themes
+        version: link:../../packages/adapters/driving/themes
       '@tutors/tutors-model-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/model
       '@tutors/ui-components':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-components
+        version: link:../../packages/adapters/driving/ui-components
       '@tutors/ui-navigators':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-navigators
+        version: link:../../packages/adapters/driving/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-primitives
+        version: link:../../packages/adapters/driving/ui-primitives
       svelte:
         specifier: 5.57.2
         version: 5.57.2(@typescript-eslint/types@8.71.0)
@@ -336,43 +324,31 @@ importers:
         version: 0.5.20(tailwindcss@4.3.3)
       '@tutors/app-config':
         specifier: workspace:*
-        version: link:../../packages/svelte/app-config
-      '@tutors/community':
+        version: link:../../packages/platform/app-config
+      '@tutors/clock':
         specifier: workspace:*
-        version: link:../../packages/svelte/community
-      '@tutors/connect':
-        specifier: workspace:*
-        version: link:../../packages/svelte/connect
-      '@tutors/course':
-        specifier: workspace:*
-        version: link:../../packages/svelte/course
+        version: link:../../packages/adapters/driven/clock
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/i18n
+        version: link:../../packages/adapters/driving/i18n
       '@tutors/identity':
         specifier: workspace:*
         version: link:../../packages/jsr/identity
-      '@tutors/identity-sveltekit':
+      '@tutors/identity-better-auth':
         specifier: workspace:*
-        version: link:../../packages/svelte/identity-sveltekit
+        version: link:../../packages/adapters/driven/identity-better-auth
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/platform/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
-      '@tutors/rbac':
+        version: link:../../packages/platform/metrics
+      '@tutors/svelte-state':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/rbac
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../packages/svelte/runes
-      '@tutors/runtime':
-        specifier: workspace:*
-        version: link:../../packages/svelte/utils/runtime
+        version: link:../../packages/adapters/driving/svelte-state
       '@tutors/themes':
         specifier: workspace:*
-        version: link:../../packages/svelte/themes
+        version: link:../../packages/adapters/driving/themes
       '@tutors/tutors-create':
         specifier: workspace:*
         version: link:../../packages/jsr/create
@@ -384,13 +360,13 @@ importers:
         version: link:../../packages/jsr/time
       '@tutors/ui-components':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-components
+        version: link:../../packages/adapters/driving/ui-components
       '@tutors/ui-navigators':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-navigators
+        version: link:../../packages/adapters/driving/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-primitives
+        version: link:../../packages/adapters/driving/ui-primitives
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -463,37 +439,37 @@ importers:
         version: 0.5.20(tailwindcss@4.3.3)
       '@tutors/app-config':
         specifier: workspace:*
-        version: link:../../packages/svelte/app-config
-      '@tutors/community':
+        version: link:../../packages/platform/app-config
+      '@tutors/clock':
         specifier: workspace:*
-        version: link:../../packages/svelte/community
+        version: link:../../packages/adapters/driven/clock
       '@tutors/i18n':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/i18n
+        version: link:../../packages/adapters/driving/i18n
       '@tutors/logger':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/logger
+        version: link:../../packages/platform/logger
       '@tutors/metrics':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/metrics
-      '@tutors/runtime':
+        version: link:../../packages/platform/metrics
+      '@tutors/svelte-state':
         specifier: workspace:*
-        version: link:../../packages/svelte/utils/runtime
+        version: link:../../packages/adapters/driving/svelte-state
       '@tutors/themes':
         specifier: workspace:*
-        version: link:../../packages/svelte/themes
+        version: link:../../packages/adapters/driving/themes
       '@tutors/tutors-time-lib':
         specifier: workspace:*
         version: link:../../packages/jsr/time
       '@tutors/ui-components':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-components
+        version: link:../../packages/adapters/driving/ui-components
       '@tutors/ui-navigators':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-navigators
+        version: link:../../packages/adapters/driving/ui-navigators
       '@tutors/ui-primitives':
         specifier: workspace:*
-        version: link:../../packages/svelte/ui-primitives
+        version: link:../../packages/adapters/driving/ui-primitives
       ag-grid-community:
         specifier: ^36.2.0
         version: 36.2.0
@@ -512,6 +488,318 @@ importers:
       vite:
         specifier: ^8.3.0
         version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
+
+  packages/adapters/driven/clock: {}
+
+  packages/adapters/driven/identity-better-auth:
+    dependencies:
+      '@sveltejs/kit':
+        specifier: ^3.0.1
+        version: 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      '@tutors/identity':
+        specifier: workspace:*
+        version: link:../../../jsr/identity
+      better-auth:
+        specifier: 1.7.7
+        version: 1.7.7(@opentelemetry/api@1.9.1)(@sveltejs/kit@3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vitest@5.0.4)
+
+  packages/adapters/driving/a11y:
+    dependencies:
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+
+  packages/adapters/driving/i18n:
+    dependencies:
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+    devDependencies:
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/adapters/driving/privacy:
+    dependencies:
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+
+  packages/adapters/driving/svelte-state:
+    dependencies:
+      '@marp-team/marp-core':
+        specifier: ^4.3.1
+        version: 4.4.0
+      '@supabase/supabase-js':
+        specifier: ^2.117.1
+        version: 2.117.2(@opentelemetry/api@1.9.1)
+      '@tutors/clock':
+        specifier: workspace:*
+        version: link:../../driven/clock
+      '@tutors/identity':
+        specifier: workspace:*
+        version: link:../../../jsr/identity
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../../../platform/logger
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/model
+      mermaid:
+        specifier: ^12.1.0
+        version: 12.1.0
+      shiki:
+        specifier: ^4.5.0
+        version: 4.5.0
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+
+  packages/adapters/driving/themes:
+    dependencies:
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../../../platform/logger
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/model
+      '@tutors/tutors-types':
+        specifier: workspace:*
+        version: link:../../../jsr/types
+    devDependencies:
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/adapters/driving/tour:
+    dependencies:
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+
+  packages/adapters/driving/ui-components:
+    dependencies:
+      '@codemirror/autocomplete':
+        specifier: ^6.20.3
+        version: 6.20.3
+      '@codemirror/commands':
+        specifier: ^6.11.0
+        version: 6.11.0
+      '@codemirror/lang-python':
+        specifier: ^6.2.1
+        version: 6.2.1
+      '@codemirror/language':
+        specifier: ^6.13.1
+        version: 6.13.1
+      '@codemirror/state':
+        specifier: ^6.7.1
+        version: 6.7.1
+      '@codemirror/theme-one-dark':
+        specifier: ^6.1.3
+        version: 6.1.3
+      '@codemirror/view':
+        specifier: ^6.43.7
+        version: 6.43.9
+      '@sveltejs/kit':
+        specifier: ^3.0.1
+        version: 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      '@tutors/a11y':
+        specifier: workspace:*
+        version: link:../a11y
+      '@tutors/domain':
+        specifier: workspace:*
+        version: link:../../../domain
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../../../platform/logger
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../themes
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/model
+      '@tutors/tutors-time-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/time
+      '@tutors/ui-navigators':
+        specifier: workspace:*
+        version: link:../ui-navigators
+      '@tutors/ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+      codemirror:
+        specifier: ^6.0.2
+        version: 6.0.2
+      file-saver:
+        specifier: ^2.0.5
+        version: 2.0.5
+      isomorphic-dompurify:
+        specifier: ^4.5.0
+        version: 4.5.0(@noble/hashes@2.4.0)
+      jheat.js:
+        specifier: ^5.2.0
+        version: 5.2.0
+      pdfjs-dist:
+        specifier: ^6.4.299
+        version: 6.4.299
+    devDependencies:
+      '@skeletonlabs/skeleton':
+        specifier: ^5.0.0
+        version: 5.0.1(tailwindcss@4.3.3)
+      '@skeletonlabs/skeleton-svelte':
+        specifier: ^5.0.0
+        version: 5.0.1(svelte@5.57.2(@typescript-eslint/types@8.71.0))
+      '@sveltejs/package':
+        specifier: ^3.0.0
+        version: 3.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^7.3.0
+        version: 7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      '@tailwindcss/vite':
+        specifier: ^4.3.3
+        version: 4.3.3(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
+
+  packages/adapters/driving/ui-navigators:
+    dependencies:
+      '@tutors/a11y':
+        specifier: workspace:*
+        version: link:../a11y
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/logger':
+        specifier: workspace:*
+        version: link:../../../platform/logger
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../tour
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/model
+      '@tutors/ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+    devDependencies:
+      '@iconify/svelte':
+        specifier: ^5.2.1
+        version: 5.2.2(svelte@5.57.2(@typescript-eslint/types@8.71.0))
+      '@skeletonlabs/skeleton-svelte':
+        specifier: ^5.0.0
+        version: 5.0.1(svelte@5.57.2(@typescript-eslint/types@8.71.0))
+      '@sveltejs/package':
+        specifier: ^3.0.0
+        version: 3.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^7.3.0
+        version: 7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
+
+  packages/adapters/driving/ui-primitives:
+    dependencies:
+      '@sveltejs/kit':
+        specifier: ^3.0.1
+        version: 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      '@tutors/a11y':
+        specifier: workspace:*
+        version: link:../a11y
+      '@tutors/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@tutors/svelte-state':
+        specifier: workspace:*
+        version: link:../svelte-state
+      '@tutors/themes':
+        specifier: workspace:*
+        version: link:../themes
+      '@tutors/tour':
+        specifier: workspace:*
+        version: link:../tour
+      '@tutors/tutors-model-lib':
+        specifier: workspace:*
+        version: link:../../../jsr/model
+      isomorphic-dompurify:
+        specifier: ^4.5.0
+        version: 4.5.0(@noble/hashes@2.4.0)
+    devDependencies:
+      '@iconify/svelte':
+        specifier: ^5.2.1
+        version: 5.2.2(svelte@5.57.2(@typescript-eslint/types@8.71.0))
+      '@skeletonlabs/skeleton-svelte':
+        specifier: ^5.0.0
+        version: 5.0.1(svelte@5.57.2(@typescript-eslint/types@8.71.0))
+      '@sveltejs/package':
+        specifier: ^3.0.0
+        version: 3.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^7.3.0
+        version: 7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
+      svelte:
+        specifier: 5.57.2
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
+
+  packages/application:
+    dependencies:
+      '@tutors/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/domain: {}
 
   packages/jsr/create: {}
 
@@ -570,7 +858,7 @@ importers:
 
   packages/jsr/types: {}
 
-  packages/svelte/app-config:
+  packages/platform/app-config:
     dependencies:
       '@sveltejs/adapter-auto':
         specifier: 8.0.0
@@ -597,415 +885,13 @@ importers:
         specifier: ^8.3.0
         version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
 
-  packages/svelte/community:
-    dependencies:
-      '@supabase/supabase-js':
-        specifier: ^2.117.1
-        version: 2.117.2(@opentelemetry/api@1.9.1)
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../utils/logger
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
+  packages/platform/logger: {}
 
-  packages/svelte/connect:
-    dependencies:
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
-      '@tutors/identity':
-        specifier: workspace:*
-        version: link:../../jsr/identity
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../utils/logger
-      '@tutors/rbac':
-        specifier: workspace:*
-        version: link:../utils/rbac
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      svelte:
-        specifier: ^5.0.0
-        version: 5.57.0(@typescript-eslint/types@8.71.0)
-
-  packages/svelte/course:
-    dependencies:
-      '@marp-team/marp-core':
-        specifier: ^4.3.1
-        version: 4.4.0
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../utils/logger
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/runtime':
-        specifier: workspace:*
-        version: link:../utils/runtime
-      '@tutors/themes':
-        specifier: workspace:*
-        version: link:../themes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      mermaid:
-        specifier: ^12.1.0
-        version: 12.1.0
-      shiki:
-        specifier: ^4.5.0
-        version: 4.5.0
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
-
-  packages/svelte/identity-sveltekit:
-    dependencies:
-      '@sveltejs/kit':
-        specifier: ^3.0.1
-        version: 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      '@tutors/identity':
-        specifier: workspace:*
-        version: link:../../jsr/identity
-      better-auth:
-        specifier: 1.7.7
-        version: 1.7.7(@opentelemetry/api@1.9.1)(@sveltejs/kit@3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vitest@5.0.4)
-
-  packages/svelte/quiz: {}
-
-  packages/svelte/runes:
-    dependencies:
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
-
-  packages/svelte/themes:
-    dependencies:
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../utils/logger
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-    devDependencies:
-      svelte:
-        specifier: 5.57.2
-        version: 5.57.2(@typescript-eslint/types@8.71.0)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
-  packages/svelte/ui-components:
-    dependencies:
-      '@codemirror/autocomplete':
-        specifier: ^6.20.3
-        version: 6.20.3
-      '@codemirror/commands':
-        specifier: ^6.11.0
-        version: 6.11.0
-      '@codemirror/lang-python':
-        specifier: ^6.2.1
-        version: 6.2.1
-      '@codemirror/language':
-        specifier: ^6.13.1
-        version: 6.13.1
-      '@codemirror/state':
-        specifier: ^6.7.1
-        version: 6.7.1
-      '@codemirror/theme-one-dark':
-        specifier: ^6.1.3
-        version: 6.1.3
-      '@codemirror/view':
-        specifier: ^6.43.7
-        version: 6.43.7
-      '@sveltejs/kit':
-        specifier: ^3.0.1
-        version: 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      '@tutors/a11y':
-        specifier: workspace:*
-        version: link:../utils/a11y
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
-      '@tutors/connect':
-        specifier: workspace:*
-        version: link:../connect
-      '@tutors/course':
-        specifier: workspace:*
-        version: link:../course
-      '@tutors/i18n':
-        specifier: workspace:*
-        version: link:../utils/i18n
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../utils/logger
-      '@tutors/quiz':
-        specifier: workspace:*
-        version: link:../quiz
-      '@tutors/rbac':
-        specifier: workspace:*
-        version: link:../utils/rbac
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/themes':
-        specifier: workspace:*
-        version: link:../themes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      '@tutors/tutors-time-lib':
-        specifier: workspace:*
-        version: link:../../jsr/time
-      '@tutors/ui-navigators':
-        specifier: workspace:*
-        version: link:../ui-navigators
-      '@tutors/ui-primitives':
-        specifier: workspace:*
-        version: link:../ui-primitives
-      codemirror:
-        specifier: ^6.0.2
-        version: 6.0.2
-      file-saver:
-        specifier: ^2.0.5
-        version: 2.0.5
-      isomorphic-dompurify:
-        specifier: ^4.5.0
-        version: 4.5.0(@noble/hashes@2.4.0)
-      jheat.js:
-        specifier: ^5.2.0
-        version: 5.2.0
-      pdfjs-dist:
-        specifier: ^6.4.299
-        version: 6.4.299
-    devDependencies:
-      '@skeletonlabs/skeleton':
-        specifier: ^5.0.0
-        version: 5.0.0(tailwindcss@4.3.3)
-      '@skeletonlabs/skeleton-svelte':
-        specifier: ^5.0.0
-        version: 5.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))
-      '@sveltejs/package':
-        specifier: ^3.0.0
-        version: 3.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^7.3.0
-        version: 7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      '@tailwindcss/vite':
-        specifier: ^4.3.3
-        version: 4.3.3(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      svelte:
-        specifier: 5.57.2
-        version: 5.57.2(@typescript-eslint/types@8.71.0)
-      tailwindcss:
-        specifier: ^4.3.3
-        version: 4.3.3
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vite:
-        specifier: ^8.3.0
-        version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
-
-  packages/svelte/ui-navigators:
-    dependencies:
-      '@tutors/a11y':
-        specifier: workspace:*
-        version: link:../utils/a11y
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../community
-      '@tutors/connect':
-        specifier: workspace:*
-        version: link:../connect
-      '@tutors/course':
-        specifier: workspace:*
-        version: link:../course
-      '@tutors/i18n':
-        specifier: workspace:*
-        version: link:../utils/i18n
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../utils/logger
-      '@tutors/rbac':
-        specifier: workspace:*
-        version: link:../utils/rbac
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/themes':
-        specifier: workspace:*
-        version: link:../themes
-      '@tutors/tour':
-        specifier: workspace:*
-        version: link:../utils/tour
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      '@tutors/ui-primitives':
-        specifier: workspace:*
-        version: link:../ui-primitives
-    devDependencies:
-      '@iconify/svelte':
-        specifier: ^5.2.1
-        version: 5.2.2(svelte@5.57.2(@typescript-eslint/types@8.71.0))
-      '@skeletonlabs/skeleton-svelte':
-        specifier: ^5.0.0
-        version: 5.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))
-      '@sveltejs/package':
-        specifier: ^3.0.0
-        version: 3.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^7.3.0
-        version: 7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      svelte:
-        specifier: 5.57.2
-        version: 5.57.2(@typescript-eslint/types@8.71.0)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vite:
-        specifier: ^8.3.0
-        version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
-
-  packages/svelte/ui-primitives:
-    dependencies:
-      '@sveltejs/kit':
-        specifier: ^3.0.1
-        version: 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      '@tutors/a11y':
-        specifier: workspace:*
-        version: link:../utils/a11y
-      '@tutors/i18n':
-        specifier: workspace:*
-        version: link:../utils/i18n
-      '@tutors/rbac':
-        specifier: workspace:*
-        version: link:../utils/rbac
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../runes
-      '@tutors/themes':
-        specifier: workspace:*
-        version: link:../themes
-      '@tutors/tour':
-        specifier: workspace:*
-        version: link:../utils/tour
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../jsr/model
-      isomorphic-dompurify:
-        specifier: ^4.5.0
-        version: 4.5.0(@noble/hashes@2.4.0)
-    devDependencies:
-      '@iconify/svelte':
-        specifier: ^5.2.1
-        version: 5.2.2(svelte@5.57.2(@typescript-eslint/types@8.71.0))
-      '@skeletonlabs/skeleton-svelte':
-        specifier: ^5.0.0
-        version: 5.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))
-      '@sveltejs/package':
-        specifier: ^3.0.0
-        version: 3.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)
-      '@sveltejs/vite-plugin-svelte':
-        specifier: ^7.3.0
-        version: 7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
-      svelte:
-        specifier: 5.57.2
-        version: 5.57.2(@typescript-eslint/types@8.71.0)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vite:
-        specifier: ^8.3.0
-        version: 8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
-
-  packages/svelte/utils/a11y:
-    dependencies:
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
-
-  packages/svelte/utils/i18n:
-    dependencies:
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-    devDependencies:
-      svelte:
-        specifier: 5.57.2
-        version: 5.57.2(@typescript-eslint/types@8.71.0)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-
-  packages/svelte/utils/logger: {}
-
-  packages/svelte/utils/metrics:
+  packages/platform/metrics:
     dependencies:
       '@prometheus-io/client':
         specifier: ^0.16.1
         version: 0.16.1
-
-  packages/svelte/utils/privacy:
-    dependencies:
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
-
-  packages/svelte/utils/rbac:
-    dependencies:
-      '@tutors/community':
-        specifier: workspace:*
-        version: link:../../community
-      '@tutors/logger':
-        specifier: workspace:*
-        version: link:../logger
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-      '@tutors/tutors-model-lib':
-        specifier: workspace:*
-        version: link:../../../jsr/model
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
-
-  packages/svelte/utils/runtime: {}
-
-  packages/svelte/utils/tour:
-    dependencies:
-      '@tutors/i18n':
-        specifier: workspace:*
-        version: link:../i18n
-      '@tutors/runes':
-        specifier: workspace:*
-        version: link:../../runes
-      svelte:
-        specifier: ^5.0.0
-        version: 5.56.8(@typescript-eslint/types@8.71.0)
 
 packages:
 
@@ -1384,9 +1270,6 @@ packages:
 
   '@codemirror/theme-one-dark@6.1.3':
     resolution: {integrity: sha512-NzBdIvEJmx6fjeremiGp3t/okrLPYT0d9orIc7AFun8oZcRk58aejkqhv6spnz4MLAevrKNPMQYXEWMg4s+sKA==}
-
-  '@codemirror/view@6.43.7':
-    resolution: {integrity: sha512-FZsExxkoxnAN+d9TgqXLg5g4A1oQwzX9WlkOT5i2PKkcW7xx3Bmu0vs90g6fo9Mpdsb/l96dnAraQ8932aO4/g==}
 
   '@codemirror/view@6.43.9':
     resolution: {integrity: sha512-sTuUzTpPMFebRhg6dawChoKKgndIwfjmJgKVxBefPElcU2NwQ6AFroupk0SFqEerQyZOGRfDNnSN8Dw/lMAsXw==}
@@ -1831,9 +1714,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@internationalized/date@3.12.2':
-    resolution: {integrity: sha512-FY1Y+H64NDs+HAF6omlnWxm3mEpfgaCSWtL5l551ZZfImA+kGjPFgrnJrGjH6lfmLL0g8Z/mBu1R3kufeCp6Jw==}
 
   '@internationalized/date@3.12.3':
     resolution: {integrity: sha512-fuLX+3ZKLsxI73y8b01EG/WjHb6gE6weCqlfawPO27kBWGMh9G1yH6Csv1uU7/cac9H2GHmOMt6CjmuQ1aia4Q==}
@@ -2411,26 +2291,13 @@ packages:
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
 
-  '@skeletonlabs/skeleton-common@5.0.0':
-    resolution: {integrity: sha512-OzBf8nUsYMXPSo6FO2MSZ+pKzAN66Dro9Jis3Xf7sJRpbpzLU9sr4PSW9K9uDy4Z6/EiQPk7R9JMr0J633ft6w==}
-
   '@skeletonlabs/skeleton-common@5.0.1':
     resolution: {integrity: sha512-iOZGjme/ZVG3uwdEB66l0HAEzqn+NQnCPJ73KXpf5SVhgKq4HGVigp1JILBvLK1o1Wn2wu+Wiaiy55YzX5Hu+w==}
-
-  '@skeletonlabs/skeleton-svelte@5.0.0':
-    resolution: {integrity: sha512-SuUX19bCFku8GF2kmLPFUTC1c7k8GeSSYJz4oJfa7Nb3LTIY+WDMWeGbwvMzfqyhV6s2XV3xefyf1joVHgzPAg==}
-    peerDependencies:
-      svelte: ^5.40.0
 
   '@skeletonlabs/skeleton-svelte@5.0.1':
     resolution: {integrity: sha512-SoCQIAMOcZz/PtRoPG0PI8PYA3C/daJh5SZG54yUQj2CyK8sIziyiyKjrhpnRNx6+L1kQtkvIvJXScYep1e/dw==}
     peerDependencies:
       svelte: ^5.40.0
-
-  '@skeletonlabs/skeleton@5.0.0':
-    resolution: {integrity: sha512-kcUU77eZTNdbz59FgCxIjimH1d9DkZtMU3+IT2yBxoFQczZGPkJ0xw97ecHeJfzBp8Ah16NqPOcxHjXxO77O9w==}
-    peerDependencies:
-      tailwindcss: ^4.0.0
 
   '@skeletonlabs/skeleton@5.0.1':
     resolution: {integrity: sha512-WozocxlhoeJdo60qnY+JvvpVqyfV5AsB4PrBisAcIcMIMXMbXfI8a5JJ7KbqfONVjBl1AtRTqdFW6g3dBOlsIg==}
@@ -2494,11 +2361,6 @@ packages:
     peerDependenciesMeta:
       '@opentelemetry/api':
         optional: true
-
-  '@sveltejs/acorn-typescript@1.0.11':
-    resolution: {integrity: sha512-LFuZUkjJ9iF7JZye/aG5XM0SFcQ5VyL0oVX4WJ9dc0Va3R3s0OauX1BESVCb+YN/ol8TAfqGDDAQsTG627Y5kw==}
-    peerDependencies:
-      acorn: ^8.9.0
 
   '@sveltejs/acorn-typescript@1.0.13':
     resolution: {integrity: sha512-wgKggnhZVL9Bfx1OaKKTrYY9BFRk6C8UAkQNUcIv1+llzYrIqy+RZm5HPKzn0NpEBvTVhTqB4kQyllZywsRBRQ==}
@@ -2944,78 +2806,38 @@ packages:
     resolution: {integrity: sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==}
     engines: {node: '>=14.6'}
 
-  '@zag-js/accordion@1.42.0':
-    resolution: {integrity: sha512-eTVh6Uz3CqdcJDr5mHWTT+oICSrZFfYCCxIpOKF00nADmb96nCDqOAYFMf8gM3J/4UDS/V27QzEH5GPmFWiHIw==}
-
   '@zag-js/accordion@1.43.0':
     resolution: {integrity: sha512-Cy7jSbmFAn4mm+btHjCk0rtYEq5ggTvuLEFDdLnnEUw3SvK0H9J1hlouX5QVEybgibI2TFwk5wd8arn+hpZRnw==}
-
-  '@zag-js/anatomy@1.42.0':
-    resolution: {integrity: sha512-F6kRAPxgBZRZmuV5SLywcrGNSclKcAcPAAgSrEdr2Z2dzFgQngbvS4dmdQyGau/vtQ42OlCI48Ri4t0hZxXkMw==}
 
   '@zag-js/anatomy@1.43.0':
     resolution: {integrity: sha512-hcARaNvhU+jXukKCU4Gz4eXU2oUSlppi15L/MoxcckMum+Pu1HFqjWpllDgjb7RyByHYX6XfFk6ijPRV8EzPpg==}
 
-  '@zag-js/aria-hidden@1.42.0':
-    resolution: {integrity: sha512-ao1RyEbHbglJtLLR4sJLPiD3hWF1CacuN5eqvODh/7HcntWULrkUHo8DIdzYgFL9GUHDyDmpaechMX5wL3kdPg==}
-
   '@zag-js/aria-hidden@1.43.0':
     resolution: {integrity: sha512-JUPIIPbcNsWW3vbPBkGBTHiPwC1jPsiYCMptyXif73J3RQpEW2DLdjen4jl7CrolSZndhVtkAUAQSfmuvWel8Q==}
-
-  '@zag-js/auto-resize@1.42.0':
-    resolution: {integrity: sha512-iL7EI30VknEkVb8PhTcLkvR8aiZda0IwJGT4K0cb7J/fMxsDAGjnjdLRu+dGUPZsXji1n58wlaKjTtCQCaXfOA==}
 
   '@zag-js/auto-resize@1.43.0':
     resolution: {integrity: sha512-qbwmMwMn6HxHgDWyF6FzWWf7yJeoWmmIPRzFbNVDg1ohMI2CpSfYqxh7LHk1bO/5C5j3pZ/0VY2j27b3szckqA==}
 
-  '@zag-js/avatar@1.42.0':
-    resolution: {integrity: sha512-rY2OxTTlvX1EMXENruejUUOZeiHusEpWLHNhrlqXMWMPWmcCe3aZ7iGMvjPFMb2mTMn0fzWmuY0nZDdVYk3V/g==}
-
   '@zag-js/avatar@1.43.0':
     resolution: {integrity: sha512-9bN1OzbrfKn2bP2d+Tw3d81h5vLbCKms/CTXvdkMnX1ZP5VrD/C1Hy1TyVW/7apUoJ1nHS6/Zi1RIfb2xnF0jQ==}
-
-  '@zag-js/carousel@1.42.0':
-    resolution: {integrity: sha512-8VMPlg5DP8vye4ujyEqzM/EQ0osOVtoG3bUJ6CGWdRIdSkbgjIt1tY8DlS1WzOvSUMnTcTAi/RPxoxYZwTIhsw==}
 
   '@zag-js/carousel@1.43.0':
     resolution: {integrity: sha512-6ZOXOQHiNth+WNzAvFwzp/l8UDjLjAXHdEpHW1XjkY/6sXbpmbT7hXFqM4X9U/IuVrsnG+bF59yb0bZdrzF4DA==}
 
-  '@zag-js/collapsible@1.42.0':
-    resolution: {integrity: sha512-MSQo9qRwp2r6aj3G/lKd3gSXAAjuCaq1LtLT3BxHEQ5skn2NQWTKVgReUSuDJNl0Lz+Z5WYq5+5TCDHr4YKHRA==}
-
   '@zag-js/collapsible@1.43.0':
     resolution: {integrity: sha512-6AqDCYLQI/AdD4gOIlg/msQUkkvdH4WknZCm4dCgJ2v9sRPu7QcCSN83Y/k/PTQqv02V4pVSRQHVHzLosGjShw==}
-
-  '@zag-js/collection@1.42.0':
-    resolution: {integrity: sha512-+Bhj/2zqVVzmS788lsg/xK1ezksMc2pfVg2oO6MnipLCo8KrgzuuvhUahUzK+uIOc9ljBW4zl9Wcm3G248gh0A==}
 
   '@zag-js/collection@1.43.0':
     resolution: {integrity: sha512-5B/K12/z146o2tMY26HKFwG+faEAhp8+lMX2XnyOEh8y4LRUBNBt6znwxNU+YrLHrhb6i3lIEaHRcfSvkglEJQ==}
 
-  '@zag-js/combobox@1.42.0':
-    resolution: {integrity: sha512-fe+Sco278h8PPFM0g3eR5366/oVIfSI3B7qDXl/xmYKMQXhIp+bKxew3U0q1COSVof0x3wrIoIpY51BXj1McGw==}
-
   '@zag-js/combobox@1.43.0':
     resolution: {integrity: sha512-fpK19QSZtxlZQp5Zwql3mXFzXoJMVAy/3FJ7p1VQex3ZyezpZK4X3ThRdfxupOEmFst1HmtRtlGLqJXNVFEIsg==}
-
-  '@zag-js/core@1.42.0':
-    resolution: {integrity: sha512-jE/sbpZvbD+/etbawzhL/L2lP1pPefed5d919je+K5h9b6GAK3lUThleaDUCww3bT53B1L7O5gtqBapW37N1ug==}
 
   '@zag-js/core@1.43.0':
     resolution: {integrity: sha512-iIpTu/U1OHKXGjXq/bn/ek32nIKE0lmS2gLdihYmv1jtPXH8hVHaIOXR5KYGfOjMVb4+FiMMCZHlH9MWbLk2iA==}
 
-  '@zag-js/date-picker@1.42.0':
-    resolution: {integrity: sha512-M8zt5kdOld7YKYmCZCQ8xPJ8+xwBpxIumzWgzFGoadSxYQPaK8gPqPFKxADJZWX7p/oHdpw2BVcVFWNC0urcyg==}
-    peerDependencies:
-      '@internationalized/date': '>=3.0.0'
-
   '@zag-js/date-picker@1.43.0':
     resolution: {integrity: sha512-pusQ1SYXJ5ffCLMoVLddxfef+nbAzhndZ6mvZLDNK2QAgFymqZ6Imo4kYC3nJ2r6yGKu9KjRQKZM4hzZNhMT1g==}
-    peerDependencies:
-      '@internationalized/date': '>=3.0.0'
-
-  '@zag-js/date-utils@1.42.0':
-    resolution: {integrity: sha512-pjFahzgNGlIIbNQWaPY4RcFhMo+9d9nHj7FctmexXdQ6x4aByfD8bPCUKomO2MsMs0/2lRkACjqZeJwP4oivAw==}
     peerDependencies:
       '@internationalized/date': '>=3.0.0'
 
@@ -3024,228 +2846,115 @@ packages:
     peerDependencies:
       '@internationalized/date': '>=3.0.0'
 
-  '@zag-js/dialog@1.42.0':
-    resolution: {integrity: sha512-2KpLQASTjr2JUR0XvqsMueVo+AAPeanD9ShFCY/YKv2qp6WRHo1Ig/tRj6pInsSBiHFo7QXyAD4SDax6C0zDcw==}
-
   '@zag-js/dialog@1.43.0':
     resolution: {integrity: sha512-CuJo+w6ZSfZqaK4+Cqm+rX++/8W1LkU3lnR4ojtFzAZkA9JTruuXOgQ3Q9M9mRj5SBk5cqBRt6uCN1SaS7Ku4g==}
-
-  '@zag-js/dismissable@1.42.0':
-    resolution: {integrity: sha512-Cx/FAQ2MuQy3kecdmswrFk94Zie1ieBa1Pnt/2ECI5FR914EJd3DwY9Krsmlrq4Z15Wm+pVtfLXgakDewVgsiQ==}
 
   '@zag-js/dismissable@1.43.0':
     resolution: {integrity: sha512-bf19aG9iLxwivpC+lntS2Lzkr4OB73zzPJWI21eIeyMDOX5+QDAZEX9gwNZRKYh1AkEq/oVHYWu71aZKNmdR8w==}
 
-  '@zag-js/dom-query@1.42.0':
-    resolution: {integrity: sha512-JgCNfp7F+YNFNb7Xmt6rXQr3N3V9Mp+pFRvZ8j5BTC3/G8ZYj/enrgOcuVwPlXPBGtA7ysvjig2x1c0Uou/6kg==}
-
   '@zag-js/dom-query@1.43.0':
     resolution: {integrity: sha512-yQDR00jJj0tgrRH43QJx7NtQH+EBxQtEdFKMzG7c88xL1ZRtqXYpqNNSmCuGj5RTsEceQjEhAxeTJikUYp9M0g==}
-
-  '@zag-js/file-upload@1.42.0':
-    resolution: {integrity: sha512-1I8mCSh6fykHmTStuD9qS425vySOhBjFZfkqLG1J10IfGjz8KCoHcOEbZDHqbJa4/Yq0d+mrwHpOYPS6jYBimA==}
 
   '@zag-js/file-upload@1.43.0':
     resolution: {integrity: sha512-3DoyQ+NRWkYYNbKFyuK60Ral5P7Fd+58YPDIQTX2RgjGgGzMzkfGMQWmLdGUe+aISHPjuNU6/iH1+MGhC+xwVg==}
 
-  '@zag-js/file-utils@1.42.0':
-    resolution: {integrity: sha512-goU5T/8SVpeoR33PS4kRWZkcfSERI7FVqqSn521PmxZ/wZMVDrXaivygbttGV8nCWfbwmsMqeyp2iy5MnbNovQ==}
-
   '@zag-js/file-utils@1.43.0':
     resolution: {integrity: sha512-ddt5UBU1pecmiUQbWe9xymcyBop8gGCcYXRautsqPz6aAHA82O9UvJ7/FxLr6qvXQO8fmYaPsIRR4342NahIZw==}
-
-  '@zag-js/floating-panel@1.42.0':
-    resolution: {integrity: sha512-C1nUUgpkAex6QG7/5IkTu38ZBj4RMLbK3sNrssMoZ6kR60jB7D1Lz7D4NbD2b0dYabM6XH10TEaCzEPY8LpC3A==}
 
   '@zag-js/floating-panel@1.43.0':
     resolution: {integrity: sha512-m/D+ymocdP8a+02KdWuATHIcCvRaUip3vtITnXzQHL8uZ03gpCrMk120q3GkbxhPYssPanluHEh7FgygJUf0Kg==}
 
-  '@zag-js/focus-trap@1.42.0':
-    resolution: {integrity: sha512-47O/OpLUm9o8CZd3ez0ntAOUKZEQ1zFj7e86fpYuQ+fNtBlpYMFHQxMRftPkiU5Ysjrz5x8RYV8A8uJ9cboNig==}
-
   '@zag-js/focus-trap@1.43.0':
     resolution: {integrity: sha512-6JApoRanDOcrfQBd7pz/rp2YxdtBmIjRenH9+1tKscbtXRJLWUGZTtr2QiCHCkyRKZdi7kyo7309HTzM62n+OA==}
-
-  '@zag-js/focus-visible@1.42.0':
-    resolution: {integrity: sha512-zT1Fk+8m6x6hzoD5fOIEV4JQIX33pwkBzANqwruQwaSqkOYtI2FmsG71YHnzKvrBppG2okPrRHEMyZEgfshIcQ==}
 
   '@zag-js/focus-visible@1.43.0':
     resolution: {integrity: sha512-1CDA2BZ9k6E6DozNjpTmt+i68HuDAvME2pbqtC+aM7woJK9SuHAXA82qyz//NnaOQnXKQMAOigumfS3fguNswQ==}
 
-  '@zag-js/i18n-utils@1.42.0':
-    resolution: {integrity: sha512-uVw+Ua3apxaBCRcsfHOlXcRPDNygSGoJ6ivmK0UJaw5QikZLEBYr7grzXDwRvZrdk0j0sA9Hk/gg3GdSXkhI3Q==}
-
   '@zag-js/i18n-utils@1.43.0':
     resolution: {integrity: sha512-HSjdmTziCUuc+DkUDO/3oV8X6zynr4wactlyqnQfNNfgaWDTYY9dJRWJ12ILhTjtasNSDENxBlhuEdDmOwDisQ==}
-
-  '@zag-js/interact-outside@1.42.0':
-    resolution: {integrity: sha512-CNNT1OtASacXEst8NMWDGmDwkOQgVQ0Ahc2SpPjSBZoVpxQIfhZ9FoeqcggDX7Nvze7kl6/OwA7pPi5TGQTVZQ==}
 
   '@zag-js/interact-outside@1.43.0':
     resolution: {integrity: sha512-mQ/6HT6Tn99H4l7u7FaxvXirE4wYenlZFuFkR0qXGRaR7bDRUeWm3dJKcV0Ex3gwcs+G5Z0ZdvA++VBfVh+WUg==}
 
-  '@zag-js/listbox@1.42.0':
-    resolution: {integrity: sha512-nt842jgTaBYTgkqu3y+4l88wpmoyesXkS+Bc3Uvuc7ze9IB04vicSiRi+vstYyA20s/EjOr2tR9Kq7dNoROLaQ==}
-
   '@zag-js/listbox@1.43.0':
     resolution: {integrity: sha512-gNO10K9yffPjkXILP91R8uU/o8Tgw0CzpbBPiVp6IF0dA/3A0Nb7fijJBlYL/s11F/5CDjnuiAWHpENv41+AUw==}
-
-  '@zag-js/live-region@1.42.0':
-    resolution: {integrity: sha512-YFkytNxBJDQIndh7W+bWMN9P74qsnQkzqqLv6LtX/TiOYr1PnL0p54DMvWhE7hqYiCyyLscBM9nbA1foSoPIPg==}
 
   '@zag-js/live-region@1.43.0':
     resolution: {integrity: sha512-8lUL9+Z34416bXyS/1sorU1sbICcgktp653PVXZ43kmzbUefl6WMTwTYuxULGklRrFX7vOLQebJ8qw9Bdf2xFw==}
 
-  '@zag-js/marquee@1.42.0':
-    resolution: {integrity: sha512-bTYbNFuDdKV7SyHchyCLhE+JtReO8VUaGfv9Prh3LfFq7yNEqiFngqhY7TZBw6Vok4q8msu0r9aAqOspZqHEHA==}
-
   '@zag-js/marquee@1.43.0':
     resolution: {integrity: sha512-PsQgqfNFBdZTUvQ61jYPbQTMrSl/MhBzJOyLe01iU2A9As6+Oi0b4a23jLAUAo5B2Cd1ejXbJDkzFadqaWkXAA==}
-
-  '@zag-js/menu@1.42.0':
-    resolution: {integrity: sha512-Jg2q+FrHeZ2ZTxrz/TAnNelapN6IGtyCnBmoNbcHGcnf3gqnEjJpug3Fn6BmPQrmTNw0+q7hBmrESyncjrfbUg==}
 
   '@zag-js/menu@1.43.0':
     resolution: {integrity: sha512-Sox9be5JdAYnsZHj1esbXH2J9in/EL/bbbMG1+MFcHPV57TjsI0HyT5ETT3WeeATrY5h45Z7gHYhJkRkHKZxWA==}
 
-  '@zag-js/pagination@1.42.0':
-    resolution: {integrity: sha512-QEcnc8z0U4RREOa1MVGFNbKJONLzbo5egdUppURkbAwhv+paR9ufG4uli7QlMvA3KgdfCHPM92+MhnYwutp5nw==}
-
   '@zag-js/pagination@1.43.0':
     resolution: {integrity: sha512-ccm/erPTk8B0mygMFuEiHRkomp7gtTlTJouebN0H0dTQ8tvyOrap4mvpUknme/KOJpzs7zlSSnoqZh3sNyxJxg==}
-
-  '@zag-js/popover@1.42.0':
-    resolution: {integrity: sha512-4knrgFDeYlKqjyRfYPEUfpIRjsTvg4zY/C0i3sbdxNEWiOW30DzW+/8Igabb00bOabrtRuIHBejm0Jorgn5JIQ==}
 
   '@zag-js/popover@1.43.0':
     resolution: {integrity: sha512-/4fXaOxcKsYV+RbcXmT36MdsVgjFKJOQ7Bnbcd3ZrB9ygbv7L+zkuveLCbWtXd1XJB5XJG1VmMfpyoo068FSQw==}
 
-  '@zag-js/popper@1.42.0':
-    resolution: {integrity: sha512-hQvXzLen/hXCItww5tJT6+VLxnee8CpsX0FabIiHub/fKIB6OeHmS/lk+RnIII57bljdjLSus/KnT8Xlmj6tRw==}
-
   '@zag-js/popper@1.43.0':
     resolution: {integrity: sha512-mN69qeFpsbrnwijwbRZlgFWiBT7Aes+VMT9sLOZ5nMHQDDupbWQDqh3DCWz8Ojqp6LbDUq6uOFdA5zrLxE5rmQ==}
-
-  '@zag-js/progress@1.42.0':
-    resolution: {integrity: sha512-ZGex63fTJHy4or5N8fBUxiwqxBGd1Vr+OE0Bnm8+FAQNjJ5BtCLhIlmsIUS8aX2SrBR0j/tp8E0ss35/PNq29Q==}
 
   '@zag-js/progress@1.43.0':
     resolution: {integrity: sha512-vGtpT6pq999MP9jPa+Tm5WuYNW45ykDJoGuLQSZvPt5dAZq2e+Ucr8pJMQHVdiP5wmIqNBa1BuuNNAZi4lHYLA==}
 
-  '@zag-js/qr-code@1.42.0':
-    resolution: {integrity: sha512-X9cUPzJKI7aWrf8ie2jgaXlFFetJf1fdwhnWnP5rG8v3jrFe4tDA1n3z6HE4bXkluZv/2EL9cROglbz5WGB6/g==}
-
   '@zag-js/qr-code@1.43.0':
     resolution: {integrity: sha512-rVGdbu1vtZW0YMw8PvSKvBEsSrPp6QG39qHlWowOPfqJaeXB0YjSbL102xs0IpJtkDkshzdV5ATKrkqWrpkhKQ==}
-
-  '@zag-js/radio-group@1.42.0':
-    resolution: {integrity: sha512-VtoN9/d3HCe/oumjdwKzv/KilF2aLzbt1IYpejXF7Cwat8xmqnCoxiA2PLjE9NfD97ZM7grng1YGcjqrWOWvuQ==}
 
   '@zag-js/radio-group@1.43.0':
     resolution: {integrity: sha512-5Y06hC2R+PHDa9Hxu+sAVyCm89fmjA5tLHEFFS4ZdwqSqc9dO42EEwSeneC7ZB3uqDKTfHgL/L6/Bw2vrzg9fw==}
 
-  '@zag-js/rating-group@1.42.0':
-    resolution: {integrity: sha512-0+OQ+iy0djWJBzWdH8pMn+ze88B0T4TdO3kJuHyG2fgJnVgmuGWkoKp8RtXSAv2CVqXfx+diivqF9ZmhNmzLQA==}
-
   '@zag-js/rating-group@1.43.0':
     resolution: {integrity: sha512-6gb8tAR/RRD9Lj8BuGVtAopuAGVHJqxXXUH7/39KbH0HCEa53YKf04Y2vCqNNfWBuay5wtcqC80k88rfiR5Dtw==}
-
-  '@zag-js/rect-utils@1.42.0':
-    resolution: {integrity: sha512-4hIvDZEPxYAqhiSNVkZtQLzd7dV7IAn7c5GdWnVVAYtJDD1Tn+v0TYkoPuGQMqLsdpNDwncw3baT3xq1+PQi+w==}
 
   '@zag-js/rect-utils@1.43.0':
     resolution: {integrity: sha512-Cj4Y9trhY4+NpVN74dkLb5ZOkLFieypnIRFvOovo0JrexZ/wtj1srG9Y35zWgBsmWDTkvp9bexdFg0rggPcNGQ==}
 
-  '@zag-js/remove-scroll@1.42.0':
-    resolution: {integrity: sha512-RP1SzQuVDk+np5knkEz/mRasLHZUbO6f3xgq4M2u4SQhpOe34uJybd+14f4ElBntAJQWVeMhohpW4n0pNUW6WQ==}
-
   '@zag-js/remove-scroll@1.43.0':
     resolution: {integrity: sha512-2cE7yS3G6JffdlKMzECDQm2ro3mAqWf2ovSylFcsHh/xLx4RIgtv3EivJrNTcr1d+H0YF2/uVyDuUwYlycWNsQ==}
-
-  '@zag-js/scroll-snap@1.42.0':
-    resolution: {integrity: sha512-gFc5LZvHa4lyCmlt5n6nODc77dGeOc+3sWQMK+20cm/VjYNCsUDjoHP2KO5tgqLJNjPrON+i0BN/QfJUfoNA7Q==}
 
   '@zag-js/scroll-snap@1.43.0':
     resolution: {integrity: sha512-nLvza7HlprDzrmSMRzRE3uv6xDm7Yh66tqkea88YYs/hgLk397jxEOFgHUuo8tGoahKQkCdJrppg+cuwmrIEoQ==}
 
-  '@zag-js/slider@1.42.0':
-    resolution: {integrity: sha512-bHTNGxM2H2oag5IbsfsV/OJegz4ic1Zs89Mvm+ryVzqOc0upJl0xMC/D/K8wnRJ8OPubNnldA+R4W8o+/4IU8w==}
-
   '@zag-js/slider@1.43.0':
     resolution: {integrity: sha512-1wiR7pwjTkQKivJxI+9agXTHdJExuTM7ohujJY204lcAMgUO4QzQADWrpSyARL9DmJTOFE8fYXbg9XNeP1gyHA==}
-
-  '@zag-js/steps@1.42.0':
-    resolution: {integrity: sha512-IDJKk4zPhQjJv5fxAvOy+LRcdnim5rJjpUdEsWq0/aDiVZiddg3sXLgJ8dTGfv6e58AIjTlaz85xv21dldWKYw==}
 
   '@zag-js/steps@1.43.0':
     resolution: {integrity: sha512-73L0E/1x2wzHcQ1EisQj6y2TwIgIA39DwuFcvTluWg07P49oAtrhw7qw5KxqS7+GlSSWO4ZV1/yHEm5289qkyA==}
 
-  '@zag-js/store@1.42.0':
-    resolution: {integrity: sha512-qQ5LB+l2dR1rZFCsErn9PeSrOADjnsvDl1NreEN/AaKXw9RK0YiQDqaCh7ndqjjA72UAcrnzgXsS0AAqxCC+MQ==}
-
   '@zag-js/store@1.43.0':
     resolution: {integrity: sha512-Q6b6vbAbIGDkXO1sGoM+hjOP2BL6uHIMX3MUhpjFpIZ6qhkxU+iRa8bCGU7xYT2vRyEMlN5NUU77PjoITpSwRg==}
-
-  '@zag-js/svelte@1.42.0':
-    resolution: {integrity: sha512-24UesuYzeRA5blEQcAiWt5tWLG05NhiJ1WNHhwafmn5HFBRvlaU7J7VymIHE06cKMCThwy2YjSgq3b56e+f3VQ==}
-    peerDependencies:
-      svelte: '>=5'
 
   '@zag-js/svelte@1.43.0':
     resolution: {integrity: sha512-gzDR6OYwOtRgN5rDpGLW5v2odwX8OQpzN7cXLlBA6UtEULhurZp2Fh4VaUTxYBREfmit0l2fuBZiom0W0Cm7RA==}
     peerDependencies:
       svelte: '>=5'
 
-  '@zag-js/switch@1.42.0':
-    resolution: {integrity: sha512-227GNBAz8mYSKVsHV6r4YA/1/0rtbrP2foygPligDOkWMsNP9cjnW1HwM/z3x54UPWLqKuZjsjD7LSuDhbxtBA==}
-
   '@zag-js/switch@1.43.0':
     resolution: {integrity: sha512-WH6i+0H9l7iIg7gYlcq5EcbJpwBjdYgxxFOGqyr04+q2WV46ytEnkW+iu61TVFr9vpE75wgtkLEG/gc080Y/zw==}
-
-  '@zag-js/tabs@1.42.0':
-    resolution: {integrity: sha512-O0qFmeneJHr85AUL/44mHQy8Cr/jCZzh55rTKz5sBoZxmk7PIGopsasNLnpyaZ34tOpcKnNEg96FdlZ4O1bjlQ==}
 
   '@zag-js/tabs@1.43.0':
     resolution: {integrity: sha512-Nll5xQUPGOdVTYd+DYGA3wF+0xlJc+kRmQoAuE5ZHIsLuJrXn9jhRwkmQHL2rh/lln3cT9Ecp4UDWl/qyqBecQ==}
 
-  '@zag-js/tags-input@1.42.0':
-    resolution: {integrity: sha512-+zGHcW1EeYCfxfngR4DXJEUWn6iKBoWkN2OnP4HrrWIAwk+0yTOQpwEd4UcCoUOo7CPtqwBmZp2Y92AMuAFA+Q==}
-
   '@zag-js/tags-input@1.43.0':
     resolution: {integrity: sha512-2qX3htVoJnrxOyF0x1O0QPYk0GFTNOw6Kw9pkO9bfUbs92TggCDZXsW/8N2vsMr6eAKo31jrQLcS4K1w7zmiig==}
-
-  '@zag-js/toast@1.42.0':
-    resolution: {integrity: sha512-8WLogVjJiCrvQ4hv9vQrcjaFJLFGtOCb/pnir7SjqR1RzbYHoPLj5ASbM9bbjpcgQQYr0GaLovP6beQW8kjBjg==}
 
   '@zag-js/toast@1.43.0':
     resolution: {integrity: sha512-T2bChbXQXfYCk8Kw4NYqoybRBN1z3XL2HnpzRe1zRyNQ/Q9RfnUsU492P+sl8IlLB2nchNKgN2BCg/UacffSYQ==}
 
-  '@zag-js/toggle-group@1.42.0':
-    resolution: {integrity: sha512-lhsPcj115a646wxHgzSkhSW4IZFKw4pqRTHSL0e8vR4jgCRhGLBzE70S+EgYIj+000A05eB+or0PhX5zeMK5qQ==}
-
   '@zag-js/toggle-group@1.43.0':
     resolution: {integrity: sha512-KFfmv5YloBaRTqPgmhZ2uootzUheuj/aO6lro6CsCB8njBR7vSTCp1ur5DFyq/dNSaSpasthr9UKXKdkBbFhIQ==}
-
-  '@zag-js/tooltip@1.42.0':
-    resolution: {integrity: sha512-viRGjX2yxF317M2G2tYvPS7+ZS3osmE+iGm40ZPg0sciezSZW1l4ZFSQ56qyCJ8rTUKv3T1m0NPWYhqVoT3eoA==}
 
   '@zag-js/tooltip@1.43.0':
     resolution: {integrity: sha512-gZNsKXI4gVbQkuGUgVzz0hHbD0fU/aBxrDlD//zXtoAicmIBTic4dw+kRqpPKNNEetD9XuoKlbJ0xNbbNxgatw==}
 
-  '@zag-js/tree-view@1.42.0':
-    resolution: {integrity: sha512-QXIfFgE7BbtB7cHXwi8Gu/9ezkOaeZ4XFAixoJttiOgnw3EIRZPqATRijh446SDPuqsFh9RSjC2zEe3vcFssZA==}
-
   '@zag-js/tree-view@1.43.0':
     resolution: {integrity: sha512-8oH76vTIzauKlaWUpNmQx/XimE7VX2gqWoW4BqcWIzIPBzBGgwfJQw7z4NfPn/Cv+9iFefb2DY0GytaGGJWxyw==}
 
-  '@zag-js/types@1.42.0':
-    resolution: {integrity: sha512-4ghao1wuLouepdYMheEYtyOlKpVsvL0Eg9tf//5VyAf7S9zC7cgGxD6ttGTlIMxqKqnAuxIMsYHG76qkb8tv1w==}
-
   '@zag-js/types@1.43.0':
     resolution: {integrity: sha512-pheZyCiVjJaXBzbfoj/gMKXkZUo1D5JWd46QVYWonHJZIdUfDRDwBvDKcXGIHmpuq7fJrnGXbegAk0+D2aa4bw==}
-
-  '@zag-js/utils@1.42.0':
-    resolution: {integrity: sha512-Km0r9hY+f6/oCJXrO4nqCIuo+4gTqbloD0V0q7B8Jq8qeWte7HN+YJSagVlk8tfADqFMRgEW4Rug0bYHzrGbVA==}
 
   '@zag-js/utils@1.43.0':
     resolution: {integrity: sha512-ZxkL+AuKRv/UGmmp5iZwmzfcVV7iWiDIrhYiMrKDKPJGdIPIFpMOisM+bTKYVkvn0jmCZV0CTF0jJm29hEV+LQ==}
@@ -3269,11 +2978,6 @@ packages:
   acorn-walk@8.3.5:
     resolution: {integrity: sha512-HEHNfbars9v4pgpW6SO1KSPkfoS0xVOM/9UzkJltjlsHZmJasxg8aXkuZa7SMf8vKGIBhpUsPluQSqhJFCqebw==}
     engines: {node: '>=0.4.0'}
-
-  acorn@8.17.0:
-    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
-    engines: {node: '>=0.4.0'}
-    hasBin: true
 
   acorn@8.18.0:
     resolution: {integrity: sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ==}
@@ -4004,14 +3708,6 @@ packages:
   esquery@1.7.0:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
-
-  esrap@2.3.0:
-    resolution: {integrity: sha512-GQ/7RN8uOtEfNpzZzBMTzW9JBcX42oaSVtPzdF+6cEL8pqIL094iUpr9jzYGn4O4P/1S60dJ6izyT8F4LYARng==}
-    peerDependencies:
-      '@typescript-eslint/types': ^8.2.0
-    peerDependenciesMeta:
-      '@typescript-eslint/types':
-        optional: true
 
   esrap@2.4.0:
     resolution: {integrity: sha512-CQPcneEHw/czj32uwQC52nYnax8H4SXt25FCM+LIwGZ49cMIxpOj3bP8wmzcI+Z0HIy5KkClaPhRLfCySzwHPA==}
@@ -5236,14 +4932,6 @@ packages:
       svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
       typescript: ^4.9.4 || ^5.0.0 || ^6.0.0
 
-  svelte@5.56.8:
-    resolution: {integrity: sha512-PY8LOw7xP6c8IOiVqdo0sbbZVYhXRSfklOQLAUyGBKqjTX0wx/z4l/9J+PmBpmlLnxzEb1NqltxQ5/wZme/Cmg==}
-    engines: {node: '>=18'}
-
-  svelte@5.57.0:
-    resolution: {integrity: sha512-NdbDn7fl4be1ViUG0oq/lvG6OZy3oENolV2ONjiqqsfVoeAfzaQAKUcEX3MrQod/Bebv1PgwET9rfXhgn9s4Kg==}
-    engines: {node: '>=18'}
-
   svelte@5.57.2:
     resolution: {integrity: sha512-1YiPCAXT0Ct6g1vOMmSLa0Nsc3QRMvtDF32ihgglGVrugIuIK38RyDiFNXVDhtQ81TJjSO57NdMw6DyYLqSGDQ==}
     engines: {node: '>=18'}
@@ -5270,10 +4958,6 @@ packages:
   tinybench@6.2.2:
     resolution: {integrity: sha512-nIZ2N2dFpjBsg2hgitKu7mA+FvsIJuGJOwysRngmVRRmWgR/UyPjwJj8c/fT/dhm8EkHnF5EOogRf+0Z2qrimA==}
     engines: {node: '>=20.0.0'}
-
-  tinyexec@1.3.0:
-    resolution: {integrity: sha512-QKAl9m8gWWGHV8jZcPeym6j+XULi6tOf1mT83WYJ4Lk2ytW/uwAWkrP0uFsdoYMdueVJ0qs26wZ+23xeB4ibNQ==}
-    engines: {node: '>=18'}
 
   tinyexec@1.3.1:
     resolution: {integrity: sha512-GCvB3aoys96IuDFBMcTB46JOR6mdMtAToqwiW8JlWhsoh1mhHi/xn9ss/Dg7N555GiJyEt2qzoG/NHCwM6h1EA==}
@@ -5648,7 +5332,7 @@ snapshots:
   '@antfu/install-pkg@1.1.0':
     dependencies:
       package-manager-detector: 1.8.0
-      tinyexec: 1.3.0
+      tinyexec: 1.3.1
 
   '@asamuzakjp/css-color@7.1.5':
     dependencies:
@@ -5917,50 +5601,50 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)':
+  '@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)':
     dependencies:
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.2
       '@opentelemetry/semantic-conventions': 1.43.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.4.0(zod@4.6.2)
+      better-call: 1.4.0(zod@4.6.6)
       jose: 6.2.4
       kysely: 0.29.6
       nanostores: 1.5.5
-      zod: 4.6.2
+      zod: 4.6.6
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@better-auth/drizzle-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
+  '@better-auth/drizzle-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/kysely-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(kysely@0.29.6)':
+  '@better-auth/kysely-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(kysely@0.29.6)':
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
       kysely: 0.29.6
 
-  '@better-auth/memory-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
+  '@better-auth/memory-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/mongo-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
+  '@better-auth/mongo-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/prisma-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
+  '@better-auth/prisma-adapter@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)':
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/telemetry@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)':
+  '@better-auth/telemetry@1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)':
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.2
 
@@ -6011,12 +5695,12 @@ snapshots:
     dependencies:
       '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.1
-      '@codemirror/view': 6.43.7
+      '@codemirror/view': 6.43.9
       '@lezer/common': 1.5.2
 
   '@codemirror/commands@6.10.4':
     dependencies:
-      '@codemirror/language': 6.12.4
+      '@codemirror/language': 6.13.1
       '@codemirror/state': 6.7.1
       '@codemirror/view': 6.43.9
       '@lezer/common': 1.5.2
@@ -6039,7 +5723,7 @@ snapshots:
   '@codemirror/language@6.12.4':
     dependencies:
       '@codemirror/state': 6.7.1
-      '@codemirror/view': 6.43.7
+      '@codemirror/view': 6.43.9
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.10
@@ -6080,13 +5764,6 @@ snapshots:
       '@codemirror/view': 6.43.9
       '@lezer/highlight': 1.2.3
 
-  '@codemirror/view@6.43.7':
-    dependencies:
-      '@codemirror/state': 6.7.1
-      crelt: 1.0.7
-      style-mod: 4.1.3
-      w3c-keyname: 2.2.8
-
   '@codemirror/view@6.43.9':
     dependencies:
       '@codemirror/state': 6.7.1
@@ -6118,10 +5795,10 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.2': {}
 
-  '@csstools/postcss-is-pseudo-class@5.0.3(postcss@8.5.26)':
+  '@csstools/postcss-is-pseudo-class@5.0.3(postcss@8.5.28)':
     dependencies:
       '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.4)
-      postcss: 8.5.26
+      postcss: 8.5.28
       postcss-selector-parser: 7.1.4
 
   '@csstools/selector-resolve-nested@3.1.0(postcss-selector-parser@7.1.4)':
@@ -6423,10 +6100,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.2.0
 
-  '@internationalized/date@3.12.2':
-    dependencies:
-      '@swc/helpers': 0.5.23
-
   '@internationalized/date@3.12.3':
     dependencies:
       '@swc/helpers': 0.5.23
@@ -6494,14 +6167,14 @@ snapshots:
 
   '@marp-team/marpit@3.2.2':
     dependencies:
-      '@csstools/postcss-is-pseudo-class': 5.0.3(postcss@8.5.26)
+      '@csstools/postcss-is-pseudo-class': 5.0.3(postcss@8.5.28)
       cssesc: 3.0.0
       js-yaml: 4.3.2
       lodash.kebabcase: 4.1.1
       markdown-it: 14.3.2
       markdown-it-front-matter: 0.2.4
-      postcss: 8.5.26
-      postcss-nesting: 13.0.2(postcss@8.5.26)
+      postcss: 8.5.28
+      postcss-nesting: 13.0.2(postcss@8.5.28)
 
   '@mdit/helper@1.1.0(markdown-it@15.0.1)':
     optionalDependencies:
@@ -6814,45 +6487,7 @@ snapshots:
 
   '@sindresorhus/merge-streams@4.0.0': {}
 
-  '@skeletonlabs/skeleton-common@5.0.0': {}
-
   '@skeletonlabs/skeleton-common@5.0.1': {}
-
-  '@skeletonlabs/skeleton-svelte@5.0.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))':
-    dependencies:
-      '@internationalized/date': 3.12.2
-      '@skeletonlabs/skeleton-common': 5.0.0
-      '@zag-js/accordion': 1.42.0
-      '@zag-js/avatar': 1.42.0
-      '@zag-js/carousel': 1.42.0
-      '@zag-js/collapsible': 1.42.0
-      '@zag-js/collection': 1.42.0
-      '@zag-js/combobox': 1.42.0
-      '@zag-js/date-picker': 1.42.0(@internationalized/date@3.12.2)
-      '@zag-js/dialog': 1.42.0
-      '@zag-js/file-upload': 1.42.0
-      '@zag-js/floating-panel': 1.42.0
-      '@zag-js/i18n-utils': 1.42.0
-      '@zag-js/listbox': 1.42.0
-      '@zag-js/marquee': 1.42.0
-      '@zag-js/menu': 1.42.0
-      '@zag-js/pagination': 1.42.0
-      '@zag-js/popover': 1.42.0
-      '@zag-js/progress': 1.42.0
-      '@zag-js/qr-code': 1.42.0
-      '@zag-js/radio-group': 1.42.0
-      '@zag-js/rating-group': 1.42.0
-      '@zag-js/slider': 1.42.0
-      '@zag-js/steps': 1.42.0
-      '@zag-js/svelte': 1.42.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))
-      '@zag-js/switch': 1.42.0
-      '@zag-js/tabs': 1.42.0
-      '@zag-js/tags-input': 1.42.0
-      '@zag-js/toast': 1.42.0
-      '@zag-js/toggle-group': 1.42.0
-      '@zag-js/tooltip': 1.42.0
-      '@zag-js/tree-view': 1.42.0
-      svelte: 5.57.2(@typescript-eslint/types@8.71.0)
 
   '@skeletonlabs/skeleton-svelte@5.0.1(svelte@5.57.2(@typescript-eslint/types@8.71.0))':
     dependencies:
@@ -6889,10 +6524,6 @@ snapshots:
       '@zag-js/tooltip': 1.43.0
       '@zag-js/tree-view': 1.43.0
       svelte: 5.57.2(@typescript-eslint/types@8.71.0)
-
-  '@skeletonlabs/skeleton@5.0.0(tailwindcss@4.3.3)':
-    dependencies:
-      tailwindcss: 4.3.3
 
   '@skeletonlabs/skeleton@5.0.1(tailwindcss@4.3.3)':
     dependencies:
@@ -7000,14 +6631,6 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
 
-  '@sveltejs/acorn-typescript@1.0.11(acorn@8.17.0)':
-    dependencies:
-      acorn: 8.17.0
-
-  '@sveltejs/acorn-typescript@1.0.11(acorn@8.18.0)':
-    dependencies:
-      acorn: 8.18.0
-
   '@sveltejs/acorn-typescript@1.0.13(acorn@8.18.0)':
     dependencies:
       acorn: 8.18.0
@@ -7076,7 +6699,7 @@ snapshots:
   '@tailwindcss/node@4.3.3':
     dependencies:
       '@jridgewell/remapping': 2.3.5
-      enhanced-resolve: 5.25.1
+      enhanced-resolve: 5.26.0
       jiti: 2.7.0
       lightningcss: 1.32.0
       magic-string: 0.30.21
@@ -7340,7 +6963,8 @@ snapshots:
     dependencies:
       undici-types: 8.3.0
 
-  '@types/trusted-types@2.0.7': {}
+  '@types/trusted-types@2.0.7':
+    optional: true
 
   '@types/unist@3.0.3': {}
 
@@ -7479,14 +7103,6 @@ snapshots:
 
   '@xmldom/xmldom@0.9.12': {}
 
-  '@zag-js/accordion@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/accordion@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -7495,33 +7111,15 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/anatomy@1.42.0': {}
-
   '@zag-js/anatomy@1.43.0': {}
-
-  '@zag-js/aria-hidden@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
 
   '@zag-js/aria-hidden@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
 
-  '@zag-js/auto-resize@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-
   '@zag-js/auto-resize@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
-
-  '@zag-js/avatar@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/avatar@1.43.0':
     dependencies:
@@ -7530,15 +7128,6 @@ snapshots:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/carousel@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/scroll-snap': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/carousel@1.43.0':
     dependencies:
@@ -7549,14 +7138,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/collapsible@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/collapsible@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -7565,26 +7146,9 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/collection@1.42.0':
-    dependencies:
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/collection@1.43.0':
     dependencies:
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/combobox@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/collection': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dismissable': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-visible': 1.42.0
-      '@zag-js/live-region': 1.42.0
-      '@zag-js/popper': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/combobox@1.43.0':
     dependencies:
@@ -7599,28 +7163,10 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/core@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/core@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/date-picker@1.42.0(@internationalized/date@3.12.2)':
-    dependencies:
-      '@internationalized/date': 3.12.2
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/date-utils': 1.42.0(@internationalized/date@3.12.2)
-      '@zag-js/dismissable': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/live-region': 1.42.0
-      '@zag-js/popper': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/date-picker@1.43.0(@internationalized/date@3.12.3)':
     dependencies:
@@ -7635,25 +7181,9 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/date-utils@1.42.0(@internationalized/date@3.12.2)':
-    dependencies:
-      '@internationalized/date': 3.12.2
-
   '@zag-js/date-utils@1.43.0(@internationalized/date@3.12.3)':
     dependencies:
       '@internationalized/date': 3.12.3
-
-  '@zag-js/dialog@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/aria-hidden': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dismissable': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-trap': 1.42.0
-      '@zag-js/remove-scroll': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/dialog@1.43.0':
     dependencies:
@@ -7667,35 +7197,15 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/dismissable@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/interact-outside': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/dismissable@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/interact-outside': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/dom-query@1.42.0':
-    dependencies:
-      '@zag-js/types': 1.42.0
-
   '@zag-js/dom-query@1.43.0':
     dependencies:
       '@zag-js/types': 1.43.0
-
-  '@zag-js/file-upload@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/file-utils': 1.42.0
-      '@zag-js/i18n-utils': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/file-upload@1.43.0':
     dependencies:
@@ -7707,24 +7217,9 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/file-utils@1.42.0':
-    dependencies:
-      '@zag-js/i18n-utils': 1.42.0
-
   '@zag-js/file-utils@1.43.0':
     dependencies:
       '@zag-js/i18n-utils': 1.43.0
-
-  '@zag-js/floating-panel@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/popper': 1.42.0
-      '@zag-js/rect-utils': 1.42.0
-      '@zag-js/store': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/floating-panel@1.43.0':
     dependencies:
@@ -7737,49 +7232,22 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/focus-trap@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-
   '@zag-js/focus-trap@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
-
-  '@zag-js/focus-visible@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
 
   '@zag-js/focus-visible@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
 
-  '@zag-js/i18n-utils@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-
   '@zag-js/i18n-utils@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
-
-  '@zag-js/interact-outside@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/interact-outside@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/listbox@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/collection': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-visible': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/listbox@1.43.0':
     dependencies:
@@ -7791,17 +7259,7 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/live-region@1.42.0': {}
-
   '@zag-js/live-region@1.43.0': {}
-
-  '@zag-js/marquee@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/marquee@1.43.0':
     dependencies:
@@ -7810,18 +7268,6 @@ snapshots:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/menu@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dismissable': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-visible': 1.42.0
-      '@zag-js/popper': 1.42.0
-      '@zag-js/rect-utils': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/menu@1.43.0':
     dependencies:
@@ -7835,14 +7281,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/pagination@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/pagination@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -7850,19 +7288,6 @@ snapshots:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/popover@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/aria-hidden': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dismissable': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-trap': 1.42.0
-      '@zag-js/popper': 1.42.0
-      '@zag-js/remove-scroll': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/popover@1.43.0':
     dependencies:
@@ -7877,25 +7302,11 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/popper@1.42.0':
-    dependencies:
-      '@floating-ui/dom': 1.8.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/popper@1.43.0':
     dependencies:
       '@floating-ui/dom': 1.8.0
       '@zag-js/dom-query': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/progress@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/progress@1.43.0':
     dependencies:
@@ -7904,16 +7315,6 @@ snapshots:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/qr-code@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-      proxy-memoize: 3.0.1
-      uqr: 0.1.3
 
   '@zag-js/qr-code@1.43.0':
     dependencies:
@@ -7925,15 +7326,6 @@ snapshots:
       proxy-memoize: 3.0.1
       uqr: 0.1.3
 
-  '@zag-js/radio-group@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-visible': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/radio-group@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -7943,14 +7335,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/rating-group@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/rating-group@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -7959,33 +7343,15 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/rect-utils@1.42.0': {}
-
   '@zag-js/rect-utils@1.43.0': {}
-
-  '@zag-js/remove-scroll@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
 
   '@zag-js/remove-scroll@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
 
-  '@zag-js/scroll-snap@1.42.0':
-    dependencies:
-      '@zag-js/dom-query': 1.42.0
-
   '@zag-js/scroll-snap@1.43.0':
     dependencies:
       '@zag-js/dom-query': 1.43.0
-
-  '@zag-js/slider@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/slider@1.43.0':
     dependencies:
@@ -7995,14 +7361,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/steps@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/steps@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -8011,20 +7369,9 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/store@1.42.0':
-    dependencies:
-      proxy-compare: 3.0.1
-
   '@zag-js/store@1.43.0':
     dependencies:
       proxy-compare: 3.0.1
-
-  '@zag-js/svelte@1.42.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))':
-    dependencies:
-      '@zag-js/core': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-      svelte: 5.57.2(@typescript-eslint/types@8.71.0)
 
   '@zag-js/svelte@1.43.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))':
     dependencies:
@@ -8032,15 +7379,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
       svelte: 5.57.2(@typescript-eslint/types@8.71.0)
-
-  '@zag-js/switch@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-visible': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/switch@1.43.0':
     dependencies:
@@ -8051,14 +7389,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/tabs@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/tabs@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -8066,17 +7396,6 @@ snapshots:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/tags-input@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/auto-resize': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/interact-outside': 1.42.0
-      '@zag-js/live-region': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/tags-input@1.43.0':
     dependencies:
@@ -8089,15 +7408,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/toast@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dismissable': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/toast@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -8107,14 +7417,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/toggle-group@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/toggle-group@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -8122,16 +7424,6 @@ snapshots:
       '@zag-js/dom-query': 1.43.0
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
-
-  '@zag-js/tooltip@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/focus-visible': 1.42.0
-      '@zag-js/popper': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
 
   '@zag-js/tooltip@1.43.0':
     dependencies:
@@ -8143,15 +7435,6 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/tree-view@1.42.0':
-    dependencies:
-      '@zag-js/anatomy': 1.42.0
-      '@zag-js/collection': 1.42.0
-      '@zag-js/core': 1.42.0
-      '@zag-js/dom-query': 1.42.0
-      '@zag-js/types': 1.42.0
-      '@zag-js/utils': 1.42.0
-
   '@zag-js/tree-view@1.43.0':
     dependencies:
       '@zag-js/anatomy': 1.43.0
@@ -8161,15 +7444,9 @@ snapshots:
       '@zag-js/types': 1.43.0
       '@zag-js/utils': 1.43.0
 
-  '@zag-js/types@1.42.0':
-    dependencies:
-      csstype: 3.2.3
-
   '@zag-js/types@1.43.0':
     dependencies:
       csstype: 3.2.3
-
-  '@zag-js/utils@1.42.0': {}
 
   '@zag-js/utils@1.43.0': {}
 
@@ -8190,8 +7467,6 @@ snapshots:
   acorn-walk@8.3.5:
     dependencies:
       acorn: 8.18.0
-
-  acorn@8.17.0: {}
 
   acorn@8.18.0: {}
 
@@ -8311,23 +7586,23 @@ snapshots:
 
   better-auth@1.7.7(@opentelemetry/api@1.9.1)(@sveltejs/kit@3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vitest@5.0.4):
     dependencies:
-      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
-      '@better-auth/drizzle-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
-      '@better-auth/kysely-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(kysely@0.29.6)
-      '@better-auth/memory-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
-      '@better-auth/mongo-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
-      '@better-auth/prisma-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
-      '@better-auth/telemetry': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.2))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)
+      '@better-auth/core': 1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5)
+      '@better-auth/drizzle-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
+      '@better-auth/kysely-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(kysely@0.29.6)
+      '@better-auth/memory-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
+      '@better-auth/mongo-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
+      '@better-auth/prisma-adapter': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)
+      '@better-auth/telemetry': 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.6))(jose@6.2.4)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.2
       '@noble/ciphers': 2.4.0
       '@noble/hashes': 2.4.0
-      better-call: 1.4.0(zod@4.6.2)
+      better-call: 1.4.0(zod@4.6.6)
       defu: 6.1.7
       jose: 6.2.4
       kysely: 0.29.6
       nanostores: 1.5.5
-      zod: 4.6.2
+      zod: 4.6.6
     optionalDependencies:
       '@sveltejs/kit': 3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))
       svelte: 5.57.2(@typescript-eslint/types@8.71.0)
@@ -8335,14 +7610,14 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  better-call@1.4.0(zod@4.6.2):
+  better-call@1.4.0(zod@4.6.6):
     dependencies:
       '@better-auth/utils': 0.5.0
       '@better-fetch/fetch': 1.3.2
       rou3: 0.9.2
       set-cookie-parser: 3.1.2
     optionalDependencies:
-      zod: 4.6.2
+      zod: 4.6.6
 
   bidi-js@1.1.0:
     dependencies:
@@ -8938,12 +8213,6 @@ snapshots:
   esquery@1.7.0:
     dependencies:
       estraverse: 5.3.0
-
-  esrap@2.3.0(@typescript-eslint/types@8.71.0):
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.5
-    optionalDependencies:
-      '@typescript-eslint/types': 8.71.0
 
   esrap@2.4.0(@typescript-eslint/types@8.71.0):
     dependencies:
@@ -9639,7 +8908,7 @@ snapshots:
 
   mutation-server-protocol@0.4.1:
     dependencies:
-      zod: 4.6.2
+      zod: 4.6.6
 
   mutation-testing-elements@3.8.4: {}
 
@@ -9793,11 +9062,11 @@ snapshots:
     optionalDependencies:
       postcss: 8.5.23
 
-  postcss-nesting@13.0.2(postcss@8.5.26):
+  postcss-nesting@13.0.2(postcss@8.5.28):
     dependencies:
       '@csstools/selector-resolve-nested': 3.1.0(postcss-selector-parser@7.1.4)
       '@csstools/selector-specificity': 5.0.0(postcss-selector-parser@7.1.4)
-      postcss: 8.5.26
+      postcss: 8.5.28
       postcss-selector-parser: 7.1.4
 
   postcss-safe-parser@7.0.1(postcss@8.5.23):
@@ -10156,47 +9425,6 @@ snapshots:
       svelte: 5.57.2(@typescript-eslint/types@8.71.0)
       typescript: 6.0.3
 
-  svelte@5.56.8(@typescript-eslint/types@8.71.0):
-    dependencies:
-      '@jridgewell/remapping': 2.3.5
-      '@jridgewell/sourcemap-codec': 1.5.5
-      '@sveltejs/acorn-typescript': 1.0.11(acorn@8.17.0)
-      '@types/estree': 1.0.9
-      '@types/trusted-types': 2.0.7
-      acorn: 8.17.0
-      aria-query: 5.3.1
-      axobject-query: 4.1.0
-      clsx: 2.1.1
-      devalue: 5.9.4
-      esm-env: 1.2.2
-      esrap: 2.3.0(@typescript-eslint/types@8.71.0)
-      is-reference: 3.0.3
-      locate-character: 3.0.0
-      magic-string: 0.30.21
-      zimmerframe: 1.1.4
-    transitivePeerDependencies:
-      - '@typescript-eslint/types'
-
-  svelte@5.57.0(@typescript-eslint/types@8.71.0):
-    dependencies:
-      '@jridgewell/remapping': 2.3.5
-      '@jridgewell/sourcemap-codec': 1.5.5
-      '@sveltejs/acorn-typescript': 1.0.11(acorn@8.18.0)
-      '@types/estree': 1.0.9
-      acorn: 8.18.0
-      aria-query: 5.3.1
-      axobject-query: 4.1.0
-      clsx: 2.1.1
-      devalue: 5.9.4
-      esm-env: 1.2.2
-      esrap: 2.3.0(@typescript-eslint/types@8.71.0)
-      is-reference: 3.0.3
-      locate-character: 3.0.0
-      magic-string: 0.30.21
-      zimmerframe: 1.1.4
-    transitivePeerDependencies:
-      - '@typescript-eslint/types'
-
   svelte@5.57.2(@typescript-eslint/types@8.71.0):
     dependencies:
       '@jridgewell/remapping': 2.3.5
@@ -10250,8 +9478,6 @@ snapshots:
       - react-native-b4a
 
   tinybench@6.2.2: {}
-
-  tinyexec@1.3.0: {}
 
   tinyexec@1.3.1: {}
 
