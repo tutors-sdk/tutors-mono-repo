@@ -35,8 +35,8 @@ export async function seedOneOnline(page: Page, { online = 1 } = {}): Promise<vo
   // runner), so seed, wait a moment, and seed again until the identity holds.
   await expect(async () => {
     const held = await page.evaluate(async ({ urls, online }) => {
-      const { tutorsId, isEducator } = await import(urls.find(url => url.includes("/runes/src/index.svelte.ts"))!);
-      const { presenceService } = await import(urls.find(url => url.includes("/community/src/services/presence.svelte.ts"))!);
+      const { tutorsId, isEducator } = await import(urls.find(url => url.includes("/svelte-state/src/index.svelte.ts"))!);
+      const { presenceService } = await import(urls.find(url => url.includes("/svelte-state/src/community/services/presence.svelte.ts"))!);
       tutorsId.value = { login: "ui-preview", name: "UI Preview", share: "true", sentiment: "neutral" };
       isEducator.value = false;
       presenceService.studentsOnline.value = Array.from({ length: online }, () => ({ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }));
@@ -121,7 +121,7 @@ export async function openNotebookWithoutHeadings(page: Page, path: string): Pro
 export async function seedEnrolledLocks(page: Page, locked: string[], showLocked = false): Promise<void> {
   await page.evaluate(async ({ locked, showLocked }) => {
     const modules = performance.getEntriesByType("resource").map(entry => entry.name);
-    const { currentCourse } = await import(modules.find(url => url.includes("/runes/src/index.svelte.ts"))!);
+    const { currentCourse } = await import(modules.find(url => url.includes("/svelte-state/src/index.svelte.ts"))!);
     const { rbacService, SHOW_LOCKED_KEY } = await import(modules.find(url => url.includes("/rbac/src/rbac-service.svelte.ts"))!);
     const course = currentCourse.value;
     const entries = Object.fromEntries(locked.map(route => [route, true]));

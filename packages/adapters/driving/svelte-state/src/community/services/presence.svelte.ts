@@ -1,7 +1,8 @@
 import type { Course, Lo, TutorsId } from "@tutors/domain/course";
-import { keepOnRoster, learnerDisplay, refreshPresence, ROSTER_REFRESH_MS, type PresenceEvent } from "@tutors/domain/presence";
+import { keepOnRoster, learnerDisplay, presenceEvent, refreshPresence, ROSTER_REFRESH_MS, type PresenceEvent } from "@tutors/domain/presence";
 import { courseRoster, sharePresence } from "@tutors/application";
 import type { Unsubscribe } from "@tutors/application/ports";
+import log from "@tutors/logger";
 import { adapters } from "../../adapters.ts";
 import { rune } from "../../index.svelte.ts";
 import { LoRecord, type PresenceService } from "../types.svelte.ts";
@@ -111,9 +112,10 @@ export const presenceService: PresenceService = {
 
     const user = learnerDisplay(student, getTutorsTimeId());
     selfId = user.id;
-    const event = sharePresence({ presence: adapters().presence, publish: adapters().publisher.publish.bind(adapters().publisher) });
-    // This browser hears its own move at once; the stored row and other browsers follow.
-    void event(course, lo, user).then((sent) => this.studentListener({ type: "broadcast", event: "lo-event", payload: sent }));
+    // This browser hears its own move at once, whatever becomes of the stored row and the other browsers.
+    this.studentListener({ type: "broadcast", event: "lo-event", payload: presenceEvent(course, lo, user) });
+    const share = sharePresence({ presence: adapters().presence, publish: adapters().publisher.publish.bind(adapters().publisher) });
+    share(course, lo, user).catch((error) => log.warn("Sharing presence failed; the local list already moved:", error));
   }
 };
 
