@@ -1276,7 +1276,7 @@ Real-time features use **Supabase Realtime Broadcast channels**, which are part 
 
 #### Client Usage
 
-Readers subscribe to their current course only while activity sharing is enabled, update their own activity locally without a server echo, and leave the channel when the course view closes. Tutors Live subscribes to the platform-wide feed only while its landing page is mounted. Reader broadcasts to that feed use HTTP without joining it.
+Readers never join a course channel: a course channel delivers every student's page view to every other student, so its cost grows with the square of the class. While activity sharing is enabled, the reader publishes each page view over HTTP to the course channel and the platform-wide feed, updates its own activity locally, and reads the course online list from `tutors-connect-latest` (rows from the last 5 minutes) on entry and every 60 seconds while the tab is visible. Tutors Live's course page is the only subscriber to a course channel, and its landing page the only subscriber to the platform-wide feed, each only while mounted.
 
 ```typescript
 import { supabase } from "../utils/supabase-client";

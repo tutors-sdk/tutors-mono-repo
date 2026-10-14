@@ -115,44 +115,40 @@ Feature: Realtime resource usage
       Then no student activity is added
 
   @rule-0279 @ears-state-driven
-  Rule: While a student has disabled activity sharing, the reader shall hold no course activity subscription.
+  Rule: While a student has disabled activity sharing, the reader shall not load the course online list.
 
     @active
-    Scenario: Entering a course with sharing disabled opens no subscription
+    Scenario: Entering a course with sharing disabled loads no online list
       Given "Alice" is signed in with sharing disabled
       When the student enters the course
-      Then no course channel remains subscribed
+      Then the online list has not been loaded
+      And no course channel remains subscribed
 
     @active
-    Scenario: Disabling sharing closes an existing course subscription
+    Scenario: Disabling sharing stops refreshing the online list
       Given "Alice" is signed in with sharing enabled
       And the student has entered the course
       When the student disables sharing
-      Then no course channel remains subscribed
+      And 60 seconds pass
+      Then the online list has been loaded 1 time
+      And the course activity list is empty
 
     @inactive
-    Scenario: Enabling sharing opens the course subscription
+    Scenario: Enabling sharing loads the online list
       Given "Alice" is signed in with sharing disabled
       And the student has entered the course
       When the student enables sharing
-      Then only "web-dev-101" remains subscribed
+      Then the online list has been loaded 1 time
+      And no course channel remains subscribed
 
   @rule-0280 @ears-event-driven
-  Rule: When a student shares course activity, the reader shall update its own activity locally without requesting a broadcast echo.
+  Rule: When a student shares course activity, the reader shall add it to the student's own online list without waiting for a broadcast.
 
-    Scenario: Sharing a learning event does not require a server echo
+    Scenario: Sharing a learning event updates the student's own list
       Given "Alice" is signed in with sharing enabled
       When the student enters the course
-      Then the course channel does not request broadcast echoes
-      And "Alice" appears once in the course activity list
-
-    Scenario: Activity is published while a course channel is closing
-      Given "Alice" is signed in with sharing enabled
-      And the student has entered the course
-      And removing that channel is pending
-      When the course is left and reopened and activity is reported before removal finishes
-      Then the course activity is published through HTTP
-      And completing removal creates one replacement subscription
+      Then "Alice" appears once in the course activity list
+      And no course channel remains subscribed
 
   @rule-0281 @ears-state-driven
   Rule: While a whiteboard has no other participant, the reader shall save local edits without sending collaboration broadcasts.
@@ -198,3 +194,70 @@ Feature: Realtime resource usage
       When another editor becomes visible in Presence
       Then one scene broadcast contains the latest edit and deletion
       And another Presence sync sends no duplicate scene broadcast
+
+  @rule-0317 @ears-event-driven
+  Rule: When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.
+
+    Scenario: Entering a course lists classmates from stored activity
+      Given "Bob" was active in the course 2 minutes ago
+      And "Alice" is signed in with sharing enabled
+      When the student enters the course
+      Then the online list is "Alice, Bob"
+      And no course channel remains subscribed
+
+    Scenario: The student's activity is published to the course without joining it
+      Given "Alice" is signed in with sharing enabled
+      When the student enters the course
+      Then the course activity is published through HTTP
+      And no course channel remains subscribed
+
+  @rule-0318 @ears-state-driven
+  Rule: While the course tab is visible, the reader shall refresh the course online list every 60 seconds.
+
+    @active
+    Scenario: A classmate who arrives appears on the next refresh
+      Given "Alice" is signed in with sharing enabled
+      And the student has entered the course
+      And "Bob" was active in the course 0 minutes ago
+      When 60 seconds pass
+      Then the online list is "Alice, Bob"
+      And the online list has been loaded 2 times
+
+    @inactive
+    Scenario: A hidden tab does not refresh the online list
+      Given "Alice" is signed in with sharing enabled
+      And the student has entered the course
+      And the course tab is hidden
+      And "Bob" was active in the course 0 minutes ago
+      When 60 seconds pass
+      Then the online list is "Alice"
+      And the online list has been loaded 1 time
+
+  @rule-0302 @ears-event-driven
+  Rule: When the course online list is loaded, the reader shall list the student and the classmates whose activity was stored in the last 5 minutes.
+
+    Scenario: A classmate inactive for more than 5 minutes is not listed
+      Given "Carol" was active in the course 10 minutes ago
+      And "Bob" was active in the course 2 minutes ago
+      And "Alice" is signed in with sharing enabled
+      When the student enters the course
+      Then the online list is "Alice, Bob"
+
+    Scenario: A classmate who leaves drops off while the student stays listed
+      Given "Bob" was active in the course 4 minutes ago
+      And "Alice" is signed in with sharing enabled
+      When the student enters the course
+      And 120 seconds pass
+      Then the online list is "Alice"
+      And the online list has been loaded 3 times
+
+  @rule-0306 @ears-unwanted
+  Rule: If the course online list cannot be loaded, then the reader shall keep the last loaded list.
+
+    Scenario: A failed refresh keeps classmates listed
+      Given "Bob" was active in the course 1 minutes ago
+      And "Alice" is signed in with sharing enabled
+      And the student has entered the course
+      And the stored activity cannot be read
+      When 60 seconds pass
+      Then the online list is "Alice, Bob"

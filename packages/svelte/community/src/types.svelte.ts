@@ -79,12 +79,22 @@ export interface PresenceService {
   connectToAllCourseAccess(): void;
 
   /**
-   * Begin monitoring activity in a specific course
+   * Begin monitoring activity in a specific course over Realtime (Tutors Live's course page)
    * @param courseId - Identifier of course to monitor
    */
   startPresenceListener(courseId: string): Promise<void>;
 
-  /** Stop monitoring the current course and clear its activity. */
+  /**
+   * Show a course's online list from stored activity, refreshed every 60 seconds while the tab is visible.
+   * The reader uses this instead of a Realtime subscription.
+   * @param courseId - Identifier of course to list
+   */
+  startCourseRoster(courseId: string): Promise<void>;
+
+  /** Reload the online list of the course being listed. */
+  refreshCourseRoster(): Promise<void>;
+
+  /** Stop monitoring or listing the current course and clear its activity. */
   stopPresenceListener(): void;
 }
 
