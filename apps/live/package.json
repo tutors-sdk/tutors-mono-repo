@@ -40,7 +40,6 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
-    "@tutors/application": "workspace:*",
     "@tutors/domain": "workspace:*",
     "@tutors/realtime-supabase": "workspace:*",
     "@tutors/store-supabase": "workspace:*",

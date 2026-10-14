@@ -200,9 +200,6 @@ importers:
       '@prometheus-io/client':
         specifier: ^0.16.1
         version: 0.16.1
-      '@tutors/application':
-        specifier: workspace:*
-        version: link:../../packages/application
       '@tutors/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -303,9 +300,6 @@ importers:
       '@tutors/course-http':
         specifier: workspace:*
         version: link:../../packages/adapters/driven/course-http
-      '@tutors/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
       '@tutors/profile-localstorage':
         specifier: workspace:*
         version: link:../../packages/adapters/driven/profile-localstorage
@@ -500,9 +494,6 @@ importers:
       '@tutors/metrics':
         specifier: workspace:*
         version: link:../../packages/platform/metrics
-      '@tutors/svelte-state':
-        specifier: workspace:*
-        version: link:../../packages/adapters/driving/svelte-state
       '@tutors/themes':
         specifier: workspace:*
         version: link:../../packages/adapters/driving/themes
@@ -775,9 +766,6 @@ importers:
       '@tutors/a11y':
         specifier: workspace:*
         version: link:../a11y
-      '@tutors/application':
-        specifier: workspace:*
-        version: link:../../../application
       '@tutors/domain':
         specifier: workspace:*
         version: link:../../../domain
@@ -854,9 +842,6 @@ importers:
       '@tutors/a11y':
         specifier: workspace:*
         version: link:../a11y
-      '@tutors/application':
-        specifier: workspace:*
-        version: link:../../../application
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../i18n

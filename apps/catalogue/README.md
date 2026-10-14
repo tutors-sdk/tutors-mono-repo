@@ -26,7 +26,7 @@ Runs on http://localhost:5175
 
 - SvelteKit + Svelte 5
 - `@tutors/ui` components
-- `@tutors/svelte-state` for catalogue data
+- `@tutors/svelte-state` for shared state, and `@tutors/store-supabase` for the catalogue rows (composed in `src/lib/compose.ts`)
 - `@tutors/app-config` for the shared Vite-based SvelteKit configuration (build time only)
 - `@tutors/i18n` for interface text in the reader's six languages
 - `@tutors/clock` for the server clock seam (`HARNESS_NOW`) and the `GET /version` endpoint

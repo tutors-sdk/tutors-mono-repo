@@ -34,7 +34,7 @@ Runs on http://localhost:5176
 - `@tutors/tutors-time-lib` for course time, calendar and lab models
 - `@tutors/ui-navigators`, `@tutors/ui-components` and `@tutors/ui-primitives` for the shell, heatmaps, tables and icons
 - `@tutors/themes` and `@tutors/i18n` for themes and interface text
-- `@tutors/svelte-state/community` for Supabase access
+- `@tutors/store-supabase` for Supabase access, composed in `src/lib/compose.ts`; `@tutors/moodle` and `@tutors/application` for the Moodle assignment source behind its port
 - `@tutors/logger`, `@tutors/metrics` and `@tutors/clock` for logs, `GET /metrics`, the server clock seam (`HARNESS_NOW`) and `GET /version`
 - AG Grid, Heat.js, Tailwind CSS v4 + Skeleton UI
 

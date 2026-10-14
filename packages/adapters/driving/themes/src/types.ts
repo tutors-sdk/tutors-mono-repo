@@ -7,7 +7,7 @@ import type { IconType } from "@tutors/tutors-model-lib";
 import type { LearnerDisplay } from "@tutors/tutors-types";
 
 /** How a learner appears in the themes presence views. */
-export type LoUser = LearnerDisplay;
+type LoUser = LearnerDisplay;
 
 /**
  * Collection of icon definitions

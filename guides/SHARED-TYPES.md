@@ -1,9 +1,11 @@
 # Shared types: @tutors/tutors-types and the plan to adopt it
 
 `packages/jsr/types` (`@tutors/tutors-types`) is one home for the types every Tutors app and package
-shares. It has no runtime dependencies and imports nothing outside itself (Rule 0130, and the
+shares. Since the hexagonal reorganisation ([ADR 0001](../docs/adr/0001-hexagonal-architecture.md))
+the types themselves live in the domain ring (`@tutors/domain`), and this package is a facade that
+re-exports them for JSR consumers. It depends on nothing but the domain (Rule 0130, and the
 `tutors-types-self-contained` dependency-cruiser rule), so anything can import it, from a theme to a
-server route to the JSR CLI.
+server route to the JSR CLI. New code in the mono-repo imports `@tutors/domain` directly.
 
 It was added without consumers. Nothing in the apps changed when it landed. This guide is the plan
 for moving existing code onto it, one reviewable step at a time. Each step can be evaluated and

@@ -35,7 +35,6 @@
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
-    "@tutors/svelte-state": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",
     "@tutors/ui-components": "workspace:*",

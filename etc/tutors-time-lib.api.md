@@ -7,82 +7,79 @@
 
 ```ts
 
-// --- interfaces ---
-
-// (from src/types/calendar-types.ts)
-export interface CalendarEntry;
-
-// (from src/types/calendar-types.ts)
-export interface CalendarModel;
-
-// (from src/types/lab-types.ts)
-export interface LabModel;
-
-// (from src/types/lab-types.ts)
-export interface LearningRecord;
-
-// (from src/types/tutors-connect-types.ts)
-export interface TutorsConnectCourse;
-
-// (from src/types/tutors-connect-types.ts)
-export interface TutorsConnectUser;
-
-// (from src/types/tutors-time-types.ts)
-export interface TutorsTimeService;
-
-
 // --- types ---
 
-// (from src/types/calendar-types.ts)
-export type CalendarMedianRow = { courseid: string; totalSeconds: number; [key: string]: string | number };
+// (from src/index.ts)
+export { BaseCalendarModel };
 
-// (from src/types/calendar-types.ts)
-export type CalendarMedianTable = { row: CalendarMedianRow | null; };
+// (from src/index.ts)
+export { BaseLabModel };
 
-// (from src/types/calendar-types.ts)
-export type CalendarRow = { courseid: string; studentid: string; full_name: string; totalSeconds: number; [key: string]: string | number; };
+// (from src/index.ts)
+export type { CalendarEntry };
 
-// (from src/types/calendar-types.ts)
-export type CalendarTable = { rows: CalendarRow[]; };
+// (from src/index.ts)
+export type { CalendarMedianRow };
 
-// (from src/types/tutors-time-types.ts)
-export type CourseDisplayInfo = { title: string; img: string | null; icon: { type: string; color: string | null } | null; };
+// (from src/index.ts)
+export type { CalendarMedianTable };
 
-// (from src/types/lab-types.ts)
-export type LabMedianRow = { courseid: string; totalMinutes: number; [key: string]: string | number; };
+// (from src/index.ts)
+export type { CalendarModel };
 
-// (from src/types/lab-types.ts)
-export type LabMedianTable = { row: LabMedianRow | null; };
+// (from src/index.ts)
+export type { CalendarRow };
 
-// (from src/types/lab-types.ts)
-export type LabRow = { studentid: string; full_name: string; totalMinutes: number; [lo_id: string]: string | number; };
+// (from src/index.ts)
+export type { CalendarTable };
 
-// (from src/types/lab-types.ts)
-export type LabTable = { rows: LabRow[]; };
+// (from src/index.ts)
+export type { CourseDisplayInfo };
 
-// (from src/utils/lab-utils.ts)
-export type LabViewMode = "lab" | "step";
+// (from src/index.ts)
+export type { LabMedianRow };
 
-// (from src/types/tutors-time-types.ts)
-export type StudentDisplayInfo = TutorsConnectUser;
+// (from src/index.ts)
+export type { LabMedianTable };
 
-// (from src/types/tutors-time-types.ts)
-export type TutorsTimeCourse = { id: string; title: string; pin: string | null data: CalendarEntry[]; loading: boolean; error: string | null; learningRecords: LearningRecord[]; learningRecordsLoading: boolean; learningRecordsError: string | null; calendarModel: CalendarModel; labsModel: LabModel; labsMedianByDay?: LabMedianRow | null; weeks?: string[]; dates?: string[]; labColumns?: string[]; stepColumns?: string[]; loadTime?( courseId: string, startDate: string | null, endDate: string | null, title: string ): Promise<TutorsTimeCourse>; };
+// (from src/index.ts)
+export type { LabModel };
 
-// (from src/types/tutors-time-types.ts)
-export type TutorsTimeStudent = { courseid: string; courseTitle: string; studentid: string; studentName: string; avatarUrl: string | null; online_status: string | null; sentiment: string | null; course: TutorsTimeCourse | null; calendarByWeek: CalendarRow | null; calendarByDay: CalendarRow | null; labsByLab: LabRow | null; labsByDay: LabRow | null; labsByStep: LabRow | null; error: string | null; hasData: boolean; };
+// (from src/index.ts)
+export type { LabRow };
 
-// (from src/utils/calendar-utils.ts)
-export type ViewMode = "week" | "day";
+// (from src/index.ts)
+export type { LabTable };
+
+// (from src/index.ts)
+export type { LabViewMode };
+
+// (from src/index.ts)
+export type { LearningRecord };
+
+// (from src/index.ts)
+export type { StudentDisplayInfo };
+
+// (from src/index.ts)
+export type { TutorsConnectCourse };
+
+// (from src/index.ts)
+export type { TutorsConnectUser };
+
+// (from src/index.ts)
+export type { TutorsTimeCourse };
+
+// (from src/index.ts)
+export type { TutorsTimeService };
+
+// (from src/index.ts)
+export type { TutorsTimeStudent };
+
+// (from src/index.ts)
+export type { ViewMode };
 
 
 // --- classes ---
-
-// (from src/services/base-calendar-model.ts)
-export class BaseCalendarModel implements CalendarModel;
-
-// (from src/services/base-lab-model.ts)
-export class BaseLabModel implements LabModel;
 
 // (from src/services/course-time.ts)
 export class CourseTime implements TutorsTimeCourse;
@@ -90,49 +87,49 @@ export class CourseTime implements TutorsTimeCourse;
 
 // --- functions ---
 
-// (from src/utils/lab-utils.ts)
+// (from ../../domain/src/learning/utils/lab-utils.ts)
 export function extractLabIdentifier(loId: string) : string;
 
-// (from src/utils/lab-utils.ts)
+// (from ../../domain/src/learning/utils/lab-utils.ts)
 export function extractStepName(loId: string) : string;
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function filterByDateRange( entries: CalendarEntry[], startDate: string | null, endDate: string | null ) : CalendarEntry[];
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function formatDateShort(dateString: string) : string;
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function formatTimeMinutesOnly(minutes: number) : string;
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function formatTimeNearestMinute(minutes: number) : string;
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function getDistinctSortedDates(entries: CalendarEntry[]) : string[];
 
-// (from src/utils/lab-utils.ts)
+// (from ../../domain/src/learning/utils/lab-utils.ts)
 export function getDistinctSortedDatesFromRecords(records: LearningRecord[]) : string[];
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function getDistinctSortedWeeks(entries: CalendarEntry[]) : string[];
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function getMondayForDate(dateString: string) : string;
 
 // (from src/services/supabase.ts)
 export function getSupabase() : SupabaseClient;
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function heatColor(minutes: number) : string;
 
 // (from src/services/supabase.ts)
 export function initSupabase(url: string, anonKey: string) : void;
 
-// (from src/utils/calendar-utils.ts)
+// (from ../../domain/src/learning/utils/calendar-utils.ts)
 export function minutesOf(value: unknown) : number;
 
-// (from src/utils/lab-utils.ts)
+// (from ../../domain/src/learning/utils/lab-utils.ts)
 export function toggleLabViewMode(current: LabViewMode) : LabViewMode;
 
 
@@ -147,9 +144,8 @@ export const TutorsTime: TutorsTimeService;
 
 | Kind | Count |
 |------|-------|
-| class | 3 |
+| class | 1 |
 | const | 1 |
 | function | 15 |
-| interface | 7 |
-| type | 14 |
+| type | 23 |
 | **Total** | **40** |

@@ -120,7 +120,7 @@ describe("completeness (runway tier N)", () => {
 
   it("the repo adds no gaps beyond the baseline, and the baseline has no stale entries", async () => {
     const { messages, declared } = await loadRepoMessages();
-    const used = ["apps", "packages/svelte"]
+    const used = ["apps", "packages/adapters"]
       .flatMap((dir) => walk(join(REPO_ROOT, dir), (name) => /\.(svelte|ts)$/.test(name)))
       .flatMap((path) => extractTranslationKeys(toPosix(path), readText(path)));
 

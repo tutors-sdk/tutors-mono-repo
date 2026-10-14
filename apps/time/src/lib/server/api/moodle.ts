@@ -12,7 +12,6 @@ export type {
   MoodleAssignSubmissionsByAssignment,
   MoodleAssignSubmissionsResponse,
   MoodleContentFile,
-  MoodleCourseSection,
   MoodleModule,
   MoodleModuleContent,
   MoodleWarning

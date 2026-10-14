@@ -18,7 +18,6 @@
     "@tutors/application": "workspace:*",
     "@tutors/bus-inprocess": "workspace:*",
     "@tutors/course-http": "workspace:*",
-    "@tutors/domain": "workspace:*",
     "@tutors/profile-localstorage": "workspace:*",
     "@tutors/realtime-supabase": "workspace:*",
     "@tutors/render-markdown": "workspace:*",

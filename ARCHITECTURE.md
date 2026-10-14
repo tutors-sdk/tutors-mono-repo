@@ -76,46 +76,63 @@ The repository uses **pnpm workspaces** for package management, enabling:
 
 ```yaml
 packages:
+  - "packages/domain"
+  - "packages/application"
+  - "packages/adapters/driven/*"
+  - "packages/adapters/driving/*"
+  - "packages/platform/*"
   - "packages/jsr/*"
-  - "packages/svelte/*"
-  - "packages/svelte/utils/*"
   - "apps/*"
 ```
 
-### Architectural Layers
+### Architectural Rings
 
-The monorepo follows a **layered architecture** with clear dependency boundaries:
+Tutors is a **hexagonal architecture** ([ADR 0001](docs/adr/0001-hexagonal-architecture.md)): three rings with every dependency arrow pointing inwards, and each app as a composition root.
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   Applications Layer                     │
-│        (reader, catalogue, live, time)                   │
-│        Consumes: All Svelte packages                     │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│               Svelte Packages Layer                      │
-│   UI Components, Themes, Services, State Management      │
-│        Consumes: JSR packages, utils                     │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                JSR Packages Layer                        │
-│     Core Models, Time Tracking, Generation Tools         │
-│              (Deno/Node compatible)                      │
-│                 No dependencies                          │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Apps: reader, catalogue, live, time                             │
+│  Each composes its adapters in src/lib/compose.ts from the env  │
+│  (the only readers of PUBLIC_ANON_MODE)                          │
+└──────────────────────────────┬──────────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Adapters (packages/adapters)                                    │
+│  driving: svelte-state (the home of runes), ui-*, themes, i18n,  │
+│           a11y, tour, privacy                                    │
+│  driven:  store-supabase, realtime-supabase, course-http,        │
+│           render-markdown, profile-localstorage, bus-inprocess,  │
+│           identity-better-auth, moodle, clock                    │
+│  Import the ports, the domain and ONE technology; never another  │
+│  adapter.                                                        │
+└──────────────────────────────┬──────────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Application (packages/application, @tutors/application)         │
+│  Ports (interfaces) + use cases; /testing has in-memory          │
+│  adapters and contract suites. Imports the domain only.          │
+└──────────────────────────────┬──────────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Domain (packages/domain, @tutors/domain)                        │
+│  course, learning, presence, access, pedagogy, quiz.             │
+│  Plain TypeScript. Imports nothing.                              │
+└─────────────────────────────────────────────────────────────────┘
+
+Beside the rings: packages/platform (logger, metrics, app-config), and packages/jsr
+(the authoring toolchain and the JSR facades over the domain).
 ```
+
+**Ports** (`@tutors/application/ports`): `CourseSource`, `CourseEmitter`, `ContentRenderer`, `LearningEventSink`, `LearningRecords`, `PresencePort`, `ProfilePort`, `SessionPort` and `IdentityClient`, `AccessStore`, `EventPublisher`, `Clock`, `AssignmentSource`, `TutorAssistant`.
 
 ### Key Principles
 
-1. **Bottom-Up Dependencies**: Lower layers never depend on higher layers
-2. **Package Isolation**: Each package has clear boundaries and responsibilities
-3. **Shared Types**: JSR packages provide TypeScript types used across the ecosystem
-4. **Runtime Compatibility**: JSR packages work in both Deno and Node.js
-5. **Svelte-Specific**: Svelte packages leverage Svelte 5 reactivity
+1. **Inward dependencies**: the domain imports nothing; the application imports the domain; adapters import the ports, the domain and their one technology; apps import everything and never another app.
+2. **One technology per adapter**: the Supabase client, the markdown toolchain and Better Auth are each imported from one package (`vendor-only-in-its-adapter`), so a swap or a vendor advisory has one place to look.
+3. **Composition at the edge**: `apps/*/src/lib/compose.ts` reads the environment once and picks the adapter behind each port. `PUBLIC_ANON_MODE=TRUE` composes the in-memory, localStorage and no-op adapters; the unit tests compose the same.
+4. **Runes in one place**: Svelte rune state in package code lives in `@tutors/svelte-state`; components keep their own local runes.
+5. **Enforced, with a shrinking baseline**: `.dependency-cruiser.cjs` and `tests/architecture/dependency-rules.test.ts` fail on a new violation; `tests/architecture/known-violations.txt` lists the edges that predate the rules and may only shrink. Rules 0340-0346 state the same as EARS requirements.
+6. **Facades for one major**: `@tutors/tutors-model-lib`, `@tutors/tutors-time-lib` and `@tutors/tutors-types` re-export the domain so published courses and tools keep working.
 
 ---
 
@@ -165,37 +182,53 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 ```
 tutors-mono-repo/
 ├── packages/
-│   ├── jsr/                    # JSR-published packages (Deno-compatible)
-│   │   ├── model/              # @tutors/tutors-model-lib
-│   │   ├── time/               # @tutors/tutors-time-lib
-│   │   ├── gen/                # @tutors/tutors-gen-lib
-│   │   ├── tutors/             # @tutors/tutors (JSON course generator CLI)
-│   │   ├── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
-│   │   ├── create/             # @tutors/tutors-create (course scaffolder)
-│   │   ├── types/              # @tutors/tutors-types (shared types)
-│   │   └── identity/           # @tutors/identity (identity contracts)
+│   ├── domain/                 # @tutors/domain: course, learning, presence, access, pedagogy, quiz
+│   ├── application/            # @tutors/application: ports, use cases, /testing (in-memory adapters, contracts)
 │   │
-│   └── svelte/                 # Svelte-specific packages
-│       ├── runes/              # @tutors/svelte-state
-│       ├── course/             # @tutors/course
-│       ├── themes/             # @tutors/themes
-│       ├── community/          # @tutors/community
-│       ├── connect/            # @tutors/connect
-│       ├── ui-primitives/      # @tutors/ui-primitives
-│       ├── ui-navigators/      # @tutors/ui-navigators
-│       ├── ui-components/      # @tutors/ui-components
-│       ├── app-config/         # @tutors/app-config (shared vite/svelte build config)
-│       └── utils/              # Utility packages
-│           ├── logger/         # @tutors/logger
-│           ├── a11y/           # @tutors/a11y
-│           └── i18n/           # @tutors/i18n
+│   ├── adapters/
+│   │   ├── driven/             # Technologies behind the ports
+│   │   │   ├── store-supabase/       # @tutors/store-supabase (records, profiles, locks, catalogue)
+│   │   │   ├── realtime-supabase/    # @tutors/realtime-supabase (PresencePort)
+│   │   │   ├── course-http/          # @tutors/course-http (CourseSource)
+│   │   │   ├── render-markdown/      # @tutors/render-markdown (ContentRenderer)
+│   │   │   ├── profile-localstorage/ # @tutors/profile-localstorage (ProfilePort, not signed in)
+│   │   │   ├── bus-inprocess/        # @tutors/bus-inprocess (EventPublisher)
+│   │   │   ├── identity-better-auth/ # @tutors/identity-better-auth (SessionPort, IdentityClient)
+│   │   │   ├── moodle/               # @tutors/moodle (AssignmentSource)
+│   │   │   └── clock/                # @tutors/clock (Clock, /version)
+│   │   └── driving/            # What calls the application
+│   │       ├── svelte-state/         # @tutors/svelte-state (the reader's state and services over the ports)
+│   │       ├── themes/               # @tutors/themes
+│   │       ├── i18n/                 # @tutors/i18n
+│   │       ├── a11y/                 # @tutors/a11y
+│   │       ├── privacy/              # @tutors/privacy
+│   │       ├── tour/                 # @tutors/tour
+│   │       ├── ui-primitives/        # @tutors/ui-primitives
+│   │       ├── ui-navigators/        # @tutors/ui-navigators
+│   │       └── ui-components/        # @tutors/ui-components
+│   │
+│   ├── platform/
+│   │   ├── logger/             # @tutors/logger
+│   │   ├── metrics/            # @tutors/metrics
+│   │   └── app-config/         # @tutors/app-config (shared vite/svelte build config)
+│   │
+│   └── jsr/                    # JSR-published packages (Deno-compatible)
+│       ├── model/              # @tutors/tutors-model-lib (facade over the domain)
+│       ├── time/               # @tutors/tutors-time-lib (facade + the time app's read models)
+│       ├── types/              # @tutors/tutors-types (facade over the domain's shared types)
+│       ├── identity/           # @tutors/identity (identity contracts)
+│       ├── gen/                # @tutors/tutors-gen-lib (authoring toolchain)
+│       ├── tutors/             # @tutors/tutors (JSON course generator CLI)
+│       ├── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
+│       └── create/             # @tutors/tutors-create (course scaffolder)
 │
 ├── apps/
-│   ├── reader/                 # Main course reader application
+│   ├── reader/                 # Main course reader application (src/lib/compose.ts composes it)
 │   ├── catalogue/              # Course catalog/discovery
 │   ├── live/                   # Live presence tracking
 │   └── time/                   # Student activity & time tracking dashboard
 │
+├── docs/adr/                   # Architecture decision records
 ├── deno.json                   # Deno workspace configuration
 ├── pnpm-workspace.yaml         # pnpm workspace configuration
 └── package.json                # Root package configuration
@@ -207,9 +240,9 @@ tutors-mono-repo/
 - Published to JSR registry for Deno ecosystem
 - Can be imported in Node.js via npm compatibility layer
 
-**Svelte Packages**: `@tutors/[name]`
+**Rings and adapters**: `@tutors/domain`, `@tutors/application`, `@tutors/[adapter]`
 - Internal workspace packages
-- Svelte 5 specific with `.svelte.ts` reactive files
+- Only `@tutors/svelte-state` holds `.svelte.ts` reactive files among the packages
 
 ---
 
@@ -643,9 +676,11 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 
 ### Architecture Overview
 
+The Svelte packages are the **driving adapters**: they call the application's use cases and read state through `@tutors/svelte-state`, which is the only package holding Svelte runes. None of them imports a driven adapter (`svelte-state-imports-no-adapter`); the apps hand `svelte-state` its adapters through `configureAdapters(compose(env))`.
+
 ```
 ┌─────────────────────────────────────────────────────────┐
-│              Svelte Package Ecosystem                    │
+│              Driving adapters (Svelte)                   │
 │                                                           │
 │  ┌──────────────┐                                        │
 │  │ UI Components │  (Domain views, pre-compiled CSS)      │
@@ -659,37 +694,26 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 │  │ UI Primitives  │  (Icon, Menu, Sidebar, shared comps)  │
 │  └──────┬─────────┘                                       │
 │         │                                                  │
-│  ┌──────┴──┐  ┌───────────┐  ┌────────┐  ┌──────────┐  │
-│  │ Connect │  │ Community │  │ Themes │  │  i18n    │  │
-│  │ (Auth)  │  │ (Anal.)   │  │(Styles)│  │  a11y    │  │
-│  └────┬────┘  └─────┬─────┘  └───┬────┘  └────┬─────┘  │
-│       └──────────────┴────────────┴────────────┘         │
-│                       │                                   │
-│  ┌──────────┐  ┌─────┴──────┐  ┌─────────────────────┐  │
-│  │  Runes   │  │   Course   │  │   Utils (logger)    │  │
-│  │ (State)  │  │(Processing)│  │                     │  │
-│  └──────────┘  └────────────┘  └─────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
+│  ┌──────┴──────┐  ┌────────┐  ┌──────┐  ┌──────┐  ┌─────┐ │
+│  │svelte-state │  │ Themes │  │ i18n │  │ a11y │  │tour │ │
+│  │ (runes,     │  │        │  │      │  │      │  │     │ │
+│  │  services)  │  └────────┘  └──────┘  └──────┘  └─────┘ │
+│  └──────┬──────┘                                           │
+│         │ calls use cases through the ports                │
+└─────────┼─────────────────────────────────────────────────┘
+          ▼
+   @tutors/application  ──►  @tutors/domain
+          ▲
+          │ implemented by the driven adapters the app composes
 ```
 
 ### Layer Structure
 
-**Foundation (Layer 1)**:
-- `runes` - Reactive state management
-- `utils/logger` - Logging
-- `utils/runtime` - Server runtime seams: the clock (`now()`, frozen by `HARNESS_NOW` for the release harness) and the `/version` endpoint. No dependencies
+**State and services** (`svelte-state`): the reader's runes (`currentCourse`, `currentLo`, `tutorsId`, ...) and its services (course loading, presence, profiles, sign-in, roles, markdown on demand). Every service reaches the outside world through `adapters()`, the port set the app composed.
 
-**Core (Layer 2)**:
-- `course` - Course data processing
-- `utils/a11y` - Accessibility
-- `utils/i18n` - Internationalization
+**Cross-cutting** (`themes`, `i18n`, `a11y`, `tour`, `privacy`): read state from `svelte-state`; import no UI package.
 
-**Features (Layer 3)**:
-- `themes` - Theme management
-- `community` - Analytics and presence
-- `connect` - Authentication
-
-**UI (Layer 4)**:
+**UI**:
 - `ui-primitives` - Primitive UI components and shared components (Icon, Menu, Sidebar, Image, LoContextTree, StudentCard)
 - `ui-navigators` - Navigation components (MainNavigator, SecondaryNavigator, Footer, TutorsShell, buttons, layout switchers)
 - `ui-components` - Domain UI components (learning objects, time views) + pre-compiled CSS
@@ -1115,16 +1139,18 @@ packages/adapters/driving/ui-components/src/
 └── utils/
 ```
 
-### 9. Utility Packages (`packages/svelte/utils/`)
+### 9. Platform Packages (`packages/platform/`)
 
 **Logger** (`logger/`):
 - `@tutors/logger` - Structured logging (JSON in production, request lifecycle hooks)
 
-**Accessibility** (`a11y/`):
-- `@tutors/a11y` - Reduced motion detection
+**Metrics** (`metrics/`):
+- `@tutors/metrics` - Prometheus registry, request middleware and the `/metrics` endpoint
 
-**Internationalization** (`i18n/`):
-- `@tutors/i18n` - Multi-language support (EN, DE, ES, FR, IT)
+**App config** (`app-config/`):
+- `@tutors/app-config` - Shared Vite and SvelteKit build options
+
+Accessibility (`@tutors/a11y`) and internationalization (`@tutors/i18n`) are driving adapters under `packages/adapters/driving/`.
 
 ---
 
@@ -1535,91 +1561,55 @@ analyticsService.reportPageLoad(lo)
 
 ```
 Applications (reader, catalogue, live, time)
+        │  src/lib/compose.ts picks the adapter behind each port
         │
-        ├─► @tutors/ui-components
-        │   ├─► @tutors/ui-navigators
-        │   │   ├─► @tutors/ui-primitives
-        │   │   │   ├─► @tutors/themes
-        │   │   │   ├─► @tutors/i18n
-        │   │   │   └─► @tutors/tutors-model-lib
-        │   │   │
-        │   │   ├─► @tutors/connect
-        │   │   │   ├─► @tutors/community
-        │   │   │   ├─► @tutors/course
-        │   │   │   └─► @tutors/svelte-state
-        │   │   │
-        │   │   ├─► @tutors/themes
-        │   │   ├─► @tutors/community
-        │   │   ├─► @tutors/i18n
-        │   │   ├─► @tutors/a11y
-        │   │   ├─► @tutors/svelte-state
-        │   │   ├─► @tutors/course
-        │   │   ├─► @tutors/logger
-        │   │   └─► @tutors/tutors-model-lib
+        ├─► driving adapters
+        │   ├─► @tutors/ui-components ─► @tutors/ui-navigators ─► @tutors/ui-primitives
+        │   ├─► @tutors/svelte-state  (runes + services; reads adapters() the app composed)
+        │   ├─► @tutors/themes, @tutors/i18n, @tutors/a11y, @tutors/tour, @tutors/privacy
         │   │
-        │   ├─► @tutors/ui-primitives
-        │   │
-        │   ├─► @tutors/community
-        │   │   ├─► @tutors/course
-        │   │   │   ├─► @tutors/svelte-state
-        │   │   │   │   └─► @tutors/tutors-model-lib
-        │   │   │   ├─► @tutors/logger
-        │   │   │   └─► @tutors/tutors-model-lib
-        │   │   ├─► @tutors/svelte-state
-        │   │   └─► @tutors/logger
-        │   │
-        │   ├─► @tutors/themes
-        │   │   ├─► @tutors/course
-        │   │   ├─► @tutors/svelte-state
-        │   │   └─► @tutors/logger
-        │   │
-        │   ├─► @tutors/i18n
-        │   │   ├─► @tutors/svelte-state
-        │   │   └─► @tutors/course
-        │   │
-        │   ├─► @tutors/a11y
-        │   │   ├─► @tutors/svelte-state
-        │   │   └─► @tutors/course
-        │   │
-        │   └─► @tutors/tutors-model-lib
+        │   └─► @tutors/application ─► @tutors/domain
         │
-        ├─► @tutors/ui-navigators
+        ├─► driven adapters (each: ports + domain + one technology)
+        │   ├─► @tutors/store-supabase      ─► @supabase/supabase-js
+        │   ├─► @tutors/realtime-supabase   ─► @supabase/supabase-js
+        │   ├─► @tutors/course-http         ─► fetch
+        │   ├─► @tutors/render-markdown     ─► markdown-it, shiki, katex
+        │   ├─► @tutors/profile-localstorage─► localStorage
+        │   ├─► @tutors/bus-inprocess
+        │   ├─► @tutors/identity-better-auth─► better-auth
+        │   ├─► @tutors/moodle              ─► Moodle web services
+        │   └─► @tutors/clock
         │
-        ├─► @tutors/ui-primitives
+        ├─► platform: @tutors/logger, @tutors/metrics, @tutors/app-config
         │
-        └─► @tutors/tutors-time-lib
+        └─► facades: @tutors/tutors-model-lib, @tutors/tutors-time-lib, @tutors/tutors-types ─► @tutors/domain
 ```
 
 ### Dependency Layers (Bottom-Up)
 
-**Layer 0** (Foundation - no dependencies):
-- `@tutors/tutors-model-lib`
-- `@tutors/tutors-time-lib`
-- `@tutors/logger`
+**Ring 0** (no dependencies):
+- `@tutors/domain`
 
-**Layer 1** (depends on foundation):
-- `@tutors/svelte-state` → model
+**Ring 1** (domain only):
+- `@tutors/application`
+- the facades `@tutors/tutors-model-lib`, `@tutors/tutors-types`; `@tutors/tutors-time-lib` also keeps a Supabase client for the time app's read models (a baseline violation, moving behind `LearningRecords`)
 
-**Layer 2** (depends on runes + foundation):
-- `@tutors/course` → runes, runtime, logger, model
-- `@tutors/a11y` → runes, course
-- `@tutors/i18n` → runes, course
+**Ring 2** (ports + domain + one technology; never another adapter):
+- driven: `store-supabase`, `realtime-supabase`, `course-http`, `render-markdown`, `profile-localstorage`, `bus-inprocess`, `identity-better-auth`, `moodle`, `clock`
+- driving: `svelte-state` (imports `@tutors/application`, `@tutors/domain`, `@tutors/logger`; no driven adapter), `themes`, `i18n`, `a11y`, `tour`, `privacy`
 
-**Layer 3** (depends on course + lower):
-- `@tutors/themes` → course, runes, logger, model
-- `@tutors/svelte-state/community` → course, runes, logger, model
+**Ring 2, UI** (strict one-directional):
+- `@tutors/ui-primitives` → themes, i18n, svelte-state, a11y
+- `@tutors/ui-navigators` → ui-primitives + the packages above
+- `@tutors/ui-components` → ui-navigators, ui-primitives + the packages above
 
-**Layer 4** (depends on community + lower):
-- `@tutors/svelte-state/connect` → community, course, runes, model
+**Platform** (beside the rings): `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config`
 
-**Layer 5** (UI):
-- `@tutors/ui-primitives` → themes, i18n, model, runes, a11y, community
-- `@tutors/ui-navigators` → ui-primitives, themes, i18n, a11y, runes, community, connect, course, logger, model
-- `@tutors/ui-components` → ui-navigators, ui-primitives + all packages
-
-**Layer 6** (applications):
-- `reader`, `catalogue`, `live` → ui-primitives, ui-navigators, ui-components + other packages
-- `time` → @tutors/tutors-time-lib, ag-grid-community, jheat.js, @supabase/supabase-js (standalone dashboard, does not consume Svelte UI packages)
+**Apps** (compose everything, import no other app):
+- `reader` → every ring, composed in `src/lib/compose.ts` (`composeReader`)
+- `catalogue`, `live` → ui packages, svelte-state, store-supabase (and realtime-supabase for live)
+- `time` → @tutors/tutors-time-lib, store-supabase, moodle, ag-grid-community, jheat.js (standalone dashboard; uses the UI packages for its shell)
 
 ---
 
@@ -1742,20 +1732,23 @@ pnpm --filter @tutors/course check
 ### Adding New Packages
 
 ```bash
-# Create package directory
-mkdir -p packages/svelte/my-package/src
+# Decide the ring first: a driven adapter wraps one technology behind a port
+# (packages/adapters/driven), a driving adapter calls the application
+# (packages/adapters/driving). Create package directory
+mkdir -p packages/adapters/driven/my-adapter/src
 
 # Create package.json
-cat > packages/svelte/my-package/package.json << EOF
+cat > packages/adapters/driven/my-adapter/package.json << EOF
 {
-  "name": "@tutors/my-package",
+  "name": "@tutors/my-adapter",
   "version": "0.0.1",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@tutors/tutors-model-lib": "workspace:*"
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*"
   }
 }
 EOF

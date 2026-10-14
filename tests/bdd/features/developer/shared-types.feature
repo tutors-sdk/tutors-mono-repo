@@ -9,16 +9,16 @@ Feature: Shared types
   identity port proposed in issue #416.
 
   @rule-0130 @ears-ubiquitous
-  Rule: Tutors shall keep its shared types package free of runtime dependencies, with every import inside the package's own files.
+  Rule: Tutors shall keep its shared types package free of runtime dependencies other than the domain ring it re-exports, with every import inside the package's own files or from the domain.
 
     Scenario: The shared types package declares no dependencies
       Given the manifests of the shared types package
-      Then its package.json declares no "dependencies, peerDependencies, optionalDependencies"
+      Then its package.json declares nothing but the domain under "dependencies, peerDependencies, optionalDependencies"
       And its deno.json declares no imports
 
     Scenario: The shared types package imports only its own files
       Given the source files of the shared types package
-      Then every import in them is a relative path to a file inside the package
+      Then every import in them is a relative path to a file inside the package or a domain import
 
   @rule-0131 @ears-ubiquitous
   Rule: Tutors shall list the same learning-object kinds and sentiments in its shared types package as in tutors-model-lib.

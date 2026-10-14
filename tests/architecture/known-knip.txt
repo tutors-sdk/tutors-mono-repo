@@ -2,7 +2,6 @@
 # This file may only shrink: fix the finding and delete its line.
 
 # Workspace dependencies declared but never imported.
-devDependencies: apps/catalogue/package.json: @tutors/course
 devDependencies: apps/catalogue/package.json: @tutors/tutors-model-lib
 
 # npm dependencies declared but never imported.

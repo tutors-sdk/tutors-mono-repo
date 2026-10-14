@@ -32,7 +32,7 @@ export type ReaderEnv = {
 };
 
 /** `PUBLIC_ANON_MODE=TRUE` turns the learner record, presence and sign-in off entirely. */
-export function isAnonymous(env: ReaderEnv): boolean {
+function isAnonymous(env: ReaderEnv): boolean {
   return env.PUBLIC_ANON_MODE?.trim().toUpperCase() === "TRUE";
 }
 

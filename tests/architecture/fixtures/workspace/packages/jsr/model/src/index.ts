@@ -1,2 +1,2 @@
-// Clean: foundation depends on nothing.
-export const model = "model";
+// Allowed: the facade re-exports the domain.
+export { course as model } from "@tutors/domain";

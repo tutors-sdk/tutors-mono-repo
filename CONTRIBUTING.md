@@ -232,7 +232,7 @@ A [pull request template](.github/PULL_REQUEST_TEMPLATE.md) is filled in for you
 - **TypeScript** for all new code
 - **Svelte 5** with runes for reactive state
 - **Tailwind CSS** for styling via the Skeleton UI framework
-- Follow the layered architecture documented in [ARCHITECTURE.md](ARCHITECTURE.md)
+- Follow the hexagonal architecture documented in [ARCHITECTURE.md](ARCHITECTURE.md) and [ADR 0001](docs/adr/0001-hexagonal-architecture.md): domain rules in `packages/domain`, ports and use cases in `packages/application`, one technology per adapter, wiring in each app's `src/lib/compose.ts`
 - No comments unless the WHY is non-obvious
 
 ## Project Structure
@@ -245,34 +245,24 @@ tutors-mono-repo/
 │   ├── live/                # Live classroom            → tutors-live
 │   └── time/                # Activity dashboard        → tutors-time
 ├── packages/
-│   ├── jsr/                 # Foundation packages, published to JSR (Deno)
-│   │   ├── model/           # Core data models          → @tutors/tutors-model-lib
-│   │   ├── time/            # Time tracking             → @tutors/tutors-time-lib
-│   │   ├── gen/             # Course generation         → @tutors/tutors-gen-lib
-│   │   ├── tutors/          # JSON course generator     → @tutors/tutors
-│   │   ├── tutors-lite/     # Static HTML generator     → @tutors/tutors-lite
-│   │   └── create/          # Course scaffolder         → @tutors/tutors-create
-│   └── svelte/              # Svelte packages (pnpm)    → @tutors/<name>
-│       ├── runes/           # Reactive state management
-│       ├── course/          # Course loading and Markdown
-│       ├── themes/          # Theme management
-│       ├── community/       # Community features
-│       ├── connect/         # Authentication
-│       ├── ui-primitives/   # Base UI components
-│       ├── ui-navigators/   # Navigation components
-│       ├── ui-components/   # Domain UI components
-│       └── utils/           # logger, metrics, a11y, i18n, rbac, privacy, tour
-├── docs/                    # Walkthrough, containers, privacy, data inventory
-├── guides/                  # Testing, EARS, RBAC, release strategy
-└── tests/                   # Test suites
-    ├── unit/                # Unit tests
-    ├── bdd/                 # BDD feature tests
-    ├── contract/            # API contract tests
-    ├── fuzz/                # Property-based fuzz tests
-    ├── components/          # Component tests
-    ├── e2e/                 # Accessibility audit
-    ├── mutation/            # Mutation testing
-    └── release/             # Release validation
+│   ├── domain/              # Domain ring: course, learning, presence, access, pedagogy, quiz → @tutors/domain
+│   ├── application/         # Ports and use cases; /testing has in-memory adapters → @tutors/application
+│   ├── adapters/
+│   │   ├── driven/          # One technology behind a port each → @tutors/store-supabase, realtime-supabase,
+│   │   │                    #   course-http, render-markdown, profile-localstorage, bus-inprocess,
+│   │   │                    #   identity-better-auth, moodle, clock
+│   │   └── driving/         # Svelte state and UI → @tutors/svelte-state, themes, i18n, a11y, tour,
+│   │                        #   privacy, ui-primitives, ui-navigators, ui-components
+│   ├── platform/            # logger, metrics, app-config → @tutors/<name>
+│   └── jsr/                 # Published to JSR (Deno)
+│       ├── model/           # Facade over the domain      → @tutors/tutors-model-lib
+│       ├── time/            # Facade + time read models   → @tutors/tutors-time-lib
+│       ├── types/           # Facade over shared types    → @tutors/tutors-types
+│       ├── identity/        # Identity contracts          → @tutors/identity
+│       ├── gen/             # Course generation           → @tutors/tutors-gen-lib
+│       ├── tutors/          # JSON course generator       → @tutors/tutors
+│       ├── tutors-lite/     # Static HTML generator       → @tutors/tutors-lite
+│       └── create/          # Course scaffolder           → @tutors/tutors-create
 ```
 
 ## Community Roles

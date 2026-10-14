@@ -10,9 +10,19 @@ export interface ArchitectureViolation {
   to: string;
 }
 
+/**
+ * A vendor module as the package sees it (`shiki/dist/core.mjs`), not where pnpm keeps it
+ * (`node_modules/.pnpm/shiki@4.5.0/node_modules/shiki/dist/core.mjs`), so a version bump
+ * changes no baseline line.
+ */
+export function vendorPath(path: string): string {
+  const match = /^.*node_modules\/((?:@[^/]+\/)?[^/@][^/]*\/.*)$/.exec(path);
+  return match ? match[1] : path;
+}
+
 /** `rule: from -> to`, the line format of the known-violations baseline. */
 export function formatViolation(violation: ArchitectureViolation): string {
-  return `${violation.rule}: ${violation.from} -> ${violation.to}`;
+  return `${violation.rule}: ${violation.from} -> ${vendorPath(violation.to)}`;
 }
 
 /**

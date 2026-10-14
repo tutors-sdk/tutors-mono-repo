@@ -19,7 +19,7 @@ export class CourseUnreachableError extends Error {
   constructor(
     readonly courseId: string,
     readonly courseUrl: string,
-    readonly cause: TypeError
+    override readonly cause: TypeError
   ) {
     super(cause.message);
     this.name = "CourseUnreachableError";

@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@tutors/a11y": "workspace:*",
-    "@tutors/application": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/svelte-state": "workspace:*",

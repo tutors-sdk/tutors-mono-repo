@@ -1,4 +1,3 @@
-// import { themeService } from "$lib/services/themes/services/themes.svelte";
 import type { Composite, Course, IconNav, Lo, LoType, Topic, WeekType } from "../types/index.ts";
 import { filterByType, setShowHide } from "../utils/lo-utils.ts";
 
