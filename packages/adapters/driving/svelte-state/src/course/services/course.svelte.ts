@@ -3,25 +3,19 @@
  * Handles course loading, caching, and content transformation.
  */
 
-import { loadMath, mayContainMath, type Lo, type Course, type Lab, type Note, type Notebook } from "@tutors/tutors-model-lib";
+import type { Lo, Course, Lab, Note, Notebook } from "@tutors/domain/course";
+import { loadCourse } from "@tutors/application";
+import { CourseNotFoundError, CourseUnreachableError } from "@tutors/application/ports";
+import { adapters } from "../../adapters.ts";
 import { LiveLab } from "./live-lab.ts";
 import { LiveNotebook } from "./live-notebook.ts";
 import { markdownService } from "../../markdown/index.ts";
-import { courseProtocol, currentCourse, currentLo, rune, isEducator } from "../../index.svelte.ts";
+import { courseProtocol, currentCourse, currentLo, rune } from "../../index.svelte.ts";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
-import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
+import { determineCourseUrl, readerDecoration } from "./lo-tree.ts";
 import log, { serializeError } from "@tutors/logger";
 
-/** A course whose tutors.json is not there: the host answered 404. */
-export class CourseNotFoundError extends Error {
-  constructor(
-    readonly courseId: string,
-    readonly courseUrl: string
-  ) {
-    super("Fetch failed with status 404");
-    this.name = "CourseNotFoundError";
-  }
-}
+export { CourseNotFoundError };
 
 let courseNotFound: (error: CourseNotFoundError) => never = (error) => {
   throw error;
@@ -51,17 +45,9 @@ export function setCourseUnreachableHandler(handler: (cause: TypeError) => never
   courseUnreachable = handler;
 }
 
-/**
- * One fixed message per failure, with what varies in fields: log collectors (and the release
- * harness) group and diff lines by message, so the course and URL must not be baked into it.
- * `error` and `stack` are always present so the line's key set does not depend on the cause.
- */
-function logCourseFetchFailure(courseId: string, courseUrl: string, cause?: unknown): void {
-  log.error("Error fetching course", {
-    courseId,
-    url: `https://${courseUrl}/tutors.json`,
-    ...(cause === undefined ? { error: null, stack: null } : serializeError(cause))
-  });
+/** A course that arrived but could not be built: logged with the same fixed message as a fetch failure, so the harness groups them. */
+function logCourseFailure(courseId: string, courseUrl: string, cause: unknown): void {
+  log.error("Error fetching course", { courseId, url: `https://${courseUrl}/tutors.json`, ...serializeError(cause) });
 }
 
 export const courseService: CourseService = {
@@ -88,31 +74,24 @@ export const courseService: CourseService = {
     if (!course) {
       const { courseId: normalizedCourseId, courseUrl } = determineCourseUrl(courseId);
       courseId = normalizedCourseId;
-
-      const response = await fetchFunction(`${courseProtocol.value}${courseUrl}/tutors.json`).catch((cause: unknown) => {
-        logCourseFetchFailure(courseId, courseUrl, cause);
-        if (cause instanceof TypeError) courseUnreachable(cause);
-        throw cause;
+      const { courseSource, renderer, clock } = adapters();
+      const protocol = courseProtocol.value as "https://" | "http://";
+      const load = loadCourse({
+        source: { load: (location) => courseSource.load(location, fetchFunction) },
+        renderer,
+        clock,
+        ...readerDecoration(renderer)
       });
-      if (response.status === 404) {
-        logCourseFetchFailure(courseId, courseUrl);
-        return courseNotFound(new CourseNotFoundError(courseId, courseUrl));
-      }
 
       try {
-        if (!response.ok) {
-          throw new Error(`Fetch failed with status ${response.status}`);
-        }
-        const text = await response.text();
-        // KaTeX is loaded on demand; every later conversion of this course is synchronous, so load it before any.
-        if (mayContainMath(text)) await loadMath();
-        course = JSON.parse(text) as Course;
-        decorateCourseTree(course, courseId, courseUrl);
-        this.courses.set(courseId, course);
+        course = await load({ courseId, courseUrl, protocol });
       } catch (error) {
-        logCourseFetchFailure(courseId, courseUrl, error);
+        if (error instanceof CourseNotFoundError) return courseNotFound(error);
+        if (error instanceof CourseUnreachableError) return courseUnreachable(error.cause);
+        if (!(error instanceof Error && error.message.startsWith("Fetch failed"))) logCourseFailure(courseId, courseUrl, error);
         throw error;
       }
+      this.courses.set(courseId, course);
     }
 
     return course;

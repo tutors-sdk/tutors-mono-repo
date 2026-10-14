@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { checkSupabase, getRecentErrorCounts } from "@tutors/svelte-state/community/utils/health-check";
+import { checkSupabase, getRecentErrorCounts } from "@tutors/store-supabase";
 import { now } from "@tutors/clock";
 
 export const GET: RequestHandler = async () => {

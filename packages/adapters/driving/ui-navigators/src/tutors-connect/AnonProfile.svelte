@@ -2,7 +2,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
 
-  import * as env from "$app/env/public";
+  import { adapters } from "@tutors/svelte-state/adapters";
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
   import { t } from "@tutors/i18n";
 
@@ -21,7 +21,7 @@
 {#snippet menuContent()}
   <p class="menu-name">{t("menu.anonName")}</p>
   <ul class="space-y-1">
-    {#if env.PUBLIC_ANON_MODE !== "TRUE"}
+    {#if !adapters().anonymous}
       <MenuItem link="/auth{redirect}" text={t("menu.connect")} type="github" />
     {/if}
     <MenuItem link="/" text={t("shell.myCourses")} type="tutors" />

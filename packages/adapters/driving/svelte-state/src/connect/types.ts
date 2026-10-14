@@ -1,60 +1,32 @@
-import type { IdentityClient } from "@tutors/identity";
-import type { Course, IconType, TutorsId } from "@tutors/tutors-model-lib";
+import type { IdentityClient } from "@tutors/application/ports";
+import type { Course, TutorsId } from "@tutors/domain/course";
+import type { CourseVisit } from "@tutors/domain/presence";
 
 export type ConnectUser = Pick<TutorsId, "login" | "name" | "email" | "image">;
 
-/**
- * Record of a user's interaction with a course
- */
-export type CourseVisit = {
-  id: string;
-  title: string;
-  img?: string;
-  icon?: IconType;
-  lastVisit: string;
-  credits: string;
-  visits?: number;
-  private?: boolean;
-  favourite?: boolean;
-};
-
-/**
- * Service for managing user profile data and course interactions
- */
-export interface ProfileStore {
-  /** List of courses visited by user */
-  courseVisits: CourseVisit[];
-
-  reload(): void;
-  save(): void;
-  logCourseVisit(course: Course): void;
-  favouriteCourse(courseId: string): void;
-  unfavouriteCourse(courseId: string): void;
-  deleteCourseVisit(courseId: string): void;
-  getCourseVisits(): Promise<CourseVisit[]>;
-}
+export type { CourseVisit };
 
 /**
  * Service for managing user authentication and course access
  */
 export interface TutorsConnectService {
-  profile: ProfileStore;
   identityClient: IdentityClient | null;
   intervalId: any;
-  anonMode: boolean;
+  /** True while the reader runs with no learner record: nothing recorded, nobody present, no sign-in. */
+  readonly anonMode: boolean;
 
   connect(redirectStr: string): Promise<void>;
   reconnect(user: ConnectUser): Promise<void>;
   disconnect(redirectStr: string): Promise<void>;
   toggleShare(): void;
-  /** Persists sentiment locally and, when signed in, in tutors-connect-users. */
+  /** Persists sentiment locally and, when signed in, in the learner's record. */
   updateSentiment(sentiment: string): Promise<void>;
 
   courseVisit(course: Course): void;
-  deleteCourseVisit(courseId: string): void;
+  deleteCourseVisit(courseId: string): Promise<void>;
   getCourseVisits(): Promise<CourseVisit[]>;
-  favouriteCourse(courseId: string): void;
-  unfavouriteCourse(courseId: string): void;
+  favouriteCourse(courseId: string): Promise<void>;
+  unfavouriteCourse(courseId: string): Promise<void>;
 
   /** Identity of the last reported learning event, so a repeat of it can be dropped. */
   lastLearningEvent: string;

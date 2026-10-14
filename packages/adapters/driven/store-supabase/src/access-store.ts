@@ -1,9 +1,11 @@
-import { supabase } from "../community/index.ts";
+/** Content locks in `tutors_content_locks`; `supabaseAccessStore` is the application's AccessStore over them. */
+import type { ContentLock } from "@tutors/domain/access";
+import type { AccessStore } from "@tutors/application/ports";
 import log from "@tutors/logger";
-import type { ContentLock } from "./types.ts";
+import { supabase } from "./client.ts";
 
 export async function getLocksForCourse(courseId: string): Promise<ContentLock[]> {
-  if (typeof supabase === "undefined") return [];
+  if (!supabase) return [];
   if (!courseId) return [];
 
   const { data, error } = await supabase
@@ -25,7 +27,7 @@ export async function upsertLock(
   locked: boolean,
   lockedBy: string
 ): Promise<boolean> {
-  if (typeof supabase === "undefined") return false;
+  if (!supabase) return false;
   if (!courseId || !loRoute || !lockedBy) return false;
 
   const { error } = await supabase.from("tutors_content_locks").upsert(
@@ -48,7 +50,7 @@ export async function upsertLock(
 }
 
 export async function removeLock(courseId: string, loRoute: string): Promise<boolean> {
-  if (typeof supabase === "undefined") return false;
+  if (!supabase) return false;
   if (!courseId || !loRoute) return false;
 
   const { error } = await supabase
@@ -63,4 +65,8 @@ export async function removeLock(courseId: string, loRoute: string): Promise<boo
   }
 
   return true;
+}
+
+export function supabaseAccessStore(): AccessStore {
+  return { locks: getLocksForCourse, setLock: upsertLock, removeLock };
 }

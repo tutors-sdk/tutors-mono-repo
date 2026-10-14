@@ -1,61 +1,21 @@
 import log from "@tutors/logger";
+import type { Lo } from "@tutors/domain/course";
+import {
+  hasActiveLocks as locksActive,
+  isLoLocked as loLocked,
+  roleHasPermission,
+  roleFor,
+  showsLockedToStudents,
+  SHOW_LOCKED_KEY,
+  type Permission,
+  type Role
+} from "@tutors/domain/access";
+import { loadContentLocks as loadLocks, setContentLock } from "@tutors/application";
+import { adapters } from "../adapters.ts";
 import { rune } from "../index.svelte.ts";
 import { contentLocks, isEducator, locksLoaded, tutorsId, currentCourse } from "../index.svelte.ts";
-import type { Lo } from "@tutors/tutors-model-lib";
-import type { Role, Permission } from "./types.ts";
-import { roleHasPermission } from "./permissions.ts";
-import { getLocksForCourse, upsertLock } from "./lock-store.ts";
 
-/**
- * The lecturer's per-course "show locked content to students" setting. It is stored as a reserved row in the
- * locks table, so every visitor's browser already reads it with the course's locks and lecturers can already
- * write it. It is not a route: route matching below never treats it as a lock.
- */
-export const SHOW_LOCKED_KEY = "@settings/show-locked";
-
-/** Drops trailing slashes. A loop, not /\/+$/, which backtracks polynomially on long runs of "/" (CodeQL js/polynomial-redos). */
-function normalizeRoute(route: string): string {
-  let end = route.length;
-  while (end > 0 && route[end - 1] === "/") end--;
-  return route.slice(0, end);
-}
-
-function isRouteLocked(route: string, locks: Map<string, boolean>): boolean {
-  if (!route) return false;
-  const normalized = normalizeRoute(route);
-  return locks.get(route) === true || locks.get(normalized) === true;
-}
-
-/** Path after the LO-type segment, e.g. `/lab/cs101/week-01` → `cs101/week-01`. */
-function routePathAfterType(route: string): string {
-  const parts = normalizeRoute(route).split("/").filter(Boolean);
-  return parts.slice(1).join("/");
-}
-
-/** Returns true if loRoute matches any locked route (exact or descendant). */
-export function isLoRouteLocked(
-  loRoute: string,
-  locks: Map<string, boolean>,
-): boolean {
-  if (!loRoute) return false;
-
-  const normalized = normalizeRoute(loRoute);
-  if (isRouteLocked(normalized, locks)) return true;
-
-  const loPath = routePathAfterType(normalized);
-  if (!loPath) return false;
-
-  for (const [route, locked] of locks) {
-    if (!locked) continue;
-    const lockPath = routePathAfterType(route);
-    // Require course id + at least one segment so `/topic/{courseId}` cannot lock the whole course.
-    if (!lockPath || lockPath.split("/").length < 2) continue;
-    if (loPath === lockPath || loPath.startsWith(`${lockPath}/`)) {
-      return true;
-    }
-  }
-  return false;
-}
+export { isLoRouteLocked, SHOW_LOCKED_KEY } from "@tutors/domain/access";
 
 function createRbacService() {
   const currentRole = rune<Role>("student");
@@ -74,8 +34,7 @@ function createRbacService() {
     currentUserId.value = userId;
     currentCourseId.value = courseId;
 
-    const educators = course?.enrollment?.educators ?? currentCourse.value?.enrollment?.educators ?? [];
-    currentRole.value = educators.includes(userId) ? "educator" : "student";
+    currentRole.value = roleFor(userId, course?.enrollment ?? currentCourse.value?.enrollment);
   }
 
   function resolvedCourseId(): string {
@@ -103,18 +62,17 @@ function createRbacService() {
     }
 
     try {
-      const locks = await getLocksForCourse(courseId);
-      const lockMap = new Map<string, boolean>();
+      const lockMap = await loadLocks({ store: adapters().accessStore })(courseId);
 
-      if (locks.length > 0) {
-        locks.forEach((lock) => lockMap.set(lock.lo_route, lock.locked));
-      } else if (typeof window !== "undefined") {
+      if (lockMap.size === 0 && typeof window !== "undefined") {
         const stored = localStorage.getItem(`tutors-locks-${courseId}`);
         if (stored) {
           try {
             const parsed = JSON.parse(stored) as Record<string, boolean>;
             Object.entries(parsed).forEach(([route, locked]) => lockMap.set(route, locked));
-          } catch { /* ignore parse errors */ }
+          } catch {
+            /* ignore parse errors */
+          }
         }
       }
 
@@ -143,7 +101,7 @@ function createRbacService() {
       localStorage.setItem(`tutors-locks-${courseId}`, JSON.stringify(Object.fromEntries(updated)));
     }
 
-    upsertLock(courseId, loRoute, locked, userId);
+    void setContentLock({ store: adapters().accessStore })(courseId, loRoute, locked, userId);
     return true;
   }
 
@@ -152,13 +110,7 @@ function createRbacService() {
   }
 
   function isLoLocked(lo: Lo): boolean {
-    // Course home remains reachable even if a stale lock exists on the course route.
-    if (lo.type === "course") return false;
-
-    const locks = contentLocks.value;
-    if (lo.route && isLoRouteLocked(lo.route, locks)) return true;
-    if (lo.video && lo.video !== lo.route && isLoRouteLocked(lo.video, locks)) return true;
-    return false;
+    return loLocked(lo, contentLocks.value);
   }
 
   function isLoVisibleToStudent(lo: Lo): boolean {
@@ -169,15 +121,12 @@ function createRbacService() {
   }
 
   function hasActiveLocks(): boolean {
-    for (const [route, locked] of contentLocks.value) {
-      if (locked && route !== SHOW_LOCKED_KEY) return true;
-    }
-    return false;
+    return locksActive(contentLocks.value);
   }
 
   /** Whether the lecturer chose to show locked content to students (greyed out) rather than hide it. */
   function showLockedToStudents(): boolean {
-    return contentLocks.value.get(SHOW_LOCKED_KEY) === true;
+    return showsLockedToStudents(contentLocks.value);
   }
 
   function setShowLockedToStudents(show: boolean): Promise<boolean> {

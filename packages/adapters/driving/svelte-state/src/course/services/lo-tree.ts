@@ -1,68 +1,41 @@
 import { courseProtocol } from "../../index.svelte.ts";
-import { nowMs } from "@tutors/clock";
-import {
-  allVideoLos,
-  convertLoSummaryToHtml,
-  convertLoToHtml,
-  createCompanions,
-  createWalls,
-  crumbs,
-  filterByType,
-  fixRoutePaths,
-  flattenLos,
-  getPanels,
-  getUnits,
-  initCalendar,
-  isCompositeLo,
-  loadIcon,
-  loadPropertyFlags,
-  removeUnknownLos,
-  type Archive,
-  type Composite,
-  type Course,
-  type Lab,
-  type Lo,
-  type Talk,
-  type Topic,
-  type Tutorial,
-  type Whiteboard
-} from "@tutors/tutors-model-lib";
+import { decorateCourseTree as decorateDomainCourseTree, type Course, type Lo } from "@tutors/domain/course";
+import type { ContentRenderer, LoadCourseDeps } from "@tutors/application";
 
-export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "") {
-  // define course properties
-  course.courseId = courseId;
-  course.courseUrl = courseUrl;
-  course.route = `/course/${courseId}`;
+/** The learning-object kinds whose bodies the reader renders on demand, as opening one can take a while. */
+const RENDERED_ON_DEMAND = new Set(["lab", "note", "notebook", "quiz"]);
 
-  // retrieve all Los in course
-  let allLos = flattenLos(course.los);
-  allLos.push(course);
-  // inject course path into all routes
-  injectCourseUrl(allLos, courseId, courseUrl);
-  // remove all los with type = "web"
-  allLos = allLos.filter((lo) => lo.type !== "web");
+/**
+ * How the reader decorates a course tree, over the domain's decoration: labs, notes, notebooks and
+ * quizzes keep their markdown until opened (only their one-line summary is rendered, so a card does
+ * not show "**bold**"); web links stay out of the route index; a course served over plain http has
+ * its links rewritten; custom companion icons are registered with the theme.
+ */
+export function readerDecoration(renderer: ContentRenderer): Pick<LoadCourseDeps, "render" | "decorated" | "omitFromIndex"> {
+  return {
+    render: (course, lo) => {
+      if (RENDERED_ON_DEMAND.has(lo.type)) {
+        // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
+        renderer.renderSummary(lo);
+      } else {
+        renderer.renderLo(course, lo, courseProtocol.value);
+      }
+    },
+    decorated: registerCompanionIcons,
+    omitFromIndex: (lo) => lo.type === "web"
+  };
+}
 
-  removeUnknownLos(course.los);
-  // Construct course tree
-  decorateLoTree(course, course);
-
-  // index all Los in course
-  course.loIndex = new Map<string, Lo>();
-  allLos.forEach((lo) => course.loIndex.set(lo.route, lo));
-  const videoLos = allVideoLos(allLos);
-  videoLos.forEach((lo) => course.loIndex.set(lo.video, lo));
-  course.topicIndex = new Map<string, Topic>();
-  //course.los.forEach((lo) => course.topicIndex.set(lo.route, lo as Topic));
-  const topicLos = filterByType(allLos, "topic");
-  topicLos.forEach((lo) => course.topicIndex.set(lo.route, lo as Topic));
-
-  loadPropertyFlags(course);
-  createCompanions(course);
-  registerCompanionIcons(course);
-  createWalls(course);
-  // createToc(course);
-  // The current week follows the server clock seam, so a frozen HARNESS_NOW freezes it too.
-  initCalendar(course, nowMs());
+/** Decorate a parsed course the way the reader does, with the renderer the app composed. */
+export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "", renderer?: ContentRenderer): void {
+  const decoration = renderer ? readerDecoration(renderer) : { render: undefined, decorated: registerCompanionIcons, omitFromIndex: (lo: Lo) => lo.type === "web" };
+  decorateDomainCourseTree(course, courseId, courseUrl, {
+    render: decoration.render,
+    today: Date.now(),
+    protocol: courseProtocol.value,
+    omitFromIndex: decoration.omitFromIndex
+  });
+  decoration.decorated?.(course);
 }
 
 /**
@@ -90,115 +63,6 @@ function registerCompanionIcons(course: Course) {
   for (const [key, companion] of Object.entries(companions)) {
     if (companion?.icon?.type) {
       registerCompanionIcon(key, { type: companion.icon.type, color: companion.icon.color });
-    }
-  }
-}
-
-export function decorateLoTree(course: Course, lo: Lo) {
-  // every Lo knows its parent
-  lo.parentCourse = course;
-  // recover icon from frontmatter if present
-  lo.icon = loadIcon(lo);
-  // define breadcrump - path to all parent Los
-  lo.breadCrumbs = [];
-  crumbs(lo, lo.breadCrumbs);
-  if (lo.breadCrumbs?.length > 2) {
-    if (lo.breadCrumbs[1].type === "unit" || lo.breadCrumbs[1].type === "side") {
-      // The generator routes a top-level unit or side to its parent page as /topic/<course id>,
-      // which is really the course page. Rewrite only that leading segment: this runs once per
-      // descendant, and a course id such as "web-topics-2026" must come through intact.
-      lo.breadCrumbs[1].route = lo.breadCrumbs[1].route.replace(/^\/topic(?=\/|$)/, "/course");
-    }
-  }
-
-  // Convert contentMd to html
-  if (lo.type !== "lab" && lo.type !== "note" && lo.type !== "notebook" && lo.type !== "quiz") {
-    // Convert labs, notes, notebooks & quizzes on demand as can be time consuming to convert all at once.
-    // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
-    convertLoToHtml(course, lo);
-  } else {
-    // Only the body of those types waits for on demand conversion. The summary is a single
-    // line and its card is on screen as soon as the tree is built, so leaving it as markdown
-    // renders the source - "**bold**" and all - until the Lo itself is opened.
-    convertLoSummaryToHtml(lo);
-  }
-
-  if (isCompositeLo(lo)) {
-    // if Lo is composite, recursively decorate all child los
-    const compositeLo = lo as Composite;
-    compositeLo.panels = getPanels(compositeLo.los);
-    compositeLo.units = getUnits(compositeLo.los);
-
-    compositeLo.toc = [];
-    compositeLo.toc.push(
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      ...compositeLo?.panels?.panelVideos,
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      ...compositeLo?.panels?.panelTalks,
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      ...compositeLo?.panels?.panelNotes,
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      ...compositeLo?.units?.units,
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      ...compositeLo?.units?.standardLos,
-      // eslint-disable-next-line no-unsafe-optional-chaining
-      ...compositeLo?.units?.sides
-    );
-
-    for (const childLo of compositeLo.los) {
-      childLo.parentLo = lo;
-      if (compositeLo.los) {
-        decorateLoTree(course, childLo);
-      }
-    }
-  }
-}
-
-function injectCourseUrl(los: Lo[], id: string, url: string) {
-  los.forEach((lo) => {
-    if (lo.type === "archive") {
-      const archive: Archive = lo as Archive;
-      archive.route = `https://${lo.route?.replace("/archive/{{COURSEURL}}", url)}/${archive.archiveFile}`;
-    } else {
-      lo.route = lo.route?.replace("{{COURSEURL}}", id);
-    }
-
-    lo.img = lo.img?.replace("{{COURSEURL}}", url);
-    lo.video = lo.video?.replace("{{COURSEURL}}", id);
-    if (lo.type == "talk" || lo.type == "paneltalk") {
-      const talk = lo as Talk;
-      talk.pdf = talk.pdf?.replace("{{COURSEURL}}", url);
-    }
-    if (lo.type === "tutorial") {
-      const tutorial = lo as Tutorial;
-      if (tutorial.pdf) {
-        tutorial.pdf = tutorial.pdf?.replace("{{COURSEURL}}", url);
-      }
-    }
-    if (lo.type == "lab") {
-      const lab = lo as Lab;
-      lab.pdf = lab.pdf?.replace("{{COURSEURL}}", url);
-    }
-    if (lo.type === "whiteboard") {
-      const whiteboard = lo as Whiteboard;
-      whiteboard.excalidraw = whiteboard.excalidraw?.replace("{{COURSEURL}}", url);
-    }
-
-    localizePath(lo);
-    fixRoutePaths(lo);
-  });
-}
-
-function localizePath(lo: Lo) {
-  if (courseProtocol.value === "http://") {
-    lo.route = lo.route?.replace("https://", "http://");
-    lo.video = lo.video?.replace("https://", "http://");
-    lo.img = lo.img?.replace("https://", "http://");
-    if ((lo as any).pdf) {
-      (lo as any).pdf = (lo as any).pdf?.replace("https://", "http://");
-    }
-    if ((lo as any).excalidraw) {
-      (lo as any).excalidraw = (lo as any).excalidraw?.replace("https://", "http://");
     }
   }
 }

@@ -1,14 +1,11 @@
-import type { RealtimeChannel } from "@supabase/supabase-js";
-import * as env from "$app/env/public";
+import type { Unsubscribe } from "@tutors/application/ports";
+import { adapters } from "../../adapters.ts";
 import { refreshLoRecord } from "./presence.svelte.ts";
 import { rune } from "../../index.svelte.ts";
 import { LoRecord, type LiveService } from "../types.svelte.ts";
-import { supabase } from "../utils/supabase-client.ts";
 
-const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
-
-let channelAll: RealtimeChannel | null = null;
-let globalChannelRemoval: Promise<unknown> | null = null;
+let stopGlobal: Unsubscribe | null = null;
+let stopCourse: Unsubscribe | null = null;
 
 export const liveService: LiveService = {
   listeningForCourse: rune<string>(""),
@@ -18,7 +15,6 @@ export const liveService: LiveService = {
   studentEventMap: new Map<string, LoRecord>(),
   courseEventMap: new Map<string, LoRecord>(),
 
-  channelCourse: null,
   listeningAll: false,
 
   studentListener(payload: { type: string; event: string; [key: string]: any }) {
@@ -56,18 +52,15 @@ export const liveService: LiveService = {
 
   async startGlobalPresenceService() {
     if (this.listeningAll) return;
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (adapters().anonymous) return;
 
     this.listeningAll = true;
-    if (globalChannelRemoval) await globalChannelRemoval;
-    if (!this.listeningAll || channelAll) return;
-
-    channelAll = supabase.channel("tutors-all-course-access", BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.broadcastListener.bind(this)).subscribe();
+    stopGlobal = adapters().presence.subscribe((event) => this.broadcastListener({ type: "broadcast", event: "lo-event", payload: event }));
   },
 
   stopGlobalPresenceService() {
-    if (channelAll && supabase) globalChannelRemoval = supabase.removeChannel(channelAll);
-    channelAll = null;
+    stopGlobal?.();
+    stopGlobal = null;
     this.listeningAll = false;
     this.coursesOnline.value = [];
     this.studentsOnline.value = [];
@@ -76,17 +69,15 @@ export const liveService: LiveService = {
   },
 
   startCoursePresenceListener(courseId: string) {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
-    if (this.channelCourse && this.listeningForCourse.value === courseId) return;
+    if (adapters().anonymous) return;
+    if (stopCourse && this.listeningForCourse.value === courseId) return;
 
-    if (this.channelCourse) {
-      supabase.removeChannel(this.channelCourse);
-    }
+    stopCourse?.();
 
     this.listeningForCourse.value = courseId;
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
 
-    this.channelCourse = supabase.channel(courseId, BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.studentListener.bind(this)).subscribe();
+    stopCourse = adapters().presence.subscribe((event) => this.studentListener({ type: "broadcast", event: "lo-event", payload: event }), courseId);
   }
 };

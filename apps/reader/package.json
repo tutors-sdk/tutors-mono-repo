@@ -15,6 +15,14 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
+    "@tutors/application": "workspace:*",
+    "@tutors/bus-inprocess": "workspace:*",
+    "@tutors/course-http": "workspace:*",
+    "@tutors/domain": "workspace:*",
+    "@tutors/profile-localstorage": "workspace:*",
+    "@tutors/realtime-supabase": "workspace:*",
+    "@tutors/render-markdown": "workspace:*",
+    "@tutors/store-supabase": "workspace:*",
     "dompurify": "^3.4.14",
     "isomorphic-dompurify": "^4.5.0"
   },

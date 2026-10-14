@@ -3,10 +3,20 @@
   import * as env from "$app/env/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/svelte-state";
-  import { supabase } from "@tutors/svelte-state/community/utils/supabase-client";
+  import { adapters } from "@tutors/svelte-state/adapters";
   import log from "@tutors/logger";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { themeService } from "@tutors/themes";
+
+  // Whiteboard scenes are read and saved straight through the composed Supabase client: a known
+  // violation (tests/architecture/known-violations.txt) until a whiteboard port exists.
+  type SceneStore = {
+    from(table: string): {
+      select(columns: string): { eq(column: string, value: string): { single(): Promise<{ data: any }> } };
+      upsert(row: Record<string, unknown>, options?: Record<string, unknown>): Promise<{ error: unknown }>;
+    };
+  };
+  const supabase = adapters().whiteboardClient as SceneStore | undefined;
 
   interface Props {
     lo: Whiteboard;
@@ -40,7 +50,7 @@
   }
 
   async function loadSceneFromDb(roomId: string): Promise<any | null> {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return null;
+    if (!supabase) return null;
     try {
       const { data } = await supabase
         .from("whiteboard_scenes")
@@ -57,7 +67,7 @@
   }
 
   function saveSceneToDb(roomId: string, elements: any[]) {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) { saveStatus = "Edits are not saved in this session."; return; }
+    if (!supabase) { saveStatus = "Edits are not saved in this session."; return; }
     if (saveTimer) clearTimeout(saveTimer);
     saveStatus = "Saving…";
     saveTimer = setTimeout(async () => {
@@ -198,7 +208,7 @@
       {/if}
       <button class="ui-button fullscreen" aria-pressed={isFullscreen} onclick={toggleFullscreen}><Icon icon={isFullscreen ? "lucide:minimize-2" : "lucide:maximize-2"} height="16" />{isFullscreen ? "Exit fullscreen" : "Fullscreen"}</button>
     </div>
-    {#if isEditing}<p class="whiteboard-status ui-muted" role="status">{saveStatus || (env.PUBLIC_ANON_MODE === "TRUE" || !supabase ? "Edits are not saved in this session." : "Use the whiteboard export menu to keep a copy of your work.")}</p>{/if}
+    {#if isEditing}<p class="whiteboard-status ui-muted" role="status">{saveStatus || (!supabase ? "Edits are not saved in this session." : "Use the whiteboard export menu to keep a copy of your work.")}</p>{/if}
     <div class="whiteboard-canvas" class:editing={isEditing}>
       {#if loading}<p class="whiteboard-loading ui-muted" role="status">Loading whiteboard…</p>{/if}
       {#if cachedScene}

@@ -1,6 +1,4 @@
-import type { TutorsId } from "@tutors/tutors-model-lib";
-import type { Course, IconType, Lo } from "@tutors/tutors-model-lib";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import type { Course, IconType, Lo, TutorsId } from "@tutors/domain/course";
 /**
  * Minimal user information for learning object interactions
  */
@@ -50,10 +48,8 @@ export type LoEvent = LoRecord;
 export interface PresenceService {
   /** Currently online students in the active course */
   studentsOnline: { value: LoRecord[] };
-  /** Supabase Realtime channel for all course events across the platform */
-  channelAll: RealtimeChannel | null;
-  /** Supabase Realtime channel for events specific to the current course */
-  channelCourse: RealtimeChannel | null;
+  /** True while this browser watches a course live (Tutors Live's course page). */
+  listening: boolean;
   /** Lookup table for quick access to student events */
   studentEventMap: Map<string, LoRecord>;
   /** ID of the course currently being monitored */
@@ -61,7 +57,7 @@ export interface PresenceService {
 
   /**
    * Process incoming student activity messages
-   * @param payload - Supabase broadcast payload with student activity data
+   * @param payload - broadcast payload with student activity data
    */
   studentListener(payload: { type: string; event: string; [key: string]: any }): void;
 
@@ -74,12 +70,7 @@ export interface PresenceService {
   sendLoEvent(course: Course, lo: Lo, student: TutorsId): void;
 
   /**
-   * Prepare the publish-only channel for platform-wide course activity
-   */
-  connectToAllCourseAccess(): void;
-
-  /**
-   * Begin monitoring activity in a specific course over Realtime (Tutors Live's course page)
+   * Begin monitoring activity in a specific course live (Tutors Live's course page)
    * @param courseId - Identifier of course to monitor
    */
   startPresenceListener(courseId: string): Promise<void>;
@@ -113,26 +104,24 @@ export interface LiveService {
   studentEventMap: Map<string, LoRecord>;
   /** Quick lookup for course activity by ID */
   courseEventMap: Map<string, LoRecord>;
-  /** Supabase Realtime channel for course-specific events */
-  channelCourse: RealtimeChannel | null;
   /** Flag indicating if global monitoring is active */
   listeningAll: boolean;
 
   /**
    * Process individual student activity
-   * @param payload - Supabase broadcast payload containing student update
+   * @param payload - broadcast payload containing student update
    */
   studentListener(payload: { type: string; event: string; [key: string]: any }): void;
 
   /**
    * Process course-level activity
-   * @param payload - Supabase broadcast payload containing course update
+   * @param payload - broadcast payload containing course update
    */
   courseListener(payload: { type: string; event: string; [key: string]: any }): void;
 
   /**
    * Handle incoming broadcast messages for both course and student events
-   * @param payload - Supabase broadcast payload to process
+   * @param payload - broadcast payload to process
    */
   broadcastListener(payload: { type: string; event: string; [key: string]: any }): void;
 
@@ -156,27 +145,10 @@ export interface LiveService {
  */
 export interface AnalyticsService {
   loRoute: string;
+  stepId: string | undefined;
 
   learningEvent(course: Course, params: Record<string, unknown>, lo: Lo, student: TutorsId): void;
   reportPageLoad(course: Course, lo: Lo, student: TutorsId): void;
   updatePageCount(course: Course, lo: Lo, student: TutorsId): void;
-  updateLogin(courseId: string, session: any): void;
-}
-
-export interface CatalogueEntry {
-  course_id: string;
-  visited_at: Date;
-  visit_count: number;
-  course_record: any;
-}
-
-/**
- * Service for managing course catalogue data
- */
-export interface CatalogueService {
-  getCatalogue(): Promise<CatalogueEntry[]>;
-  getCatalogueCount(): Promise<number>;
-  getStudentCount(): Promise<number>;
-  pruneCatalogue(fetchFunction: typeof fetch): Promise<void>;
-  deleteCourses(courseIds: string[]): Promise<void>;
+  updateLogin(courseId: string, session: { user: TutorsId }): Promise<void>;
 }

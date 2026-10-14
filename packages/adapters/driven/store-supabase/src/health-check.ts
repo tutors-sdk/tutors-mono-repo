@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.ts";
+import { supabase } from "./client.ts";
 
 interface CheckResult {
   status: "ok" | "error" | "skipped";
@@ -7,7 +7,7 @@ interface CheckResult {
 }
 
 export async function checkSupabase(): Promise<CheckResult> {
-  if (typeof supabase === "undefined") {
+  if (!supabase) {
     return { status: "skipped", latencyMs: 0, message: "anon mode" };
   }
 
@@ -29,7 +29,7 @@ export async function checkSupabase(): Promise<CheckResult> {
 }
 
 export async function getRecentErrorCounts(): Promise<{ app: string; level: string; count: number }[]> {
-  if (typeof supabase === "undefined") return [];
+  if (!supabase) return [];
 
   try {
     const { data, error } = await supabase.rpc("get_error_counts", { minutes_ago: 60 });

@@ -1,29 +1,31 @@
 /**
- * Analytics service for tracking user interactions and learning progress.
- * Integrates with Supabase for data persistence and provides real-time analytics tracking.
- * Handles learning events, page loads, and duration tracking.
+ * Analytics: what the reader records as a learner moves through a course, through the
+ * recordLearningEvent and recordHeartbeat use cases and whichever LearningEventSink the app composed.
  */
-
-import type { TutorsId } from "@tutors/tutors-model-lib";
-import type { Course, Lo } from "@tutors/tutors-model-lib";
-import { storeStudentCourseLearningObjectInSupabase, recordHeartbeat, addOrUpdateStudent } from "../utils/supabase-client.ts";
+import type { Course, Lo, TutorsId } from "@tutors/domain/course";
+import { recordHeartbeat, recordLearningEvent } from "@tutors/application";
+import { adapters } from "../../adapters.ts";
 import type { AnalyticsService } from "../types.svelte.ts";
 import log from "@tutors/logger";
+
+function deps() {
+  const { learningEvents, clock, publisher } = adapters();
+  return { events: learningEvents, clock, publish: publisher.publish.bind(publisher) };
+}
 
 export const analyticsService: AnalyticsService = {
   /** Current learning object route being tracked */
   loRoute: "",
+  /** The step id (a lab step, a notebook cell) the route above was built with, if any. */
+  stepId: undefined as string | undefined,
 
   /**
    * Records a learning event for a specific learning object
    * Handles both direct and nested learning object routes
-   * @param course - Current course context
-   * @param params - Event parameters including optional learning object ID
-   * @param lo - Learning object being interacted with
-   * @param student - Student performing the interaction
    */
   learningEvent(course: Course, params: Record<string, string>, lo: Lo, student: TutorsId) {
     try {
+      this.stepId = params.loid || undefined;
       if (params.loid) {
         const targetRouteParts = lo.route.split("/");
         const trimmedTargetRoute = targetRouteParts.slice(0, 3).join("/");
@@ -37,47 +39,38 @@ export const analyticsService: AnalyticsService = {
     }
   },
 
-  /**
-   * Records a page load event in Supabase
-   * Creates or updates learning object interaction record
-   * @param course - Current course
-   * @param lo - Learning object being viewed
-   * @param student - Student viewing the content
-   */
+  /** Records a page load through the composed sink. */
   reportPageLoad(course: Course, lo: Lo, student: TutorsId) {
     try {
-      storeStudentCourseLearningObjectInSupabase(course, this.loRoute, lo, student);
+      void recordLearningEvent(deps())(student, course, lo, this.stepId).catch((error: unknown) => log.error("TutorStore Error:", error));
     } catch (error: unknown) {
       log.error("TutorStore Error:", error);
     }
   },
 
-  /**
-   * Updates analytics for time spent on learning objects
-   * Tracks both individual learning object and calendar-based durations
-   * @param course - Current course
-   * @param lo - Learning object being tracked
-   * @param student - Student to update analytics for
-   */
+  /** The 30-second tick: time against the learning object on screen, and the day. */
   updatePageCount(course: Course, lo: Lo, student: TutorsId) {
     try {
       if (student) {
-        void recordHeartbeat(course.courseId, student.login, lo.route ? this.loRoute : null);
+        void recordHeartbeat(deps())(student, course, lo.route ? lo : null, this.stepId).catch((error: unknown) => log.error("TutorStore Error:", error));
       }
     } catch (error: unknown) {
       log.error("TutorStore Error:", error);
     }
   },
 
-  /**
-   * Updates or creates student record on login
-   * Ensures student data is synchronized with auth state
-   * @param courseId - Course being accessed
-   * @param session - Authentication session data
-   */
+  /** Updates or creates the learner's record on login. */
   async updateLogin(courseId: string, session: { user: TutorsId }) {
     try {
-      await addOrUpdateStudent(session.user);
+      const user = session.user;
+      await (adapters().profile.signedIn ?? adapters().profile.local).upsertLearner({
+        login: user.login,
+        name: user.name ?? null,
+        email: user.email ?? null,
+        image: user.image ?? null,
+        sentiment: user.sentiment ?? null,
+        sharing: user.share === "true" ? true : user.share === "false" ? false : null
+      });
     } catch (error: unknown) {
       log.error("TutorStore Error:", error);
     }

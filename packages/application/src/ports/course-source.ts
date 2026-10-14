@@ -36,8 +36,11 @@ export type CourseLocation = {
 
 /** Reads a published course. The text comes back unparsed: the use case decides when to load maths before parsing. */
 export interface CourseSource {
-  /** The tutors.json text of a course, or throws CourseNotFoundError, CourseUnreachableError, or an Error naming the HTTP status. */
-  load(location: CourseLocation): Promise<string>;
+  /**
+   * The tutors.json text of a course, or throws CourseNotFoundError, CourseUnreachableError, or an
+   * Error naming the HTTP status. A SvelteKit load passes its own `fetch` so a server read carries the request.
+   */
+  load(location: CourseLocation, fetchFn?: typeof fetch): Promise<string>;
 }
 
 /** Decorated course json, parsed. */

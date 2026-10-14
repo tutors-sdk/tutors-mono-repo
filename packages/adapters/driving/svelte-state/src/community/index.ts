@@ -4,22 +4,13 @@
  */
 
 // Service exports
-export { catalogueService } from "./services/catalogue.ts";
 export { liveService } from "./services/live.svelte.ts";
 export { presenceService } from "./services/presence.svelte.ts";
 export { analyticsService } from "./services/analytics.svelte.ts";
 
 // Type exports
-export type { LoUser, LoEvent, CatalogueService, CatalogueEntry, TutorsConnectLatestRow } from "./types.svelte.ts";
+export type { LoUser, LoEvent, TutorsConnectLatestRow } from "./types.svelte.ts";
 export { LoRecord } from "./types.svelte.ts";
-export {
-  supabase,
-  getTutorsConnectLatestLosByCourseId,
-  isReceivedAtOnLocalDay,
-  isReceivedAtInLocalWeek,
-  isReceivedAtInLocalMonth,
-  isReceivedAtInLocalYear
-} from "./utils/supabase-client.ts";
 
-export { createSupabaseErrorTransport } from "./utils/error-transport.ts";
-export { checkSupabase, getRecentErrorCounts } from "./utils/health-check.ts";
+// Local-day rules, as the live app has always imported them from here; they live in the domain now.
+export { isReceivedAtOnLocalDay, isReceivedAtInLocalWeek, isReceivedAtInLocalMonth, isReceivedAtInLocalYear } from "@tutors/domain/learning";

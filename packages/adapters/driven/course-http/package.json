@@ -1,0 +1,12 @@
+{
+  "name": "@tutors/course-http",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Reads published courses over HTTP: the CourseSource adapter",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@tutors/application": "workspace:*",
+    "@tutors/logger": "workspace:*"
+  }
+}

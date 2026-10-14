@@ -7,20 +7,17 @@
   "type": "module",
   "exports": {
     ".": "./src/index.svelte.ts",
+    "./adapters": "./src/adapters.ts",
     "./course": "./src/course/index.ts",
     "./markdown": "./src/markdown/index.ts",
     "./community": "./src/community/index.ts",
-    "./community/utils/supabase-client": "./src/community/utils/supabase-client.ts",
-    "./community/utils/error-transport": "./src/community/utils/error-transport.ts",
-    "./community/utils/health-check": "./src/community/utils/health-check.ts",
     "./connect": "./src/connect/index.ts",
     "./rbac": "./src/rbac/index.ts"
   },
   "dependencies": {
     "@marp-team/marp-core": "^4.3.1",
-    "@supabase/supabase-js": "^2.117.1",
-    "@tutors/clock": "workspace:*",
-    "@tutors/identity": "workspace:*",
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "mermaid": "^12.1.0",

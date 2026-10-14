@@ -1,76 +1,70 @@
 /**
  * Authentication and user connection management service.
  * Handles user authentication, course access, analytics tracking, and presence management.
- * Supports both authenticated and anonymous modes.
+ * Which learner record, presence and sign-in it talks to is decided by the app's composition root
+ * (`configureAdapters`); with the anonymous set in place it records nothing and offers no sign-in.
  */
 
 import { browser } from "$app/env";
 import { goto } from "$app/navigation";
-import type { Course } from "@tutors/tutors-model-lib";
+import type { Course } from "@tutors/domain/course";
+import { courseAdmission, forgetCourseVisit, setFavouriteCourse, visitCourse } from "@tutors/application";
+import type { ProfilePort } from "@tutors/application/ports";
+import { parseSentiment } from "@tutors/domain/presence";
 
+import { adapters } from "../../adapters.ts";
 import { analyticsService, presenceService } from "../../community/index.ts";
-import * as env from "$app/env/public";
-
-import { currentCourse, currentLo, tutorsId, isEducator } from "../../index.svelte.ts";
+import { currentCourse, currentLo, tutorsId } from "../../index.svelte.ts";
 import { rbacService } from "../../rbac/index.ts";
-import { localStorageProfile } from "./localStorageProfile.ts";
-
-import { updateCourseList } from "../utils/allCourseAccess.ts";
 import { type ConnectUser, type CourseVisit, type TutorsConnectService } from "../types.ts";
-import { supabaseProfile } from "./supabaseProfile.svelte.ts";
-import {
-  addOrUpdateStudent,
-  getTutorsConnectUserOnlineStatus,
-  getTutorsConnectUserSentiment,
-  updateTutorsConnectUserOnlineStatus,
-  updateTutorsConnectUserSentiment
-} from "../../community/utils/supabase-client.ts";
 import log from "@tutors/logger";
-
-/** Global anonymous mode flag, controlled by environment variable */
-let anonMode = false;
 
 /** Global flag to disable analytics in case of database issues*/
 export let analyticsEnabled = true;
 
-if (env.PUBLIC_ANON_MODE === "TRUE") {
-  anonMode = true;
+/** The learner's record: the store's once signed in, the browser's otherwise. */
+function profile(): ProfilePort {
+  const { local, signedIn } = adapters().profile;
+  return tutorsId.value?.login && signedIn ? signedIn : local;
+}
+
+function learnerId(): string {
+  return tutorsId.value?.login ?? "";
 }
 
 export const tutorsConnectService: TutorsConnectService = {
-  /** Active user profile implementation */
-  profile: localStorageProfile,
   identityClient: null,
   /** Timer ID for analytics updates */
   intervalId: null,
-  /** Local anonymous mode flag */
-  anonMode: false,
+
+  get anonMode(): boolean {
+    return adapters().anonymous;
+  },
 
   /**
    * Initiates GitHub OAuth authentication flow
    * @param redirectStr - URL to redirect to after successful authentication
-   * @returns Promise from auth provider
    */
   async connect(redirectStr: string) {
-    if (!this.identityClient) throw new Error("Identity client is not configured");
-    return this.identityClient.signIn(redirectStr);
+    const client = this.identityClient ?? adapters().identityClient;
+    if (!client) throw new Error("Identity client is not configured");
+    return client.signIn(redirectStr);
   },
 
   /**
    * Re-establishes user session and connections
-   * Switches to Supabase profile and handles course redirects
+   * Switches to the stored profile and handles course redirects
    * @param user - User identity to reconnect
    */
-
   async reconnect(user: ConnectUser) {
-    if (anonMode) return;
-    presenceService.connectToAllCourseAccess();
+    if (this.anonMode) return;
     if (user) {
-      this.profile = supabaseProfile;
       tutorsId.value = { ...user, share: "true", sentiment: "neutral" };
-      tutorsId.value.sentiment! = (await getTutorsConnectUserSentiment(user.login)) ?? "neutral";
-      tutorsId.value.share = (await getTutorsConnectUserOnlineStatus(user.login)) ?? "online";
-      addOrUpdateStudent(tutorsId.value).catch((err) => log.error("Failed to update student record:", err));
+      const stored = profile();
+      tutorsId.value.sentiment! = (await stored.getSentiment(user.login)) ?? "neutral";
+      const sharing = await stored.getSharing(user.login);
+      tutorsId.value.share = sharing === null ? "online" : String(sharing);
+      analyticsService.updateLogin("", { user: tutorsId.value }).catch((err) => log.error("Failed to update student record:", err));
       if (browser) {
         if (!localStorage.share) {
           localStorage.share = true;
@@ -93,8 +87,9 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param redirectStr - URL to redirect to after logout
    */
   async disconnect(redirectStr: string) {
-    if (!this.identityClient) throw new Error("Identity client is not configured");
-    return this.identityClient.signOut(redirectStr);
+    const client = this.identityClient ?? adapters().identityClient;
+    if (!client) throw new Error("Identity client is not configured");
+    return client.signOut(redirectStr);
   },
 
   /**
@@ -114,9 +109,10 @@ export const tutorsConnectService: TutorsConnectService = {
       } else {
         presenceService.stopPresenceListener();
       }
-      if (login && !anonMode) {
-        const onlineStatus = tutorsId.value.share === "true" ? "online" : "offline";
-        void updateTutorsConnectUserOnlineStatus(login, onlineStatus).catch((err) => log.error("Failed to update online status:", err));
+      if (login && !this.anonMode) {
+        void profile()
+          .setSharing(login, tutorsId.value.share === "true")
+          .catch((err) => log.error("Failed to update online status:", err));
       }
     }
   },
@@ -126,13 +122,14 @@ export const tutorsConnectService: TutorsConnectService = {
     if (browser) {
       localStorage.sentiment = s;
     }
-    if (anonMode) return;
+    if (this.anonMode) return;
     if (tutorsId.value) {
       tutorsId.value = { ...tutorsId.value, sentiment: s };
     }
     const login = tutorsId.value?.login;
-    if (login) {
-      await updateTutorsConnectUserSentiment(login, s);
+    const parsed = parseSentiment(s);
+    if (login && parsed) {
+      await profile().setSentiment(login, parsed);
     }
   },
 
@@ -149,17 +146,18 @@ export const tutorsConnectService: TutorsConnectService = {
     } else {
       rbacService.clear();
     }
-    if (anonMode) return;
+    if (this.anonMode) return;
     if (analyticsEnabled) {
-      updateCourseList(course);
-      this.profile.logCourseVisit(course);
+      const { publisher, clock } = adapters();
+      void publisher.publish({ type: "course-visit", learnerId: learnerId(), course }).catch((err) => log.error("Failed to publish course visit:", err));
+      void visitCourse({ profile: profile(), clock })(learnerId(), course).catch((err) => log.error("Failed to log course visit:", err));
     }
     if (tutorsId.value?.login && tutorsId.value.share === "true") {
       void presenceService.startCourseRoster(course.courseId);
     } else {
       presenceService.stopPresenceListener();
     }
-    if (course.authLevel! > 0 && !tutorsId.value?.login) {
+    if (courseAdmission(course, tutorsId.value?.login) === "sign-in") {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
     }
@@ -169,36 +167,20 @@ export const tutorsConnectService: TutorsConnectService = {
     }
   },
 
-  /**
-   * Adds course to user's favorites
-   * @param courseId - Course to favorite
-   */
   async favouriteCourse(courseId: string) {
-    await this.profile.favouriteCourse(courseId);
+    await setFavouriteCourse({ profile: profile() })(learnerId(), courseId, true);
   },
 
-  /**
-   * Removes course from user's favorites
-   * @param courseId - Course to unfavorite
-   */
   async unfavouriteCourse(courseId: string) {
-    await this.profile.unfavouriteCourse(courseId);
+    await setFavouriteCourse({ profile: profile() })(learnerId(), courseId, false);
   },
 
-  /**
-   * Deletes a course visit record
-   * @param courseId - Course visit to delete
-   */
   async deleteCourseVisit(courseId: string) {
-    await this.profile.deleteCourseVisit(courseId);
+    await forgetCourseVisit({ profile: profile() })(learnerId(), courseId);
   },
 
-  /**
-   * Retrieves user's course visit history
-   * @returns Promise resolving to array of course visits
-   */
   getCourseVisits(): Promise<CourseVisit[]> {
-    return this.profile.getCourseVisits();
+    return profile().getCourseVisits(learnerId());
   },
 
   lastLearningEvent: "",
@@ -253,7 +235,7 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param params - Event parameters to record
    */
   learningEvent(params: Record<string, string>): void {
-    if (anonMode || this.navigationInFlight) return;
+    if (this.anonMode || this.navigationInFlight) return;
     if (currentCourse.value && currentLo.value && tutorsId.value) {
       const identity = [params.loid ?? "", currentLo.value.route, tutorsId.value.login ?? "", tutorsId.value.sentiment ?? "", tutorsId.value.share ?? ""].join("|");
       if (!this.pendingNavigation && identity === this.lastLearningEvent) return;
@@ -272,7 +254,7 @@ export const tutorsConnectService: TutorsConnectService = {
    * Updates page counts every 30 seconds when page is visible
    */
   startTimer() {
-    if (anonMode) return;
+    if (this.anonMode) return;
     this.intervalId = setInterval(() => {
       if (!document.hidden && currentCourse.value && currentLo.value && tutorsId.value) {
         if (analyticsEnabled) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
@@ -293,17 +275,9 @@ export const tutorsConnectService: TutorsConnectService = {
   checkWhiteList(): void {
     const course = currentCourse.value;
     if (!course?.authLevel || course.authLevel < 1) return;
-    const enrollment = course.enrollment;
-    if (enrollment?.whitelist && enrollment.whitelist.length > 0) {
-      if (!tutorsId.value?.login) {
-        goto(`/`);
-      } else {
-        const login = tutorsId.value.login;
-        const isEducator = enrollment.educators?.includes(login) ?? false;
-        if (!isEducator && !enrollment.whitelist.includes(login)) {
-          goto(`/`);
-        }
-      }
+    if (!course.enrollment?.whitelist?.length) return;
+    if (courseAdmission(course, tutorsId.value?.login) !== "admit") {
+      goto(`/`);
     }
   }
 };

@@ -1,6 +1,5 @@
 import type { LogEntry } from "@tutors/logger";
-import { supabase } from "./supabase-client.ts";
-import * as env from "$app/env/public";
+import { supabase, supabaseConfig } from "./client.ts";
 
 let buffer: LogEntry[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -30,7 +29,7 @@ async function flush(appName: string) {
     flushTimer = null;
   }
 
-  if (typeof supabase === "undefined") return;
+  if (!supabase) return;
 
   try {
     await supabase.from("app_errors").insert(batch.map((e) => buildRow(e, appName)));
@@ -53,7 +52,9 @@ function flushOnUnload(appName: string) {
   // Only the key goes in the query string: the gateway takes it from there, but PostgREST reads any other
   // parameter as a column filter, so `?Prefer=...` is rejected with 400 (PGRST100) and the rows are lost.
   // sendBeacon cannot send a Prefer header, and an insert returns no body without one.
-  const url = `${env.PUBLIC_SUPABASE_URL}/rest/v1/app_errors?apikey=${env.PUBLIC_SUPABASE_ANON_KEY}`;
+  const config = supabaseConfig();
+  if (!config) return;
+  const url = `${config.url}/rest/v1/app_errors?apikey=${config.key}`;
 
   // sendBeacon survives page unload where async fetch does not
   const nav = navigator as Navigator & { sendBeacon?: (url: string, data: Blob) => boolean };
@@ -94,7 +95,7 @@ export function createSupabaseErrorTransport(appName: string): (entry: LogEntry)
 
   return (entry: LogEntry) => {
     if (entry.level !== "warn" && entry.level !== "error") return;
-    if (typeof supabase === "undefined") return;
+    if (!supabase) return;
 
     buffer.push(entry);
     if (buffer.length >= MAX_BUFFER_SIZE) {

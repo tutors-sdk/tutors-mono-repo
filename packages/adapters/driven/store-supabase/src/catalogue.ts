@@ -1,11 +1,28 @@
-import type { CatalogueEntry, CatalogueService } from "../types.svelte.ts";
-import { supabase } from "../utils/supabase-client.ts";
+import { supabase } from "./client.ts";
+
+/** One row of the catalogue: a course and how often it has been visited. */
+export interface CatalogueEntry {
+  course_id: string;
+  visited_at: Date;
+  visit_count: number;
+  course_record: any;
+}
+
+/** Reads and prunes the catalogue of visited courses. */
+export interface CatalogueService {
+  getCatalogue(): Promise<CatalogueEntry[]>;
+  getCatalogueCount(): Promise<number>;
+  getStudentCount(): Promise<number>;
+  pruneCatalogue(fetchFunction: typeof fetch): Promise<void>;
+  deleteCourses(courseIds: string[]): Promise<void>;
+}
 import log from "@tutors/logger";
 
 export const catalogueService: CatalogueService = {
   async getCatalogue() {
+    if (!supabase) return [];
     try {
-      const { data, error } = await supabase.from("tutors-connect-courses").select("*").order("visited_at", { ascending: false });
+      const { data, error } = await supabase!.from("tutors-connect-courses").select("*").order("visited_at", { ascending: false });
 
       if (error) {
         throw error;
@@ -20,8 +37,9 @@ export const catalogueService: CatalogueService = {
   },
 
   async getCatalogueCount() {
+    if (!supabase) return 0;
     try {
-      const { count, error } = await supabase.from("tutors-connect-courses").select("*", { count: "exact", head: true });
+      const { count, error } = await supabase!.from("tutors-connect-courses").select("*", { count: "exact", head: true });
 
       if (error) {
         throw error;
@@ -35,8 +53,9 @@ export const catalogueService: CatalogueService = {
   },
 
   async getStudentCount() {
+    if (!supabase) return 0;
     try {
-      const { count, error } = await supabase.from("tutors-connect-profiles").select("*", { count: "exact", head: true });
+      const { count, error } = await supabase!.from("tutors-connect-profiles").select("*", { count: "exact", head: true });
 
       if (error) {
         throw error;
@@ -72,8 +91,9 @@ export const catalogueService: CatalogueService = {
   },
 
   async deleteCourses(courseIds: string[]) {
+    if (!supabase) return;
     try {
-      const { error } = await supabase.from("tutors-connect-courses").delete().in("course_id", courseIds);
+      const { error } = await supabase!.from("tutors-connect-courses").delete().in("course_id", courseIds);
 
       if (error) {
         log.error("Error deleting courses:", error);
