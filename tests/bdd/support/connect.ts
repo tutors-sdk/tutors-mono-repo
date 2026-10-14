@@ -37,7 +37,7 @@ export function freshBrowser(): void {
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
   tutorsConnectService.identityClient = { signIn: vi.fn(), signOut: vi.fn() };
-  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true });
+  Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true, navigationInFlight: true, navigationAttempt: 0 });
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];
 
