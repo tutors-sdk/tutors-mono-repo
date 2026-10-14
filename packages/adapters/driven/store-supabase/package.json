@@ -1,0 +1,16 @@
+{
+  "name": "@tutors/store-supabase",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Supabase adapter for Tutors: learning records, learner profiles, content locks and the catalogue behind the application ports",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
+    "@tutors/logger": "workspace:*"
+  }
+}

@@ -1,15 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Window } from "happy-dom";
 import type { Course, Notebook } from "@tutors/tutors-model-lib";
-import { currentLo } from "../../../packages/svelte/runes/src/index.svelte.ts";
-import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
-import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { currentLo } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
+import { addTransport, removeTransport, type LogEntry } from "../../../packages/platform/logger/src/index.ts";
+import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
+import { anonymousReader } from "../../support/reader-adapters.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(value: T) => ({ value });
   return { rune, courseProtocol: rune("https://"), currentCourse: rune(null), currentLo: rune(null), isEducator: rune(false) };
 });
+
+// The reader's own anonymous wiring: real course fetching and rendering, nothing recorded.
+anonymousReader();
 
 const answering = (status: number) => (async () => new Response("", { status })) as unknown as typeof fetch;
 /** What a browser does for a host that does not exist, or a 404 sent without CORS headers. */

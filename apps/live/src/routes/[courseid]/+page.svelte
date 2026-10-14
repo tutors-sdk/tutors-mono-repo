@@ -1,14 +1,7 @@
 <script lang="ts">
-  import {
-    LoRecord,
-    presenceService,
-    type TutorsConnectLatestRow,
-    getTutorsConnectLatestLosByCourseId,
-    isReceivedAtInLocalMonth,
-    isReceivedAtInLocalWeek,
-    isReceivedAtInLocalYear,
-    isReceivedAtOnLocalDay
-  } from "@tutors/community";
+  import { LoRecord, presenceService, type TutorsConnectLatestRow } from "@tutors/svelte-state/community";
+  import { getTutorsConnectLatestLosByCourseId } from "@tutors/store-supabase";
+  import { isReceivedAtInLocalMonth, isReceivedAtInLocalWeek, isReceivedAtInLocalYear, isReceivedAtOnLocalDay } from "@tutors/domain/learning";
   import ConnectLatestLosCards from "@tutors/ui-components/time/ConnectLatestLosCards.svelte";
   import { Tabs } from "@skeletonlabs/skeleton-svelte";
   import { t } from "@tutors/i18n";

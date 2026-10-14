@@ -107,7 +107,7 @@ describe("security contracts (runway tier M)", () => {
     });
 
     it("the shared config the apps build on keeps the check on too", () => {
-      const file = "packages/svelte/app-config/src/svelte.js";
+      const file = "packages/platform/app-config/src/svelte.js";
       expect(csrfConfigFindings(file, readText(join(REPO_ROOT, file)))).toEqual([]);
     });
 

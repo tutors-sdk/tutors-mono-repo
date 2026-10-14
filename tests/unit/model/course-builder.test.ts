@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
  * Course builder tests -- validates that the Course type hierarchy can be
  * constructed correctly and traversed (course -> topics -> units -> los).
  * We build mock objects that conform to the type shapes defined in
- * packages/jsr/model/src/types/learning-objects.ts.
+ * packages/domain/src/course/types/learning-objects.ts.
  */
 
 // ---------------------------------------------------------------------------

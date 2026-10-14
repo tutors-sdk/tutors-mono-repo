@@ -1,6 +1,6 @@
 import * as env from "$app/env/public";
 import { createClient } from "@supabase/supabase-js";
-import { now } from "@tutors/runtime";
+import { now } from "@tutors/clock";
 import type { MoodleAssignSubmission, MoodleModule } from "#lib/server/api/moodle.ts";
 
 export interface AssignmentRow {

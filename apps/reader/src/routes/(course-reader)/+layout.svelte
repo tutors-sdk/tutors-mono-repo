@@ -1,11 +1,11 @@
 <script lang="ts">
   import CourseShell from "@tutors/ui-navigators/TutorsShell.svelte";
   import { onDestroy, type Snippet } from "svelte";
-  import { tutorsConnectService } from "@tutors/connect";
-  import { presenceService } from "@tutors/community";
+  import { tutorsConnectService } from "@tutors/svelte-state/connect";
+  import { presenceService } from "@tutors/svelte-state/community";
   import { page } from "$app/state";
-  import { currentCourse, isEducator, contentLocks, locksLoaded, tutorsId } from "@tutors/runes";
-  import { rbacService, isLoRouteLocked } from "@tutors/rbac";
+  import { currentCourse, isEducator, contentLocks, locksLoaded, tutorsId } from "@tutors/svelte-state";
+  import { rbacService, isLoRouteLocked } from "@tutors/svelte-state/rbac";
   import { afterNavigate, beforeNavigate, goto } from "$app/navigation";
   import { revealMatches } from "@tutors/ui-navigators/search/resource-search";
 

@@ -1,10 +1,14 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { courseService } from "../../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { courseService } from "../../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
 import { captureLogs, courseHost, publishedCourseJson, type CourseHost, type LogCapture } from "../../support/reader-loading.ts";
+import { anonymousReader } from "../../../support/reader-adapters.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+
+// The reader's own anonymous wiring: real course fetching and rendering, nothing recorded.
+anonymousReader();
 
 const feature = await loadFeature("tests/bdd/features/shared/offline-resilience.feature");
 

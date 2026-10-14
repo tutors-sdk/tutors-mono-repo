@@ -1,17 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MockSupabaseClient } from "../../bdd/support/mocks";
 
-vi.mock("$app/env/public", () => ({
-  PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-  PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-  PUBLIC_ANON_MODE: "TRUE"
-}));
-
-vi.mock("@tutors/community/utils/supabase-client", async () => {
-  const { MockSupabaseClient } = await import("../../bdd/support/mocks");
-  return { supabase: new MockSupabaseClient() };
-});
-
 vi.mock("@tutors/logger", () => ({
   default: {
     error: vi.fn(),
@@ -21,12 +10,13 @@ vi.mock("@tutors/logger", () => ({
   }
 }));
 
-import { supabase } from "@tutors/community/utils/supabase-client";
-import { updateCourseList } from "../../../packages/svelte/connect/src/utils/allCourseAccess";
+import { configureSupabase, updateCourseList } from "../../../packages/adapters/driven/store-supabase/src/index.ts";
 import type { Course } from "@tutors/tutors-model-lib";
 import log from "@tutors/logger";
 
-const mockClient = supabase as unknown as MockSupabaseClient;
+// The composition root's job: the store adapter is given the stand-in client.
+const mockClient = new MockSupabaseClient();
+configureSupabase(mockClient as never);
 
 function createMockCourse(overrides: Partial<Course> = {}): Course {
   return {

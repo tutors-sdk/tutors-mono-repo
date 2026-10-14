@@ -33,9 +33,9 @@ import type {
   Unit,
   Web,
   Whiteboard,
-} from "../../../../packages/jsr/model/src/types/index.ts";
-import type { CourseDisplayInfo, LearningRecord, TutorsConnectCourse, TutorsConnectUser } from "../../../../packages/jsr/time/src/types/index.ts";
-import type { CourseVisit as ConnectCourseVisit } from "../../../../packages/svelte/connect/src/types.ts";
+} from "../../../../packages/domain/src/course/types/index.ts";
+import type { CourseDisplayInfo, LearningRecord, TutorsConnectCourse, TutorsConnectUser } from "../../../../packages/domain/src/learning/types/index.ts";
+import type { CourseVisit as ConnectCourseVisit } from "../../../../packages/adapters/driving/svelte-state/src/connect/types.ts";
 
 type Assert<T extends true> = T;
 type Extends<A, B> = [A] extends [B] ? true : false;

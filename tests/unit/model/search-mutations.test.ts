@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Self-contained re-implementations of internal (non-exported) functions from
-// packages/jsr/model/src/services/search.ts.
+// packages/domain/src/course/services/search.ts.
 //
 // These mirror the source logic so that tight assertions kill mutation-testing
 // survivors that the existing search.test.ts misses.

@@ -57,8 +57,8 @@ The value must be the number `1`. Any other value, including `true` or `"1"`, le
 
 | Component | Location | Role |
 |-----------|----------|------|
-| `WhiteboardViewer.svelte` | `packages/svelte/ui-components` | Renders whiteboard LOs with view/edit/fullscreen controls, handles DB persistence |
-| `WhiteboardButton.svelte` | `packages/svelte/ui-navigators` | Toolbar button that opens the course-level whiteboard overlay |
+| `WhiteboardViewer.svelte` | `packages/adapters/driving/ui-components` | Renders whiteboard LOs with view/edit/fullscreen controls, handles DB persistence |
+| `WhiteboardButton.svelte` | `packages/adapters/driving/ui-navigators` | Toolbar button that opens the course-level whiteboard overlay |
 | `excalidraw-viewer.html` | `apps/reader/static` | Standalone HTML that renders Excalidraw scenes as static SVG |
 | `excalidraw-editor.html` | `apps/reader/static` | Standalone HTML with full interactive Excalidraw + Supabase Realtime sync |
 | `whiteboard_scenes` | Supabase table | Persists scene elements, app state, and files per room |
@@ -109,7 +109,7 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap â€
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/adapters/driven/store-supabase/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
 
 To try a whiteboard against a course on your machine, generate one that contains a `whiteboard-*` folder, serve its `json/` output over HTTP with CORS enabled, and open `/whiteboard/localhost:<port>/<topic>/<whiteboard-folder>` on the reader (add `whiteboard: 1` to the course's `properties.yaml` to see the toolbar button). The reader treats a `localhost` course id as plain HTTP, but the generator writes the `.excalidraw` URL into `tutors.json` as `https://{{COURSEURL}}/...`, so when serving over plain HTTP change that prefix to `http://` in the generated `tutors.json`.
 

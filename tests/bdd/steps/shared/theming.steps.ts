@@ -2,11 +2,11 @@
 import { readFileSync } from "node:fs";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { themeService } from "../../../../packages/svelte/themes/src/services/themes.svelte.ts";
+import { themeService } from "../../../../packages/adapters/driving/themes/src/services/themes.svelte.ts";
 import { startLaterSession, startWithNoStoredPreferences } from "../../support/theme.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
 const feature = await loadFeature("tests/bdd/features/shared/theming.feature");
 
@@ -49,7 +49,7 @@ describeFeature(feature, ({ Scenario }) => {
     When("I select the {string} theme", selectTheme);
     Then("the document theme attribute should be {string}", themeAttributeIs);
     And("the {string} stylesheet should set the base font family to {string}", (_ctx, name: string, fontFamily: string) => {
-      const css = readFileSync(`packages/svelte/themes/src/styles/${name}.css`, "utf8");
+      const css = readFileSync(`packages/adapters/driving/themes/src/styles/${name}.css`, "utf8");
       const block = css.slice(css.indexOf(`[data-theme="${name}"] {`));
       expect(block.slice(0, block.indexOf("}"))).toContain(`--base-font-family: ${fontFamily};`);
     });

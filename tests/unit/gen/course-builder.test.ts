@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { preOrder } from "../../../packages/jsr/model/src/types/type-utils.ts";
+import { preOrder } from "../../../packages/domain/src/course/types/type-utils.ts";
 import type { TutorsJsonLo } from "../../../packages/jsr/types/src/tutors-json.ts";
 import { descendants, syntheticTutorsJson } from "../../support/synthetic-course.ts";
 

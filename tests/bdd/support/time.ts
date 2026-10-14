@@ -1,5 +1,5 @@
-import type { CalendarEntry } from "../../../packages/jsr/time/src/types/calendar-types.ts";
-import type { LearningRecord } from "../../../packages/jsr/time/src/types/lab-types.ts";
+import type { CalendarEntry } from "../../../packages/domain/src/learning/types/calendar-types.ts";
+import type { LearningRecord } from "../../../packages/domain/src/learning/types/lab-types.ts";
 
 /**
  * Builders for the analytics features: a scenario's data table describes the

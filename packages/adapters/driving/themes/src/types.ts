@@ -1,0 +1,74 @@
+/**
+ * Core type definitions for the Tutors application.
+ * Defines interfaces for services, data models, and user interactions.
+ */
+
+import type { IconType } from "@tutors/tutors-model-lib";
+import type { LearnerDisplay } from "@tutors/tutors-types";
+
+/** How a learner appears in the themes presence views. */
+type LoUser = LearnerDisplay;
+
+/**
+ * Collection of icon definitions
+ */
+export type IconLib = Record<string, IconType>;
+
+/**
+ * Theme definition with icons
+ */
+export type Theme = {
+  name: string; // Theme name
+  icons: IconLib; // Theme icons
+};
+
+/** Card style type for display options */
+export type CardStyleType = "portrait" | "landscape" | "circular";
+
+/** Card configuration - to be able to override the ambient settings */
+export type CardConfig = {
+  style: CardStyleType;
+};
+
+/**
+ * Display information for course/topic/lab cards
+ */
+export interface CardDetails {
+  route: string;
+  title?: string;
+  type: string;
+  summary?: string;
+  summaryEx?: string;
+  icon?: IconType;
+  img?: string;
+  student?: LoUser;
+  video?: string;
+  metric?: string;
+}
+
+/**
+ * Service for theme management and icon customization
+ */
+export interface ThemeService {
+  /** Available themes with their icon libraries */
+  themes: Theme[];
+  /** current theme */
+  currentTheme: any;
+  lightMode: any;
+  cardStyle: { value: CardStyleType };
+  /** Lab and note text fills the reading panel instead of keeping a comfortable line length */
+  fullWidthReading: { value: boolean };
+  /** Tracks if festive snow animation is active */
+  isSnowing: boolean;
+
+  initDisplay(forceTheme?: string, forceMode?: string): void;
+  setDisplayMode(mode: string): void;
+  toggleDisplayMode(): void;
+  setTheme(theme: string): void;
+  setCardStyle(style: string): void;
+  setFullWidthReading(full: boolean): void;
+  getIcon(type: string): IconType;
+  addIcon(type: string, icon: IconType): void;
+  getTypeColour(type: string): string;
+  eventTrigger(): void;
+}

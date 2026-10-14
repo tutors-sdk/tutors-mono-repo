@@ -1,18 +1,19 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";
-import { supabase } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { courseService } from "../../../../packages/svelte/course/src/course/services/course.svelte.ts";
-import type { MockSupabaseClient } from "../../support/mocks.ts";
+import { catalogueService, configureSupabase } from "../../../../packages/adapters/driven/store-supabase/src/index.ts";
+import { courseService } from "../../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
+import { MockSupabaseClient } from "../../support/mocks.ts";
 import { captureLogs, courseHost, publishedCourseJson, type CourseHost, type LogCapture } from "../../support/reader-loading.ts";
+import { anonymousReader } from "../../../support/reader-adapters.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
-// Supabase is the network: the in-memory client stands in for it, and the catalogue service under test is the real one.
-vi.mock("../../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
-  const { MockSupabaseClient } = await import("../../support/mocks.ts");
-  return { supabase: new MockSupabaseClient() };
-});
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+// Supabase is the network: the in-memory client stands in for it through the store adapter's own
+// configuration seam, and the catalogue service under test is the real one.
+// The reader's own anonymous wiring first (it composes no store), then the stand-in store.
+anonymousReader();
+const supabase = new MockSupabaseClient();
+configureSupabase(supabase as never);
 
 const feature = await loadFeature("tests/bdd/features/shared/error-handling.feature");
 

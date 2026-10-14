@@ -165,11 +165,33 @@ function stripComments(source: string): string {
 }
 
 /**
- * Resolve a relative import path to an absolute file path.
+ * The workspace packages the published facades re-export, by import specifier: the rings and
+ * the markdown renderer. Mirrors their `exports` maps, so a facade's report lists what the
+ * facade really exposes.
+ */
+const WORKSPACE_ENTRIES: Record<string, string> = {
+  "@tutors/domain": "packages/domain/src/index.ts",
+  "@tutors/domain/course": "packages/domain/src/course/index.ts",
+  "@tutors/domain/course/vocabulary": "packages/domain/src/course/vocabulary.ts",
+  "@tutors/domain/learning": "packages/domain/src/learning/index.ts",
+  "@tutors/domain/presence": "packages/domain/src/presence/index.ts",
+  "@tutors/domain/access": "packages/domain/src/access/index.ts",
+  "@tutors/domain/quiz": "packages/domain/src/quiz/index.ts",
+  "@tutors/application": "packages/application/src/index.ts",
+  "@tutors/application/ports": "packages/application/src/ports/index.ts",
+  "@tutors/application/testing": "packages/application/src/testing/index.ts",
+  "@tutors/render-markdown": "packages/adapters/driven/render-markdown/src/index.ts",
+};
+
+/**
+ * Resolve a relative import path, or a workspace package a facade re-exports, to an absolute file path.
  * Handles Deno-style .ts extensions in imports.
  */
 function resolveImportPath(fromFile: string, importPath: string): string | null {
-  // Only handle relative imports
+  const workspaceEntry = WORKSPACE_ENTRIES[importPath];
+  if (workspaceEntry) return path.join(ROOT, workspaceEntry);
+
+  // Only handle relative imports beyond that
   if (!importPath.startsWith("./") && !importPath.startsWith("../")) {
     return null;
   }

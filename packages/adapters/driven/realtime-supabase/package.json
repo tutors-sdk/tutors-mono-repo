@@ -1,0 +1,14 @@
+{
+  "name": "@tutors/realtime-supabase",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Presence over Supabase Realtime: the PresencePort adapter",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
+    "@tutors/logger": "workspace:*"
+  }
+}

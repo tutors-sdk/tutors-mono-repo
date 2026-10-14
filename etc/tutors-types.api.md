@@ -9,79 +9,70 @@
 
 // --- interfaces ---
 
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface AppErrorRow;
 
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface CalendarDbRow;
 
-// (from src/ports.ts)
-export interface LearningEventSink;
-
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface LearningRecordRow;
 
-// (from src/ports.ts)
-export interface PresencePort;
-
-// (from src/ports.ts)
-export interface ProfilePort;
-
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface TutorsConnectCourseRow;
 
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface TutorsConnectLatestRow;
 
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface TutorsConnectUserRow;
 
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export interface TutorsTables;
 
 
 // --- types ---
 
-// (from src/events.ts)
+// (from ../../domain/src/learning/events.ts)
 export type CalendarDay = string;
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export type CourseIcon = { type: string; color?: string | null; };
 
-// (from src/learner.ts)
-export type CourseVisit = { id: string; title: string; img?: string; icon?: CourseIcon; lastVisit: string; credits: string; visits?: number; private?: boolean; favourite?: boolean; };
+// (from src/index.ts)
+export type { CourseVisit };
 
-// (from src/learner.ts)
-export type LearnerDisplay = { id: string; fullName: string; avatar: string; sentiment: Sentiment; };
+// (from src/index.ts)
+export type { LearnerDisplay };
 
-// (from src/events.ts)
+// (from ../../domain/src/learning/events.ts)
 export type LearningEvent = PageLoadEvent | TickEvent;
 
-// (from src/events.ts)
+// (from ../../domain/src/learning/events.ts)
 export type LearningEventKind = LearningEvent["kind"];
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export type LoCompositeType = (typeof LO_COMPOSITE_TYPES)[number];
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export type LoSimpleType = (typeof LO_SIMPLE_TYPES)[number];
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export type LoType = (typeof LO_TYPES)[number];
 
-// (from src/learner.ts)
-export type OnlineStatus = (typeof ONLINE_STATUSES)[number];
+// (from src/index.ts)
+export type { OnlineStatus };
 
-// (from src/events.ts)
+// (from ../../domain/src/learning/events.ts)
 export type PageLoadEvent = { kind: "page-load"; courseId: string; loId: string; loType: LoType; day: CalendarDay };
 
-// (from src/events.ts)
-export type PresenceEvent = { courseId: string; courseUrl: string; courseTitle: string; loRoute: string; title: string; img?: string; icon?: CourseIcon; isPrivate: boolean; user?: LearnerDisplay; type: LoType; };
+// (from src/index.ts)
+export type { PresenceEvent };
 
-// (from src/learner.ts)
-export type Sentiment = (typeof SENTIMENTS)[number];
+// (from src/index.ts)
+export type { Sentiment };
 
-// (from src/events.ts)
+// (from ../../domain/src/learning/events.ts)
 export type TickEvent = { kind: "tick"; courseId: string; loId: string | null; day: CalendarDay };
 
 // (from src/tutors-json.ts)
@@ -102,52 +93,49 @@ export type TutorsJsonStep = { type: "step"; id: string; title: string; shortTit
 // (from src/tutors-json.ts)
 export type TutorsJsonVideoIds = { videoid: string; videoIds: { service: string; id: string; url?: string; externalUrl?: string }[]; };
 
-// (from src/rows.ts)
+// (from ../../domain/src/learning/rows.ts)
 export type TutorsTableName = keyof TutorsTables;
-
-// (from src/ports.ts)
-export type Unsubscribe = () => void;
 
 
 // --- functions ---
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export function isLoCompositeType(value: unknown) : value is LoCompositeType;
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export function isLoType(value: unknown) : value is LoType;
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export function isSentiment(value: unknown) : value is Sentiment;
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export function onlineStatusFor(sharing: boolean) : OnlineStatus;
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export function parseSentiment(value: unknown) : Sentiment | null;
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export function parseSharing(value: unknown) : boolean | null;
 
 
 // --- consts ---
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export const DEFAULT_SENTIMENT: Sentiment;
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export const LO_COMPOSITE_TYPES;
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export const LO_SIMPLE_TYPES;
 
-// (from src/learning-objects.ts)
+// (from ../../domain/src/course/vocabulary.ts)
 export const LO_TYPES;
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export const ONLINE_STATUSES;
 
-// (from src/learner.ts)
+// (from ../../domain/src/presence/learner.ts)
 export const SENTIMENTS;
 
 // (from src/tutors-json.ts)
@@ -161,6 +149,6 @@ export const TUTORS_JSON_SCHEMA;
 |------|-------|
 | const | 7 |
 | function | 6 |
-| interface | 10 |
-| type | 22 |
-| **Total** | **45** |
+| interface | 7 |
+| type | 21 |
+| **Total** | **41** |

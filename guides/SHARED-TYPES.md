@@ -1,9 +1,11 @@
 # Shared types: @tutors/tutors-types and the plan to adopt it
 
 `packages/jsr/types` (`@tutors/tutors-types`) is one home for the types every Tutors app and package
-shares. It has no runtime dependencies and imports nothing outside itself (Rule 0130, and the
+shares. Since the hexagonal reorganisation ([ADR 0001](../docs/adr/0001-hexagonal-architecture.md))
+the types themselves live in the domain ring (`@tutors/domain`), and this package is a facade that
+re-exports them for JSR consumers. It depends on nothing but the domain (Rule 0130, and the
 `tutors-types-self-contained` dependency-cruiser rule), so anything can import it, from a theme to a
-server route to the JSR CLI.
+server route to the JSR CLI. New code in the mono-repo imports `@tutors/domain` directly.
 
 It was added without consumers. Nothing in the apps changed when it landed. This guide is the plan
 for moving existing code onto it, one reviewable step at a time. Each step can be evaluated and
@@ -14,7 +16,7 @@ stopped on its own.
 As of October 2026 there is no shared vocabulary. Types live in about 15 `types.ts` files, and the
 learner-facing ones are mostly `string`:
 
-- **Shared learner types sit in the data layer.** `LoUser` and `LoEvent` live in `@tutors/community`, so
+- **Shared learner types sit in the data layer.** `LoUser` and `LoEvent` live in `@tutors/svelte-state/community`, so
   `themes/src/types.ts` and `ui-primitives/.../StudentCard.svelte` depend on the Supabase package to
   get a type.
 - **Settings are stringly typed.** `TutorsId.share` holds `"true"`, `"false"`, `"online"` or
@@ -72,7 +74,7 @@ from the unification block (0132-0149). Identity is not in this plan.
 | 0 (this PR) | Add the package, Rules 0130-0131, the dependency rule, the API report and this plan | None | Are the names and shapes the ones we want to standardise on? |
 | 1 | Publish `@tutors/tutors-types` 0.1.0 to JSR. Make model-lib and time-lib re-export from it: `COURSE_SENTIMENT_IDS = SENTIMENTS`, `simpleTypes` from `LO_SIMPLE_TYPES`, `TutorsConnectUser = TutorsConnectUserRow` and so on, as type aliases so every existing name keeps working. Add a ratchet that lists type names declared in more than one package and may only shrink. | None (aliases) | API reports show only re-exports. The duplicate-type ratchet has a baseline. |
 | 2 | Normalise at the edges. Connect and community read the share setting with `parseSharing` and write it with `onlineStatusFor`. Sentiment reads go through `parseSentiment`, replacing `normalizeStoredSentiment`. Learning-object kinds go through `isLoType`. Community's `LoUser.sentiment` and `LoRecord.type` narrow to `Sentiment` and `LoType`, and `TutorsId.share` is read as a boolean internally while storage keeps its current values. This has to come before step 3, because `string` fields don't fit the shared `Sentiment` and `LoType`. | Yes: the presence truthiness check is fixed | Write BDD Rules for sharing (0132) and sentiment (0133) and see them fail before the change. Live presence still works end to end in the e2e stack. |
-| 3 | Move the learner and presence types out of `@tutors/community`. Themes and ui-primitives import `LearnerDisplay` and `PresenceEvent` from tutors-types, `LoUser` becomes an alias, and `LoRecord` implements `PresenceEvent`, which is possible now that step 2 has narrowed its fields. Add a compat assertion for the community payloads. Rule 0134: themes and UI primitives import no data package. | None | Two `known-violations` lines are gone, and themes and primitives build without Supabase in their graph. |
+| 3 | Move the learner and presence types out of `@tutors/svelte-state/community`. Themes and ui-primitives import `LearnerDisplay` and `PresenceEvent` from tutors-types, `LoUser` becomes an alias, and `LoRecord` implements `PresenceEvent`, which is possible now that step 2 has narrowed its fields. Add a compat assertion for the community payloads. Rule 0134: themes and UI primitives import no data package. | None | Two `known-violations` lines are gone, and themes and primitives build without Supabase in their graph. |
 | 4 | Ports. Community, connect and PR #327's data-api client implement `PresencePort`, `ProfilePort` and `LearningEventSink`. #327's contract imports `LearningEvent` and `CourseVisit` instead of `string` and `Record<string, unknown>`. Apps depend on the ports, and the Supabase types stay inside the adapters. | None | Each app can be given a fake adapter in tests. This step lines up with #327 landing and with #416's adapter shape. |
 | 5 | Generated row types. Once the schema is in `supabase/migrations` (migration plan), generate with `supabase gen types typescript` and make `rows.ts` re-export the generated tables. Add the five missing tables. CI fails when the generated file is stale. | None | No inline row casts remain in `supabase-client.ts`. |
 | 6 | Narrow the learning-object model: `Lo.type` becomes `LoType`, and model-lib's `Lo` family moves here (or is re-exported) if it stays dependency-free. Unknown kinds found while parsing a course are reported, not silently passed. | Possible, for courses with unknown kinds | Run `check:generator-diff` over real courses first and count unknown kinds. Only then decide. |

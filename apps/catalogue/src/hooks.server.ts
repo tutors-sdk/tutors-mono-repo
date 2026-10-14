@@ -4,9 +4,13 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { building } from "$app/env";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
-import { announceClock } from "@tutors/runtime";
+import { announceClock } from "@tutors/clock";
+import * as publicEnv from "$app/env/public";
+import { composeCatalogue } from "./lib/compose.ts";
 
 setAppName("tutors-catalogue");
+// The composition root for the server: the same wiring the browser gets, so both answer alike.
+composeCatalogue(publicEnv);
 // From here on every stdout/stderr line of the running server is one JSON object: stray console
 // output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
 if (!building) installProcessLogging();

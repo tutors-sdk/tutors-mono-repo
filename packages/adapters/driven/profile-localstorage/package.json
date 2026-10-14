@@ -1,0 +1,12 @@
+{
+  "name": "@tutors/profile-localstorage",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "A learner's record in the browser: the ProfilePort adapter for visitors who are not signed in",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*"
+  }
+}

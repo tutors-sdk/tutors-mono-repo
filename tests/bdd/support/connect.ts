@@ -1,23 +1,25 @@
 import "./svelte-runes-shim.ts";
 import { vi } from "vitest";
 import { decorateCourseTree, type Course, type Enrollment, type Lo, type TutorsId } from "../../../packages/jsr/model/src/tutors.ts";
-import { liveService } from "../../../packages/svelte/community/src/services/live.svelte.ts";
-import { presenceService } from "../../../packages/svelte/community/src/services/presence.svelte.ts";
-import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
-import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
-import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
-import { recordingFunctions } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
+import { liveService } from "../../../packages/adapters/driving/svelte-state/src/community/services/live.svelte.ts";
+import { presenceService } from "../../../packages/adapters/driving/svelte-state/src/community/services/presence.svelte.ts";
+import { tutorsConnectService } from "../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
+import { configureAdapters } from "../../../packages/adapters/driving/svelte-state/src/adapters.ts";
+import { recordingFunctions } from "../../../packages/adapters/driven/store-supabase/src/index.ts";
+import { composeReader } from "../../../apps/reader/src/lib/compose.ts";
+import { currentCourse, currentLo, tutorsId } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
-import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
+import { browserStorage, publicEnv, recorder, settle } from "./supabase-recorder.ts";
 
 /**
  * Drives the reader's connect, analytics, presence and live services the way
- * the reader's layouts do. A steps file that imports this must first mock
- * `@supabase/supabase-js` (returning `recorder`), `$app/env/public`,
- * `$app/env`, `$app/navigation` and an injected `IdentityClient`; every
- * module between those seams is the real product code.
+ * the reader's layouts do. `freshBrowser` runs the reader's own composition root
+ * (`composeReader`) against the recorder's environment, so every adapter the
+ * reader composes in a signed-in deployment is in place. A steps file that
+ * imports this must first mock `@supabase/supabase-js` (returning `recorder`),
+ * `$app/env/public`, `$app/env` and `$app/navigation`; the identity client is
+ * injected here. Every module between those seams is the real product code.
  */
 
 export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
@@ -26,6 +28,7 @@ export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
 export function freshBrowser(): void {
   vi.clearAllMocks();
   liveService.stopGlobalPresenceService();
+  liveService.stopCoursePresenceListener();
   presenceService.stopPresenceListener();
   recorder.reset();
   recordingFunctions.missing = false;
@@ -37,17 +40,16 @@ export function freshBrowser(): void {
   tutorsId.value = null;
   currentCourse.value = null;
   currentLo.value = null;
-  tutorsConnectService.profile = localStorageProfile;
-  tutorsConnectService.identityClient = { signIn: vi.fn(), signOut: vi.fn() };
+  // The reader's composition root, with the signed-in environment the recorder describes and the
+  // identity adapter stubbed: the Supabase adapters it composes all talk to the recorder.
+  const identityClient = { signIn: vi.fn(), signOut: vi.fn() };
+  configureAdapters(composeReader(publicEnv, { identityClient }));
+  tutorsConnectService.identityClient = identityClient;
   Object.assign(tutorsConnectService, { lastLearningEvent: "", pendingNavigation: true, navigationInFlight: true, navigationAttempt: 0 });
-  localStorageProfile.courseVisits = [];
-  supabaseProfile.courseVisits = [];
 
-  Object.assign(presenceService, { channelAll: null, channelCourse: null, listeningTo: "" });
   presenceService.studentsOnline.value = [];
   presenceService.studentEventMap.clear();
 
-  Object.assign(liveService, { channelCourse: null, listeningAll: false });
   liveService.listeningForCourse.value = "";
   liveService.coursesOnline.value = [];
   liveService.studentsOnline.value = [];

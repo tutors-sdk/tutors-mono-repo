@@ -1,4 +1,4 @@
-import { catalogueService } from "@tutors/community";
+import { catalogueService } from "@tutors/store-supabase";
 
 export const load = async ({ fetch }) => {
   let catalogueEntries = await catalogueService.getCatalogue();

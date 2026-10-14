@@ -89,7 +89,7 @@ Locks are stored by **topic or unit route** (e.g. `/course/cs101/topic-01`). Fil
 
 This ensures child learning objects (labs, talks, notes, videos, etc.) disappear from **walls** (`/wall/lab/...`, `/wall/talk/...`, `/wall/video/...`) when their parent topic or unit is locked, not only from the course home cards.
 
-The shared helper `isLoRouteLocked(loRoute, locks)` (exported from `@tutors/rbac`) implements this check. UI components call `rbacService.isLoLocked(lo)`, which delegates to `isLoRouteLocked` using the current `contentLocks` map. Educator bypass remains in the UI layer (`isEducator`).
+The shared helper `isLoRouteLocked(loRoute, locks)` (exported from `@tutors/svelte-state/rbac`) implements this check. UI components call `rbacService.isLoLocked(lo)`, which delegates to `isLoRouteLocked` using the current `contentLocks` map. Educator bypass remains in the UI layer (`isEducator`).
 
 ### Student View
 
@@ -115,9 +115,9 @@ When a course has auth level >= 1 and a whitelist, the system checks access on c
 
 ## Architecture
 
-### Package: `@tutors/rbac`
+### Package: `@tutors/svelte-state/rbac`
 
-Located at `packages/svelte/utils/rbac/`. Contains:
+Located at `packages/adapters/driving/svelte-state/`. Contains:
 
 | File | Purpose |
 |------|---------|
@@ -129,7 +129,7 @@ Located at `packages/svelte/utils/rbac/`. Contains:
 
 ### Reactive State (Runes)
 
-The following runes in `@tutors/runes` support RBAC:
+The following runes in `@tutors/svelte-state` support RBAC:
 
 | Rune | Type | Purpose |
 |------|------|---------|
@@ -166,7 +166,7 @@ Cards/Units/Wall call rbacService.isLoLocked + isEducator to filter visible cont
 
 ## Supabase Setup
 
-The `tutors_content_locks` table must be created in your Supabase project. Run the SQL in `packages/svelte/utils/rbac/sql/002_content_locks.sql`:
+The `tutors_content_locks` table must be created in your Supabase project. Run the SQL in `packages/adapters/driven/store-supabase/sql/002_content_locks.sql`:
 
 ```sql
 CREATE TABLE IF NOT EXISTS tutors_content_locks (

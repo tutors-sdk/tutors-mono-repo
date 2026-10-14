@@ -23,6 +23,17 @@ function kebab(s: string): string {
     .toLowerCase();
 }
 
+/** The text between an opening brace already consumed at `from` and its matching close brace, or null when unbalanced. */
+function braceBody(text: string, from: number): string | null {
+  let depth = 1;
+  for (let i = from; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return text.slice(from, i);
+  }
+  return null;
+}
+
 function titleCase(s: string): string {
   return s
     .split(/[-_\s]+/)
@@ -140,16 +151,15 @@ function extractPackages(): PackageInfo[] {
     { dir: "packages/jsr/gen", category: "jsr" as const },
     { dir: "packages/jsr/time", category: "jsr" as const },
     { dir: "packages/jsr/tutors", category: "jsr" as const },
-    { dir: "packages/svelte/course", category: "svelte" as const },
-    { dir: "packages/svelte/runes", category: "svelte" as const },
-    { dir: "packages/svelte/community", category: "svelte" as const },
-    { dir: "packages/svelte/connect", category: "svelte" as const },
-    { dir: "packages/svelte/themes", category: "svelte" as const },
-    { dir: "packages/svelte/ui-primitives", category: "svelte" as const },
-    { dir: "packages/svelte/ui-components", category: "svelte" as const },
-    { dir: "packages/svelte/utils/logger", category: "svelte" as const },
-    { dir: "packages/svelte/utils/a11y", category: "svelte" as const },
-    { dir: "packages/svelte/utils/i18n", category: "svelte" as const },
+    { dir: "packages/domain", category: "jsr" as const },
+    { dir: "packages/application", category: "jsr" as const },
+    { dir: "packages/adapters/driving/svelte-state", category: "svelte" as const },
+    { dir: "packages/adapters/driving/themes", category: "svelte" as const },
+    { dir: "packages/adapters/driving/ui-primitives", category: "svelte" as const },
+    { dir: "packages/adapters/driving/ui-components", category: "svelte" as const },
+    { dir: "packages/platform/logger", category: "svelte" as const },
+    { dir: "packages/adapters/driving/a11y", category: "svelte" as const },
+    { dir: "packages/adapters/driving/i18n", category: "svelte" as const },
     { dir: "apps/reader", category: "app" as const },
     { dir: "apps/catalogue", category: "app" as const },
     { dir: "apps/live", category: "app" as const },
@@ -222,8 +232,8 @@ function extractRoutes(): RouteInfo[] {
 function extractComponents(): ComponentInfo[] {
   const components: ComponentInfo[] = [];
   const componentDirs = [
-    { dir: "packages/svelte/ui-primitives/src", pkg: "ui-primitives" },
-    { dir: "packages/svelte/ui-components/src", pkg: "ui-components" },
+    { dir: "packages/adapters/driving/ui-primitives/src", pkg: "ui-primitives" },
+    { dir: "packages/adapters/driving/ui-components/src", pkg: "ui-components" },
   ];
 
   for (const { dir, pkg } of componentDirs) {
@@ -416,13 +426,13 @@ function extractSchemas(): SchemaInfo[] {
 
     // 1. Extract Zod schemas (z.object definitions)
     if (content.includes("z.object(")) {
-      const schemaRegex = /export const (\w+)\s*=\s*z\.object\(\{([^}]*(?:\{[^}]*\}[^}]*)*)\}\)/g;
+      const schemaStart = /export const (\w+)\s*=\s*z\.object\(\{/g;
       let zodMatch;
-      while ((zodMatch = schemaRegex.exec(content)) !== null) {
+      while ((zodMatch = schemaStart.exec(content)) !== null) {
         const name = zodMatch[1];
-        if (seen.has(name)) continue;
+        const body = braceBody(content, zodMatch.index + zodMatch[0].length);
+        if (body === null || seen.has(name)) continue;
         seen.add(name);
-        const body = zodMatch[2];
         const fields: SchemaInfo["fields"] = [];
         for (const line of body.split("\n").filter((l) => l.trim() && !l.trim().startsWith("//"))) {
           const fieldMatch = line.match(/(\w+):\s*z\.(\w+)\(\)(.*)$/);
@@ -530,9 +540,9 @@ function extractSchemas(): SchemaInfo[] {
 function extractServices(): ServiceInfo[] {
   const services: ServiceInfo[] = [];
   const serviceDirs = [
-    { dir: "packages/svelte/community/src/services", pkg: "community" },
-    { dir: "packages/svelte/connect/src/services", pkg: "connect" },
-    { dir: "packages/svelte/course/src/course/services", pkg: "course" },
+    { dir: "packages/adapters/driving/svelte-state/src/community/services", pkg: "community" },
+    { dir: "packages/adapters/driving/svelte-state/src/connect/services", pkg: "connect" },
+    { dir: "packages/adapters/driving/svelte-state/src/course/services", pkg: "course" },
   ];
 
   for (const { dir, pkg } of serviceDirs) {

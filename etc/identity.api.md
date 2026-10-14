@@ -9,13 +9,13 @@
 
 // --- interfaces ---
 
-// (from src/index.ts)
+// (from ../../domain/src/access/actor.ts)
 export interface Actor;
 
-// (from src/index.ts)
+// (from ../../application/src/ports/session.ts)
 export interface IdentityClient;
 
-// (from src/index.ts)
+// (from ../../application/src/ports/session.ts)
 export interface SessionPort;
 
 ```

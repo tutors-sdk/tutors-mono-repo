@@ -1,0 +1,19 @@
+{
+  "name": "@tutors/identity-better-auth",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "SvelteKit identity adapter with separate server and browser entry points",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./src/index.server.ts",
+    "./client": "./src/client.ts"
+  },
+  "dependencies": {
+    "@tutors/identity": "workspace:*",
+    "better-auth": "1.7.7"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": "^3.0.1"
+  }
+}

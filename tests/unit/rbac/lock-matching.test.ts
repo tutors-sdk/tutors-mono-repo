@@ -1,12 +1,6 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 
-vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
-  getLocksForCourse: vi.fn(),
-  upsertLock: vi.fn(),
-  removeLock: vi.fn(),
-}));
-
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,
@@ -18,10 +12,15 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { contentLocks, currentCourse, isEducator, locksLoaded } from "../../../packages/svelte/runes/src/index.svelte.ts";
-import { getLocksForCourse } from "../../../packages/svelte/utils/rbac/src/lock-store.ts";
-import { isLoRouteLocked, rbacService, SHOW_LOCKED_KEY } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
+import { contentLocks, currentCourse, isEducator, locksLoaded } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
+import { configureAdapters } from "../../../packages/adapters/driving/svelte-state/src/adapters.ts";
+import { isLoRouteLocked, rbacService, SHOW_LOCKED_KEY } from "../../../packages/adapters/driving/svelte-state/src/rbac/rbac-service.svelte.ts";
 import type { Lo } from "@tutors/tutors-model-lib";
+import type { AccessStore } from "../../../packages/application/src/ports/index.ts";
+
+// The access store the app composes; here a recording stand-in behind the port.
+const locks = vi.fn<AccessStore["locks"]>();
+configureAdapters({ accessStore: { locks, setLock: vi.fn(async () => true), removeLock: vi.fn(async () => true) } });
 
 describe("isLoRouteLocked", () => {
   it("returns true for an exact route match", () => {
@@ -171,22 +170,20 @@ describe("rbacService.isLoVisibleToStudent", () => {
 
 describe("rbacService.loadContentLocks", () => {
   beforeEach(() => {
-    vi.mocked(getLocksForCourse).mockReset();
+    locks.mockReset();
     contentLocks.value = new Map();
     locksLoaded.value = false;
   });
 
   it("marks locks as loaded once the store responds", async () => {
-    vi.mocked(getLocksForCourse).mockResolvedValue([
-      { lo_route: "/topic/cs101/week-01", locked: true } as any,
-    ]);
+    locks.mockResolvedValue([{ lo_route: "/topic/cs101/week-01", locked: true } as any]);
     await rbacService.loadContentLocks("cs101");
     expect(locksLoaded.value).toBe(true);
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
   });
 
   it("resolves rather than rejecting when the lock store fails", async () => {
-    vi.mocked(getLocksForCourse).mockRejectedValue(new Error("network down"));
+    locks.mockRejectedValue(new Error("network down"));
     await expect(rbacService.loadContentLocks("cs999")).resolves.toBeUndefined();
     expect(locksLoaded.value).toBe(true);
     expect(contentLocks.value.size).toBe(0);

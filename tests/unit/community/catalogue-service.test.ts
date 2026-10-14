@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MockSupabaseClient, createMockFetch } from "../../bdd/support/mocks";
 
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
-  const { MockSupabaseClient } = await import("../../bdd/support/mocks");
-  return { supabase: new MockSupabaseClient() };
-});
-
-vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
+vi.mock("../../../packages/platform/logger/src/index.ts", () => ({
   default: {
     error: vi.fn(),
     debug: vi.fn(),
@@ -16,11 +11,12 @@ vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
   }
 }));
 
-import { supabase } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { catalogueService } from "../../../packages/svelte/community/src/services/catalogue.ts";
-import log from "../../../packages/svelte/utils/logger/src/index.ts";
+import { catalogueService, configureSupabase } from "../../../packages/adapters/driven/store-supabase/src/index.ts";
+import log from "../../../packages/platform/logger/src/index.ts";
 
-const mockClient = supabase as unknown as MockSupabaseClient;
+// The composition root's job: the store adapter is given the stand-in client.
+const mockClient = new MockSupabaseClient();
+configureSupabase(mockClient as never);
 
 function makeCatalogueEntry(overrides: Record<string, unknown> = {}) {
   return {

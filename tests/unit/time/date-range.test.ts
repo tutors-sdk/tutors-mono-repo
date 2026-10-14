@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   filterByDateRange,
   getMondayForDate
-} from "../../../packages/jsr/time/src/utils/calendar-utils";
-import type { CalendarEntry } from "../../../packages/jsr/time/src/types/calendar-types";
+} from "../../../packages/domain/src/learning/utils/calendar-utils";
+import type { CalendarEntry } from "../../../packages/domain/src/learning/types/calendar-types";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal CalendarEntry

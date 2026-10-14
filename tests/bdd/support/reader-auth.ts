@@ -23,7 +23,8 @@ export const READER_ORIGIN = "https://tutors.test";
 
 /** The reader's private and public env, read on every request. Steps change them to switch modes. */
 export const privateEnv: Record<string, string | undefined> = {};
-export const publicEnv: Record<string, string | undefined> = {};
+// The composition root reads the Supabase keys; undeclared, the reader runs without a store.
+export const publicEnv: Record<string, string | undefined> = { PUBLIC_SUPABASE_URL: undefined, PUBLIC_SUPABASE_ANON_KEY: undefined };
 
 export function configureReader(): void {
   Object.assign(privateEnv, {

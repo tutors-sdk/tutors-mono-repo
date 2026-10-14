@@ -15,13 +15,13 @@ Feature: Test quality ratchets
       Given the repository's coverage configuration
       Then the scaffolder source file "packages/jsr/create/src/generate.ts" shall be measured
       And the time dashboard source file "apps/time/src/lib/enrichCourseUserFields.ts" shall be measured
-      And the course package source file "packages/svelte/course/src/course/services/lo-tree.ts" shall be measured
+      And the course package source file "packages/adapters/driving/svelte-state/src/course/services/lo-tree.ts" shall be measured
 
     Scenario: Test files and generated files stay out of the measure
       Given the repository's coverage configuration
-      Then the test file "packages/svelte/course/src/course/services/__tests__/lo-tree.test.ts" shall not be measured
+      Then the test file "packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree.test.ts" shall not be measured
       And the generated file "apps/reader/.svelte-kit/types/src/routes/proxy+layout.ts" shall not be measured
-      And the declaration file "packages/jsr/model/src/types/ambient.d.ts" shall not be measured
+      And the declaration file "packages/domain/src/course/types/ambient.d.ts" shall not be measured
 
   @rule-0111 @ears-unwanted
   Rule: If total or per-package test coverage falls below its recorded floor, then tutors shall fail the coverage check and name the scope and metric.
@@ -79,17 +79,17 @@ Feature: Test quality ratchets
   Rule: If a mutated module's mutation score is below its recorded floor, then tutors shall fail the mutation floor check and name the module.
 
     Scenario: A module below its floor fails the check
-      Given a recorded mutation floor of 85 percent for "packages/jsr/model/src/utils/lo-utils.ts"
-      When Stryker kills 84 and misses 16 of the mutants in "packages/jsr/model/src/utils/lo-utils.ts"
-      Then the mutation floor check shall report "below-floor: packages/jsr/model/src/utils/lo-utils.ts 84% < floor 85%"
+      Given a recorded mutation floor of 85 percent for "packages/domain/src/course/utils/lo-utils.ts"
+      When Stryker kills 84 and misses 16 of the mutants in "packages/domain/src/course/utils/lo-utils.ts"
+      Then the mutation floor check shall report "below-floor: packages/domain/src/course/utils/lo-utils.ts 84% < floor 85%"
 
     Scenario: A module whose score rose past the margin demands a raised floor
-      Given a recorded mutation floor of 85 percent for "packages/jsr/model/src/utils/lo-utils.ts"
-      When Stryker kills 90 and misses 10 of the mutants in "packages/jsr/model/src/utils/lo-utils.ts"
-      Then the mutation floor check shall report "stale-floor: packages/jsr/model/src/utils/lo-utils.ts 90% >= floor 85% + 2; raise it to 90"
+      Given a recorded mutation floor of 85 percent for "packages/domain/src/course/utils/lo-utils.ts"
+      When Stryker kills 90 and misses 10 of the mutants in "packages/domain/src/course/utils/lo-utils.ts"
+      Then the mutation floor check shall report "stale-floor: packages/domain/src/course/utils/lo-utils.ts 90% >= floor 85% + 2; raise it to 90"
 
     Scenario: A mutated module with no floor fails the check
-      Given a recorded mutation floor of 85 percent for "packages/jsr/model/src/utils/lo-utils.ts"
+      Given a recorded mutation floor of 85 percent for "packages/domain/src/course/utils/lo-utils.ts"
       When Stryker kills 5 and misses 5 of the mutants in "packages/jsr/gen/src/utils/lr-utils.ts"
       Then the mutation floor check shall report "unfloored: packages/jsr/gen/src/utils/lr-utils.ts scored 50% and has no floor"
 
@@ -122,7 +122,7 @@ Feature: Test quality ratchets
       Given the nightly Stryker configuration
       Then every package source file the coverage run measures shall be mutated
       And the scaffolder source file "packages/jsr/create/src/scaffolder.ts" shall be mutated
-      And the course service "packages/svelte/course/src/course/services/course.svelte.ts" shall be mutated
+      And the course service "packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts" shall be mutated
 
     Scenario: The comprehensive run collects the unit, BDD and contract suites
       Given the nightly mutation test configuration
@@ -139,12 +139,12 @@ Feature: Test quality ratchets
       Then the job that runs "pnpm test:mutation:nightly" shall check "reports/mutation-nightly/mutation.json" against "tests/mutation/nightly-mutation-floors.json"
 
     Scenario: A module below its nightly floor fails the night
-      Given a recorded nightly mutation floor of 70 percent for "packages/svelte/course/src/course/services/course.svelte.ts"
-      When the nightly run kills 69 and misses 31 of the mutants in "packages/svelte/course/src/course/services/course.svelte.ts"
-      Then the nightly floor check shall fail with "below-floor: packages/svelte/course/src/course/services/course.svelte.ts 69% < floor 70%"
+      Given a recorded nightly mutation floor of 70 percent for "packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts"
+      When the nightly run kills 69 and misses 31 of the mutants in "packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts"
+      Then the nightly floor check shall fail with "below-floor: packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts 69% < floor 70%"
 
     Scenario: A new library module without a nightly floor fails the night
-      Given a recorded nightly mutation floor of 70 percent for "packages/svelte/course/src/course/services/course.svelte.ts"
+      Given a recorded nightly mutation floor of 70 percent for "packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts"
       When the nightly run kills 3 and misses 1 of the mutants in "packages/jsr/model/src/new-module.ts"
       Then the nightly floor check shall fail with "unfloored: packages/jsr/model/src/new-module.ts scored 75% and has no floor"
 
@@ -168,9 +168,9 @@ Feature: Test quality ratchets
   Rule: When a module's score in the nightly mutation run is 2 or more points above its nightly floor, tutors shall report the floor to raise in the nightly summary without failing the nightly run.
 
     Scenario: A module that rose past the margin is reported and the night passes
-      Given a recorded nightly mutation floor of 70 percent for "packages/svelte/course/src/course/services/course.svelte.ts"
-      When the nightly run kills 80 and misses 20 of the mutants in "packages/svelte/course/src/course/services/course.svelte.ts"
-      Then the nightly summary shall report "stale-floor: packages/svelte/course/src/course/services/course.svelte.ts 80% >= floor 70% + 2; raise it to 80"
+      Given a recorded nightly mutation floor of 70 percent for "packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts"
+      When the nightly run kills 80 and misses 20 of the mutants in "packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts"
+      Then the nightly summary shall report "stale-floor: packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts 80% >= floor 70% + 2; raise it to 80"
       And the nightly floor check shall pass
 
     Scenario: The nightly job warns on stale floors and writes the step summary

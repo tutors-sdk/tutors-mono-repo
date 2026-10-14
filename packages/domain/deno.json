@@ -1,0 +1,14 @@
+{
+  "name": "@tutors/domain",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./course": "./src/course/index.ts",
+    "./course/vocabulary": "./src/course/vocabulary.ts",
+    "./learning": "./src/learning/index.ts",
+    "./presence": "./src/presence/index.ts",
+    "./access": "./src/access/index.ts",
+    "./quiz": "./src/quiz/index.ts"
+  }
+}

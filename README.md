@@ -38,9 +38,11 @@ New here? Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md
 
 ## Structure
 
-This repository uses pnpm workspaces. Directory names and package names differ, so every table below shows both: the **Package** column is what you pass to `pnpm --filter`. Aligning the two is tracked in [#233](https://github.com/tutors-sdk/tutors-mono-repo/issues/233).
+This repository uses pnpm workspaces, laid out as a hexagonal architecture: a domain ring, an application ring of ports and use cases, and adapters around them, with each app as a composition root. The decision and its rules are in [docs/adr/0001-hexagonal-architecture.md](docs/adr/0001-hexagonal-architecture.md). Directory names and package names differ, so every table below shows both: the **Package** column is what you pass to `pnpm --filter`.
 
 ### Applications
+
+Each app composes its adapters in `src/lib/compose.ts`, the only place that reads `PUBLIC_ANON_MODE`.
 
 | Directory | Package | What it is | Dev port |
 |---|---|---|---|
@@ -49,58 +51,67 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `apps/live` | `tutors-live` | Live classroom / presence | 5174 |
 | `apps/time` | `tutors-time` | Student activity and time-tracking dashboard | 5176 |
 
-### Packages
-
-**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; three of them also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
+### Rings
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/jsr/model` | `@tutors/tutors-model-lib` | Core data models, types and the course-tree utilities |
-| `packages/jsr/time` | `@tutors/tutors-time-lib` | Time tracking utilities |
-| `packages/jsr/gen` | `@tutors/tutors-gen-lib` | Course generation utilities |
+| `packages/domain` | `@tutors/domain` | The domain: course tree, learning records, presence, access and quiz rules. Plain TypeScript, imports nothing. Subpaths: `/course`, `/learning`, `/presence`, `/access`, `/quiz` |
+| `packages/application` | `@tutors/application` | Ports (`/ports`: what the application needs from outside, as interfaces) and the use cases over them; `/testing` holds in-memory adapters and the contract suite every adapter of a port must pass |
+
+### Driven adapters (`packages/adapters/driven/`)
+
+Each wraps one technology behind a port and imports no other adapter.
+
+| Directory | Package | Port it implements |
+|---|---|---|
+| `store-supabase` | `@tutors/store-supabase` | LearningEventSink, LearningRecords, ProfilePort, AccessStore and the catalogue, over Supabase |
+| `realtime-supabase` | `@tutors/realtime-supabase` | PresencePort over Supabase Realtime |
+| `course-http` | `@tutors/course-http` | CourseSource: reads a published `tutors.json` over HTTP |
+| `render-markdown` | `@tutors/render-markdown` | ContentRenderer: markdown-it, Shiki and KaTeX |
+| `profile-localstorage` | `@tutors/profile-localstorage` | ProfilePort in the browser, for a visitor who is not signed in |
+| `bus-inprocess` | `@tutors/bus-inprocess` | EventPublisher, in process |
+| `identity-better-auth` | `@tutors/identity-better-auth` | SessionPort and IdentityClient over Better Auth (`/server` and `/client` entry points) |
+| `moodle` | `@tutors/moodle` | AssignmentSource over Moodle web services |
+| `clock` | `@tutors/clock` | Clock (frozen by `HARNESS_NOW` for the release harness) and the `/version` endpoint |
+
+### Driving adapters (`packages/adapters/driving/`)
+
+| Directory | Package | What it is |
+|---|---|---|
+| `svelte-state` | `@tutors/svelte-state` | The reader's Svelte 5 state and services over the ports: course loading, presence, profiles, sign-in and role checks (`/community`, `/connect`, `/rbac`, `/adapters`). The only home of runes in package code |
+| `themes` | `@tutors/themes` | Theme management, icon sets and card styles |
+| `i18n` | `@tutors/i18n` | Internationalization (six locales) |
+| `a11y` | `@tutors/a11y` | Accessibility utilities |
+| `privacy` | `@tutors/privacy` | Consent management |
+| `tour` | `@tutors/tour` | Guided product tours |
+| `ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
+| `ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
+| `ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
+
+The UI packages keep their strict one-directional dependency: `ui-components → ui-navigators → ui-primitives`.
+
+### Platform (`packages/platform/`)
+
+| Directory | Package | What it is |
+|---|---|---|
+| `logger` | `@tutors/logger` | Logging utility and server request logger |
+| `metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
+
+### JSR packages (`packages/jsr/`)
+
+These carry a `deno.json` and are run and published with Deno; some also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm. The three libraries are facades over the domain for one major version, so courses and tools built on them keep working.
+
+| Directory | Package | What it is |
+|---|---|---|
+| `packages/jsr/model` | `@tutors/tutors-model-lib` | Facade: re-exports the domain's course model and tree utilities |
+| `packages/jsr/time` | `@tutors/tutors-time-lib` | Facade over the domain's learning records, plus the time app's read models |
+| `packages/jsr/types` | `@tutors/tutors-types` | Facade over the domain's shared types (see `guides/SHARED-TYPES.md`) |
+| `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
+| `packages/jsr/gen` | `@tutors/tutors-gen-lib` | Course generation utilities (the authoring toolchain) |
 | `packages/jsr/tutors` | `@tutors/tutors` | The generator that turns a course folder into `tutors.json` |
 | `packages/jsr/tutors-lite` | `@tutors/tutors-lite` | Static HTML course generator |
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
-| `packages/jsr/types` | `@tutors/tutors-types` | The shared types every layer uses; imports nothing outside itself (see `guides/SHARED-TYPES.md`) |
-| `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
-
-**Foundation layer, Svelte.**
-
-| Directory | Package | What it is |
-|---|---|---|
-| `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
-| `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
-| `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
-
-**Core services.**
-
-| Directory | Package | What it is |
-|---|---|---|
-| `packages/svelte/runes` | `@tutors/runes` | Svelte 5 reactive state shared across packages |
-| `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
-| `packages/svelte/utils/a11y` | `@tutors/a11y` | Accessibility utilities |
-| `packages/svelte/utils/i18n` | `@tutors/i18n` | Internationalization (six locales) |
-
-**Feature services.**
-
-| Directory | Package | What it is |
-|---|---|---|
-| `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
-| `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
-| `packages/svelte/community` | `@tutors/community` | Presence and community features |
-| `packages/svelte/connect` | `@tutors/connect` | User profiles, course activity and injected sign-in/sign-out |
-| `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Better Auth server and browser adapter |
-| `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
-| `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
-| `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
-
-**UI layer.** Strict one-directional dependency: `ui-components → ui-navigators → ui-primitives`.
-
-| Directory | Package | What it is |
-|---|---|---|
-| `packages/svelte/ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
-| `packages/svelte/ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
-| `packages/svelte/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
 
 ## Getting Started
 
@@ -169,7 +180,7 @@ Docs live in five places. This is the index.
 |---|---|
 | [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) | Understand how one course page gets from URL to pixels. **Start here.** |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Look something up: every package, service and data flow, in depth |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | The authority on the shape: C4 and sequence diagrams, ports, adapters, ownership and data boundaries, the EARS rules that enforce them |
 | [guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/testing/TESTING.md](guides/testing/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
 | [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite |
 | [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
@@ -189,17 +200,16 @@ Docs live in five places. This is the index.
 
 ## Architecture
 
-The monorepo follows a layered architecture with clear dependency boundaries:
+Tutors is a hexagonal architecture. [ARCHITECTURE.md](ARCHITECTURE.md) is the authority on its shape, intent and ownership boundaries, and [ADR 0001](docs/adr/0001-hexagonal-architecture.md) records the decision. The dependency arrows point inwards:
 
-1. **Foundation** → No internal dependencies
-2. **Core Services** → Depend on foundation
-3. **Feature Services** → Depend on core + foundation
-4. **UI Primitives** → Low-level components (Icon, Menu, Sidebar, Image)
-5. **UI Navigators** → Navigation chrome (MainNavigator, Footer, TutorsShell)
-6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
-7. **Applications** → Consume packages as needed
+1. **Domain** (`@tutors/domain`) imports nothing.
+2. **Application** (`@tutors/application`) imports the domain only, and defines the ports.
+3. **Adapters** (`packages/adapters/driven`, `packages/adapters/driving`) import the ports, the domain and their one technology, never another adapter. Svelte runes live in `@tutors/svelte-state` only.
+4. **Apps** compose the adapters in `src/lib/compose.ts`; `PUBLIC_ANON_MODE=TRUE` composes the in-memory, localStorage and no-op adapters instead of Supabase and Better Auth.
 
-Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
+`.dependency-cruiser.cjs` enforces this (`pnpm architecture-report` draws the graph); the edges that predate the rules are in `tests/architecture/known-violations.txt`, which may only shrink. Rules 0340-0346 in `tests/bdd/features/developer/hexagonal-architecture.feature` state the same as requirements.
+
+Only `@tutors/identity-better-auth` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 
 The reader uses the GitHub-only Better Auth stateless adapter. See [identity rollout](guides/identity-rollout.md) for configuration, session continuity and the required preceding rollout/rollback checkpoints before releasing the adapter cleanup.
 

@@ -2,10 +2,10 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 import { currentCourse } from "../../support/runes-stub.ts";
-import { buildTourSteps, findTourTarget, tourService } from "../../../../packages/svelte/utils/tour/src/tour-service.svelte.ts";
-import { cardStepForType, homeSteps, openMenuStep } from "../../../../packages/svelte/utils/tour/src/steps.ts";
+import { buildTourSteps, findTourTarget, tourService } from "../../../../packages/adapters/driving/tour/src/tour-service.svelte.ts";
+import { cardStepForType, homeSteps, openMenuStep } from "../../../../packages/adapters/driving/tour/src/steps.ts";
 
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 const environment = vi.hoisted(() => ({ browser: true }));
 vi.mock("$app/env", () => environment);
 

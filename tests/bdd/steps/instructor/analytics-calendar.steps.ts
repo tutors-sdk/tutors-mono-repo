@@ -1,8 +1,8 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
-import type { CalendarEntry, CalendarRow } from "../../../../packages/jsr/time/src/types/calendar-types.ts";
-import { heatColor } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { BaseCalendarModel } from "../../../../packages/domain/src/learning/services/base-calendar-model.ts";
+import type { CalendarEntry, CalendarRow } from "../../../../packages/domain/src/learning/types/calendar-types.ts";
+import { heatColor } from "../../../../packages/domain/src/learning/utils/calendar-utils.ts";
 import { calendarEntries, calendarEntriesByStudent, cells, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/analytics-calendar.feature");

@@ -7,8 +7,8 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
  * (reading 'increment')" as an unhandled rejection on every first visit.
  *
  * The real Supabase client is used; only fetch is stubbed, answering the rpc
- * and recording the update that follows. The client captures fetch when the
- * module loads, so the stub is installed before the import.
+ * and recording the update that follows. The client captures fetch when it is
+ * created, so the stub is installed before the client is composed.
  */
 
 const net = vi.hoisted(() => {
@@ -26,13 +26,9 @@ const net = vi.hoisted(() => {
   return state;
 });
 
-vi.mock("$app/env/public", () => ({
-  PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-  PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-  PUBLIC_ANON_MODE: "FALSE"
-}));
+import { configureSupabase, createSupabaseClient, updateLearningRecordsDuration } from "../../../packages/adapters/driven/store-supabase/src/index.ts";
 
-import { updateLearningRecordsDuration } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
+configureSupabase(createSupabaseClient("https://mock.supabase.co", "mock-anon-key"));
 
 beforeEach(() => {
   net.updates = [];

@@ -3,8 +3,8 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import type { PageData } from "./$types";
-  import { currentLo } from "@tutors/runes";
-  import { rbacService } from "@tutors/rbac";
+  import { currentLo } from "@tutors/svelte-state";
+  import { rbacService } from "@tutors/svelte-state/rbac";
   import { findResources, highlightParts, withHighlight } from "@tutors/ui-navigators/search/resource-search";
   import Card from "@tutors/ui-components/learning-objects/layout/Card.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";

@@ -4,9 +4,9 @@ import {
   extractStepName,
   getDistinctSortedDatesFromRecords,
   toggleLabViewMode
-} from "../../../packages/jsr/time/src/utils/lab-utils";
-import type { LearningRecord } from "../../../packages/jsr/time/src/types/lab-types";
-import type { LabViewMode } from "../../../packages/jsr/time/src/utils/lab-utils";
+} from "../../../packages/domain/src/learning/utils/lab-utils";
+import type { LearningRecord } from "../../../packages/domain/src/learning/types/lab-types";
+import type { LabViewMode } from "../../../packages/domain/src/learning/utils/lab-utils";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal LearningRecord

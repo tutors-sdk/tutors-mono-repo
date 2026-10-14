@@ -85,7 +85,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["packages/svelte/utils/logger/**"],
+    files: ["packages/platform/logger/**"],
     rules: {
       "no-console": "off",
     },

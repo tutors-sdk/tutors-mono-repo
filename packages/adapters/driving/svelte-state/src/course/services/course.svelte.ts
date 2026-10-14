@@ -1,0 +1,240 @@
+/**
+ * Core service for managing course content and navigation.
+ * Handles course loading, caching, and content transformation.
+ */
+
+import type { Lo, Course, Lab, Note, Notebook } from "@tutors/domain/course";
+import { loadCourse } from "@tutors/application";
+import { CourseNotFoundError, CourseUnreachableError } from "@tutors/application/ports";
+import { adapters } from "../../adapters.ts";
+import { LiveLab } from "./live-lab.ts";
+import { LiveNotebook } from "./live-notebook.ts";
+import { markdownService } from "../../markdown/index.ts";
+import { courseProtocol, currentCourse, currentLo, rune } from "../../index.svelte.ts";
+import type { CourseService, LabService, NotebookService } from "../types.ts";
+import { determineCourseUrl, readerDecoration } from "./lo-tree.ts";
+import log, { serializeError } from "@tutors/logger";
+
+export { CourseNotFoundError };
+
+let courseNotFound: (error: CourseNotFoundError) => never = (error) => {
+  throw error;
+};
+
+let courseUnreachable: (cause: TypeError) => never = (cause) => {
+  throw cause;
+};
+
+/**
+ * An app sets this to `(e) => error(404, ...)` so a missing course renders as "Page Not Found".
+ * The app has to supply it: SvelteKit recognises an expected error with `instanceof`, and this
+ * package does not resolve the same copy of SvelteKit as the app does.
+ * Left unset, a missing course is an unexpected error, which SvelteKit renders as a 500.
+ */
+export function setCourseNotFoundHandler(handler: (error: CourseNotFoundError) => never): void {
+  courseNotFound = handler;
+}
+
+/**
+ * A browser reports a host that does not exist, and a 404 sent without CORS headers (Netlify's,
+ * for an unknown site), as a TypeError with no status: the same TypeError as being offline. The
+ * service logs it and lets it propagate; an app that would rather show "Page Not Found" for it
+ * than an unexpected error sets this, as it does setCourseNotFoundHandler.
+ */
+export function setCourseUnreachableHandler(handler: (cause: TypeError) => never): void {
+  courseUnreachable = handler;
+}
+
+/** A course that arrived but could not be built: logged with the same fixed message as a fetch failure, so the harness groups them. */
+function logCourseFailure(courseId: string, courseUrl: string, cause: unknown): void {
+  log.error("Error fetching course", { courseId, url: `https://${courseUrl}/tutors.json`, ...serializeError(cause) });
+}
+
+export const courseService: CourseService = {
+  /** Cache of loaded courses indexed by courseId */
+  courses: new Map<string, Course>(),
+  /** Cache of live lab instances indexed by labId */
+  labs: new Map<string, LiveLab>(),
+  /** Cache of processed notes indexed by noteId */
+  notes: new Map<string, Note>(),
+  /** Cache of live notebook instances indexed by notebookId */
+  notebooks: new Map<string, LiveNotebook>(),
+  /** Current course URL */
+  courseUrl: rune(""),
+
+  /**
+   * Fetches and caches a course by ID. Handles both direct URLs and Netlify domains.
+   * @param courseId - Course identifier
+   * @param fetchFunction - Fetch implementation for HTTP requests
+   * @returns Promise resolving to the loaded Course
+   */
+  async getOrLoadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
+    let course = this.courses.get(courseId);
+
+    if (!course) {
+      const { courseId: normalizedCourseId, courseUrl } = determineCourseUrl(courseId);
+      courseId = normalizedCourseId;
+      const { courseSource, renderer, clock } = adapters();
+      const protocol = courseProtocol.value as "https://" | "http://";
+      const load = loadCourse({
+        source: { load: (location) => courseSource.load(location, fetchFunction) },
+        renderer,
+        clock,
+        ...readerDecoration(renderer)
+      });
+
+      try {
+        course = await load({ courseId, courseUrl, protocol });
+      } catch (error) {
+        if (error instanceof CourseNotFoundError) return courseNotFound(error);
+        if (error instanceof CourseUnreachableError) return courseUnreachable(error.cause);
+        if (!(error instanceof Error && error.message.startsWith("Fetch failed"))) logCourseFailure(courseId, courseUrl, error);
+        throw error;
+      }
+      this.courses.set(courseId, course);
+    }
+
+    return course;
+  },
+
+  /**
+   * Loads a course and updates global state
+   * @param courseId - Course identifier
+   * @param fetchFunction - Fetch implementation
+   * @returns Promise resolving to the loaded Course
+   */
+  async readCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
+    const course = await this.getOrLoadCourse(courseId, fetchFunction);
+    this.courseUrl.value = course.courseUrl;
+    currentCourse.value = course;
+    currentLo.value = course;
+    return course;
+  },
+
+  /**
+   * Loads a topic from a course and updates current learning object
+   * @param courseId - Course identifier
+   * @param topicId - Topic identifier
+   * @param fetchFunction - Fetch implementation
+   * @returns Promise resolving to the topic
+   */
+  async readTopic(courseId: string, topicId: string, fetchFunction: typeof fetch): Promise<Lo> {
+    const course = await this.readCourse(courseId, fetchFunction);
+    const topic = course.topicIndex.get(topicId);
+    if (topic) {
+      currentLo.value = topic;
+    }
+    return topic ?? course;
+  },
+
+  /**
+   * Creates or retrieves a LiveLab instance for a lab
+   * @param courseId - Course identifier
+   * @param labId - Lab identifier
+   * @param fetchFunction - Fetch implementation
+   * @returns Promise resolving to LiveLab instance
+   */
+  async readLab(courseId: string, labId: string, fetchFunction: typeof fetch): Promise<LabService> {
+    const course = await this.readCourse(courseId, fetchFunction);
+
+    const lastSegment = labId.substring(labId.lastIndexOf("/") + 1);
+    if (!lastSegment.startsWith("book")) {
+      labId = labId.slice(0, labId.lastIndexOf("/"));
+    }
+
+    let liveLab = this.labs.get(labId);
+    if (!liveLab) {
+      const lab = course.loIndex.get(labId) as Lab;
+      markdownService.convertLabToHtml(course, lab);
+      liveLab = new LiveLab(course, lab, labId);
+      this.labs.set(labId, liveLab);
+    }
+
+    currentLo.value = liveLab.lab;
+    return liveLab;
+  },
+
+  /**
+   * Reads and caches a notebook, creating a LiveNotebook instance
+   * @param courseId - Course identifier
+   * @param notebookId - Notebook path/identifier
+   * @param fetchFunction - Fetch implementation for HTTP requests
+   * @returns Promise resolving to the LiveNotebook instance
+   */
+  async readNotebook(courseId: string, notebookId: string, fetchFunction: typeof fetch): Promise<NotebookService> {
+    const course = await this.readCourse(courseId, fetchFunction);
+
+    let liveNotebook = this.notebooks.get(notebookId);
+    if (!liveNotebook) {
+      const notebook = course.loIndex.get(notebookId) as Notebook;
+      markdownService.convertNotebookToHtml(course, notebook);
+      liveNotebook = new LiveNotebook(course, notebook, notebookId);
+      this.notebooks.set(notebookId, liveNotebook);
+    }
+
+    currentLo.value = liveNotebook.notebook;
+    return liveNotebook;
+  },
+
+  /**
+   * Retrieves all learning objects of a specific type from a course
+   * @param courseId - Course identifier
+   * @param type - Type of learning objects to retrieve
+   * @param fetchFunction - Fetch implementation
+   * @returns Promise resolving to array of learning objects
+   */
+  async readWall(courseId: string, type: string, fetchFunction: typeof fetch): Promise<Lo[]> {
+    const course = await this.readCourse(courseId, fetchFunction);
+    const wall = course.wallMap?.get(type);
+    return wall ?? [];
+  },
+
+  /**
+   * Loads a specific learning object and processes it if needed
+   * @param courseId - Course identifier
+   * @param loId - Learning object identifier
+   * @param fetchFunction - Fetch implementation
+   * @returns Promise resolving to the learning object
+   */
+  async readLo(courseId: string, loId: string, fetchFunction: typeof fetch): Promise<Lo> {
+    const course = await this.readCourse(courseId, fetchFunction);
+    const lo = course.loIndex.get(loId);
+    if (lo) {
+      currentLo.value = lo;
+    }
+    if (lo?.type === "note") {
+      if (!this.notes.has(loId)) {
+        markdownService.convertNoteToHtml(course, lo as Note);
+        this.notes.set(loId, lo as Note);
+      }
+    }
+    if (lo?.type === "notebook") {
+      if (!this.notebooks.has(loId)) {
+        markdownService.convertNotebookToHtml(course, lo);
+        const liveNotebook = new LiveNotebook(course, lo as Notebook, loId);
+        this.notebooks.set(loId, liveNotebook);
+      }
+    }
+    // A quiz needs no processing here: its renderer splits the quiz definition
+    // out of contentMd and converts the surrounding prose itself.
+    return lo ?? course;
+  },
+
+  /**
+   * Refreshes all cached labs and notes, forcing markdown to HTML reconversion
+   */
+  refreshAllLabs() {
+    for (const liveLab of this.labs.values()) {
+      markdownService.convertLabToHtml(liveLab.course, liveLab.lab, true);
+      liveLab.convertMdToHtml();
+      liveLab.refreshStep();
+    }
+    for (const note of this.notes.values()) {
+      markdownService.convertNoteToHtml(currentCourse.value!, note, true);
+    }
+    for (const liveNotebook of this.notebooks.values()) {
+      markdownService.convertNotebookToHtml(currentCourse.value!, liveNotebook.notebook, true);
+      liveNotebook.refreshNav();
+    }
+  }
+};

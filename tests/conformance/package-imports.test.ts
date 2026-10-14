@@ -5,7 +5,7 @@ import { REPO_ROOT } from "../../scripts/checks/lib/repo.ts";
 import { workspaceAliases } from "../../vitest.aliases.ts";
 import { AssignmentsService } from "../../apps/time/src/lib/server/services/AssignmentsService.ts";
 
-vi.mock("$app/env/private", () => ({}));
+vi.mock("$app/env/private", () => ({ MOODLE_WS_URL: undefined, MOODLE_WS_TOKEN: undefined, MOODLE_WS_REST_FORMAT: undefined }));
 
 describe("package-local app imports", () => {
   it("resolves from the importing app without a root #lib alias", () => {

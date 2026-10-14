@@ -6,7 +6,7 @@ import {
   nowMs,
   versionEndpoint,
   versionInfo
-} from "../../../packages/svelte/utils/runtime/src/index.ts";
+} from "../../../packages/adapters/driven/clock/src/index.ts";
 
 const FROZEN = "2026-09-16T09:05:00.000Z";
 

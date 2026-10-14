@@ -202,7 +202,7 @@ exports exactly the pinned app-level series with everything else under `process_
 
 **Lives in** `scripts/checks/observability.ts`, `tests/observability/observability-contracts.test.ts`,
 `tests/unit/utils/logger-contract.test.ts`, `observability/`, and the logger in
-`packages/svelte/utils/logger` (`contract.ts` holds the contract as data).
+`packages/platform/logger` (`contract.ts` holds the contract as data).
 
 ```bash
 pnpm exec vitest run tests/observability

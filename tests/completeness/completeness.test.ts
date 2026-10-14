@@ -20,10 +20,10 @@ import {
 } from "../../scripts/checks/completeness.ts";
 import { describeRatchet, ratchet } from "../../scripts/checks/lib/ratchet.ts";
 import { REPO_ROOT, readBaseline, readText, toPosix, walk } from "../../scripts/checks/lib/repo.ts";
-import { FluentIconLib } from "../../packages/svelte/themes/src/icons/fluent-icons.ts";
-import { HeroIconLib } from "../../packages/svelte/themes/src/icons/hero-icons.ts";
-import { EasterIcons } from "../../packages/svelte/themes/src/icons/easter-icons.ts";
-import { FestiveIcons } from "../../packages/svelte/themes/src/icons/festive-icons.ts";
+import { FluentIconLib } from "../../packages/adapters/driving/themes/src/icons/fluent-icons.ts";
+import { HeroIconLib } from "../../packages/adapters/driving/themes/src/icons/hero-icons.ts";
+import { EasterIcons } from "../../packages/adapters/driving/themes/src/icons/easter-icons.ts";
+import { FestiveIcons } from "../../packages/adapters/driving/themes/src/icons/festive-icons.ts";
 
 const BASELINE = "tests/completeness/known-gaps.txt";
 const STYLES = join(REPO_ROOT, THEMES_DIR, "styles");
@@ -80,10 +80,10 @@ describe("completeness (runway tier N)", () => {
       const files = new Map<string, string | undefined>([
         ["docs/guide.md", "# Guide\n\n## Getting Started\n"],
         ["docs/img.png", undefined],
-        ["packages/svelte/runes/src/index.ts", undefined]
+        ["packages/adapters/driving/svelte-state/src/index.ts", undefined]
       ]);
       const markdown = [
-        "[ok](guide.md) [ok anchor](guide.md#getting-started) [img](./img.png) [dir](../packages/svelte/runes)",
+        "[ok](guide.md) [ok anchor](guide.md#getting-started) [img](./img.png) [dir](../packages/adapters/driving/svelte-state)",
         "[url](https://tutors.dev) [mail](mailto:a@b.c) [self](#readme)",
         "[gone](missing.md) [bad anchor](guide.md#nope)",
         "`[inline](nowhere.md)`",
@@ -104,9 +104,9 @@ describe("completeness (runway tier N)", () => {
     });
 
     it("READMEs: flags a missing README, an unlisted dependency and a package that does not exist", () => {
-      const workspace = new Set(["@tutors/course", "@tutors/themes"]);
-      expect(readmeFindings("apps/time", undefined, ["@tutors/course"], workspace)).toEqual(["readme-missing: apps/time"]);
-      expect(readmeFindings("apps/reader", "- `@tutors/course`\n- `@tutors/ui`", ["@tutors/course", "@tutors/themes", "svelte"], workspace)).toEqual([
+      const workspace = new Set(["@tutors/svelte-state", "@tutors/themes"]);
+      expect(readmeFindings("apps/time", undefined, ["@tutors/svelte-state"], workspace)).toEqual(["readme-missing: apps/time"]);
+      expect(readmeFindings("apps/reader", "- `@tutors/svelte-state`\n- `@tutors/ui`", ["@tutors/svelte-state", "@tutors/themes", "svelte"], workspace)).toEqual([
         "readme-unknown-package: apps/reader: @tutors/ui",
         "readme-unlisted-package: apps/reader: @tutors/themes"
       ]);
@@ -120,7 +120,7 @@ describe("completeness (runway tier N)", () => {
 
   it("the repo adds no gaps beyond the baseline, and the baseline has no stale entries", async () => {
     const { messages, declared } = await loadRepoMessages();
-    const used = ["apps", "packages/svelte"]
+    const used = ["apps", "packages/adapters"]
       .flatMap((dir) => walk(join(REPO_ROOT, dir), (name) => /\.(svelte|ts)$/.test(name)))
       .flatMap((path) => extractTranslationKeys(toPosix(path), readText(path)));
 

@@ -37,19 +37,19 @@ run_module() {
 
   case "$module" in
     model)
-      mutate_glob="packages/jsr/model/src/**/*.ts"
+      mutate_glob="packages/domain/src/course/**/*.ts,packages/adapters/driven/render-markdown/src/*.ts"
       ;;
     time)
-      mutate_glob="packages/jsr/time/src/**/*.ts"
+      mutate_glob="packages/domain/src/learning/**/*.ts,packages/jsr/time/src/**/*.ts"
       ;;
     search)
-      mutate_glob="packages/jsr/model/src/services/search.ts"
+      mutate_glob="packages/domain/src/course/services/search.ts"
       ;;
     calendar)
-      mutate_glob="packages/jsr/time/src/services/base-calendar-model.ts,packages/jsr/time/src/utils/calendar-utils.ts"
+      mutate_glob="packages/domain/src/learning/services/base-calendar-model.ts,packages/domain/src/learning/utils/calendar-utils.ts"
       ;;
     lo-utils)
-      mutate_glob="packages/jsr/model/src/utils/lo-utils.ts"
+      mutate_glob="packages/domain/src/course/utils/lo-utils.ts"
       ;;
     *)
       echo "[mutation] Unknown module: $module"

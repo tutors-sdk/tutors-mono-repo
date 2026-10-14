@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "@tutors/i18n";
-  import { catalogueService } from "@tutors/community";
+  import { catalogueService } from "@tutors/store-supabase";
   import Catalogue from "@tutors/ui-components/time/Catalogue.svelte";
   import { onMount } from "svelte";
   import type { PageData } from "./$types";

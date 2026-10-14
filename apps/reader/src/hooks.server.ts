@@ -2,16 +2,21 @@
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
 import { building } from "$app/env";
-import { createIdentityHandle } from "@tutors/identity-sveltekit/server";
+import { createIdentityHandle } from "@tutors/identity-better-auth/server";
 import * as env from "$app/env/private";
 import * as publicEnv from "$app/env/public";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
-import { announceClock } from "@tutors/runtime";
+import { announceClock } from "@tutors/clock";
+import { configureAdapters } from "@tutors/svelte-state/adapters";
 import { authMode } from "#lib/server/auth-mode.ts";
+import { composeReader } from "#lib/compose.ts";
 
 setAppName("tutors-reader");
+// The composition root: the server reads courses and records nothing itself, but the same wiring
+// keeps server and browser answering alike.
+configureAdapters(composeReader(publicEnv));
 // From here on every stdout/stderr line of the running server is one JSON object: stray console
 // output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
 if (!building) installProcessLogging();

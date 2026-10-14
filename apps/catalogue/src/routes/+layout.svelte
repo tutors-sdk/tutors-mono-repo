@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import TutorsShell from "@tutors/ui-navigators/TutorsShell.svelte";
-  import { currentCourse } from "@tutors/runes";
+  import { currentCourse } from "@tutors/svelte-state";
   import { themeService } from "@tutors/themes";
   import { initLocaleFromCookie, locale, t } from "@tutors/i18n";
   import { browser } from "$app/env";

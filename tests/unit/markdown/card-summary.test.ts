@@ -3,7 +3,7 @@ import type { Composite, Course, Lo } from "@tutors/tutors-model-lib";
 
 // decorateCourseTree reaches themeService, which builds its runes at import time.
 // Substituting a plain rune keeps the tree walk testable outside a Svelte compile.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     rune,
@@ -16,7 +16,8 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
   };
 });
 
-import { decorateCourseTree } from "../../../packages/svelte/course/src/course/services/lo-tree.ts";
+import { decorateCourseTree } from "../../../packages/adapters/driving/svelte-state/src/course/services/lo-tree.ts";
+import { markdownRenderer } from "../../../packages/adapters/driven/render-markdown/src/index.ts";
 
 const SUMMARY_MD = "**bold** intro";
 
@@ -63,13 +64,13 @@ describe("GIVEN a course tree decorated for the reader", () => {
   describe("WHEN an Lo type has its body converted on demand", () => {
     it.each(["lab", "note", "notebook", "quiz"])("shall still convert the %s summary to html", (type) => {
       const course = buildCourse();
-      decorateCourseTree(course, "test", "test.netlify.app");
+      decorateCourseTree(course, "test", "test.netlify.app", markdownRenderer);
       expect(summaryOf(course, type)).toContain("<strong>bold</strong>");
     });
 
     it("shall leave the body of those types for on demand conversion", () => {
       const course = buildCourse();
-      decorateCourseTree(course, "test", "test.netlify.app");
+      decorateCourseTree(course, "test", "test.netlify.app", markdownRenderer);
       const lab = (course.los[0] as Composite).los.find((lo) => lo.type === "lab") as Lo;
       expect(lab.contentHtml).toBeUndefined();
     });
@@ -78,7 +79,7 @@ describe("GIVEN a course tree decorated for the reader", () => {
   describe("WHEN an Lo type is converted up front", () => {
     it.each(["talk", "video"])("shall convert the %s summary to html exactly once", (type) => {
       const course = buildCourse();
-      decorateCourseTree(course, "test", "test.netlify.app");
+      decorateCourseTree(course, "test", "test.netlify.app", markdownRenderer);
       const summary = summaryOf(course, type);
       expect(summary).toContain("<strong>bold</strong>");
       expect(summary).not.toContain("&lt;");
@@ -86,7 +87,7 @@ describe("GIVEN a course tree decorated for the reader", () => {
 
     it("shall convert the topic summary to html", () => {
       const course = buildCourse();
-      decorateCourseTree(course, "test", "test.netlify.app");
+      decorateCourseTree(course, "test", "test.netlify.app", markdownRenderer);
       expect((course.los[0] as Lo).summary).toContain("<strong>bold</strong>");
     });
   });

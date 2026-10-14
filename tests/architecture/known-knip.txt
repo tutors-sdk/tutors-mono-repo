@@ -2,7 +2,6 @@
 # This file may only shrink: fix the finding and delete its line.
 
 # Workspace dependencies declared but never imported.
-devDependencies: apps/catalogue/package.json: @tutors/course
 devDependencies: apps/catalogue/package.json: @tutors/tutors-model-lib
 
 # npm dependencies declared but never imported.
@@ -10,8 +9,8 @@ dependencies: apps/reader/package.json: dompurify
 dependencies: packages/jsr/model/package.json: archiver
 dependencies: packages/jsr/model/package.json: front-matter
 dependencies: packages/jsr/model/package.json: js-yaml
-dependencies: packages/svelte/ui-components/package.json: codemirror
-dependencies: packages/svelte/ui-components/package.json: isomorphic-dompurify
+dependencies: packages/adapters/driving/ui-components/package.json: codemirror
+dependencies: packages/adapters/driving/ui-components/package.json: isomorphic-dompurify
 devDependencies: apps/reader/package.json: @codemirror/lang-python
 devDependencies: apps/reader/package.json: @codemirror/state
 devDependencies: apps/reader/package.json: @codemirror/theme-one-dark
@@ -23,19 +22,19 @@ devDependencies: apps/reader/package.json: zod
 devDependencies: package.json: @testing-library/svelte
 devDependencies: package.json: clsx
 devDependencies: package.json: esm-env
-devDependencies: packages/svelte/ui-navigators/package.json: @iconify/svelte
+devDependencies: packages/adapters/driving/ui-navigators/package.json: @iconify/svelte
 
 # @sveltejs/kit used by packages that rely on the consuming app providing it (peer dependency).
 # gen-lib is imported through a Vitest alias rather than a declared dependency.
-unlisted: packages/svelte/course/src/ambient.d.ts: @sveltejs/kit
-unlisted: packages/svelte/utils/metrics/src/middleware.ts: @sveltejs/kit
+unlisted: packages/adapters/driving/svelte-state/src/ambient.d.ts: @sveltejs/kit
+unlisted: packages/platform/metrics/src/middleware.ts: @sveltejs/kit
 unlisted: tests/contract/gen-lib-api.test.ts: @tutors/tutors-gen-lib
 
-# packages/svelte/course __tests__ import a path that does not exist; the root Vitest
+# packages/adapters/driving/svelte-state __tests__ import a path that does not exist; the root Vitest
 # include never runs them (see known-findings.txt in tests/suite-health).
-unresolved: packages/svelte/course/src/course/services/__tests__/lo-tree-advanced.test.ts: ../../../runes.svelte
-unresolved: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts: ../../../runes.svelte
-unresolved: packages/svelte/course/src/course/services/__tests__/lo-tree.test.ts: ../../../runes.svelte
+unresolved: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-advanced.test.ts: ../../../runes.svelte
+unresolved: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-mutation-killers.test.ts: ../../../runes.svelte
+unresolved: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree.test.ts: ../../../runes.svelte
 
 # Files nothing imports.
 unused-file: apps/reader/src/lib/env.ts

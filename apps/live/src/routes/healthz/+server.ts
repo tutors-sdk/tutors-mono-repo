@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { checkSupabase, getRecentErrorCounts } from "@tutors/community/utils/health-check";
-import { now } from "@tutors/runtime";
+import { checkSupabase, getRecentErrorCounts } from "@tutors/store-supabase";
+import { now } from "@tutors/clock";
 
 export const GET: RequestHandler = async () => {
   const [supabaseCheck, errorCounts] = await Promise.all([checkSupabase(), getRecentErrorCounts()]);

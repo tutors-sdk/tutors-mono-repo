@@ -1,5 +1,5 @@
 import * as env from "$app/env/private";
-import { nowMs } from "@tutors/runtime";
+import { nowMs } from "@tutors/clock";
 import { AssignmentsService, type MoodleModule } from "#lib/server/services/AssignmentsService.ts";
 import { getLastSyncedAt, upsertAssignments, upsertSubmissions } from "#lib/server/db/submissionsRepository.ts";
 

@@ -4,7 +4,7 @@ import {
   crumbs,
   getUnits,
   getPanels,
-} from "../../../packages/jsr/model/src/utils/lo-utils";
+} from "../../../packages/domain/src/course/utils/lo-utils";
 
 /**
  * Tests for composite Lo operations:

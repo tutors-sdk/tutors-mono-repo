@@ -2,9 +2,12 @@
   "name": "@tutors/tutors-types",
   "version": "0.1.0",
   "license": "MIT",
-  "description": "Shared, runtime-dependency-free TypeScript types for Tutors: learning-object kinds, learner fields, events, stored rows and service ports",
+  "description": "Shared TypeScript vocabulary for Tutors, re-exported from the domain: learning-object kinds, learner fields, events, stored rows and the tutors.json schema",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tutors/domain": "workspace:*"
   }
 }

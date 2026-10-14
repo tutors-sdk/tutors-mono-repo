@@ -41,19 +41,15 @@ missing-icon: HeroIconLib: tutorial
 # App READMEs out of step with package.json (good first issue #244).
 readme-unknown-package: apps/catalogue: @tutors/ui
 readme-unknown-package: apps/live: @tutors/ui
-readme-unlisted-package: apps/catalogue: @tutors/community
 readme-unlisted-package: apps/catalogue: @tutors/logger
 readme-unlisted-package: apps/catalogue: @tutors/metrics
-readme-unlisted-package: apps/catalogue: @tutors/runes
 readme-unlisted-package: apps/catalogue: @tutors/themes
 readme-unlisted-package: apps/catalogue: @tutors/tutors-model-lib
 readme-unlisted-package: apps/catalogue: @tutors/ui-components
 readme-unlisted-package: apps/catalogue: @tutors/ui-navigators
 readme-unlisted-package: apps/catalogue: @tutors/ui-primitives
-readme-unlisted-package: apps/live: @tutors/community
 readme-unlisted-package: apps/live: @tutors/logger
 readme-unlisted-package: apps/live: @tutors/metrics
-readme-unlisted-package: apps/live: @tutors/runes
 readme-unlisted-package: apps/live: @tutors/themes
 readme-unlisted-package: apps/live: @tutors/tutors-model-lib
 readme-unlisted-package: apps/live: @tutors/ui-components

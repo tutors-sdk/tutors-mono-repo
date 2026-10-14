@@ -260,7 +260,7 @@ every comparison. The image keeps that to a known, short list:
 - **Clock.** Server code that stamps a time into a response or a stored record
   (`/healthz` `timestamp`, the time app's `last_synced_at` and sync-interval
   check, and which week of a course calendar is the current one, which is
-  rendered into every course page) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
+  rendered into every course page) reads it from `now()` in `@tutors/clock`. With `HARNESS_NOW` set to
   an ISO 8601 instant (`2026-09-16T09:05:00.000Z`) it answers that instant;
   otherwise the system clock. Log timestamps, metrics, request durations and
   identity session expiry stay on the real clock: the seam
@@ -397,7 +397,7 @@ The fields whose value differs between two runs of one image under the same
 traffic are exactly `timestamp`, `hostname`, `pid`, `requestId`,
 `duration_ms`, `slow` and `stack` (frames name content-hashed build files).
 They are listed in code as `VARIABLE_LOG_FIELDS`, next to `CORE_LOG_KEYS` and
-`LOG_EVENT_FIELDS` in `packages/svelte/utils/logger/src`. Key names, key
+`LOG_EVENT_FIELDS` in `packages/platform/logger/src`. Key names, key
 order, types, `event`, `message`, `level` (apart from the `slow` case) and
 line counts per event are stable. `pnpm check:container` checks the contract
 against real container output.

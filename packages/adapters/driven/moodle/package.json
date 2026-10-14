@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/moodle",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Moodle web services: the AssignmentSource adapter",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@tutors/application": "workspace:*"
+  }
+}

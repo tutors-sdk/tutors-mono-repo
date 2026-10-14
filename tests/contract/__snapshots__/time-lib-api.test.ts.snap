@@ -2,24 +2,24 @@
 
 exports[`Public API Surface — @tutors/tutors-time-lib > should export service classes and types 1`] = `
 [
-  "getSupabase",
-  "initSupabase",
-  "BaseCalendarModel",
-  "BaseLabModel",
-  "CourseTime",
-  "filterByDateRange",
-  "getDistinctSortedDates",
-  "formatDateShort",
-  "formatTimeNearestMinute",
-  "formatTimeMinutesOnly",
-  "minutesOf",
-  "heatColor",
-  "getMondayForDate",
-  "getDistinctSortedWeeks",
   "extractLabIdentifier",
   "extractStepName",
+  "filterByDateRange",
+  "formatDateShort",
+  "formatTimeMinutesOnly",
+  "formatTimeNearestMinute",
+  "getDistinctSortedDates",
   "getDistinctSortedDatesFromRecords",
+  "getDistinctSortedWeeks",
+  "getMondayForDate",
+  "heatColor",
+  "minutesOf",
   "toggleLabViewMode",
+  "BaseCalendarModel",
+  "BaseLabModel",
+  "getSupabase",
+  "initSupabase",
+  "CourseTime",
 ]
 `;
 

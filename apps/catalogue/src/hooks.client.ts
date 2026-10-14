@@ -1,6 +1,10 @@
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import log, { addTransport, setAppName } from "@tutors/logger";
-import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
+import * as env from "$app/env/public";
+import { createSupabaseErrorTransport } from "@tutors/store-supabase";
+import { composeCatalogue } from "./lib/compose.ts";
+
+composeCatalogue(env);
 
 setAppName("tutors-catalogue");
 addTransport(createSupabaseErrorTransport("tutors-catalogue"));

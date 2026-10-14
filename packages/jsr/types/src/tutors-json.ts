@@ -14,7 +14,7 @@
  * Plain data only: no imports from outside the package (Rule 0130), so validators are the caller's
  * choice. The mono-repo uses Ajv's draft 2020-12 build.
  */
-import { LO_SIMPLE_TYPES } from "./learning-objects.ts";
+import { LO_SIMPLE_TYPES } from "@tutors/domain/course/vocabulary";
 
 /** Video ids read from a learning object's `videoid` file. */
 export type TutorsJsonVideoIds = {

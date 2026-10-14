@@ -1,0 +1,256 @@
+import type { Composite, Course, IconNav, Lo, LoType, Topic, WeekType } from "../types/index.ts";
+import { filterByType, setShowHide } from "../utils/lo-utils.ts";
+
+export function createToc(course: Course) {
+  course.los.forEach((lo) => {
+    if (lo.type == "topic") {
+      const topic = lo as Topic;
+      topic.toc = [];
+      topic.toc.push(
+        ...topic.panels.panelVideos,
+        ...topic.panels.panelTalks,
+        ...topic.panels.panelNotes,
+        ...topic.units.units,
+        ...topic.units.standardLos,
+        ...topic.units.sides,
+      );
+
+      topic.toc.forEach((lo) => {
+        lo.parentLo = course;
+        lo.parentTopic = topic;
+        if (lo.type === "unit" || lo.type === "side") {
+          const composite = lo as Composite;
+          composite.los.forEach((subLo) => {
+            subLo.parentTopic = topic;
+          });
+        }
+      });
+    }
+  });
+}
+
+export function createCompanions(course: Course) {
+  course.companions = {
+    show: true,
+    bar: [],
+  };
+  const companionsList = [
+    {
+      key: "slack",
+      type: "slack",
+      target: "_blank",
+      tip: "Go to module Slack channel",
+    },
+    {
+      key: "zoom",
+      type: "zoom",
+      target: "_blank",
+      tip: "Go to module Zoom meeting",
+    },
+    {
+      key: "moodle",
+      type: "moodle",
+      target: "_blank",
+      tip: "Go to module Moodle page",
+    },
+    {
+      key: "youtube",
+      type: "youtube",
+      target: "_blank",
+      tip: "Go to module YouTube channel",
+    },
+    {
+      key: "teams",
+      type: "teams",
+      target: "_blank",
+      tip: "Go to module Teams meeting",
+    },
+    {
+      key: "podcast",
+      type: "podcast",
+      target: "_blank",
+      tip: "Go to module Podcast",
+    },
+  ];
+  companionsList.forEach((companionItem) => {
+    const { key, type, target, tip } = companionItem;
+    if (course.properties?.[key]) {
+      course.companions.bar.push({
+        link: course.properties[key],
+        type,
+        target,
+        tip,
+      });
+    }
+  });
+  if (course.properties?.companions) {
+    for (const [key, value] of Object.entries(course.properties.companions)) {
+      const companion: any = value;
+      // themeService.addIcon(key, companion.icon);
+      course.companions.bar.push({
+        link: companion.link,
+        type: key,
+        target: "_blank",
+        tip: companion.title,
+      });
+    }
+  }
+  course.companions.show = course.companions.bar.length > 0;
+}
+
+export function createWalls(course: Course) {
+  course.walls = [];
+  course.wallMap = new Map<string, Lo[]>();
+  ["talk", "tutorial", "note", "lab", "notebook", "podcast", "web", "archive", "github", "quiz"].forEach((type) => addWall(course, type as LoType));
+  course.wallBar = {
+    show: true,
+    bar: [],
+  };
+  course.walls?.forEach((wall) => {
+    course.wallBar.bar.push(createWallLink(wall[0].type, course));
+  });
+}
+
+/** Types whose plural neither the "s" nor the "es" rule produces. */
+const irregularPlurals: Record<string, string> = {
+  quiz: "quizzes",
+};
+
+/**
+ * Plural of a learning object type, for wall titles and tooltips. Without this
+ * a quiz wall is labelled "All quizs". Walls are also built for custom types
+ * drawn from course properties, so this handles any string, not just LoType.
+ */
+export function pluraliseLoType(type: string): string {
+  const irregular = irregularPlurals[type.toLowerCase()];
+  if (irregular) return irregular;
+  return /(s|x|z|ch|sh)$/i.test(type) ? `${type}es` : `${type}s`;
+}
+
+function createWallLink(type: string, course: Course): IconNav {
+  return {
+    link: `/wall/${type}/${course.courseId}`,
+    type: type,
+    tip: `All ${pluraliseLoType(type)} in the course`,
+    target: "",
+  };
+}
+
+function addWall(course: Course, type: LoType) {
+  let los = filterByType(course.los, type);
+  los = los.filter((lo) => lo.hide === false);
+  if (los.length > 0) {
+    course.walls?.push(filterByType(course.los, type));
+  }
+  if (los.length > 0) {
+    course.wallMap?.set(type, los);
+  }
+}
+
+export function loadPropertyFlags(course: Course) {
+  course.isPortfolio = (course.properties?.portfolio as unknown as boolean) === true;
+  course.llm = course.properties?.llm as unknown as number;
+  course.isPrivate = (course.properties?.private as unknown as number) === 1;
+  course.areVideosHidden = (course.properties?.hideVideos as unknown as boolean) === true;
+  course.footer = course.properties?.footer as unknown as string;
+  course.areLabStepsAutoNumbered = (course.properties?.labStepsAutoNumber as unknown as boolean) === true;
+  course.authLevel = course.properties?.auth as unknown as number;
+  course.defaultPdfReader = "adobe";
+  if (course.properties?.defaultPdfReader) {
+    course.defaultPdfReader = course.properties.defaultPdfReader;
+  }
+  course.pdfOrientation = "landscape";
+  if (course.properties?.pdfOrientation) {
+    course.pdfOrientation = course.properties.pdfOrientation;
+  }
+  if (course.enrollment) {
+    course.hasEnrollment = true;
+  }
+  if (course.calendar) {
+    course.hasCalendar = true;
+  }
+  course.hasWhiteboard = (course.properties?.whiteboard as unknown as number) === 1;
+  course.ignorePin = course.properties?.ignorepin?.toString();
+  if (course.properties?.icon && typeof course.properties.icon === "object") {
+    const icon = course.properties.icon as { type?: string; color?: string };
+    if (icon.type && icon.color) {
+      course.icon = {
+        type: icon.type,
+        color: icon.color,
+      };
+    }
+  }
+
+
+  course.los.forEach((lo) => {
+    if (lo.hide) {
+      setShowHide(lo, true);
+    }
+  });
+}
+
+/**
+ * Parse the course calendar and work out which week is current.
+ *
+ * @param course The course whose `calendar` property is read.
+ * @param today The instant to treat as "now", in epoch milliseconds. Defaults to the
+ *   system clock; the server passes its clock seam so the current week follows the
+ *   frozen instant the release harness sets (`HARNESS_NOW`).
+ */
+export function initCalendar(course: Course, today: number = Date.now()) {
+  try {
+    if (!course.calendar) return;
+    const calendarObj = course.calendar;
+    const weeks: WeekType[] = [];
+
+    if (Array.isArray(calendarObj.weeks)) {
+      for (const weekObj of calendarObj.weeks) {
+        if (weekObj.date) {
+          // New format: { date, week, topic, assessment }
+          const isBreak = weekObj.week == null;
+          const assessment = weekObj.assessment && typeof weekObj.assessment === "object"
+            ? { name: weekObj.assessment.name, due: weekObj.assessment.due, percentage: weekObj.assessment.percentage, submission: weekObj.assessment.submission }
+            : undefined;
+          weeks.push({
+            date: weekObj.date,
+            title: weekObj.topic,
+            type: isBreak ? "break" : "topic",
+            dateObj: new Date(weekObj.date),
+            weekNumber: weekObj.week ?? undefined,
+            assessment,
+          });
+        } else {
+          // Old format: { "2026-09-07": { title, type } }
+          const date = Object.keys(weekObj)[0];
+          const weekData = weekObj[date];
+          weeks.push({
+            date,
+            title: weekData.title,
+            type: weekData.type,
+            dateObj: new Date(date),
+          });
+        }
+      }
+    }
+
+    // A calendar with no weeks has nothing to show, so the course gets no calendar and the
+    // reader offers no Calendar button for it (Rule 0284, issue #427).
+    if (weeks.length === 0) return;
+
+    const currentWeek = weeks.find(
+      (week, i) =>
+        today > Date.parse(week.date) &&
+        today <= Date.parse(weeks[i + 1]?.date),
+    );
+    course.courseCalendar = {
+      title: calendarObj.title,
+      year: calendarObj.year ? Number(calendarObj.year) : undefined,
+      weeks,
+      currentWeek,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    // The domain has no logger; a malformed calendar is reported on stderr where one exists.
+    (globalThis as { process?: { stderr?: { write(s: string): unknown } } }).process?.stderr?.write(`Error loading calendar: ${message}\n`);
+  }
+}

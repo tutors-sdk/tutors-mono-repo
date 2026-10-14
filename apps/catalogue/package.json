@@ -21,13 +21,11 @@
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
     "@tutors/app-config": "workspace:*",
-    "@tutors/community": "workspace:*",
-    "@tutors/course": "workspace:*",
+    "@tutors/clock": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
-    "@tutors/runes": "workspace:*",
-    "@tutors/runtime": "workspace:*",
+    "@tutors/svelte-state": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@tutors/ui-components": "workspace:*",
@@ -42,6 +40,7 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
+    "@tutors/store-supabase": "workspace:*",
     "isomorphic-dompurify": "^4.5.0"
   }
 }

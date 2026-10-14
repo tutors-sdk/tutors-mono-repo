@@ -5,16 +5,16 @@
 #   // quarantine: #123 until 2026-10-01
 #
 # documentation-only: the 24 legacy feature files no runner loads; issue #214 retires them.
-# skip: lo-tree mutation killers under packages/svelte/course, which the root
+# skip: lo-tree mutation killers under packages/adapters/driving/svelte-state, which the root
 #   vitest include does not run at all (see the architecture pass).
 # no-assertion: the best-practice axe test logs violations but never fails.
 # uncollected: test files no Vitest or Playwright config and no `deno test` workflow step
-#   includes, so they run nowhere. The packages/svelte/course lo-tree tests cover a copy of
+#   includes, so they run nowhere. The packages/adapters/driving/svelte-state lo-tree tests cover a copy of
 #   decorateCourseTree that #228 removes.
 
-skip: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers
-uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-80-percent.test.ts
-uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-advanced.test.ts
-uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts
-uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree-mutation-killers.test.ts
-uncollected: packages/svelte/course/src/course/services/__tests__/lo-tree.test.ts
+skip: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-mutation-killers.test.ts :: decorateCourseTree() - Mutation Killers
+uncollected: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-80-percent.test.ts
+uncollected: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-advanced.test.ts
+uncollected: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-breadcrumbs.test.ts
+uncollected: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree-mutation-killers.test.ts
+uncollected: packages/adapters/driving/svelte-state/src/course/services/__tests__/lo-tree.test.ts
