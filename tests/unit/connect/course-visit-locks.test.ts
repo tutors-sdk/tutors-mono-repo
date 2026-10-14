@@ -7,39 +7,12 @@ import type { Course } from "@tutors/tutors-model-lib";
  * never becomes true and every card, wall and TOC entry stays hidden.
  */
 
-vi.mock("$app/env/public", () => ({
-  PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-  PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-  PUBLIC_ANON_MODE: "TRUE"
-}));
-
 vi.mock("$app/env", () => ({ browser: false }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
 vi.mock("../../../packages/adapters/driving/svelte-state/src/community/index.ts", () => ({
   analyticsService: { learningEvent: vi.fn(), reportPageLoad: vi.fn(), updatePageCount: vi.fn(), updateLogin: vi.fn() },
   presenceService: { startPresenceListener: vi.fn(), startCourseRoster: vi.fn(), stopPresenceListener: vi.fn(), sendLoEvent: vi.fn() }
-}));
-
-vi.mock("@tutors/svelte-state/community/utils/supabase-client", () => ({
-  supabase: undefined,
-  addOrUpdateStudent: vi.fn(),
-  getTutorsConnectUserOnlineStatus: vi.fn(),
-  getTutorsConnectUserSentiment: vi.fn(),
-  updateTutorsConnectUserOnlineStatus: vi.fn(),
-  updateTutorsConnectUserSentiment: vi.fn()
-}));
-
-vi.mock("../../../packages/adapters/driving/svelte-state/src/connect/services/localStorageProfile.ts", () => ({
-  localStorageProfile: { logCourseVisit: vi.fn(), reloadProfile: vi.fn() }
-}));
-
-vi.mock("../../../packages/adapters/driving/svelte-state/src/connect/services/supabaseProfile.svelte.ts", () => ({
-  supabaseProfile: { logCourseVisit: vi.fn(), reloadProfile: vi.fn() }
-}));
-
-vi.mock("../../../packages/adapters/driving/svelte-state/src/connect/utils/allCourseAccess.ts", () => ({
-  updateCourseList: vi.fn()
 }));
 
 vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
@@ -62,8 +35,12 @@ vi.mock("../../../packages/adapters/driving/svelte-state/src/rbac/index.ts", () 
   }
 }));
 
+import { anonymousAdapters, configureAdapters } from "../../../packages/adapters/driving/svelte-state/src/adapters.ts";
 import { tutorsConnectService } from "../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
 import { rbacService } from "../../../packages/adapters/driving/svelte-state/src/rbac/index.ts";
+
+// What PUBLIC_ANON_MODE composes: the in-memory set, with nothing recorded and no sign-in.
+configureAdapters(anonymousAdapters());
 
 const enrolledCourse = { courseId: "cs101", hasEnrollment: true, authLevel: 0 } as unknown as Course;
 const openCourse = { courseId: "cs102", hasEnrollment: false, authLevel: 0 } as unknown as Course;

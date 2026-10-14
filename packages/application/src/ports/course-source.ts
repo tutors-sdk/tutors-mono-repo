@@ -34,13 +34,19 @@ export type CourseLocation = {
   protocol: "https://" | "http://";
 };
 
+/**
+ * The part of the platform's `fetch` a course source is handed: this ring names no platform, so
+ * the type is spelled out rather than taken from the DOM library.
+ */
+export type FetchLike = (url: string) => Promise<{ status: number; ok: boolean; text(): Promise<string> }>;
+
 /** Reads a published course. The text comes back unparsed: the use case decides when to load maths before parsing. */
 export interface CourseSource {
   /**
    * The tutors.json text of a course, or throws CourseNotFoundError, CourseUnreachableError, or an
    * Error naming the HTTP status. A SvelteKit load passes its own `fetch` so a server read carries the request.
    */
-  load(location: CourseLocation, fetchFn?: typeof fetch): Promise<string>;
+  load(location: CourseLocation, fetchFn?: FetchLike): Promise<string>;
 }
 
 /** Decorated course json, parsed. */

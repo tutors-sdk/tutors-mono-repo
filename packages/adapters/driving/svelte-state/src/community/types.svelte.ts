@@ -138,6 +138,8 @@ export interface LiveService {
    * @param courseId - Course to monitor
    */
   startCoursePresenceListener(courseId: string): void;
+  /** Stop following a course; its students list is cleared. */
+  stopCoursePresenceListener(): void;
 }
 
 /**

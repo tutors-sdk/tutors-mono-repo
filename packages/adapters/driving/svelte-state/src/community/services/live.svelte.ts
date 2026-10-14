@@ -79,5 +79,13 @@ export const liveService: LiveService = {
     this.studentEventMap.clear();
 
     stopCourse = adapters().presence.subscribe((event) => this.studentListener({ type: "broadcast", event: "lo-event", payload: event }), courseId);
+  },
+
+  stopCoursePresenceListener() {
+    stopCourse?.();
+    stopCourse = null;
+    this.listeningForCourse.value = "";
+    this.studentsOnline.value = [];
+    this.studentEventMap.clear();
   }
 };

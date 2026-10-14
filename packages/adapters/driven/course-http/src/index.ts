@@ -1,7 +1,7 @@
 /**
  * Reads a published course's tutors.json over HTTP: the application's CourseSource port.
  */
-import { CourseNotFoundError, CourseUnreachableError, type CourseLocation, type CourseSource } from "@tutors/application/ports";
+import { CourseNotFoundError, CourseUnreachableError, type CourseLocation, type CourseSource, type FetchLike } from "@tutors/application/ports";
 import log, { serializeError } from "@tutors/logger";
 
 /**
@@ -18,9 +18,9 @@ function logCourseFetchFailure(courseId: string, courseUrl: string, cause?: unkn
 }
 
 /** `fetchFn` defaults to the platform's; a SvelteKit load passes its own so server reads carry the request. */
-export function httpCourseSource(fetchFn: typeof fetch = (...args) => globalThis.fetch(...args)): CourseSource {
+export function httpCourseSource(fetchFn: FetchLike = (url) => globalThis.fetch(url)): CourseSource {
   return {
-    async load(location: CourseLocation, fetchOverride?: typeof fetch): Promise<string> {
+    async load(location: CourseLocation, fetchOverride?: FetchLike): Promise<string> {
       const { courseId, courseUrl, protocol } = location;
       const response = await (fetchOverride ?? fetchFn)(`${protocol}${courseUrl}/tutors.json`).catch((cause: unknown) => {
         logCourseFetchFailure(courseId, courseUrl, cause);

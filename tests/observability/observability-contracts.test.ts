@@ -295,7 +295,7 @@ describe("observability contracts (runway tier K)", () => {
 
   describe("log message stability", () => {
     /** Product source that runs on the server: apps and workspace packages, minus the logger itself and tests. */
-    const SOURCES = [join(REPO_ROOT, "apps"), join(REPO_ROOT, "packages/svelte")]
+    const SOURCES = [join(REPO_ROOT, "apps"), join(REPO_ROOT, "packages/adapters"), join(REPO_ROOT, "packages/application"), join(REPO_ROOT, "packages/domain")]
       .flatMap((root) => walk(root, (name) => name.endsWith(".ts") && !name.endsWith(".d.ts") && !name.endsWith(".test.ts")))
       .filter((file) => !toPosix(file).startsWith("packages/platform/logger/"));
 

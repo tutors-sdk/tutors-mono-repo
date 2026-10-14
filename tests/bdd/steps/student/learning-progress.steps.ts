@@ -3,10 +3,13 @@ import { expect, vi } from "vitest";
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
 // SvelteKit and the identity adapter. Everything between them is product code.
-vi.mock("../../../../packages/adapters/driving/svelte-state/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 // The time library builds its own client; locally it resolves a different copy of supabase-js, so its seam is `getSupabase`.
-vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({ getSupabase: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({
+  initSupabase: () => undefined,
+  getSupabase: (await import("../../support/supabase-recorder.ts")).createClient
+}));
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
@@ -18,10 +21,9 @@ import type { LoRecord } from "../../../../packages/adapters/driving/svelte-stat
 import { BaseCalendarModel } from "../../../../packages/domain/src/learning/services/base-calendar-model.ts";
 import { CourseTime } from "../../../../packages/jsr/time/src/services/course-time.ts";
 import { formatTimeNearestMinute } from "../../../../packages/domain/src/learning/utils/calendar-utils.ts";
-import { formatDate } from "../../../../packages/adapters/driving/svelte-state/src/community/utils/supabase-client.ts";
+import { formatDate } from "../../../../packages/adapters/driven/store-supabase/src/index.ts";
 import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
 import { currentLo } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
-import { supabaseProfile } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/supabaseProfile.svelte.ts";
 import type { CourseVisit } from "../../../../packages/adapters/driving/svelte-state/src/connect/types.ts";
 
 const feature = await loadFeature("tests/bdd/features/student/learning-progress.feature");
@@ -42,11 +44,8 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     for (let i = 0; i < times; i++) await openLo(target, labsOf(target)[lab - 1]);
   };
   const visitCourse = () => openLo(course, labsOf(course)[0]);
-  /** What a newly opened page reads: the profile as stored, not what this tab still holds in memory. */
-  const storedVisits = (): Promise<CourseVisit[]> => {
-    supabaseProfile.courseVisits = [];
-    return tutorsConnectService.getCourseVisits();
-  };
+  /** What a newly opened page reads: the profile as stored; the store adapter holds nothing in memory. */
+  const storedVisits = (): Promise<CourseVisit[]> => tutorsConnectService.getCourseVisits();
 
   Background(({ Given, And }) => {
     Given("the course {string} is published with {number} labs", (_ctx, courseId: string, labCount: number) => {

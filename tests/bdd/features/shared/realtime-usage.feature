@@ -21,7 +21,7 @@ Feature: Realtime resource usage
       Then the original live course channel remains subscribed
 
     Scenario: Repeating global publisher setup creates one publish-only channel
-      When the global publisher is prepared 3 times
+      When activity is published 3 times
       Then one global channel exists without a subscription
 
   @rule-0274 @ears-event-driven

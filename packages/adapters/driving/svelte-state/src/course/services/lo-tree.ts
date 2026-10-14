@@ -1,4 +1,5 @@
 import { courseProtocol } from "../../index.svelte.ts";
+import { adapters } from "../../adapters.ts";
 import { decorateCourseTree as decorateDomainCourseTree, type Course, type Lo } from "@tutors/domain/course";
 import type { ContentRenderer, LoadCourseDeps } from "@tutors/application";
 
@@ -31,7 +32,7 @@ export function decorateCourseTree(course: Course, courseId: string = "", course
   const decoration = renderer ? readerDecoration(renderer) : { render: undefined, decorated: registerCompanionIcons, omitFromIndex: (lo: Lo) => lo.type === "web" };
   decorateDomainCourseTree(course, courseId, courseUrl, {
     render: decoration.render,
-    today: Date.now(),
+    today: adapters().clock.nowMs(),
     protocol: courseProtocol.value,
     omitFromIndex: decoration.omitFromIndex
   });

@@ -1,12 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Composite, Course, Lo } from "@tutors/tutors-model-lib";
 
-vi.mock("../../../packages/adapters/driving/svelte-state/src/rbac/lock-store.ts", () => ({
-  getLocksForCourse: vi.fn(),
-  upsertLock: vi.fn(),
-  removeLock: vi.fn(),
-}));
-
 vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {

@@ -1,7 +1,7 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
-vi.mock("../../../../packages/adapters/driving/svelte-state/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
+vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
   createClient: (await import("../../support/supabase-recorder.ts")).createClient
 }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
@@ -83,7 +83,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
     whiteboard = undefined;
     liveService.stopGlobalPresenceService();
     presenceService.stopPresenceListener();
-    if (liveService.channelCourse) void recorder.removeChannel(liveService.channelCourse as unknown as RecordingChannel);
+    liveService.stopCoursePresenceListener();
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -124,8 +124,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       Then("the original live course channel remains subscribed", () => expect(recorder.joined(course.courseId)).toEqual([original]));
     });
     RuleScenario("Repeating global publisher setup creates one publish-only channel", ({ When, Then }) => {
-      When("the global publisher is prepared {number} times", (_ctx, count: number) => {
-        for (let i = 0; i < count; i++) presenceService.connectToAllCourseAccess();
+      When("activity is published {number} times", (_ctx, count: number) => {
+        for (let i = 0; i < count; i++) presenceService.sendLoEvent(course, labsOf(course)[0], githubUser("Alice"));
       });
       Then("one global channel exists without a subscription", () => {
         expect(recorder.channels.filter((channel) => channel.name === ALL_COURSES_CHANNEL)).toHaveLength(1);
