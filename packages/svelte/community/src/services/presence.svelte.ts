@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import { rune } from "@tutors/runes";

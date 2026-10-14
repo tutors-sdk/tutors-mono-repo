@@ -146,7 +146,7 @@ it can fail, then against the real repo.
 | J | `conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
 | K | `observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
 | L | `performance/` | A client bundle over its ceiling (`bundle-budgets.json`), a Lighthouse median below its floor (`lighthouse.json`), a k6 threshold crossed, memory growing after warm-up, a soak whose late p95 doubled. See [performance/README.md](./performance/README.md) |
-| M | `security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
+| M | `security/` | A Vite/SvelteKit configuration that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
 | N | `completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
 | O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file that no steps file binds and no cucumber config loads, or one with an EARS keyword Gherkin drops (`While`, `Where`, `If`) or an `@ignore` tag; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
 
@@ -203,11 +203,11 @@ pnpm check:k8s --out rendered                      # also write the output for k
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
 pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract, identical headers on repeat requests (except Date and x-request-id), /version shape
 pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
-pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with Auth.js on (CI runs both for the reader)
+pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with authentication enabled (CI runs both for the reader)
 pnpm check:build-identity                          # after building the apps with SVELTEKIT_ADAPTER=node and GIT_SHA: only GET /version answers the commit and build date
 pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
 pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail
-pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with Auth.js on, no Docker
+pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with authentication enabled, no Docker
 pnpm check:bundle                                  # after building the apps with SVELTEKIT_ADAPTER=node
 pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3
 pnpm check:lighthouse --image tutors/reader:ci

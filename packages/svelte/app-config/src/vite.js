@@ -3,11 +3,11 @@ import { fileURLToPath } from 'node:url';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, mergeConfig } from 'vite';
+import { createSvelteKitOptions } from './svelte.js';
 
 // Workspace packages ship uncompiled .ts/.svelte source, so Vite has to bundle
 // them into the server build rather than leave them as external imports.
-// Auth.js also imports SvelteKit virtual modules ($env/$app), including through the identity adapter.
-const NO_EXTERNAL = [/^@tutors\//, '@auth/sveltekit'];
+const NO_EXTERNAL = [/^@tutors\//];
 
 /**
  * The Vite config every Tutors app shares: the repo-root .env, APP_VERSION from
@@ -16,9 +16,10 @@ const NO_EXTERNAL = [/^@tutors\//, '@auth/sveltekit'];
  *
  * @param {string} appUrl the calling config's `import.meta.url`, used to find the app's package.json
  * @param {import('vite').UserConfig} [overrides] merged over the base with Vite's `mergeConfig` (arrays concatenate)
+ * @param {Parameters<typeof createSvelteKitOptions>[0]} [svelteOptions] fixture-specific SvelteKit options
  * @returns {import('vite').UserConfig}
  */
-export function createViteConfig(appUrl, overrides = {}) {
+export function createViteConfig(appUrl, overrides = {}, svelteOptions = {}) {
   const file = fileURLToPath(new URL('package.json', appUrl));
   const pkg = JSON.parse(readFileSync(file, 'utf8'));
 
@@ -29,9 +30,12 @@ export function createViteConfig(appUrl, overrides = {}) {
         define: {
           APP_VERSION: JSON.stringify(pkg.version)
         },
-        plugins: [tailwindcss(), sveltekit()],
+        plugins: [tailwindcss(), sveltekit(createSvelteKitOptions(svelteOptions))],
         ssr: {
-          noExternal: NO_EXTERNAL
+          noExternal: NO_EXTERNAL,
+          // jsdom reads files relative to its CommonJS module; preserve its Node package and assets.
+          // Keep prom-client's OpenTelemetry require visible to Netlify's function tracer.
+          external: ['isomorphic-dompurify', '@prometheus-io/client']
         }
       },
       overrides

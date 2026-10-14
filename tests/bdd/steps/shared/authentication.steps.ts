@@ -5,9 +5,9 @@ import { expect, vi } from "vitest";
 // SvelteKit and the injected identity client. Everything between them is product code.
 vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
-vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
-// `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
-vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
+// `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
+vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 // The application injects this client into connect.
 const authSignIn = vi.hoisted(() => vi.fn());
 
@@ -54,7 +54,7 @@ describeFeature(feature, ({ Background, Rule }) => {
           expect(provider).toBe("github");
           expect(authSignIn.mock.calls).toEqual([[path]]);
         });
-        // Auth.js owns the GitHub round trip; the reader takes over again when the session arrives.
+        // The identity adapter owns the GitHub round trip; the reader takes over again when the session arrives.
         And("after authentication as {string} the reader should know me by my profile name {string}", async (_ctx, user: string, name: string) => {
           await signIn(githubUser(user));
           expect(tutorsId.value?.name).toBe(name);

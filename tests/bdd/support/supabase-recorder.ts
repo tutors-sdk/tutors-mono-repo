@@ -248,7 +248,7 @@ export const recorder = new RecordingSupabase();
 /** Stands in for `createClient` from `@supabase/supabase-js`. */
 export const createClient = (): RecordingSupabase => recorder;
 
-/** `$env/dynamic/public` as a configured, signed-in deployment. */
+/** `$app/env/public` as a configured, signed-in deployment. */
 export const publicEnv: Record<string, string> = {
   PUBLIC_SUPABASE_URL: "https://supabase.invalid",
   PUBLIC_SUPABASE_ANON_KEY: "anon-key",

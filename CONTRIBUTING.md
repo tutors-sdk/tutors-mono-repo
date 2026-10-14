@@ -191,6 +191,7 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `timing-tolerance` | informing until harness 2.0: a page, journey or load p95 significantly slower on the candidate by 10% or more |
 | `asset-graph` | informing until harness 2.0: an app's build chunks under `/_app/immutable/` changed, one finding per app (scope `<app>`) |
 | `replay` | informing until harness 2.0: status, headers or network of a URL in the harness's replay set (scope `replay:<key>...`) |
+| `slo` | informing until harness 2.0: the candidate misses a service level objective (the stricter of `release/slo.yaml` and the harness's floors), or regressed against production (scope `<objective id>`, `<id>/load`, `<id>/regression`) |
 
 Rules of thumb:
 

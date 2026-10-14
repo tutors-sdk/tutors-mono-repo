@@ -208,16 +208,17 @@ test("Online list opens as a dialog", { tag: "@rule-0046" }, async ({ page }) =>
 });
 
 test("Course tools withholds class activity from a student", { tag: "@rule-0063" }, async ({ page }) => {
-  await seedOneOnline(page);
+  await page.goto(course);
+  await signInAs(page, "student");
   const navigation = page.locator(".shell-navigation");
   await expect(navigation.getByRole("link", { name: "My time", exact: true })).toHaveAttribute("href", "/time/reference-course");
   await expect(navigation.getByRole("link", { name: "Live now" })).toHaveAttribute("href", "https://live.tutors.dev/reference-course");
-  await expect(navigation.getByRole("button", { name: "View Online 1", exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Class activity" })).toHaveCount(0);
 });
 
 test("Course tools offers class activity to an educator", { tag: "@rule-0063" }, async ({ page }) => {
-  await seedOneOnline(page, { educator: true });
+  await page.goto(course);
+  await signInAs(page, "lecturer");
   const classActivity = page.locator(".shell-navigation").getByRole("link", { name: "Class activity" });
   await expect(classActivity).toHaveAttribute("href", "https://time.tutors.dev/reference-course");
   await expect(classActivity).toHaveAttribute("target", "_blank");
@@ -243,16 +244,9 @@ async function learnRows(page: Page): Promise<string[]> {
 
 test("Learn section ends with Educator Control for an educator", { tag: "@rule-0217" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  // Keep course loading slower than the role seed's stability check, as it can be on CI.
-  await page.route("https://reference-course.netlify.app/tutors.json", async route => {
-    const response = await route.fetch();
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    await route.fulfill({ response });
-  });
   await page.goto(course);
   await signInAs(page, "lecturer");
   const sidebar = page.locator(".shell-navigation");
-  // The row appears when the seeded role reaches the sidebar, a frame or two after signInAs returns.
   await expect(sidebar.getByRole("button", { name: "Open Educator Control", exact: true })).toBeVisible();
   const rows = await learnRows(page);
   expect(rows.at(-1)).toBe("Educator Control");

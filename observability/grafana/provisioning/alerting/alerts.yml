@@ -1,77 +1,17 @@
-# Grafana alerting rules provisioned at startup.
-# These fire against the Prometheus data source once it is connected.
+# Grafana alerting rules provisioned at startup. GENERATED from release/slo.yaml by `pnpm slo:alerts`:
+# edit the objectives there, never this file (`pnpm check:slo` fails when the two drift, Rule 0298).
+#
+# tutors-infra: the health check, which no objective covers.
+# tutors-slo: per objective, multi-window burn-rate alerts for that objective's app alone (Rule 0297): page-fast
+# (14.4x over 1h and 5m) and page-slow (6x over 6h and 30m) page; ticket (1x over 3d and 6h) does not. Each is labelled
+# with its objective (slo) and app, and links its runbook in docs/slo.md.
 apiVersion: 1
-
 groups:
   - orgId: 1
     name: tutors-infra
     folder: Tutors
     interval: 1m
     rules:
-      - uid: high-error-rate
-        title: High error rate
-        condition: C
-        data:
-          - refId: A
-            relativeTimeRange:
-              from: 300
-              to: 0
-            datasourceUid: prometheus
-            model:
-              expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100
-              intervalMs: 1000
-              maxDataPoints: 43200
-          - refId: C
-            relativeTimeRange:
-              from: 300
-              to: 0
-            datasourceUid: __expr__
-            model:
-              type: threshold
-              expression: A
-              conditions:
-                - evaluator:
-                    type: gt
-                    params: [5]
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Error rate above 5% for 5 minutes"
-          description: "{{ $value }}% of requests are returning 5xx errors"
-
-      - uid: high-latency-p99
-        title: High p99 latency
-        condition: C
-        data:
-          - refId: A
-            relativeTimeRange:
-              from: 300
-              to: 0
-            datasourceUid: prometheus
-            model:
-              expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
-              intervalMs: 1000
-              maxDataPoints: 43200
-          - refId: C
-            relativeTimeRange:
-              from: 300
-              to: 0
-            datasourceUid: __expr__
-            model:
-              type: threshold
-              expression: A
-              conditions:
-                - evaluator:
-                    type: gt
-                    params: [5]
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "p99 latency above 5 seconds for 5 minutes"
-          description: "p99 request duration is {{ $value }}s"
-
       - uid: healthz-failing
         title: Health check failing
         condition: C
@@ -96,10 +36,1015 @@ groups:
               conditions:
                 - evaluator:
                     type: gt
-                    params: [0]
+                    params:
+                      - 0
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Service health check failing"
+          summary: Service health check failing
           description: "{{ $labels.app }} ({{ $labels.instance }}) has been unreachable for 2 minutes"
+  - orgId: 1
+    name: tutors-slo
+    folder: Tutors
+    interval: 1m
+    rules:
+      - uid: slo-reader-availability-page-fast
+        title: "reader-availability: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="reader",status_code=~"5.."}[1h])) / sum(rate(http_requests_total{app="reader"}[1h]))) > 0.072 and (sum(rate(http_requests_total{app="reader",status_code=~"5.."}[5m])) / sum(rate(http_requests_total{app="reader"}[5m]))) > 0.072
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: reader-availability
+          app: reader
+        annotations:
+          summary: "reader: reader-availability is burning its error budget 14.4x too fast"
+          description: "Objective: 99.5% of reader responses that are not 5xx. More than 7.2% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-availability
+      - uid: slo-reader-availability-page-slow
+        title: "reader-availability: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="reader",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="reader"}[6h]))) > 0.03 and (sum(rate(http_requests_total{app="reader",status_code=~"5.."}[30m])) / sum(rate(http_requests_total{app="reader"}[30m]))) > 0.03
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: reader-availability
+          app: reader
+        annotations:
+          summary: "reader: reader-availability is burning its error budget 6x too fast"
+          description: "Objective: 99.5% of reader responses that are not 5xx. More than 3% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-availability
+      - uid: slo-reader-availability-ticket
+        title: "reader-availability: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="reader",status_code=~"5.."}[3d])) / sum(rate(http_requests_total{app="reader"}[3d]))) > 0.005 and (sum(rate(http_requests_total{app="reader",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="reader"}[6h]))) > 0.005
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: reader-availability
+          app: reader
+        annotations:
+          summary: "reader: reader-availability is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 99.5% of reader responses that are not 5xx. More than 0.5% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-availability
+      - uid: slo-reader-latency-page-fast
+        title: "reader-latency: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="1"}[1h])) / sum(rate(http_request_duration_seconds_count{app="reader"}[1h]))) > 0.72 and (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="1"}[5m])) / sum(rate(http_request_duration_seconds_count{app="reader"}[5m]))) > 0.72
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: reader-latency
+          app: reader
+        annotations:
+          summary: "reader: reader-latency is burning its error budget 14.4x too fast"
+          description: "Objective: 95% of reader requests under 1s. More than 72% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-latency
+      - uid: slo-reader-latency-page-slow
+        title: "reader-latency: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="reader"}[6h]))) > 0.3 and (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="1"}[30m])) / sum(rate(http_request_duration_seconds_count{app="reader"}[30m]))) > 0.3
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: reader-latency
+          app: reader
+        annotations:
+          summary: "reader: reader-latency is burning its error budget 6x too fast"
+          description: "Objective: 95% of reader requests under 1s. More than 30% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-latency
+      - uid: slo-reader-latency-ticket
+        title: "reader-latency: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="1"}[3d])) / sum(rate(http_request_duration_seconds_count{app="reader"}[3d]))) > 0.05 and (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="reader"}[6h]))) > 0.05
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: reader-latency
+          app: reader
+        annotations:
+          summary: "reader: reader-latency is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 95% of reader requests under 1s. More than 5% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-latency
+      - uid: slo-reader-latency-tail-page-fast
+        title: "reader-latency-tail: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="2.5"}[1h])) / sum(rate(http_request_duration_seconds_count{app="reader"}[1h]))) > 0.144 and (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="2.5"}[5m])) / sum(rate(http_request_duration_seconds_count{app="reader"}[5m]))) > 0.144
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: reader-latency-tail
+          app: reader
+        annotations:
+          summary: "reader: reader-latency-tail is burning its error budget 14.4x too fast"
+          description: "Objective: 99% of reader requests under 2.5s. More than 14.4% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-latency-tail
+      - uid: slo-reader-latency-tail-page-slow
+        title: "reader-latency-tail: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="2.5"}[6h])) / sum(rate(http_request_duration_seconds_count{app="reader"}[6h]))) > 0.06 and (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="2.5"}[30m])) / sum(rate(http_request_duration_seconds_count{app="reader"}[30m]))) > 0.06
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: reader-latency-tail
+          app: reader
+        annotations:
+          summary: "reader: reader-latency-tail is burning its error budget 6x too fast"
+          description: "Objective: 99% of reader requests under 2.5s. More than 6% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-latency-tail
+      - uid: slo-reader-latency-tail-ticket
+        title: "reader-latency-tail: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="2.5"}[3d])) / sum(rate(http_request_duration_seconds_count{app="reader"}[3d]))) > 0.01 and (1 - sum(rate(http_request_duration_seconds_bucket{app="reader",le="2.5"}[6h])) / sum(rate(http_request_duration_seconds_count{app="reader"}[6h]))) > 0.01
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: reader-latency-tail
+          app: reader
+        annotations:
+          summary: "reader: reader-latency-tail is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 99% of reader requests under 2.5s. More than 1% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#reader-latency-tail
+      - uid: slo-catalogue-availability-page-fast
+        title: "catalogue-availability: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="catalogue",status_code=~"5.."}[1h])) / sum(rate(http_requests_total{app="catalogue"}[1h]))) > 0.144 and (sum(rate(http_requests_total{app="catalogue",status_code=~"5.."}[5m])) / sum(rate(http_requests_total{app="catalogue"}[5m]))) > 0.144
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: catalogue-availability
+          app: catalogue
+        annotations:
+          summary: "catalogue: catalogue-availability is burning its error budget 14.4x too fast"
+          description: "Objective: 99% of catalogue responses that are not 5xx. More than 14.4% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#catalogue-availability
+      - uid: slo-catalogue-availability-page-slow
+        title: "catalogue-availability: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="catalogue",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="catalogue"}[6h]))) > 0.06 and (sum(rate(http_requests_total{app="catalogue",status_code=~"5.."}[30m])) / sum(rate(http_requests_total{app="catalogue"}[30m]))) > 0.06
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: catalogue-availability
+          app: catalogue
+        annotations:
+          summary: "catalogue: catalogue-availability is burning its error budget 6x too fast"
+          description: "Objective: 99% of catalogue responses that are not 5xx. More than 6% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#catalogue-availability
+      - uid: slo-catalogue-availability-ticket
+        title: "catalogue-availability: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="catalogue",status_code=~"5.."}[3d])) / sum(rate(http_requests_total{app="catalogue"}[3d]))) > 0.01 and (sum(rate(http_requests_total{app="catalogue",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="catalogue"}[6h]))) > 0.01
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: catalogue-availability
+          app: catalogue
+        annotations:
+          summary: "catalogue: catalogue-availability is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 99% of catalogue responses that are not 5xx. More than 1% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#catalogue-availability
+      - uid: slo-catalogue-latency-page-fast
+        title: "catalogue-latency: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="catalogue",le="1"}[1h])) / sum(rate(http_request_duration_seconds_count{app="catalogue"}[1h]))) > 0.72 and (1 - sum(rate(http_request_duration_seconds_bucket{app="catalogue",le="1"}[5m])) / sum(rate(http_request_duration_seconds_count{app="catalogue"}[5m]))) > 0.72
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: catalogue-latency
+          app: catalogue
+        annotations:
+          summary: "catalogue: catalogue-latency is burning its error budget 14.4x too fast"
+          description: "Objective: 95% of catalogue requests under 1s. More than 72% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#catalogue-latency
+      - uid: slo-catalogue-latency-page-slow
+        title: "catalogue-latency: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="catalogue",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="catalogue"}[6h]))) > 0.3 and (1 - sum(rate(http_request_duration_seconds_bucket{app="catalogue",le="1"}[30m])) / sum(rate(http_request_duration_seconds_count{app="catalogue"}[30m]))) > 0.3
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: catalogue-latency
+          app: catalogue
+        annotations:
+          summary: "catalogue: catalogue-latency is burning its error budget 6x too fast"
+          description: "Objective: 95% of catalogue requests under 1s. More than 30% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#catalogue-latency
+      - uid: slo-catalogue-latency-ticket
+        title: "catalogue-latency: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="catalogue",le="1"}[3d])) / sum(rate(http_request_duration_seconds_count{app="catalogue"}[3d]))) > 0.05 and (1 - sum(rate(http_request_duration_seconds_bucket{app="catalogue",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="catalogue"}[6h]))) > 0.05
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: catalogue-latency
+          app: catalogue
+        annotations:
+          summary: "catalogue: catalogue-latency is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 95% of catalogue requests under 1s. More than 5% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#catalogue-latency
+      - uid: slo-live-availability-page-fast
+        title: "live-availability: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="live",status_code=~"5.."}[1h])) / sum(rate(http_requests_total{app="live"}[1h]))) > 0.144 and (sum(rate(http_requests_total{app="live",status_code=~"5.."}[5m])) / sum(rate(http_requests_total{app="live"}[5m]))) > 0.144
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: live-availability
+          app: live
+        annotations:
+          summary: "live: live-availability is burning its error budget 14.4x too fast"
+          description: "Objective: 99% of live responses that are not 5xx. More than 14.4% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#live-availability
+      - uid: slo-live-availability-page-slow
+        title: "live-availability: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="live",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="live"}[6h]))) > 0.06 and (sum(rate(http_requests_total{app="live",status_code=~"5.."}[30m])) / sum(rate(http_requests_total{app="live"}[30m]))) > 0.06
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: live-availability
+          app: live
+        annotations:
+          summary: "live: live-availability is burning its error budget 6x too fast"
+          description: "Objective: 99% of live responses that are not 5xx. More than 6% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#live-availability
+      - uid: slo-live-availability-ticket
+        title: "live-availability: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="live",status_code=~"5.."}[3d])) / sum(rate(http_requests_total{app="live"}[3d]))) > 0.01 and (sum(rate(http_requests_total{app="live",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="live"}[6h]))) > 0.01
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: live-availability
+          app: live
+        annotations:
+          summary: "live: live-availability is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 99% of live responses that are not 5xx. More than 1% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#live-availability
+      - uid: slo-live-latency-page-fast
+        title: "live-latency: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="live",le="1"}[1h])) / sum(rate(http_request_duration_seconds_count{app="live"}[1h]))) > 0.72 and (1 - sum(rate(http_request_duration_seconds_bucket{app="live",le="1"}[5m])) / sum(rate(http_request_duration_seconds_count{app="live"}[5m]))) > 0.72
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: live-latency
+          app: live
+        annotations:
+          summary: "live: live-latency is burning its error budget 14.4x too fast"
+          description: "Objective: 95% of live requests under 1s. More than 72% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#live-latency
+      - uid: slo-live-latency-page-slow
+        title: "live-latency: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="live",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="live"}[6h]))) > 0.3 and (1 - sum(rate(http_request_duration_seconds_bucket{app="live",le="1"}[30m])) / sum(rate(http_request_duration_seconds_count{app="live"}[30m]))) > 0.3
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: live-latency
+          app: live
+        annotations:
+          summary: "live: live-latency is burning its error budget 6x too fast"
+          description: "Objective: 95% of live requests under 1s. More than 30% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#live-latency
+      - uid: slo-live-latency-ticket
+        title: "live-latency: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="live",le="1"}[3d])) / sum(rate(http_request_duration_seconds_count{app="live"}[3d]))) > 0.05 and (1 - sum(rate(http_request_duration_seconds_bucket{app="live",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="live"}[6h]))) > 0.05
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: live-latency
+          app: live
+        annotations:
+          summary: "live: live-latency is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 95% of live requests under 1s. More than 5% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#live-latency
+      - uid: slo-time-availability-page-fast
+        title: "time-availability: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="time",status_code=~"5.."}[1h])) / sum(rate(http_requests_total{app="time"}[1h]))) > 0.144 and (sum(rate(http_requests_total{app="time",status_code=~"5.."}[5m])) / sum(rate(http_requests_total{app="time"}[5m]))) > 0.144
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: time-availability
+          app: time
+        annotations:
+          summary: "time: time-availability is burning its error budget 14.4x too fast"
+          description: "Objective: 99% of time responses that are not 5xx. More than 14.4% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#time-availability
+      - uid: slo-time-availability-page-slow
+        title: "time-availability: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="time",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="time"}[6h]))) > 0.06 and (sum(rate(http_requests_total{app="time",status_code=~"5.."}[30m])) / sum(rate(http_requests_total{app="time"}[30m]))) > 0.06
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: time-availability
+          app: time
+        annotations:
+          summary: "time: time-availability is burning its error budget 6x too fast"
+          description: "Objective: 99% of time responses that are not 5xx. More than 6% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#time-availability
+      - uid: slo-time-availability-ticket
+        title: "time-availability: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (sum(rate(http_requests_total{app="time",status_code=~"5.."}[3d])) / sum(rate(http_requests_total{app="time"}[3d]))) > 0.01 and (sum(rate(http_requests_total{app="time",status_code=~"5.."}[6h])) / sum(rate(http_requests_total{app="time"}[6h]))) > 0.01
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: time-availability
+          app: time
+        annotations:
+          summary: "time: time-availability is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 99% of time responses that are not 5xx. More than 1% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#time-availability
+      - uid: slo-time-latency-page-fast
+        title: "time-latency: error budget burning 14.4x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="time",le="1"}[1h])) / sum(rate(http_request_duration_seconds_count{app="time"}[1h]))) > 0.72 and (1 - sum(rate(http_request_duration_seconds_bucket{app="time",le="1"}[5m])) / sum(rate(http_request_duration_seconds_count{app="time"}[5m]))) > 0.72
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        labels:
+          severity: critical
+          slo: time-latency
+          app: time
+        annotations:
+          summary: "time: time-latency is burning its error budget 14.4x too fast"
+          description: "Objective: 95% of time requests under 1s. More than 72% were bad over both the last 1h and the last 5m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#time-latency
+      - uid: slo-time-latency-page-slow
+        title: "time-latency: error budget burning 6x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="time",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="time"}[6h]))) > 0.3 and (1 - sum(rate(http_request_duration_seconds_bucket{app="time",le="1"}[30m])) / sum(rate(http_request_duration_seconds_count{app="time"}[30m]))) > 0.3
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          severity: critical
+          slo: time-latency
+          app: time
+        annotations:
+          summary: "time: time-latency is burning its error budget 6x too fast"
+          description: "Objective: 95% of time requests under 1s. More than 30% were bad over both the last 6h and the last 30m."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#time-latency
+      - uid: slo-time-latency-ticket
+        title: "time-latency: error budget burning 1x"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: (1 - sum(rate(http_request_duration_seconds_bucket{app="time",le="1"}[3d])) / sum(rate(http_request_duration_seconds_count{app="time"}[3d]))) > 0.05 and (1 - sum(rate(http_request_duration_seconds_bucket{app="time",le="1"}[6h])) / sum(rate(http_request_duration_seconds_count{app="time"}[6h]))) > 0.05
+              intervalMs: 1000
+              maxDataPoints: 43200
+          - refId: C
+            relativeTimeRange:
+              from: 259200
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 0
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels:
+          severity: warning
+          slo: time-latency
+          app: time
+        annotations:
+          summary: "time: time-latency is burning its error budget 1x too fast (a ticket, not a page)"
+          description: "Objective: 95% of time requests under 1s. More than 5% were bad over both the last 3d and the last 6h."
+          runbook_url: https://github.com/tutors-sdk/tutors-mono-repo/blob/main/docs/slo.md#time-latency

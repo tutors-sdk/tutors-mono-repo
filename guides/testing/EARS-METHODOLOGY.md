@@ -253,8 +253,9 @@ run the scenarios: `pnpm test:bdd` does that.
 | `no-rule` | a feature has scenarios outside any Rule |
 | `unbound-feature`, `unbound-rule`, `rule-not-run` | no steps file loads the feature, no steps file binds the Rule title, or the binding is `Rule.skip` or `Rule.only` |
 
-The word lists and system names are the exported `DEFAULT_CONFIG`; `tests/bdd/ears-audit.config.json`
-may override `systems`, `wrongObligations` and `vagueTerms`.
+The word lists and system names are the exported `DEFAULT_CONFIG`. An optional
+`tests/bdd/ears-audit.config.json` may override `systems`, `wrongObligations` and `vagueTerms`; none
+is committed, so the defaults apply.
 
 Step coverage is `vitest-cucumber`'s own strictness. It fails `pnpm test:bdd` when a Rule, scenario
 or step exists in the feature and not in the steps file, or the reverse, and when a Rule has no

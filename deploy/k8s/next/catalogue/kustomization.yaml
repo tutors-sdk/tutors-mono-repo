@@ -22,7 +22,7 @@ patches:
       metadata:
         name: catalogue-tutors-app-config
       data:
-        ORIGIN: "https://next.catalogue.tutors.dev"
+        TUTORS_ORIGIN: "https://next.catalogue.tutors.dev"
         PUBLIC_READER_ORIGIN: "https://next.tutors.dev"
         PUBLIC_CATALOGUE_ORIGIN: "https://next.catalogue.tutors.dev"
         PUBLIC_LIVE_ORIGIN: "https://next.live.tutors.dev"
