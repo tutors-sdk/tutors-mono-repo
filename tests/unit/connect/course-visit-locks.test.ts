@@ -18,7 +18,7 @@ vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
 vi.mock("../../../packages/svelte/community/src/index.ts", () => ({
   analyticsService: { learningEvent: vi.fn(), reportPageLoad: vi.fn(), updatePageCount: vi.fn(), updateLogin: vi.fn() },
-  presenceService: { startPresenceListener: vi.fn(), sendLoEvent: vi.fn() }
+  presenceService: { startPresenceListener: vi.fn(), startCourseRoster: vi.fn(), stopPresenceListener: vi.fn(), sendLoEvent: vi.fn() }
 }));
 
 vi.mock("@tutors/community/utils/supabase-client", () => ({
