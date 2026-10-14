@@ -101,7 +101,7 @@ pnpm build
 
 Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) first. It follows one course page from the URL to the rendered cards and names every file on the way. Most changes people want to make (how a page looks, what a card shows, how navigation behaves) live on that path.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) is the full reference: every package, service and data flow. Use it to look things up, not as a first read.
+[ARCHITECTURE.md](ARCHITECTURE.md) is the authority on the shape of the repository: the rings, the ports and adapters, who owns what, and the EARS rules that check it. Read sections 1, 4 and 17 first; use the rest to look things up.
 
 The [Documentation](README.md#documentation) table in the README indexes everything else.
 
@@ -245,7 +245,7 @@ tutors-mono-repo/
 │   ├── live/                # Live classroom            → tutors-live
 │   └── time/                # Activity dashboard        → tutors-time
 ├── packages/
-│   ├── domain/              # Domain ring: course, learning, presence, access, pedagogy, quiz → @tutors/domain
+│   ├── domain/              # Domain ring: course, learning, presence, access, quiz → @tutors/domain
 │   ├── application/         # Ports and use cases; /testing has in-memory adapters → @tutors/application
 │   ├── adapters/
 │   │   ├── driven/          # One technology behind a port each → @tutors/store-supabase, realtime-supabase,

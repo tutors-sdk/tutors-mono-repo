@@ -1,23 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { askTutor, loadContentLocks, loadCourse, setContentLock } from "@tutors/application";
-import { FakeTutorAssistant, FixedClock, InMemoryAccessStore, InMemoryCourseSource, PassThroughRenderer } from "@tutors/application/testing";
-
-const course = { courseId: "cs101", title: "CS101" };
-
-describe("askTutor", () => {
-  it("passes the question and where it was asked to the assistant", async () => {
-    const assistant = new FakeTutorAssistant();
-    const reply = await askTutor({ assistant })({ course }, "What is a lab?");
-    expect(reply?.answer).toContain("asked about CS101");
-    expect(assistant.asked).toEqual([{ context: { course }, question: "What is a lab?" }]);
-  });
-
-  it("does not ask about an empty question", async () => {
-    const assistant = new FakeTutorAssistant();
-    expect(await askTutor({ assistant })({ course }, "   ")).toBeNull();
-    expect(assistant.asked).toEqual([]);
-  });
-});
+import { loadContentLocks, loadCourse, setContentLock } from "@tutors/application";
+import { FixedClock, InMemoryAccessStore, InMemoryCourseSource, PassThroughRenderer } from "@tutors/application/testing";
 
 describe("content locks", () => {
   it("reads the course's locks as a route map and writes a lecturer's lock through the store", async () => {

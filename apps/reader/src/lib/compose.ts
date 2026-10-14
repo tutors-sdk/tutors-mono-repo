@@ -6,7 +6,6 @@
  * browser run the same wiring; tests call it with the environment they want.
  */
 import type { IdentityClient } from "@tutors/application/ports";
-import { FakeTutorAssistant } from "@tutors/application/testing";
 import { anonymousAdapters, type Adapters } from "@tutors/svelte-state/adapters";
 import { clock } from "@tutors/clock";
 import { markdownRenderer } from "@tutors/render-markdown";
@@ -44,8 +43,7 @@ export function composeReader(env: ReaderEnv, options: { identityClient?: Identi
     courseSource: httpCourseSource(),
     profile: { local: localStorageProfile(), signedIn: null },
     publisher,
-    identityClient: options.identityClient ?? null,
-    assistant: new FakeTutorAssistant()
+    identityClient: options.identityClient ?? null
   };
 
   if (isAnonymous(env)) {

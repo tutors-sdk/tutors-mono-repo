@@ -8,4 +8,3 @@ export * from "./course/index.ts";
 export * from "./learning/index.ts";
 export * from "./presence/index.ts";
 export * from "./access/index.ts";
-export * from "./pedagogy/index.ts";

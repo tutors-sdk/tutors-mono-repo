@@ -57,6 +57,63 @@ const sources = (dir: string, match: RegExp): string[] =>
           : []
   );
 
+
+/** ARCHITECTURE.md, the authority on the shape (Rules 0347 to 0352). */
+const ARCHITECTURE = "ARCHITECTURE.md";
+const architectureDoc = () => readFileSync(resolve(REPO_ROOT, ARCHITECTURE), "utf8");
+
+/** Every package.json name under apps/ and packages/, node_modules excluded. */
+function workspacePackageNames(): string[] {
+  const manifests = [...sources(resolve(REPO_ROOT, "apps"), /^package\.json$/), ...sources(resolve(REPO_ROOT, "packages"), /^package\.json$/)];
+  return manifests.map((file) => (JSON.parse(readFileSync(file, "utf8")) as { name?: string }).name).filter((name): name is string => !!name).sort();
+}
+
+/** `export interface X` in the application ring's ports, the port names the document must carry. */
+function portInterfaces(): string[] {
+  return sources(resolve(REPO_ROOT, "packages/application/src/ports"), /\.ts$/)
+    .flatMap((file) => [...readFileSync(file, "utf8").matchAll(/^export interface (\w+)/gm)].map((m) => m[1]))
+    .filter((name) => !name.startsWith("Moodle") && !name.endsWith("Options"))
+    .sort();
+}
+
+function forbiddenRuleNames(): string[] {
+  const config = readFileSync(resolve(REPO_ROOT, ".dependency-cruiser.cjs"), "utf8");
+  return [...new Set([...config.matchAll(/name: "([a-z-]+)"/g)].map((m) => m[1]))].filter((name) => !["supabase", "markdown", "better-auth"].includes(name)).sort();
+}
+
+/** Every `.from("table")` the adapters, the time library and the apps make. */
+function queriedTables(): string[] {
+  const roots = ["packages/adapters/driven", "packages/jsr/time/src", "apps"].map((dir) => resolve(REPO_ROOT, dir));
+  const tables = roots
+    .flatMap((root) => sources(root, /\.(ts|svelte)$/))
+    .filter((file) => isProductModule(relative(REPO_ROOT, file)))
+    .flatMap((file) => [...readFileSync(file, "utf8").matchAll(/\.from\("([a-z_-]+)"\)/g)].map((m) => m[1]));
+  return [...new Set(tables)].sort();
+}
+
+const ruleIdsOf = (feature: string) => [...feature.matchAll(/@rule-(\d{4})/g)].map((m) => m[1]);
+
+function allFeatureRuleIds(): Set<string> {
+  return new Set(sources(resolve(REPO_ROOT, "tests/bdd/features"), /\.feature$/).flatMap((file) => ruleIdsOf(readFileSync(file, "utf8"))));
+}
+
+/** The ids the requirements table of the document cites, as `| 0340 |` rows. */
+const citedRuleIds = (doc: string) => [...doc.matchAll(/^\| (\d{4}) \|/gm)].map((m) => m[1]);
+
+/** A data-ownership or ports row names its subject in backticks in the first cell. */
+const hasRowFor = (doc: string, name: string) => new RegExp("^\\| `" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "`", "m").test(doc);
+
+/**
+ * What the document leaves out: packages it does not name and tables it has no row for. The
+ * architecture check fails with this list (Rule 0352).
+ */
+export function missingFromAuthority(doc: string, expected: { packages: string[]; tables: string[] }): string[] {
+  return [
+    ...expected.packages.filter((name) => !doc.includes("`" + name + "`")).map((name) => `package ${name}`),
+    ...expected.tables.filter((table) => !hasRowFor(doc, table)).map((table) => `table ${table}`)
+  ];
+}
+
 const isProductModule = (file: string) => !/\.(test|spec|d)\.ts$/.test(file) && !/(^|\/)(test|tests|__tests__|fixtures)\//.test(file);
 
 describeFeature(feature, ({ Rule }) => {
@@ -226,4 +283,96 @@ describeFeature(feature, ({ Rule }) => {
       });
     }
   );
+
+  Rule("Tutors shall name every workspace package in ARCHITECTURE.md, so a package that this document does not describe cannot exist.", ({ RuleScenario }) => {
+    RuleScenario("Every package under apps and packages is named in the architecture document", ({ Given, Then }) => {
+      let names: string[] = [];
+      Given("the names of every workspace package", () => {
+        names = workspacePackageNames();
+        expect(names.length).toBeGreaterThan(20);
+      });
+      Then("ARCHITECTURE.md names each of them", () => {
+        expect(missingFromAuthority(architectureDoc(), { packages: names, tables: [] })).toEqual([]);
+      });
+    });
+  });
+
+  Rule("Tutors shall name every port of the application ring in ARCHITECTURE.md, with the adapter that implements it.", ({ RuleScenario }) => {
+    RuleScenario("Every port interface is in the ports table", ({ Given, Then }) => {
+      let ports: string[] = [];
+      Given("the interfaces exported from the application ring's ports", () => {
+        ports = portInterfaces();
+        expect(ports).toContain("PresencePort");
+      });
+      Then("ARCHITECTURE.md has a ports table row for each of them", () => {
+        const doc = architectureDoc();
+        expect(ports.filter((port) => !hasRowFor(doc, port))).toEqual([]);
+      });
+    });
+  });
+
+  Rule("Tutors shall cite every dependency rule of .dependency-cruiser.cjs in ARCHITECTURE.md by name.", ({ RuleScenario }) => {
+    RuleScenario("Every forbidden rule is in the dependency rules table", ({ Given, Then }) => {
+      let names: string[] = [];
+      Given("the names of the forbidden rules in .dependency-cruiser.cjs", () => {
+        names = forbiddenRuleNames();
+        expect(names).toContain("domain-self-contained");
+      });
+      Then("ARCHITECTURE.md cites each of them in backticks", () => {
+        const doc = architectureDoc();
+        expect(names.filter((name) => !doc.includes(`\`${name}\``))).toEqual([]);
+      });
+    });
+  });
+
+  Rule("Tutors shall name in ARCHITECTURE.md every Supabase table and channel a package reads or writes, with the adapter that owns it.", ({ RuleScenario }) => {
+    RuleScenario("Every table a package queries is in the data ownership table", ({ Given, Then, And }) => {
+      let tables: string[] = [];
+      Given("the Supabase tables the adapters, the time library and the apps query", () => {
+        tables = queriedTables();
+        expect(tables).toContain("learning_records");
+      });
+      Then("ARCHITECTURE.md has a data ownership row for each of them", () => {
+        expect(missingFromAuthority(architectureDoc(), { packages: [], tables })).toEqual([]);
+      });
+      And("ARCHITECTURE.md has a data ownership row for the platform-wide presence channel", async () => {
+        const { ALL_COURSES_CHANNEL } = await import("../../../../packages/adapters/driven/realtime-supabase/src/index.ts");
+        expect(hasRowFor(architectureDoc(), `Realtime channel \`${ALL_COURSES_CHANNEL}\``) || architectureDoc().includes(`| Realtime channel \`${ALL_COURSES_CHANNEL}\``)).toBe(true);
+      });
+    });
+  });
+
+  Rule("Tutors shall keep the requirements table of ARCHITECTURE.md and the hexagonal-architecture feature in agreement, citing every Rule of the feature and no Rule id that exists in no feature.", ({ RuleScenario }) => {
+    RuleScenario("The architecture requirements table and the feature agree", ({ Given, Then, And }) => {
+      let ids: string[] = [];
+      Given("the Rule ids of the hexagonal-architecture feature", () => {
+        ids = ruleIdsOf(readFileSync(resolve(REPO_ROOT, "tests/bdd/features/developer/hexagonal-architecture.feature"), "utf8"));
+        expect(ids).toContain("0340");
+      });
+      Then("ARCHITECTURE.md's requirements table lists each of them", () => {
+        const cited = citedRuleIds(architectureDoc());
+        expect(ids.filter((id) => !cited.includes(id))).toEqual([]);
+      });
+      And("every Rule id ARCHITECTURE.md cites is a Rule in some feature", () => {
+        const known = allFeatureRuleIds();
+        expect(citedRuleIds(architectureDoc()).filter((id) => !known.has(id))).toEqual([]);
+      });
+    });
+  });
+
+  Rule("If a package, port, rule or table is added without its line in ARCHITECTURE.md, then tutors shall fail the architecture check naming what is missing.", ({ RuleScenario }) => {
+    RuleScenario("A document that leaves a package and a table out is told which", ({ Given, When, Then }) => {
+      let doc = "";
+      let missing: string[] = [];
+      Given("an architecture document that names {string} and {string} only", (_ctx: unknown, pkg: string, table: string) => {
+        doc = `| \`${pkg}\` | ring |\n| \`${table}\` | store-supabase |\n`;
+      });
+      When("it is checked against the packages {string} and the tables {string}", (_ctx: unknown, packages: string, tables: string) => {
+        missing = missingFromAuthority(doc, { packages: packages.split(",").map((s) => s.trim()), tables: tables.split(",").map((s) => s.trim()) });
+      });
+      Then("the check names {string} and {string} as missing", (_ctx: unknown, a: string, b: string) => {
+        expect(missing).toEqual([a, b]);
+      });
+    });
+  });
 });

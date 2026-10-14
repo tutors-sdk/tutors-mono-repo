@@ -3,7 +3,6 @@ import {
   assert,
   assertEqual,
   ContractFailure,
-  FakeTutorAssistant,
   FixedClock,
   FixedSession,
   InMemoryAssignmentSource,
@@ -96,15 +95,6 @@ describe("the in-memory adapters behind every port", () => {
     expect(await source.courseContents(7)).toEqual([{ id: 1, name: "Week 1" }]);
     expect(await source.courseContents(8)).toEqual([]);
     expect((await source.assignmentSubmissions([2])).assignments.map((a) => a.assignmentid)).toEqual([2]);
-  });
-
-  it("FakeTutorAssistant names where the learner asked from and cites the learning object", async () => {
-    const assistant = new FakeTutorAssistant("No idea.");
-    const course = { courseId: "cs101", title: "CS101" };
-    expect(await assistant.ask({ context: { course }, question: "why?" })).toEqual({ answer: "No idea. (asked about CS101)", sources: [] });
-    const lo = { route: "/lab/cs101/1", title: "Lab 1", type: "lab", contentMd: "" };
-    expect(await assistant.ask({ context: { course, lo }, question: "how?" })).toEqual({ answer: "No idea. (asked about Lab 1)", sources: ["/lab/cs101/1"] });
-    expect(assistant.asked.map((q) => q.question)).toEqual(["why?", "how?"]);
   });
 
   it("the contract assertions fail with a ContractFailure naming the difference", () => {

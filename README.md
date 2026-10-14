@@ -55,7 +55,7 @@ Each app composes its adapters in `src/lib/compose.ts`, the only place that read
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/domain` | `@tutors/domain` | The domain: course tree, learning records, presence, access, pedagogy and quiz rules. Plain TypeScript, imports nothing. Subpaths: `/course`, `/learning`, `/presence`, `/access`, `/pedagogy`, `/quiz` |
+| `packages/domain` | `@tutors/domain` | The domain: course tree, learning records, presence, access and quiz rules. Plain TypeScript, imports nothing. Subpaths: `/course`, `/learning`, `/presence`, `/access`, `/quiz` |
 | `packages/application` | `@tutors/application` | Ports (`/ports`: what the application needs from outside, as interfaces) and the use cases over them; `/testing` holds in-memory adapters and the contract suite every adapter of a port must pass |
 
 ### Driven adapters (`packages/adapters/driven/`)
@@ -180,7 +180,7 @@ Docs live in five places. This is the index.
 |---|---|
 | [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) | Understand how one course page gets from URL to pixels. **Start here.** |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Look something up: every package, service and data flow, in depth |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | The authority on the shape: C4 and sequence diagrams, ports, adapters, ownership and data boundaries, the EARS rules that enforce them |
 | [guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/testing/TESTING.md](guides/testing/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
 | [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite |
 | [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
@@ -200,7 +200,7 @@ Docs live in five places. This is the index.
 
 ## Architecture
 
-Tutors is a hexagonal architecture ([ADR 0001](docs/adr/0001-hexagonal-architecture.md)). The dependency arrows point inwards:
+Tutors is a hexagonal architecture. [ARCHITECTURE.md](ARCHITECTURE.md) is the authority on its shape, intent and ownership boundaries, and [ADR 0001](docs/adr/0001-hexagonal-architecture.md) records the decision. The dependency arrows point inwards:
 
 1. **Domain** (`@tutors/domain`) imports nothing.
 2. **Application** (`@tutors/application`) imports the domain only, and defines the ports.

@@ -6,7 +6,6 @@ import type { Course, Lo } from "@tutors/domain/course";
 import type { ContentLock } from "@tutors/domain/access";
 import type { LearningEvent, CalendarEntry, LearningRecord, TutorsConnectUser } from "@tutors/domain/learning";
 import type { CourseVisit, PresenceEvent, Sentiment, StoredPresence } from "@tutors/domain/presence";
-import type { TutorQuestion, TutorReply } from "@tutors/domain/pedagogy";
 import { CourseNotFoundError, type CourseLocation, type CourseSource } from "../ports/course-source.ts";
 import type { CourseEmitter } from "../ports/course-emitter.ts";
 import type { ContentRenderer } from "../ports/content-renderer.ts";
@@ -19,7 +18,6 @@ import type { AccessStore } from "../ports/access-store.ts";
 import type { AppEvent, EventPublisher } from "../ports/event-publisher.ts";
 import type { Clock } from "../ports/clock.ts";
 import type { AssignmentSource, MoodleAssignSubmissionsResponse, MoodleCourseSection } from "../ports/assignment-source.ts";
-import type { TutorAssistant } from "../ports/tutor-assistant.ts";
 import type { Actor } from "@tutors/domain/access";
 
 /** A clock stopped at one instant; `advance` moves it. */
@@ -230,19 +228,5 @@ export class InMemoryAssignmentSource implements AssignmentSource {
   }
   async assignmentSubmissions(assignmentIds: number[]): Promise<MoodleAssignSubmissionsResponse> {
     return { assignments: this.submissions.assignments.filter((a) => assignmentIds.includes(a.assignmentid)) };
-  }
-}
-
-/**
- * A tutor that answers every question the same way, naming where the learner is. What the reader
- * runs until the Ollama adapter lands, and what tests run always.
- */
-export class FakeTutorAssistant implements TutorAssistant {
-  readonly asked: TutorQuestion[] = [];
-  constructor(private readonly answer = "The course material does not cover that yet.") {}
-  async ask(question: TutorQuestion): Promise<TutorReply> {
-    this.asked.push(question);
-    const where = question.context.lo?.title ?? question.context.course.title;
-    return { answer: `${this.answer} (asked about ${where})`, sources: question.context.lo ? [question.context.lo.route] : [] };
   }
 }

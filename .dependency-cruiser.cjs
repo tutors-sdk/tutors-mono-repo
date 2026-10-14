@@ -3,7 +3,7 @@
 // Tutors is a hexagonal architecture (docs/adr/0001-hexagonal-architecture.md): three rings,
 // with every dependency pointing inwards.
 //
-//   domain       packages/domain                    the rules of a course, learning, presence, access, pedagogy
+//   domain       packages/domain                    the rules of a course, learning, presence, access
 //   application  packages/application               ports and use cases; imports the domain only
 //   adapters     packages/adapters/driven/<name>    one technology each, behind a port
 //                packages/adapters/driving/<name>   Svelte state, UI, themes, i18n, a11y, tour

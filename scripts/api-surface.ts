@@ -176,7 +176,6 @@ const WORKSPACE_ENTRIES: Record<string, string> = {
   "@tutors/domain/learning": "packages/domain/src/learning/index.ts",
   "@tutors/domain/presence": "packages/domain/src/presence/index.ts",
   "@tutors/domain/access": "packages/domain/src/access/index.ts",
-  "@tutors/domain/pedagogy": "packages/domain/src/pedagogy/index.ts",
   "@tutors/domain/quiz": "packages/domain/src/quiz/index.ts",
   "@tutors/application": "packages/application/src/index.ts",
   "@tutors/application/ports": "packages/application/src/ports/index.ts",

@@ -13,11 +13,9 @@ import type {
   IdentityClient,
   LearningEventSink,
   PresencePort,
-  ProfilePort,
-  TutorAssistant
+  ProfilePort
 } from "@tutors/application/ports";
 import {
-  FakeTutorAssistant,
   InMemoryAccessStore,
   InMemoryCourseSource,
   InMemoryLearningEventSink,
@@ -40,7 +38,6 @@ export type Adapters = {
   accessStore: AccessStore;
   publisher: EventPublisher;
   identityClient: IdentityClient | null;
-  assistant: TutorAssistant;
   /**
    * The whiteboard's own persistence client, until it has a port of its own. Typed as unknown
    * here so this package names no vendor; the whiteboard component casts it.
@@ -64,7 +61,6 @@ export function anonymousAdapters(overrides: Partial<Adapters> = {}): Adapters {
     accessStore: new InMemoryAccessStore(systemClock),
     publisher: new RecordingPublisher(),
     identityClient: null,
-    assistant: new FakeTutorAssistant(),
     whiteboardClient: undefined,
     ...overrides
   };

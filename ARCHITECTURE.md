@@ -1,1949 +1,776 @@
-# Tutors Monorepo - Architecture Documentation
+# Tutors Architecture
 
-> **Version:** 1.0.0  
-> **Last Updated:** July 2026  
-> **Purpose:** Comprehensive architectural overview, onboarding guide, and reference for the Tutors monorepo ecosystem
+**This file is the authority on the shape of Tutors, the intent behind it and its ownership boundaries.** When code and this document disagree, one of them is wrong and the pull request that fixes it changes both. The structural statements in it are executable: Rules 0340 to 0352 in [`tests/bdd/features/developer/hexagonal-architecture.feature`](tests/bdd/features/developer/hexagonal-architecture.feature) check the repository against them on every pull request, and [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs) enforces the dependency rules they state. The decision itself is recorded in [ADR 0001](docs/adr/0001-hexagonal-architecture.md).
 
----
+Diagrams are Mermaid and render on GitHub. The C4 diagrams go from the system in its world (Context) to its deployable units (Containers) to the parts inside the reader (Components); the sequence diagrams show each core part doing its job through the rings.
 
-## Table of Contents
+## Contents
 
-1. [Overview](#overview)
-2. [Monorepo Architecture](#monorepo-architecture)
-3. [Technology Stack](#technology-stack)
-4. [Package Structure](#package-structure)
-5. [JSR Subsystem](#jsr-subsystem)
-6. [Svelte Package Ecosystem](#svelte-package-ecosystem)
-7. [Applications](#applications)
-8. [Services](#services)
-9. [Content Generation Pipeline](#content-generation-pipeline)
-10. [Reader Application Flow](#reader-application-flow)
-11. [Dependency Graph](#dependency-graph)
-12. [Data Flow](#data-flow)
-13. [Development Workflow](#development-workflow)
-14. [Deployment Strategy](#deployment-strategy)
-15. [Contributing Guidelines](#contributing-guidelines)
-
----
-
-## Overview
-
-The **Tutors Monorepo** is a comprehensive workspace containing the complete Tutors educational platform ecosystem. It unifies course generation tools, UI component libraries, reader applications, and real-time services into a single, well-architected repository using pnpm workspaces.
-
-### Key Capabilities
-
-**Course Generation**:
-- Transform markdown-based content into structured course data
-- Generate JSON representations or static HTML
-- CLI tools for content authors
-
-**Course Reading**:
-- Interactive web-based course viewer
-- Real-time student presence tracking
-- Analytics and engagement metrics
-- Multiple theme and layout options
-
-**Platform Features**:
-- Multi-language support (i18n)
-- Accessibility features (dyslexia-friendly fonts, reduced motion)
-- GitHub OAuth authentication
-- Live collaboration via WebSockets
-- Course cataloging and discovery
-
-### Ecosystem Components
-
-This monorepo contains **4 distinct subsystems**:
-
-1. **JSR Packages** - Deno-compatible libraries for course generation and data models
-2. **Svelte Packages** - UI components and services for web applications
-3. **Applications** - End-user facing applications (reader, catalogue, live, time)
-4. **Services** - Backend infrastructure (Supabase Realtime for presence)
+1. [Intent](#1-intent)
+2. [System context (C4 level 1)](#2-system-context-c4-level-1)
+3. [Containers (C4 level 2)](#3-containers-c4-level-2)
+4. [The rings](#4-the-rings)
+5. [Components of the reader (C4 level 3)](#5-components-of-the-reader-c4-level-3)
+6. [The ports](#6-the-ports)
+7. [The adapters](#7-the-adapters)
+8. [Composition roots](#8-composition-roots)
+9. [Core parts, each as a sequence](#9-core-parts-each-as-a-sequence)
+10. [Ownership boundaries](#10-ownership-boundaries)
+11. [Data ownership](#11-data-ownership)
+12. [Dependency rules](#12-dependency-rules)
+13. [Requirements (EARS)](#13-requirements-ears)
+14. [Testing the architecture](#14-testing-the-architecture)
+15. [Authoring toolchain and the JSR facades](#15-authoring-toolchain-and-the-jsr-facades)
+16. [Deployment](#16-deployment)
+17. [How to change things](#17-how-to-change-things)
+18. [Glossary](#18-glossary)
 
 ---
 
-## Monorepo Architecture
+## 1. Intent
 
-### Workspace Structure
+Tutors is an open learning platform: a lecturer writes a course as a folder of markdown, the generator turns it into `tutors.json`, and the reader presents it to students, recording what they read, showing who else is present and letting a lecturer see engagement over time. The platform runs on Supabase (Postgres, Realtime), signs students in with GitHub through Better Auth, renders markdown with markdown-it, Shiki and KaTeX, and reads assignments from Moodle.
 
-The repository uses **pnpm workspaces** for package management, enabling:
+The architecture is **hexagonal** (ports and adapters). The rules of a course, of learning records, of presence and of access live in a **domain** ring that imports nothing. The **application** ring says what the product needs from the outside world as **ports** (interfaces) and holds the **use cases** that drive the domain through them. Everything that touches a technology is an **adapter** around those two rings: Supabase, Better Auth, markdown, localStorage, Moodle, the Svelte state and the UI. Each **app** is a composition root that reads its environment once and decides which adapter sits behind each port.
 
-- Shared dependencies across packages
-- Fast installation and linking
-- Workspace protocol (`workspace:*`) for internal dependencies
-- Independent versioning of packages
+The intent is not to replace any technology. Supabase, Better Auth and the markdown toolchain stay. The intent is that:
 
-**Workspace Configuration** (`pnpm-workspace.yaml`):
-
-```yaml
-packages:
-  - "packages/domain"
-  - "packages/application"
-  - "packages/adapters/driven/*"
-  - "packages/adapters/driving/*"
-  - "packages/platform/*"
-  - "packages/jsr/*"
-  - "apps/*"
-```
-
-### Architectural Rings
-
-Tutors is a **hexagonal architecture** ([ADR 0001](docs/adr/0001-hexagonal-architecture.md)): three rings with every dependency arrow pointing inwards, and each app as a composition root.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Apps: reader, catalogue, live, time                             │
-│  Each composes its adapters in src/lib/compose.ts from the env  │
-│  (the only readers of PUBLIC_ANON_MODE)                          │
-└──────────────────────────────┬──────────────────────────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Adapters (packages/adapters)                                    │
-│  driving: svelte-state (the home of runes), ui-*, themes, i18n,  │
-│           a11y, tour, privacy                                    │
-│  driven:  store-supabase, realtime-supabase, course-http,        │
-│           render-markdown, profile-localstorage, bus-inprocess,  │
-│           identity-better-auth, moodle, clock                    │
-│  Import the ports, the domain and ONE technology; never another  │
-│  adapter.                                                        │
-└──────────────────────────────┬──────────────────────────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Application (packages/application, @tutors/application)         │
-│  Ports (interfaces) + use cases; /testing has in-memory          │
-│  adapters and contract suites. Imports the domain only.          │
-└──────────────────────────────┬──────────────────────────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Domain (packages/domain, @tutors/domain)                        │
-│  course, learning, presence, access, pedagogy, quiz.             │
-│  Plain TypeScript. Imports nothing.                              │
-└─────────────────────────────────────────────────────────────────┘
-
-Beside the rings: packages/platform (logger, metrics, app-config), and packages/jsr
-(the authoring toolchain and the JSR facades over the domain).
-```
-
-**Ports** (`@tutors/application/ports`): `CourseSource`, `CourseEmitter`, `ContentRenderer`, `LearningEventSink`, `LearningRecords`, `PresencePort`, `ProfilePort`, `SessionPort` and `IdentityClient`, `AccessStore`, `EventPublisher`, `Clock`, `AssignmentSource`, `TutorAssistant`.
-
-### Key Principles
-
-1. **Inward dependencies**: the domain imports nothing; the application imports the domain; adapters import the ports, the domain and their one technology; apps import everything and never another app.
-2. **One technology per adapter**: the Supabase client, the markdown toolchain and Better Auth are each imported from one package (`vendor-only-in-its-adapter`), so a swap or a vendor advisory has one place to look.
-3. **Composition at the edge**: `apps/*/src/lib/compose.ts` reads the environment once and picks the adapter behind each port. `PUBLIC_ANON_MODE=TRUE` composes the in-memory, localStorage and no-op adapters; the unit tests compose the same.
-4. **Runes in one place**: Svelte rune state in package code lives in `@tutors/svelte-state`; components keep their own local runes.
-5. **Enforced, with a shrinking baseline**: `.dependency-cruiser.cjs` and `tests/architecture/dependency-rules.test.ts` fail on a new violation; `tests/architecture/known-violations.txt` lists the edges that predate the rules and may only shrink. Rules 0340-0346 state the same as EARS requirements.
-6. **Facades for one major**: `@tutors/tutors-model-lib`, `@tutors/tutors-time-lib` and `@tutors/tutors-types` re-export the domain so published courses and tools keep working.
+- every rule of the product can be tested without a database, a browser or a network, through the in-memory adapters that ship with the application ring;
+- each technology has exactly one home, so a dependency bump, a vendor advisory or a change in how a technology is used is made in one package;
+- the anonymous reader (`PUBLIC_ANON_MODE=TRUE`) is the same product composed with different adapters, not a second code path;
+- the shape is enforced, not described: a pull request that crosses a ring fails before review.
 
 ---
 
-## Technology Stack
+## 2. System context (C4 level 1)
 
-### Core Technologies
+```mermaid
+C4Context
+  title Tutors in its world
 
-**Build & Package Management**:
-- **pnpm 8+**: Fast, disk-efficient package manager with workspace support
-- **Vite 8.x**: Next-generation build tool and dev server
-- **TypeScript 5+**: Type-safe development across all packages
+  Person(student, "Student", "Reads a course, is recorded while signed in, may share presence")
+  Person(lecturer, "Lecturer", "Authors a course; watches engagement and who is online; locks content")
+  Person(operator, "Operator", "Deploys the four apps; reads logs, metrics and the release harness")
 
-**Runtime Environments**:
-- **Deno**: For JSR packages and CLI tools
-- **Node.js 22.12+**: For Svelte packages and applications (`engines.node` in `package.json`)
-- **Browser**: For client-side applications
+  System(tutors, "Tutors", "Reader, Catalogue, Live and Time apps over published courses")
 
-**Frontend Framework**:
-- **Svelte 5**: Reactive UI framework with runes-based state
-- **SvelteKit 2**: Full-stack framework with SSR/CSR
-- **Tailwind CSS 4**: Utility-first styling
-- **Skeleton UI 5**: Svelte component library
+  System_Ext(courseSite, "Published course site", "Static host serving tutors.json and the course's media (Netlify or any static host)")
+  System_Ext(supabase, "Supabase", "Postgres tables for learners, learning records, presence snapshots and locks; Realtime broadcast channels")
+  System_Ext(github, "GitHub", "OAuth identity provider; course source repositories")
+  System_Ext(moodle, "Moodle", "The college VLE: assignments and submissions")
+  System_Ext(harness, "Release harness", "Compares production with a release candidate every night")
 
-**Content Processing**:
-- **markdown-it**: Markdown parsing
-- **Shiki**: Syntax highlighting
-- **Marp**: Presentation rendering
-- **Mermaid**: Diagram rendering
-- **PDF.js**: PDF viewing
+  Rel(student, tutors, "Reads courses in a browser")
+  Rel(lecturer, tutors, "Reads engagement, sees who is online, locks content")
+  Rel(lecturer, courseSite, "Publishes tutors.json with the tutors CLI")
+  Rel(operator, tutors, "Deploys and observes")
+  Rel(tutors, courseSite, "GET tutors.json, media", "HTTPS")
+  Rel(tutors, supabase, "Rows and RPCs; broadcast", "PostgREST, Realtime")
+  Rel(tutors, github, "Sign in with GitHub", "OAuth")
+  Rel(tutors, moodle, "Assignments, submissions", "Web services, server side")
+  Rel(harness, tutors, "Drives the deployed apps", "HTTPS")
+```
 
-**Backend Services**:
-- **Supabase**: Database, authentication, analytics
-- **Supabase Realtime**: Real-time broadcast communication (presence, live activity)
-- **Better Auth**: GitHub OAuth integration
-
-**JSR Ecosystem** (Deno-first):
-- **Vento**: Template engine for HTML generation
-- **archiver**: ZIP file creation
-- **front-matter**: YAML parsing
+**Boundary of the system.** Tutors owns the four apps and the packages in this repository. It does not own the course content (the lecturer's repository and static host), the identity (GitHub), the store (Supabase's service) or the VLE. Everything it does not own is reached through a port, and every port has an in-memory adapter.
 
 ---
 
-## Package Structure
+## 3. Containers (C4 level 2)
 
-### Directory Layout
+```mermaid
+C4Container
+  title The deployable units of Tutors
 
-```
-tutors-mono-repo/
-├── packages/
-│   ├── domain/                 # @tutors/domain: course, learning, presence, access, pedagogy, quiz
-│   ├── application/            # @tutors/application: ports, use cases, /testing (in-memory adapters, contracts)
-│   │
-│   ├── adapters/
-│   │   ├── driven/             # Technologies behind the ports
-│   │   │   ├── store-supabase/       # @tutors/store-supabase (records, profiles, locks, catalogue)
-│   │   │   ├── realtime-supabase/    # @tutors/realtime-supabase (PresencePort)
-│   │   │   ├── course-http/          # @tutors/course-http (CourseSource)
-│   │   │   ├── render-markdown/      # @tutors/render-markdown (ContentRenderer)
-│   │   │   ├── profile-localstorage/ # @tutors/profile-localstorage (ProfilePort, not signed in)
-│   │   │   ├── bus-inprocess/        # @tutors/bus-inprocess (EventPublisher)
-│   │   │   ├── identity-better-auth/ # @tutors/identity-better-auth (SessionPort, IdentityClient)
-│   │   │   ├── moodle/               # @tutors/moodle (AssignmentSource)
-│   │   │   └── clock/                # @tutors/clock (Clock, /version)
-│   │   └── driving/            # What calls the application
-│   │       ├── svelte-state/         # @tutors/svelte-state (the reader's state and services over the ports)
-│   │       ├── themes/               # @tutors/themes
-│   │       ├── i18n/                 # @tutors/i18n
-│   │       ├── a11y/                 # @tutors/a11y
-│   │       ├── privacy/              # @tutors/privacy
-│   │       ├── tour/                 # @tutors/tour
-│   │       ├── ui-primitives/        # @tutors/ui-primitives
-│   │       ├── ui-navigators/        # @tutors/ui-navigators
-│   │       └── ui-components/        # @tutors/ui-components
-│   │
-│   ├── platform/
-│   │   ├── logger/             # @tutors/logger
-│   │   ├── metrics/            # @tutors/metrics
-│   │   └── app-config/         # @tutors/app-config (shared vite/svelte build config)
-│   │
-│   └── jsr/                    # JSR-published packages (Deno-compatible)
-│       ├── model/              # @tutors/tutors-model-lib (facade over the domain)
-│       ├── time/               # @tutors/tutors-time-lib (facade + the time app's read models)
-│       ├── types/              # @tutors/tutors-types (facade over the domain's shared types)
-│       ├── identity/           # @tutors/identity (identity contracts)
-│       ├── gen/                # @tutors/tutors-gen-lib (authoring toolchain)
-│       ├── tutors/             # @tutors/tutors (JSON course generator CLI)
-│       ├── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
-│       └── create/             # @tutors/tutors-create (course scaffolder)
-│
-├── apps/
-│   ├── reader/                 # Main course reader application (src/lib/compose.ts composes it)
-│   ├── catalogue/              # Course catalog/discovery
-│   ├── live/                   # Live presence tracking
-│   └── time/                   # Student activity & time tracking dashboard
-│
-├── docs/adr/                   # Architecture decision records
-├── deno.json                   # Deno workspace configuration
-├── pnpm-workspace.yaml         # pnpm workspace configuration
-└── package.json                # Root package configuration
+  Person(student, "Student")
+  Person(lecturer, "Lecturer")
+
+  System_Boundary(tutors, "Tutors") {
+    Container(reader, "Reader", "SvelteKit, Node 22 image", "Presents a course; records learning; shares presence; GitHub sign-in. tutors.dev")
+    Container(catalogue, "Catalogue", "SvelteKit, Node 22 image", "The courses students have visited, with visit counts")
+    Container(live, "Live", "SvelteKit, Node 22 image", "Who is online, per course and across the platform")
+    Container(time, "Time", "SvelteKit, Node 22 image", "Engagement over time per course and student; Moodle assignments")
+    Container(cli, "tutors CLI", "Deno, published to JSR", "Turns a course folder into tutors.json or a static site")
+  }
+
+  System_Ext(courseSite, "Published course site", "Static host")
+  ContainerDb_Ext(postgres, "Supabase Postgres", "tutors-connect-users, learning_records, calendar, tutors-connect-latest, tutors_content_locks, tutors-connect-courses, app_errors")
+  Container_Ext(realtime, "Supabase Realtime", "Broadcast channels: one per course and tutors-all-course-access")
+  System_Ext(github, "GitHub", "OAuth")
+  System_Ext(moodle, "Moodle", "Web services")
+
+  Rel(student, reader, "Reads", "HTTPS")
+  Rel(student, catalogue, "Browses", "HTTPS")
+  Rel(lecturer, live, "Watches", "HTTPS")
+  Rel(lecturer, time, "Analyses", "HTTPS")
+  Rel(lecturer, cli, "Runs", "deno run -A jsr:@tutors/tutors")
+  Rel(cli, courseSite, "Publishes tutors.json")
+  Rel(reader, courseSite, "GET tutors.json", "HTTPS")
+  Rel(reader, postgres, "Learning records, profiles, locks, presence snapshots", "PostgREST")
+  Rel(reader, realtime, "Publishes page views", "HTTP send, never joins")
+  Rel(reader, github, "Sign in", "OAuth via Better Auth")
+  Rel(catalogue, postgres, "tutors-connect-courses", "PostgREST")
+  Rel(live, realtime, "Subscribes", "WebSocket")
+  Rel(live, postgres, "tutors-connect-latest", "PostgREST")
+  Rel(time, postgres, "calendar, learning_records", "PostgREST")
+  Rel(time, moodle, "Assignments", "Server side")
 ```
 
-### Package Naming Convention
-
-**JSR Packages**: `@tutors/tutors-[name]-lib` or `@tutors/[name]`
-- Published to JSR registry for Deno ecosystem
-- Can be imported in Node.js via npm compatibility layer
-
-**Rings and adapters**: `@tutors/domain`, `@tutors/application`, `@tutors/[adapter]`
-- Internal workspace packages
-- Only `@tutors/svelte-state` holds `.svelte.ts` reactive files among the packages
+Each app is a SvelteKit application built into a Node 22 container image on quay.io/tutors-sdk (signed with cosign, with an SBOM) and deployed from the kustomize overlays under `deploy/k8s`. The CLI is a Deno program published to JSR. The four apps share one Supabase project.
 
 ---
 
-## JSR Subsystem
+## 4. The rings
 
-The JSR (JavaScript Registry) subsystem provides the **foundation layer** - core data models, course generation tools, and CLI utilities that work across both Deno and Node.js runtimes.
+```mermaid
+flowchart TB
+  subgraph apps["Apps  ·  apps/*  ·  composition roots"]
+    direction LR
+    readerApp["reader<br/>src/lib/compose.ts"]
+    catalogueApp["catalogue<br/>src/lib/compose.ts"]
+    liveApp["live<br/>src/lib/compose.ts"]
+    timeApp["time<br/>src/lib/compose.ts"]
+  end
 
-### Architecture Overview
+  subgraph adapters["Adapters  ·  packages/adapters"]
+    direction LR
+    subgraph driving["driving: call the application"]
+      svelteState["svelte-state<br/>runes + services"]
+      ui["ui-primitives → ui-navigators → ui-components"]
+      cross["themes · i18n · a11y · tour · privacy"]
+    end
+    subgraph driven["driven: implement a port with one technology"]
+      storeSupabase["store-supabase"]
+      realtimeSupabase["realtime-supabase"]
+      courseHttp["course-http"]
+      renderMarkdown["render-markdown"]
+      profileLocal["profile-localstorage"]
+      bus["bus-inprocess"]
+      identity["identity-better-auth"]
+      moodle["moodle"]
+      clock["clock"]
+    end
+  end
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                         JSR Subsystem                                │
-│                    (Deno-First, Node-Compatible)                     │
-│                                                                      │
-│  ┌──────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │
-│  │  Model   │  │  Time  │  │   Gen    │  │  Tutors  │  │ Tutors │  │
-│  │  (Core)  │  │(Track) │  │(Gener.)  │  │  (JSON)  │  │  Lite  │  │
-│  └────┬─────┘  └───┬────┘  └────┬─────┘  └────┬─────┘  └───┬────┘  │
-└───────┼────────────┼────────────┼──────────────┼────────────┼────────┘
-        │            │            │              │            │
-        └────────────┴────────────┴──────────────┴────────────┘
-        All published to jsr.io/@tutors/*
-```
+  subgraph application["Application  ·  packages/application  ·  @tutors/application"]
+    ports["ports/  (interfaces)"]
+    useCases["course · learning · presence · access  (use cases)"]
+    testing["testing/  in-memory adapters + contract suites"]
+  end
 
-### 1. Model Package (`packages/jsr/model`)
+  subgraph domain["Domain  ·  packages/domain  ·  @tutors/domain"]
+    domainModules["course · learning · presence · access · quiz"]
+  end
 
-**Package Name**: `@tutors/tutors-model-lib`  
-**Purpose**: Core data structures, types, and utilities
+  apps --> adapters
+  apps --> application
+  driving --> application
+  driven -. implement .-> ports
+  driven --> domain
+  application --> domain
 
-#### Key Responsibilities
-
-- **Type Definitions**: TypeScript interfaces for all learning objects
-- **Data Models**: Course, Topic, Lab, Talk, Video, Note, etc.
-- **Markdown Processing**: markdown-it configuration and plugins
-- **Utility Functions**: Tree traversal, search, course utilities
-
-#### Core Types
-
-```typescript
-// Learning Object (Lo) - The fundamental unit
-interface Lo {
-  type: LoType;              // "course" | "topic" | "lab" | "talk" | etc.
-  title: string;             // Display title
-  summary?: string;          // Optional description
-  route: string;             // URL path
-  img?: string;              // Card image
-  video?: string;            // Video URL
-  pdf?: string;              // PDF URL
-  icon?: IconType;           // Icon configuration
-  los?: Lo[];                // Child learning objects
-  hide?: boolean;            // Hide from navigation
-  // ... additional properties
-}
-
-// Course - Top-level container
-interface Course extends Lo {
-  type: "course";
-  url: string;               // Base URL for assets
-  topicIndex: Map<string, Lo>;
-  labIndex: Map<string, Lo>;
-  // ... indices for fast lookup
-}
-
-// Icon configuration
-interface IconType {
-  type: string;              // Icon type identifier
-  color?: string;            // Icon color
-}
+  classDef ring fill:#f6f8fa,stroke:#57606a,color:#24292f
+  classDef core fill:#dafbe1,stroke:#1a7f37,color:#24292f
+  class apps,adapters ring
+  class application,domain core
 ```
 
-#### File Structure
+| Ring | Directory | Package | May import | Owns |
+|---|---|---|---|---|
+| Domain | `packages/domain` | `@tutors/domain` (`/course`, `/learning`, `/presence`, `/access`, `/quiz`) | Nothing outside itself | The course tree and its vocabulary, learning events and records, presence rules and the roster, admission, roles and locks, quiz parsing and scoring |
+| Application | `packages/application` | `@tutors/application` (`/ports`, `/testing`) | The domain | The twelve ports, the use cases, the in-memory adapters and the contract suite each adapter of a port must pass |
+| Driven adapters | `packages/adapters/driven/*` | `@tutors/<name>` | Ports, domain, one technology, `@tutors/logger` | One technology each, behind a port |
+| Driving adapters | `packages/adapters/driving/*` | `@tutors/<name>` | Ports, domain, `svelte-state`, `@tutors/logger` | The Svelte state (the only home of runes), the UI, themes, i18n, a11y, tours, consent |
+| Apps | `apps/*` | `tutors-reader`, `tutors-catalogue`, `tutors-live`, `tutors-time` | Everything; never another app | Composition, routes, server hooks, environment |
+| Platform | `packages/platform/*` | `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config` | Nothing in the rings | Logging, metrics, build configuration; used by every ring that runs on a server |
+| JSR | `packages/jsr/*` | `@tutors/tutors-model-lib`, `@tutors/tutors-time-lib`, `@tutors/tutors-types`, `@tutors/identity`, `@tutors/tutors-gen-lib`, `@tutors/tutors`, `@tutors/tutors-lite`, `@tutors/tutors-create` | The facades import the rings; the authoring toolchain is self-contained | Published packages: facades over the domain for one major, and the authoring toolchain |
 
-```
-packages/jsr/model/src/
-├── tutors.ts                # Main export
-├── types/
-│   ├── learning-objects.ts # Lo, Course, Topic types
-│   ├── icon-types.ts       # Icon configurations
-│   ├── media-types.ts      # Video, PDF types
-│   ├── calendar-types.ts   # Calendar structures
-│   └── tutors-id-types.ts  # Identifier types
-├── utils/
-│   ├── lo-utils.ts         # Learning object utilities
-│   ├── course-utils.ts     # Course tree manipulation
-│   ├── markdown-utils.ts   # Markdown processing
-│   └── markdown-plugins.ts # Custom markdown-it plugins
-└── services/
-    ├── lo-tree.ts          # Tree traversal and decoration
-    └── search.ts           # Search functionality
-```
+---
 
-#### Usage Example
+## 5. Components of the reader (C4 level 3)
 
-```typescript
-import { type Course, type Lo } from "@tutors/tutors-model-lib";
+```mermaid
+C4Component
+  title Inside the reader container
 
-// Traverse course tree
-function visitLo(lo: Lo, visitor: (lo: Lo) => void) {
-  visitor(lo);
-  lo.los?.forEach((child) => visitLo(child, visitor));
-}
-```
+  Container_Boundary(reader, "Reader") {
+    Component(routes, "Routes", "SvelteKit +page / +layout", "course, topic, lab, note, talk, video, quiz, wall, search, time, whiteboard, auth, create")
+    Component(hooks, "hooks.server.ts", "SvelteKit", "Composes the adapters; request log, metrics, locale, security headers, identity handle")
+    Component(compose, "compose.ts", "Composition root", "Reads PUBLIC_ANON_MODE and the Supabase env once; picks the adapter behind each port")
 
-### 2. Time Package (`packages/jsr/time`)
+    Component(uiComponents, "ui-components", "Svelte", "Learning-object views, cards, time views")
+    Component(uiNavigators, "ui-navigators", "Svelte", "Shell, navigators, footer")
+    Component(uiPrimitives, "ui-primitives", "Svelte", "Icon, Image, Menu, Sidebar, toasts")
+    Component(crossCutting, "themes · i18n · a11y · tour · privacy", "Svelte", "Theme, locale, reduced motion, tours, consent")
 
-**Package Name**: `@tutors/tutors-time-lib`  
-**Purpose**: Analytics, time tracking, and learning metrics
+    Component(svelteState, "svelte-state", "Svelte 5 runes", "currentCourse, currentLo, tutorsId; courseService, analyticsService, presenceService, liveService, tutorsConnectService, rbacService, markdownService")
+    Component(application, "@tutors/application", "TypeScript", "loadCourse, recordLearningEvent, recordHeartbeat, sharePresence, courseRoster, visitCourse, courseAdmission, loadContentLocks")
+    Component(domain, "@tutors/domain", "TypeScript", "course tree, learning events, presence rules, access rules, quiz")
 
-#### Key Responsibilities
+    Component(courseHttp, "course-http", "CourseSource", "GET tutors.json")
+    Component(renderMarkdown, "render-markdown", "ContentRenderer", "markdown-it, Shiki, KaTeX")
+    Component(storeSupabase, "store-supabase", "LearningEventSink, ProfilePort, AccessStore, LearningRecords, catalogue", "PostgREST")
+    Component(realtimeSupabase, "realtime-supabase", "PresencePort", "Broadcast channels + tutors-connect-latest")
+    Component(profileLocal, "profile-localstorage", "ProfilePort", "Browser localStorage")
+    Component(busInprocess, "bus-inprocess", "EventPublisher", "In-process listeners")
+    Component(identityAdapter, "identity-better-auth", "SessionPort, IdentityClient", "Better Auth, GitHub")
+    Component(clockAdapter, "clock", "Clock", "HARNESS_NOW")
+  }
 
-- **Event Tracking**: Learning event capture and storage
-- **Calendar Models**: Time-based activity views
-- **Lab Analytics**: Step-by-step progress tracking
-- **Supabase Integration**: Data persistence layer
+  System_Ext(courseSite, "Published course site")
+  ContainerDb_Ext(postgres, "Supabase Postgres")
+  Container_Ext(realtime, "Supabase Realtime")
+  System_Ext(github, "GitHub")
 
-#### Core Services
-
-```typescript
-// TutorsTime - Main analytics service
-interface TutorsTime {
-  logLearningEvent(event: LearningEvent): Promise<void>;
-  getCourseMetrics(courseId: string): Promise<CourseMetrics>;
-  getStudentActivity(userId: string): Promise<Activity[]>;
-}
-
-// CourseTime - Course-specific analytics
-interface CourseTime {
-  calendar: CalendarModel;
-  labs: Map<string, LabModel>;
-  calculateEngagement(userId: string): number;
-}
-```
-
-#### Data Models
-
-```typescript
-interface LearningEvent {
-  userId: string;
-  courseId: string;
-  loRoute: string;
-  loType: string;
-  timestamp: Date;
-  duration?: number;
-}
-
-interface CalendarModel {
-  days: Map<string, DayActivity>;
-  weeks: WeekActivity[];
-  totalTime: number;
-}
-
-interface LabModel {
-  labId: string;
-  steps: StepActivity[];
-  completionRate: number;
-}
+  Rel(hooks, compose, "configureAdapters(composeReader(env))")
+  Rel(routes, uiComponents, "renders")
+  Rel(uiComponents, uiNavigators, "")
+  Rel(uiNavigators, uiPrimitives, "")
+  Rel(routes, svelteState, "courseService.readCourse, analyticsService, presenceService")
+  Rel(uiComponents, svelteState, "reads runes")
+  Rel(crossCutting, svelteState, "reads runes")
+  Rel(svelteState, application, "calls use cases with adapters()")
+  Rel(application, domain, "")
+  Rel(compose, courseHttp, "composes")
+  Rel(compose, renderMarkdown, "composes")
+  Rel(compose, storeSupabase, "composes")
+  Rel(compose, realtimeSupabase, "composes")
+  Rel(compose, profileLocal, "composes")
+  Rel(compose, busInprocess, "composes")
+  Rel(hooks, identityAdapter, "createIdentityHandle")
+  Rel(compose, clockAdapter, "composes")
+  Rel(courseHttp, courseSite, "HTTPS")
+  Rel(storeSupabase, postgres, "PostgREST")
+  Rel(realtimeSupabase, realtime, "httpSend; subscribe")
+  Rel(realtimeSupabase, postgres, "tutors-connect-latest")
+  Rel(identityAdapter, github, "OAuth")
 ```
 
-#### File Structure
+The other three apps are smaller instances of the same shape: Live composes `realtime-supabase` behind `PresencePort` and subscribes; Catalogue composes `store-supabase` for the course list; Time composes `store-supabase` for its health check and error transport, the time library's read model for calendar and lab analytics, and `moodle` on the server behind `AssignmentSource`.
 
-```
-packages/jsr/time/src/
-├── index.ts                # Main export
-├── types/
-│   ├── tutors-time-types.ts
-│   ├── calendar-types.ts
-│   ├── lab-types.ts
-│   └── tutors-connect-types.ts
-├── services/
-│   ├── tutors-time.ts      # Main analytics service
-│   ├── course-time.ts      # Course metrics
-│   ├── base-calendar-model.ts
-│   ├── base-lab-model.ts
-│   └── supabase.ts         # Supabase client
-└── utils/
-    ├── calendar-utils.ts
-    └── lab-utils.ts
-```
+---
 
-### 3. Gen Package (`packages/jsr/gen`)
+## 6. The ports
 
-**Package Name**: `@tutors/tutors-gen-lib`  
-**Purpose**: Course content generation from markdown source
+A port is an interface in `packages/application/src/ports/`. It is named for what the application needs, not for the technology that provides it. Every port has an in-memory adapter in `@tutors/application/testing`, and the ones with behaviour worth contracting have a contract suite there that every adapter of the port runs.
 
-#### Key Responsibilities
-
-- **Content Parsing**: Read markdown files and extract metadata
-- **JSON Generation**: Create `tutors.json` course structure
-- **HTML Generation**: Create static HTML for tutors-lite
-- **Asset Processing**: Copy and organize course assets
-- **Template Rendering**: Vento-based HTML templates
-
-#### Generation Pipeline
-
-```
-Markdown Source Files
-        │
-        ▼
-┌─────────────────┐
-│  Course Builder │  ← Parse folder structure
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Resource Builder│  ← Extract metadata from markdown
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Template Engine │  ← Render with Vento (for HTML mode)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Course Emitter  │  ← Write JSON or HTML output
-└─────────────────┘
-```
-
-#### Key Components
-
-**CourseBuilder** (`services/course-builder.ts`):
-- Scans folder structure
-- Identifies learning object types from folder/file patterns
-- Builds hierarchical course tree
-
-**ResourceBuilder** (`services/resource-builder.ts`):
-- Reads markdown frontmatter (YAML)
-- Extracts title, summary, images
-- Processes content markdown
-
-**TemplateEngine** (`templates/template-engine.ts`):
-- Loads Vento templates for HTML generation
-- Renders Lo-specific views (Lab.vto, Talk.vto, etc.)
-- Applies theme styles
-
-**CourseEmitter** (`services/course-emitter.ts`):
-- Writes `tutors.json` (for reader consumption)
-- OR generates `html/` folder (for tutors-lite)
-
-#### File Structure
-
-```
-packages/jsr/gen/src/
-├── services/
-│   ├── course-builder.ts   # Folder parsing
-│   ├── resource-builder.ts # Metadata extraction
-│   └── course-emitter.ts   # Output generation
-└── templates/
-    ├── template-engine.ts  # Vento integration
-    ├── template-downloader.ts
-    ├── styles.ts           # CSS injection
-    ├── utils.ts
-    └── vento/              # HTML templates
-        ├── Composite.vto
-        ├── Lab.vto
-        ├── Talk.vto
-        ├── Topic.vto
-        └── components/
-            ├── cards/
-            ├── navigators/
-            └── ...
+```mermaid
+classDiagram
+  direction LR
+  class CourseSource {
+    +load(location, fetchFn?) Promise~string~
+  }
+  class CourseEmitter {
+    +emit(course, destination) Promise~void~
+  }
+  class ContentRenderer {
+    +renderLo(course, lo, protocol?)
+    +renderSummary(lo)
+    +renderMarkdown(md) string
+    +mayContainMath(text) boolean
+    +loadMath() Promise~void~
+  }
+  class LearningEventSink {
+    +record(event, learnerId) Promise~void~
+  }
+  class LearningRecords {
+    +calendarEntries(courseId, start?, end?)
+    +learningRecords(courseId, learnerId?)
+    +learners(courseId)
+  }
+  class PresencePort {
+    +publish(event) Promise~void~
+    +subscribe(listener, courseId?) Unsubscribe
+    +recent(courseId, sinceIso) Promise~StoredPresence[] | null~
+  }
+  class ProfilePort {
+    +getCourseVisits(learnerId)
+    +saveCourseVisits(learnerId, visits)
+    +upsertLearner(profile)
+    +getSentiment(learnerId) / setSentiment
+    +getSharing(learnerId) / setSharing
+  }
+  class SessionPort {
+    +getActor() Promise~Actor | null~
+  }
+  class IdentityClient {
+    +signIn(returnTo)
+    +signOut(returnTo)
+  }
+  class AccessStore {
+    +locks(courseId) Promise~ContentLock[]~
+    +setLock(courseId, loRoute, locked, lockedBy) Promise~boolean~
+    +removeLock(courseId, loRoute) Promise~boolean~
+  }
+  class EventPublisher {
+    +publish(event: AppEvent) Promise~void~
+    +subscribe(listener) Unsubscribe
+  }
+  class Clock {
+    +now() Date
+    +nowMs() number
+  }
+  class AssignmentSource {
+    +courseContents(courseId, options?)
+    +assignmentSubmissions(assignmentIds, options?)
+  }
 ```
 
-#### Folder Structure Convention
+| Port | What the application needs | Driven adapters | In-memory adapter | Contract suite |
+|---|---|---|---|---|
+| `CourseSource` | The text of a published `tutors.json` | `course-http` | `InMemoryCourseSource` | — |
+| `CourseEmitter` | Write a built course out | (the generator's own emitter, until authoring is extracted) | `InMemoryCourseEmitter` | — |
+| `ContentRenderer` | Markdown to HTML, maths on demand | `render-markdown` | `PassThroughRenderer` | — |
+| `LearningEventSink` | Record a page load or a 30-second tick for a learner | `store-supabase` | `InMemoryLearningEventSink` | `learningEventSinkContract` |
+| `LearningRecords` | Read what was recorded about a course | `store-supabase` | `InMemoryLearningRecords` | — |
+| `PresencePort` | Share where a learner is; watch a course; read who was active since | `realtime-supabase` | `InMemoryPresence` | `presenceContract` |
+| `ProfilePort` | A learner's visit history, sentiment and sharing | `store-supabase` (signed in), `profile-localstorage` (not signed in) | `InMemoryProfile` | `profileContract` |
+| `SessionPort` | The verified actor of a request | `identity-better-auth/server` | `FixedSession` | — |
+| `IdentityClient` | Sign in and out from the browser | `identity-better-auth/client` | `RecordingIdentityClient` | — |
+| `AccessStore` | The content locks lecturers set | `store-supabase` | `InMemoryAccessStore` | `accessStoreContract` |
+| `EventPublisher` | Tell the rest of the application something happened | `bus-inprocess` | `RecordingPublisher` | `eventPublisherContract` |
+| `Clock` | The instant, so time can be frozen | `clock` | `FixedClock` | — |
+| `AssignmentSource` | Assignments and submissions from the VLE | `moodle` | `InMemoryAssignmentSource` | — |
 
-Example source structure:
+Application events (`AppEvent`) are `learning` (a learner's page load or tick), `presence` (a sharing learner moved) and `course-visit` (a learner opened a course; the catalogue counts it). They are how one part of the product reacts to another without importing it.
 
-```
-my-course/
-├── properties.yaml         # Course metadata
-├── topic-01/
-│   ├── unit-1/            # Unit container
-│   │   ├── book-a/        # Lab (folder with steps)
-│   │   │   ├── book-a.md  # Lab overview
-│   │   │   ├── 01.md      # Step 1
-│   │   │   ├── 02.md      # Step 2
-│   │   │   └── archives/  # Archives
-│   │   ├── talk-1.md      # Talk (markdown)
-│   │   └── video-1.md     # Video (markdown with video URL)
-│   └── properties.yaml
-└── topic-02/
-    └── ...
-```
+---
 
-Generated output (JSON mode):
+## 7. The adapters
 
-```
-json/
-├── tutors.json            # Course tree structure
-├── topic-01/
-│   ├── book-a/
-│   │   ├── book-a.json   # Lab step data
-│   │   └── ...
-│   └── ...
-└── ...
-```
+### Driven adapters (`packages/adapters/driven/`)
 
-### 4. Tutors Package (`packages/jsr/tutors`)
+| Package | Technology (the only package that imports it) | Ports | Also exports |
+|---|---|---|---|
+| `@tutors/store-supabase` | `@supabase/supabase-js` (shared with realtime-supabase) | `LearningEventSink`, `LearningRecords`, `ProfilePort`, `AccessStore` | The client seam (`createSupabaseClient`, `configureSupabase`), the catalogue (`catalogueService`, `updateCourseList`), the error transport, the health check |
+| `@tutors/realtime-supabase` | `@supabase/supabase-js` Realtime | `PresencePort` | `ALL_COURSES_CHANNEL` |
+| `@tutors/course-http` | `fetch` | `CourseSource` | `CourseNotFoundError`, `CourseUnreachableError` (defined in the port) |
+| `@tutors/render-markdown` | `markdown-it` and plugins, `shiki`, `katex` | `ContentRenderer` | The conversions the model facade re-exports (`convertLoToHtml`, ...) |
+| `@tutors/profile-localstorage` | `localStorage` | `ProfilePort` | — |
+| `@tutors/bus-inprocess` | none | `EventPublisher` | — |
+| `@tutors/identity-better-auth` | `better-auth` | `SessionPort` (`/server`), `IdentityClient` (`/client`) | `createIdentityHandle` |
+| `@tutors/moodle` | Moodle web services over `fetch` | `AssignmentSource` | — |
+| `@tutors/clock` | `HARNESS_NOW` | `Clock` | The `/version` endpoint |
 
-**Package Name**: `@tutors/reader` (or `@tutors/tutors`)  
-**Purpose**: CLI entry point for course generation
+### Driving adapters (`packages/adapters/driving/`)
 
-#### Key Responsibilities
-
-- **CLI Interface**: Command-line tool for authors
-- **Orchestration**: Coordinates gen package services
-- **Configuration**: Reads Deno configuration and environment
-
-#### Usage
-
-```bash
-# Generate JSON course
-deno run -A jsr:@tutors/reader
-
-# Or locally
-deno run -A packages/jsr/tutors/main.ts
-```
-
-#### File Structure
-
-```
-packages/jsr/tutors/
-├── deno.json              # JSR package configuration
-├── main.ts                # CLI entry point
-└── readme.md              # Usage documentation
-```
-
-#### main.ts Structure
-
-```typescript
-import { CourseBuilder, CourseEmitter } from "@tutors/tutors-gen-lib";
-
-// Parse command-line args
-const args = parseArgs(Deno.args);
-
-// Build course from source folder
-const builder = new CourseBuilder(args.source);
-const course = await builder.build();
-
-// Emit JSON or HTML
-const emitter = new CourseEmitter(args.output, args.mode);
-await emitter.emit(course);
-
-console.log(`Course generated: ${args.output}`);
-```
-
-### 5. Tutors Lite Package (`packages/jsr/tutors-lite`)
-
-**Package Name**: `@tutors/tutors-lite`  
-**Purpose**: CLI entry point for static HTML course generation
-
-#### Key Responsibilities
-
-- **Static HTML Generation**: Produces a self-contained `html/` folder that can be opened locally or deployed to any static host
-- **Offline Capable**: Generated courses work without a backend — no authentication, analytics, or real-time features
-- **Template Rendering**: Uses Vento templates to produce responsive HTML pages for all learning object types
-
-#### Usage
-
-```bash
-# Generate static HTML course
-deno run -A jsr:@tutors/tutors-lite
-
-# Or locally
-deno run -A packages/jsr/tutors-lite/main.ts
-```
-
-#### How It Differs from `tutors`
-
-| | `tutors` (JSON) | `tutors-lite` (HTML) |
+| Package | Role | Reaches the outside world through |
 |---|---|---|
-| Output | `json/tutors.json` | `html/` folder with `index.html` per page |
-| Requires reader app | Yes | No — self-contained static site |
-| Analytics/auth | Supported via Supabase | Not available |
-| Hosting | Needs tutors reader deployment | Any static host or local file:// |
+| `@tutors/svelte-state` | The reader's state (`currentCourse`, `currentLo`, `tutorsId`, ...) and services (`courseService`, `analyticsService`, `presenceService`, `liveService`, `tutorsConnectService`, `rbacService`, `markdownService`). The only package in which `$state`, `$derived` and `$effect` appear in `.ts` modules. | `adapters()`, the port set the app installed with `configureAdapters` |
+| `@tutors/ui-primitives` → `@tutors/ui-navigators` → `@tutors/ui-components` | The UI, in a strict one-directional layering | `svelte-state` |
+| `@tutors/themes`, `@tutors/i18n`, `@tutors/a11y`, `@tutors/tour`, `@tutors/privacy` | Cross-cutting | `svelte-state`; none imports a UI package |
 
-#### File Structure
-
-```
-packages/jsr/tutors-lite/
-├── deno.json              # JSR package configuration
-└── main.ts                # CLI entry point
-```
-
-### JSR Publishing Workflow
-
-**Deno Configuration** (`deno.json`):
-
-```json
-{
-  "workspace": [
-    "./packages/jsr/model",
-    "./packages/jsr/time",
-    "./packages/jsr/gen",
-    "./packages/jsr/tutors",
-    "./packages/jsr/tutors-lite"
-  ],
-  "imports": {
-    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.0.0",
-    "@tutors/tutors-time-lib": "jsr:@tutors/tutors-time-lib@^5.0.0"
-  }
-}
-```
-
-**Publishing Commands**:
-
-```bash
-# Publish to JSR
-cd packages/jsr/model
-deno publish
-
-# Or via npx (for npm compatibility)
-npx jsr publish
-```
-
-**Consumption**:
-
-```typescript
-// In Deno
-import { type Course } from "jsr:@tutors/tutors-model-lib@^5.0";
-
-// In Node.js (via npm)
-import { type Course } from "@tutors/tutors-model-lib";
-```
+A driving adapter never imports a driven adapter (`svelte-state-imports-no-adapter`). It asks `adapters()` for the port and the app has already decided what is behind it.
 
 ---
 
-## Svelte Package Ecosystem
+## 8. Composition roots
 
-The Svelte subsystem provides **reactive UI components**, **services**, and **state management** for web applications. All packages leverage Svelte 5's runes-based reactivity.
+Each app has one file that reads the environment and composes the adapters, called once from `hooks.server.ts` and `hooks.client.ts` so the server and the browser run the same wiring. It is the only place in the repository that reads `PUBLIC_ANON_MODE` (Rule 0345).
 
-### Architecture Overview
-
-The Svelte packages are the **driving adapters**: they call the application's use cases and read state through `@tutors/svelte-state`, which is the only package holding Svelte runes. None of them imports a driven adapter (`svelte-state-imports-no-adapter`); the apps hand `svelte-state` its adapters through `configureAdapters(compose(env))`.
-
-```
-┌─────────────────────────────────────────────────────────┐
-│              Driving adapters (Svelte)                   │
-│                                                           │
-│  ┌──────────────┐                                        │
-│  │ UI Components │  (Domain views, pre-compiled CSS)      │
-│  └──────┬────────┘                                        │
-│         │                                                  │
-│  ┌──────┴─────────┐                                       │
-│  │ UI Navigators  │  (Shell, navbars, layout switchers)   │
-│  └──────┬─────────┘                                       │
-│         │                                                  │
-│  ┌──────┴─────────┐                                       │
-│  │ UI Primitives  │  (Icon, Menu, Sidebar, shared comps)  │
-│  └──────┬─────────┘                                       │
-│         │                                                  │
-│  ┌──────┴──────┐  ┌────────┐  ┌──────┐  ┌──────┐  ┌─────┐ │
-│  │svelte-state │  │ Themes │  │ i18n │  │ a11y │  │tour │ │
-│  │ (runes,     │  │        │  │      │  │      │  │     │ │
-│  │  services)  │  └────────┘  └──────┘  └──────┘  └─────┘ │
-│  └──────┬──────┘                                           │
-│         │ calls use cases through the ports                │
-└─────────┼─────────────────────────────────────────────────┘
-          ▼
-   @tutors/application  ──►  @tutors/domain
-          ▲
-          │ implemented by the driven adapters the app composes
+```mermaid
+flowchart LR
+  env["env<br/>PUBLIC_ANON_MODE<br/>PUBLIC_SUPABASE_URL<br/>PUBLIC_SUPABASE_ANON_KEY"] --> compose{"composeReader(env)"}
+  compose -- "ANON_MODE=TRUE" --> anon["anonymousAdapters()<br/>in-memory sink, presence, locks<br/>localStorage profile<br/>no identity client"]
+  compose -- "no URL or key" --> unconfigured["anonymousAdapters()<br/>anonymous: false, warning logged"]
+  compose -- "configured" --> live["supabaseLearningEventSink()<br/>supabasePresence(client)<br/>supabaseProfile() once signed in<br/>supabaseAccessStore()<br/>catalogue listens for course-visit"]
+  anon & unconfigured & live --> install["configureAdapters(...)"]
+  install --> services["svelte-state services read adapters()"]
 ```
 
-### Layer Structure
-
-**State and services** (`svelte-state`): the reader's runes (`currentCourse`, `currentLo`, `tutorsId`, ...) and its services (course loading, presence, profiles, sign-in, roles, markdown on demand). Every service reaches the outside world through `adapters()`, the port set the app composed.
-
-**Cross-cutting** (`themes`, `i18n`, `a11y`, `tour`, `privacy`): read state from `svelte-state`; import no UI package.
-
-**UI**:
-- `ui-primitives` - Primitive UI components and shared components (Icon, Menu, Sidebar, Image, LoContextTree, StudentCard)
-- `ui-navigators` - Navigation components (MainNavigator, SecondaryNavigator, Footer, TutorsShell, buttons, layout switchers)
-- `ui-components` - Domain UI components (learning objects, time views) + pre-compiled CSS
-
-### 1. Runes Package (`packages/adapters/driving/svelte-state`)
-
-**Package Name**: `@tutors/svelte-state`  
-**Purpose**: Global reactive state using Svelte 5 runes
-
-#### Key Exports
-
-```typescript
-// Lazy-initialized reactive state
-export const currentCourse: {
-  get value(): Course | null;
-  set value(v: Course | null);
-};
-
-export const currentLo: {
-  get value(): Lo | null;
-  set value(v: Lo | null);
-};
-
-export const currentLabStepIndex: {
-  get value(): number;
-  set value(v: number);
-};
-
-export const layout: {
-  get value(): "expanded" | "compacted";
-  set value(v: "expanded" | "compacted");
-};
-
-export const transientUpdate: {
-  get value(): boolean;
-  set value(v: boolean);
-};
-```
-
-#### Implementation Pattern
-
-```typescript
-// index.svelte.ts (must use .svelte.ts extension for runes)
-import type { Course } from "@tutors/tutors-model-lib";
-
-const rune = <T>(initialValue: T) => {
-  let _rune = $state(initialValue);
-  return {
-    get value() { return _rune; },
-    set value(v: T) { _rune = v; }
-  };
-};
-
-// Lazy initialization to avoid SSR issues
-let _currentCourse: ReturnType<typeof rune<Course | null>> | null = null;
-
-export const currentCourse = {
-  get value() {
-    return (_currentCourse ??= rune(null)).value;
-  },
-  set value(v) {
-    (_currentCourse ??= rune(null)).value = v;
-  }
-};
-```
-
-#### Usage in Components
-
-```svelte
-<script lang="ts">
-  import { currentCourse } from "@tutors/svelte-state";
-
-  $effect(() => {
-    if (currentCourse.value) {
-      console.log("Course changed:", currentCourse.value.title);
-    }
-  });
-</script>
-
-<h1>{currentCourse.value?.title}</h1>
-```
-
-### 2. Course Package (`packages/adapters/driving/svelte-state`)
-
-**Package Name**: `@tutors/course`  
-**Purpose**: Course loading, processing, and markdown rendering
-
-#### Sub-modules
-
-**Course Service** (`course/services/course.svelte.ts`):
-- Fetches course JSON from CDN
-- Caches loaded courses
-- Manages lab instances
-- Decorates course tree with URLs
-
-**Live Lab** (`course/services/live-lab.ts`):
-- Manages lab step navigation
-- Fetches markdown content for steps
-- Converts markdown to HTML
-- Tracks current step state
-
-**Live Notebook** (`course/services/live-notebook.ts`):
-- Manages Jupyter notebook rendering
-- Cell-by-cell content processing
-
-**Lo Tree** (`course/services/lo-tree.ts`):
-- Tree traversal utilities
-- URL decoration
-- Index building (topicIndex, labIndex, etc.)
-
-**Markdown Service** (`markdown/services/markdown.svelte.ts`):
-- Markdown-to-HTML conversion
-- Syntax highlighting with Shiki
-- Mermaid diagram rendering
-- Marp presentation rendering
-- Code block copy button action
-
-#### File Structure
-
-```
-packages/adapters/driving/svelte-state/src/
-├── course/
-│   ├── index.ts
-│   ├── types.ts
-│   └── services/
-│       ├── course.svelte.ts
-│       ├── live-lab.ts
-│       ├── live-notebook.ts
-│       └── lo-tree.ts
-├── markdown/
-│   ├── index.ts
-│   ├── types.ts
-│   ├── services/
-│   │   ├── markdown.svelte.ts
-│   │   ├── marp-renderer.ts
-│   │   └── mermaid-action.ts
-│   └── actions/
-│       └── copy-code-action.ts
-└── index.ts
-```
-
-#### Usage Example
-
-```typescript
-import { courseService } from "@tutors/svelte-state";
-
-// Load course
-const course = await courseService.readCourse("my-course-id", fetch);
-
-// Load lab
-const lab = await courseService.readLab(course, "lab-01", fetch);
-await lab.loadStep("01");
-
-// Render markdown
-import { markdownService } from "@tutors/svelte-state";
-const html = await markdownService.renderMarkdown(content);
-```
-
-### 3. Themes Package (`packages/adapters/driving/themes`)
-
-**Package Name**: `@tutors/themes`  
-**Purpose**: UI theming, icons, and display modes
-
-#### Features
-
-- **Display Modes**: Light/dark theme toggle
-- **Icon Sets**: Multiple icon theme choices (Fluent, Hero, Easter, Festive)
-- **Layouts**: Expanded/compacted card layouts
-- **Card Styles**: Portrait/landscape/circular card modes
-- **Festive Mode**: Snow animation effect
-
-#### Theme Service
-
-```typescript
-export const themeService: ThemeService = {
-  // Display mode
-  currentDisplayMode: $state("light"),
-  toggleDisplayMode(): void,
-  setDisplayMode(mode: "light" | "dark"): void,
-
-  // Icons
-  currentIconSet: $state("fluent"),
-  setIconSet(set: string): void,
-  getIcon(type: string): IconType,
-
-  // Layouts
-  currentLayout: $state("expanded"),
-  setLayout(layout: "expanded" | "compacted"): void,
-
-  // Card styles
-  currentCardStyle: $state("portrait"),
-  setCardStyle(style: "portrait" | "landscape" | "circular"): void,
-
-  // Persistence
-  initDisplay(): void,
-  saveTheme(): void
-};
-```
-
-#### File Structure
-
-```
-packages/adapters/driving/themes/src/
-├── index.ts
-├── types.ts
-├── services/
-│   └── themes.svelte.ts
-├── icons/
-│   ├── fluent-icons.ts
-│   ├── hero-icons.ts
-│   ├── easter-icons.ts
-│   └── festive-icons.ts
-├── styles/
-│   ├── tutors.css
-│   ├── classic.css
-│   ├── dyslexia.css
-│   ├── easter.css
-│   ├── prose-headings.css
-│   └── card-styles.ts
-└── events/
-    ├── festive.svelte.ts
-    └── snow.ts
-```
-
-### 4. Community Package (`packages/adapters/driving/svelte-state`)
-
-**Package Name**: `@tutors/svelte-state/community`  
-**Purpose**: Analytics, real-time presence, and social features
-
-#### Sub-services
-
-**Analytics Service**:
-- Tracks page views and learning events
-- Sends data to Supabase
-
-**Presence Service**:
-- Course-specific student presence
-- Real-time status updates via Supabase Realtime
-
-**Live Service**:
-- Platform-wide live activity monitoring
-- Online student count
-
-**Catalogue Service**:
-- Course directory management
-- Visit statistics
-
-#### File Structure
-
-```
-packages/adapters/driving/svelte-state/src/community/
-├── index.ts
-├── types.svelte.ts
-├── services/
-│   ├── analytics.svelte.ts
-│   ├── presence.svelte.ts
-│   ├── live.svelte.ts
-│   └── catalogue.ts
-└── utils/
-    └── supabase-client.ts
-```
-
-### 5. Connect Package (`packages/adapters/driving/svelte-state`)
-
-**Package Name**: `@tutors/svelte-state/connect`  
-**Purpose**: User authentication and session management
-
-#### Features
-
-- GitHub OAuth integration
-- User profile management
-- Session persistence (localStorage or Supabase)
-- Course access control
-
-#### File Structure
-
-```
-packages/adapters/driving/svelte-state/src/connect/
-├── index.ts
-├── types.ts
-├── services/
-│   ├── connect.svelte.ts
-│   ├── localStorageProfile.ts
-│   └── supabaseProfile.svelte.ts
-└── utils/
-    └── allCourseAccess.ts
-```
-
-### 6. UI Primitives Package (`packages/adapters/driving/ui-primitives`)
-
-**Package Name**: `@tutors/ui-primitives`  
-**Purpose**: Low-level, reusable primitive UI components and shared components
-
-#### Components
-
-**Primitive Components**:
-- **Icon** - Iconify-based icon rendering with theme-aware type mapping
-- **IconBar** - Horizontal icon strip
-- **Image** - Responsive image with fallback
-- **Menu / MenuItem** - Dropdown menu system
-- **Sidebar** - Collapsible navigation sidebar
-- **SetuIcon / TutorsIcon** - Branding icons
-
-**Shared Components**:
-- **LoContextTree** - Learning object context tree display
-- **LoReference** - Learning object reference display
-- **StudentCard** - Student information card
-
-**Utilities**:
-- **animations.ts** - Shared animation helpers
-- **sanitize.ts** - HTML sanitization utilities
-
-#### File Structure
-
-```
-packages/adapters/driving/ui-primitives/src/
-├── index.ts
-├── _safelist.svelte
-├── components/
-│   ├── Icon.svelte
-│   ├── IconBar.svelte
-│   ├── Image.svelte
-│   ├── Menu.svelte
-│   ├── MenuItem.svelte
-│   ├── Sidebar.svelte
-│   ├── SetuIcon.svelte
-│   ├── TutorsIcon.svelte
-│   ├── LoContextTree.svelte
-│   ├── LoReference.svelte
-│   └── StudentCard.svelte
-└── utils/
-    ├── animations.ts
-    └── sanitize.ts
-```
-
-### 7. UI Navigators Package (`packages/adapters/driving/ui-navigators`)
-
-**Package Name**: `@tutors/ui-navigators`  
-**Purpose**: Navigation and shell components
-
-This package sits between `ui-primitives` and `ui-components` in the dependency chain. It provides the main application shell, navigation bars, and layout switching components. The one-directional dependency flow is: `ui-components` -> `ui-navigators` -> `ui-primitives`.
-
-#### Key Components
-
-- **TutorsShell** - Main app shell providing header, main content area, and footer layout
-- **MainNavigator** - Primary navigation bar
-- **SecondaryNavigator** - Secondary navigation bar
-- **LayoutMenu** - Layout switching menu
-- **Calendar** - Calendar view component
-- **CourseContext** - Course context display
-
-#### Subdirectories
-
-- `buttons/` - Navigation buttons (Breadcrumbs, SearchButton, TocButton)
-- `footers/` - Footer components (Footer, TutorsMessage)
-- `layout/` - Layout switchers (ThemeSwitcher, LanguageSwitcher)
-- `titles/` - Title components (CourseTitle, TutorsTitle)
-- `tutors-connect/` - Authentication UI (AnonProfile, ConnectedProfile)
-
-#### File Structure
-
-```
-packages/adapters/driving/ui-navigators/src/
-├── index.ts
-├── TutorsShell.svelte
-├── MainNavigator.svelte
-├── SecondaryNavigator.svelte
-├── LayoutMenu.svelte
-├── Calendar.svelte
-├── CourseContext.svelte
-├── buttons/
-├── footers/
-├── layout/
-├── titles/
-└── tutors-connect/
-```
-
-#### Dependencies
-
-- `@tutors/ui-primitives` - Primitive UI components
-- `@tutors/themes` - Theming and display modes
-- `@tutors/i18n` - Internationalization
-- `@tutors/a11y` - Accessibility
-- `@tutors/svelte-state` - Reactive state
-- `@tutors/svelte-state/community` - Analytics and presence
-- `@tutors/svelte-state/connect` - Authentication
-- `@tutors/course` - Course processing
-- `@tutors/logger` - Logging
-- `@tutors/tutors-model-lib` - Core data models
-
-### 8. UI Components Package (`packages/adapters/driving/ui-components`)
-
-**Package Name**: `@tutors/ui-components`  
-**Purpose**: High-level, domain-specific UI components
-
-This package depends on both `@tutors/ui-navigators` and `@tutors/ui-primitives` and produces a pre-compiled CSS file (`dist/style.css`) containing all Tailwind utilities and Skeleton theme styles required by the applications. Its `styles.css` uses `@source` directives to scan `ui-navigators` and `ui-primitives` for Tailwind class detection. It must be built before running any app.
-
-#### Component Categories
-
-**Learning Object Components** (`learning-objects/`):
-- `content/` - Lab, Notebook, Talk, Video, Calendar, Note
-- `layout/` - Cards, Panels, Wall, Units
-- `structure/` - Context, LoContext, CourseContext
-
-**Time Components** (`time/`):
-- Catalogue, Students, Courses
-
-**Utilities** (`utils/`):
-- Grid helpers
-
-#### File Structure
-
-```
-packages/adapters/driving/ui-components/src/
-├── styles.css              # Tailwind/Skeleton entry point (with @source directives)
-├── _dynamic-classes.css    # Safelist for @apply directives
-├── _safelist.svelte        # Safelist for dynamic template classes
-├── learning-objects/
-│   ├── content/
-│   ├── layout/
-│   └── structure/
-├── time/
-└── utils/
-```
-
-### 9. Platform Packages (`packages/platform/`)
-
-**Logger** (`logger/`):
-- `@tutors/logger` - Structured logging (JSON in production, request lifecycle hooks)
-
-**Metrics** (`metrics/`):
-- `@tutors/metrics` - Prometheus registry, request middleware and the `/metrics` endpoint
-
-**App config** (`app-config/`):
-- `@tutors/app-config` - Shared Vite and SvelteKit build options
-
-Accessibility (`@tutors/a11y`) and internationalization (`@tutors/i18n`) are driving adapters under `packages/adapters/driving/`.
+| App | Root | Composes |
+|---|---|---|
+| reader | `apps/reader/src/lib/compose.ts` `composeReader(env, { identityClient })` | Clock, `markdownRenderer`, `httpCourseSource()`, `localStorageProfile()`, `inProcessPublisher()`, and in a signed-in deployment the Supabase sink, presence, profile and access store; subscribes the catalogue's `updateCourseList` to `course-visit` events |
+| live | `apps/live/src/lib/compose.ts` `composeLive(env)` | Clock and `supabasePresence(client)`; Live only listens |
+| catalogue | `apps/catalogue/src/lib/compose.ts` `composeCatalogue(env)` | The Supabase client behind the catalogue reads |
+| time | `apps/time/src/lib/compose.ts` `composeTime(env)` | The Supabase client for the health check and error transport, and the time library's client; `moodleAssignmentSource` is composed on the server from private environment |
+
+The reader's `hooks.server.ts` also decides the **auth mode** from `PUBLIC_ANON_MODE` and `PRIVATE_AUTH_SECRET` (`enabled`, `anonymous`, `unconfigured`) and installs the identity handle; a misconfigured deployment serves courses anonymously and logs the misconfiguration once at startup.
+
+Tests compose the same roots: `anonymousReader()` in `tests/support/reader-adapters.ts` is `configureAdapters(composeReader({ PUBLIC_ANON_MODE: "TRUE" }))`, and the BDD features that record Supabase traffic run `composeReader(publicEnv, { identityClient })` against a recording client.
 
 ---
 
-## Applications
+## 9. Core parts, each as a sequence
 
-### Application Architecture
+### 9.1 Loading a course
 
-All applications follow the **SvelteKit architecture**:
-
-```
-app/
-├── src/
-│   ├── routes/            # File-based routing
-│   │   ├── +layout.svelte
-│   │   ├── +page.svelte
-│   │   └── [dynamic]/
-│   ├── hooks.client.ts    # Client hooks
-│   ├── hooks.server.ts    # Server hooks
-│   ├── app.css           # Global styles
-│   ├── app.html          # HTML template
-│   └── app.d.ts          # TypeScript definitions
-├── static/               # Static assets
-├── vite.config.ts
-└── package.json
-```
-
-### 1. Reader App (`apps/reader`)
-
-**Purpose**: Main course reader application
-
-**Route Groups**:
-- `(auth)/` - Authentication routes
-- `(course-reader)/` - Course content routes
-- `(home)/` - Landing page and course list
-
-**Key Routes**:
-- `/` - Home/landing page
-- `/course/[courseid]` - Course home
-- `/topic/[courseid]/[...loid]` - Topic page
-- `/lab/[courseid]/[...loid]` - Lab viewer
-- `/talk/[courseid]/[...loid]` - Talk viewer
-- `/video/[courseid]/[...loid]` - Video player
-- `/note/[courseid]/[...loid]` - PDF viewer
-- `/notebook/[courseid]/[...loid]` - Notebook viewer
-- `/time/[courseid]` - Analytics dashboard
-- `/search/[courseid]` - Course search
-
-**Environment Configuration**:
-
-```env
-# Anon mode (no backend)
-PUBLIC_ANON_MODE=TRUE
-
-# Or full mode with services
-PUBLIC_SUPABASE_URL=...
-PUBLIC_SUPABASE_ANON_KEY=...
-PRIVATE_AUTH_GITHUB_ID=...
-PRIVATE_AUTH_GITHUB_SECRET=...
-PRIVATE_AUTH_SECRET=...
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Route as +page.ts (course route)
+  participant CS as courseService (svelte-state)
+  participant UC as loadCourse (application)
+  participant Src as CourseSource (course-http)
+  participant R as ContentRenderer (render-markdown)
+  participant D as domain/course
+  Route->>CS: readCourse(courseId, fetch)
+  CS->>CS: determineCourseUrl(courseId)
+  CS->>UC: loadCourse({ source, renderer, clock, render, decorated })(location)
+  UC->>Src: load(location, fetch)
+  Src-->>UC: tutors.json text (or CourseNotFoundError / CourseUnreachableError)
+  UC->>R: mayContainMath(text) → loadMath() when true
+  UC->>D: decorateCourseTree(course, courseId, courseUrl, { render, today, protocol })
+  D->>R: render(course, lo) for each learning object (summaries only for labs, notes, notebooks, quizzes)
+  UC-->>CS: Course
+  CS->>CS: cache; currentCourse.value = course
+  CS-->>Route: Course
 ```
 
-### 2. Catalogue App (`apps/catalogue`)
+The reader renders labs, notes, notebooks and quizzes on demand, so `readerDecoration` hands the use case a `render` that converts only their summaries; `readLab` and friends render the body when opened. A 404 becomes `CourseNotFoundError`, an unreachable host `CourseUnreachableError`; the route maps them to a page.
 
-**Purpose**: Course catalog and discovery
+### 9.2 Recording learning
 
-**Features**:
-- Course listing with statistics
-- Visit tracking
-- Minimal UI for browsing
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Layout as Course layout
+  participant TC as tutorsConnectService
+  participant AS as analyticsService
+  participant UC as recordLearningEvent / recordHeartbeat
+  participant Sink as LearningEventSink (store-supabase)
+  participant Bus as EventPublisher (bus-inprocess)
+  Layout->>TC: learningEvent({}) after a navigation
+  TC->>AS: reportPageLoad(course, lo, student)
+  AS->>UC: recordLearningEvent(deps)(student, course, lo, stepId)
+  UC->>UC: pageLoadEvent(course, lo, clock.now())  (domain)
+  UC->>Sink: record({ kind: "page-load", courseId, loId, loType, day }, login)
+  Sink->>Sink: record_page_view RPC, or per-table upserts when the migration is missing
+  UC->>Bus: publish({ type: "learning", learnerId, event })
+  loop every 30 s while the tab is visible
+    TC->>AS: updatePageCount()
+    AS->>UC: recordHeartbeat(deps)(student, course, lo, stepId)
+    UC->>Sink: record({ kind: "tick", ... }, login)
+  end
+```
 
-### 3. Live App (`apps/live`)
+Nothing is recorded for a visitor who is not signed in: the use case returns before touching the port. In anonymous mode the sink is in memory, so the same code runs and records nothing durable.
 
-**Purpose**: Real-time student presence tracking
+### 9.3 Presence: sharing where a learner is, and who is online
 
-**Features**:
-- Live student count per course
-- Current page views
-- Real-time updates via Supabase Realtime
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Reader as Reader (presenceService)
+  participant UC as sharePresence / courseRoster
+  participant P as PresencePort (realtime-supabase)
+  participant RT as Supabase Realtime
+  participant DB as tutors-connect-latest
+  participant Live as Live app (liveService)
+  Reader->>UC: sharePresence(deps)(course, lo, learnerDisplay)
+  UC->>P: publish(presenceEvent)
+  P->>RT: httpSend to channel courseId (never joined by the reader)
+  P->>RT: httpSend to tutors-all-course-access
+  P->>DB: upsert latest snapshot (course_id, student_id)
+  Live->>P: subscribe(listener, courseId)
+  RT-->>Live: lo-event broadcast
+  Reader->>UC: courseRoster(deps)(courseId) on entry and every 60 s while visible
+  UC->>P: recent(courseId, sinceIso)
+  P->>DB: rows since the roster window
+  P-->>UC: StoredPresence[] | null (null keeps the last list)
+  UC->>UC: presentLearners(rows) (domain/presence)
+```
 
-### 4. Time App (`apps/time`)
+The reader **publishes only** and reads the roster from stored rows; a course channel delivers every student's page view to every other student, so joining it grows with the square of the class. Live's course page is the only subscriber to a course channel and its landing page the only subscriber to the platform-wide feed.
 
-**Purpose**: Student activity and time tracking dashboard
+### 9.4 Signing in and the actor
 
-**URL**: [time.tutors.dev](https://time.tutors.dev)
+```mermaid
+sequenceDiagram
+  autonumber
+  participant B as Browser
+  participant H as hooks.server.ts (reader)
+  participant I as identity handle (identity-better-auth/server)
+  participant GH as GitHub
+  participant L as Root layout
+  participant TC as tutorsConnectService
+  participant Prof as ProfilePort (store-supabase)
+  B->>H: GET /auth (IdentityClient.signIn)
+  H->>I: createIdentityHandle({ enabled, secret, githubId, githubSecret })
+  I->>GH: /api/auth/sign-in/social → OAuth
+  GH-->>I: /api/auth/callback/github
+  I->>I: session cookie; locals.actor = { subject: github:<id>, login, name, email, image }
+  B->>H: next request
+  I-->>L: locals.actor
+  L->>TC: reconnect(tutorsId)
+  TC->>Prof: upsertLearner(profile) (signed-in profile)
+  TC->>Prof: getCourseVisits / sentiment / sharing
+```
 
-**Features**:
-- Calendar heatmaps showing daily/weekly student activity
-- AG Grid-based lab and calendar data views with sortable columns
-- Median engagement metrics across students
-- Per-student activity drilldown with avatar, sentiment, and online status
-- Moodle assignment sync via server-side API integration
+`@tutors/identity` (JSR) re-exports `Actor`, `SessionPort` and `IdentityClient` so a consumer outside the mono-repo sees the contracts without the provider. Only `identity-better-auth` imports Better Auth; browser entry points cannot reach its server module (`identity-no-server-in-browser`).
 
-**Key Dependencies**:
-- `@tutors/tutors-time-lib` (workspace) — analytics models, Supabase queries, calendar/lab data structures
-- `ag-grid-community` — data grids for lab steps, calendar entries, and median views
-- `jheat.js` — calendar heatmap visualisation
-- `@supabase/supabase-js` — direct Supabase access for time data
+### 9.5 Visiting a course: admission, locks, the catalogue
 
-**Route Structure**:
-- `/` — Course ID entry dialog
-- `/[courseid]` — Redirects to medians view
-- `/[courseid]/medians` — Median engagement across all students
-- `/[courseid]/calendar` — Calendar views (by day, by week, raw)
-- `/[courseid]/lab` — Lab views (by step, by lab, learning records)
-- `/[courseid]/[studentid]` — Individual student calendar view
-- `/[courseid]/assignments` — Moodle assignment data
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Layout as Course layout
+  participant TC as tutorsConnectService
+  participant Adm as courseAdmission (application/access)
+  participant Locks as loadContentLocks → AccessStore
+  participant Visit as visitCourse → ProfilePort
+  participant Bus as EventPublisher
+  participant Cat as catalogue listener (store-supabase updateCourseList)
+  Layout->>TC: courseVisit(course)
+  TC->>Locks: loadContentLocks({ store })(courseId) → contentLocks rune
+  TC->>Adm: courseAdmission(course, login)
+  alt "sign-in"
+    TC-->>Layout: goto /auth
+  else admitted
+    TC->>Bus: publish({ type: "course-visit", learnerId, course })
+    Bus->>Cat: updateCourseList(course, clock.now()) → tutors-connect-courses
+    TC->>Visit: visitCourse({ profile, clock })(learnerId, course)
+    Visit->>Visit: recordCourseVisit(visits, course, now) (domain/presence)
+    TC->>TC: rbacService.loadRole when the course has an enrollment
+  end
+```
 
-**Notes**:
-- Runs with `ssr = false` — all rendering is client-side (Supabase client is browser-only)
-- Uses AG Grid in legacy theme mode (`theme: "legacy"`) for compatibility with v35 Theming API
-- Dev server runs on port 5176
+The catalogue is not called by the reader; it listens. Removing the catalogue would remove one `subscribe` in `composeReader` and nothing in the services.
+
+### 9.6 Tutors Time: engagement over time
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Page as /[courseid]/calendar (time app)
+  participant CT as CourseTime (tutors-time-lib read model)
+  participant DB as Supabase (calendar, learning_records, tutors-connect-users)
+  participant D as domain/learning
+  participant Srv as +server.ts (time app, server)
+  participant M as AssignmentSource (moodle)
+  Page->>CT: loadTime(courseId, start, end, title)
+  CT->>DB: calendar rows for the course, in id order
+  CT->>DB: full names for the learners seen
+  CT->>D: filterByDateRange; BaseCalendarModel; BaseLabModel
+  CT->>DB: learning_records for the course
+  CT-->>Page: calendarModel, labsModel, pin
+  Page->>Srv: /api/moodle/...
+  Srv->>M: courseContents(courseId) / assignmentSubmissions(ids)
+  M-->>Srv: Moodle shapes, unchanged
+```
+
+The time library keeps its own Supabase client for these reads; that edge is listed in the baseline and is the next read model to move behind `LearningRecords`.
+
+### 9.7 Generating a course
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant L as Lecturer
+  participant CLI as tutors CLI (packages/jsr/tutors)
+  participant Gen as @tutors/tutors-gen-lib
+  participant D as @tutors/domain/course
+  participant Site as Static host
+  participant Reader as Reader
+  L->>CLI: deno run -A jsr:@tutors/tutors
+  CLI->>Gen: build the course from the folder (properties.yaml, markdown, assets)
+  Gen->>D: learning-object kinds and tree rules
+  Gen->>Gen: emit json/tutors.json (or html/ with tutors-lite)
+  L->>Site: publish the folder
+  Reader->>Site: GET tutors.json (CourseSource)
+```
+
+The authoring toolchain is deliberately outside the vendor rule and unchanged by the retrofit; its `course-emitter.ts` moves behind the `CourseEmitter` port when authoring is extracted, independently.
 
 ---
 
-## Services
+## 10. Ownership boundaries
 
-### Supabase Realtime (Broadcast Channels)
+Ownership here means: which package is allowed to know a thing, and therefore which package a change goes in. People ownership is in [`.github/CODEOWNERS`](.github/CODEOWNERS) (today, `@tutors-sdk/maintainers` for every path); the boundaries below are what a reviewer holds a pull request to.
 
-**Purpose**: Real-time presence and live activity tracking
+| Concern | Owner | Nobody else may |
+|---|---|---|
+| What a course is: learning-object kinds, the tree, routes, the vocabulary | `@tutors/domain/course` | Define a learning-object kind, or walk the tree with rules of its own |
+| What a learning event is and how a day is cut | `@tutors/domain/learning` (`pageLoadEvent`, `tickEvent`, `localYyyyMmDd`) | Compute a day or an event shape |
+| Who counts as present and for how long | `@tutors/domain/presence` (`ROSTER_REFRESH_MS`, `keepOnRoster`, `presentLearners`) | Decide roster membership |
+| Who may enter a course and what is locked | `@tutors/domain/access` and `courseAdmission` | Check a whitelist or a lock inline |
+| What the application needs from the world | `@tutors/application/ports` | Add a method a technology happens to offer; a port grows only when a use case needs it |
+| The order of operations in a feature | `@tutors/application` use cases | Sequence port calls in a Svelte service or a route |
+| The Supabase client and every table it touches | `@tutors/store-supabase`, `@tutors/realtime-supabase` | Import `@supabase/supabase-js` (baseline exception: `packages/jsr/time`) |
+| Markdown, syntax highlighting, maths, Marp, Mermaid | `@tutors/render-markdown` | Import `markdown-it`, `shiki`, `katex`, `mermaid`, `@marp-team/*` (baseline exception: `svelte-state/src/markdown`, moving) |
+| Better Auth, the session cookie, the actor | `@tutors/identity-better-auth` | Import `better-auth`; read the session another way |
+| Runes and the reader's shared state | `@tutors/svelte-state` | Hold `$state` in a `.ts` module of another package |
+| Which adapter is behind a port, and anonymous mode | `apps/*/src/lib/compose.ts` | Read `PUBLIC_ANON_MODE`; construct a driven adapter |
+| UI layering | `ui-primitives` → `ui-navigators` → `ui-components` | Import upward, or import a UI package from a cross-cutting package |
+| Logging, metrics, build options | `packages/platform` | Depend on the rings from a platform package |
+| The published API of the JSR packages | `etc/*.api.md` (API surface reports) | Change an export without the report changing with it |
+| What a release intends to change | `release/claims.yaml`, judged by the release harness | Ship an observable difference no claim covers |
 
-Real-time features use **Supabase Realtime Broadcast channels**, which are part of the existing Supabase project — no separate server or deployment is required.
-
-#### Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│              Supabase Realtime Broadcast                  │
-│                                                           │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │              Supabase Project                     │   │
-│  │  ┌────────────────┐    ┌────────────────┐        │   │
-│  │  │ Global Channel │    │ Course Channel │  × N   │   │
-│  │  │ (all-course-   │    │ ({courseId})    │        │   │
-│  │  │  access)       │    │                │        │   │
-│  │  └───────┬────────┘    └───────┬────────┘        │   │
-│  │          └──────────┬──────────┘                  │   │
-│  │                     │                              │   │
-│  │          Channel-based broadcasting               │   │
-│  │          (one channel per course)                 │   │
-│  └──────────────────────────────────────────────────┘   │
-│                        ▲                                 │
-│                        │                                 │
-│               ┌────────┴────────┐                       │
-│               │    Clients      │                       │
-│               │   (Browsers)    │                       │
-│               └─────────────────┘                       │
-└─────────────────────────────────────────────────────────┘
-```
-
-#### Client Usage
-
-Readers never join a course channel: a course channel delivers every student's page view to every other student, so its cost grows with the square of the class. While activity sharing is enabled, the reader publishes each page view over HTTP to the course channel and the platform-wide feed, updates its own activity locally, and reads the course online list from `tutors-connect-latest` (rows from the last 5 minutes) on entry and every 60 seconds while the tab is visible. Tutors Live's course page is the only subscriber to a course channel, and its landing page the only subscriber to the platform-wide feed, each only while mounted.
-
-```typescript
-import { supabase } from "../utils/supabase-client";
-
-// Subscribe to a channel (equivalent to joining a room)
-const channel = supabase
-  .channel(courseId, { config: { broadcast: { self: false } } })
-  .on("broadcast", { event: "lo-event" }, (payload) => {
-    const data = payload.payload;
-    // Handle presence update
-  })
-  .subscribe();
-
-// Send a broadcast message
-channel.send({
-  type: "broadcast",
-  event: "lo-event",
-  payload: { type: "presence", user: userId, page: currentPage }
-});
-
-// Cleanup
-supabase.removeChannel(channel);
-```
+Boundaries between the apps: an app never imports another app (`no-app-to-app`). What two apps share lives in a package.
 
 ---
 
-## Content Generation Pipeline
+## 11. Data ownership
 
-### End-to-End Flow
+Every Supabase table and channel has exactly one adapter that reads or writes it, and one port that the application knows it through.
 
-```
-Author Creates Content
-        │
-        ├─ Markdown files (.md)
-        ├─ YAML metadata (properties.yaml)
-        ├─ Assets (images, PDFs, videos)
-        └─ Folder structure
-        │
-        ▼
-┌────────────────────────────────────────┐
-│  tutors CLI                             │
-│  $ deno run -A jsr:@tutors/reader      │
-│  $ deno run -A jsr:@tutors/tutors-lite │
-└──────────────┬─────────────────────────┘
-               │
-               ▼
-┌────────────────────────────────────────┐
-│  Course Builder (@tutors/tutors-gen-lib)│
-│  - Scan folders                         │
-│  - Identify Lo types                    │
-│  - Parse markdown frontmatter           │
-└──────────────┬─────────────────────────┘
-               │
-               ▼
-┌────────────────────────────────────────┐
-│  Course Emitter                         │
-│  - Generate tutors.json                 │
-│  - OR generate HTML (tutors-lite)       │
-└──────────────┬─────────────────────────┘
-               │
-               ▼
-        json/ or html/
-        (Deployable output)
-        │
-        ▼
-┌────────────────────────────────────────┐
-│  Deploy to CDN                          │
-│  - Netlify, Vercel, GitHub Pages, etc.  │
-└──────────────┬─────────────────────────┘
-               │
-               ▼
-┌────────────────────────────────────────┐
-│  Reader Application                     │
-│  - Fetch tutors.json                    │
-│  - Render course with UI components     │
-└────────────────────────────────────────┘
-```
+| Table or channel | Adapter | Port | Written by | Read by |
+|---|---|---|---|---|
+| `tutors-connect-users` | `store-supabase` (profile), `tutors-time-lib` read model (names) | `ProfilePort`, `LearningRecords` | Reader on sign-in (`upsertLearner`), sentiment and sharing changes | Reader (profile), Time (full names) |
+| `tutors-connect-profiles` | `store-supabase` (profile, catalogue count) | `ProfilePort` | Reader (course visits of a signed-in learner) | Reader, Catalogue (count) |
+| `learning_records` | `store-supabase` (learning-events, learning-records), `tutors-time-lib` read model | `LearningEventSink`, `LearningRecords` | Reader (page loads, ticks: `record_page_view` / `record_heartbeat` RPCs or per-table upserts) | Time |
+| `calendar` | `store-supabase` (learning-events, learning-records), `tutors-time-lib` read model | `LearningEventSink`, `LearningRecords` | Reader (one row per learner per day) | Time |
+| `tutors-connect-latest` | `realtime-supabase`, `store-supabase` (presence-rows) | `PresencePort` | Reader (latest snapshot per learner per course) | Reader (roster), Live |
+| `tutors_content_locks` | `store-supabase` (access-store) | `AccessStore` | Reader, by a lecturer | Reader |
+| `tutors-connect-courses` | `store-supabase` (catalogue, course-catalogue) | the catalogue service | Reader, on a course visit (through the `course-visit` event) | Catalogue |
+| `app_errors` | `store-supabase` (error-transport) | the logger's transport | Every app's logger | Operators |
+| `assignments` | Time app server (`lib/server/db`) | — (Time's own cache of Moodle assignments) | Time | Time |
+| `assignments_submissions` | Time app server (`lib/server/db`) | — (Time's own cache of Moodle submissions) | Time | Time |
+| Realtime channel `<courseId>` | `realtime-supabase` | `PresencePort` | Reader (HTTP send, never joined) | Live course page |
+| Realtime channel `tutors-all-course-access` | `realtime-supabase` | `PresencePort` | Reader (HTTP send) | Live landing page |
 
-### Generation Modes
-
-**JSON Mode** (Default):
-
-```bash
-deno run -A jsr:@tutors/reader
-```
-
-Output: `json/tutors.json` + markdown files
-
-**HTML Mode** (Tutors Lite):
-
-```bash
-deno run -A jsr:@tutors/tutors-lite
-```
-
-Output: `html/` folder with self-contained static site
-
-### Folder Structure Convention
-
-```
-course-folder/
-├── properties.yaml          # Course metadata
-│   # title: Course Title
-│   # summary: Course description
-│   # icon: course-icon
-│
-├── topic-01/
-│   ├── properties.yaml      # Topic metadata
-│   ├── unit-1/              # Unit grouping
-│   │   ├── book-a/          # Lab (folder = multi-step)
-│   │   │   ├── book-a.md    # Lab overview
-│   │   │   ├── 01.md        # Step 1
-│   │   │   ├── 02.md        # Step 2
-│   │   │   ├── img/         # Step images
-│   │   │   └── archives/    # Downloadable archives
-│   │   │
-│   │   ├── talk-1.md        # Talk (single file)
-│   │   ├── talk-1.pdf       # Talk PDF (optional)
-│   │   │
-│   │   ├── video-1.md       # Video (with video URL in frontmatter)
-│   │   └── note-1.pdf       # Note (PDF document)
-│   │
-│   └── unit-2/
-│       └── ...
-│
-└── topic-02/
-    └── ...
-```
-
-### Markdown Frontmatter Examples
-
-**Lab** (`book-a/book-a.md`):
-
-```yaml
----
-title: My Lab
-summary: Interactive tutorial
-icon: lab
----
-
-# Lab Overview
-This lab teaches...
-```
-
-**Talk** (`talk-1.md`):
-
-```yaml
----
-title: Introduction to TypeScript
-summary: Learn TypeScript basics
-icon: talk
-pdf: talk-1.pdf
----
-
-# Slide 1
-Content...
-```
-
-**Video** (`video-1.md`):
-
-```yaml
----
-title: Demo Video
-summary: Watch this demo
-video: https://youtube.com/watch?v=...
----
-
-Additional context...
-```
+Migrations are expand-only and live under `supabase/migrations/`; `pnpm check:migrations` holds the rule. A migration ships before or after the code that uses it, never in the same deploy as a contraction.
 
 ---
 
-## Reader Application Flow
+## 12. Dependency rules
 
-### Course Loading Sequence
+All in [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs), run by `tests/architecture/dependency-rules.test.ts` over a negative fixture workspace (every rule must catch its planted violation) and over the repository (no violation beyond the baseline). `pnpm architecture-report` draws the graph.
 
-```
-1. User navigates to /course/[courseid]
-         │
-         ▼
-2. +page.ts (load function)
-   await courseService.readCourse(courseid, fetch)
-         │
-         ▼
-3. courseService.readCourse():
-   - Fetch https://[courseUrl]/tutors.json
-   - Parse JSON
-   - Decorate tree with lo-tree.ts
-   - Cache in courseService.courses Map
-   - Update currentCourse rune
-         │
-         ▼
-4. +page.svelte renders course
-   - Uses currentCourse.value
-   - Displays cards/panels via @tutors/ui-components
-         │
-         ▼
-5. analyticsService.reportPageLoad()
-   - Send event to Supabase
-   - Broadcast presence via Supabase Realtime
-```
+| Rule | Statement |
+|---|---|
+| `domain-self-contained` | `packages/domain` imports nothing outside itself |
+| `application-imports-domain-only` | `packages/application` imports only `packages/domain` and its own files |
+| `vendor-only-in-its-adapter` | `@supabase/*` only from store-supabase and realtime-supabase; markdown-it, katex, shiki, mermaid and `@marp-team/*` only from render-markdown; better-auth only from identity-better-auth. The authoring toolchain (`packages/jsr/gen`, `tutors`, `tutors-lite`, `create`) is exempt |
+| `no-adapter-to-adapter` | A driven adapter imports no other adapter |
+| `svelte-state-imports-no-adapter` | `svelte-state` imports no adapter; it reads `adapters()` |
+| `adapters-import-no-app` | No package imports an app |
+| `ui-layering` | `ui-primitives` → `ui-navigators` → `ui-components`; cross-cutting packages import no UI package |
+| `ui-primitives-no-data-features` | `ui-primitives` imports nothing from `svelte-state/community`, `/connect` or `/rbac` (a source scan catches type imports too) |
+| `platform-self-contained` | `packages/platform` imports nothing from apps or the rings |
+| `facades-import-rings-only` | `tutors-model-lib`, `tutors-time-lib` and `tutors-types` import only the rings and render-markdown |
+| `tutors-types-self-contained` | `packages/jsr/types` imports only the domain |
+| `identity-provider-only-in-adapter` | Apps do not import an identity provider |
+| `identity-contracts-self-contained` | `packages/jsr/identity` imports only the domain and the application |
+| `identity-no-server-in-browser` | Browser entry points cannot reach the identity adapter's server module |
+| `no-app-to-app` | An app imports no other app |
+| `no-cross-workspace-relative-import` | A package reaches another only by its package name |
+| `no-cross-package-cycle` | No cycle between packages |
+| `runes-only-in-svelte-state` | `$state`, `$derived`, `$effect` in a `.ts` module only under `svelte-state` (a source scan: a rune is not an import) |
 
-### Lab Viewing Sequence
-
-```
-1. User clicks lab card
-         │
-         ▼
-2. Navigate to /lab/[courseid]/[...labid]
-         │
-         ▼
-3. +page.ts loads lab
-   await courseService.readLab(course, labid, fetch)
-         │
-         ▼
-4. courseService.readLab():
-   - Create LiveLab instance
-   - Fetch lab markdown files
-   - Convert to HTML with markdownService
-   - Cache in courseService.labs Map
-         │
-         ▼
-5. +page.svelte renders Lab component
-   - Displays steps with navigation
-   - Current step from currentLabStepIndex rune
-         │
-         ▼
-6. User navigates steps
-   - lab.loadStep(stepIndex)
-   - Updates currentLabStepIndex
-   - Fetches step markdown if not cached
-```
-
-### Analytics & Presence Flow
-
-```
-User views page
-      │
-      ▼
-analyticsService.reportPageLoad(lo)
-      │
-      ├─► Supabase (persistent analytics)
-      │   - Insert learning_event row
-      │   - Update user_session
-      │
-      └─► Supabase Realtime (broadcast channel)
-          - Send presence message to channel
-          - Other clients receive update
-          - Live view shows current students
-```
+**The baseline.** [`tests/architecture/known-violations.txt`](tests/architecture/known-violations.txt) lists the edges that predate the rules, as `rule: from -> to` with vendor paths normalised so a version bump changes no line. It may only shrink: a new line fails the test, a stale line (fixed but not deleted) fails the test. At the time of writing it holds the svelte-state markdown service's Shiki, Marp and Mermaid imports, the time library's Supabase client and two `rbacService` imports in `ui-primitives`' context tree.
 
 ---
 
-## Dependency Graph
+## 13. Requirements (EARS)
 
-### Package Dependencies
+Tutors writes requirements in EARS (Easy Approach to Requirements Syntax) as `Rule:` blocks in Gherkin features under `tests/bdd/features/`, each tagged with a stable id (`@rule-NNNN`) and its EARS pattern (`@ears-ubiquitous`, `@ears-event-driven`, `@ears-state-driven`, `@ears-unwanted`, `@ears-optional`). Every Rule is bound to a step file and runs in `pnpm test`; `pnpm test:ears:audit` checks the wording, the tags and the binding. The methodology is in [`guides/testing/EARS-METHODOLOGY.md`](guides/testing/EARS-METHODOLOGY.md).
 
-```
-Applications (reader, catalogue, live, time)
-        │  src/lib/compose.ts picks the adapter behind each port
-        │
-        ├─► driving adapters
-        │   ├─► @tutors/ui-components ─► @tutors/ui-navigators ─► @tutors/ui-primitives
-        │   ├─► @tutors/svelte-state  (runes + services; reads adapters() the app composed)
-        │   ├─► @tutors/themes, @tutors/i18n, @tutors/a11y, @tutors/tour, @tutors/privacy
-        │   │
-        │   └─► @tutors/application ─► @tutors/domain
-        │
-        ├─► driven adapters (each: ports + domain + one technology)
-        │   ├─► @tutors/store-supabase      ─► @supabase/supabase-js
-        │   ├─► @tutors/realtime-supabase   ─► @supabase/supabase-js
-        │   ├─► @tutors/course-http         ─► fetch
-        │   ├─► @tutors/render-markdown     ─► markdown-it, shiki, katex
-        │   ├─► @tutors/profile-localstorage─► localStorage
-        │   ├─► @tutors/bus-inprocess
-        │   ├─► @tutors/identity-better-auth─► better-auth
-        │   ├─► @tutors/moodle              ─► Moodle web services
-        │   └─► @tutors/clock
-        │
-        ├─► platform: @tutors/logger, @tutors/metrics, @tutors/app-config
-        │
-        └─► facades: @tutors/tutors-model-lib, @tutors/tutors-time-lib, @tutors/tutors-types ─► @tutors/domain
-```
+### 13.1 The architecture's own requirements
 
-### Dependency Layers (Bottom-Up)
+These are the rules this document rests on. They live in [`hexagonal-architecture.feature`](tests/bdd/features/developer/hexagonal-architecture.feature) and are bound in [`hexagonal-architecture.steps.ts`](tests/bdd/steps/developer/hexagonal-architecture.steps.ts).
 
-**Ring 0** (no dependencies):
-- `@tutors/domain`
+| Id | Pattern | Requirement |
+|---|---|---|
+| 0340 | ubiquitous | Tutors shall keep the domain ring self-contained, with every import inside `packages/domain`. |
+| 0341 | ubiquitous | Tutors shall keep the application ring importing only the domain ring and its own files, never an adapter or a vendor library. |
+| 0342 | ubiquitous | Tutors shall import a vendor library (the Supabase client, the markdown renderers, Better Auth) only from the adapter that wraps it, outside the authoring toolchain. |
+| 0343 | ubiquitous | Tutors shall keep a driven adapter from importing another adapter, so each wraps its one technology behind a port. |
+| 0344 | ubiquitous | Tutors shall keep Svelte rune state in package modules to the svelte-state adapter, so the rings and the other adapters know no framework. |
+| 0345 | ubiquitous | Tutors shall read `PUBLIC_ANON_MODE` only in an app's composition root, which picks the adapters, so no package decides for itself whether it is anonymous. |
+| 0346 | event-driven | When a change adds an edge the ring rules forbid, tutors shall fail the architecture check naming the rule, the importing file and the import, with the known-violations baseline accepting no new line. |
+| 0347 | ubiquitous | Tutors shall name every workspace package in ARCHITECTURE.md, so a package that this document does not describe cannot exist. |
+| 0348 | ubiquitous | Tutors shall name every port of the application ring in ARCHITECTURE.md, with the adapter that implements it. |
+| 0349 | ubiquitous | Tutors shall cite every dependency rule of `.dependency-cruiser.cjs` in ARCHITECTURE.md by name. |
+| 0350 | ubiquitous | Tutors shall name in ARCHITECTURE.md every Supabase table and channel a package reads or writes, with the adapter that owns it. |
+| 0351 | ubiquitous | Tutors shall keep the requirements table of ARCHITECTURE.md and the hexagonal-architecture feature in agreement, citing every Rule of the feature and no Rule id that exists in no feature. |
+| 0352 | unwanted | If a package, port, rule or table is added without its line in ARCHITECTURE.md, then tutors shall fail the architecture check naming what is missing. |
 
-**Ring 1** (domain only):
-- `@tutors/application`
-- the facades `@tutors/tutors-model-lib`, `@tutors/tutors-types`; `@tutors/tutors-time-lib` also keeps a Supabase client for the time app's read models (a baseline violation, moving behind `LearningRecords`)
+### 13.2 Requirements per boundary
 
-**Ring 2** (ports + domain + one technology; never another adapter):
-- driven: `store-supabase`, `realtime-supabase`, `course-http`, `render-markdown`, `profile-localstorage`, `bus-inprocess`, `identity-better-auth`, `moodle`, `clock`
-- driving: `svelte-state` (imports `@tutors/application`, `@tutors/domain`, `@tutors/logger`; no driven adapter), `themes`, `i18n`, `a11y`, `tour`, `privacy`
+The product's behaviour is specified the same way. The features that govern each part of the shape above:
 
-**Ring 2, UI** (strict one-directional):
-- `@tutors/ui-primitives` → themes, i18n, svelte-state, a11y
-- `@tutors/ui-navigators` → ui-primitives + the packages above
-- `@tutors/ui-components` → ui-navigators, ui-primitives + the packages above
+| Part | Features (under `tests/bdd/features/`) |
+|---|---|
+| Course loading, navigation, course JSON and its history | `course/course-loading`, `course/course-navigation`, `course/course-json-history`, `generator/course-json`, `course/llm-exports` |
+| Learning records and progress | `student/learning-progress`, `instructor/analytics-calendar`, `instructor/analytics-lab`, `time/lab-analytics` |
+| Presence and live views | `student/live-presence`, `live/presence-tracking`, `shared/realtime-usage`, `instructor/student-engagement` |
+| Sign-in, sessions and admission | `shared/authentication`, `shared/sign-in-session`, `instructor/whitelist-management`, `ui/content-locks` |
+| Catalogue and discovery | `student/course-discovery`, `ui/catalogue` |
+| Reading, search, labs, quizzes, resources | `ui/reading`, `ui/search`, `student/search-content`, `student/lab-interaction`, `ui/learning-activities`, `ui/resource-cards`, `ui/course-tools` |
+| Shell, themes, accessibility, i18n, tours | `ui/shell-and-navigation`, `ui/preferences-and-themes`, `shared/theming`, `ui/accessibility`, `developer/theme-customisation`, `developer/i18n-localisation`, `developer/guided-tour` |
+| Resilience and errors | `shared/offline-resilience`, `shared/error-handling` |
+| Shared types and the rings | `developer/shared-types`, `developer/hexagonal-architecture` |
+| Release and quality | `developer/release-candidate`, `developer/release-changelog`, `developer/release-claims-lifetime`, `developer/release-openvex`, `developer/release-quality`, `developer/runtime-image`, `developer/service-level-objectives`, `developer/test-quality-ratchets` |
 
-**Platform** (beside the rings): `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config`
+### 13.3 Writing a new requirement against this shape
 
-**Apps** (compose everything, import no other app):
-- `reader` → every ring, composed in `src/lib/compose.ts` (`composeReader`)
-- `catalogue`, `live` → ui packages, svelte-state, store-supabase (and realtime-supabase for live)
-- `time` → @tutors/tutors-time-lib, store-supabase, moodle, ag-grid-community, jheat.js (standalone dashboard; uses the UI packages for its shell)
+1. Decide which ring owns the rule (section 10). A rule about what a course *is* goes in the domain and its feature drives domain functions; a rule about what happens *when* a learner does something is a use case and its feature drives the use case with in-memory adapters; a rule about a technology drives the adapter with a scripted or recorded client.
+2. Reserve a Rule id (`pnpm test:ears:audit --next-id` sees only merged features; the project tracks reservations for open pull requests).
+3. Write the `Rule:` in EARS form, tag it, bind it, and run `pnpm test:ears:audit`.
+4. If the rule constrains the shape (a new port, package or table), add its line to this document; Rules 0347 to 0352 will insist.
 
 ---
 
-## Data Flow
+## 14. Testing the architecture
 
-### State Management Flow
+| What | Where | How it is checked |
+|---|---|---|
+| The rings and vendor rules | `tests/architecture/dependency-rules.test.ts` | 31 planted violations in `tests/architecture/fixtures/workspace`, each caught by its rule; the repository against the baseline |
+| Runes outside svelte-state, type imports in ui-primitives | same file | Source scans with their own baseline prefixes |
+| This document as the authority | `tests/bdd/steps/developer/hexagonal-architecture.steps.ts` | Rules 0347 to 0352 read the workspace, the ports, the cruiser config, the adapters' table names and this file |
+| Every adapter of a port | `tests/unit/application/port-contracts.test.ts`, `tests/contract/supabase/*` | The contract suites in `@tutors/application/testing` run against the in-memory adapters, the localStorage profile, the in-process bus and the recorded Supabase client |
+| The use cases | `tests/unit/application/*` | Driven with in-memory adapters and `FixedClock` |
+| The services over the ports | `tests/unit/community/*`, `tests/unit/connect/*`, `tests/unit/course/*` | `configureAdapters(anonymousAdapters({ ...spies }))` |
+| The product through its composition root | `tests/bdd/steps/**` | `composeReader(...)` against a recording Supabase client and a stubbed identity client |
+| Coverage, mutation and API surface ratchets | `tests/suite-health/coverage-floors.json`, `tests/mutation/*.json`, `etc/*.api.md` | Floors per ring scope (`packages/domain/src/**`, `packages/application/src/**`, `packages/adapters/driven/**`) that only rise |
 
-```
-User Action (e.g., click lab card)
-        │
-        ▼
-Event Handler in UI Component
-        │
-        ▼
-Call Service Method
-  courseService.readLab()
-        │
-        ▼
-Service Updates State
-  - Fetch data
-  - Process data
-  - Update rune: currentLo.value = lab
-        │
-        ▼
-Reactive Components Re-render
-  $effect(() => { ... })
-        │
-        ▼
-UI Updates
-```
-
-### Data Sources
-
-**Static JSON (CDN)**:
-- Course structure (`tutors.json`)
-- Markdown content
-- Images, PDFs, videos
-
-**Supabase (Database)**:
-- Learning events
-- User sessions
-- Course catalogue
-- Analytics data
-
-**Supabase Realtime (Broadcast)**:
-- Real-time presence
-- Live student count
-- Current page views
-
-**Better Auth (OAuth)**:
-- User authentication
-- Session tokens
+The test tiers A to O and what runs where are in [`guides/testing/TESTING-OVERVIEW.md`](guides/testing/TESTING-OVERVIEW.md).
 
 ---
 
-## Development Workflow
+## 15. Authoring toolchain and the JSR facades
 
-### Initial Setup
+`packages/jsr/` holds the Deno packages published to JSR. Inside `packages/jsr/` you are in Deno-land (`deno.json`, `npm:` specifiers); everywhere else is pnpm.
 
-```bash
-# Clone repository
-cd /path/to/tutors-mono-repo
+| Package | Role after the retrofit |
+|---|---|
+| `@tutors/tutors-model-lib` (`packages/jsr/model`) | Facade for one major: re-exports `@tutors/domain/course` and the markdown conversions of `@tutors/render-markdown`; `decorateCourseTree` renders as it always did |
+| `@tutors/tutors-time-lib` (`packages/jsr/time`) | Facade over `@tutors/domain/learning`, plus the time app's read models (`CourseTime`, `TutorsTime`) and their Supabase client (baseline) |
+| `@tutors/tutors-types` (`packages/jsr/types`) | Facade over the domain's shared types and vocabulary |
+| `@tutors/identity` (`packages/jsr/identity`) | `Actor`, `SessionPort`, `IdentityClient` for consumers outside the repository |
+| `@tutors/tutors-gen-lib`, `@tutors/tutors`, `@tutors/tutors-lite`, `@tutors/tutors-create` | The authoring toolchain: course builder, emitters, Marp rendering, templates, the CLIs and the scaffolder. Unchanged by the retrofit, exempt from the vendor rule, and extracted independently |
 
-# Install dependencies
-pnpm install
-
-# Start reader app
-cd apps/reader
-pnpm dev
-# Runs on http://localhost:5173
-```
-
-### Environment Configuration
-
-**Anonymous Mode** (no backend):
-
-```bash
-# .env (repository root)
-PUBLIC_ANON_MODE=TRUE
-```
-
-**Full Mode** (with services):
-
-```bash
-# .env (repository root)
-PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-PUBLIC_SUPABASE_ANON_KEY=xxx
-PRIVATE_AUTH_GITHUB_ID=xxx
-PRIVATE_AUTH_GITHUB_SECRET=xxx
-PRIVATE_AUTH_SECRET=xxx
-```
-
-### Development Scripts
-
-**Root**:
-
-```bash
-pnpm dev       # Run reader app
-pnpm build     # Build reader app
-```
-
-**Per App**:
-
-```bash
-pnpm --filter reader dev
-pnpm --filter catalogue dev
-pnpm --filter live dev
-pnpm --filter tutors-time dev
-```
-
-**Per Package**:
-
-```bash
-pnpm --filter @tutors/ui-primitives build
-pnpm --filter @tutors/ui-navigators build
-pnpm --filter @tutors/ui-components build
-pnpm --filter @tutors/course check
-```
-
-### Adding New Packages
-
-```bash
-# Decide the ring first: a driven adapter wraps one technology behind a port
-# (packages/adapters/driven), a driving adapter calls the application
-# (packages/adapters/driving). Create package directory
-mkdir -p packages/adapters/driven/my-adapter/src
-
-# Create package.json
-cat > packages/adapters/driven/my-adapter/package.json << EOF
-{
-  "name": "@tutors/my-adapter",
-  "version": "0.0.1",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "dependencies": {
-    "@tutors/application": "workspace:*",
-    "@tutors/domain": "workspace:*"
-  }
-}
-EOF
-
-# Install dependencies
-pnpm install
-```
-
-### Hot Module Replacement (HMR)
-
-Vite provides instant updates:
-
-- Svelte components reload on change
-- CSS updates without page refresh
-- Service changes trigger re-import
-
-### Type Checking
-
-```bash
-# Check all packages
-pnpm -r check
-
-# Check specific app
-cd apps/reader
-pnpm check
-```
+The facades exist so that published courses and tools built on them keep working through one major version. New code in the repository imports the rings.
 
 ---
 
-## Deployment Strategy
+## 16. Deployment
 
-### JSR Package Publishing
-
-```bash
-# Publish model package
-cd packages/jsr/model
-deno publish
-
-# Or all JSR packages
-for pkg in packages/jsr/*; do
-  cd $pkg
-  deno publish
-  cd -
-done
-```
-
-### Application Deployment
-
-**Reader App** (Netlify/Vercel):
-
-```bash
-cd apps/reader
-pnpm build
-# Outputs to build/
-```
-
-**Build Configuration** (`vite.config.ts`):
-
-Every app builds on the shared helpers in `@tutors/app-config` (`packages/platform/app-config`) and overrides only what is unique to it:
-
-```javascript
-// vite.config.ts
-import { createViteConfig } from "@tutors/app-config/vite";
-export default createViteConfig(import.meta.url /*, { ...vite overrides } */);
-```
-
-`createViteConfig` reads `.env` from the repo root, sets `APP_VERSION` from the app's `package.json`, adds the Tailwind and SvelteKit plugins, and bundles every `@tutors/*` package into the server build (`ssr.noExternal`). It supplies the plugin options from `createSvelteKitOptions` in `@tutors/app-config/svelte`: `adapter-auto` (detects Netlify, Vercel, Cloudflare) by default, or `adapter-node` when `SVELTEKIT_ADAPTER=node`, which is what the container image sets. The shared options also read `.env` from the repo root and, when the build has a `GIT_SHA`, name the SvelteKit build after a hash of it so two builds of one commit are identical. Vite overrides are the helper's second argument; flattened SvelteKit option overrides are its third argument.
-
-**Environment Variables** (production):
-
-Set in Netlify/Vercel dashboard:
-
-```
-PUBLIC_SUPABASE_URL
-PUBLIC_SUPABASE_ANON_KEY
-PRIVATE_AUTH_GITHUB_ID
-PRIVATE_AUTH_GITHUB_SECRET
-PRIVATE_AUTH_SECRET
-PUBLIC_PDF_KEY
-```
-
-### Course Deployment
-
-After generating course:
-
-```bash
-# Generate course
-cd /path/to/course-source
-deno run -A jsr:@tutors/reader
-
-# Deploy json/ folder
-cd json
-netlify deploy --prod
-# Or any static host: Vercel, GitHub Pages, etc.
-```
+- **Images**: one per app, built from the Node 22 runtime image (no package manager in the runtime layer, Rule 0220), pushed to quay.io/tutors-sdk with a cosign signature and an SBOM.
+- **Kubernetes**: `deploy/k8s/base`, `components`, `variants` and one overlay per app under `deploy/k8s/overlays/`; `deploy/k8s/next` reuses production images for the next hosts. `pnpm check:k8s` and the platform-conformance tests hold the restricted-SCC, arbitrary-UID and read-only-root policies.
+- **Environment**: `PUBLIC_ANON_MODE`, `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` are read by the composition roots; `PRIVATE_AUTH_SECRET`, `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET` by the reader's identity handle; `MOODLE_WS_URL` and its token by the time app's server; `HARNESS_NOW` freezes the clock for the release harness.
+- **Observability**: every server line is one JSON object with a request id (`@tutors/logger`), `/metrics` is Prometheus (`@tutors/metrics`), `/version` and `/healthz` are served by every app; the error transport writes to `app_errors`.
+- **Release**: `release/claims.yaml`, `deployed.json`, `openvex.json`, `slo.yaml` and `SOP.md` are what the [release harness](https://github.com/tutors-sdk/tutors-release-harness) reads when it compares production with a release candidate. Main is the release candidate; students only see a release.
 
 ---
 
-## Contributing Guidelines
+## 17. How to change things
 
-### Getting Started
-
-1. **Fork the repository**
-2. **Clone your fork**
-3. **Create a feature branch** from `development`
-4. **Make your changes**
-5. **Test locally**
-6. **Submit a Pull Request** to `development`
-
-### Branch Strategy (GitFlow)
-
-- `main` - Production releases
-- `development` - Integration branch
-- `feature/*` - Feature branches
-- `fix/*` - Bug fix branches
-
-### Commit Message Convention
-
-```
-Add: New feature or package
-Update: Enhancement to existing code
-Fix: Bug fix
-Refactor: Code restructuring
-Docs: Documentation changes
-Style: Code formatting
-Test: Add or update tests
-```
-
-### Code Quality
-
-**Type Safety**:
-
-```bash
-pnpm -r check
-```
-
-**Linting** (if configured):
-
-```bash
-pnpm lint
-```
-
-**Formatting** (if configured):
-
-```bash
-pnpm format
-```
-
-### Pull Request Checklist
-
-- [ ] Branch from `development`
-- [ ] Code follows existing patterns
-- [ ] No TypeScript errors
-- [ ] Changes tested locally
-- [ ] Dependencies updated if needed
-- [ ] Documentation updated
-- [ ] Commit messages are clear
-- [ ] PR description explains changes
+| You want to | Do this | Not this |
+|---|---|---|
+| Add a rule about courses, learning, presence or access | A function in `@tutors/domain/<context>` with a unit or property test; a Rule in a feature | Logic in a Svelte service or a route |
+| Add something the product does | A use case in `@tutors/application/<context>` taking its ports as deps; call it from a svelte-state service with `adapters()` | A service that calls Supabase |
+| Need something new from a technology | Add a method to the port the use case needs, implement it in the adapter, add the case to the contract suite and the in-memory adapter | Reach past the port |
+| Use a technology in a new way | Change its adapter | Import the vendor somewhere else (the vendor rule will refuse) |
+| Add a table or channel | Give it an owner adapter and a port, add the migration (expand-only), add its row to section 11 | Query it from two packages |
+| Add a package | Decide its ring (section 4), `packages/adapters/driven|driving/<name>` or `packages/platform/<name>`, add it to the workspace, to section 4 or 7 here, to the vitest aliases if tests import it, and to knip | A package that imports another adapter |
+| Change how an app is wired | `apps/<app>/src/lib/compose.ts` | A conditional on `PUBLIC_ANON_MODE` anywhere else |
+| Fix a baseline debt | Make the change, delete the line from `known-violations.txt` | Add a line |
+| Change a published API | Change the code, run `pnpm api-report`, commit `etc/*.api.md` | Hand-edit the report |
 
 ---
 
-## Appendix
+## 18. Glossary
 
-### Glossary
-
-- **Lo (Learning Object)**: Atomic unit of content
-- **JSR**: JavaScript Registry (Deno package registry)
-- **Rune**: Svelte 5 reactive primitive ($state, $derived, $effect)
-- **SSR**: Server-Side Rendering
-- **CSR**: Client-Side Rendering
-- **Supabase Realtime**: Real-time broadcast channel platform (part of Supabase)
-- **Tutors Connect**: Authentication system
-- **Tutors Time**: Analytics and time tracking (app at `apps/time`, library at `packages/jsr/time`)
-
-### Useful Links
-
-- **Live Platform**: [https://tutors.dev](https://tutors.dev)
-- **Reference Manual**: [https://tutors-reference-manual.netlify.app](https://tutors-reference-manual.netlify.app)
-- **JSR Registry**: [https://jsr.io/@tutors](https://jsr.io/@tutors)
-- **Supabase Realtime**: [https://supabase.com/docs/guides/realtime](https://supabase.com/docs/guides/realtime)
-
-### Version History
-
-- **1.0.0** (July 2026): Initial monorepo migration
-
----
-
-## License
-
-This project is licensed under the **MIT License**. See LICENSE file for details.
-
----
-
-**Last Updated**: July 2026  
-**Maintainer**: Tutors SDK Team  
-**Contributors**: See repository contributors
-
-For questions about this architecture, please open an issue on GitHub.
+- **Ring**: a layer of the hexagon. Dependencies point inwards: apps → adapters → application → domain.
+- **Port**: an interface in `@tutors/application/ports` saying what the application needs from outside.
+- **Driven adapter**: implements a port with one technology; the application calls it.
+- **Driving adapter**: calls the application; the Svelte state and the UI.
+- **Composition root**: `apps/<app>/src/lib/compose.ts`, where the environment decides which adapter is behind each port.
+- **`adapters()`**: the port set `svelte-state` reads, installed by `configureAdapters`.
+- **Anonymous mode**: `PUBLIC_ANON_MODE=TRUE`; the in-memory, localStorage and no-op adapters. Same code, nothing recorded, nobody present, no sign-in.
+- **Baseline**: `tests/architecture/known-violations.txt`; pre-existing rule violations that may only be removed.
+- **Facade**: a JSR package that re-exports the rings under its old names for one major version.
+- **Contract suite**: cases in `@tutors/application/testing` that every adapter of a port must pass.
+- **EARS**: the requirements syntax of the `Rule:` blocks; see section 13.
+- **Learning object (Lo)**: a node of the course tree: topic, lab, note, talk, video, quiz, and the rest of the vocabulary in `@tutors/domain/course/vocabulary`.

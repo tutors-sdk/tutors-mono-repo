@@ -9,7 +9,6 @@
     "./learning": "./src/learning/index.ts",
     "./presence": "./src/presence/index.ts",
     "./access": "./src/access/index.ts",
-    "./pedagogy": "./src/pedagogy/index.ts",
     "./quiz": "./src/quiz/index.ts"
   }
 }

@@ -28,7 +28,6 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/domain/learning": resolve(root, "packages/domain/src/learning/index.ts"),
   "@tutors/domain/presence": resolve(root, "packages/domain/src/presence/index.ts"),
   "@tutors/domain/access": resolve(root, "packages/domain/src/access/index.ts"),
-  "@tutors/domain/pedagogy": resolve(root, "packages/domain/src/pedagogy/index.ts"),
   "@tutors/domain/quiz": resolve(root, "packages/domain/src/quiz/index.ts"),
   "@tutors/domain": resolve(root, "packages/domain/src/index.ts"),
   "@tutors/application/ports": resolve(root, "packages/application/src/ports/index.ts"),
