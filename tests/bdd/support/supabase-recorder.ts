@@ -177,6 +177,7 @@ export class RecordingSupabase {
   rpcCalls: RpcCall[] = [];
   tableErrors = new Map<string, DbError>();
   channels: RecordingChannel[] = [];
+  missingFunctions = new Set<string>();
   private tables = new Map<string, Row[]>();
 
   reset() {
@@ -184,6 +185,7 @@ export class RecordingSupabase {
     this.rpcCalls = [];
     this.tableErrors.clear();
     this.channels = [];
+    this.missingFunctions.clear();
     this.tables.clear();
   }
 
@@ -201,14 +203,39 @@ export class RecordingSupabase {
   }
 
   /**
-   * The two counters the reader uses. `get_count_learning_records` reports the
-   * stored value of a learning record field; `increment_calendar` is only logged.
+   * The database functions the reader calls, doing what their SQL does. `get_count_learning_records`
+   * reports the stored value of a learning record field; `increment_calendar` adds one to a calendar
+   * field; `record_page_view` and `record_heartbeat` are the single-request writes in
+   * supabase/migrations/20261014_record_page_view_and_heartbeat.sql. A function named in
+   * `missingFunctions` answers as PostgREST does for one the database lacks.
    */
   rpc(fn: string, args: Row) {
     this.rpcCalls.push({ fn, args });
+    if (this.missingFunctions.has(fn)) {
+      return Promise.resolve({ data: null, error: { message: `Could not find the function public.${fn}`, code: "PGRST202" } });
+    }
+    const record = (courseId: unknown, studentId: unknown, loId: unknown) =>
+      this.rows("learning_records").find((r) => r.course_id === courseId && r.student_id === studentId && r.lo_id === loId);
+    const day = (id: unknown, studentId: unknown, courseId: unknown) => this.rows("calendar").find((r) => r.id === id && r.studentid === studentId && r.courseid === courseId);
+    const bump = (row: Row | undefined, field: string) => {
+      if (row) row[field] = Number(row[field] ?? 0) + 1;
+    };
     if (fn === "get_count_learning_records") {
-      const record = this.rows("learning_records").find((r) => r.course_id === args.course_base && r.student_id === args.user_name && r.lo_id === args.lo_key);
-      return Promise.resolve({ data: record ? [{ increment: record[args.field_name as string] }] : null, error: null });
+      const found = record(args.course_base, args.user_name, args.lo_key);
+      return Promise.resolve({ data: found ? [{ increment: found[args.field_name as string] }] : null, error: null });
+    }
+    if (fn === "increment_calendar") bump(day(args.row_id, args.student_id_value, args.course_id_value), args.field_name as string);
+    if (fn === "record_page_view") {
+      const lr = record(args.p_course_id, args.p_student_id, args.p_lo_id);
+      if (lr) Object.assign(lr, { duration: Number(lr.duration ?? 0) + 1, count: Number(lr.count ?? 0) + 1, date_last_accessed: new Date().toISOString(), type: args.p_lo_type });
+      else this.rows("learning_records").push({ course_id: args.p_course_id, student_id: args.p_student_id, lo_id: args.p_lo_id, duration: 1, count: 1, date_last_accessed: new Date().toISOString(), type: args.p_lo_type });
+      const cal = day(args.p_day, args.p_student_id, args.p_course_id);
+      if (cal) Object.assign(cal, { timeactive: Number(cal.timeactive ?? 0) + 1, pageloads: Number(cal.pageloads ?? 0) + 1 });
+      else this.rows("calendar").push({ id: args.p_day, studentid: args.p_student_id, courseid: args.p_course_id, timeactive: 1, pageloads: 1 });
+    }
+    if (fn === "record_heartbeat") {
+      if (args.p_lo_id != null) bump(record(args.p_course_id, args.p_student_id, args.p_lo_id), "duration");
+      bump(day(args.p_day, args.p_student_id, args.p_course_id), "timeactive");
     }
     return Promise.resolve({ data: null, error: null });
   }

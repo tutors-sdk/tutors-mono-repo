@@ -6,6 +6,7 @@ import { presenceService } from "../../../packages/svelte/community/src/services
 import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
 import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
+import { recordingFunctions } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
@@ -27,6 +28,7 @@ export function freshBrowser(): void {
   liveService.stopGlobalPresenceService();
   presenceService.stopPresenceListener();
   recorder.reset();
+  recordingFunctions.missing = false;
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("window", { localStorage: storage });
