@@ -280,16 +280,19 @@ describe("deploy.yml tells the release harness only after the overlays are verif
 
 describe("deploy-pin-pr.yml opens the pin pull request for a final tag, and deploys nothing", () => {
   const text = readFileSync(join(REPO_ROOT, ".github/workflows/deploy-pin-pr.yml"), "utf8");
-  const workflow = yaml.load(text) as Workflow & { on: { workflow_run?: { workflows: string[]; types: string[] } } };
+  const workflow = yaml.load(text) as Workflow;
   const pin = workflow.jobs.pin;
   const run = pin.steps.map((step) => step.run ?? "").join("\n");
 
-  it("follows image-build.yml's runs, and a person can start it with a version", () => {
-    const imageBuild = yaml.load(readFileSync(join(REPO_ROOT, ".github/workflows/image-build.yml"), "utf8")) as { name: string };
-    expect(workflow.on.workflow_run).toEqual({ workflows: [imageBuild.name], types: ["completed"] });
-    expect(Object.keys(workflow.on).sort()).toEqual(["workflow_dispatch", "workflow_run"]);
-    expect(pin.if).toContain("github.event.workflow_run.conclusion == 'success'");
-    expect(pin.if).toContain("github.event.workflow_run.event == 'push'");
+  it("is called by image-build.yml after the images are published, never by workflow_run", () => {
+    const imageBuild = yaml.load(readFileSync(join(REPO_ROOT, ".github/workflows/image-build.yml"), "utf8")) as {
+      jobs: Record<string, { needs?: string; uses?: string; if?: string; with?: Record<string, string> }>;
+    };
+    expect(Object.keys(workflow.on).sort()).toEqual(["workflow_call", "workflow_dispatch"]);
+    const caller = Object.values(imageBuild.jobs).find((job) => job.uses === "./.github/workflows/deploy-pin-pr.yml");
+    expect(caller?.needs).toBe("publish");
+    expect(caller?.if).toContain("startsWith(github.ref, 'refs/tags/v')");
+    expect(caller?.with?.version).toBe("${{ github.ref_name }}");
   });
 
   it("pins final releases only, never a release candidate", () => {

@@ -5,8 +5,8 @@ name: Deploy Pin PR
 # 15 October 2026 and nobody ran deploy:pin, so main kept pinning 16.2.2 and the
 # release harness went on judging main against the release before.
 #
-# When image-build.yml finishes successfully for a pushed vX.Y.Z tag (never an rc),
-# this workflow:
+# image-build.yml calls it (its last job, after all four images are published) for a
+# v* tag; for a final vX.Y.Z (never an rc) it:
 #   1. branches deploy/pin-X.Y.Z from main (never release/*: that fires release-dispatch.yml)
 #   2. merges vX.Y.Z into it when main does not contain it yet, so the release's
 #      version bump, CHANGELOG and claims land with the pin (as #264 did for 16.2.2)
@@ -24,10 +24,18 @@ name: Deploy Pin PR
 # so its CI starts by itself. Without them GITHUB_TOKEN opens it and its CI waits until
 # someone pushes to the branch or re-runs it. guides/Release-Strategy.md#deploy-and-post-deploy.
 
+# Called, not triggered by workflow_run: a workflow_run job runs with the base
+# repository's write token whatever started the run (zizmor: dangerous-triggers).
 on:
-  workflow_run:
-    workflows: ["Container Image Build"]
-    types: [completed]
+  workflow_call:
+    inputs:
+      version:
+        description: "The tag image-build.yml published (vX.Y.Z or X.Y.Z); anything else is a no-op"
+        type: string
+        required: true
+    secrets:
+      RELEASE_APP_PRIVATE_KEY:
+        required: false
   workflow_dispatch:
     inputs:
       version:
@@ -43,21 +51,20 @@ concurrency:
 jobs:
   pin:
     name: Open the pin pull request
-    if: >-
-      github.repository == 'tutors-sdk/tutors-mono-repo' && (github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    env:
+      HAS_APP_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+    if: github.repository == 'tutors-sdk/tutors-mono-repo'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
     steps:
-      # A tag push's workflow_run names the tag as its head_branch. Anything that is not
-      # a final vX.Y.Z (a branch, an rc) stops here, quietly.
+      # Anything that is not a final vX.Y.Z (an rc) stops here, quietly.
       - name: Which release
         id: version
         env:
-          REF: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.event.workflow_run.head_branch }}
+          REF: ${{ inputs.version }}
         run: |
           version="${REF#v}"
           if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -144,7 +151,7 @@ jobs:
 
       - name: Mint the release app token
         id: app-token
-        if: steps.todo.outputs.skip == 'false' && vars.RELEASE_APP_CLIENT_ID != ''
+        if: steps.todo.outputs.skip == 'false' && vars.RELEASE_APP_CLIENT_ID != '' && env.HAS_APP_KEY == 'true'
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
