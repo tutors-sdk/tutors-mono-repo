@@ -19,6 +19,8 @@
     "@supabase/supabase-js": "^2.117.1",
     "@tutors/data-api": "workspace:*",
     "@tutors/logger": "workspace:*",
+    "@tutors/realtime": "workspace:*",
+    "@tutors/realtime-supabase": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*"
   },

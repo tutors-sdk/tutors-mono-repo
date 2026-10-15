@@ -1,7 +1,7 @@
 import type { LayoutLoad } from "./$types";
 import { TutorsTime } from "@tutors/tutors-time-lib";
-import { enrichCourseUserFields } from "$lib/enrichCourseUserFields";
-import { isSignedOut, readerSignInUrl, useReaderTimeSource } from "$lib/time-source";
+import { enrichCourseUserFields } from "#lib/enrichCourseUserFields.ts";
+import { isSignedOut, readerSignInUrl, useReaderTimeSource } from "#lib/time-source.ts";
 
 export const load: LayoutLoad = async ({ params }) => {
   useReaderTimeSource();

@@ -12,7 +12,7 @@ supabase/migrations/<version>_<snake_case_name>.sql
 - One concern per file, plain SQL only, no `psql` meta-commands. Write it so a second run is harmless where Postgres allows it (`IF NOT EXISTS`, `CREATE OR REPLACE`).
 - **A merged migration is never edited, deleted or renamed.** Deployed databases have already run it, and the harness applies only the files the deployed version lacks, so an edit to a merged file would not be rehearsed at all. To change something, add a new migration.
 
-The harness reads this directory and nothing else: `--mode migration --a <ref> --b <ref>` fetches `supabase/migrations/*.sql` at both refs (`scripts/fetch-migrations.sh`, a sparse checkout). Any other layout (a different directory, subfolders, `.sql` files elsewhere) is invisible to it.
+The harness reads this directory and nothing else: `--mode migration --a <ref> --b <ref>` fetches `supabase/migrations/*.sql` at both refs (the harness's own `scripts/fetch-migrations.sh` in tutors-sdk/tutors-release-harness, a sparse checkout). Any other layout (a different directory, subfolders, `.sql` files elsewhere) is invisible to it.
 
 ### What is not in this directory yet
 

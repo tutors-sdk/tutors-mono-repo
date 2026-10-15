@@ -69,7 +69,7 @@ export function courseFactsFrom(courseId: string, json: unknown): CourseFacts {
   };
 }
 
-/** Someone signed in, as the Auth.js session names them. */
+/** Someone signed in, as the verified identity (locals.actor) names them. */
 export interface Actor {
   login: string;
 }

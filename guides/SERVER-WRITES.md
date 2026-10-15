@@ -1,10 +1,10 @@
 # Student data through the reader's server
 
-Tutors signs people in with Auth.js, so Supabase never sees who is calling: every browser request
+Tutors signs people in with Better Auth, so Supabase never sees who is calling: every browser request
 arrives as `anon`, with the key every page ships. Row-Level Security cannot tell one student from
 another, and the policies `20260924_enable_rls_public_tables.sql` added let any row through. This
 guide describes how that is being closed: writes, and reads of personal data, move to SvelteKit
-server routes that check the Auth.js session and use a private `service_role` key. The contract
+server routes that check the verified identity (locals.actor) and use a private `service_role` key. The contract
 step that removes the old anon access ships in the next release, once no older pod or tab uses it
 (see [Release order](#release-order)).
 
@@ -30,10 +30,10 @@ Two checks keep the seam honest:
 - `tests/architecture/browser-data-access.test.ts`: what browser code does with that anon client is
   limited to reading the public tables (`tutors-connect-courses`, `tutors-connect-latest`,
   `tutors_content_locks`), inserting into `app_errors`, and calling `get_student_count` and
-  `get_error_counts`. Anything else belongs behind a route.
+  `get_error_counts`, plus `realtime_watch` for public Live watcher registration. The publisher's budget claim stays in `live-activity.server.ts`, which SvelteKit cannot bundle into the browser. Anything else belongs behind a route.
 
 **The reader is the data API's host for now, and that is temporary.** The routes live in the reader
-because it is the app with Auth.js. The time dashboard calling the reader for its data is the smell
+because it is the app with Better Auth. The time dashboard calling the reader for its data is the smell
 that says so: on OpenShift the data API wants to be its own pod, with the reader, time and live
 apps as clients (#325). Moving it is a deployment change, not a browser one, because of the
 contract above.
@@ -52,7 +52,7 @@ All in the reader for now, under `apps/reader/src/routes/api/`. The helpers they
 | `POST /api/presence` | a signed-in student who shares presence | the latest learning object in `tutors-connect-latest`; the user in the payload is replaced with the session's |
 | `PUT`, `DELETE /api/locks` | an educator of the course | lock, unlock or remove a lock in `tutors_content_locks` |
 | `GET`, `PUT /api/whiteboard` | reading a shared board: anyone; a personal board or saving: a signed-in user | a whiteboard learning object's saved scene; the owner of a personal room is appended by the server |
-| `GET /api/time/[courseId]` | a signed-in user; the time dashboard's origin with the reader's cookie | a course's time rows: all of them for an educator, otherwise the viewer's own and classmates pseudonymised |
+| `GET /api/time/[courseId]` | a signed-in user; the time dashboard's origin with the reader's cookie | a course's time rows (`start` / `end` optionally bound calendar reads): all of them for an educator, otherwise the viewer's own and classmates pseudonymised |
 
 Common to every route:
 
@@ -130,17 +130,25 @@ of:
 
 - a least-privilege Postgres role for the data API, granted exactly the tables and columns the
   routes use, instead of service_role; or
-- minting a short-lived Supabase JWT per request from the Auth.js session (`sub` = the GitHub
+- minting a short-lived Supabase JWT per request from the verified identity (locals.actor) (`sub` = the GitHub
   login, plus a course role claim), so per-user RLS policies apply underneath and a missed filter
   returns nothing instead of everything.
 
-- It is read only from `$env/dynamic/private`, in `apps/reader/src/lib/server/api/service-client.ts`
-  and the time app's `$lib/server/db/submissionsRepository.ts`. SvelteKit refuses to bundle
+- It is read only from `$app/env/private`, in `apps/reader/src/lib/server/api/service-client.ts`
+  and the time app's `#lib/server/db/submissionsRepository.ts`. SvelteKit refuses to bundle
   `$lib/server` modules for the browser.
 - It is never a `PUBLIC_` variable, never in a ConfigMap. In Kubernetes it goes in the reader's
   `reader-tutors-app-oauth` Secret and the time app's `time-tutors-app-secrets` Secret (see the
   `secrets.yaml.example` files).
 - If it equals the anon key, the reader logs an error and does not use it (the routes answer 503).
+
+## Alignment with main
+
+The routes use `locals.actor` from the Better Auth identity adapter and Kit 3's declared
+`$app/env` variables. Analytics use `record_page_view` and `record_heartbeat` with the service
+key, preserving main's atomic counters and its fallback when the functions are missing. The
+Live publisher claims its budget with that same private key; watcher reports remain public.
+Calendar date ranges reach the database query through the time API.
 
 ## Release order
 
@@ -150,10 +158,10 @@ of:
    reader, and `PUBLIC_READER_URL` on time.
 2. Apply the pending migrations (`20260925100000` to `20260925100200`) as usual, then deploy the new
    reader and time pods. Everything in `supabase/migrations` is safe to run before the new pods are
-   up: nothing there removes what a v16.2.2 pod or tab uses.
+   up: nothing added by this PR removes what an older pod or tab uses.
 
 **Release N+1: contract.** `supabase/contracts/revoke_anon_student_data.sql` removes the anon
-policies and table grants for personal data and writes, and revokes anon access to the two
+policies and table grants for personal data and writes, and revokes anon access to the legacy and atomic
 student-counter RPCs (public catalogue, shared presence and lock reads remain). It is not a
 migration yet, so no release run or `supabase db push` can apply it early, and it refuses to run
 unless `tutors.contract_ok` is set. In the release after N:

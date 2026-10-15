@@ -1,0 +1,10 @@
+{
+  "name": "@tutors/tutors-types",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Shared, runtime-dependency-free TypeScript types for Tutors: learning-object kinds, learner fields, events, stored rows and service ports",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

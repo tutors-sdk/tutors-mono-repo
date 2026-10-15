@@ -3,16 +3,13 @@ import { expect, vi } from "vitest";
 
 vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
-vi.mock("$env/dynamic/public", async () => {
+vi.mock("$app/env/public", async () => {
   const { publicEnv } = await import("../../support/supabase-recorder.ts");
   const { READER_ORIGIN } = await import("../../support/reader-api.ts");
-  return { env: Object.assign(publicEnv, { PUBLIC_READER_URL: READER_ORIGIN }) };
+  return Object.assign(publicEnv, { PUBLIC_READER_URL: READER_ORIGIN });
 });
-vi.mock("$env/dynamic/private", async () => ({ env: (await import("../../support/supabase-recorder.ts")).privateEnv }));
-vi.mock("$app/environment", () => ({ browser: true, building: false, goto: vi.fn() }));
-vi.mock("../../../../packages/svelte/connect/node_modules/@auth/sveltekit/dist/client.js", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
-vi.mock("$lib/enrichCourseUserFields", async () => await import("../../../../apps/time/src/lib/enrichCourseUserFields.ts"));
-vi.mock("$lib/time-source", async () => await import("../../../../apps/time/src/lib/time-source.ts"));
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
+vi.mock("$app/env", () => ({ browser: true, building: false, goto: vi.fn() }));
 
 import type { Course, Lo } from "../../../../packages/jsr/model/src/tutors.ts";
 import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";

@@ -25,26 +25,25 @@
   },
   "dependencies": {
     "@tutors/a11y": "workspace:*",
-    "@tutors/community": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/runes": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tour": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "isomorphic-dompurify": "^4.3.0"
+    "isomorphic-dompurify": "^4.5.0"
   },
   "devDependencies": {
     "@iconify/svelte": "^5.2.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.0",
-    "@sveltejs/package": "^2.0.0",
+    "@sveltejs/package": "^3.0.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
-    "svelte": "^5.57.0",
+    "svelte": "5.57.2",
     "typescript": "^6.0.3",
     "vite": "^8.3.0"
   },
   "peerDependencies": {
-    "@sveltejs/kit": "^2.0.0",
-    "svelte": "^5.57.0"
+    "@sveltejs/kit": "^3.0.1",
+    "svelte": "^5.57.2"
   }
 }

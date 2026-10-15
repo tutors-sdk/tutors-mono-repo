@@ -1,6 +1,6 @@
 {
   "name": "tutors-reader",
-  "version": "16.2.2",
+  "version": "17.0.0",
   "license": "MIT",
   "description": "Tutors - Clean modern course reader",
   "private": true,
@@ -13,12 +13,13 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@auth/core": "^0.41.3",
     "@supabase/supabase-js": "^2.117.1",
-    "dompurify": "^3.4.14"
+    "@opentelemetry/api": "1.9.1",
+    "@prometheus-io/client": "^0.16.1",
+    "dompurify": "^3.4.14",
+    "isomorphic-dompurify": "^4.5.0"
   },
   "devDependencies": {
-    "@auth/sveltekit": "^1.11.3",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/state": "^6.7.1",
     "@codemirror/theme-one-dark": "^6.1.3",
@@ -26,7 +27,8 @@
     "@iconify/svelte": "^5.2.2",
     "@skeletonlabs/skeleton": "^5.0.1",
     "@skeletonlabs/skeleton-svelte": "^5.0.1",
-    "@sveltejs/kit": "^2.70.3",
+    "@sveltejs/adapter-netlify": "7.0.1",
+    "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
@@ -36,6 +38,8 @@
     "@tutors/course": "workspace:*",
     "@tutors/data-api": "workspace:*",
     "@tutors/i18n": "workspace:*",
+    "@tutors/identity": "workspace:*",
+    "@tutors/identity-sveltekit": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
     "@tutors/rbac": "workspace:*",
@@ -51,12 +55,15 @@
     "codemirror": "^6.0.2",
     "fflate": "^0.8.3",
     "file-saver": "^2.0.5",
-    "pdfjs-dist": "^6.3.289",
-    "svelte": "^5.57.0",
+    "pdfjs-dist": "^6.4.299",
+    "svelte": "5.57.2",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.3.0",
     "zod": "^4.6.2"
+  },
+  "imports": {
+    "#lib/*": "./src/lib/*"
   }
 }

@@ -1,14 +1,16 @@
 # Tutors Mono Repo
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tutors-sdk/tutors-mono-repo/badge)](https://scorecard.dev/viewer/?uri=github.com/tutors-sdk/tutors-mono-repo)
-<!-- OpenSSF Best Practices badge: register at https://www.bestpractices.dev/en/projects/new and replace PROJECT_ID below -->
-<!-- [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/PROJECT_ID/badge)](https://www.bestpractices.dev/projects/PROJECT_ID) -->
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/tutors-sdk/tutors-mono-repo/badge)](https://scorecard.dev/viewer/?uri=github.com/tutors-sdk/tutors-mono-repo) [![OpenSSF Baseline](https://www.bestpractices.dev/projects/15165/baseline)](https://www.bestpractices.dev/projects/15165)
 
 A modern monorepo for the Tutors educational platform - an open-source course reader and learning management system built with Svelte 5, SvelteKit, and TypeScript.
 
+## Release readiness
+
+Before cutting a release, read the [daily A3](https://tutors-sdk.github.io/tutors-release-harness/a3.html) and the [overnight readiness page](https://tutors-sdk.github.io/tutors-release-harness/readiness.html) from the [release harness](https://github.com/tutors-sdk/tutors-release-harness). Both rebuild every night after the nightly A/A and Main to RC runs, with no manual step.
+
 ## Quick start
 
-Ten minutes from clone to a rendered course. Requires Node.js >= 22.12.0 and pnpm >= 8.
+Ten minutes from clone to a rendered course. Requires Node.js >= 22.17.0 and pnpm >= 8.
 
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
@@ -59,6 +61,9 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/jsr/tutors` | `@tutors/tutors` | The generator that turns a course folder into `tutors.json` |
 | `packages/jsr/tutors-lite` | `@tutors/tutors-lite` | Static HTML course generator |
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
+| `packages/jsr/types` | `@tutors/tutors-types` | The shared types every layer uses; imports nothing outside itself (see `guides/SHARED-TYPES.md`) |
+| `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
+| `packages/jsr/realtime` | `@tutors/realtime` | Realtime port: topics, the adapter contract and a budgeted gateway, with no broker imports |
 
 **Foundation layer, Svelte.**
 
@@ -66,7 +71,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
-| `packages/svelte/app-config` | `@tutors/app-config` | Build-time only: the `vite.config.ts` and `svelte.config.js` every app shares |
+| `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 
 **Core services.**
 
@@ -84,7 +89,9 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/svelte/themes` | `@tutors/themes` | Theme management, icon sets and card styles |
 | `packages/svelte/quiz` | `@tutors/quiz` | Parses quiz definitions authored in course markdown, and scores answers |
 | `packages/svelte/community` | `@tutors/community` | Presence and community features |
-| `packages/svelte/connect` | `@tutors/connect` | Authentication and user management |
+| `packages/svelte/connect` | `@tutors/connect` | User profiles, course activity and injected sign-in/sign-out |
+| `packages/svelte/identity-sveltekit` | `@tutors/identity-sveltekit` | Better Auth server and browser adapter |
+| `packages/svelte/realtime-supabase` | `@tutors/realtime-supabase` | Supabase Realtime adapter for `@tutors/realtime` |
 | `packages/svelte/utils/rbac` | `@tutors/rbac` | Role resolution and content locking |
 | `packages/svelte/utils/privacy` | `@tutors/privacy` | Consent management |
 | `packages/svelte/utils/tour` | `@tutors/tour` | Guided product tours |
@@ -101,12 +108,12 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Prerequisites
 
-- Node.js >= 22.12.0
+- Node.js >= 22.17.0
 - pnpm >= 8.0.0
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` sets `envDir` to the root, and its `svelte.config.js` sets `kit.env.dir` to match so the `$env` modules resolve from the same file. There is nothing further to copy.
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so the `$env` modules resolve from the same file. There is nothing further to copy.
 
 Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 
@@ -193,6 +200,12 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 5. **UI Navigators** → Navigation chrome (MainNavigator, Footer, TutorsShell)
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
+
+Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts.
+
+Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
+
+The reader uses the GitHub-only Better Auth stateless adapter. See [identity rollout](guides/identity-rollout.md) for configuration, session continuity and the required preceding rollout/rollback checkpoints before releasing the adapter cleanup.
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 

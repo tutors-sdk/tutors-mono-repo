@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PinDialog from "$lib/components/PinDialog.svelte";
+  import PinDialog from "#lib/components/PinDialog.svelte";
   import { t } from "@tutors/i18n";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 

@@ -1,0 +1,203 @@
+import { vi } from "vitest";
+import type { Actor } from "@tutors/identity";
+import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, githubResponse, signInRequest, isClaimsCookie } from "./reader-oauth.mjs";
+import type { GithubAccount } from "./reader-oauth.mjs";
+export { GITHUB_CLIENT_ID, githubAccount } from "./reader-oauth.mjs";
+export type { GithubAccount } from "./reader-oauth.mjs";
+
+/**
+ * Drives the reader's sign-in over HTTP, the way a browser and GitHub would, so the
+ * Rules in `features/shared/sign-in-session.feature` hold whichever library the reader
+ * signs people in with (issue #416).
+ *
+ * Product code runs from `apps/reader/src/hooks.server.ts` down: the request logger,
+ * the auth mode switch, the auth library and the root layout's `load`. The seams are
+ * SvelteKit itself (`sequence` and the request event), `$env`, and GitHub, whose
+ * OAuth and API endpoints answer from `githubAccount` through a stubbed `fetch`.
+ *
+ * Moving to another auth library should only change what is marked `library-specific`
+ * below. The feature file and its steps stay as they are.
+ */
+
+export const READER_ORIGIN = "https://tutors.test";
+
+/** The reader's private and public env, read on every request. Steps change them to switch modes. */
+export const privateEnv: Record<string, string | undefined> = {};
+export const publicEnv: Record<string, string | undefined> = {};
+
+export function configureReader(): void {
+  Object.assign(privateEnv, {
+    PRIVATE_AUTH_SECRET: AUTH_SECRET,
+    PRIVATE_AUTH_GITHUB_ID: GITHUB_CLIENT_ID,
+    PRIVATE_AUTH_GITHUB_SECRET: GITHUB_CLIENT_SECRET
+  });
+  Object.assign(publicEnv, { PUBLIC_ANON_MODE: "FALSE" });
+}
+
+/** One cookie as the reader set it, with its attributes. */
+export type SetCookie = { name: string; value: string; attributes: Record<string, string | true> };
+
+export function parseSetCookie(header: string): SetCookie {
+  const [pair, ...attrs] = header.split(";").map((part) => part.trim());
+  const eq = pair.indexOf("=");
+  const attributes: Record<string, string | true> = {};
+  for (const attr of attrs) {
+    const i = attr.indexOf("=");
+    if (i < 0) attributes[attr.toLowerCase()] = true;
+    else attributes[attr.slice(0, i).toLowerCase()] = attr.slice(i + 1);
+  }
+  return { name: pair.slice(0, eq), value: decodeURIComponent(pair.slice(eq + 1)), attributes };
+}
+
+/** What the reader answered: status, where it sends the browser, and the cookies it set. */
+export type ReaderResponse = { status: number; location: string | null; cookies: SetCookie[]; body: string; headers: Headers };
+
+/** A browser's cookie jar for the reader's origin. */
+export class Browser {
+  jar = new Map<string, string>();
+
+  keep(response: ReaderResponse): void {
+    for (const cookie of response.cookies) {
+      const expired =
+        cookie.value === "" || cookie.attributes["max-age"] === "0" || (typeof cookie.attributes.expires === "string" && Date.parse(cookie.attributes.expires) <= Date.now());
+      if (expired) this.jar.delete(cookie.name);
+      else this.jar.set(cookie.name, cookie.value);
+    }
+  }
+
+  header(): string {
+    return [...this.jar].map(([name, value]) => `${name}=${encodeURIComponent(value)}`).join("; ");
+  }
+}
+
+/** GitHub's side of the OAuth round trip: it knows one account, and either grants or refuses. */
+export function githubKnows(account: GithubAccount | null, { refuses = false } = {}): void {
+  vi.stubGlobal("fetch", async (input: string | URL | Request, init?: { method?: string }) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    const response = githubResponse(url, account, refuses);
+    if (response) return response;
+    throw new Error(`unexpected request from the reader to ${url} (${init?.method ?? "GET"})`);
+  });
+}
+
+type Handle = (input: { event: unknown; resolve: (event: unknown) => Promise<Response> }) => Promise<Response>;
+type LayoutLoad = (input: { locals: Record<string, unknown> }) => Promise<{ loggedIn: boolean; user?: Record<string, unknown> }>;
+
+async function reader(): Promise<{ handle: Handle; load: LayoutLoad }> {
+  const hooks = await import("../../../apps/reader/src/hooks.server.ts");
+  const layout = await import("../../../apps/reader/src/routes/+layout.server.ts");
+  return { handle: hooks.handle as unknown as Handle, load: layout.load as unknown as LayoutLoad };
+}
+
+/** What the root layout hands the page, captured when a request reaches SvelteKit's router. */
+export type PageData = { actor: Actor | null; loggedIn: boolean; user?: Record<string, unknown> };
+
+export async function send(
+  browser: Browser,
+  method: "GET" | "POST",
+  path: string,
+  json?: unknown,
+  requestHeaders?: Record<string, string>
+): Promise<ReaderResponse & { page?: PageData }> {
+  const { handle, load } = await reader();
+  const url = new URL(path, READER_ORIGIN);
+  const headers = new Headers({ origin: READER_ORIGIN, ...requestHeaders });
+  const cookie = browser.header();
+  if (cookie) headers.set("cookie", cookie);
+  let body: string | undefined;
+  if (json !== undefined) {
+    headers.set("content-type", "application/json");
+    body = JSON.stringify(json);
+  }
+  const request = new Request(url, { method, headers, body });
+  // SvelteKit's `event.cookies`: what the hooks set here reaches the browser as Set-Cookie.
+  const pageCookies: SetCookie[] = [];
+  const cookies = {
+    get: (name: string) => browser.jar.get(name),
+    getAll: () => [...browser.jar].map(([name, value]) => ({ name, value })),
+    set: (name: string, value: string, options: Record<string, unknown> = {}) => {
+      const attributes: Record<string, string | true> = {};
+      if (options.httpOnly) attributes.httponly = true;
+      if (options.secure) attributes.secure = true;
+      if (options.sameSite) attributes.samesite = String(options.sameSite);
+      if (options.maxAge !== undefined) attributes["max-age"] = String(options.maxAge);
+      if (options.expires instanceof Date) attributes.expires = options.expires.toUTCString();
+      pageCookies.push({ name, value, attributes });
+    },
+    delete: (name: string) => pageCookies.push({ name, value: "", attributes: { "max-age": "0" } })
+  };
+  const event = {
+    url,
+    request,
+    cookies,
+    locals: {} as Record<string, unknown>,
+    params: {},
+    route: { id: null },
+    getClientAddress: () => "127.0.0.1",
+    setHeaders() {},
+    isDataRequest: false,
+    isSubRequest: false
+  };
+  let page: PageData | undefined;
+  const response = await handle({
+    event,
+    resolve: async (resolved) => {
+      page = await load({ locals: (resolved as typeof event).locals });
+      return new Response("<html></html>", { headers: { "content-type": "text/html" } });
+    }
+  });
+  const text = await response.text();
+  let location = response.headers.get("location");
+  if (!location && response.headers.get("content-type")?.includes("application/json")) {
+    location = (JSON.parse(text) as { url?: string }).url ?? null;
+  }
+  const result = {
+    status: response.status,
+    location,
+    cookies: [...response.headers.getSetCookie().map(parseSetCookie), ...pageCookies],
+    body: text,
+    headers: response.headers,
+    page
+  };
+  browser.keep(result);
+  return result;
+}
+
+export function startSignIn(browser: Browser, returnTo: string) {
+  const request = signInRequest(returnTo);
+  return send(browser, "POST", request.path, request.json);
+}
+
+export async function signOut(browser: Browser, returnTo: string) {
+  const response = await send(browser, "POST", "/api/auth/sign-out", {});
+  // Better Auth returns success JSON; the browser port navigates only after that success.
+  if (response.status === 200 && JSON.parse(response.body).success) response.location = new URL(returnTo, READER_ORIGIN).href;
+  return response;
+}
+
+/** GitHub sends the browser back to the reader's callback, with a code or with the refusal. */
+export function returnFromGithub(browser: Browser, authorizeUrl: string, { refused = false } = {}) {
+  const callback = githubCallback(authorizeUrl, "github-code", refused);
+  return send(browser, "GET", callback.pathname + callback.search);
+}
+
+/** Starts sign-in from `returnTo`, approves it on GitHub and follows GitHub back to the reader. */
+export async function signInThroughGithub(browser: Browser, returnTo: string) {
+  const started = await startSignIn(browser, returnTo);
+  return returnFromGithub(browser, started.location!);
+}
+
+/** The page data a browser gets on its next page load. */
+export async function openPage(browser: Browser, path = "/"): Promise<PageData> {
+  const { page } = await send(browser, "GET", path);
+  return page!;
+}
+
+/** The encrypted claims cookie for the selected SDK. */
+export function sessionCookieOf(response: ReaderResponse): SetCookie | undefined {
+  return response.cookies.find((cookie) => isClaimsCookie(cookie.name) && cookie.value !== "");
+}
+
+export function sessionInJar(browser: Browser): [string, string] | undefined {
+  return [...browser.jar].find(([name]) => isClaimsCookie(name));
+}

@@ -8,6 +8,7 @@ describe("browser code reaches personal data only through the data API", () => {
       supabase.from("tutors_content_locks").select("id, locked");
       supabase.from("app_errors").insert(rows);
       supabase.rpc("get_student_count");
+      supabase.rpc("realtime_watch", { p_topic: "tutors-all-course-access", p_watcher: "tab" });
     `;
     expect(scanBrowserSource("x.ts", source)).toEqual([]);
   });
@@ -17,9 +18,10 @@ describe("browser code reaches personal data only through the data API", () => {
       'supabase.from("learning_records").select("*");',
       'supabase.from("tutors-connect-courses").upsert(row);',
       'supabase.from("tutors_content_locks")\n  .delete()',
-      'supabase.rpc("increment_calendar", {});'
+      'supabase.rpc("increment_calendar", {});',
+      'supabase.rpc("realtime_claim_live_publish", {});'
     ].join("\n");
-    expect(scanBrowserSource("x.ts", source).map((f) => f.line)).toEqual([1, 2, 3, 5]);
+    expect(scanBrowserSource("x.ts", source).map((f) => f.line)).toEqual([1, 2, 3, 5, 6]);
   });
 
   it("finds nothing in the repository's browser code", () => {

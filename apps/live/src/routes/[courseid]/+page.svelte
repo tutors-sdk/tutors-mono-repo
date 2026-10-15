@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import {
     LoRecord,
     presenceService,
@@ -50,14 +49,20 @@
 
   const studentsOnlineVisible = $derived(presenceService.studentsOnline.value.filter((lo) => lo?.user?.fullName !== "Anon"));
 
-  onMount(async () => {
+  $effect(() => {
     const courseid = data.courseid;
     if (!courseid) return;
 
-    if (presenceService.listeningTo !== courseid) {
-      presenceService.startPresenceListener(courseid);
-    }
-    connectRows = await getTutorsConnectLatestLosByCourseId(courseid);
+    presenceService.startPresenceListener(courseid);
+    connectRows = [];
+    let active = true;
+    void getTutorsConnectLatestLosByCourseId(courseid).then((rows) => {
+      if (active) connectRows = rows;
+    });
+    return () => {
+      active = false;
+      presenceService.stopPresenceListener();
+    };
   });
 </script>
 

@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 
 // Read the public environment at runtime so one image can serve production and next.
 export const siteUrls = {

@@ -199,11 +199,7 @@ describe("analyticsService.updatePageCount", () => {
       throw new Error("duration fail");
     });
 
-    analyticsService.updatePageCount(
-      makeCourse(),
-      makeLo({ route: "course/c1/topic" }),
-      makeStudent()
-    );
+    analyticsService.updatePageCount(makeCourse(), makeLo({ route: "course/c1/topic" }), makeStudent());
 
     expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "duration fail" }));
   });

@@ -39,6 +39,17 @@ describe("readerTimeSource: course time data from the reader's API", () => {
     expect(calls[0].init).toMatchObject({ credentials: "include" });
   });
 
+  it("keeps filtered reports and their display lookups in the same bounded request", async () => {
+    const { calls, fetchFn } = reader();
+    const source = readerTimeSource("https://tutors.dev", fetchFn);
+    await source.courseRecord("web-dev", "2026-10-01", "2026-10-15");
+    await source.user("alice", "web-dev", "2026-10-01", "2026-10-15");
+    await source.courseRows("web-dev", "2026-10-01", "2026-10-15");
+    expect(calls.map((call) => call.url)).toEqual(["https://tutors.dev/api/time/web-dev?start=2026-10-01&end=2026-10-15"]);
+    await source.courseRows("web-dev");
+    expect(calls[1].url).toBe("https://tutors.dev/api/time/web-dev");
+  });
+
   it("reports the reader's status in a TutorsTimeSourceError, and asks again next time", async () => {
     const { calls, fetchFn } = reader([401]);
     const source = readerTimeSource("https://tutors.dev", fetchFn);

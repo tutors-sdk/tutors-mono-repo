@@ -1,7 +1,7 @@
 /**
  * What browser code may still do with the anon Supabase client, now that student data goes through
  * the data API (@tutors/data-api, guides/SERVER-WRITES.md): read the public tables, report errors,
- * and call the two aggregate functions. Anything else (a write, a read of a personal table, another
+ * and call the two aggregate functions or report a Live watcher. Anything else (a write, a read of a personal table, another
  * RPC) belongs behind a data API route. Realtime channels are not table access and are not checked.
  *
  * Lexical, like the other checks: it finds `.from("table")` and `.rpc("fn")` calls in browser code
@@ -20,11 +20,11 @@ export const BROWSER_TABLES: Readonly<Record<string, readonly string[]>> = {
   app_errors: ["insert"]
 };
 
-/** Database functions browser code may call: aggregates only. */
-export const BROWSER_RPCS: readonly string[] = ["get_student_count", "get_error_counts"];
+/** Database functions browser code may call: aggregates and public Live watcher registration. */
+export const BROWSER_RPCS: readonly string[] = ["get_student_count", "get_error_counts", "realtime_watch"];
 
 /** Server-only files: SvelteKit never bundles them for the browser. */
-const SERVER_ONLY = /(^|\/)(lib\/server\/|hooks\.server\.ts$|\+server\.ts$|\+page\.server\.ts$|\+layout\.server\.ts$)/;
+const SERVER_ONLY = /\.server\.ts$|(^|\/)(lib\/server\/|hooks\.server\.ts$|\+server\.ts$|\+page\.server\.ts$|\+layout\.server\.ts$)/;
 
 export interface DataAccessFinding {
   file: string;

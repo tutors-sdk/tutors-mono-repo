@@ -26,6 +26,11 @@ export const GET: RequestHandler = async ({ request, url, params, locals }) => {
   if (!courseId) return answer(400, { message: "courseId is malformed" }, cors);
   const user = await sessionUser(locals);
   if (!user) return answer(401, { message: "Sign in to the reader to see time data" }, cors);
+  const start = url.searchParams.get("start");
+  const end = url.searchParams.get("end");
+  if ([start, end].some((day) => day !== null && !/^\d{4}-\d{2}-\d{2}$/.test(day)) || (start && end && start > end)) {
+    return answer(400, { message: "start and end must be an ordered yyyy-mm-dd range" }, cors);
+  }
   const db = serviceClient();
   if (!db) return answer(503, { message: "Time data is not configured on this server" }, cors);
 
@@ -37,7 +42,7 @@ export const GET: RequestHandler = async ({ request, url, params, locals }) => {
     if (e instanceof AuthorizationUnavailableError) return answer(503, { message: "Could not read who teaches this course from its host; try again shortly" }, cors);
     throw e;
   }
-  const rows = await readTimeRows(db, courseId);
+  const rows = await readTimeRows(db, courseId, start, end);
   log.info("Time data read", { courseId, role: educator ? "educator" : "student" });
   return answer(200, educator ? rows : pseudonymise(rows, user.login), cors);
 };

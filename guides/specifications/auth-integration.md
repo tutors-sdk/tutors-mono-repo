@@ -1,6 +1,8 @@
 # Authentication Integration
 
-These scenarios are specification prose, not executed. Every one of them describes the GitHub OAuth flow as a person sees it: a click on "Sign in with GitHub", a redirect to GitHub, the callback, a session cookie, a redirect to the sign-in page, a profile in the header. In the reader that flow is Auth.js (`@auth/sveltekit`) wired up in `apps/reader/src/hooks.server.ts` and the `(auth)` routes; it needs a running SvelteKit server, a browser and a GitHub OAuth counterpart, none of which exist in Node Vitest, and the product holds no Node-callable function that decides any of these outcomes. The only authentication logic the reader owns outright is whether Auth.js runs at all, and that is covered: `tests/unit/reader/auth-mode.test.ts` drives `authMode()` in `apps/reader/src/lib/server/auth-mode.ts`, and tier G (`tests/e2e-stack/journeys/student.journey.spec.ts`, "reader with no auth configuration") proves the reader serves pages when no secret is set. Tier M (`tests/security/security.test.ts`) checks the flags of the cookies Auth.js sets and the CSRF origin check, as static contracts. `apps/reader/tests/e2e/smoke.spec.ts` opens the auth page. Beyond that, no tier covers this today: nothing signs in through GitHub, signs out, returns an OAuth callback error, expires a session or fails the network during sign-in.
+`Session persists across page navigation` is now exercised by `apps/reader/tests/e2e/authentication.spec.ts`. The network-failure scenario remains specification prose. The rest of the GitHub OAuth flow is now executable: `tests/bdd/features/shared/sign-in-session.feature` (Rules 0250–0259) drives the reader's `hooks.server.ts` over HTTP with GitHub stubbed at `fetch`, covering starting sign-in, the callback, the session the pages see, its 30-day lifetime, forged and tampered cookies, a refused sign-in, sign-out, anonymous mode, a missing secret and the session cookie's flags. Those Rules run against Better Auth through the HTTP driver (issue #416).
+
+The browser tests prove profile persistence, reload and logout. The remaining gap is a rendered sign-in error and retry flow for network failures. Tier M (`tests/security/security.test.ts`) still checks the cookie flags and the CSRF origin check as static contracts.
 
 ```gherkin
 @developer @ears-event-driven @ears-unwanted
@@ -8,30 +10,6 @@ Feature: Authentication Integration
   As a developer
   I want GitHub OAuth authentication to work reliably
   So that users can connect their identities to the platform
-
-  @ears-event-driven
-  Scenario: Sign in with GitHub
-    When a user clicks "Sign in with GitHub"
-    Then the system shall redirect to GitHub's OAuth flow
-    And upon successful authorisation the system shall create a session
-
-  @ears-event-driven
-  Scenario: Sign out clears session
-    When an authenticated user clicks disconnect
-    Then the system shall clear the session
-    And the system shall redirect to the home page
-
-  @ears-unwanted
-  Scenario: Handle OAuth callback error
-    If GitHub returns an error during the OAuth callback
-    Then the system shall display an error message
-    And the system shall not create a session
-
-  @ears-unwanted
-  Scenario: Handle expired session
-    If a user's session token has expired
-    Then the system shall redirect to the sign-in page
-    And the system shall not display protected content
 
   @ears-event-driven
   Scenario: Session persists across page navigation
@@ -45,3 +23,11 @@ Feature: Authentication Integration
     Then the system shall display a connection error
     And the system shall allow retry
 ```
+
+## Identity boundary
+
+`@tutors/identity` defines `Actor`, request-scoped `SessionPort` and `IdentityClient` without framework or database imports. `@tutors/identity-sveltekit/server` owns the GitHub-only Better Auth configuration, `/api/auth` endpoints and session renewal cookies. The reader keeps `authMode()` and passes its credentials and enabled predicate into the adapter. Anonymous and unconfigured requests resolve `locals.actor` to `null`. There is one adapter and no selector or provider fallback.
+
+The adapter derives `Actor.subject=github:<numeric account id>` from GitHub's verified profile. Provider-owned `githubId` and `login` cannot be changed by profile updates or OAuth additional data. The existing Better Auth secret, cookie names, OAuth callback, stateless strategy and rolling 30-day expiry stay unchanged through cleanup. The root server layout exposes only the actor and a typed profile; nullable profile fields become strings there. Login remains the key for existing student records, analytics and enrollment. No stored rows or identifiers are migrated.
+
+The browser layout injects `createIdentityClient()` from `@tutors/identity-sveltekit/client` into connect and reconnects the profile only in the browser. Connect has no provider imports; sharing, sentiment, presence, course roles and privacy remain its existing services' responsibility. See [identity rollout](../identity-rollout.md) for the preceding deployment gate, session continuity and image rollback.

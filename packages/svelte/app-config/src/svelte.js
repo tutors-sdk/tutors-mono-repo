@@ -6,10 +6,10 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 /**
  * The SvelteKit config every Tutors app shares.
  *
- * @param {import('@sveltejs/kit').Config} [overrides] top-level keys replace the base; `kit` is merged key by key
- * @returns {import('@sveltejs/kit').Config}
+ * @param {NonNullable<Parameters<typeof import('@sveltejs/kit/vite').sveltekit>[0]>} [overrides] options replace shared defaults
+ * @returns {NonNullable<Parameters<typeof import('@sveltejs/kit/vite').sveltekit>[0]>}
  */
-export function createSvelteConfig(overrides = {}) {
+export function createSvelteKitOptions(overrides = {}) {
   // SVELTEKIT_ADAPTER=node produces a self-contained Node server (build/index.js)
   // for the container image. Anything else keeps adapter-auto, which detects the
   // hosting platform (Netlify) at build time.
@@ -28,20 +28,13 @@ export function createSvelteConfig(overrides = {}) {
     preprocess: vitePreprocess(),
 
     onwarn(warning, defaultHandler) {
-      // Ignore state_referenced_locally warning globally
-      // These are Svelte 5 best practice warnings about reactivity
-      // The code works correctly but could be improved by using $derived/$effect
       if (warning.code === 'state_referenced_locally') return;
       defaultHandler(warning);
     },
 
-    ...overrides,
-
-    kit: {
-      adapter,
-      ...(buildName ? { version: { name: buildName } } : {}),
-      env: { dir: '../..' },
-      ...overrides.kit
-    }
+    adapter,
+    ...(buildName ? { version: { name: buildName } } : {}),
+    env: { dir: '../..' },
+    ...overrides
   };
 }

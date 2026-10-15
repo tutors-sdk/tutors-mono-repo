@@ -3,6 +3,20 @@ import type { SessionUser } from "./http.ts";
 
 export class StoreError extends Error {}
 
+export const recordingFunctions = { missing: false };
+
+async function callRecordingFunction(db: SupabaseClient, fn: "record_page_view" | "record_heartbeat", args: Record<string, unknown>): Promise<boolean> {
+  if (recordingFunctions.missing) return false;
+  const { error } = await db.rpc(fn, args);
+  if (!error) return true;
+  // Older databases keep working until the expand migration is applied.
+  if (error.code === "PGRST202") {
+    recordingFunctions.missing = true;
+    return false;
+  }
+  fail(fn, error);
+}
+
 function fail(what: string, error: { message?: string } | null): never {
   throw new StoreError(`${what}: ${error?.message ?? "unknown error"}`);
 }
@@ -31,6 +45,9 @@ export async function recordPageLoad(
   login: string,
   input: { courseId: string; loId: string; loType: string; day: string }
 ): Promise<void> {
+  if (await callRecordingFunction(db, "record_page_view", {
+    p_course_id: input.courseId, p_student_id: login, p_lo_id: input.loId, p_lo_type: input.loType, p_day: input.day
+  })) return;
   const [duration, count] = await Promise.all([
     nextIncrement(db, "duration", input.courseId, login, input.loId),
     nextIncrement(db, "count", input.courseId, login, input.loId)
@@ -60,6 +77,9 @@ export async function recordPageLoad(
 }
 
 export async function recordTick(db: SupabaseClient, login: string, input: { courseId: string; loId: string | null; day: string }): Promise<void> {
+  if (await callRecordingFunction(db, "record_heartbeat", {
+    p_course_id: input.courseId, p_student_id: login, p_lo_id: input.loId, p_day: input.day
+  })) return;
   if (input.loId) {
     const duration = await nextIncrement(db, "duration", input.courseId, login, input.loId);
     const { error } = await db

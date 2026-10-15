@@ -22,23 +22,30 @@ The `.env` file sits at the repository root, not in this folder. With `PUBLIC_AN
 |---|---|
 | `PUBLIC_ANON_MODE` | `TRUE` turns off auth, presence and analytics |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Learning records and presence |
-| `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub sign-in (Auth.js) |
+| `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub sign-in (Better Auth) |
 | `PUBLIC_PDF_KEY` | The Adobe PDF viewer for talks |
 | `METRICS_TOKEN`, `LOG_LEVEL` | Guarding `/metrics` and the log level |
 
 ## Tests
 
-The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm test:e2e:reader`. The config starts `pnpm dev` itself. Unit and BDD tests for the packages the reader uses are under the root `tests/`.
+The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm test:e2e:reader`. The config starts an isolated `pnpm dev` itself with authentication enabled, fixture OAuth credentials, and Supabase directed to a local discard fixture; it never reuses your running dev server. Ports 5173, 5178 and 5179 must be free.
+
+`signInAs` obtains signed session cookies through the real `/auth` routes and installs them in the browser. The server's GitHub fetches use the same provider responses as `tests/bdd/support/reader-auth.ts`, via a test-only Node preload that refuses production mode or different credentials. Lecturer role comes from intercepted course enrollment, not a client role override. Store seeding remains for rendering/presence previews and the explicit forged-identity regression.
+
+`authentication.spec.ts` covers the real sign-in button, navigation, reload, UI logout, forged identity/cookies and rejection under a different production secret. Its protected route lives in an unshipped SvelteKit fixture that runs the reader's actual hooks. It tests session resolution; replace it with #320's personal-data route when that lands to cover that route's access policy. Unit and BDD tests for the packages the reader uses are under the root `tests/`.
 
 ## Workspace packages
 
 - `@tutors/ui-primitives`, `@tutors/ui-navigators`, `@tutors/ui-components` provide the interface
 - `@tutors/course`, `@tutors/tutors-model-lib` load and model courses
+- `@tutors/identity`, `@tutors/identity-sveltekit` provide verified identity contracts and the Better Auth adapter
 - `@tutors/connect`, `@tutors/community`, `@tutors/rbac`, `@tutors/runes` handle sign-in, presence, roles and shared state
 - `@tutors/data-api` is the typed contract the reader's `/api` routes implement (the reader hosts the data API for now; see [guides/SERVER-WRITES.md](../../guides/SERVER-WRITES.md))
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
 - `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
-- `@tutors/app-config` provides the shared `vite.config.ts` and `svelte.config.js` (build time only)
+- `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 
 [docs/COURSE-PAGE-WALKTHROUGH.md](../../docs/COURSE-PAGE-WALKTHROUGH.md) walks through how a course page is rendered.
+
+App-local imports use `#lib/*` from this app's `package.json`, with explicit file extensions. Root tests use the importing app's mapping; there is no global `#lib` alias. Neither app has a library index, so a bare `#lib` mapping is unnecessary.

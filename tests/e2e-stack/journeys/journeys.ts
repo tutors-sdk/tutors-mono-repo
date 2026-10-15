@@ -34,7 +34,7 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
 
   await page.getByRole("link", { name: new RegExp(`^${fixture.topicTitle}\\b`) }).click();
   await expect(page).toHaveURL(new RegExp(`/topic/${courseId}/${fixture.topicPath}$`));
-  await expect(page.getByRole("main").getByRole("heading", { level: 1, name: fixture.topicTitle })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Course navigation" }).getByRole("heading", { level: 2, name: fixture.topicTitle })).toBeVisible();
   await onPage("reader:topic");
 
   await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.labTitle}\\b`) }).first().click();
