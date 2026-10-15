@@ -8,7 +8,6 @@ import type {
 } from "../types/index.ts";
 import { BaseCalendarModel } from "./base-calendar-model.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
-import { filterByDateRange } from "../utils/index.ts";
 import { getSupabase } from "./supabase.ts";
 
 export class CourseTime implements TutorsTimeCourse {
@@ -38,8 +37,7 @@ export class CourseTime implements TutorsTimeCourse {
     if (!id) throw new Error("Course ID is required");
 
     try {
-      const rawData = await CourseTime.getCalendarData(id);
-      const filteredData = filterByDateRange(rawData, startDate, endDate);
+      const filteredData = await CourseTime.getCalendarData(id, startDate, endDate);
 
       let learningRecords: LearningRecord[] = [];
       let learningRecordsError: string | null = null;
@@ -96,16 +94,28 @@ export class CourseTime implements TutorsTimeCourse {
   }
 
   /**
-   * Retrieve calendar data for a given course (or all courses if courseId is not provided).
+   * Retrieve calendar data for a given course (or all courses if courseId is not provided),
+   * limited to days from startDate to endDate (inclusive, YYYY-MM-DD) when given.
+   * The range is applied in the query so only those days leave the database.
    * Enriches entries with student full names from tutors-connect-users.
    * Throws an error if the database query fails.
    */
-  static async getCalendarData(courseId?: string): Promise<CalendarEntry[]> {
+  static async getCalendarData(
+    courseId?: string,
+    startDate?: string | null,
+    endDate?: string | null
+  ): Promise<CalendarEntry[]> {
     const supabase = getSupabase();
     let query = supabase.from("calendar").select("*").order("id", { ascending: true });
 
     if (courseId) {
       query = query.eq("courseid", courseId);
+    }
+    if (startDate) {
+      query = query.gte("id", startDate);
+    }
+    if (endDate) {
+      query = query.lte("id", endDate);
     }
 
     const { data, error } = await query;

@@ -119,3 +119,18 @@ Feature: Learning Progress Tracking
       Then the system shall record 2 more blocks of time active against the lab and against the calendar for today
       And the system shall increment the page load count for the lab to 2
       And the reader shall have asked for a recording function once
+
+  @rule-0319 @ears-event-driven
+  Rule: When a lecturer loads a course's time report for a date range, the time dashboard shall read only that course's calendar days within the range from the database.
+
+    Scenario: A date range is read, not the whole calendar
+      Given the calendar holds 10 thirty-second blocks of time active for "alice" on each of "2026-03-01, 2026-03-16, 2026-03-17, 2026-04-01"
+      When the time report for the course is loaded from "2026-03-16" to "2026-03-17"
+      Then the database shall have returned 2 calendar days for the course
+      And the report shall cover the days "2026-03-16, 2026-03-17"
+
+    Scenario: A report with no range still reads the whole course
+      Given the calendar holds 10 thirty-second blocks of time active for "alice" on each of "2026-03-01, 2026-03-16, 2026-03-17, 2026-04-01"
+      When the time report for the course is loaded with no date range
+      Then the database shall have returned 4 calendar days for the course
+      And the report shall cover the days "2026-03-01, 2026-03-16, 2026-03-17, 2026-04-01"
