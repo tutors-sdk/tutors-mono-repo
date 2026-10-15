@@ -6,6 +6,28 @@
 
 EARS (Easy Approach to Requirements Syntax) is a structured approach to writing natural-language requirements that eliminates ambiguity. Each requirement follows one of five patterns, each mapped to a Gherkin tag for traceability.
 
+## Start here: the EARS dashboard
+
+```bash
+pnpm ears:dashboard                       # writes reports/ears-dashboard/index.html; open it in a browser
+pnpm ears:dashboard --since origin/main   # also marks the Rules your branch adds, changes or removes
+```
+
+One self-contained page ([`scripts/ears-dashboard.ts`](../../scripts/ears-dashboard.ts), Rules 0510–0515) with three views:
+
+- **Overview**: how many feature files, Rules and scenarios there are, Rules by EARS pattern and by
+  area, the next free Rule id, and what needs attention (findings, scenarios still outside a Rule).
+- **Rules**: every feature file and its Rules, searchable and filterable by pattern, area and audit
+  status. Each Rule shows its source as written, with line numbers that link to GitHub, the steps
+  file or Playwright tests that prove it, and any audit finding, marked when the baseline allows it.
+- **Write a Rule**: the anatomy of a Rule, the five patterns each with a passing Rule from this
+  repository as its example, the system names and the words the audit rejects, and the audit codes.
+
+The page is built from the audit's own parser and checks (`scripts/checks/ears-audit.ts`), so it says
+what CI says, and its examples change as the features do. CI builds it in the `ears-audit` job of
+every run: download the `ears-dashboard` artifact. On a pull request it is built `--since` the base
+branch, and the job summary lists the Rules the pull request added, changed or removed.
+
 ## The Five EARS Patterns
 
 ### 1. Ubiquitous (`@ears-ubiquitous`)
