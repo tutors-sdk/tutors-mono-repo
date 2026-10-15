@@ -8,5 +8,9 @@
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
 time POST /api/sync | who: an operator holding PRIVATE_MOODLE_SYNC_TOKEN (else 401); the browser cannot call it
-reader POST /auth/signin/github | hook | who: anyone; Auth.js starts the GitHub OAuth flow
-reader POST /auth/signout | hook | who: a signed-in user; Auth.js checks its own CSRF token
+reader POST /api/auth/sign-in/social | hook | who: anyone; GitHub only, Better Auth verifies origin and return URL
+reader POST /api/auth/callback/github | hook | who: OAuth callback holder; Better Auth verifies signed state (GitHub normally uses GET)
+reader POST /api/auth/sign-out | hook | who: session holder; Better Auth verifies origin and deletes browser cookies
+reader POST /api/auth/get-session | hook | who: session holder; Better Auth verifies cookies and renews the session
+reader POST /api/auth/update-user | hook | who: session holder; Better Auth verifies origin, adapter rejects githubId/login changes including null
+reader POST /api/live/activity | who: anyone, as the anon key it replaces allowed; the body is validated (4 KB, LoRecord shape) and published only to watched topics within the day's Live budget

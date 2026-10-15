@@ -1,0 +1,20 @@
+{
+	admin off
+	auto_https off
+}
+
+http://:3000 {
+	reverse_proxy reader:3000
+}
+http://:3001 {
+	reverse_proxy catalogue:3000
+}
+http://:3002 {
+	reverse_proxy live:3000
+}
+http://:3003 {
+	reverse_proxy time:3000
+}
+http://:3005 {
+	reverse_proxy reader-unconfigured:3000
+}

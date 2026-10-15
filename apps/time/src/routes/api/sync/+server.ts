@@ -1,8 +1,8 @@
 import { json, error } from "@sveltejs/kit";
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { timingSafeEqual } from "node:crypto";
 import type { RequestHandler } from "./$types";
-import { AssignmentsSyncService } from "$lib/server/services/AssignmentsSyncService";
+import { AssignmentsSyncService } from "#lib/server/services/AssignmentsSyncService.ts";
 
 export const POST: RequestHandler = async ({ request }) => {
   const token = env.PRIVATE_MOODLE_SYNC_TOKEN;

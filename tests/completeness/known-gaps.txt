@@ -41,7 +41,6 @@ missing-icon: HeroIconLib: tutorial
 # App READMEs out of step with package.json (good first issue #244).
 readme-unknown-package: apps/catalogue: @tutors/ui
 readme-unknown-package: apps/live: @tutors/ui
-readme-unknown-package: apps/reader: @tutors/ui
 readme-unlisted-package: apps/catalogue: @tutors/community
 readme-unlisted-package: apps/catalogue: @tutors/logger
 readme-unlisted-package: apps/catalogue: @tutors/metrics
@@ -60,15 +59,3 @@ readme-unlisted-package: apps/live: @tutors/tutors-model-lib
 readme-unlisted-package: apps/live: @tutors/ui-components
 readme-unlisted-package: apps/live: @tutors/ui-navigators
 readme-unlisted-package: apps/live: @tutors/ui-primitives
-readme-unlisted-package: apps/reader: @tutors/community
-readme-unlisted-package: apps/reader: @tutors/connect
-readme-unlisted-package: apps/reader: @tutors/logger
-readme-unlisted-package: apps/reader: @tutors/metrics
-readme-unlisted-package: apps/reader: @tutors/rbac
-readme-unlisted-package: apps/reader: @tutors/runes
-readme-unlisted-package: apps/reader: @tutors/tutors-create
-readme-unlisted-package: apps/reader: @tutors/tutors-model-lib
-readme-unlisted-package: apps/reader: @tutors/tutors-time-lib
-readme-unlisted-package: apps/reader: @tutors/ui-components
-readme-unlisted-package: apps/reader: @tutors/ui-navigators
-readme-unlisted-package: apps/reader: @tutors/ui-primitives

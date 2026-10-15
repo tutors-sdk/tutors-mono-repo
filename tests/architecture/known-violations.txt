@@ -5,3 +5,8 @@
 # course (core) reads the icon library from themeService (feature).
 # Removed by the "break package cycles" move in PR #228.
 layer-core: packages/svelte/course/src/course/services/lo-tree.ts -> packages/svelte/themes/src/index.ts
+
+# The context tree primitives ask rbacService which learning objects are locked.
+# Removed when the lock state is passed in as a prop from ui-navigators.
+ui-primitives-no-data-features: packages/svelte/ui-primitives/src/components/LoContextTree.svelte -> packages/svelte/utils/rbac/src/index.ts
+ui-primitives-no-data-features: packages/svelte/ui-primitives/src/components/LoContextTreeView.svelte -> packages/svelte/utils/rbac/src/index.ts

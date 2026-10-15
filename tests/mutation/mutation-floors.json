@@ -13,6 +13,8 @@
     "packages/jsr/model/src/utils/course-utils.ts": 96,
     "packages/jsr/model/src/utils/markdown-utils.ts": 97,
     "packages/jsr/time/src/services/base-lab-model.ts": 87,
-    "packages/jsr/time/src/utils/lab-utils.ts": 98
+    "packages/jsr/time/src/utils/lab-utils.ts": 98,
+    "packages/jsr/gen/src/services/course-builder.ts": 94,
+    "packages/jsr/gen/src/services/resource-builder.ts": 72
   }
 }

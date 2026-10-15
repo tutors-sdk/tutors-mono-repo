@@ -1,16 +1,15 @@
 /* global APP_VERSION */
-import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
+import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
-import { building } from "$app/environment";
-import { SvelteKitAuth } from "@auth/sveltekit";
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
-import GithubProvider from "@auth/core/providers/github";
+import { building } from "$app/env";
+import { createIdentityHandle } from "@tutors/identity-sveltekit/server";
+import * as env from "$app/env/private";
+import * as publicEnv from "$app/env/public";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 import { announceClock } from "@tutors/runtime";
-import { authMode } from "$lib/server/auth-mode";
+import { authMode } from "#lib/server/auth-mode.ts";
 
 setAppName("tutors-reader");
 // From here on every stdout/stderr line of the running server is one JSON object: stray console
@@ -29,58 +28,11 @@ export const init: ServerInit = async () => {
   }
 };
 
-const { handle: authInitHandle } = SvelteKitAuth({
-  basePath: "/auth",
-  providers: [
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    GithubProvider({
-      clientId: env.PRIVATE_AUTH_GITHUB_ID,
-      clientSecret: env.PRIVATE_AUTH_GITHUB_SECRET,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      profile(profile: any) {
-        return {
-          id: profile.id.toString(),
-          name: profile.name,
-          login: profile.login,
-          email: profile.email,
-          image: profile.avatar_url
-        };
-      }
-    })
-  ],
-
-  callbacks: {
-    async session({ session, token }) {
-      session.user.login = token.login;
-      return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.login = user.login;
-      }
-      return token;
-    }
-  },
-
-  session: {
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-
-    strategy: "jwt"
-  },
-
+const authHandle = createIdentityHandle({
+  enabled: () => currentAuthMode() === "enabled",
   secret: env.PRIVATE_AUTH_SECRET,
-  trustHost: true,
-
-  // Route Auth.js output through the structured logger; its default writes
-  // coloured plain text that log collectors cannot parse.
-  logger: {
-    error: (error) => log.error("Auth.js error", error),
-    // @auth/sveltekit turns off Auth.js's own CSRF token and relies on
-    // SvelteKit's origin check, so "csrf-disabled" arrives on every auth request.
-    warn: (code) => (code === "csrf-disabled" ? log.debug("Auth.js warning", { code }) : log.warn("Auth.js warning", { code })),
-    debug: (message, metadata) => log.debug("Auth.js debug", { details: message, metadata })
-  }
+  githubId: env.PRIVATE_AUTH_GITHUB_ID,
+  githubSecret: env.PRIVATE_AUTH_GITHUB_SECRET
 });
 
 // First in the chain so every request gets a correlation id and one completion line,
@@ -92,28 +44,34 @@ const localeHandle: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
+function setSecurityHeaders(headers: Headers): void {
+  headers.set("X-Frame-Options", "SAMEORIGIN");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+}
+
 const securityHeaders: Handle = async ({ event, resolve }) => {
   const response = await resolve(event);
-  response.headers.set("X-Frame-Options", "SAMEORIGIN");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  return response;
-};
-
-// Without a secret Auth.js throws MissingSecret from the root layout on every
-// page, so anonymous and unconfigured deployments skip it and have no session.
-const authHandle: Handle = async (input) => {
-  if (currentAuthMode() === "enabled") return authInitHandle(input);
-  input.event.locals.auth = async () => null;
-  return input.resolve(input.event);
+  try {
+    setSecurityHeaders(response.headers);
+    return response;
+  } catch {
+    // A `Response.redirect()` has immutable headers. OAuth can answer a failed sign-in with one,
+    // so without a copy "GitHub said no" would become a 500 (Rule 0255).
+    const copy = new Response(response.body, response);
+    setSecurityHeaders(copy.headers);
+    return copy;
+  }
 };
 
 export const handle = sequence(requestLogger, metricsHandle, localeHandle, securityHeaders, authHandle);
 
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
-  logRequestError({ error, event, status, message });
+export const handleError: HandleServerError = ({ kind, error, event }) => {
+  if (kind !== "unknown") return;
+  logRequestError({ error, event, status: 500, message: "Internal Error" });
   return {
+    status: 500,
     message: "An unexpected error occurred"
   };
 };

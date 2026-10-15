@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 
 type MoodleScalar = string | number | boolean;
 type MoodleParams = Record<string, MoodleScalar | null | undefined>;

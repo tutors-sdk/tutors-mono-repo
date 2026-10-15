@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { env } from "$env/dynamic/public";
+  import * as env from "$app/env/public";
   import { adobeLoaded, currentCourse } from "@tutors/runes";
   import type { Talk } from "@tutors/tutors-model-lib";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
   interface Props {
     lo: Talk;
@@ -32,7 +32,10 @@
 
   let adobeDCView: any = null;
   let mounted = false;
-  let viewerId = $derived(`adobe-pdf-viewer-${lo.pdf.split('/').pop()?.replace(/[^a-z0-9]/gi, '')}`);
+  // Remounting Adobe's viewer into a container id it had already used (switching to the browser
+  // reader and back) left it blank (issue 374), so each mount renders into a container of its own.
+  const mountId = $props.id();
+  let viewerId = $derived(`adobe-pdf-viewer-${lo.pdf.split('/').pop()?.replace(/[^a-z0-9]/gi, '')}-${mountId}`);
 
   function loadSDK() {
     if (!adobeLoaded.value) {
@@ -72,17 +75,23 @@
     }
   });
 
+  function onReady() {
+    displayPDF();
+    mounted = true;
+  }
+
   onMount(() => {
     loadSDK();
     if (window.AdobeDC) {
-      displayPDF();
-      mounted = true;
+      onReady();
     } else {
-      document.addEventListener("adobe_dc_view_sdk.ready", () => {
-        displayPDF();
-        mounted = true;
-      });
+      document.addEventListener("adobe_dc_view_sdk.ready", onReady, { once: true });
     }
+  });
+
+  onDestroy(() => {
+    if (typeof document !== "undefined") document.removeEventListener("adobe_dc_view_sdk.ready", onReady);
+    adobeDCView = null;
   });
 </script>
 

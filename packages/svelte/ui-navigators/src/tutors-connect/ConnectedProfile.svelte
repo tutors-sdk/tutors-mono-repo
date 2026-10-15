@@ -5,7 +5,6 @@
    * so each of those has one home, one name and one visibility rule.
    */
   import { tutorsConnectService } from "@tutors/connect";
-  import { presenceService } from "@tutors/community";
   import MenuItem from "@tutors/ui-primitives/components/MenuItem.svelte";
   import Menu from "@tutors/ui-primitives/components/Menu.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
@@ -24,11 +23,9 @@
 
 {#snippet menuSelector()}
   <div class="relative">
-    {#if presenceService.studentsOnline.value.length && tutorsId.value?.share === "true"}
-      <span class="online-count">
-        {presenceService.studentsOnline.value.length}
-      </span>
-    {/if}
+    <!-- The chip says whether I am sharing, which is a fact about me and belongs on my avatar. The
+         count of who else is online is a fact about the course, and now badges the course tools row
+         that names it (#370): a bare number here said nothing about what it counted. -->
     <span class="presence-chip" class:offline={tutorsId.value?.share !== "true"}>
       {#if tutorsId.value?.share === "true"}
         <Icon icon="lucide:check" color="var(--ui-on-brand)" height="14" />
@@ -69,8 +66,6 @@
 
 <style>
   .option :global([data-scope="dialog"][data-part="trigger"]) { width: 100%; }
-  .online-count, .presence-chip { position: absolute; right: -5px; z-index: 1; display: flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding-inline: 4px; border: 2px solid var(--ui-surface); border-radius: 999px; color: var(--ui-on-brand); font-size: var(--font-caption); font-weight: var(--weight-bold); line-height: 1; font-variant-numeric: tabular-nums; }
-  .online-count { top: -5px; background: var(--ui-danger); }
-  .presence-chip { bottom: -5px; width: 22px; padding: 0; background: var(--ui-brand); }
+  .presence-chip { position: absolute; right: -5px; bottom: -5px; z-index: 1; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 2px solid var(--ui-surface); border-radius: 999px; background: var(--ui-brand); color: var(--ui-on-brand); }
   .presence-chip.offline { background: var(--ui-danger); }
 </style>

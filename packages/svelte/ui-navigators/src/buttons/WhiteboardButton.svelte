@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { env } from "$env/dynamic/public";
+  import * as env from "$app/env/public";
 
   import { t } from "@tutors/i18n";
   let { labelled = false } = $props();
@@ -67,7 +67,7 @@
 
 {#if currentCourse?.value}
   <button onclick={openEditor} aria-label={t("shell.whiteboard")}>
-    <div class="nav-row">
+    <div class="nav-row" data-tour="whiteboard">
       <Icon type="whiteboard" />
       {#if labelled}<span>{t("shell.whiteboard")}</span>{/if}
     </div>
