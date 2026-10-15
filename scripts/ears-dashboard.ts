@@ -364,6 +364,9 @@ export function embedJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 }
 
+/** Text safe inside a Markdown table cell: backslashes first, then the pipes that would split the cell. */
+const tableCell = (text: string): string => text.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+
 /** A Markdown summary for the GitHub Actions job summary. */
 export function renderSummary(data: DashboardData): string {
   const t = totals(data);
@@ -380,8 +383,8 @@ export function renderSummary(data: DashboardData): string {
     if (moved.length === 0 && data.removed.length === 0) out.push("No Rule was added, changed or removed.");
     else {
       out.push("| Rule | Change | Pattern | Audit | Title |", "|---|---|---|---|---|");
-      for (const { r, f } of moved) out.push(`| [${r.id}](${data.repoUrl}/blob/${data.ref}/${f.file}#L${r.line}) | ${r.change} | ${r.pattern} | ${r.status} | ${r.title.replace(/\|/g, "\\|")} |`);
-      for (const r of data.removed) out.push(`| ${r.id} | removed | | | ${r.title.replace(/\|/g, "\\|")} |`);
+      for (const { r, f } of moved) out.push(`| [${r.id}](${data.repoUrl}/blob/${data.ref}/${f.file}#L${r.line}) | ${r.change} | ${r.pattern} | ${r.status} | ${tableCell(r.title)} |`);
+      for (const r of data.removed) out.push(`| ${r.id} | removed | | | ${tableCell(r.title)} |`);
     }
   }
   return `${out.join("\n")}\n`;
