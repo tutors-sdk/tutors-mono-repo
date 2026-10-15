@@ -1,7 +1,7 @@
 import { serviceClient } from "#lib/server/api/service-client.ts";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { MAX_LIVE_ACTIVITY_BYTES, receiveLiveActivity } from "@tutors/community/services/live-activity.ts";
+import { MAX_LIVE_ACTIVITY_BYTES, receiveLiveActivity } from "@tutors/community/services/live-activity.server.ts";
 
 /**
  * Tutors Live's activity feed: the reader posts each learning event here, and this publishes it to the

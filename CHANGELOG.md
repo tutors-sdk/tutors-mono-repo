@@ -30,6 +30,8 @@
 
 #### Security
 
+- Browser packages reach personal data only through the new `@tutors/data-api` package; CI refuses a database-client import in browser code and any browser write outside the data API (PR #327)
+
 - Background data responses do not refresh session cookies, so a delayed response cannot undo logout or restore the previous account after a switch (network) (PR #320)
 - Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the verified Better Auth identity and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0071, 0072) (network, persistence) (PR #320)
 - Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)

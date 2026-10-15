@@ -19,7 +19,7 @@
     "packages/jsr/time/src/services/course-time.ts": 73,
     "packages/jsr/time/src/services/supabase.ts": 0,
     "packages/jsr/time/src/services/tutors-time.ts": 15,
-    "packages/svelte/community/src/services/live.svelte.ts": 49,
+    "packages/svelte/community/src/services/live.svelte.ts": 71,
     "packages/svelte/community/src/services/presence.svelte.ts": 94,
     "packages/svelte/community/src/utils/error-transport.ts": 0,
     "packages/svelte/community/src/utils/health-check.ts": 83,
@@ -97,6 +97,6 @@
     "packages/svelte/utils/runtime/src/clock.ts": 86,
     "packages/svelte/utils/logger/src/index.ts": 100,
     "packages/jsr/time/src/services/source.ts": 82,
-    "packages/svelte/community/src/utils/reader-api.ts": 73
+    "packages/svelte/data-api/src/client.ts": 69
   }
 }
