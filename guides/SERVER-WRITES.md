@@ -129,7 +129,7 @@ of:
 
 1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader and time, `PRIVATE_API_ALLOWED_ORIGINS` on
    reader, and `PUBLIC_READER_URL` on time.
-2. Apply the pending migrations (`20260925100000` to `20260925100200`) as usual, then deploy the new
+2. Apply the pending migrations (`20261017000000` to `20261017000200`) as usual, then deploy the new
    reader and time pods. Everything in `supabase/migrations` is safe to run before the new pods are
    up: nothing there removes what a v16.2.2 pod or tab uses.
 
