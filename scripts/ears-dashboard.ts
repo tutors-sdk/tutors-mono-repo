@@ -571,6 +571,7 @@ function overview() {
   const attention = [];
   for (const f of D.features) {
     for (const r of f.rules) if (r.status === "failing") attention.push("<li>" + '<a href="#rule-' + esc(r.id || "") + '" data-goto="' + esc(f.file) + '">' + esc(r.id ? "Rule " + r.id : r.title) + "</a> in " + esc(f.file) + ": " + esc(r.violations.filter((v) => !v.baselined).map((v) => v.code).join(", ")) + "</li>");
+    for (const v of f.violations) if (!v.baselined) attention.push("<li>" + link(f.file, v.line) + " <b>" + esc(v.code) + "</b>: " + esc(v.message) + "</li>");
     if (f.looseScenarios.length) attention.push("<li>" + esc(f.file) + ": " + f.looseScenarios.length + " scenario(s) outside a Rule (migrating them shrinks the baseline)</li>");
   }
   let changed = "";
