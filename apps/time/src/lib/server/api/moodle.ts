@@ -10,7 +10,7 @@ interface MoodleErrorResponse {
   debuginfo?: string;
 }
 
-export interface MoodleContentFile {
+interface MoodleContentFile {
   type?: string;
   filename?: string;
   filepath?: string;
@@ -22,7 +22,7 @@ export interface MoodleContentFile {
   repositorytype?: string;
 }
 
-export interface MoodleModuleContent {
+interface MoodleModuleContent {
   type?: string;
   filename?: string;
   filepath?: string;
@@ -97,14 +97,14 @@ export interface MoodleCourseSection {
   availabilityinfo?: string;
 }
 
-export interface MoodleWarning {
+interface MoodleWarning {
   item?: string;
   itemid?: number;
   warningcode?: string;
   message?: string;
 }
 
-export interface MoodleAssignSubmissionPlugin {
+interface MoodleAssignSubmissionPlugin {
   type?: string;
   name?: string;
   fileareas?: unknown[];
@@ -126,7 +126,7 @@ export interface MoodleAssignSubmission {
   timestarted?: number;
 }
 
-export interface MoodleAssignSubmissionsByAssignment {
+interface MoodleAssignSubmissionsByAssignment {
   assignmentid: number;
   submissions: MoodleAssignSubmission[];
 }

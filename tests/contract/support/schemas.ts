@@ -70,7 +70,7 @@ export const ConnectLatestSchema = z.object({
   timestamp: z.string(),
 });
 
-export const LoRecordUserSchema = z.object({
+const LoRecordUserSchema = z.object({
   fullName: z.string(),
   avatar: z.string(),
   id: z.string(),
@@ -103,25 +103,25 @@ export const RealtimeChannelSchema = z.object({
 // Whiteboard collaboration schemas
 // ---------------------------------------------------------------------------
 
-export const WhiteboardUserSchema = z.object({
+const WhiteboardUserSchema = z.object({
   name: z.string(),
   id: z.string(),
   avatar: z.string(),
   color: z.string().optional(),
 });
 
-export const WhiteboardPointerSchema = z.object({
+const WhiteboardPointerSchema = z.object({
   x: z.number(),
   y: z.number(),
 });
 
-export const WhiteboardElementSchema = z.object({
+const WhiteboardElementSchema = z.object({
   id: z.string(),
   version: z.number(),
   type: z.string(),
 }).passthrough();
 
-export const WhiteboardAppStateSchema = z.object({
+const WhiteboardAppStateSchema = z.object({
   viewBackgroundColor: z.string(),
 });
 
@@ -188,19 +188,3 @@ export const WhiteboardSetThemeSchema = z.object({
   type: z.literal("set-theme"),
   theme: z.enum(["light", "dark"]),
 });
-
-// ---------------------------------------------------------------------------
-// Type exports
-// ---------------------------------------------------------------------------
-
-export type LearningRecord = z.infer<typeof LearningRecordSchema>;
-export type CalendarEntry = z.infer<typeof CalendarEntrySchema>;
-export type ConnectUser = z.infer<typeof ConnectUserSchema>;
-export type ConnectProfile = z.infer<typeof ConnectProfileSchema>;
-export type ConnectCourse = z.infer<typeof ConnectCourseSchema>;
-export type ConnectLatest = z.infer<typeof ConnectLatestSchema>;
-export type LoRecord = z.infer<typeof LoRecordSchema>;
-export type WhiteboardSceneInit = z.infer<typeof WhiteboardSceneInitSchema>;
-export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
-export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
-export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;

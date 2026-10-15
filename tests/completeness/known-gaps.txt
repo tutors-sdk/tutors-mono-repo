@@ -46,7 +46,6 @@ readme-unlisted-package: apps/catalogue: @tutors/logger
 readme-unlisted-package: apps/catalogue: @tutors/metrics
 readme-unlisted-package: apps/catalogue: @tutors/runes
 readme-unlisted-package: apps/catalogue: @tutors/themes
-readme-unlisted-package: apps/catalogue: @tutors/tutors-model-lib
 readme-unlisted-package: apps/catalogue: @tutors/ui-components
 readme-unlisted-package: apps/catalogue: @tutors/ui-navigators
 readme-unlisted-package: apps/catalogue: @tutors/ui-primitives
