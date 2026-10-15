@@ -43,5 +43,5 @@ Three user personas drive the BDD test suite. Each represents a distinct stakeho
 
 **Test Coverage**:
 - `theme-customisation.feature` — Themes, icon libraries, light/dark, code styles
-- [specifications/auth-integration.md](./specifications/auth-integration.md) — GitHub OAuth, sessions, expiry, error states (prose; needs a browser)
+- `shared/sign-in-session.feature` — GitHub OAuth, sessions, expiry and cookie flags over HTTP (Rules 0250–0259)
 - `i18n-localisation.feature` — 5 locales, fallbacks, cookie persistence

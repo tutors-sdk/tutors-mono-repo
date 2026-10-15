@@ -9,7 +9,7 @@ const feature = await loadFeature("tests/bdd/features/instructor/analytics-lab.f
 
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-describeFeature(feature, ({ Scenario }) => {
+describeFeature(feature, ({ Rule }) => {
   let records: LearningRecord[];
   let model: BaseLabModel;
 
@@ -29,48 +29,54 @@ describeFeature(feature, ({ Scenario }) => {
     expect(actual).toEqual(expected);
   };
 
-  Scenario("View lab completion across students", ({ Given, When, Then, And }) => {
-    Given("a course has lab learning objects with these student records:", given);
-    When("an instructor opens the lab analytics view", build);
-    Then("records shall be grouped by student, one row each, in the order {string}", (_ctx, students: string) => {
-      expect(model.lab.rows.map((row) => row.studentid)).toEqual(list(students));
-    });
-    And("the lab columns shall be {string}", (_ctx, labs: string) => {
-      expect(model.labs).toEqual(list(labs));
-    });
-    And("the lab grid shall display each student's duration per lab:", (_ctx, table: TableRow[]) => {
-      expectGrid(model.lab.rows, table, (lab) => lab);
-    });
-  });
-
-  Scenario("View per-step lab analytics", ({ Given, When, Then, And }) => {
-    Given("a course has lab learning objects with these student records:", given);
-    When("an instructor drills into a specific lab", build);
-    Then("steps shall be ordered sequentially as {string}", (_ctx, steps: string) => {
-      expect(model.steps).toEqual(list(steps).map(stepColumn));
-    });
-    And("the step grid shall show time spent on each step:", (_ctx, table: TableRow[]) => {
-      expectGrid(model.step.rows, table, stepColumn);
+  Rule("When a lecturer opens the lab view, the time dashboard shall show one row per student and one column per lab, holding the minutes each student spent on that lab.", ({ RuleScenario }) => {
+    RuleScenario("View lab completion across students", ({ Given, When, Then, And }) => {
+      Given("a course has lab learning objects with these student records:", given);
+      When("an instructor opens the lab analytics view", build);
+      Then("records shall be grouped by student, one row each, in the order {string}", (_ctx, students: string) => {
+        expect(model.lab.rows.map((row) => row.studentid)).toEqual(list(students));
+      });
+      And("the lab columns shall be {string}", (_ctx, labs: string) => {
+        expect(model.labs).toEqual(list(labs));
+      });
+      And("the lab grid shall display each student's duration per lab:", (_ctx, table: TableRow[]) => {
+        expectGrid(model.lab.rows, table, (lab) => lab);
+      });
     });
   });
 
-  Scenario("Identify students with low engagement", ({ Given, When, Then, And }) => {
-    let total: number;
+  Rule("When a lecturer opens the steps of a lab, the time dashboard shall show one column per step in step order, holding the minutes each student spent on that step.", ({ RuleScenario }) => {
+    RuleScenario("View per-step lab analytics", ({ Given, When, Then, And }) => {
+      Given("a course has lab learning objects with these student records:", given);
+      When("an instructor drills into a specific lab", build);
+      Then("steps shall be ordered sequentially as {string}", (_ctx, steps: string) => {
+        expect(model.steps).toEqual(list(steps).map(stepColumn));
+      });
+      And("the step grid shall show time spent on each step:", (_ctx, table: TableRow[]) => {
+        expectGrid(model.step.rows, table, stepColumn);
+      });
+    });
+  });
 
-    Given("a course has lab learning objects with these student records:", given);
-    When("an instructor opens the lab analytics view", build);
-    Then("the student {string} who has not started the lab shall be listed with a total of {number} minutes", (_ctx, student: string, minutes: number) => {
-      const row = model.lab.rows.find((candidate) => candidate.studentid === student);
-      expect(row).toBeDefined();
-      total = row!.totalMinutes;
-      expect(total).toBe(minutes);
-    });
-    And("a total of {number} minutes shall have no heat colour", (_ctx, minutes: number) => {
-      expect(total).toBe(minutes);
-      expect(heatColor(total)).toBe("");
-    });
-    And("the median for {string} shall be {number}, ignoring students who have not started", (_ctx, lab: string, median: number) => {
-      expect(model.medianByLab.row?.[lab]).toBe(median);
+  Rule("When a lecturer opens the lab view, the time dashboard shall list a student who has not started a lab with 0 minutes and leave them out of that lab's median.", ({ RuleScenario }) => {
+    RuleScenario("Identify students with low engagement", ({ Given, When, Then, And }) => {
+      let total: number;
+
+      Given("a course has lab learning objects with these student records:", given);
+      When("an instructor opens the lab analytics view", build);
+      Then("the student {string} who has not started the lab shall be listed with a total of {number} minutes", (_ctx, student: string, minutes: number) => {
+        const row = model.lab.rows.find((candidate) => candidate.studentid === student);
+        expect(row).toBeDefined();
+        total = row!.totalMinutes;
+        expect(total).toBe(minutes);
+      });
+      And("a total of {number} minutes shall have no heat colour", (_ctx, minutes: number) => {
+        expect(total).toBe(minutes);
+        expect(heatColor(total)).toBe("");
+      });
+      And("the median for {string} shall be {number}, ignoring students who have not started", (_ctx, lab: string, median: number) => {
+        expect(model.medianByLab.row?.[lab]).toBe(median);
+      });
     });
   });
 });

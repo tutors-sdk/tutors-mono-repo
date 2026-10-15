@@ -8,7 +8,7 @@ vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import(".
 
 const feature = await loadFeature("tests/bdd/features/shared/offline-resilience.feature");
 
-describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Scenario }) => {
+describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
   let host: CourseHost;
   let logs: LogCapture;
 
@@ -22,35 +22,37 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Scenario }) =
     logs.stop();
   });
 
-  Scenario("Failed API call does not corrupt local state", ({ Given, When, And, Then }) => {
-    Given("the reader has loaded the course {string} titled {string}", async (_ctx, courseId: string, title: string) => {
-      host.answer(courseId, new Response(publishedCourseJson(title)));
-      const course = await courseService.readCourse(courseId, host.fetch);
-      expect(course.title).toBe(title);
-    });
-    When("the network becomes unavailable", () => {
-      host.goOffline();
-    });
-    And("the reader fails to load the course {string}", async (_ctx, courseId: string) => {
-      await expect(courseService.readCourse(courseId, host.fetch)).rejects.toThrow("Failed to fetch");
-      expect(logs.errors().map((entry) => entry.message)).toContain("Error fetching course");
-    });
-    Then("the reader shall still serve {string} titled {string} without a network request", async (_ctx, courseId: string, title: string) => {
-      const requestsBefore = host.requested.length;
-      const course = await courseService.readCourse(courseId, host.fetch);
-      expect(course.title).toBe(title);
-      expect(course.courseId).toBe(courseId);
-      expect(host.requested).toHaveLength(requestsBefore);
-    });
-    And("the reader shall hold exactly {number} course in its cache", (_ctx, count: number) => {
-      expect(courseService.courses.size).toBe(count);
-    });
-    And("the reader shall still open the topic {string} of {string}", async (_ctx, topicTitle: string, courseId: string) => {
-      const course = await courseService.readCourse(courseId, host.fetch);
-      const [topicRoute] = [...course.topicIndex.keys()];
-      const topic = await courseService.readTopic(courseId, topicRoute, host.fetch);
-      expect(topic.type).toBe("topic");
-      expect(topic.title).toBe(topicTitle);
+  Rule("If loading a course fails, then the reader shall keep serving the courses it already loaded, without a network request.", ({ RuleScenario }) => {
+    RuleScenario("Failed API call does not corrupt local state", ({ Given, When, And, Then }) => {
+      Given("the reader has loaded the course {string} titled {string}", async (_ctx, courseId: string, title: string) => {
+        host.answer(courseId, new Response(publishedCourseJson(title)));
+        const course = await courseService.readCourse(courseId, host.fetch);
+        expect(course.title).toBe(title);
+      });
+      When("the network becomes unavailable", () => {
+        host.goOffline();
+      });
+      And("the reader fails to load the course {string}", async (_ctx, courseId: string) => {
+        await expect(courseService.readCourse(courseId, host.fetch)).rejects.toThrow("Failed to fetch");
+        expect(logs.errors().map((entry) => entry.message)).toContain("Error fetching course");
+      });
+      Then("the reader shall still serve {string} titled {string} without a network request", async (_ctx, courseId: string, title: string) => {
+        const requestsBefore = host.requested.length;
+        const course = await courseService.readCourse(courseId, host.fetch);
+        expect(course.title).toBe(title);
+        expect(course.courseId).toBe(courseId);
+        expect(host.requested).toHaveLength(requestsBefore);
+      });
+      And("the reader shall hold exactly {number} course in its cache", (_ctx, count: number) => {
+        expect(courseService.courses.size).toBe(count);
+      });
+      And("the reader shall still open the topic {string} of {string}", async (_ctx, topicTitle: string, courseId: string) => {
+        const course = await courseService.readCourse(courseId, host.fetch);
+        const [topicRoute] = [...course.topicIndex.keys()];
+        const topic = await courseService.readTopic(courseId, topicRoute, host.fetch);
+        expect(topic.type).toBe("topic");
+        expect(topic.title).toBe(topicTitle);
+      });
     });
   });
 });
