@@ -9,7 +9,7 @@ Feature: Live Presence
     And the student "Alice" is signed in
     And a live dashboard is watching the course and the platform feeds
 
-  @rule-0539 @ears-event-driven
+  @rule-0549 @ears-event-driven
   Rule: When students open a course, the reader shall show the number of students online on it.
 
     Scenario: See online students count
@@ -17,7 +17,7 @@ Feature: Live Presence
       When "Bob" and "Carol" view lab 1 of the course
       Then the system shall display 3 students currently online
 
-  @rule-0540 @ears-event-driven
+  @rule-0550 @ears-event-driven
   Rule: When another student joins a course or moves within it, the reader shall update the online list, the count and the learning object shown for that student.
 
     Scenario: Receive presence updates
@@ -27,7 +27,7 @@ Feature: Live Presence
       And the online list shall be "Alice, Bob"
       And when "Bob" moves on to lab 2 the online count shall stay at 2 and show "Bob" at "Lab 2"
 
-  @rule-0541 @ears-event-driven
+  @rule-0551 @ears-event-driven
   Rule: When a student sets their sentiment, the reader shall store it and broadcast it to the other participants of the course.
 
     Scenario: Express sentiment
@@ -38,7 +38,7 @@ Feature: Live Presence
       And the system shall broadcast the sentiment "confused" to other course participants
       And the sentiment "confused" shall be on the presence card of "Alice"
 
-  @rule-0542 @ears-unwanted
+  @rule-0552 @ears-unwanted
   Rule: If a student has turned off sharing their presence, then the reader shall mark the student offline and broadcast none of their activity.
 
     Scenario: Private mode hides presence

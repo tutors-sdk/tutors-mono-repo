@@ -4,7 +4,7 @@ Feature: Offline Resilience
   I want the system to handle intermittent connectivity
   So that I can continue using previously loaded content
 
-  @rule-0525 @ears-unwanted
+  @rule-0535 @ears-unwanted
   Rule: If loading a course fails, then the reader shall keep serving the courses it already loaded, without a network request.
 
     Scenario: Failed API call does not corrupt local state

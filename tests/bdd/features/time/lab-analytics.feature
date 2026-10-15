@@ -3,7 +3,7 @@ Feature: Lab Analytics
   I want to view lab completion data across students
   So that I can identify which labs need more support
 
-  @rule-0543 @ears-event-driven
+  @rule-0553 @ears-event-driven
   Rule: When a lecturer opens the lab view, the time dashboard shall show a median row holding the median minutes per lab and per step among the students who started it.
 
     Scenario: Calculate and display lab medians

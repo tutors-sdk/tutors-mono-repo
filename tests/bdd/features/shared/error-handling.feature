@@ -4,7 +4,7 @@ Feature: Error Handling
   I want the system to handle errors gracefully
   So that I receive useful feedback instead of blank screens or crashes
 
-  @rule-0521 @ears-unwanted
+  @rule-0531 @ears-unwanted
   Rule: If the course host answers 404 for a course, then the reader shall fail the load with a not-found message, log the error and cache nothing for that course.
 
     Scenario: Invalid course URL
@@ -15,7 +15,7 @@ Feature: Error Handling
       And the reader shall log the error "Error fetching course"
       And the reader shall not cache a course for "no-such-course"
 
-  @rule-0522 @ears-unwanted
+  @rule-0532 @ears-unwanted
   Rule: If the network fails while the reader loads a course, then the reader shall fail the load, cache nothing and load the course on the next attempt once the network is back.
 
     Scenario: Network failure during course load
@@ -27,7 +27,7 @@ Feature: Error Handling
       When the network is restored and the reader loads the course "web-dev-101" again
       Then the course title shall be "Web Development 101"
 
-  @rule-0523 @ears-unwanted
+  @rule-0533 @ears-unwanted
   Rule: If a course's JSON is cut off, has no learning objects or is null, then the reader shall fail the load, log the error and cache nothing for that course.
 
     Scenario Outline: Malformed course JSON
@@ -43,7 +43,7 @@ Feature: Error Handling
         | a course with no learning objects   |
         | a null document                     |
 
-  @rule-0524 @ears-unwanted
+  @rule-0534 @ears-unwanted
   Rule: If the database query for the catalogue fails, then the catalogue shall list no courses until the database answers again.
 
     Scenario: Supabase query failure

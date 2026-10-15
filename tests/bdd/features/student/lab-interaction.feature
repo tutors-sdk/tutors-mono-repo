@@ -8,7 +8,7 @@ Feature: Lab Interaction
     Given the generator has published the course "web-dev-101" titled "Web Development 101"
     And the topic "HTML Fundamentals" holds the lab "First Web Page"
 
-  @rule-0529 @ears-event-driven
+  @rule-0539 @ears-event-driven
   Rule: When a student opens a lab, the reader shall show its first step with a navigation panel listing every step title.
 
     Scenario: Navigate through lab steps
@@ -17,7 +17,7 @@ Feature: Lab Interaction
       Then the system shall display the content for the step "Step 1"
       And the system shall show a navigation panel with the step titles "Step 1, Step 2, Step 3, Step 4, Step 5"
 
-  @rule-0530 @ears-event-driven
+  @rule-0540 @ears-event-driven
   Rule: When a student moves to a lab step, the reader shall show that step, mark it as the current step and offer the steps before and after it.
 
     Scenario: Move between lab steps
@@ -28,7 +28,7 @@ Feature: Lab Interaction
       And the step navigation shall mark only "Step 4" as the current step
       And the step navigation shall offer "Step 3" as previous and "Step 5" as next
 
-  @rule-0531 @ears-event-driven
+  @rule-0541 @ears-event-driven
   Rule: When a student opens a lab step, the reader shall render its Markdown as HTML and mark each fenced code block with its language.
 
     Scenario: View lab with mixed content types
@@ -37,7 +37,7 @@ Feature: Lab Interaction
       Then the system shall render the markdown heading and paragraph as HTML
       And the system shall mark the code block with the language "javascript" for highlighting
 
-  @rule-0532 @ears-event-driven
+  @rule-0542 @ears-event-driven
   Rule: When a student follows a topic breadcrumb from a lab, the reader shall return to that topic.
 
     Scenario: Navigate via breadcrumbs
@@ -46,7 +46,7 @@ Feature: Lab Interaction
       When the student follows the breadcrumb "HTML Fundamentals"
       Then the system shall navigate back to the topic "HTML Fundamentals" at "/topic/web-dev-101/topic-0"
 
-  @rule-0533 @ears-event-driven
+  @rule-0543 @ears-event-driven
   Rule: When a student opens a lab that was published with a PDF, the reader shall link to the PDF on the course host.
 
     Scenario: View lab PDF companion

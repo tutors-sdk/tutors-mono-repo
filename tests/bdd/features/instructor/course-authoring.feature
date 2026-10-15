@@ -33,7 +33,7 @@ Feature: Course Authoring
         | lab  | 2     |
         | talk | 1     |
 
-  @rule-0510 @ears-event-driven
+  @rule-0520 @ears-event-driven
   Rule: When the reader loads a course, the reader shall list a topic's learning objects that have an order value first, by that value, and the rest after them in authored order.
 
     Scenario: Course with frontMatter ordering
@@ -47,7 +47,7 @@ Feature: Course Authoring
       Then the system shall sort ordered LOs first by their order value, as "Lab A, Lab B"
       And unordered LOs shall appear after ordered ones, in authored sequence, as "Lab C, Lab D"
 
-  @rule-0511 @ears-event-driven
+  @rule-0521 @ears-event-driven
   Rule: When the reader loads a course, the reader shall take its portfolio layout and its authentication level from the course properties.
 
     Scenario: Course properties are applied

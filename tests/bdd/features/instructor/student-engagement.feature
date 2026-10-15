@@ -7,7 +7,7 @@ Feature: Student Engagement Monitoring
   Background:
     Given the course "web-dev-101" is published with 2 labs
 
-  @rule-0512 @ears-event-driven
+  @rule-0522 @ears-event-driven
   Rule: When students open a course, the live dashboard shall show how many are online with the name and avatar of each.
 
     Scenario: View currently online students
@@ -19,7 +19,7 @@ Feature: Student Engagement Monitoring
         | Alice | https://avatars.example/alice.png   |
         | Bob   | https://avatars.example/bob.png     |
 
-  @rule-0513 @ears-event-driven
+  @rule-0523 @ears-event-driven
   Rule: When a lecturer loads the latest activity of a course, the live dashboard shall list each student's latest learning object and time, most recent first.
 
     Scenario: View latest activity feed
@@ -32,7 +32,7 @@ Feature: Student Engagement Monitoring
         | Bob     | Lab 2           | 2026-03-18T10:05:00.000Z |
         | Alice   | Lab 1           | 2026-03-18T10:00:00.000Z |
 
-  @rule-0514 @ears-ubiquitous
+  @rule-0524 @ears-ubiquitous
   Rule: The live dashboard shall count each activity in today, this week, this month and this year according to when it was received.
 
     Scenario Outline: Filter engagement by time period

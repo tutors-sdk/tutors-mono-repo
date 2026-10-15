@@ -8,7 +8,7 @@ Feature: Learning Progress Tracking
     Given the course "web-dev-101" is published with 2 labs
     And the student "Alice" is signed in
 
-  @rule-0534 @ears-event-driven
+  @rule-0544 @ears-event-driven
   Rule: When a lecturer loads the time report of a course, the time dashboard shall show each student's total time active in hours and minutes.
 
     Scenario: View time spent on a course
@@ -17,7 +17,7 @@ Feature: Learning Progress Tracking
       Then the system shall display 90 minutes of total time active for "alice"
       And time shall be displayed in hours and minutes as "1h 30"
 
-  @rule-0535 @ears-event-driven
+  @rule-0545 @ears-event-driven
   Rule: When a signed-in student views a learning object, the reader shall count the page load and record each 30 seconds of activity against the learning object and the day's calendar.
 
     Scenario: Record learning activity
@@ -26,7 +26,7 @@ Feature: Learning Progress Tracking
       Then the system shall record 2 more blocks of time active against the lab and against the calendar for today
       And the system shall increment the page load count for the lab to 2
 
-  @rule-0536 @ears-event-driven
+  @rule-0546 @ears-event-driven
   Rule: When the dashboard of a signed-in student loads, the reader shall list the courses the student accessed recently with the date of each last visit.
 
     Scenario: Resume from last accessed position
@@ -35,7 +35,7 @@ Feature: Learning Progress Tracking
       Then the system shall list "web-dev-101" among the recently accessed courses
       And the entry shall show today as the last accessed date
 
-  @rule-0537 @ears-event-driven
+  @rule-0547 @ears-event-driven
   Rule: When a student stars a course, the reader shall store the course among the favourites in the student's profile.
 
     Scenario: Star a favourite course
@@ -44,7 +44,7 @@ Feature: Learning Progress Tracking
       Then the system shall store "web-dev-101" as a favourite in the profile of the student
       And the home page shall load "web-dev-101" among the favourites of the student
 
-  @rule-0538 @ears-event-driven
+  @rule-0548 @ears-event-driven
   Rule: When a signed-in student views learning objects in more than one course, the reader shall count page loads per learning object, grouped by course.
 
     Scenario: View learning records per learning object
