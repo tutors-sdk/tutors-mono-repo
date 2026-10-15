@@ -34,3 +34,13 @@ Feature: Course Discovery
       When a student navigates to the course
       Then the reader shall display the course title "Introduction to Computing" and the summary "<p>Introduction to Computing summary</p>"
       And the reader shall display the topics in the order "Hardware, Networks, Software"
+
+  @rule-0370 @ears-unwanted
+  Rule: If Supabase is not configured, then the catalogue shall show an empty catalogue and a student count of 0 without logging an error.
+
+    Scenario: Open the catalogue with no Supabase configured
+      Given Supabase is not configured
+      When a student opens the catalogue
+      Then the catalogue shall display no courses
+      And the catalogue shall show a student count of 0
+      And no error shall be logged
