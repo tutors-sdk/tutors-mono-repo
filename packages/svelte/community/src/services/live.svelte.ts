@@ -3,12 +3,16 @@ import { topics, type Subscription } from "@tutors/realtime";
 import { refreshLoRecord } from "./presence.svelte.ts";
 import { rune } from "@tutors/runes";
 import { LoRecord, type LiveService } from "../types.svelte.ts";
-import { supabase } from "../utils/supabase-client.ts";
+import { getTutorsConnectRecentLos, getTutorsConnectRecentLosByCourseId, supabase } from "../utils/supabase-client.ts";
+import { watchLiveFeed } from "./live-feed.ts";
 import { realtime } from "./realtime.ts";
 
 const RECEIVE_OWN = { self: true };
 
 let globalSubscription: Subscription | null = null;
+/** Stop the watcher reports (and stored-activity reads) of the platform feed and of the course feed. */
+let stopGlobalFeed: (() => void) | null = null;
+let stopCourseFeed: (() => void) | null = null;
 
 export const liveService: LiveService = {
   listeningForCourse: rune<string>(""),
@@ -64,9 +68,14 @@ export const liveService: LiveService = {
       { events: ["lo-event"], onMessage: (event, payload) => this.broadcastListener({ type: "broadcast", event, payload }) },
       RECEIVE_OWN
     );
+    stopGlobalFeed = watchLiveFeed(topics.platformActivity(), getTutorsConnectRecentLos, (record) =>
+      this.broadcastListener({ type: "broadcast", event: "lo-event", payload: record })
+    );
   },
 
   stopGlobalPresenceService() {
+    stopGlobalFeed?.();
+    stopGlobalFeed = null;
     void globalSubscription?.close();
     globalSubscription = null;
     this.listeningAll = false;
@@ -81,6 +90,7 @@ export const liveService: LiveService = {
     if (this.courseSubscription && this.listeningForCourse.value === courseId) return;
 
     void this.courseSubscription?.close();
+    stopCourseFeed?.();
 
     this.listeningForCourse.value = courseId;
     this.studentsOnline.value = [];
@@ -90,6 +100,11 @@ export const liveService: LiveService = {
       topics.courseActivity(courseId),
       { events: ["lo-event"], onMessage: (event, payload) => this.studentListener({ type: "broadcast", event, payload }) },
       RECEIVE_OWN
+    );
+    stopCourseFeed = watchLiveFeed(
+      topics.courseActivity(courseId),
+      (since) => getTutorsConnectRecentLosByCourseId(courseId, since),
+      (record) => this.studentListener({ type: "broadcast", event: "lo-event", payload: record })
     );
   }
 };

@@ -7,6 +7,7 @@ Feature: Live Presence
   Background:
     Given the course "web-dev-101" is published with 2 labs
     And the student "Alice" is signed in
+    And a live dashboard is watching the course and the platform feeds
 
   @ears-event-driven
   Scenario: See online students count

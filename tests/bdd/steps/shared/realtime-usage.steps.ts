@@ -8,7 +8,7 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, onlineListLoads, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, liveWatcher, loEventArrives, onlineListLoads, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
 import { recorder, settle, type RecordingChannel } from "../../support/supabase-recorder.ts";
 import { mountWhiteboardEditor } from "../../support/whiteboard-editor.ts";
 import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";
@@ -132,9 +132,13 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       When("the live service is asked to monitor {string} again", (_ctx, courseId: string) => liveService.startCoursePresenceListener(courseId));
       Then("the original live course channel remains subscribed", () => expect(recorder.joined(course.courseId)).toEqual([original]));
     });
-    RuleScenario("Repeated global publishing reuses one publish-only channel", ({ When, Then }) => {
-      When("course activity is published {number} times", (_ctx, count: number) => {
+    // The reader's server publishes for the browser, and only to a feed a Live tab is watching.
+    RuleScenario("Repeated global publishing reuses one publish-only channel", ({ Given, When, Then }) => {
+      Given("a live dashboard is watching the platform feed", () => liveWatcher(ALL_COURSES_CHANNEL, "live-tab"));
+      When("course activity is published {number} times", async (_ctx, count: number) => {
         for (let i = 0; i < count; i++) presenceService.sendLoEvent(course, labsOf(course)[0], githubUser("Alice"));
+        await settle();
+        expect(recorder.sentOn(ALL_COURSES_CHANNEL)).toHaveLength(count);
       });
       Then("one global channel exists without a subscription", () => {
         expect(recorder.channels.filter((channel) => channel.name === ALL_COURSES_CHANNEL)).toHaveLength(1);
@@ -589,7 +593,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
         And("no course channel remains subscribed", noCourseChannel);
       });
       RuleScenario("The student's activity is published to the course without joining it", ({ Given, When, Then, And }) => {
-        Given("{string} is signed in with sharing {word}", signInWithSharing);
+        Given("a live dashboard is watching the course feed", () => liveWatcher(course.courseId, "live-tab"));
+        And("{string} is signed in with sharing {word}", signInWithSharing);
         When("the student enters the course", enterCourse);
         Then("the course activity is published through HTTP", () => {
           const published = recorder.sentOn(course.courseId).map((message) => message.payload as { courseId?: string; user?: { fullName?: string } });

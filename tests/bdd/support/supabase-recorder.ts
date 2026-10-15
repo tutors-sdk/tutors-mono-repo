@@ -23,6 +23,7 @@ export type TableCall = {
   /** How many rows a select handed back, so a step can see what the database actually returned. */
   returned?: number;
   order?: { column: string; ascending: boolean };
+  limit?: number;
 };
 
 export type RpcCall = { fn: string; args: Row };
@@ -80,6 +81,11 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
+  limit(count: number) {
+    this.call.limit = count;
+    return this;
+  }
+
   single() {
     this.mode = "single";
     return this;
@@ -129,7 +135,7 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       const direction = order.ascending ? 1 : -1;
       found.sort((a, b) => String(a[order.column]).localeCompare(String(b[order.column])) * direction);
     }
-    if (this.mode === "many") return { data: found, error: null };
+    if (this.mode === "many") return { data: this.call.limit === undefined ? found : found.slice(0, this.call.limit), error: null };
     if (found.length === 0 && this.mode === "single") return { data: null, error: { message: "no rows", code: "PGRST116" } };
     return { data: found[0] ?? null, error: null };
   }
@@ -190,6 +196,10 @@ export class RecordingChannel {
   }
 }
 
+const DEFAULT_LIVE_SETTINGS = { live_daily_budget: 120000, slow_at: 0.7, pause_at: 0.9, watcher_ttl_seconds: 90 };
+/** topics.platformActivity() in @tutors/realtime. */
+const PLATFORM_TOPIC = "tutors-all-course-access";
+
 export class RecordingSupabase {
   tableCalls: TableCall[] = [];
   rpcCalls: RpcCall[] = [];
@@ -198,9 +208,12 @@ export class RecordingSupabase {
   /** Whether the broker confirms joins; off plays a broker that accepts the socket but never the join. */
   confirmJoins = true;
   missingFunctions = new Set<string>();
+  /** realtime_settings, as supabase/migrations/20261016_realtime_live_budget.sql seeds it. */
+  liveSettings = { ...DEFAULT_LIVE_SETTINGS };
   private tables = new Map<string, Row[]>();
 
   reset() {
+    this.liveSettings = { ...DEFAULT_LIVE_SETTINGS };
     this.tableCalls = [];
     this.rpcCalls = [];
     this.tableErrors.clear();
@@ -227,7 +240,8 @@ export class RecordingSupabase {
    * The database functions the reader calls, doing what their SQL does. `get_count_learning_records`
    * reports the stored value of a learning record field; `increment_calendar` adds one to a calendar
    * field; `record_page_view` and `record_heartbeat` are the single-request writes in
-   * supabase/migrations/20261014_record_page_view_and_heartbeat.sql. A function named in
+   * supabase/migrations/20261014_record_page_view_and_heartbeat.sql; `realtime_watch` and
+   * `realtime_claim_live_publish` are Tutors Live's budget in 20261016_realtime_live_budget.sql. A function named in
    * `missingFunctions` answers as PostgREST does for one the database lacks.
    */
   rpc(fn: string, args: Row) {
@@ -254,11 +268,65 @@ export class RecordingSupabase {
       if (cal) Object.assign(cal, { timeactive: Number(cal.timeactive ?? 0) + 1, pageloads: Number(cal.pageloads ?? 0) + 1 });
       else this.rows("calendar").push({ id: args.p_day, studentid: args.p_student_id, courseid: args.p_course_id, timeactive: 1, pageloads: 1 });
     }
+    if (fn === "realtime_watch") {
+      const watchers = this.rows("realtime_watchers");
+      const at = watchers.findIndex((w) => w.topic === args.p_topic && w.watcher === args.p_watcher);
+      const row = { topic: args.p_topic, watcher: args.p_watcher, seen_at: new Date().toISOString() };
+      if (at >= 0) watchers[at] = row;
+      else watchers.push(row);
+      return Promise.resolve({ data: { tier: this.liveTier() }, error: null });
+    }
+    if (fn === "realtime_claim_live_publish") return Promise.resolve({ data: this.claimLivePublish(String(args.p_course_id)), error: null });
     if (fn === "record_heartbeat") {
       if (args.p_lo_id != null) bump(record(args.p_course_id, args.p_student_id, args.p_lo_id), "duration");
       bump(day(args.p_day, args.p_student_id, args.p_course_id), "timeactive");
     }
     return Promise.resolve({ data: null, error: null });
+  }
+
+  /** Today's (UTC) row of realtime_budget: the Realtime messages Live's publishing has spent. */
+  liveSpent(): number {
+    const day = new Date().toISOString().slice(0, 10);
+    return Number(this.rows("realtime_budget").find((r) => r.day === day)?.sent ?? 0);
+  }
+
+  /** live_budget_tier for today. */
+  liveTier(): "normal" | "slow" | "paused" {
+    const { live_daily_budget: budget, slow_at, pause_at } = this.liveSettings;
+    const sent = this.liveSpent();
+    if (sent >= budget * pause_at) return "paused";
+    if (sent >= budget * slow_at) return "slow";
+    return "normal";
+  }
+
+  /** realtime_claim_live_publish: the watched topics the budget allows, charged at 1 + watchers each. */
+  private claimLivePublish(courseId: string): { tier: string; topics: string[] } {
+    const cutoff = Date.now() - this.liveSettings.watcher_ttl_seconds * 1000;
+    const watchers = this.rows("realtime_watchers");
+    watchers.splice(0, watchers.length, ...watchers.filter((w) => Date.parse(String(w.seen_at)) >= cutoff));
+    const tier = this.liveTier();
+    if (tier === "paused") return { tier, topics: [] };
+    const count = (topic: string) => watchers.filter((w) => w.topic === topic).length;
+    const topics: string[] = [];
+    let cost = 0;
+    if (count(courseId) > 0) {
+      topics.push(courseId);
+      cost += 1 + count(courseId);
+    }
+    if (tier === "normal" && count(PLATFORM_TOPIC) > 0) {
+      topics.push(PLATFORM_TOPIC);
+      cost += 1 + count(PLATFORM_TOPIC);
+    }
+    if (cost > 0) this.spendLive(cost);
+    return { tier, topics };
+  }
+
+  /** Adds to today's realtime_budget row, as a claim does; a scenario uses it to put the day at a given spend. */
+  spendLive(messages: number) {
+    const day = new Date().toISOString().slice(0, 10);
+    const row = this.rows("realtime_budget").find((r) => r.day === day);
+    if (row) row.sent = Number(row.sent) + messages;
+    else this.rows("realtime_budget").push({ day, sent: messages });
   }
 
   channel(name: string, options?: RecordingChannel["options"]) {

@@ -7,6 +7,8 @@ import type { TutorsId } from "@tutors/tutors-model-lib";
 import { topics } from "@tutors/realtime";
 import { getTutorsConnectRecentLosByCourseId, supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
 import { realtime } from "./realtime.ts";
+import { watchLiveFeed } from "./live-feed.ts";
+import log from "@tutors/logger";
 
 /**
  * The reader's online list is read from stored activity, not delivered over Realtime. A course channel
@@ -20,6 +22,8 @@ let rosterTimer: ReturnType<typeof setInterval> | null = null;
 let rosterGeneration = 0;
 /** The student this browser reports as; kept on the list even when their stored row has aged out. */
 let selfId = "";
+/** Stops Tutors Live's watcher reports for the course page it shows. */
+let stopLiveFeed: (() => void) | null = null;
 
 export const presenceService: PresenceService = {
   courseSubscription: null,
@@ -54,6 +58,11 @@ export const presenceService: PresenceService = {
       events: ["lo-event"],
       onMessage: (event, payload) => this.studentListener({ type: "broadcast", event, payload })
     });
+    stopLiveFeed = watchLiveFeed(
+      topics.courseActivity(courseId),
+      (since) => getTutorsConnectRecentLosByCourseId(courseId, since),
+      (record) => this.studentListener({ type: "broadcast", event: "lo-event", payload: record })
+    );
   },
 
   async startCourseRoster(courseId: string) {
@@ -106,6 +115,8 @@ export const presenceService: PresenceService = {
   },
 
   stopPresenceListener() {
+    stopLiveFeed?.();
+    stopLiveFeed = null;
     if (rosterTimer) clearInterval(rosterTimer);
     rosterTimer = null;
     rosterGeneration++;
@@ -134,18 +145,32 @@ export const presenceService: PresenceService = {
       loRecord.icon = lo.icon;
     }
 
-    // Published without joining: only Tutors Live subscribes to either feed.
-    realtime.publish(topics.platformActivity(), "lo-event", loRecord);
     selfId = loRecord.user?.id ?? "";
     this.studentListener({ type: "broadcast", event: "lo-event", payload: loRecord });
-    const subscription = this.listeningTo === course.courseId ? this.courseSubscription : null;
-    if (!subscription?.send("lo-event", loRecord)) {
-      realtime.publish(topics.courseActivity(course.courseId), "lo-event", loRecord);
-    }
-
+    // The browser publishes nothing over Realtime: the reader's server publishes to Tutors Live, and only
+    // to the feeds a Live tab is watching, within the day's budget.
+    reportLiveActivity(loRecord);
     void upsertTutorsConnectLatestLo(loRecord);
   }
 };
+
+/** The reader's server route that publishes learning events to Tutors Live (apps/reader/src/routes/api/live/activity). */
+export const LIVE_ACTIVITY_ROUTE = "/api/live/activity";
+
+/** Fire-and-forget: `keepalive` lets the request finish when the student is leaving the page. */
+function reportLiveActivity(loRecord: LoRecord) {
+  if (typeof fetch !== "function") return;
+  try {
+    void fetch(LIVE_ACTIVITY_ROUTE, {
+      method: "POST",
+      keepalive: true,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(loRecord)
+    }).catch((error: unknown) => log.warn("Reporting live activity failed:", error));
+  } catch (error) {
+    log.warn("Reporting live activity failed:", error);
+  }
+}
 
 export function refreshLoRecord(loEvent: LoRecord, nextLoEvent: LoRecord) {
   loEvent.loRoute = nextLoEvent.loRoute;

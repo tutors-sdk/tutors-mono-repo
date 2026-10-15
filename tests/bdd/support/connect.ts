@@ -1,6 +1,7 @@
 import "./svelte-runes-shim.ts";
 import { vi } from "vitest";
 import { decorateCourseTree, type Course, type Enrollment, type Lo, type TutorsId } from "../../../packages/jsr/model/src/tutors.ts";
+import type { LoRecord } from "../../../packages/svelte/community/src/types.svelte.ts";
 import { liveService } from "../../../packages/svelte/community/src/services/live.svelte.ts";
 import { presenceService } from "../../../packages/svelte/community/src/services/presence.svelte.ts";
 import { realtime } from "../../../packages/svelte/community/src/services/realtime.ts";
@@ -12,6 +13,7 @@ import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/run
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
 import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
+import { POST as postLiveActivity } from "../../../apps/reader/src/routes/api/live/activity/+server.ts";
 
 /**
  * Drives the reader's connect, analytics, presence and live services the way
@@ -22,6 +24,38 @@ import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
  */
 
 export const ALL_COURSES_CHANNEL = "tutors-all-course-access";
+
+/** What the reader's server received on POST /api/live/activity, and how it answered. */
+export type LiveActivityPost = { body: unknown; status: number; answer: unknown };
+export const readerServer = { posts: [] as LiveActivityPost[] };
+
+/**
+ * The browser's `fetch`, wired to the reader's server: POST /api/live/activity runs the real route
+ * handler, the way SvelteKit would. Anything else is a 404, so a scenario never reaches the network.
+ */
+async function readerFetch(input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]): Promise<Response> {
+  const url = String(input);
+  if (url !== "/api/live/activity" || init?.method !== "POST") return new Response(null, { status: 404 });
+  const request = new Request(`https://reader.invalid${url}`, { method: "POST", headers: init.headers, body: init.body });
+  const response = await postLiveActivity({ request } as Parameters<typeof postLiveActivity>[0]);
+  const text = await response.clone().text();
+  readerServer.posts.push({ body: JSON.parse(String(init.body)), status: response.status, answer: text ? JSON.parse(text) : null });
+  return response;
+}
+
+/** Sends a body to the reader's server as any client could, not only the reader's own pages. */
+export async function postToReaderServer(body: string): Promise<{ status: number; answer: unknown }> {
+  const response = await postLiveActivity({
+    request: new Request("https://reader.invalid/api/live/activity", { method: "POST", headers: { "content-type": "application/json" }, body })
+  } as Parameters<typeof postLiveActivity>[0]);
+  const text = await response.text();
+  return { status: response.status, answer: text ? JSON.parse(text) : null };
+}
+
+/** A Tutors Live tab, in another browser, reported itself as a watcher of `topic` `secondsAgo` before now. */
+export function liveWatcher(topic: string, watcher: string, secondsAgo = 0): void {
+  recorder.rows("realtime_watchers").push({ topic, watcher, seen_at: new Date(Date.now() - secondsAgo * 1000).toISOString() });
+}
 
 /** A browser tab with nobody signed in, no course open and nobody online. */
 export function freshBrowser(): void {
@@ -35,6 +69,8 @@ export function freshBrowser(): void {
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("window", { localStorage: storage });
   vi.stubGlobal("document", { hidden: false });
+  vi.stubGlobal("fetch", readerFetch);
+  readerServer.posts = [];
 
   tutorsId.value = null;
   currentCourse.value = null;
@@ -162,6 +198,14 @@ export function storedActivity(name: string, course: Course, lo: Lo, minutesAgo:
   const at = rows.findIndex((existing) => existing.course_id === row.course_id && existing.student_id === row.student_id);
   if (at >= 0) rows[at] = row;
   else rows.push(row);
+}
+
+/** The learning events the reader stored for Tutors Live for `name`, in order: its upserts into tutors-connect-latest. */
+export function liveActivityStored(name: string): LoRecord[] {
+  return recorder
+    .upserts("tutors-connect-latest")
+    .map((row) => row.payload as LoRecord)
+    .filter((payload) => payload.user?.fullName === name);
 }
 
 /** How many times the reader asked the database for a course's online list. */

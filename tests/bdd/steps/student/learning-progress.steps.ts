@@ -11,10 +11,9 @@ vi.mock("$app/env/public", async () => (await import("../../support/supabase-rec
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import { freshBrowser, liveActivityStored, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
-import type { LoRecord } from "../../../../packages/svelte/community/src/types.svelte.ts";
 import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
 import { CourseTime } from "../../../../packages/jsr/time/src/services/course-time.ts";
 import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
@@ -172,8 +171,8 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
   });
 
   Rule("When a student opens a learning object, the reader shall report one learning event for it.", ({ RuleScenario }) => {
-    /** Every event the reader published for `name`, in order. */
-    const reported = (name: string) => recorder.sentOn(ALL_COURSES_CHANNEL).map((message) => message.payload as LoRecord).filter((payload) => payload.user?.fullName === name);
+    /** Every event the reader stored for Tutors Live for `name`, in order: one upsert per learning event. */
+    const reported = (name: string) => liveActivityStored(name);
     const viewLab = (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
     const countedViews = (_ctx: unknown, count: number) => expect(learningRecord(course.courseId, 1)).toMatchObject({ count });
     const reportedCount = (_ctx: unknown, count: number, name: string) => expect(reported(name)).toHaveLength(count);
@@ -207,7 +206,7 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
   });
 
   Rule("When a student moves to another learning object, the reader shall report one learning event, for the learning object they arrive at.", ({ RuleScenario }) => {
-    const reported = (name: string) => recorder.sentOn(ALL_COURSES_CHANNEL).map((message) => message.payload as LoRecord).filter((payload) => payload.user?.fullName === name);
+    const reported = (name: string) => liveActivityStored(name);
     const reportedCount = (_ctx: unknown, count: number, name: string) => expect(reported(name)).toHaveLength(count);
     const viewLab = (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
     /** The route params SvelteKit gives a lab page: `/lab/[courseid]/[...loid]`. */
