@@ -71,7 +71,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- whiteboard_scenes comes from 20260925100000. The old hand-run script installed a public read
+  -- whiteboard_scenes comes from 20261017000000. The old hand-run script installed a public read
   -- policy on some databases (never on tutors-prod).
   DROP POLICY IF EXISTS "Anyone can read whiteboard scenes" ON public.whiteboard_scenes;
   DROP POLICY IF EXISTS "Authenticated users can upsert whiteboard scenes" ON public.whiteboard_scenes;
