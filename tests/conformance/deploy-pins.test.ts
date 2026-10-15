@@ -277,3 +277,40 @@ describe("deploy.yml tells the release harness only after the overlays are verif
     expect(check?.run).toContain("--registry");
   });
 });
+
+describe("deploy-pin-pr.yml opens the pin pull request for a final tag, and deploys nothing", () => {
+  const text = readFileSync(join(REPO_ROOT, ".github/workflows/deploy-pin-pr.yml"), "utf8");
+  const workflow = yaml.load(text) as Workflow & { on: { workflow_run?: { workflows: string[]; types: string[] } } };
+  const pin = workflow.jobs.pin;
+  const run = pin.steps.map((step) => step.run ?? "").join("\n");
+
+  it("follows image-build.yml's runs, and a person can start it with a version", () => {
+    const imageBuild = yaml.load(readFileSync(join(REPO_ROOT, ".github/workflows/image-build.yml"), "utf8")) as { name: string };
+    expect(workflow.on.workflow_run).toEqual({ workflows: [imageBuild.name], types: ["completed"] });
+    expect(Object.keys(workflow.on).sort()).toEqual(["workflow_dispatch", "workflow_run"]);
+    expect(pin.if).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(pin.if).toContain("github.event.workflow_run.event == 'push'");
+  });
+
+  it("pins final releases only, never a release candidate", () => {
+    expect(run).toContain("^[0-9]+\\.[0-9]+\\.[0-9]+$");
+  });
+
+  it("holds no permission by default and only what a branch and a pull request need in its job", () => {
+    expect(workflow.permissions).toEqual({});
+    expect(pin.permissions).toEqual({ contents: "write", "pull-requests": "write" });
+  });
+
+  it("pins with pnpm deploy:pin on a deploy/pin-X.Y.Z branch, never release/*, and never pushes to main", () => {
+    expect(run).toContain('pnpm --silent deploy:pin "$VERSION"');
+    expect(run).toContain('branch="deploy/pin-$VERSION"');
+    expect(text).not.toMatch(/refs\/heads\/(release|main)/);
+    expect(run).toContain('"HEAD:refs/heads/$BRANCH"');
+    expect(run).toContain("--base main");
+  });
+
+  it("never holds HARNESS_TOKEN: telling the harness stays deploy.yml's, after the merge", () => {
+    expect(text).not.toContain("HARNESS_TOKEN");
+    expect(text).not.toContain("/dispatches");
+  });
+});
