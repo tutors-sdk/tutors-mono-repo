@@ -173,7 +173,8 @@ tutors-mono-repo/
 │   │   ├── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
 │   │   ├── create/             # @tutors/tutors-create (course scaffolder)
 │   │   ├── types/              # @tutors/tutors-types (shared types)
-│   │   └── identity/           # @tutors/identity (identity contracts)
+│   │   ├── identity/           # @tutors/identity (identity contracts)
+│   │   └── realtime/           # @tutors/realtime (Realtime port and budgeted gateway)
 │   │
 │   └── svelte/                 # Svelte-specific packages
 │       ├── runes/              # @tutors/runes
@@ -181,6 +182,7 @@ tutors-mono-repo/
 │       ├── themes/             # @tutors/themes
 │       ├── community/          # @tutors/community
 │       ├── connect/            # @tutors/connect
+│       ├── realtime-supabase/  # @tutors/realtime-supabase (Supabase Realtime adapter)
 │       ├── ui-primitives/      # @tutors/ui-primitives
 │       ├── ui-navigators/      # @tutors/ui-navigators
 │       ├── ui-components/      # @tutors/ui-components
@@ -1278,27 +1280,25 @@ Real-time features use **Supabase Realtime Broadcast channels**, which are part 
 
 Readers never join a course channel: a course channel delivers every student's page view to every other student, so its cost grows with the square of the class. While activity sharing is enabled, the reader publishes each page view over HTTP to the course channel and the platform-wide feed, updates its own activity locally, and reads the course online list from `tutors-connect-latest` (rows from the last 5 minutes) on entry and every 60 seconds while the tab is visible. Tutors Live's course page is the only subscriber to a course channel, and its landing page the only subscriber to the platform-wide feed, each only while mounted.
 
+Every channel and broadcast goes through the Realtime port, `@tutors/realtime`, and the tab's one gateway in `@tutors/community` (`services/realtime.ts`). Only the Supabase adapter, `@tutors/realtime-supabase`, calls `.channel()`; `tests/architecture/realtime-boundary.test.ts` holds that line. The gateway keeps a tab within its budget (10 broadcasts a second, 3 joined channels), leaves a failing channel and rejoins it after a full-jitter exponential backoff (1 s doubling to 30 s), and counts what each topic sends, receives, drops and refuses. Topic names come from `topics`, so they change in one place.
+
 ```typescript
-import { supabase } from "../utils/supabase-client";
+import { topics } from "@tutors/realtime";
+import { realtime } from "./realtime.ts";
 
-// Subscribe to a channel (equivalent to joining a room)
-const channel = supabase
-  .channel(courseId, { config: { broadcast: { self: false } } })
-  .on("broadcast", { event: "lo-event" }, (payload) => {
-    const data = payload.payload;
+// Publish without joining: one HTTP request, delivered only to the topic's subscribers
+realtime.publish(topics.courseActivity(courseId), "lo-event", loRecord);
+
+// Join (Tutors Live only); the gateway shares the channel if this tab already joined it
+const subscription = realtime.subscribe(topics.courseActivity(courseId), {
+  events: ["lo-event"],
+  onMessage: (event, payload) => {
     // Handle presence update
-  })
-  .subscribe();
-
-// Send a broadcast message
-channel.send({
-  type: "broadcast",
-  event: "lo-event",
-  payload: { type: "presence", user: userId, page: currentPage }
+  }
 });
 
-// Cleanup
-supabase.removeChannel(channel);
+subscription.send("lo-event", loRecord); // false while the link is degraded or the budget is spent
+await subscription.close();
 ```
 
 ---

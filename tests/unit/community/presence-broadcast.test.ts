@@ -6,14 +6,17 @@ import type { Course, Lo } from "@tutors/tutors-model-lib";
  * The platform-wide broadcast is fire-and-forget: Tutors Live losing an event must not stop the
  * course channel or the latest-LO upsert behind it, and the loss must reach the log. `httpSend`
  * fails two ways - it rejects on a failed POST, and throws synchronously where the Realtime client
- * has no `httpSend` - and each has its own arm in `sendLoEvent`.
+ * has no `httpSend` - and the Realtime gateway turns both into one logged failure.
  */
 
 const { mockUpsert, mockChannel, allChannel, courseChannel } = vi.hoisted(() => {
   const allChannel = { httpSend: vi.fn() };
   const courseChannel = { send: vi.fn(), on: vi.fn(), subscribe: vi.fn() };
   courseChannel.on.mockReturnValue(courseChannel);
-  courseChannel.subscribe.mockReturnValue(courseChannel);
+  courseChannel.subscribe.mockImplementation((callback?: (status: string) => void) => {
+    callback?.("SUBSCRIBED");
+    return courseChannel;
+  });
   return {
     mockUpsert: vi.fn(),
     allChannel,
@@ -57,7 +60,7 @@ describe("presence-service: a failed platform-wide broadcast does not stop the r
     vi.clearAllMocks();
     // An anonymous id is minted from localStorage even for a student who shares their name.
     vi.stubGlobal("window", { localStorage: { tutorsTimeId: "anon-1" } });
-    presenceService.connectToAllCourseAccess();
+    presenceService.stopPresenceListener();
     await presenceService.startPresenceListener("web-dev");
   });
 
@@ -70,7 +73,7 @@ describe("presence-service: a failed platform-wide broadcast does not stop the r
 
     await sendAndSettle();
 
-    expect(log.error).toHaveBeenCalledWith("Broadcast to tutors-all-course-access failed:", expect.any(Error));
+    expect(log.error).toHaveBeenCalledWith("Realtime broadcast failed:", "tutors-all-course-access", expect.any(Error));
     expect(courseChannel.send).toHaveBeenCalledWith(expect.objectContaining({ event: "lo-event" }));
     expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({ courseId: "web-dev", title: "Lab 1" }));
   });
@@ -82,7 +85,7 @@ describe("presence-service: a failed platform-wide broadcast does not stop the r
 
     await sendAndSettle();
 
-    expect(log.error).toHaveBeenCalledWith("Broadcast to tutors-all-course-access failed:", expect.any(TypeError));
+    expect(log.error).toHaveBeenCalledWith("Realtime broadcast failed:", "tutors-all-course-access", expect.any(TypeError));
     expect(courseChannel.send).toHaveBeenCalledWith(expect.objectContaining({ event: "lo-event" }));
     expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({ courseId: "web-dev", title: "Lab 1" }));
   });

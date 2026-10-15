@@ -1,0 +1,17 @@
+{
+  "name": "@tutors/realtime-supabase",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Supabase Realtime adapter for the @tutors/realtime port",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tutors/realtime": "workspace:*"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.117.1"
+  }
+}

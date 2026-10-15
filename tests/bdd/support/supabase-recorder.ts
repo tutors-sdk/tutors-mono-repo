@@ -140,6 +140,7 @@ export class RecordingChannel {
   readonly handlers = new Map<string, BroadcastHandler[]>();
   subscribed = false;
   subscriptions = 0;
+  private statusCallback?: (status: string) => void;
 
   constructor(
     private readonly db: RecordingSupabase,
@@ -152,10 +153,18 @@ export class RecordingChannel {
     return this;
   }
 
-  subscribe() {
+  /** Joins at once, as a healthy broker would; `report` plays a broker status after that. */
+  subscribe(callback?: (status: string) => void) {
     this.subscribed = true;
     this.subscriptions++;
+    this.statusCallback = callback;
+    if (this.db.confirmJoins) callback?.("SUBSCRIBED");
     return this;
+  }
+
+  /** The broker reporting a status for this channel, such as CHANNEL_ERROR or TIMED_OUT. */
+  report(status: string) {
+    this.statusCallback?.(status);
   }
 
   /** Product code broadcasting: logged, then relayed with the configured sender-echo behaviour. */
@@ -186,6 +195,8 @@ export class RecordingSupabase {
   rpcCalls: RpcCall[] = [];
   tableErrors = new Map<string, DbError>();
   channels: RecordingChannel[] = [];
+  /** Whether the broker confirms joins; off plays a broker that accepts the socket but never the join. */
+  confirmJoins = true;
   missingFunctions = new Set<string>();
   private tables = new Map<string, Row[]>();
 
@@ -194,6 +205,7 @@ export class RecordingSupabase {
     this.rpcCalls = [];
     this.tableErrors.clear();
     this.channels = [];
+    this.confirmJoins = true;
     this.missingFunctions.clear();
     this.tables.clear();
   }
@@ -266,7 +278,7 @@ export class RecordingSupabase {
   /** Deliver a broadcast to every subscribed listener on the named channel. */
   relay(name: string, message: BroadcastMessage, sender?: RecordingChannel) {
     for (const channel of this.channels.filter((c) => c.name === name && c.subscribed && c !== sender)) {
-      for (const handler of channel.handlers.get(message.event) ?? []) handler(message);
+      for (const handler of [...(channel.handlers.get(message.event) ?? []), ...(channel.handlers.get("*") ?? [])]) handler(message);
     }
   }
 
@@ -291,8 +303,14 @@ export class RecordingSupabase {
 /** The one client every product module receives from the mocked `createClient`. */
 export const recorder = new RecordingSupabase();
 
+/** The options product code passed to each `createClient` call, in order. */
+export const clientOptions: unknown[] = [];
+
 /** Stands in for `createClient` from `@supabase/supabase-js`. */
-export const createClient = (): RecordingSupabase => recorder;
+export const createClient = (_url?: string, _key?: string, options?: unknown): RecordingSupabase => {
+  clientOptions.push(options);
+  return recorder;
+};
 
 /** `$app/env/public` as a configured, signed-in deployment. */
 export const publicEnv: Record<string, string> = {

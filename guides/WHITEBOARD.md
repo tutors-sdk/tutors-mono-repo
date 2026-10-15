@@ -89,8 +89,8 @@ WhiteboardViewer.svelte
 
 The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collaboration:
 
-- **Scene sync**: Broadcasts element changes via the `scene-update` event. Elements are merged by ID using Excalidraw's version numbers (higher version wins).
-- **Cursor sync**: Coalesces pointer positions into at most 20 `cursor-update` broadcasts per second, preserving the final position. Cursor colors are deterministically assigned from the user's ID. Pending scene and cursor timers are cleared and the channel is removed when the editor unmounts.
+- **Scene sync**: Batches element changes and sends them at most once every 250 ms via the `scene-update` event, so a long drag still reaches peers. Elements are merged by ID using Excalidraw's version numbers (higher version wins).
+- **Cursor sync**: Coalesces pointer positions into one `cursor-update` broadcast per interval, preserving the final position. Each broadcast is delivered to every other editor, so the interval grows with the room: 100 ms up to 3 participants, 250 ms up to 6, 500 ms up to 8, and no cursor broadcasts above 8 (Presence still shows who is there). A pointer that has moved less than 4 px with the same button since the last broadcast is not sent. Cursor colors are deterministically assigned from the user's ID. Pending scene and cursor timers are cleared and the channel is removed when the editor unmounts.
 - **User tracking**: Uses Supabase Presence to track active collaborators. When a user disconnects, they are automatically removed from the presence state.
 - **Solo rooms**: Scene and cursor broadcasts stop when no other editor is present; local scene saving continues. Skipped scene deltas retain the latest version of each element, including deletions, and are sent once when a peer appears in Presence. Each editor uses a distinct presence key, so two tabs belonging to the same user still collaborate.
 - **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table. `WhiteboardViewer.svelte` keeps a single `message` listener for its lifetime (it must keep receiving `scene-changed` after `editor-ready`) and ignores messages that do not come from its own iframe. The iframe is recreated when the mode or the personal/shared room changes, so each room starts with a fresh `editor-ready` handshake.
@@ -99,7 +99,7 @@ The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collabor
 
 ### Excalidraw Loading
 
-Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap — no bundling required. The editor additionally loads `@supabase/supabase-js` for real-time connectivity.
+Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap — no bundling required. The editor additionally loads `@supabase/supabase-js`, pinned to the version the workspace uses, for real-time connectivity.
 
 ## Development
 

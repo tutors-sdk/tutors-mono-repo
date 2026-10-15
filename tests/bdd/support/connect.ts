@@ -3,6 +3,7 @@ import { vi } from "vitest";
 import { decorateCourseTree, type Course, type Enrollment, type Lo, type TutorsId } from "../../../packages/jsr/model/src/tutors.ts";
 import { liveService } from "../../../packages/svelte/community/src/services/live.svelte.ts";
 import { presenceService } from "../../../packages/svelte/community/src/services/presence.svelte.ts";
+import { realtime } from "../../../packages/svelte/community/src/services/realtime.ts";
 import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
 import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
@@ -27,6 +28,7 @@ export function freshBrowser(): void {
   vi.clearAllMocks();
   liveService.stopGlobalPresenceService();
   presenceService.stopPresenceListener();
+  void realtime.reset();
   recorder.reset();
   recordingFunctions.missing = false;
   const storage = browserStorage();
@@ -43,11 +45,11 @@ export function freshBrowser(): void {
   localStorageProfile.courseVisits = [];
   supabaseProfile.courseVisits = [];
 
-  Object.assign(presenceService, { channelAll: null, channelCourse: null, listeningTo: "" });
+  Object.assign(presenceService, { courseSubscription: null, listeningTo: "" });
   presenceService.studentsOnline.value = [];
   presenceService.studentEventMap.clear();
 
-  Object.assign(liveService, { channelCourse: null, listeningAll: false });
+  Object.assign(liveService, { courseSubscription: null, listeningAll: false });
   liveService.listeningForCourse.value = "";
   liveService.coursesOnline.value = [];
   liveService.studentsOnline.value = [];

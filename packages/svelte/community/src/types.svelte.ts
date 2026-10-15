@@ -1,6 +1,6 @@
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import type { Course, IconType, Lo } from "@tutors/tutors-model-lib";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import type { Subscription } from "@tutors/realtime";
 /**
  * Minimal user information for learning object interactions
  */
@@ -50,10 +50,8 @@ export type LoEvent = LoRecord;
 export interface PresenceService {
   /** Currently online students in the active course */
   studentsOnline: { value: LoRecord[] };
-  /** Supabase Realtime channel for all course events across the platform */
-  channelAll: RealtimeChannel | null;
-  /** Supabase Realtime channel for events specific to the current course */
-  channelCourse: RealtimeChannel | null;
+  /** Tutors Live's subscription to the monitored course's activity */
+  courseSubscription: Subscription | null;
   /** Lookup table for quick access to student events */
   studentEventMap: Map<string, LoRecord>;
   /** ID of the course currently being monitored */
@@ -72,11 +70,6 @@ export interface PresenceService {
    * @param student - Student viewing the content
    */
   sendLoEvent(course: Course, lo: Lo, student: TutorsId): void;
-
-  /**
-   * Prepare the publish-only channel for platform-wide course activity
-   */
-  connectToAllCourseAccess(): void;
 
   /**
    * Begin monitoring activity in a specific course over Realtime (Tutors Live's course page)
@@ -113,8 +106,8 @@ export interface LiveService {
   studentEventMap: Map<string, LoRecord>;
   /** Quick lookup for course activity by ID */
   courseEventMap: Map<string, LoRecord>;
-  /** Supabase Realtime channel for course-specific events */
-  channelCourse: RealtimeChannel | null;
+  /** Subscription to the monitored course's activity */
+  courseSubscription: Subscription | null;
   /** Flag indicating if global monitoring is active */
   listeningAll: boolean;
 
