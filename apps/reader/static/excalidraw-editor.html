@@ -36,7 +36,7 @@
     import React, { createElement, useEffect, useRef, useState, useCallback } from "react";
     import { createRoot } from "react-dom/client";
     import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom";
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
 
     const CURSOR_COLORS = [
       "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
@@ -53,6 +53,17 @@
 
     const loadingEl = document.getElementById("loading");
 
+    // Every broadcast is billed once per receiver, so a room's cursor traffic grows with the square of its size.
+    // Larger rooms share cursors less often, and above 8 participants only Presence shows who is there.
+    const SCENE_BATCH_MS = 250;
+    const CURSOR_MIN_MOVE_PX = 4;
+    function cursorInterval(participants) {
+      if (participants <= 3) return 100;
+      if (participants <= 6) return 250;
+      if (participants <= 8) return 500;
+      return null;
+    }
+
     function ExcalidrawEditor({ config }) {
       const excalidrawAPIRef = useRef(null);
       const channelRef = useRef(null);
@@ -65,6 +76,10 @@
       const pendingCursorRef = useRef(null);
       const subscribedRef = useRef(false);
       const hasPeersRef = useRef(true);
+      const participantsRef = useRef(2);
+      const latestElementsRef = useRef(null);
+      const lastCursorRef = useRef(null);
+      const cursorArmedAtRef = useRef(0);
       const [collaborators, setCollaborators] = useState(new Map());
       // The reader's appearance: set by init-editor, then followed through "set-theme" messages.
       const [theme, setTheme] = useState(config.theme === "dark" ? "dark" : "light");
@@ -129,6 +144,16 @@
           .on("presence", { event: "sync" }, () => {
             const state = channel.presenceState();
             hasPeersRef.current = Object.keys(state).some(key => key !== presenceKey);
+            participantsRef.current = Math.max(Object.keys(state).length, 1);
+            // A queued cursor keeps to the interval of the room it is now in, not the one it was queued in.
+            if (cursorTimerRef.current !== null) {
+              clearTimeout(cursorTimerRef.current);
+              cursorTimerRef.current = null;
+              const interval = cursorInterval(participantsRef.current);
+              if (interval !== null) {
+                cursorTimerRef.current = setTimeout(sendQueuedCursor, Math.max(0, cursorArmedAtRef.current + interval - Date.now()));
+              }
+            }
             // Presence can lag behind subscription, so replay edits suppressed while alone.
             if (hasPeersRef.current && pendingSceneRef.current.size > 0) {
               channel.send({
@@ -181,6 +206,7 @@
           debounceTimerRef.current = null;
           cursorTimerRef.current = null;
           pendingCursorRef.current = null;
+          latestElementsRef.current = null;
           pendingSceneRef.current.clear();
           subscribedRef.current = false;
           hasPeersRef.current = false;
@@ -192,13 +218,16 @@
       const handleChange = useCallback((elements) => {
         if (isRemoteUpdateRef.current) return;
 
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
+        // Batch rather than debounce: a long drag still reaches peers, at most 4 times a second.
+        latestElementsRef.current = elements;
+        if (debounceTimerRef.current !== null) return;
 
         debounceTimerRef.current = setTimeout(() => {
+          debounceTimerRef.current = null;
+          const elements = latestElementsRef.current;
+          latestElementsRef.current = null;
           const channel = channelRef.current;
-          if (!channel) return;
+          if (!channel || !elements) return;
 
           const versionMap = lastVersionsRef.current;
           const changed = elements.filter(el => {
@@ -226,31 +255,42 @@
             type: "scene-changed",
             elements: elements,
           }, location.origin);
-        }, 100);
+        }, SCENE_BATCH_MS);
       }, []);
+
+      function sendQueuedCursor() {
+        cursorTimerRef.current = null;
+        const channel = channelRef.current;
+        if (!channel || !subscribedRef.current || !hasPeersRef.current) return;
+        if (cursorInterval(participantsRef.current) === null) return;
+        const next = pendingCursorRef.current;
+        const last = lastCursorRef.current;
+        if (last && next.button === last.button &&
+            Math.hypot(next.pointer.x - last.pointer.x, next.pointer.y - last.pointer.y) < CURSOR_MIN_MOVE_PX) return;
+        lastCursorRef.current = next;
+        const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
+        channel.send({
+          type: "broadcast",
+          event: "cursor-update",
+          payload: {
+            userId: config.user.id,
+            userName: config.user.name,
+            color: myColor,
+            ...next,
+          },
+        });
+      }
 
       const handlePointerUpdate = useCallback((payload) => {
         if (!channelRef.current || !subscribedRef.current || !hasPeersRef.current) return;
+        const interval = cursorInterval(participantsRef.current);
+        if (interval === null) return;
         pendingCursorRef.current = { pointer: payload.pointer, button: payload.button };
         if (cursorTimerRef.current !== null) return;
 
-        // Coalesce pointer events to 20 broadcasts per second, keeping the final position.
-        cursorTimerRef.current = setTimeout(() => {
-          cursorTimerRef.current = null;
-          const channel = channelRef.current;
-          if (!channel || !subscribedRef.current || !hasPeersRef.current) return;
-          const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
-          channel.send({
-            type: "broadcast",
-            event: "cursor-update",
-            payload: {
-              userId: config.user.id,
-              userName: config.user.name,
-              color: myColor,
-              ...pendingCursorRef.current,
-            },
-          });
-        }, 50);
+        // Coalesce pointer events to one broadcast per interval, keeping the final position.
+        cursorArmedAtRef.current = Date.now();
+        cursorTimerRef.current = setTimeout(sendQueuedCursor, interval);
       }, [config.user]);
 
       return createElement(Excalidraw, {
