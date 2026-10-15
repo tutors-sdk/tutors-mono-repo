@@ -14,15 +14,16 @@ export function createIdentityHandle(options: IdentityOptions): Handle {
       if (!authPaths.has(event.url.pathname.slice("/api/auth".length))) return new Response("Not Found", { status: 404 });
       return auth.handler(event.request);
     }
-    const { response: session, headers } = await auth.api.getSession({ headers: event.request.headers, returnHeaders: true });
+    const dataRequest = event.url.pathname.startsWith("/api/");
+    const { response: session, headers } = await auth.api.getSession({ headers: event.request.headers, query: { disableRefresh: dataRequest }, returnHeaders: true });
     const user = session?.user;
     if (user && /^[1-9]\d*$/.test(user.githubId ?? "") && Number.isSafeInteger(Number(user.githubId)) && typeof user.login === "string" && user.login) {
       event.locals.actor = { subject: `github:${user.githubId}`, login: user.login, name: user.name ?? null, email: user.email ?? null, image: user.image ?? null };
     }
     const response = await resolve(event);
     const forwarded = new Headers(response.headers);
-    // getSession refreshes outside the auth route; forward every cookie, including deletion/chunks.
-    for (const cookie of headers.getSetCookie()) forwarded.append("set-cookie", cookie);
+    // A slow data response must not restore an old cookie after logout or an account switch.
+    if (!dataRequest) for (const cookie of headers.getSetCookie()) forwarded.append("set-cookie", cookie);
     if (session || headers.has("set-cookie")) forwarded.set("cache-control", "private, no-store");
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers: forwarded });
   };
