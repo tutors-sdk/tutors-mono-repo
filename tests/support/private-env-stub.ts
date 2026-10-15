@@ -10,3 +10,4 @@ export const PRIVATE_SUPABASE_SERVICE_ROLE_KEY: string | undefined = undefined;
 export const PRIVATE_API_ALLOWED_ORIGINS: string | undefined = undefined;
 export const PRIVATE_COURSE_HOSTS: string | undefined = undefined;
 export const PRIVATE_TUTORS_ADMINS: string | undefined = undefined;
+export const PRIVATE_MOODLE_SYNC_TOKEN: string | undefined = undefined;

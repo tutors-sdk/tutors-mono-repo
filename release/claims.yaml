@@ -61,6 +61,12 @@ claims:
   - artefact: network
     scope: "catalogue:*"
     reason: "Rule 0070: the catalogue shows the number of students without reading any student's profile"
+  - artefact: dom
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
+  - artefact: screenshot
+    scope: "time:*"
+    reason: "CHANGELOG Unreleased (Time): the dashboard no longer offers the Advanced · Moodle sync fields"
   # Accessibility fixes the Paper rebuild (#313) made. axe found each on production
   # (16.2.2) and not on main, and the Main-to-RC run listed them as unclaimed.
   - artefact: axe

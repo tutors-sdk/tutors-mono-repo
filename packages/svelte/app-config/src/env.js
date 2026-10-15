@@ -21,6 +21,7 @@ export const variables = defineEnvVars({
   PRIVATE_COURSE_HOSTS: optionalString,
   PRIVATE_TUTORS_ADMINS: optionalString,
   PUBLIC_READER_URL: { ...optionalString, public: true },
+  PRIVATE_MOODLE_SYNC_TOKEN: optionalString,
   MOODLE_WS_URL: optionalString,
   MOODLE_WS_TOKEN: optionalString,
   MOODLE_WS_REST_FORMAT: optionalString,
