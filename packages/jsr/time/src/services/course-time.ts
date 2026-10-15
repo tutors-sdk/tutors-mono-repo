@@ -8,7 +8,17 @@ import type {
 } from "../types/index.ts";
 import { BaseCalendarModel } from "./base-calendar-model.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
-import { getSupabase } from "./supabase.ts";
+import { getTutorsTimeSource, type TutorsTimeRows } from "./source.ts";
+
+function displayNames(users: Pick<TutorsConnectUser, "github_id" | "full_name">[]): Record<string, string> {
+  const names: Record<string, string> = {};
+  for (const row of users) {
+    const key = row.github_id?.trim();
+    if (!key) continue;
+    names[key] = row.full_name && row.full_name.trim().length > 0 ? row.full_name.trim() : key;
+  }
+  return names;
+}
 
 export class CourseTime implements TutorsTimeCourse {
   id = "";
@@ -37,12 +47,13 @@ export class CourseTime implements TutorsTimeCourse {
     if (!id) throw new Error("Course ID is required");
 
     try {
-      const filteredData = await CourseTime.getCalendarData(id, startDate, endDate);
+      const rows = await getTutorsTimeSource().courseRows(id, startDate, endDate);
+      const filteredData = CourseTime.calendarEntries(rows);
 
       let learningRecords: LearningRecord[] = [];
       let learningRecordsError: string | null = null;
       try {
-        learningRecords = await CourseTime.getAllLearningRecordsForCourse(id);
+        learningRecords = CourseTime.learningEntries(rows);
       } catch (e) {
         learningRecordsError = e instanceof Error ? e.message : "Failed to load learning records";
       }
@@ -65,180 +76,60 @@ export class CourseTime implements TutorsTimeCourse {
     return this;
   }
 
-  /**
-   * Retrieve learning records from the learning_records table.
-   * Filters by student_id, course_id, and type (all required).
-   * Returns an empty array if no records are found or on error.
-   */
   static async getLearningRecords(
     studentId: string,
     courseId: string,
     type: string
   ): Promise<LearningRecord[]> {
-    const supabase = getSupabase();
-    let query = supabase
-      .from("learning_records")
-      .select("*")
-      .eq("student_id", studentId)
-      .eq("course_id", courseId)
-      .eq("type", type);
-
-    const { data, error } = await query;
-
-    if (error) {
-      process.stderr.write(`Failed to fetch learning records: ${error.message}\n`);
+    try {
+      const rows = await getTutorsTimeSource().courseRows(courseId);
+      return (rows.learningRecords as unknown as LearningRecord[]).filter((r) => r.student_id === studentId && r.type === type);
+    } catch (e) {
+      process.stderr.write(`Failed to fetch learning records: ${e instanceof Error ? e.message : String(e)}\n`);
       return [];
     }
-
-    return (data as LearningRecord[]) ?? [];
   }
 
-  /**
-   * Retrieve calendar data for a given course (or all courses if courseId is not provided),
-   * limited to days from startDate to endDate (inclusive, YYYY-MM-DD) when given.
-   * The range is applied in the query so only those days leave the database.
-   * Enriches entries with student full names from tutors-connect-users.
-   * Throws an error if the database query fails.
-   */
-  static async getCalendarData(
-    courseId?: string,
-    startDate?: string | null,
-    endDate?: string | null
-  ): Promise<CalendarEntry[]> {
-    const supabase = getSupabase();
-    let query = supabase.from("calendar").select("*").order("id", { ascending: true });
+  static async getCalendarData(courseId: string, startDate?: string | null, endDate?: string | null): Promise<CalendarEntry[]> {
+    return CourseTime.calendarEntries(await getTutorsTimeSource().courseRows(courseId, startDate, endDate));
+  }
 
-    if (courseId) {
-      query = query.eq("courseid", courseId);
-    }
-    if (startDate) {
-      query = query.gte("id", startDate);
-    }
-    if (endDate) {
-      query = query.lte("id", endDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(`Failed to fetch calendar data: ${error.message}`);
-    }
-
-    const rawEntries = (data as Omit<CalendarEntry, "full_name">[]) ?? [];
+  private static calendarEntries(rows: TutorsTimeRows): CalendarEntry[] {
+    const rawEntries = (rows.calendar as unknown as Omit<CalendarEntry, "full_name">[]).slice().sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const names = displayNames(rows.users);
 
     /** Convert timeactive from 30-second blocks to minutes at load */
     const toMinutes = (blocks: number | null | undefined): number =>
       blocks != null ? Math.round((blocks * 30) / 60) : 0;
 
-    // Look up student full names by studentid (github_id in tutors-connect-users)
-    const studentIds = Array.from(new Set(rawEntries.map((e) => e.studentid).filter(Boolean)));
-    if (!studentIds.length) {
-      // No users to look up; fall back to using studentid as full_name
-      return rawEntries.map<CalendarEntry>((entry) => ({
-        ...entry,
-        timeactive: toMinutes(entry.timeactive),
-        full_name: entry.studentid
-      }));
-    }
-
-    const { data: userRows, error: userError } = await supabase
-      .from("tutors-connect-users")
-      .select("github_id, full_name")
-      .in("github_id", studentIds);
-
-    if (userError) {
-      // If lookup fails, fall back to raw student IDs
-      return rawEntries.map<CalendarEntry>((entry) => ({
-        ...entry,
-        timeactive: toMinutes(entry.timeactive),
-        full_name: entry.studentid
-      }));
-    }
-
-    const nameMap: Record<string, string> = {};
-    for (const row of (userRows ?? []) as TutorsConnectUser[]) {
-      const key = row.github_id?.trim();
-      if (!key) continue;
-      const displayName =
-        row.full_name && row.full_name.trim().length > 0 ? row.full_name.trim() : key;
-      nameMap[key] = displayName;
-    }
-
     // Attach full_name while preserving raw studentid; timeactive converted to minutes
     return rawEntries.map<CalendarEntry>((entry) => ({
       ...entry,
       timeactive: toMinutes(entry.timeactive),
-      full_name: nameMap[entry.studentid] ?? entry.studentid
+      full_name: names[entry.studentid] ?? entry.studentid
     }));
   }
 
-  /**
-   * Retrieve all learning records for a given course (all students, type="lab").
-   * Enriches records with student full names from tutors-connect-users.
-   * Throws an error if the database query fails.
-   */
   static async getAllLearningRecordsForCourse(courseId: string): Promise<LearningRecord[]> {
-    const supabase = getSupabase();
-    let query = supabase
-      .from("learning_records")
-      .select("*")
-      .eq("course_id", courseId)
-//
-      .order("date_last_accessed", { ascending: false });
+    return CourseTime.learningEntries(await getTutorsTimeSource().courseRows(courseId));
+  }
 
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(`Failed to fetch learning records: ${error.message}`);
-    }
-
-    let learningRecords: LearningRecord[] = (data as LearningRecord[]) ?? [];
+  private static learningEntries(rows: TutorsTimeRows): LearningRecord[] {
+    const names = displayNames(rows.users);
 
     /** Convert duration from 30-second blocks to minutes at load */
-    learningRecords = learningRecords.map((r) => ({
+    const learningRecords = (rows.learningRecords as unknown as LearningRecord[]).map((r) => ({
       ...r,
-      duration: r.duration != null ? Math.round((r.duration * 30) / 60) : null
+      duration: r.duration != null ? Math.round((r.duration * 30) / 60) : null,
+      full_name: names[r.student_id] ?? r.student_id
     }));
 
     // Sort learning records: primary key by student_id, secondary key by lo_id
     learningRecords.sort((a, b) => {
-      const aStudentId = a.student_id || "";
-      const bStudentId = b.student_id || "";
-      const studentCompare = aStudentId.localeCompare(bStudentId);
-      if (studentCompare !== 0) {
-        return studentCompare;
-      }
-      // If student_id is the same, sort by lo_id
-      const aLoId = a.lo_id || "";
-      const bLoId = b.lo_id || "";
-      return aLoId.localeCompare(bLoId);
+      const studentCompare = (a.student_id || "").localeCompare(b.student_id || "");
+      if (studentCompare !== 0) return studentCompare;
+      return (a.lo_id || "").localeCompare(b.lo_id || "");
     });
-
-    // Enrich learning records with student full names (similar to calendar entries)
-    const studentIds = Array.from(new Set(learningRecords.map((r) => r.student_id).filter(Boolean)));
-    if (studentIds.length > 0) {
-      const { data: userRows, error: userError } = await supabase
-        .from("tutors-connect-users")
-        .select("github_id, full_name")
-        .in("github_id", studentIds);
-
-      if (!userError && userRows) {
-        const nameMap: Record<string, string> = {};
-        for (const row of userRows as TutorsConnectUser[]) {
-          const key = row.github_id?.trim();
-          if (!key) continue;
-          const displayName =
-            row.full_name && row.full_name.trim().length > 0 ? row.full_name.trim() : key;
-          nameMap[key] = displayName;
-        }
-
-        // Add full_name for display; keep student_id as raw github_id for links
-        learningRecords = learningRecords.map((record) => ({
-          ...record,
-          full_name: nameMap[record.student_id] ?? record.student_id
-        }));
-      }
-    }
 
     return learningRecords;
   }

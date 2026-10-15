@@ -69,6 +69,12 @@ export type StudentDisplayInfo = TutorsConnectUser;
 // (from src/types/tutors-time-types.ts)
 export type TutorsTimeCourse = { id: string; title: string; pin: string | null data: CalendarEntry[]; loading: boolean; error: string | null; learningRecords: LearningRecord[]; learningRecordsLoading: boolean; learningRecordsError: string | null; calendarModel: CalendarModel; labsModel: LabModel; labsMedianByDay?: LabMedianRow | null; weeks?: string[]; dates?: string[]; labColumns?: string[]; stepColumns?: string[]; loadTime?( courseId: string, startDate: string | null, endDate: string | null, title: string ): Promise<TutorsTimeCourse>; };
 
+// (from src/index.ts)
+export type { TutorsTimeRows };
+
+// (from src/index.ts)
+export type { TutorsTimeSource };
+
 // (from src/types/tutors-time-types.ts)
 export type TutorsTimeStudent = { courseid: string; courseTitle: string; studentid: string; studentName: string; avatarUrl: string | null; online_status: string | null; sentiment: string | null; course: TutorsTimeCourse | null; calendarByWeek: CalendarRow | null; calendarByDay: CalendarRow | null; labsByLab: LabRow | null; labsByDay: LabRow | null; labsByStep: LabRow | null; error: string | null; hasData: boolean; };
 
@@ -86,6 +92,9 @@ export class BaseLabModel implements LabModel;
 
 // (from src/services/course-time.ts)
 export class CourseTime implements TutorsTimeCourse;
+
+// (from src/services/source.ts)
+export class TutorsTimeSourceError extends Error;
 
 
 // --- functions ---
@@ -123,6 +132,9 @@ export function getMondayForDate(dateString: string) : string;
 // (from src/services/supabase.ts)
 export function getSupabase() : SupabaseClient;
 
+// (from src/services/source.ts)
+export function getTutorsTimeSource() : TutorsTimeSource;
+
 // (from src/utils/calendar-utils.ts)
 export function heatColor(minutes: number) : string;
 
@@ -132,8 +144,20 @@ export function initSupabase(url: string, anonKey: string) : void;
 // (from src/utils/calendar-utils.ts)
 export function minutesOf(value: unknown) : number;
 
+// (from src/services/source.ts)
+export function readerTimeSource(readerUrl: string, fetchFn: typeof fetch = (...args) => fetch(...args)) : TutorsTimeSource;
+
+// (from src/services/source.ts)
+export function setTutorsTimeSource(source: TutorsTimeSource) : void;
+
+// (from src/services/source.ts)
+export function supabaseTimeSource() : TutorsTimeSource;
+
 // (from src/utils/lab-utils.ts)
 export function toggleLabViewMode(current: LabViewMode) : LabViewMode;
+
+// (from src/services/source.ts)
+export function withoutTrailingSlashes(url: string) : string;
 
 
 // --- consts ---
@@ -147,9 +171,9 @@ export const TutorsTime: TutorsTimeService;
 
 | Kind | Count |
 |------|-------|
-| class | 3 |
+| class | 4 |
 | const | 1 |
-| function | 15 |
+| function | 20 |
 | interface | 7 |
-| type | 14 |
-| **Total** | **40** |
+| type | 16 |
+| **Total** | **48** |

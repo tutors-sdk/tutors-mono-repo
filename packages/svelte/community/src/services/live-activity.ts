@@ -1,9 +1,10 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import * as env from "$app/env/public";
 import { topics, type RealtimeAdapter, type Topic } from "@tutors/realtime";
 import { supabaseRealtimeAdapter } from "@tutors/realtime-supabase";
 import log from "@tutors/logger";
 import type { LoRecord } from "../types.svelte.ts";
-import { claimLivePublish, supabase, type LiveBudgetTier } from "../utils/supabase-client.ts";
+import { claimLivePublish, type LiveBudgetTier } from "../utils/supabase-client.ts";
 
 /**
  * The reader's server side of Tutors Live (POST /api/live/activity). The browser sends each learning
@@ -85,12 +86,12 @@ export function parseLiveActivity(raw: string): LoRecord | string {
  * 400 for a malformed body; 204 in anonymous mode; otherwise 202 with the tier and the topics published
  * to. A claim that fails (the migration not applied, the database unreachable) publishes nothing.
  */
-export async function receiveLiveActivity(raw: string): Promise<LiveActivityResponse> {
+export async function receiveLiveActivity(raw: string, db: SupabaseClient | null): Promise<LiveActivityResponse> {
   const record = parseLiveActivity(raw);
   if (typeof record === "string") return { status: 400, body: { message: record } };
-  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return { status: 204 };
+  if (env.PUBLIC_ANON_MODE === "TRUE" || !db) return { status: 204 };
 
-  const claim = await claimLivePublish(record.courseId);
+  const claim = await claimLivePublish(record.courseId, db);
   if (!claim) return { status: 202, body: { tier: null, topics: [] } };
 
   const allowed = new Map<string, Topic>([
@@ -98,7 +99,7 @@ export async function receiveLiveActivity(raw: string): Promise<LiveActivityResp
     [topics.platformActivity(), topics.platformActivity()]
   ]);
   const targets = claim.topics.map((topic) => allowed.get(topic)).filter((topic): topic is Topic => topic !== undefined);
-  adapter ??= supabaseRealtimeAdapter(supabase);
+  adapter ??= supabaseRealtimeAdapter(db);
   const results = await Promise.allSettled(targets.map((topic) => adapter!.publish(topic, "lo-event", record)));
   results.forEach((result, i) => {
     if (result.status === "rejected") log.error("Live activity broadcast failed:", targets[i], result.reason);
