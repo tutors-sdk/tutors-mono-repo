@@ -14,8 +14,12 @@ minimumReleaseAgeExclude:
   - dompurify@3.4.14
   - happy-dom@20.11.6
   - vite@8.2.2
+# Better Auth 1.7.7 publishes a Kit 2 peer; the built-session/browser contracts cover this exact Kit 3 pairing.
+peerDependencyRules:
+  allowedVersions:
+    "better-auth@1.7.7>@sveltejs/kit": "3.0.1"
 overrides:
-  cookie: ">=0.7.0 <1.0.0"
+  cookie@<0.7.0: ">=0.7.0 <1.0.0"
   # Security advisory remediation. Ranges are bounded to the same major so
   # consumers pinned to a major (e.g. packages/jsr/gen -> npm:js-yaml@^4.1.1)
   # keep resolving.
@@ -34,3 +38,5 @@ overrides:
   dompurify@>=3.4.13 <3.4.16: ">=3.4.16 <4"
   "@marp-team/marpit>markdown-it": ">=14.3.1 <15"
   undici@>=8.0.0 <8.10.2: ">=8.10.2 <9"
+  # GHSA-68fv-2mgg-jv7q: the sanitizer runtime now includes source-map-js.
+  source-map-js@>=1.0.0 <1.2.2: ">=1.2.2 <2"

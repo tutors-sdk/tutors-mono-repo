@@ -1,13 +1,18 @@
-import type { RealtimeChannel } from "@supabase/supabase-js";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
+import { topics, type Subscription } from "@tutors/realtime";
 import { refreshLoRecord } from "./presence.svelte.ts";
 import { rune } from "@tutors/runes";
 import { LoRecord, type LiveService } from "../types.svelte.ts";
-import { supabase } from "../utils/supabase-client.ts";
+import { getTutorsConnectRecentLos, getTutorsConnectRecentLosByCourseId, supabase } from "../utils/supabase-client.ts";
+import { watchLiveFeed } from "./live-feed.ts";
+import { realtime } from "./realtime.ts";
 
-const BROADCAST_CONFIG = { config: { broadcast: { self: true } } };
+const RECEIVE_OWN = { self: true };
 
-let channelAll: RealtimeChannel | null = null;
+let globalSubscription: Subscription | null = null;
+/** Stop the watcher reports (and stored-activity reads) of the platform feed and of the course feed. */
+let stopGlobalFeed: (() => void) | null = null;
+let stopCourseFeed: (() => void) | null = null;
 
 export const liveService: LiveService = {
   listeningForCourse: rune<string>(""),
@@ -17,7 +22,7 @@ export const liveService: LiveService = {
   studentEventMap: new Map<string, LoRecord>(),
   courseEventMap: new Map<string, LoRecord>(),
 
-  channelCourse: null,
+  courseSubscription: null,
   listeningAll: false,
 
   studentListener(payload: { type: string; event: string; [key: string]: any }) {
@@ -53,32 +58,53 @@ export const liveService: LiveService = {
     this.studentListener(payload);
   },
 
-  startGlobalPresenceService() {
+  async startGlobalPresenceService() {
     if (this.listeningAll) return;
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
 
-    channelAll = supabase
-      .channel("tutors-all-course-access", BROADCAST_CONFIG)
-      .on("broadcast", { event: "lo-event" }, this.broadcastListener.bind(this))
-      .subscribe();
-
     this.listeningAll = true;
+    globalSubscription = realtime.subscribe(
+      topics.platformActivity(),
+      { events: ["lo-event"], onMessage: (event, payload) => this.broadcastListener({ type: "broadcast", event, payload }) },
+      RECEIVE_OWN
+    );
+    stopGlobalFeed = watchLiveFeed(topics.platformActivity(), getTutorsConnectRecentLos, (record) =>
+      this.broadcastListener({ type: "broadcast", event: "lo-event", payload: record })
+    );
+  },
+
+  stopGlobalPresenceService() {
+    stopGlobalFeed?.();
+    stopGlobalFeed = null;
+    void globalSubscription?.close();
+    globalSubscription = null;
+    this.listeningAll = false;
+    this.coursesOnline.value = [];
+    this.studentsOnline.value = [];
+    this.courseEventMap.clear();
+    this.studentEventMap.clear();
   },
 
   startCoursePresenceListener(courseId: string) {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (this.courseSubscription && this.listeningForCourse.value === courseId) return;
 
-    if (this.channelCourse) {
-      supabase.removeChannel(this.channelCourse);
-    }
+    void this.courseSubscription?.close();
+    stopCourseFeed?.();
 
     this.listeningForCourse.value = courseId;
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
 
-    this.channelCourse = supabase
-      .channel(courseId, BROADCAST_CONFIG)
-      .on("broadcast", { event: "lo-event" }, this.studentListener.bind(this))
-      .subscribe();
+    this.courseSubscription = realtime.subscribe(
+      topics.courseActivity(courseId),
+      { events: ["lo-event"], onMessage: (event, payload) => this.studentListener({ type: "broadcast", event, payload }) },
+      RECEIVE_OWN
+    );
+    stopCourseFeed = watchLiveFeed(
+      topics.courseActivity(courseId),
+      (since) => getTutorsConnectRecentLosByCourseId(courseId, since),
+      (record) => this.studentListener({ type: "broadcast", event: "lo-event", payload: record })
+    );
   }
 };

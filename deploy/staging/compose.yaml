@@ -9,8 +9,7 @@
 # IMAGE_TAG selects what to run: latest (main), rc-<branch> (release
 # candidates), X.Y.Z (releases) or sha-<short> (any main commit).
 # Host ports default to 3000-3003 (READER_PORT, CATALOGUE_PORT, LIVE_PORT,
-# TIME_PORT). Each app's *_ORIGIN must be the URL users actually reach it on,
-# or adapter-node rejects form posts as cross-site.
+# TIME_PORT). The HTTP proxy supplies the request origin for CSRF and OAuth.
 name: tutors-staging
 
 x-app: &app
@@ -37,34 +36,50 @@ x-app: &app
     start_period: 10s
 
 services:
+  proxy:
+    image: docker.io/library/caddy:2@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
+    restart: unless-stopped
+    user: "1001:1001"
+    read_only: true
+    cap_drop: [ALL]
+    # The official Caddy binary carries a file capability and needs it in the bounding set to execute.
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /data:uid=1001,gid=1001
+      - /config:uid=1001,gid=1001
+    volumes:
+      - ../local/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "${READER_PORT:-3000}:3000"
+      - "${CATALOGUE_PORT:-3001}:3001"
+      - "${LIVE_PORT:-3002}:3002"
+      - "${TIME_PORT:-3003}:3003"
+
   reader:
     <<: *app
     image: quay.io/tutors-sdk/tutors-reader:${IMAGE_TAG:-main}
-    ports:
-      - "${READER_PORT:-3000}:3000"
     environment:
-      ORIGIN: ${READER_ORIGIN:-http://localhost:3000}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
 
   catalogue:
     <<: *app
     image: quay.io/tutors-sdk/tutors-catalogue:${IMAGE_TAG:-main}
-    ports:
-      - "${CATALOGUE_PORT:-3001}:3000"
     environment:
-      ORIGIN: ${CATALOGUE_ORIGIN:-http://localhost:3001}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
 
   live:
     <<: *app
     image: quay.io/tutors-sdk/tutors-live:${IMAGE_TAG:-main}
-    ports:
-      - "${LIVE_PORT:-3002}:3000"
     environment:
-      ORIGIN: ${LIVE_ORIGIN:-http://localhost:3002}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
 
   time:
     <<: *app
     image: quay.io/tutors-sdk/tutors-time:${IMAGE_TAG:-main}
-    ports:
-      - "${TIME_PORT:-3003}:3000"
     environment:
-      ORIGIN: ${TIME_ORIGIN:-http://localhost:3003}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host

@@ -8,8 +8,7 @@ import type {
 } from "../types/index.ts";
 import { BaseCalendarModel } from "./base-calendar-model.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
-import { filterByDateRange } from "../utils/index.ts";
-import { getTutorsTimeSource } from "./source.ts";
+import { getTutorsTimeSource, type TutorsTimeRows } from "./source.ts";
 
 function displayNames(users: Pick<TutorsConnectUser, "github_id" | "full_name">[]): Record<string, string> {
   const names: Record<string, string> = {};
@@ -48,13 +47,13 @@ export class CourseTime implements TutorsTimeCourse {
     if (!id) throw new Error("Course ID is required");
 
     try {
-      const rawData = await CourseTime.getCalendarData(id);
-      const filteredData = filterByDateRange(rawData, startDate, endDate);
+      const rows = await getTutorsTimeSource().courseRows(id, startDate, endDate);
+      const filteredData = CourseTime.calendarEntries(rows);
 
       let learningRecords: LearningRecord[] = [];
       let learningRecordsError: string | null = null;
       try {
-        learningRecords = await CourseTime.getAllLearningRecordsForCourse(id);
+        learningRecords = CourseTime.learningEntries(rows);
       } catch (e) {
         learningRecordsError = e instanceof Error ? e.message : "Failed to load learning records";
       }
@@ -91,8 +90,11 @@ export class CourseTime implements TutorsTimeCourse {
     }
   }
 
-  static async getCalendarData(courseId: string): Promise<CalendarEntry[]> {
-    const rows = await getTutorsTimeSource().courseRows(courseId);
+  static async getCalendarData(courseId: string, startDate?: string | null, endDate?: string | null): Promise<CalendarEntry[]> {
+    return CourseTime.calendarEntries(await getTutorsTimeSource().courseRows(courseId, startDate, endDate));
+  }
+
+  private static calendarEntries(rows: TutorsTimeRows): CalendarEntry[] {
     const rawEntries = (rows.calendar as unknown as Omit<CalendarEntry, "full_name">[]).slice().sort((a, b) => String(a.id).localeCompare(String(b.id)));
     const names = displayNames(rows.users);
 
@@ -109,7 +111,10 @@ export class CourseTime implements TutorsTimeCourse {
   }
 
   static async getAllLearningRecordsForCourse(courseId: string): Promise<LearningRecord[]> {
-    const rows = await getTutorsTimeSource().courseRows(courseId);
+    return CourseTime.learningEntries(await getTutorsTimeSource().courseRows(courseId));
+  }
+
+  private static learningEntries(rows: TutorsTimeRows): LearningRecord[] {
     const names = displayNames(rows.users);
 
     /** Convert duration from 30-second blocks to minutes at load */

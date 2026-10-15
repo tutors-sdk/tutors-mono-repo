@@ -3,7 +3,7 @@
   import { t, type MessageKey } from "@tutors/i18n";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
-  import StudentAvatar from "$lib/components/StudentAvatar.svelte";
+  import StudentAvatar from "#lib/components/StudentAvatar.svelte";
 
   let { children } = $props();
 

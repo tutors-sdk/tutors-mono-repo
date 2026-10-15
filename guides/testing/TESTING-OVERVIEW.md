@@ -59,7 +59,7 @@ Every command below exists in the root `package.json`.
 | `pnpm test:mutation` | Stryker over the twelve targeted modules (break at 90%), then `pnpm check:mutation-floors` |
 | `pnpm test:mutation:nightly` | Stryker over every library source file against the unit, BDD and contract suites, in place (`stryker.nightly.config.json`) |
 | `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
-| `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
+| `pnpm test:e2e:reader` | The reader's UI contract plus signed-session browser regressions. Uses isolated OAuth fixtures; runs on PRs targeting `main` in Chromium |
 | `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |
 | `pnpm e2e:stack:fixture` | Builds the fixture course (needs Deno) |
 | `pnpm e2e:stack:up` / `:down` | The tier G compose stack |
@@ -70,7 +70,7 @@ Every command below exists in the root `package.json`.
 | `pnpm check:knip` | Unused files, exports and dependencies |
 | `pnpm check:audit` | `pnpm audit` against `tests/security/audit-allowlist.json` |
 | `pnpm check:bundle` | Per-app client bundle ceilings |
-| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with Auth.js on |
+| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with authentication enabled |
 | `pnpm check:lighthouse` | Lighthouse floors on three reader pages |
 | `pnpm check:load` | k6 load or soak against a built image |
 | `pnpm check:k8s` | Render every overlay and apply the manifest policies |

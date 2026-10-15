@@ -1,7 +1,7 @@
 /* global APP_VERSION */
-import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
+import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
-import { building } from "$app/environment";
+import { building } from "$app/env";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 import { announceClock } from "@tutors/runtime";
@@ -27,9 +27,11 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(createRequestLogger(), metricsHandle, securityHeaders);
 
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
-  logRequestError({ error, event, status, message });
+export const handleError: HandleServerError = ({ kind, error, event }) => {
+  if (kind !== "unknown") return;
+  logRequestError({ error, event, status: 500, message: "Internal Error" });
   return {
+    status: 500,
     message: "An unexpected error occurred"
   };
 };

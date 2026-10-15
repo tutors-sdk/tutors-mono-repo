@@ -27,7 +27,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -38,7 +38,7 @@ jobs:
       - name: Create .env for SvelteKit apps
         run: cp .env.example .env
 
-      # Generates each app's .svelte-kit/tsconfig.json, which the app tsconfigs extend.
+      # Generates Kit 3 route types and manifests; tsconfigs extend $app/tsconfig.
       # Tests import app source files (e.g. legacy hooks), so every app must be synced,
       # not only the ones that get type-checked below.
       - name: Sync SvelteKit apps
@@ -98,7 +98,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -148,7 +148,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -177,7 +177,7 @@ jobs:
           MATRIX_APP: ${{ matrix.app }}
 
       # .env.example runs the image anonymously. The reader is the only app with a
-      # sign-in flow, so probe it again with Auth.js on: the release harness found
+      # sign-in flow, so probe it again with authentication enabled: the release harness found
       # /auth/<courseid> answering 500 (jsdom's __dirname in the ESM server bundle)
       # in exactly this mode.
       - name: Smoke test the image with authentication enabled
@@ -198,7 +198,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -241,7 +241,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -281,7 +281,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -373,7 +373,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -397,11 +397,14 @@ jobs:
       - name: Check bundle budgets
         run: pnpm check:bundle
 
-      # The built server, run with Auth.js on: no CommonJS globals in the ES module
+      # The built server, run with authentication enabled: no CommonJS globals in the ES module
       # bundle, and no 5xx on the routes in tests/security/header-contract.json
       # (v16.2.0 answered 500 on /auth/<courseid>). Needs no Docker.
       - name: Smoke test the built servers
         run: pnpm check:server
+
+      - name: Prove both identity adapters against the built reader
+        run: pnpm test:identity:built
 
       # Starts each built server with the commit above and a sentinel build date and looks for them
       # anywhere but GET /version: headers, pages, the error page, /_app/version.json and every built file.
@@ -430,7 +433,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-)'; then
+          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model|types)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-|scripts/checks/lib/tutors-json\.ts)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -448,7 +451,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.gen.outputs.run == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -500,7 +503,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -527,7 +530,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -540,6 +543,14 @@ jobs:
 
       - name: Prove every @ui scenario
         run: pnpm test:e2e:reader --project=chromium
+
+      - name: Build reader for the identity browser regression
+        run: SVELTEKIT_ADAPTER=node pnpm build
+
+      - name: Built reader sign-in, reload and logout
+        run: pnpm test:e2e:reader authentication.spec.ts --project=chromium --grep-invert="Forged browser identity"
+        env:
+          TEST_READER_BUILT: "1"
 
       - name: Upload report
         if: failure()

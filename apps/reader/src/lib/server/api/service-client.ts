@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
+import * as env from "$app/env/private";
+import * as publicEnv from "$app/env/public";
 import log, { withRequestId } from "@tutors/logger";
 
 let client: SupabaseClient | null | undefined;

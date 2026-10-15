@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { onMount, onDestroy } from "svelte";
   import { currentCodeTheme } from "@tutors/course/markdown";
   import "./notebook-styles.css";

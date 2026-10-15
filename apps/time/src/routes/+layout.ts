@@ -1,7 +1,7 @@
 import type { LayoutLoad } from "./$types";
 import { TutorsTime } from "@tutors/tutors-time-lib";
 import type { MessageKey } from "@tutors/i18n";
-import { useReaderTimeSource } from "$lib/time-source";
+import { useReaderTimeSource } from "#lib/time-source.ts";
 
 export const ssr = false;
 

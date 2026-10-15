@@ -32,9 +32,9 @@ function studentDisplayName(info: StudentDisplayInfo): string {
 }
 
 export const TutorsTime: TutorsTimeService = {
-  async getStudentDisplayInfo(studentId: string, courseId?: string): Promise<StudentDisplayInfo> {
+  async getStudentDisplayInfo(studentId: string, courseId?: string, startDate?: string | null, endDate?: string | null): Promise<StudentDisplayInfo> {
     const id = studentId.trim();
-    const row = await getTutorsTimeSource().user(id, courseId);
+    const row = await getTutorsTimeSource().user(id, courseId, startDate, endDate);
     if (!row) {
       return emptyConnectUser(id);
     }
@@ -50,8 +50,8 @@ export const TutorsTime: TutorsTimeService = {
   },
 
   /** Return display title, image or icon for a course (for AppBar). */
-  async getCourseDisplayInfo(courseId: string): Promise<CourseDisplayInfo> {
-    const row = await getTutorsTimeSource().courseRecord(courseId);
+  async getCourseDisplayInfo(courseId: string, startDate?: string | null, endDate?: string | null): Promise<CourseDisplayInfo> {
+    const row = await getTutorsTimeSource().courseRecord(courseId, startDate, endDate);
     if (!row) {
       return { title: courseId, img: null, icon: null };
     }
@@ -107,7 +107,7 @@ export const TutorsTime: TutorsTimeService = {
       }
     }
 
-    const { title } = await this.getCourseDisplayInfo(id);
+    const { title } = await this.getCourseDisplayInfo(id, normalizedStart, normalizedEnd);
     const courseTime = new CourseTime();
     await courseTime.loadTime(id, normalizedStart, normalizedEnd, title);
 
@@ -131,7 +131,7 @@ export const TutorsTime: TutorsTimeService = {
     if (!courseId) throw new Error("Course ID is required");
     if (!studentId) throw new Error("Student ID is required");
 
-    const displayInfo = await this.getStudentDisplayInfo(studentId, courseId);
+    const displayInfo = await this.getStudentDisplayInfo(studentId, courseId, startDate, endDate);
     const courseTime = await this.loadCourseTime(courseId, startDate ?? null, endDate ?? null);
     const course = courseTime;
 

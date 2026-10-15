@@ -8,7 +8,7 @@
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
 time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one). It writes only what it fetches from Moodle, with the service_role key
-reader POST /api/analytics | who: a signed-in student (Auth.js session, else 401); rows are written under the session's login (Rules 0071, 0072)
+reader POST /api/analytics | who: a signed-in student (verified identity (locals.actor), else 401); rows are written under the session's login (Rules 0071, 0072)
 reader PUT /api/me | who: a signed-in user, for their own tutors-connect-users row; name, email and avatar come from the session
 reader PATCH /api/me | who: a signed-in user, for their own sentiment and online status (Rule 0072)
 reader PUT /api/profile | who: a signed-in user, for their own course-visit history
@@ -17,5 +17,9 @@ reader POST /api/presence | who: a signed-in student who shares presence; stored
 reader PUT /api/locks | who: a signed-in educator of the course (enrollment.yaml educators or PRIVATE_TUTORS_ADMINS), else 403 (Rule 0065)
 reader DELETE /api/locks | who: a signed-in educator of the course, else 403 (Rule 0065)
 reader PUT /api/whiteboard | who: a signed-in user; a personal room is always the session's own (Rule 0068)
-reader POST /auth/signin/github | hook | who: anyone; Auth.js starts the GitHub OAuth flow
-reader POST /auth/signout | hook | who: a signed-in user; Auth.js checks its own CSRF token
+reader POST /api/auth/sign-in/social | hook | who: anyone; GitHub only, Better Auth verifies origin and return URL
+reader POST /api/auth/callback/github | hook | who: OAuth callback holder; Better Auth verifies signed state (GitHub normally uses GET)
+reader POST /api/auth/sign-out | hook | who: session holder; Better Auth verifies origin and deletes browser cookies
+reader POST /api/auth/get-session | hook | who: session holder; Better Auth verifies cookies and renews the session
+reader POST /api/auth/update-user | hook | who: session holder; Better Auth verifies origin, adapter rejects githubId/login changes including null
+reader POST /api/live/activity | who: anyone, as the anon key it replaces allowed; the body is validated (4 KB, LoRecord shape) and published only to watched topics within the day's Live budget

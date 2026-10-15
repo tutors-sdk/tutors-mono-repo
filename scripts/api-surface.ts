@@ -13,6 +13,9 @@
  *   - @tutors/tutors-model-lib (packages/jsr/model)
  *   - @tutors/tutors-gen-lib   (packages/jsr/gen)
  *   - @tutors/tutors-time-lib  (packages/jsr/time)
+ *   - @tutors/tutors-types     (packages/jsr/types)
+ *   - @tutors/identity         (packages/jsr/identity)
+ *   - @tutors/realtime         (packages/jsr/realtime)
  */
 
 import * as fs from "fs";
@@ -36,6 +39,18 @@ interface PackageConfig {
 
 const TRACKED_PACKAGES: PackageConfig[] = [
   {
+    name: "@tutors/identity",
+    dir: "packages/jsr/identity",
+    entry: "src/index.ts",
+    reportFile: "identity.api.md",
+  },
+  {
+    name: "@tutors/realtime",
+    dir: "packages/jsr/realtime",
+    entry: "src/index.ts",
+    reportFile: "realtime.api.md",
+  },
+  {
     name: "@tutors/tutors-model-lib",
     dir: "packages/jsr/model",
     entry: "src/tutors.ts",
@@ -52,6 +67,12 @@ const TRACKED_PACKAGES: PackageConfig[] = [
     dir: "packages/jsr/time",
     entry: "src/index.ts",
     reportFile: "tutors-time-lib.api.md",
+  },
+  {
+    name: "@tutors/tutors-types",
+    dir: "packages/jsr/types",
+    entry: "src/index.ts",
+    reportFile: "tutors-types.api.md",
   },
 ];
 
@@ -494,8 +515,9 @@ function extractExportsFromFile(
     const kind = varMatch[1] as "const" | "let";
     const name = varMatch[2];
     // Extract just the declaration part (type annotation)
-    const afterDecl = cleaned.slice(varMatch.index);
-    const colonMatch = afterDecl.match(/(?:const|let|var)\s+\w+\s*:\s*([^=]+?)(?:\s*=|$)/);
+    // Only the declaration's own line: an unannotated `const X = [` must not borrow a later declaration's type.
+    const declLine = cleaned.slice(varMatch.index).split("\n", 1)[0];
+    const colonMatch = declLine.match(/(?:const|let|var)\s+\w+\s*:\s*([^=]+?)(?:\s*=|$)/);
     const typeAnnotation = colonMatch ? colonMatch[1].trim() : "";
 
     symbols.push({

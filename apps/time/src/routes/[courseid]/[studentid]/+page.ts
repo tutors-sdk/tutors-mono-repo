@@ -1,5 +1,5 @@
 import { TutorsTime } from "@tutors/tutors-time-lib";
-import { useReaderTimeSource } from "$lib/time-source";
+import { useReaderTimeSource } from "#lib/time-source.ts";
 
 export async function load({ params }: { params: Record<string, string> }) {
   useReaderTimeSource();

@@ -1,7 +1,7 @@
 import { rune, currentCourse } from "@tutors/runes";
 import type { TourStep } from "./types";
 import { cardStepForType, courseHeaderSteps, courseSidebarSteps, homeSteps, openMenuStep } from "./steps";
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 
 const TOUR_COMPLETED_KEY = "tutors-tour-completed";
 
