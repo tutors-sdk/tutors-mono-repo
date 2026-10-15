@@ -23,7 +23,7 @@
 
 #### Fixes
 
-- Database: `whiteboard_scenes` is created by a migration (`20260925100000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)
+- Database: `whiteboard_scenes` is created by a migration (`20261017000000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)
 - Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #320)
 - Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #320)
 - Database: the contract step that revokes anonymous access to personal student rows, assignment rows, content-lock writes and student-counter RPCs is written (`supabase/contracts/revoke_anon_student_data.sql`) but ships in the next release, once no pod of this one's predecessors is left. `pnpm check:migrations` now refuses a contract step in the same release as its expand (`-- contract-for:` header) (PR #320)
