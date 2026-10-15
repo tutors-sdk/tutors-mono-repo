@@ -62,18 +62,18 @@ Feature: Realtime resource usage
       And completing removal creates one replacement global subscription
 
   @rule-0275 @ears-event-driven
-  Rule: When whiteboard cursor updates arrive, the reader shall coalesce them into at most one broadcast every 50 milliseconds.
+  Rule: When whiteboard cursor updates arrive, the reader shall coalesce them into at most one broadcast per cursor interval.
 
     Scenario: A cursor burst sends its final position
       Given a subscribed whiteboard editor
-      When 100 cursor positions arrive within 49 milliseconds
+      When 100 cursor positions arrive within 99 milliseconds
       Then no cursor broadcast has been sent
-      And at 50 milliseconds one broadcast carries the final position
+      And at 100 milliseconds one broadcast carries the final position
 
-    Scenario: Continuous pointer movement sends at most 20 broadcasts per second
+    Scenario: Continuous pointer movement in a small room sends at most 10 broadcasts per second
       Given a subscribed whiteboard editor
       When the cursor moves every millisecond for 1000 milliseconds
-      Then 20 cursor broadcasts have been sent
+      Then 10 cursor broadcasts have been sent
       And the final broadcast carries the final position
 
   @rule-0276 @ears-state-driven
@@ -82,7 +82,7 @@ Feature: Realtime resource usage
     @active
     Scenario: Cursor movement before subscription sends no broadcast
       Given a whiteboard editor awaiting subscription
-      When the cursor moves and 50 milliseconds elapse
+      When the cursor moves and 100 milliseconds elapse
       Then no cursor broadcast has been sent
 
     @active
@@ -94,7 +94,7 @@ Feature: Realtime resource usage
     @inactive
     Scenario: Cursor movement after subscription sends a broadcast
       Given a subscribed whiteboard editor
-      When the cursor moves and 50 milliseconds elapse
+      When the cursor moves and 100 milliseconds elapse
       Then one cursor broadcast has been sent
 
   @rule-0277 @ears-event-driven
@@ -159,7 +159,7 @@ Feature: Realtime resource usage
       Given a subscribed whiteboard editor
       And only this editor is present in the room
       When a scene change and a cursor position are queued
-      And 100 milliseconds elapse
+      And 250 milliseconds elapse
       Then the scene is sent to the parent for saving
       And no collaboration broadcast is sent
 
@@ -167,7 +167,7 @@ Feature: Realtime resource usage
     Scenario: A cursor queued before the last peer leaves is not broadcast
       Given a subscribed whiteboard editor
       When a cursor position is queued and the last peer leaves
-      And 50 milliseconds elapse
+      And 100 milliseconds elapse
       Then no collaboration broadcast is sent
 
     @inactive
@@ -175,7 +175,7 @@ Feature: Realtime resource usage
       Given a subscribed whiteboard editor
       And another tab of the same user is present in the room
       When a scene change and a cursor position are queued
-      And 100 milliseconds elapse
+      And 250 milliseconds elapse
       Then a scene broadcast and a cursor broadcast are sent
       And the scene is sent to the parent for saving
 
@@ -195,6 +195,100 @@ Feature: Realtime resource usage
       When another editor becomes visible in Presence
       Then one scene broadcast contains the latest edit and deletion
       And another Presence sync sends no duplicate scene broadcast
+
+  @rule-0307 @ears-event-driven
+  Rule: When the whiteboard Presence count changes, the reader shall set the cursor interval to 100 milliseconds for up to 3 participants, 250 milliseconds for up to 6 and 500 milliseconds for up to 8.
+
+    Scenario: Three participants share cursors 10 times a second
+      Given a subscribed whiteboard editor
+      And 3 participants are present in the room
+      When the cursor moves every millisecond for 1000 milliseconds
+      Then 10 cursor broadcasts have been sent
+
+    Scenario: Six participants share cursors 4 times a second
+      Given a subscribed whiteboard editor
+      And 6 participants are present in the room
+      When the cursor moves every millisecond for 1000 milliseconds
+      Then 4 cursor broadcasts have been sent
+
+    Scenario: Eight participants share cursors twice a second
+      Given a subscribed whiteboard editor
+      And 8 participants are present in the room
+      When the cursor moves every millisecond for 1000 milliseconds
+      Then 2 cursor broadcasts have been sent
+      And the final broadcast carries the final position
+
+    Scenario: A cursor queued before the room grows waits for the longer interval
+      Given a subscribed whiteboard editor
+      And 3 participants are present in the room
+      When a cursor position is queued and the room grows to 8 participants
+      And 499 milliseconds elapse
+      Then no cursor broadcast has been sent
+      And at 500 milliseconds one broadcast carries the final position
+
+  @rule-0308 @ears-state-driven
+  Rule: While a whiteboard room has more than 8 participants, the reader shall not send cursor broadcasts.
+
+    @active
+    Scenario: A crowded room shares no cursors
+      Given a subscribed whiteboard editor
+      And 9 participants are present in the room
+      When the cursor moves every millisecond for 1000 milliseconds
+      Then no cursor broadcast has been sent
+
+    @active
+    Scenario: A crowded room still shares scene edits
+      Given a subscribed whiteboard editor
+      And 9 participants are present in the room
+      When a scene change and a cursor position are queued
+      And 500 milliseconds elapse
+      Then only a scene broadcast is sent
+
+    @inactive
+    Scenario: Cursors resume when the room shrinks to 8
+      Given a subscribed whiteboard editor
+      And 9 participants are present in the room
+      And the room shrinks to 8 participants
+      When the cursor moves every millisecond for 1000 milliseconds
+      Then 2 cursor broadcasts have been sent
+
+  @rule-0309 @ears-unwanted
+  Rule: If the pointer has moved less than 4 pixels with an unchanged button since the last cursor broadcast, then the reader shall not send a cursor broadcast.
+
+    Scenario: A pointer jitter is not broadcast
+      Given a subscribed whiteboard editor
+      And a cursor broadcast has been sent at 10, 10
+      When the pointer moves to 12, 11 and 100 milliseconds elapse
+      Then 1 cursor broadcasts have been sent
+
+    Scenario: A press without movement is broadcast
+      Given a subscribed whiteboard editor
+      And a cursor broadcast has been sent at 10, 10
+      When the pointer is pressed at 10, 10 and 100 milliseconds elapse
+      Then 2 cursor broadcasts have been sent
+
+    Scenario: A 4 pixel move is broadcast
+      Given a subscribed whiteboard editor
+      And a cursor broadcast has been sent at 10, 10
+      When the pointer moves to 14, 10 and 100 milliseconds elapse
+      Then 2 cursor broadcasts have been sent
+
+  @rule-0310 @ears-event-driven
+  Rule: When a whiteboard scene changes, the reader shall send the accumulated changes at most once every 250 milliseconds.
+
+    Scenario: A single edit is sent after 250 milliseconds
+      Given a subscribed whiteboard editor
+      When a scene change is made
+      And 249 milliseconds elapse
+      Then no collaboration broadcast is sent
+      And at 250 milliseconds one scene broadcast carries the edit
+
+    Scenario: A continuous drag sends 4 scene broadcasts a second with the latest version
+      Given a subscribed whiteboard editor
+      When an element is dragged every 16 milliseconds for 1000 milliseconds
+      Then 4 scene broadcasts have been sent
+      And the scene is saved 4 times
+      And the final scene broadcast carries the latest version
 
   @rule-0317 @ears-event-driven
   Rule: When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.

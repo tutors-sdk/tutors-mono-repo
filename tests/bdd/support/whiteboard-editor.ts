@@ -48,7 +48,9 @@ export function mountWhiteboardEditor() {
     location: { origin: "https://reader.invalid" },
     crypto: { randomUUID: () => "session-alice" },
     setTimeout,
-    clearTimeout
+    clearTimeout,
+    // The test's clock, so fake timers move the editor's Date.now() too.
+    Date
   });
   const editor = Editor({
     config: {

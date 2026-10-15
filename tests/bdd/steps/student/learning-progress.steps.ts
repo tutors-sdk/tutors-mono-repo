@@ -309,4 +309,40 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
       });
     });
   });
+
+  Rule("When a lecturer loads a course's time report for a date range, the time dashboard shall read only that course's calendar days within the range from the database.", ({ RuleScenario }) => {
+    let report: CourseTime;
+    const seedDays = (_ctx: unknown, blocks: number, student: string, days: string) => {
+      recorder.seed(
+        "calendar",
+        days.split(",").map((day) => ({ id: day.trim(), studentid: student, courseid: course.courseId, timeactive: blocks, pageloads: 1 }))
+      );
+    };
+    const load = async (startDate: string | null, endDate: string | null) => {
+      report = new CourseTime();
+      await report.loadTime(course.courseId, startDate, endDate, course.title);
+    };
+    const returnedDays = (_ctx: unknown, count: number) => {
+      const reads = recorder.tableCalls.filter((call) => call.table === "calendar" && call.op === "select");
+      expect(reads.map((call) => call.returned)).toEqual([count]);
+    };
+    const coveredDays = (_ctx: unknown, days: string) => {
+      expect(report.calendarModel.dates).toEqual(days.split(",").map((day) => day.trim()));
+    };
+    const seedStep = "the calendar holds {number} thirty-second blocks of time active for {string} on each of {string}";
+
+    RuleScenario("A date range is read, not the whole calendar", ({ Given, When, Then, And }) => {
+      Given(seedStep, seedDays);
+      When("the time report for the course is loaded from {string} to {string}", (_ctx, start: string, end: string) => load(start, end));
+      Then("the database shall have returned {number} calendar days for the course", returnedDays);
+      And("the report shall cover the days {string}", coveredDays);
+    });
+
+    RuleScenario("A report with no range still reads the whole course", ({ Given, When, Then, And }) => {
+      Given(seedStep, seedDays);
+      When("the time report for the course is loaded with no date range", () => load(null, null));
+      Then("the database shall have returned {number} calendar days for the course", returnedDays);
+      And("the report shall cover the days {string}", coveredDays);
+    });
+  });
 });
