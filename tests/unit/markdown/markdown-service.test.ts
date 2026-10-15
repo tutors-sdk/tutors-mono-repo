@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
  *
  * The source file (markdown.svelte.ts) uses Svelte 5 runes and has heavy
  * module-level side effects (Shiki highlighter init, localStorage access,
- * $app/environment import). The key utility functions -- escapeHtml and
+ * $app/env import). The key utility functions -- escapeHtml and
  * renderNotebookOutput -- are not exported but contain substantial branching
  * logic worth verifying.
  *

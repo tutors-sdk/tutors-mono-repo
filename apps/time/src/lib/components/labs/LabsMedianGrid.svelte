@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { GridApi } from "ag-grid-community";
-  import { GridLabModel } from "$lib/components/labs/GridLabModel";
+  import { GridLabModel } from "#lib/components/labs/GridLabModel.ts";
   import type { LabMedianRow, TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   ModuleRegistry.registerModules([AllCommunityModule]);

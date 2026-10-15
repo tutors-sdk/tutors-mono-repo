@@ -1626,4 +1626,4 @@ The right-hand column is the honest part. Every row on the left is a claim that 
 - **Docs**: tracked `*.md` files excluding test fixtures, generated knowledge-graph output, personal workspace files and vendored `.tessl` docs (63 files, 9.8k lines at 21 Sep; not re-measured).
 - **June baseline** is 1 Jun, 27 tests in `tutors-apps`, none in `tutors` or `tutors-cli`, and no workflows in any of them.
 - **Line counts** are deliberately left out of the headline: the raw diff is dominated by lockfiles and a vendored PDF worker. PR sizes on the Paper slide are `git diff --shortstat` of each merge.
-- Charts are regenerated from these sources by the scripts in `guides/evolution/tools`; the hardening narrative draws on merged PR descriptions, `CHANGELOG.md`, the workflows and deploy manifests, and `tutors-sdk/tutors-release-harness` (its README, `docs/lean.md` and the user guide).
+- Charts are regenerated from these sources by the scripts in `guides/evolution/tools`; the hardening narrative draws on merged PR descriptions, `CHANGELOG.md`, the workflows and deploy manifests, and `tutors-sdk/tutors-release-harness` (its README, its `docs/lean.md` and its user guide).

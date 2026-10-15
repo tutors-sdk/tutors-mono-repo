@@ -1,0 +1,10 @@
+{
+  "name": "@tutors/identity",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Framework-free verified identity and session contracts for Tutors",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

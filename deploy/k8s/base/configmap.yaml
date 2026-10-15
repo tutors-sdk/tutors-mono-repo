@@ -5,9 +5,9 @@ metadata:
   labels:
     app.kubernetes.io/part-of: tutors
 data:
-  # Public URL of the app. adapter-node uses it to build absolute URLs and to
-  # validate form submissions, so it must match the Route/Ingress host.
-  ORIGIN: "https://tutors.dev"
+  # Public URL metadata used to render the Route/Ingress host.
+  # Kit 3 derives the request origin from the trusted proxy headers below.
+  TUTORS_ORIGIN: "https://tutors.dev"
   # Cross-app links. Public dynamic env is read by SvelteKit at runtime.
   PUBLIC_READER_ORIGIN: "https://tutors.dev"
   PUBLIC_CATALOGUE_ORIGIN: "https://catalogue.tutors.dev"

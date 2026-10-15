@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { env } from "$env/dynamic/public";
+  import { browser } from "$app/env";
+  import * as env from "$app/env/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
   import { tutorsId } from "@tutors/runes";
   import { readerApi, readerApiJson } from "@tutors/community/utils/reader-api";

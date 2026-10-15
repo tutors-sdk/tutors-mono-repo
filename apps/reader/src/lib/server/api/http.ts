@@ -11,18 +11,8 @@ export interface SessionUser {
 
 type Locals = RequestEvent["locals"];
 
-type Session = { user?: { login?: string | null; name?: string | null; email?: string | null; image?: string | null } | null } | null;
-
 export async function sessionUser(locals: Locals): Promise<SessionUser | null> {
-  const session = (await locals.auth?.()) as Session;
-  const login = session?.user?.login?.trim();
-  if (!login) return null;
-  return {
-    login,
-    name: session?.user?.name ?? null,
-    email: session?.user?.email ?? null,
-    image: session?.user?.image ?? null
-  };
+  return locals.actor ?? null;
 }
 
 export async function requireUser(locals: Locals): Promise<SessionUser> {

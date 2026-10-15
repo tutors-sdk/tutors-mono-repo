@@ -1,6 +1,6 @@
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { AssignmentsSyncService } from "$lib/server/services/AssignmentsSyncService";
+import { AssignmentsSyncService } from "#lib/server/services/AssignmentsSyncService.ts";
 
 export const POST: RequestHandler = async ({ request }) => {
   const body = await request.json();

@@ -12,9 +12,9 @@ export interface TutorsTimeRows {
 }
 
 export interface TutorsTimeSource {
-  courseRows(courseId: string): Promise<TutorsTimeRows>;
-  courseRecord(courseId: string): Promise<Pick<TutorsConnectCourse, "course_id" | "course_record"> | null>;
-  user(studentId: string, courseId?: string): Promise<Omit<TutorsConnectUser, "email"> | null>;
+  courseRows(courseId: string, startDate?: string | null, endDate?: string | null): Promise<TutorsTimeRows>;
+  courseRecord(courseId: string, startDate?: string | null, endDate?: string | null): Promise<Pick<TutorsConnectCourse, "course_id" | "course_record"> | null>;
+  user(studentId: string, courseId?: string, startDate?: string | null, endDate?: string | null): Promise<Omit<TutorsConnectUser, "email"> | null>;
 }
 
 export class TutorsTimeSourceError extends Error {
@@ -38,10 +38,15 @@ async function selectAll(query: (from: number, to: number) => PromiseLike<{ data
 
 export function supabaseTimeSource(): TutorsTimeSource {
   return {
-    async courseRows(courseId) {
+    async courseRows(courseId, startDate, endDate) {
       const db = getSupabase();
       const [calendar, learningRecords, course] = await Promise.all([
-        selectAll((from, to) => db.from("calendar").select("*").eq("courseid", courseId).order("id", { ascending: true }).range(from, to), "calendar data"),
+        selectAll((from, to) => {
+          let query = db.from("calendar").select("*").eq("courseid", courseId).order("id", { ascending: true });
+          if (startDate) query = query.gte("id", startDate);
+          if (endDate) query = query.lte("id", endDate);
+          return query.range(from, to);
+        }, "calendar data"),
         selectAll((from, to) => db.from("learning_records").select("*").eq("course_id", courseId).order("date_last_accessed", { ascending: false }).range(from, to), "learning records"),
         this.courseRecord(courseId)
       ]);
@@ -74,29 +79,34 @@ export function readerTimeSource(readerUrl: string, fetchFn: typeof fetch = (...
   const base = withoutTrailingSlashes(readerUrl);
   const cache = new Map<string, { at: number; rows: Promise<TutorsTimeRows> }>();
 
-  async function load(courseId: string): Promise<TutorsTimeRows> {
-    const response = await fetchFn(`${base}/api/time/${encodeURIComponent(courseId)}`, { credentials: "include", headers: { accept: "application/json" } });
+  async function load(courseId: string, startDate?: string | null, endDate?: string | null): Promise<TutorsTimeRows> {
+    const params = new URLSearchParams();
+    if (startDate) params.set("start", startDate);
+    if (endDate) params.set("end", endDate);
+    const query = params.size ? `?${params}` : "";
+    const response = await fetchFn(`${base}/api/time/${encodeURIComponent(courseId)}${query}`, { credentials: "include", headers: { accept: "application/json" } });
     if (!response.ok) throw new TutorsTimeSourceError(`The reader answered ${response.status} for the time data of ${courseId}`, response.status);
     return (await response.json()) as TutorsTimeRows;
   }
 
-  function courseRows(courseId: string): Promise<TutorsTimeRows> {
-    const hit = cache.get(courseId);
+  function courseRows(courseId: string, startDate?: string | null, endDate?: string | null): Promise<TutorsTimeRows> {
+    const key = JSON.stringify([courseId, startDate || null, endDate || null]);
+    const hit = cache.get(key);
     if (hit && Date.now() - hit.at < 30_000) return hit.rows;
-    const rows = load(courseId);
-    cache.set(courseId, { at: Date.now(), rows });
-    rows.catch(() => cache.delete(courseId));
+    const rows = load(courseId, startDate, endDate);
+    cache.set(key, { at: Date.now(), rows });
+    rows.catch(() => cache.delete(key));
     return rows;
   }
 
   return {
     courseRows,
-    async courseRecord(courseId) {
-      return (await courseRows(courseId)).course;
+    async courseRecord(courseId, startDate, endDate) {
+      return (await courseRows(courseId, startDate, endDate)).course;
     },
-    async user(studentId, courseId) {
+    async user(studentId, courseId, startDate, endDate) {
       if (!courseId) return null;
-      return (await courseRows(courseId)).users.find((u) => u.github_id === studentId) ?? null;
+      return (await courseRows(courseId, startDate, endDate)).users.find((u) => u.github_id === studentId) ?? null;
     }
   };
 }

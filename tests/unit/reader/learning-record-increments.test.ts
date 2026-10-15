@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
-import { recordTick } from "../../../apps/reader/src/lib/server/api/store.ts";
+import { recordTick, recordingFunctions } from "../../../apps/reader/src/lib/server/api/store.ts";
 
 
 const net = { rpcBody: undefined as unknown, updates: [] as unknown[], calendarIncrements: [] as unknown[] };
@@ -28,6 +28,7 @@ const db = createClient("https://mock.supabase.co", "service-role-key", { global
 const tick = () => recordTick(db, "student", { courseId: "course", loId: "lo", day: "2026-09-25" });
 
 beforeEach(() => {
+  recordingFunctions.missing = true;
   net.updates = [];
   net.calendarIncrements = [];
 });

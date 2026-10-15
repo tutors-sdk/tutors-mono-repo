@@ -1,17 +1,17 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { insert } = vi.hoisted(() => ({ insert: vi.fn() }));
 
 vi.mock(
   "../../../packages/svelte/community/src/utils/supabase-client.ts",
   () => ({
-    supabase: { from: () => ({ insert: vi.fn() }) },
+    supabase: { from: () => ({ insert }) },
   }),
 );
 
-vi.mock("$env/dynamic/public", () => ({
-  env: {
-    PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-    PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-  },
+vi.mock("$app/env/public", () => ({
+  PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+  PUBLIC_SUPABASE_ANON_KEY: "anon-key",
 }));
 
 import { createSupabaseErrorTransport } from "../../../packages/svelte/community/src/utils/error-transport.ts";
@@ -68,5 +68,63 @@ describe("error transport: flush on unload", () => {
     expect(new URL(url).searchParams.has("Prefer")).toBe(false);
     expect(init.headers.Prefer).toBe("return=minimal");
     expect(init.keepalive).toBe(true);
+  });
+});
+
+// The ordinary path: entries buffer until the batch is full, then go to the table in one insert.
+describe("error transport: the full buffer", () => {
+  beforeEach(() => {
+    insert.mockClear();
+    vi.stubGlobal("window", {
+      location: { href: "https://tutors.dev/note/course/x" },
+      addEventListener: () => {},
+    });
+    vi.stubGlobal("navigator", { userAgent: "test" });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  function sendMany(count: number, level = "error") {
+    const send = createSupabaseErrorTransport("reader");
+    for (let i = 0; i < count; i++) {
+      send({
+        timestamp: "t",
+        level,
+        message: `boom ${i}`,
+        app: "reader",
+        courseId: "course-1",
+        studentId: "student-1",
+      } as never);
+    }
+  }
+
+  it("writes the whole batch in one insert once 20 entries are buffered", () => {
+    sendMany(20);
+    expect(insert).toHaveBeenCalledOnce();
+    const [rows] = insert.mock.calls[0] as unknown as [
+      Record<string, unknown>[],
+    ];
+    expect(rows).toHaveLength(20);
+    expect(rows[0]).toMatchObject({
+      app: "reader",
+      level: "error",
+      message: "boom 0",
+      course_id: "course-1",
+      student_id: "student-1",
+      url: "https://tutors.dev/note/course/x",
+      user_agent: "test",
+    });
+  });
+
+  it("keeps a partial batch buffered rather than writing it", () => {
+    sendMany(19);
+    expect(insert).not.toHaveBeenCalled();
+    // The buffer outlives the transport, so empty it rather than leave 19 entries for the next test.
+    sendMany(1);
+    expect(insert).toHaveBeenCalledOnce();
+  });
+
+  it("ignores anything below warn, so a full buffer of debug writes nothing", () => {
+    sendMany(20, "debug");
+    expect(insert).not.toHaveBeenCalled();
   });
 });

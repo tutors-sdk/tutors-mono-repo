@@ -27,7 +27,7 @@ function courseSummary(course: Course, visibility?: LlmsVisibility): string {
 
   if (!hideCourseWide) {
     links.push(`- [${fileName}-complete-llms.txt](https://${course.courseUrl}/llms/${fileName}-complete-llms.txt) — ${llmsText}`);
-    const talks = filterByType(course.los, "talk").filter(isVisible);
+    const talks = filterByType(course.los, "talk").filter((lo) => !lo.hide && isVisible(lo));
     if (talks.length > 0) {
       links.push(`- [${fileName}-complete-pdfs.zip](https://${course.courseUrl}/llms/${fileName}-complete-pdfs.zip) — ${pdfsZip}`);
     }
@@ -41,7 +41,7 @@ function topics(course: Course, visibility?: LlmsVisibility): string {
   const topicStr: string[] = [];
   const topicLos = filterByType(course.los, "topic");
   topicLos.forEach((lo: Lo, index: number) => {
-    if (lo.type === "topic" && isVisible(lo)) {
+    if (lo.type === "topic" && !lo.hide && isVisible(lo)) {
       const topic = lo as Topic;
       const paddedIndex = index.toString().padStart(2, "0");
       const title = `${paddedIndex}-${toSnakeCase(topic.title)}`;
@@ -52,7 +52,7 @@ function topics(course: Course, visibility?: LlmsVisibility): string {
       const allLos = flattenLos(topic.los);
       const videos = allLos.filter((lo) => lo.type === "panelvideo");
       videos.forEach((video: Lo) => {
-        if (!isVisible(video)) return;
+        if (video.hide || !isVisible(video)) return;
         const videoConfig = getVideoConfig(video);
         if (videoConfig.externalUrl) {
           topicStr.push(`- [${video.title}](${videoConfig.externalUrl}) — ${videoTxt}`);

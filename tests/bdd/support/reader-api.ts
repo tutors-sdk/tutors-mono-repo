@@ -79,7 +79,7 @@ async function callReader(request: Request, withSession: boolean): Promise<Respo
   const user = withSession ? session : null;
   const locals = {
     locale: "en",
-    auth: async () => (user ? { user: { login: user.login, name: user.name, email: user.email, image: user.image }, expires: "2099-01-01T00:00:00Z" } : null)
+    actor: user ? { subject: `github:${user.login}`, login: user.login, name: user.name, email: user.email, image: user.image } : null
   };
   try {
     return await handler({ request, url, params, locals, fetch: globalThis.fetch, route: { id: route.id }, setHeaders: () => {} });
@@ -107,6 +107,7 @@ export function installReaderFetch(): void {
     const url = new URL(raw, READER_ORIGIN);
     const course = courseJsonResponse(url);
     if (course) return course;
+    if (url.pathname === "/api/live/activity") return previous(input, init);
     if (url.origin !== READER_ORIGIN || !url.pathname.startsWith("/api/")) return previous(input, init);
 
     const origin = sameOrigin ? null : "https://time.test";

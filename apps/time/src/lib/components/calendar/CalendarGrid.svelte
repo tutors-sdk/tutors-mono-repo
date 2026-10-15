@@ -3,7 +3,7 @@
   import { invalidateAll } from "$app/navigation";
   import { createGrid, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
   import type { ColDef, GridApi } from "ag-grid-community";
-  import { GridCalendarModel } from "$lib/components/calendar/GridCalendarModel";
+  import { GridCalendarModel } from "#lib/components/calendar/GridCalendarModel.ts";
   import type { CalendarRow, CalendarMedianRow, TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   ModuleRegistry.registerModules([AllCommunityModule]);

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LoRecord } from "@tutors/community";
-  import { type CardConfig, type CardDetails } from "@tutors/themes";
+  import { loTypeColour, type CardConfig, type CardDetails } from "@tutors/themes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
@@ -15,25 +15,6 @@
    * when `onUnlock` is given (the lock is on this resource, not inherited), an Unlock button.
    */
   let { cardDetails, cardLayout, children, locked = false, lecturer = false, onUnlock } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; children?: Snippet; locked?: boolean; lecturer?: boolean; onUnlock?: () => void }>();
-
-  const legacyCardColours: Record<string, { border: string; background: string }> = {
-    course: { border: "#37919b", background: "#d3ecee" },
-    topic: { border: "#53a878", background: "#d9eee0" },
-    talk: { border: "#cb9d00", background: "#f4ecce" },
-    paneltalk: { border: "#cb9d00", background: "#f4ecce" },
-    reference: { border: "#37919b", background: "#d3ecee" },
-    lab: { border: "#d00034", background: "#fcd6d8" },
-    archive: { border: "#d00034", background: "#fcd6d8" },
-    panelvideo: { border: "#ff0032", background: "#ffd6dd" },
-    video: { border: "#ff0032", background: "#ffd6dd" },
-    github: { border: "#cb9d00", background: "#f4ecce" },
-    web: { border: "#008c8f", background: "#d6e9e9" },
-    note: { border: "#53a878", background: "#d9eee0" },
-    tutorial: { border: "#008c8f", background: "#d6e9e9" },
-    podcast: { border: "#008c8f", background: "#d6e9e9" },
-    notebook: { border: "#557927", background: "#d9eee0" },
-    quiz: { border: "#6366f1", background: "#e0e7ff" }
-  };
 
   function plainFromSummary(html: string | undefined): string {
     if (!html) return "";
@@ -60,11 +41,7 @@
   const target = $derived(["web", "github"].includes(cardDetails.type) && cardDetails.route.startsWith("http") ? "_blank" : "");
   const route = $derived(cardDetails.type === "video" ? (cardDetails.video || cardDetails.route) : cardDetails.route);
   const hideVideoIcon = $derived(currentCourse.value?.areVideosHidden);
-  const cardColour = $derived.by(() => {
-    const c = legacyCardColours[cardDetails.type] ?? legacyCardColours.course;
-    // Pastel backgrounds would wash out on a dark surface, so dark mode darkens them first.
-    return { border: c.border, background: `light-dark(${c.background}, color-mix(in srgb, ${c.background} 35%, black))` };
-  });
+  const cardColour = $derived(loTypeColour(cardDetails.type));
 </script>
 
 {#if cardDetails.student}

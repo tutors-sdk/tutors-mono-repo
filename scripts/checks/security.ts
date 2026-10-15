@@ -189,7 +189,7 @@ export function routeKey(route: Pick<MutatingRoute, "app" | "method" | "route">)
 export interface InventoryEntry {
   key: string;
   who: string;
-  /** Mounted by a hook (e.g. Auth.js) rather than a route file, so discovery cannot see it. */
+  /** Mounted by a hook (e.g. Better Auth) rather than a route file, so discovery cannot see it. */
   hook: boolean;
 }
 

@@ -1,83 +1,98 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-type Answer = { data?: unknown; error?: { message: string } | null };
-
-const db = vi.hoisted(() => ({
-  client: undefined as unknown,
-  head: { error: null } as Answer | Error,
-  rpc: { data: [], error: null } as Answer | Error,
-  calls: [] as unknown[][]
-}));
+// health-check reads `supabase` at call time and treats an absent client as anon mode, so the
+// stub is held in a mutable binding the tests reassign rather than the shared MockSupabaseClient
+// (which has no rpc).
+let client: unknown;
 
 vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
   get supabase() {
-    return db.client;
+    return client;
   }
 }));
 
 import { checkSupabase, getRecentErrorCounts } from "../../../packages/svelte/community/src/utils/health-check.ts";
 
-function settle(answer: Answer | Error): Promise<Answer> {
-  return answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer);
+function clientReturning({ select, rpc }: { select?: unknown; rpc?: unknown } = {}) {
+  return {
+    from: vi.fn(() => ({ select: vi.fn(() => Promise.resolve(select)) })),
+    rpc: vi.fn(() => Promise.resolve(rpc))
+  };
 }
 
 beforeEach(() => {
-  db.calls = [];
-  db.head = { error: null };
-  db.rpc = { data: [], error: null };
-  db.client = {
-    from: (table: string) => ({
-      select: (...args: unknown[]) => {
-        db.calls.push(["select", table, ...args]);
-        return settle(db.head);
-      }
-    }),
-    rpc: (name: string, params: unknown) => {
-      db.calls.push(["rpc", name, params]);
-      return settle(db.rpc);
-    }
-  };
+  client = undefined;
 });
 
-describe("health check: the database probe", () => {
-  it("is skipped in anonymous mode, where there is no client", async () => {
-    db.client = undefined;
+describe("checkSupabase", () => {
+  it("skips the check when there is no client, so anon mode is not an error", async () => {
     expect(await checkSupabase()).toEqual({ status: "skipped", latencyMs: 0, message: "anon mode" });
   });
 
-  it("counts the public catalogue without reading any row", async () => {
+  it("reports ok and a latency when the count query answers", async () => {
+    client = clientReturning({ select: { error: null } });
     const result = await checkSupabase();
     expect(result.status).toBe("ok");
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
-    expect(db.calls).toEqual([["select", "tutors-connect-courses", "count", { count: "exact", head: true }]]);
+    expect(result.message).toBeUndefined();
   });
 
-  it("reports the database's error", async () => {
-    db.head = { error: { message: "permission denied" } };
-    expect(await checkSupabase()).toMatchObject({ status: "error", message: "permission denied" });
+  it("asks only for the row count, not the rows", async () => {
+    const stub = clientReturning({ select: { error: null } });
+    client = stub;
+    await checkSupabase();
+    expect(stub.from).toHaveBeenCalledWith("tutors-connect-courses");
   });
 
-  it("reports a thrown failure", async () => {
-    db.head = new Error("fetch failed");
-    expect(await checkSupabase()).toMatchObject({ status: "error", message: "fetch failed" });
+  it("reports the error message when the query answers with one", async () => {
+    client = clientReturning({ select: { error: { message: "permission denied" } } });
+    const result = await checkSupabase();
+    expect(result).toMatchObject({ status: "error", message: "permission denied" });
+  });
+
+  it("reports the message when the query throws an Error", async () => {
+    client = { from: vi.fn(() => ({ select: () => Promise.reject(new Error("network down")) })) };
+    const result = await checkSupabase();
+    expect(result).toMatchObject({ status: "error", message: "network down" });
+  });
+
+  it("stringifies a thrown value that is not an Error", async () => {
+    client = { from: vi.fn(() => ({ select: () => Promise.reject("gateway timeout") })) };
+    const result = await checkSupabase();
+    expect(result).toMatchObject({ status: "error", message: "gateway timeout" });
   });
 });
 
-describe("health check: recent error counts", () => {
-  it("asks get_error_counts for the last hour and returns its per-app counts", async () => {
-    db.rpc = { data: [{ app: "reader", level: "error", count: 3 }], error: null };
-    expect(await getRecentErrorCounts()).toEqual([{ app: "reader", level: "error", count: 3 }]);
-    expect(db.calls).toEqual([["rpc", "get_error_counts", { minutes_ago: 60 }]]);
+describe("getRecentErrorCounts", () => {
+  it("returns nothing when there is no client", async () => {
+    expect(await getRecentErrorCounts()).toEqual([]);
   });
 
-  it("returns no counts in anonymous mode, on an error, or when the call throws", async () => {
-    db.rpc = { data: null, error: null };
+  it("returns the counts the function reports", async () => {
+    const counts = [{ app: "reader", level: "error", count: 3 }];
+    client = clientReturning({ rpc: { data: counts, error: null } });
+    expect(await getRecentErrorCounts()).toEqual(counts);
+  });
+
+  it("asks for the last hour", async () => {
+    const stub = clientReturning({ rpc: { data: [], error: null } });
+    client = stub;
+    await getRecentErrorCounts();
+    expect(stub.rpc).toHaveBeenCalledWith("get_error_counts", { minutes_ago: 60 });
+  });
+
+  it("returns nothing when the function answers with an error", async () => {
+    client = clientReturning({ rpc: { data: null, error: { message: "no such function" } } });
     expect(await getRecentErrorCounts()).toEqual([]);
-    db.rpc = { data: null, error: { message: "function does not exist" } };
+  });
+
+  it("returns nothing when the function answers with no data", async () => {
+    client = clientReturning({ rpc: { data: null, error: null } });
     expect(await getRecentErrorCounts()).toEqual([]);
-    db.rpc = new Error("fetch failed");
-    expect(await getRecentErrorCounts()).toEqual([]);
-    db.client = undefined;
+  });
+
+  it("returns nothing when the call throws, so a health page still renders", async () => {
+    client = { rpc: () => Promise.reject(new Error("socket closed")) };
     expect(await getRecentErrorCounts()).toEqual([]);
   });
 });

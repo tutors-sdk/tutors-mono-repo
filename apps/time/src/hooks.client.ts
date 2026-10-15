@@ -1,8 +1,8 @@
-import type { HandleClientError } from "@sveltejs/kit";
+import type { HandleClientError } from "@sveltejs/kit/hooks";
 import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
-import { useReaderTimeSource } from "$lib/time-source";
+import { useReaderTimeSource } from "#lib/time-source.ts";
 
 useReaderTimeSource();
 
@@ -16,9 +16,11 @@ window.addEventListener("unhandledrejection", (event) => {
   });
 });
 
-export const handleError: HandleClientError = ({ error }) => {
+export const handleError: HandleClientError = ({ kind, error }) => {
+  if (kind !== "unknown") return;
   log.error("Client error:", error instanceof Error ? error : { details: error });
   return {
+    status: 500,
     message: "An unexpected error occurred"
   };
 };

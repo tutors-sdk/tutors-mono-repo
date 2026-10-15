@@ -129,6 +129,8 @@ pnpm check                       # svelte-check on the reader, catalogue, live a
 
 The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
 
+Formatting follows the root `.editorconfig` and `.prettierrc` (2 spaces, double quotes, 180 columns, the same settings `deno fmt` applies to the jsr packages listed in `deno.json`). Your editor picks them up; `pnpm format:check` lists files that drift and `pnpm format` rewrites them. Existing files have not been reformatted in bulk, so format only the files you touch.
+
 Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation` and `pnpm test:mutation:nightly`, both nightly), the browser journeys against built images (`pnpm test:e2e:stack`), the reader's UI contract (`pnpm test:e2e:reader`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 
 Useful while developing:
@@ -189,6 +191,8 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `timing-tolerance` | informing until harness 2.0: a page, journey or load p95 significantly slower on the candidate by 10% or more |
 | `asset-graph` | informing until harness 2.0: an app's build chunks under `/_app/immutable/` changed, one finding per app (scope `<app>`) |
 | `replay` | informing until harness 2.0: status, headers or network of a URL in the harness's replay set (scope `replay:<key>...`) |
+| `slo` | informing until harness 2.0: the candidate misses a service level objective (the stricter of `release/slo.yaml` and the harness's floors), or regressed against production (scope `<objective id>`, `<id>/load`, `<id>/regression`) |
+| `realtime` | informing until harness 2.0: a reader page opened a Realtime websocket on the candidate, or Realtime messages per reader page view rose against production (scope `<page>/websocket`, `<app>/messages`) |
 
 Rules of thumb:
 

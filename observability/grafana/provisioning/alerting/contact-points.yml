@@ -11,3 +11,12 @@ contactPoints:
         settings:
           addresses: "tutors-alerts@example.com"
         disableResolveMessage: false
+  # Tickets: SLO budgets burning at the sustainable rate or faster. Worked in hours, not minutes; never a page.
+  - orgId: 1
+    name: tutors-tickets
+    receivers:
+      - uid: tickets-email
+        type: email
+        settings:
+          addresses: "tutors-tickets@example.com"
+        disableResolveMessage: false

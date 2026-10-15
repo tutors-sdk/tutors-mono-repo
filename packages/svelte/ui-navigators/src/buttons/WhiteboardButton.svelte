@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
-  import { env } from "$env/dynamic/public";
+  import * as env from "$app/env/public";
 
   import { t } from "@tutors/i18n";
   let { labelled = false } = $props();
