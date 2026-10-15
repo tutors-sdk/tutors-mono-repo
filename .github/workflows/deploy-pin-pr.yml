@@ -172,7 +172,10 @@ jobs:
           BRANCH: ${{ steps.todo.outputs.branch }}
         run: |
           auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push "https://github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
+          # Forced: no open pull request uses this branch (checked above), so a tip left by an
+          # earlier run that failed before opening its pull request, or whose pull request was
+          # closed, is stale and is replaced rather than rejecting the retry.
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push --force "https://github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
           body="$(printf '%s\n' \
             "Pins production to $VERSION (release/SOP.md, step 10), opened by deploy-pin-pr.yml after image-build.yml published \`v$VERSION\`." \
             "" \
