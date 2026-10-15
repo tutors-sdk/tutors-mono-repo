@@ -155,7 +155,7 @@ Calendar date ranges reach the database query through the time API.
 **Release N (the one that ships this change): expand.**
 
 1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader and time, `PRIVATE_API_ALLOWED_ORIGINS` on
-   reader, and `PUBLIC_READER_URL` on time.
+   reader, and `PUBLIC_READER_URL` plus `PRIVATE_MOODLE_SYNC_TOKEN` on time.
 2. Apply the pending migrations (`20261017000000` to `20261017000200`) as usual, then deploy the new
    reader and time pods. Everything in `supabase/migrations` is safe to run before the new pods are
    up: nothing added by this PR removes what an older pod or tab uses.
@@ -195,7 +195,7 @@ bus and of `can()`.
   only by `/api/presence`.
 - **`app_errors`** still accepts inserts from anyone holding the anon key, so the table can be filled
   with junk, but it can no longer be read.
-- **The time app's `POST /api/sync`** still has no authentication. It writes only what it fetches
-  from Moodle, now with the service key.
+- **The time app's `POST /api/sync`** requires the operator token from #329 and writes the
+  fetched Moodle assignments with the service key.
 - **Assignments and submissions** reach browsers only as counts, and only for educators, through
   `/api/time`.
