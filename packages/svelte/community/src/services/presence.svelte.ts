@@ -4,11 +4,9 @@ import type { Course, Lo } from "@tutors/tutors-model-lib";
 import { rune } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
+import { topics } from "@tutors/realtime";
 import { getTutorsConnectRecentLosByCourseId, supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
-import log from "@tutors/logger";
-
-const BROADCAST_CONFIG = { config: { broadcast: { self: false } } };
-let courseChannelRemoval: Promise<unknown> | null = null;
+import { realtime } from "./realtime.ts";
 
 /**
  * The reader's online list is read from stored activity, not delivered over Realtime. A course channel
@@ -24,8 +22,7 @@ let rosterGeneration = 0;
 let selfId = "";
 
 export const presenceService: PresenceService = {
-  channelAll: null,
-  channelCourse: null,
+  courseSubscription: null,
   listeningTo: "",
   studentsOnline: rune<LoRecord[]>([]),
   studentEventMap: new Map<string, LoRecord>(),
@@ -46,26 +43,17 @@ export const presenceService: PresenceService = {
     }
   },
 
-  /** Publish-only: joining here multiplies billed platform-wide deliveries by every reader.
-   * Only Tutors Live's landing page subscribes to this feed.
-   */
-  connectToAllCourseAccess(): void {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
-    if (this.channelAll) return;
-    this.channelAll = supabase.channel("tutors-all-course-access", BROADCAST_CONFIG);
-  },
-
   async startPresenceListener(courseId: string) {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
     if (this.listeningTo === courseId) return;
 
     this.stopPresenceListener();
     this.listeningTo = courseId;
-    // Supabase reuses channels by topic, so wait until the previous instance has left.
-    if (courseChannelRemoval) await courseChannelRemoval;
-    if (this.listeningTo !== courseId || this.channelCourse) return;
-
-    this.channelCourse = supabase.channel(courseId, BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.studentListener.bind(this)).subscribe();
+    // The gateway waits for a previous channel on this topic to finish leaving before it joins again.
+    this.courseSubscription = realtime.subscribe(topics.courseActivity(courseId), {
+      events: ["lo-event"],
+      onMessage: (event, payload) => this.studentListener({ type: "broadcast", event, payload })
+    });
   },
 
   async startCourseRoster(courseId: string) {
@@ -121,8 +109,8 @@ export const presenceService: PresenceService = {
     if (rosterTimer) clearInterval(rosterTimer);
     rosterTimer = null;
     rosterGeneration++;
-    if (this.channelCourse && supabase) courseChannelRemoval = supabase.removeChannel(this.channelCourse);
-    this.channelCourse = null;
+    void this.courseSubscription?.close();
+    this.courseSubscription = null;
     this.listeningTo = "";
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
@@ -146,28 +134,13 @@ export const presenceService: PresenceService = {
       loRecord.icon = lo.icon;
     }
 
-    // Publish by HTTP because the global channel is deliberately never joined.
-    try {
-      void this.channelAll?.httpSend("lo-event", loRecord).catch((error) => log.error("Broadcast to tutors-all-course-access failed:", error));
-    } catch (error) {
-      log.error("Broadcast to tutors-all-course-access failed:", error);
-    }
+    // Published without joining: only Tutors Live subscribes to either feed.
+    realtime.publish(topics.platformActivity(), "lo-event", loRecord);
     selfId = loRecord.user?.id ?? "";
-    const message = { type: "broadcast" as const, event: "lo-event", payload: loRecord };
-    this.studentListener(message);
-    try {
-      const channel = this.listeningTo === course.courseId ? this.channelCourse : null;
-      if (channel) {
-        void channel.send(message);
-      } else {
-        // The reader never joins the course channel; Tutors Live's course page is the only subscriber.
-        void supabase
-          .channel(course.courseId, BROADCAST_CONFIG)
-          .httpSend("lo-event", loRecord)
-          .catch((error) => log.error("Broadcast to course failed:", error));
-      }
-    } catch (error) {
-      log.error("Broadcast to course failed:", error);
+    this.studentListener({ type: "broadcast", event: "lo-event", payload: loRecord });
+    const subscription = this.listeningTo === course.courseId ? this.courseSubscription : null;
+    if (!subscription?.send("lo-event", loRecord)) {
+      realtime.publish(topics.courseActivity(course.courseId), "lo-event", loRecord);
     }
 
     void upsertTutorsConnectLatestLo(loRecord);

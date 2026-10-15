@@ -44,6 +44,7 @@ describe("architecture rules (runway tier A)", () => {
       ["identity-provider-only-in-adapter", "packages/svelte/connect/src/provider.ts", "external/better-auth/index.ts"],
       ["identity-contracts-self-contained", "packages/jsr/identity/src/framework.ts", "external/sveltekit.ts"],
       ["identity-contracts-self-contained", "packages/jsr/identity/src/database.ts", "external/supabase.ts"],
+      ["realtime-contracts-self-contained", "packages/jsr/realtime/src/broker.ts", "external/supabase.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/leak.client.ts", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/Leak.svelte", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/secret.client.ts", "external/$env/dynamic/private.ts"],

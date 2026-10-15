@@ -20,8 +20,8 @@ Feature: Realtime resource usage
       When the live service is asked to monitor "web-dev-101" again
       Then the original live course channel remains subscribed
 
-    Scenario: Repeating global publisher setup creates one publish-only channel
-      When the global publisher is prepared 3 times
+    Scenario: Repeated global publishing reuses one publish-only channel
+      When course activity is published 3 times
       Then one global channel exists without a subscription
 
   @rule-0274 @ears-event-driven

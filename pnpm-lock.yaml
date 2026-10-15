@@ -562,6 +562,8 @@ importers:
         specifier: ^0.0.6
         version: 0.0.6
 
+  packages/jsr/realtime: {}
+
   packages/jsr/time:
     dependencies:
       '@supabase/supabase-js':
@@ -605,6 +607,12 @@ importers:
       '@tutors/logger':
         specifier: workspace:*
         version: link:../utils/logger
+      '@tutors/realtime':
+        specifier: workspace:*
+        version: link:../../jsr/realtime
+      '@tutors/realtime-supabase':
+        specifier: workspace:*
+        version: link:../realtime-supabase
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes
@@ -682,6 +690,15 @@ importers:
         version: 1.7.7(@opentelemetry/api@1.9.1)(@sveltejs/kit@3.0.1(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(typescript@6.0.3)(vite@8.3.0(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.0))(vitest@5.0.4)
 
   packages/svelte/quiz: {}
+
+  packages/svelte/realtime-supabase:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.117.1
+        version: 2.117.2(@opentelemetry/api@1.9.1)
+      '@tutors/realtime':
+        specifier: workspace:*
+        version: link:../../jsr/realtime
 
   packages/svelte/runes:
     dependencies:
