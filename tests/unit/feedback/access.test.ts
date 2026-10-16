@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { admits, courseAccessReader, courseJsonUrl, educatorsOf, teaches } from "../../../packages/svelte/utils/feedback/src/server/index.ts";
+import { MAX_ENROLLMENT_LOGINS, admits, courseAccessReader, courseJsonUrl, educatorsOf, teaches } from "../../../packages/svelte/utils/feedback/src/server/index.ts";
 
 const answer =
   (body: unknown, ok = true) =>
@@ -45,5 +45,28 @@ describe("course access for feedback", () => {
     expect(await read("broken", answer("{not json"))).toBeNull();
     expect(await read("odd.example.com", answer({}))).toBeNull();
     expect(await read("bare", answer({ enrollment: "x" }))).toEqual({ authLevel: 0, enrollment: null });
+  });
+
+  it("keeps only the enrollment's capped login lists, and forgets the oldest course past the limit", async () => {
+    let fetches = 0;
+    const read = courseAccessReader({ maxCourses: 2 });
+    const fetchFn = async () => {
+      fetches++;
+      return answer({
+        authLevel: 1,
+        enrollment: { educators: ["ellen", 7], whitelist: Array.from({ length: MAX_ENROLLMENT_LOGINS + 5 }, (_, i) => `s${i}`), students: ["huge"] }
+      })();
+    };
+    const access = await read("a", fetchFn);
+    expect(access?.enrollment?.educators).toEqual(["ellen"]);
+    expect(access?.enrollment?.whitelist).toHaveLength(MAX_ENROLLMENT_LOGINS);
+    expect(access?.enrollment).not.toHaveProperty("students");
+    await read("b", fetchFn);
+    await read("c", fetchFn);
+    expect(fetches).toBe(3);
+    await read("c", fetchFn);
+    expect(fetches).toBe(3);
+    await read("a", fetchFn);
+    expect(fetches).toBe(4);
   });
 });

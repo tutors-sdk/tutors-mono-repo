@@ -1,6 +1,6 @@
 import "../../bdd/support/svelte-runes-shim.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { readerFeedbackDesk, type Annotation, type FeedbackDesk } from "../../../packages/svelte/utils/feedback/src/index.ts";
+import { FeedbackReadError, readerFeedbackDesk, type Annotation, type FeedbackDesk } from "../../../packages/svelte/utils/feedback/src/index.ts";
 import { createFeedbackService, explanationToast, FEEDBACK_POLL_MS } from "../../../packages/svelte/utils/feedback/src/service.svelte.ts";
 
 const ref = { courseId: "cs101", labRoute: "/lab/cs101/lab-01", stepId: "02" };
@@ -38,9 +38,11 @@ describe("readerFeedbackDesk", () => {
     expect(urls).toEqual(["/api/feedback?courseId=cs101&labRoute=%2Flab%2Fcs101%2Flab-01&stepId=02", "/api/feedback/mine?courseId=cs101"]);
   });
 
-  it("rejects a read the server refused", async () => {
-    const d = readerFeedbackDesk((async () => new Response("{}", { status: 401 })) as never);
-    await expect(d.step(ref)).rejects.toThrow("401");
+  it("rejects a read the server refused, with its reason", async () => {
+    const d = readerFeedbackDesk((async () => new Response(JSON.stringify({ reason: "not-kept" }), { status: 503 })) as never);
+    await expect(d.step(ref)).rejects.toMatchObject({ status: 503, reason: "not-kept" });
+    const bare = readerFeedbackDesk((async () => new Response("oops", { status: 502 })) as never);
+    await expect(bare.received("cs101")).rejects.toMatchObject({ status: 502, reason: "unavailable" });
   });
 
   it("posts an annotation for one student or for everyone, and a revoke", async () => {
@@ -201,6 +203,57 @@ describe("feedbackService", () => {
     await service.visit("cs101", "alice", null, (a) => toasts.push(a));
     expect(toasts.map((a) => a.id)).toEqual(["first"]);
     await service.visit("", "alice", null, (a) => toasts.push(a));
+    service.reset();
+  });
+
+  it("turns itself off when the server keeps no feedback, until someone else signs in", async () => {
+    vi.useFakeTimers();
+    const step = vi.fn(async () => {
+      throw new FeedbackReadError(503, "not-kept");
+    });
+    const service = createFeedbackService({ desk: desk({ step }) });
+    await service.arrive(ref, "alice");
+    expect(service.available.value).toBe(false);
+    await vi.advanceTimersByTimeAsync(FEEDBACK_POLL_MS * 2);
+    await service.arrive({ ...ref, stepId: "03" }, "alice");
+    expect(step).toHaveBeenCalledTimes(1);
+    await service.arrive(ref, "bob");
+    expect(step).toHaveBeenCalledTimes(2);
+    service.reset();
+  });
+
+  it("offers nothing on a course the server does not read, and tries again on the next step", async () => {
+    vi.useFakeTimers();
+    const step = vi.fn(async () => {
+      throw new FeedbackReadError(503, "no-course");
+    });
+    const service = createFeedbackService({ desk: desk({ step, received: step as never }) });
+    await service.arrive(ref, "alice");
+    expect(service.available.value).toBe(false);
+    await vi.advanceTimersByTimeAsync(FEEDBACK_POLL_MS * 2);
+    expect(step).toHaveBeenCalledTimes(1);
+    await service.visit("cs101", "alice", null, () => {});
+    expect(service.available.value).toBe(false);
+    await service.arrive({ ...ref, stepId: "03" }, "alice");
+    expect(step).toHaveBeenCalledTimes(3);
+    service.reset();
+  });
+
+  it("keeps what is on screen when a read fails for any other reason", async () => {
+    let fail = false;
+    const service = createFeedbackService({
+      desk: desk({
+        step: async () => {
+          if (fail) throw new FeedbackReadError(500, "unavailable");
+          return { broadcasts: [broadcast("a", "t")], personal: [], history: null };
+        }
+      })
+    });
+    await service.arrive(ref, "alice");
+    fail = true;
+    await service.refresh();
+    expect(service.available.value).toBe(true);
+    expect(service.banners()).toHaveLength(1);
     service.reset();
   });
 

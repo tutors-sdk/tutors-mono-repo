@@ -5,4 +5,4 @@
  */
 export * from "./annotation.ts";
 export { memoryFeedbackStore, RECEIVED_LIMIT, type FeedbackStore } from "./store.ts";
-export { readerFeedbackDesk, type FeedbackDesk, type FeedbackRefusal, type FeedbackResult, type StepFeedbackView } from "./client.ts";
+export { FeedbackReadError, readerFeedbackDesk, type FeedbackDesk, type FeedbackRefusal, type FeedbackResult, type StepFeedbackView } from "./client.ts";

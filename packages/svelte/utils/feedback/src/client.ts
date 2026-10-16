@@ -10,7 +10,7 @@ import type { StepFeedback } from "./annotation.ts";
 export type StepFeedbackView = StepFeedback & { history: Annotation[] | null };
 
 /** Why a post was not kept: the server's reason, or `unavailable` when it could not be reached. */
-export type FeedbackRefusal = "invalid" | "forbidden" | "not-found" | "unavailable" | "signed-out" | "not-kept";
+export type FeedbackRefusal = "invalid" | "forbidden" | "not-found" | "unavailable" | "signed-out" | "not-kept" | "no-course";
 
 export type FeedbackResult = { ok: true; annotation: Annotation } | { ok: false; reason: FeedbackRefusal };
 
@@ -25,13 +25,29 @@ export interface FeedbackDesk {
   revoke(id: string): Promise<FeedbackResult>;
 }
 
-const REASONS: readonly FeedbackRefusal[] = ["invalid", "forbidden", "not-found", "unavailable", "signed-out", "not-kept"];
+const REASONS: readonly FeedbackRefusal[] = ["invalid", "forbidden", "not-found", "unavailable", "signed-out", "not-kept", "no-course"];
+
+/** A read the server refused, with its reason, so a page can tell "feedback is off here" from "try again". */
+export class FeedbackReadError extends Error {
+  constructor(
+    readonly status: number,
+    readonly reason: FeedbackRefusal
+  ) {
+    super(`feedback read answered ${status} (${reason})`);
+    this.name = "FeedbackReadError";
+  }
+}
+
+const reasonOf = (value: unknown): FeedbackRefusal => REASONS.find((r) => r === value) ?? "unavailable";
 
 /** The desk over the reader's own /api/feedback. */
 export function readerFeedbackDesk(fetchFn: typeof fetch = (...args) => fetch(...args), base = "/api/feedback"): FeedbackDesk {
   async function read<T>(url: string): Promise<T> {
     const response = await fetchFn(url, { credentials: "same-origin", headers: { accept: "application/json" } });
-    if (!response.ok) throw new Error(`feedback read answered ${response.status}`);
+    if (!response.ok) {
+      const answer = (await response.json().catch(() => ({}))) as { reason?: unknown };
+      throw new FeedbackReadError(response.status, reasonOf(answer.reason));
+    }
     return (await response.json()) as T;
   }
 
@@ -45,8 +61,7 @@ export function readerFeedbackDesk(fetchFn: typeof fetch = (...args) => fetch(..
       });
       const answer = (await response.json().catch(() => ({}))) as { annotation?: Annotation; reason?: string };
       if (response.ok && answer.annotation) return { ok: true, annotation: answer.annotation };
-      const reason = REASONS.find((r) => r === answer.reason) ?? "unavailable";
-      return { ok: false, reason };
+      return { ok: false, reason: reasonOf(answer.reason) };
     } catch {
       return { ok: false, reason: "unavailable" };
     }

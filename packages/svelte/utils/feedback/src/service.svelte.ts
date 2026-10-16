@@ -9,7 +9,7 @@
  */
 import { rune } from "@tutors/runes";
 import { isBroadcast, sameStep, type Annotation, type StepRef } from "./annotation.ts";
-import { readerFeedbackDesk, type FeedbackDesk, type FeedbackRefusal, type FeedbackResult, type StepFeedbackView } from "./client.ts";
+import { FeedbackReadError, readerFeedbackDesk, type FeedbackDesk, type FeedbackRefusal, type FeedbackResult, type StepFeedbackView } from "./client.ts";
 
 /** How often a step's feedback is read again while it stays on screen (Rule 0404). */
 export const FEEDBACK_POLL_MS = 60_000;
@@ -73,6 +73,8 @@ export function createFeedbackService({
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping for toasts, never rendered
   const looks = new Map<string, { at: number; newest: string | null }>();
   let receivedFor: string | null = null;
+  /** True once the server said it keeps no feedback, or nobody is signed in to it, until someone else signs in. */
+  let off = false;
 
   function stopPolling(): void {
     if (poll) clearInterval(poll);
@@ -81,7 +83,8 @@ export function createFeedbackService({
 
   /** Someone else signed in (or out): everything read for the last person is forgotten first (Rule 0570). */
   function signedInAs(login: string | null): void {
-    available.value = !!login && enabled();
+    if (login !== reader) off = false;
+    available.value = !!login && enabled() && !off;
     if (login === reader) return;
     reader = login;
     reads++;
@@ -93,6 +96,21 @@ export function createFeedbackService({
     failure.value = null;
   }
 
+  /**
+   * A read the server refused because feedback is off, not because it failed: off on this server
+   * (no service-role key) or for this session, nothing is offered until someone else signs in; off
+   * for this course (one the server does not read, or does not admit them to), nothing is offered
+   * until the next step or page. Any other failure keeps what is on screen.
+   */
+  function refused(error: unknown): void {
+    if (!(error instanceof FeedbackReadError)) return;
+    if (error.reason === "not-kept" || error.reason === "signed-out") off = true;
+    else if (error.reason !== "no-course" && error.reason !== "forbidden") return;
+    available.value = false;
+    stopPolling();
+    view.value = EMPTY;
+  }
+
   /** Reads the step's feedback again; a failed read keeps what is on screen. */
   async function refresh(): Promise<void> {
     const ref = step.value;
@@ -101,8 +119,8 @@ export function createFeedbackService({
     try {
       const read = await desk.step(ref);
       if (mine === reads && step.value && sameStep(step.value, ref)) view.value = read;
-    } catch {
-      // What is on screen stays until a read answers.
+    } catch (error) {
+      if (mine === reads) refused(error);
     }
   }
 
@@ -187,7 +205,8 @@ export function createFeedbackService({
         const read = await desk.received(courseId);
         if (who === reader && receivedFor === courseId) received.value = read;
         return read;
-      } catch {
+      } catch (error) {
+        if (who === reader) refused(error);
         return null;
       }
     },

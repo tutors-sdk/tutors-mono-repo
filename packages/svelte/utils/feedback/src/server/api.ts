@@ -28,7 +28,7 @@ export type StepFeedbackView = StepFeedback & { history: Annotation[] | null };
 export const FEEDBACK_MESSAGES = {
   signIn: "Sign in with GitHub to read and send feedback",
   notKept: "Feedback is not kept on this server",
-  noCourse: "The course could not be read; try again",
+  noCourse: "The course could not be read, or is not one this server reads feedback for",
   notAdmitted: "This course does not admit you",
   forbidden: "Only an educator of the course may do that",
   notFound: "No such annotation",
@@ -70,7 +70,7 @@ export function feedbackApi({ store, accessOf, now = () => new Date() }: Feedbac
   /** The course's access rules, or the answer refusing the request: 503 when it cannot be read, 403 when it does not admit `login`. */
   async function admitted(courseId: string, login: string): Promise<CourseAccess | Answer> {
     const access = await accessOf(courseId).catch(() => null);
-    if (!access) return fail(503, FEEDBACK_MESSAGES.noCourse, "unavailable");
+    if (!access) return fail(503, FEEDBACK_MESSAGES.noCourse, "no-course");
     return admits(access, login) ? access : fail(403, FEEDBACK_MESSAGES.notAdmitted, "forbidden");
   }
   const refused = (value: CourseAccess | Answer): value is Answer => "status" in value;
@@ -136,7 +136,7 @@ export function feedbackApi({ store, accessOf, now = () => new Date() }: Feedbac
         }
         if (!found) return fail(404, FEEDBACK_MESSAGES.notFound, "not-found");
         const access = await accessOf(found.ref.courseId).catch(() => null);
-        if (!access) return fail(503, FEEDBACK_MESSAGES.noCourse, "unavailable");
+        if (!access) return fail(503, FEEDBACK_MESSAGES.noCourse, "no-course");
         if (!teaches(access, login)) return fail(403, FEEDBACK_MESSAGES.forbidden, "forbidden");
         try {
           const revoked = await store!.revoke(post.id, now().toISOString());
@@ -146,7 +146,7 @@ export function feedbackApi({ store, accessOf, now = () => new Date() }: Feedbac
         }
       }
       const access = await accessOf(post.ref.courseId).catch(() => null);
-      if (!access) return fail(503, FEEDBACK_MESSAGES.noCourse, "unavailable");
+      if (!access) return fail(503, FEEDBACK_MESSAGES.noCourse, "no-course");
       if (!teaches(access, login)) return fail(403, FEEDBACK_MESSAGES.forbidden, "forbidden");
       const audience = audienceOf({ learnerId: post.learnerId, everyone: post.everyone });
       if (typeof audience === "string") return fail(400, audience === "no-audience" ? "name a student or everyone" : "a student or everyone, not both", "invalid");
