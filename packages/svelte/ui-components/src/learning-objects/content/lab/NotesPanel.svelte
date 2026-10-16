@@ -192,7 +192,7 @@
 {/if}
 
 <style>
-  .notes-panel { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); width: var(--notes-width, 360px); max-height: calc(100dvh - var(--space-8)); overflow-y: auto; padding: var(--space-5); }
+  .notes-panel { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); width: var(--notes-width, 360px); max-width: 50%; max-height: calc(100dvh - var(--space-8)); overflow-y: auto; padding: var(--space-5); }
   .resize-handle { position: absolute; inset-block: var(--space-4); inset-inline-start: -6px; width: 12px; cursor: col-resize; border-radius: var(--radius-control); touch-action: none; }
   .resize-handle:hover, .resize-handle:focus-visible { background: color-mix(in srgb, var(--ui-brand) 24%, transparent); }
   .notes-header { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
@@ -218,7 +218,7 @@
   .minimised-step { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-meta); }
   /* Under 1024px there is no room beside the step: the panel is a sheet across the bottom. */
   @media (max-width: 1023px) {
-    .notes-panel { position: fixed; inset: auto 0 0 0; z-index: 45; width: auto; max-height: 70dvh; border-radius: var(--radius-panel) var(--radius-panel) 0 0; box-shadow: 0 -4px 16px rgb(0 0 0 / 0.18); }
+    .notes-panel { position: fixed; inset: auto 0 0 0; z-index: 45; width: auto; max-width: none; max-height: 70dvh; border-radius: var(--radius-panel) var(--radius-panel) 0 0; box-shadow: 0 -4px 16px rgb(0 0 0 / 0.18); }
     .resize-handle { display: none; }
     .notes-minimised { right: var(--space-4); left: var(--space-4); bottom: calc(var(--space-4) + 64px); max-width: none; }
   }

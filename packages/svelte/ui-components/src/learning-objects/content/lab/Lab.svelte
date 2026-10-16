@@ -63,7 +63,7 @@
 <style>
   /* With the notes panel open on a wide screen, the step and the panel sit side by side. */
   .lab-content.notes-docked { display: flex; align-items: flex-start; gap: var(--space-4); }
-  .lab-content.notes-docked > .reading-panel { flex: 1 1 auto; }
+  .lab-content.notes-docked > .reading-panel { flex: 1 1 auto; min-width: 0; }
   .lab-content :global(.notes-panel) { flex: 0 0 auto; }
   .mobile-steps :global(a[data-noted])::after { content: ""; display: inline-block; width: 8px; height: 8px; margin-inline-start: var(--space-2); border-radius: 999px; background: var(--ui-brand); vertical-align: middle; }
   .reading-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); font-size: var(--font-meta); color: var(--ui-muted); margin-bottom: var(--space-6); }

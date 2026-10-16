@@ -204,7 +204,9 @@ export function withMemoryFallback(store: NotesStore, warn: () => void): NotesSt
       const key = stepKey(ref);
       memory.delete(key);
       removed.add(key);
-      if (!inMemory) await store.remove(ref).catch(fallBack);
+      // Removing frees space, so it is tried even after a full store moved notes into memory:
+      // a note the learner deleted must not come back on the next page load.
+      await store.remove(ref).catch(fallBack);
     },
     async forCourse(courseId) {
       const stored = await fromStore(() => store.forCourse(courseId), [] as Note[]);

@@ -103,6 +103,21 @@ describe("the memory fallback", () => {
     expect(await store.forCourse("cs101")).toEqual([]);
   });
 
+  it("still removes a note from the store after a full store moved the session into memory", async () => {
+    const removed: string[] = [];
+    const full: NotesStore = {
+      get: async () => null,
+      put: () => Promise.reject(new Error("full")),
+      remove: async (r) => void removed.push(r.stepId),
+      forCourse: async () => []
+    };
+    const store = withMemoryFallback(full, () => {});
+    await store.put(note("02", "new"));
+    expect(store.inMemory).toBe(true);
+    await store.remove(ref("01"));
+    expect(removed).toEqual(["01"]);
+  });
+
   it("hides a removed note the store still lists, and lists only the course's notes from memory", async () => {
     const held = [note("01", "old"), note("02", "stays")];
     const flaky: NotesStore = {
