@@ -389,8 +389,9 @@ mutants sit in code no test reaches, so the report doubles as a map of where tes
 - A module 2 or more points above its floor is listed in the job summary as a floor to raise and
   does not fail the night (Rule 0119); raise it with `--update` in any later change.
 - The run mutates files in place, because a `vi.mock` by relative `node_modules` path cannot
-  match inside Stryker's symlinked sandbox. Type-check suppression is off so only mutated files
-  are touched, and `git diff --exit-code --stat` runs after Stryker even when it fails, so a
+  match inside Stryker's symlinked sandbox. `disableTypeChecks` names only the mutated files
+  (their instrumented code would otherwise fail the strict check in `tests/unit/types`), so only
+  mutated files are touched, and `git diff --exit-code --stat` runs after Stryker even when it fails, so a
   source left mutated fails the night (Rule 0118). Locally, an interrupted run leaves mutated
   sources behind: restore them with `git checkout -- packages`.
 
