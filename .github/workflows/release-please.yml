@@ -1,0 +1,59 @@
+name: Release Please
+
+# Releases the JSR libraries in packages/jsr (the six 5.x packages that version
+# together) with the central release capability: reusable-release-please.yml
+# keeps the release pull request, and merging it publishes to JSR with
+# provenance and runs the post-publish canary, all in this one run.
+# The apps are not released here: they follow release/SOP.md.
+# guides/Release-Capability.md is the guide.
+
+on:
+  push:
+    branches: [main]
+  # Ship a patch-only release on purpose (an urgent fix): run this workflow
+  # with force-release ticked and it opens the release pull request anyway.
+  workflow_dispatch:
+    inputs:
+      force-release:
+        description: Open a release pull request even if only fixes landed since the last release
+        type: boolean
+        default: false
+
+permissions: {}
+
+# Runs that rewrite the release pull request take turns. Queued, not
+# cancelled: every push to main must reach the release pull request.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release pull request
+    if: github.repository == 'tutors-sdk/tutors-mono-repo'
+    uses: ./.github/workflows/reusable-release-please.yml
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      config-file: .github/release-please/config.json
+      manifest-file: .github/release-please/manifest.json
+      force-release: ${{ inputs.force-release == true }}
+      # The Latest release on the repository page stays the apps' vX.Y.Z.
+      make-latest: false
+      app-client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+    secrets:
+      app_private_key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+  publish:
+    name: Publish
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
+    uses: ./.github/workflows/reusable-publish-jsr.yml
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
+    with:
+      paths: ${{ needs.release-please.outputs.paths_released }}
+      config-file: .github/release-please/config.json

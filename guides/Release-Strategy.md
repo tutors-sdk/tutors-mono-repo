@@ -4,6 +4,8 @@
 
 This document defines the release strategy for Tutors. It replaces the previous model of staging work on a long-lived `development` branch with a trunk-based workflow where `main` is always the source of truth and releases are cut, hardened, and shipped through a release candidate (RC) process.
 
+It covers the apps. The JSR libraries in `packages/jsr` are released separately, by the reusable release-please workflows in [Release-Capability.md](Release-Capability.md).
+
 ## Principles
 
 1. **Main is always releasable.** Every merged PR should leave `main` in a deployable state. This does not mean every commit ships to production, it means every commit _could_.
