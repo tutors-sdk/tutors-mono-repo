@@ -78,7 +78,6 @@ const ga = {
   "nav.layout.theme": "Téama",
   "nav.layout.codeStyle": "Stíl Chóid",
   "nav.layout.language": "Teanga",
-  "nav.layout.tip": "Oscail Roghchlár Téama",
   "nav.info.title": "Eolas faoin gCúrsa",
   "nav.info.tip": "Oscail eolas faoin gcúrsa",
   "nav.toc.suffix": "Crann Cúrsa",
