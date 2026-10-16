@@ -43,6 +43,8 @@ RUN corepack enable && corepack install
 # ---------------------------------------------------------------------------
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+# pnpm-workspace.yaml's patchedDependencies (dev tooling only) must resolve for the lockfile to install.
+COPY patches ./patches
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm fetch
 
