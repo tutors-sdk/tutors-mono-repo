@@ -72,10 +72,12 @@
 
 <svelte:window onkeydown={onWindowKey} />
 
-<button class="header-action" data-tour="search" onclick={show} aria-label={t("nav.search.tip")} aria-haspopup="dialog" aria-expanded={open}>
+<button class="header-action" data-tour="search" onclick={show} aria-label={t("nav.search.tip")} aria-keyshortcuts={shortcut === "⌘K" ? "Meta+K /" : "Control+K /"} aria-haspopup="dialog" aria-expanded={open}>
   <Icon icon="lucide:search" height="20" />
   <span class="hidden md:block">{t("nav.search")}</span>
-  <kbd class="shortcut-hint" aria-hidden="true">{shortcut}</kbd>
+  <!-- Key hints are drawn from data-key so they stay out of the button's visible text: its name must contain
+       that text (WCAG 2.5.3, axe label-content-name-mismatch), and aria-keyshortcuts carries the keys instead. -->
+  <kbd class="shortcut-hint" data-key={shortcut} aria-hidden="true"></kbd>
 </button>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
@@ -98,7 +100,7 @@
           spellcheck="false"
           onkeydown={onKey}
         />
-        <button class="search-close" onclick={close} aria-label={t("shell.close")}><kbd>esc</kbd><Icon icon="lucide:x" height="20" /></button>
+        <button class="search-close" onclick={close} aria-label={t("shell.close")} aria-keyshortcuts="Escape"><kbd data-key="esc" aria-hidden="true"></kbd><Icon icon="lucide:x" height="20" /></button>
       </div>
       <button class="search-done" onclick={close}>{t("shell.close")}</button>
     </div>
@@ -143,6 +145,7 @@
 <style>
   kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 var(--space-1); border: 1px solid var(--ui-border); border-radius: var(--radius-small); background: var(--ui-canvas); color: var(--ui-muted); font-family: inherit; font-size: var(--font-caption); line-height: 1; }
   .header-action kbd { margin-left: var(--space-1); }
+  kbd[data-key]::after { content: attr(data-key); }
   /* Keyboard hints are for keyboards: the header's hint shows only on a wide screen with a mouse or trackpad,
      and on touch screens the palette's esc hint becomes a close button and the key legend goes. */
   .shortcut-hint { display: none; }

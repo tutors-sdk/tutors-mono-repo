@@ -62,5 +62,11 @@ test.describe("on a touch phone", () => {
 test("Desktop header shows the search shortcut", { tag: "@rule-0060" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(course);
-  await expect(page.locator('[data-tour="search"] kbd')).toHaveText(/^(Ctrl K|⌘K)$/);
+  // The hint is drawn from data-key so the button's visible text stays inside its name (WCAG 2.5.3);
+  // assistive technology gets the keys from aria-keyshortcuts.
+  const hint = page.locator('[data-tour="search"] kbd');
+  await expect(hint).toBeVisible();
+  await expect(hint).toHaveAttribute("data-key", /^(Ctrl K|⌘K)$/);
+  expect(await hint.evaluate((kbd) => getComputedStyle(kbd, "::after").content)).toMatch(/^"(Ctrl K|⌘K)"$/);
+  await expect(page.locator('[data-tour="search"]')).toHaveAttribute("aria-keyshortcuts", /^(Control|Meta)\+K \/$/);
 });

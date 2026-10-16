@@ -88,7 +88,7 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   const header = page.locator(".shell-header");
   for (const theme of ["tutors", "dyslexia"]) {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await header.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+    await header.getByRole("button", { name: "Preferences", exact: true }).click();
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
     for (const width of [320, 390, 768]) {
@@ -155,7 +155,7 @@ test("Desktop sidebar holds course info and the tools", { tag: "@rule-0024" }, a
 
 test("Closing the preferences menu returns focus to its button", { tag: "@rule-0025" }, async ({ page }) => {
   await page.goto(course);
-  const button = page.getByRole("button", { name: "Open Theme Menu", exact: true });
+  const button = page.getByRole("button", { name: "Preferences", exact: true });
   await button.click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   await expect(preferences).toBeVisible();

@@ -78,7 +78,6 @@ const de: Record<string, string> = {
   "nav.layout.theme": "Thema",
   "nav.layout.codeStyle": "Code-Stil",
   "nav.layout.language": "Sprache",
-  "nav.layout.tip": "Themen-Menü öffnen",
   "nav.info.title": "Kursinfo",
   "nav.info.tip": "Kursinfo öffnen",
   "nav.toc.suffix": "Kursbaum",
