@@ -445,7 +445,33 @@ Tutors es una aplicación de código abierto; el componente de recopilación de 
   "classTime.calendarEntries": "Entradas del calendario",
   "classTime.notAvailable": "N/D",
   "classTime.online": "En línea",
-  "classTime.offline": "Sin conexión"
+  "classTime.offline": "Sin conexión",
+
+  // Lecturer feedback on lab steps
+  "feedback.banner": "Explicación para todos en este paso",
+  "feedback.dismiss": "Ocultar",
+  "feedback.from": "De",
+  "feedback.forYou": "Comentarios para ti",
+  "feedback.educatorPanel": "Comentarios en este paso",
+  "feedback.audience": "Para",
+  "feedback.everyone": "Todos en este paso",
+  "feedback.oneStudent": "Un estudiante",
+  "feedback.studentLogin": "Usuario de GitHub del estudiante",
+  "feedback.body": "Comentario (markdown)",
+  "feedback.post": "Publicar",
+  "feedback.notSent": "El comentario no se envió. Inténtalo de nuevo.",
+  "feedback.forbidden": "Solo un docente de este curso puede hacerlo.",
+  "feedback.notKept": "Este servidor no guarda comentarios.",
+  "feedback.history": "Publicado en este paso",
+  "feedback.historyEmpty": "Aún no hay nada publicado en este paso.",
+  "feedback.toEveryone": "Para todos",
+  "feedback.to": "Para",
+  "feedback.revoke": "Retirar",
+  "feedback.revoked": "Retirado",
+  "feedback.received": "Comentarios recibidos",
+  "feedback.receivedEmpty": "Aún no hay comentarios en este curso.",
+  "feedback.toast": "Tu docente publicó una explicación para todos en este paso",
+  "feedback.open": "Abrir paso"
 };
 
 export default es;

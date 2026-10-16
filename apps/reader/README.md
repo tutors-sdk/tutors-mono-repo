@@ -23,6 +23,7 @@ The `.env` file sits at the repository root, not in this folder. With `PUBLIC_AN
 | `PUBLIC_ANON_MODE` | `TRUE` turns off auth, presence and analytics |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Learning records and presence |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub sign-in (Better Auth) |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Keeping lecturer feedback on lab steps (`/api/feedback`); feedback is off without it |
 | `PUBLIC_PDF_KEY` | The Adobe PDF viewer for talks |
 | `METRICS_TOKEN`, `LOG_LEVEL` | Guarding `/metrics` and the log level |
 

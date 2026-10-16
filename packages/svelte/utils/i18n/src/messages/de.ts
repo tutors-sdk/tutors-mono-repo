@@ -445,7 +445,33 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "classTime.calendarEntries": "Kalendereinträge",
   "classTime.notAvailable": "k. A.",
   "classTime.online": "Online",
-  "classTime.offline": "Offline"
+  "classTime.offline": "Offline",
+
+  // Lecturer feedback on lab steps
+  "feedback.banner": "Erklärung für alle in diesem Schritt",
+  "feedback.dismiss": "Ausblenden",
+  "feedback.from": "Von",
+  "feedback.forYou": "Feedback für dich",
+  "feedback.educatorPanel": "Feedback zu diesem Schritt",
+  "feedback.audience": "Für",
+  "feedback.everyone": "Alle in diesem Schritt",
+  "feedback.oneStudent": "Eine Person",
+  "feedback.studentLogin": "GitHub-Login der Person",
+  "feedback.body": "Feedback (Markdown)",
+  "feedback.post": "Senden",
+  "feedback.notSent": "Das Feedback wurde nicht gesendet. Versuche es erneut.",
+  "feedback.forbidden": "Nur Lehrende dieses Kurses können das.",
+  "feedback.notKept": "Feedback wird auf diesem Server nicht gespeichert.",
+  "feedback.history": "Zu diesem Schritt gesendet",
+  "feedback.historyEmpty": "Zu diesem Schritt wurde noch nichts gesendet.",
+  "feedback.toEveryone": "An alle",
+  "feedback.to": "An",
+  "feedback.revoke": "Zurückziehen",
+  "feedback.revoked": "Zurückgezogen",
+  "feedback.received": "Erhaltenes Feedback",
+  "feedback.receivedEmpty": "Noch kein Feedback in diesem Kurs.",
+  "feedback.toast": "Deine Lehrperson hat eine Erklärung für alle in diesem Schritt gepostet",
+  "feedback.open": "Schritt öffnen"
 };
 
 export default de;
