@@ -1,0 +1,22 @@
+{
+  "name": "@tutors/insights",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Learning insights in Tutors Time: lab steps ranked by the help they needed, help response times and a student's part, read-only over stored help requests and feedback",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./service": "./src/service.svelte.ts",
+    "./server": "./src/server/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
+    "@tutors/community": "workspace:*",
+    "@tutors/feedback": "workspace:*",
+    "@tutors/runes": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

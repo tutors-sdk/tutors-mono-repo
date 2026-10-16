@@ -1,0 +1,20 @@
+{
+  "name": "@tutors/feedback",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Lecturer feedback on lab steps: annotations for one student, explanations for everyone, revocation and history",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./service": "./src/service.svelte.ts",
+    "./server": "./src/server/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
+    "@tutors/runes": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

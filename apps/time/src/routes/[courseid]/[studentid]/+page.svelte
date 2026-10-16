@@ -5,6 +5,8 @@
   import Tables from "@tutors/ui-components/time/Tables.svelte";
   import { t } from "@tutors/i18n";
   import { invalidateAll } from "$app/navigation";
+  import { page } from "$app/state";
+  import StudentInsights from "#lib/components/insights/StudentInsights.svelte";
 
   interface Props {
     data: { course: { id: string; pin: string } | null; studentCalendar: TutorsTimeStudent };
@@ -37,4 +39,9 @@
 {:else if data.studentCalendar}
   <HeatMaps studentCalendar={data.studentCalendar} />
   <Tables studentCalendar={data.studentCalendar} />
+{/if}
+
+<!-- Beside the calendar and lab analytics, whatever they hold: the student's requests, hints and annotations (Rule 0414). -->
+{#if page.params.courseid && page.params.studentid}
+  <StudentInsights courseId={page.params.courseid} learnerId={page.params.studentid} />
 {/if}

@@ -348,6 +348,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/feedback':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/feedback
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/i18n
@@ -357,6 +360,9 @@ importers:
       '@tutors/identity-sveltekit':
         specifier: workspace:*
         version: link:../../packages/svelte/identity-sveltekit
+      '@tutors/insights':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/insights
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -472,6 +478,9 @@ importers:
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/i18n
+      '@tutors/insights':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/insights
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/logger
@@ -771,6 +780,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../course
+      '@tutors/feedback':
+        specifier: workspace:*
+        version: link:../utils/feedback
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n
@@ -967,6 +979,18 @@ importers:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.71.0)
 
+  packages/svelte/utils/feedback:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.117.1
+        version: 2.117.2(@opentelemetry/api@1.9.1)
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
+
   packages/svelte/utils/i18n:
     dependencies:
       '@tutors/runes':
@@ -979,6 +1003,24 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+
+  packages/svelte/utils/insights:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.117.1
+        version: 2.117.2(@opentelemetry/api@1.9.1)
+      '@tutors/community':
+        specifier: workspace:*
+        version: link:../../community
+      '@tutors/feedback':
+        specifier: workspace:*
+        version: link:../feedback
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
 
   packages/svelte/utils/logger: {}
 

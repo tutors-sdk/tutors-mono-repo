@@ -4,7 +4,7 @@ import type { MessageKey } from "@tutors/i18n";
 
 export const ssr = false;
 
-const VIEWS = ["calendar", "lab", "medians", "assignments"];
+const VIEWS = ["calendar", "lab", "medians", "assignments", "insights"];
 
 /** Derive a human-readable view type from the current pathname. */
 function getViewType(pathname: string): MessageKey | "" {

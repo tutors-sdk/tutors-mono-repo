@@ -36,6 +36,7 @@
     "@tutors/rbac": "workspace:*",
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/feedback": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/quiz": "workspace:*",
