@@ -185,6 +185,26 @@ Client/server error aggregation for observability. Authoritative columns from `s
 **Consent required:** No — but retention should be time-bounded given free-text/URL fields may capture personal data
 **Deletion impact:** Removes error records attributable to the user
 
+### `assistance_requests`
+Help requests students raise on lab steps (I'm stuck, Need a hint, Request lecturer help). Authoritative columns from `supabase/migrations/20261020_assistance_requests.sql`. RLS is on with no policy: only the reader's server reaches the rows, with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`, through `/api/assistance`.
+
+| Field | Type | PII | Description |
+|-------|------|-----|-------------|
+| id | uuid | No | Primary key |
+| course_id | string | No | Course identifier |
+| lab_route, step_id | string | No | The lab step the request is about |
+| learner_id | string | Yes | Student's GitHub login |
+| learner_name | string | Yes | Student's display name, for the lecturer's queue |
+| kind, state | string | No | `stuck`/`hint`/`lecturer`; `open`/`acknowledged`/`resolved`/`withdrawn` |
+| requested_at, acknowledged_at, closed_at | timestamp | No | When the request was raised, acknowledged and ended |
+| acknowledged_by, closed_by | string | Yes | GitHub login of the educator (or student) who acted; `system` for an expiry |
+| closed_reason | string | No | `resolved`, `hint`, `withdrawn` or `expired` |
+| hint_text | string | Yes | The lecturer's typed hint (free text) |
+
+**Legal basis:** Legitimate interest (teaching support the student asks for)
+**Consent required:** No — the student raises each request themselves
+**Deletion impact:** Removes the student's help history
+
 ### Legacy tables (unused)
 `students`, `studentsinteraction`, `course`, `learningobject`, `users` and `"tutors-connect_moodle"` predate Tutors Connect and are not read or written by any current app, nor are the 19 functions over them (`get_lab_data`, `get_topic_data`, `get_learner_records` and others). They may still hold student data from earlier deployments. Since `supabase/migrations/20260924_enable_rls_public_tables.sql` they have RLS on with no policy, so the anon key cannot reach them; only `service_role` or a direct Postgres role can. Export anything worth keeping before a later contract migration drops them.
 
@@ -224,6 +244,7 @@ When a user requests data deletion, purge the tables holding their personal data
 4. `"tutors-connect-profiles"` (WHERE `tutorId` = `<login>`)
 5. `whiteboard_scenes` (personal boards — WHERE `room_id` ends with `-<login>`)
 6. `app_errors` (WHERE `student_id` = `<login>`)
+6a. `assistance_requests` (WHERE `learner_id` = `<login>`; set `acknowledged_by`/`closed_by` = NULL where they name the login)
 7. `tutors_content_locks` (set `locked_by` = NULL WHERE `locked_by` = `<login>` — preferable to deleting locks)
 8. `"tutors-connect-users"` (WHERE `github_id` = `<login>`) — last
 

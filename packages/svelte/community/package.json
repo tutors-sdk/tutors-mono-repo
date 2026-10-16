@@ -11,6 +11,7 @@
       "default": "./src/index.ts"
     },
     "./services/*": "./src/services/*",
+    "./assistance": "./src/assistance/index.ts",
     "./utils/supabase-client": "./src/utils/supabase-client.ts",
     "./utils/error-transport": "./src/utils/error-transport.ts",
     "./utils/health-check": "./src/utils/health-check.ts"
