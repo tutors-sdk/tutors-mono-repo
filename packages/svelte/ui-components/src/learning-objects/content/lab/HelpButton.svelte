@@ -106,6 +106,9 @@
       </span>
     {:else if failure === "not-kept"}
       <span class="help-failure" role="alert">{t("help.notKept")}</span>
+    {:else if failure === "signed-out"}
+      <!-- The reader still shows the student signed in, but the server's session has ended or been revoked. -->
+      <span class="help-failure" role="alert">{t("help.signedOut")}</span>
     {/if}
   </span>
 {/if}

@@ -461,6 +461,7 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "help.notSent": "Ihre Anfrage wurde nicht gesendet.",
   "help.retry": "Erneut versuchen",
   "help.notKept": "Hilfeanfragen sind auf dieser Seite nicht verfügbar.",
+  "help.signedOut": "Deine Sitzung ist abgelaufen; melde dich erneut an, um Hilfe anzufragen.",
   "help.hintTitle": "Hinweis Ihrer Lehrkraft",
   "help.closeHint": "Hinweis schließen",
   "help.helpedQuestion": "Hat Ihnen die Hilfe geholfen?",

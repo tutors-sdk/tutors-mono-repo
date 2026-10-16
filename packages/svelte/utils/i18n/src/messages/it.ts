@@ -461,6 +461,7 @@ Tutors è un'applicazione open source: il componente di raccolta dati [si trova 
   "help.notSent": "La richiesta non è stata inviata.",
   "help.retry": "Riprova",
   "help.notKept": "Le richieste di aiuto non sono disponibili su questo sito.",
+  "help.signedOut": "La tua sessione è scaduta; accedi di nuovo per chiedere aiuto.",
   "help.hintTitle": "Suggerimento del docente",
   "help.closeHint": "Chiudi suggerimento",
   "help.helpedQuestion": "L'aiuto ricevuto ti è servito?",

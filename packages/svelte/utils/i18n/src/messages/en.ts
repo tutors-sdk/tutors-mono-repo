@@ -461,6 +461,7 @@ Tutors is an open source application - the data collection component [is here](h
   "help.notSent": "Your request was not sent.",
   "help.retry": "Try again",
   "help.notKept": "Help requests are not available on this site.",
+  "help.signedOut": "Your reader session has ended; sign in again to ask for help.",
   "help.hintTitle": "Hint from your lecturer",
   "help.closeHint": "Close hint",
   "help.helpedQuestion": "Did the help you got help?",

@@ -461,6 +461,7 @@ Tutors es una aplicación de código abierto; el componente de recopilación de 
   "help.notSent": "Tu solicitud no se envió.",
   "help.retry": "Reintentar",
   "help.notKept": "Las solicitudes de ayuda no están disponibles en este sitio.",
+  "help.signedOut": "Tu sesión ha terminado; vuelve a iniciar sesión para pedir ayuda.",
   "help.hintTitle": "Pista de tu profesor",
   "help.closeHint": "Cerrar pista",
   "help.helpedQuestion": "¿Te sirvió la ayuda que recibiste?",

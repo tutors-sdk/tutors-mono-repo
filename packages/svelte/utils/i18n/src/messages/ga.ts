@@ -436,6 +436,7 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "help.notSent": "Níor seoladh d'iarratas.",
   "help.retry": "Bain triail eile as",
   "help.notKept": "Níl iarratais chabhrach ar fáil ar an suíomh seo.",
+  "help.signedOut": "Tá do sheisiún thart; sínigh isteach arís chun cabhair a iarraidh.",
   "help.hintTitle": "Leid ó do léachtóir",
   "help.closeHint": "Dún an leid",
   "help.helpedQuestion": "Ar chabhraigh an chabhair leat?",
