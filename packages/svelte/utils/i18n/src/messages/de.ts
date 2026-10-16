@@ -445,7 +445,40 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "classTime.calendarEntries": "Kalendereinträge",
   "classTime.notAvailable": "k. A.",
   "classTime.online": "Online",
-  "classTime.offline": "Offline"
+  "classTime.offline": "Offline",
+
+  // Private notes on a lab step
+  "notes.button": "Notizen",
+  "notes.hasNote": "Dieser Schritt hat eine Notiz",
+  "notes.title": "Meine Notizen",
+  "notes.restore": "Notizen öffnen",
+  "notes.resize": "Notizbereich anpassen",
+  "notes.minimise": "Minimieren",
+  "notes.close": "Schließen",
+  "notes.sessionOnlyTitle": "Notizen werden nicht gespeichert",
+  "notes.sessionOnly": "Dieser Browser speichert keine Notizen, sie gelten nur für diese Sitzung. Exportieren Sie sie, um eine Kopie zu behalten.",
+  "notes.kind": "Art",
+  "notes.kind.note": "Notiz",
+  "notes.kind.discovery": "Entdeckung",
+  "notes.kind.question": "Frage",
+  "notes.kind.snippet": "Codeausschnitt",
+  "notes.kind.reflection": "Reflexion",
+  "notes.view": "Notizansicht",
+  "notes.write": "Schreiben",
+  "notes.preview": "Vorschau",
+  "notes.empty": "Für diesen Schritt ist noch nichts geschrieben.",
+  "notes.label": "Notiz zu diesem Schritt",
+  "notes.placeholder": "Schreiben Sie eine private Notiz zu diesem Schritt. Markdown funktioniert.",
+  "notes.saving": "Wird gespeichert…",
+  "notes.saved": "In diesem Browser gespeichert",
+  "notes.private": "Nur in diesem Browser gespeichert, nie gesendet",
+  "notes.otherSteps": "Weitere Schritte mit Notizen",
+  "notes.exportCourse": "Kursnotizen exportieren",
+  "notes.exportLab": "Dieses Lab exportieren",
+  "notes.deleteAll": "Alle Notizen dieses Kurses löschen",
+  "notes.deleteAllConfirm": "Alle Ihre Notizen in diesem Kurs löschen? Das kann nicht rückgängig gemacht werden.",
+  "notes.deleteAllYes": "Alle löschen",
+  "notes.cancel": "Abbrechen"
 };
 
 export default de;

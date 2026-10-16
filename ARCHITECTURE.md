@@ -809,6 +809,12 @@ export const currentCourse = {
 - Marp presentation rendering
 - Code block copy button action
 
+**Private Notes** (`notes/`, imported as `@tutors/course/notes`; Rules 0380 to 0383):
+- A learner's private note per lab step, kept in the browser's localStorage under `@notes/{courseId}/{labRoute}/{stepId}` and never sent to a server (`local-storage.ts`)
+- When the browser refuses notes (no storage, or storage full), the session's notes are kept in memory and the learner is told once (`withMemoryFallback` in `notes.ts`)
+- A course's notes, or one lab's, exported as one markdown document built in the browser (`notesToMarkdown`)
+- `notesService` (`notes.svelte.ts`): the note on screen, saved once typing settles, and the notes panel's open, minimised and width state; `NotesButton` and `NotesPanel` on the lab step draw it (Rules 0554 to 0558)
+
 #### File Structure
 
 ```
@@ -830,6 +836,11 @@ packages/svelte/course/src/
 │   │   └── mermaid-action.ts
 │   └── actions/
 │       └── copy-code-action.ts
+├── notes/
+│   ├── index.ts
+│   ├── notes.ts
+│   ├── local-storage.ts
+│   └── notes.svelte.ts
 └── index.ts
 ```
 
