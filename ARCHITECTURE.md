@@ -1338,6 +1338,21 @@ Requests live in `assistance_requests` (`supabase/migrations/20261020_assistance
 
 Operator steps: apply the migration, then set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Supabase, Settings, API) on the reader only, never as a `PUBLIC_` variable.
 
+#### Learning insights
+
+Tutors Time's Insights section (Struggle by step, Help response) and the Help and feedback panel on a student's page show an educator of the course read-only numbers over the help requests and lecturer annotations stored in a chosen day, 7 days or 30 days: the lab steps ranked by requests and waiting time, the time to acknowledge and to resolve per day and kind of help, and a student's requests raised, hints read and annotations received. The arithmetic, the read and the reader's answer are `@tutors/insights` (`packages/svelte/utils/insights`); the reader's server composes them in `apps/reader/src/lib/server/insights.ts` behind one route:
+
+- `GET /api/insights?courseId=&span=day|week|month&day=YYYY-MM-DD[&learnerId=]` answers `{ period, insights }` or `{ period, progress }` to an educator of the course (its published `enrollment.educators`, in a course whose whitelist admits them), and `{ message, reason }` to anyone else. Tutors Time calls it from `PUBLIC_TIME_ORIGIN` with the reader's session (`credentials: "include"`); the reader answers that origin and its own, and refuses any other with 403.
+
+The reads go through two views, never the tables, each with no free text (no student name, no hint, no annotation body). Both run as the caller (`security_invoker`) and are closed to `anon` and `authenticated`, so only the service-role client reads them:
+
+| View | Rows of | Read by |
+|------|---------|---------|
+| `insights_help_requests` | `assistance_requests` | `@tutors/insights` (`supabaseInsightsRead`) |
+| `insights_annotations` | `feedback_annotations` | `@tutors/insights` (`supabaseInsightsRead`) |
+
+Each read names the course and a half-open period over an index that leads with both (`idx_assistance_requests_course_time`, `idx_feedback_annotations_course_time`), in pages of Supabase's 1000 rows. With fewer than 5 students with records in the period, and for a step or a kind of help on a day asked about by fewer than 5 students, only counts are shown, never a median or 90th percentile. A database without the views answers `not-ready`, and Time shows the insights pages empty with one message. Operator steps: apply `supabase/migrations/20261022_insights_views.sql` after the help request and feedback migrations; the reader needs the same `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`, and Tutors Time needs `PUBLIC_READER_ORIGIN` pointing at the reader. The session cookie reaches the reader only when Time and the reader are on the same site (for example `time.tutors.dev` and `tutors.dev`).
+
 ---
 
 ## Content Generation Pipeline

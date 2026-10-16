@@ -36,6 +36,7 @@
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
     "@tutors/feedback": "workspace:*",
+    "@tutors/insights": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/identity": "workspace:*",
     "@tutors/identity-sveltekit": "workspace:*",

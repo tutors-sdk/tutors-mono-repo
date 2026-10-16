@@ -8,7 +8,7 @@
  */
 
 type Row = Record<string, unknown>;
-type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" };
+type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" | "lt" };
 type DbError = { message: string; code?: string };
 type BroadcastMessage = { type: string; event: string; payload: unknown };
 type BroadcastHandler = (message: BroadcastMessage) => void;
@@ -24,6 +24,8 @@ export type TableCall = {
   returned?: number;
   order?: { column: string; ascending: boolean };
   limit?: number;
+  /** `.range(from, to)`: the rows from index `from` to `to`, both included. */
+  range?: { from: number; to: number };
   /** An insert or update followed by `.select()`: the written rows come back. */
   returning?: string;
 };
@@ -80,6 +82,16 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
+  lt(column: string, value: unknown) {
+    this.call.filters.push({ column, value, op: "lt" });
+    return this;
+  }
+
+  range(from: number, to: number) {
+    this.call.range = { from, to };
+    return this;
+  }
+
   in(column: string, value: unknown[]) {
     this.call.filters.push({ column, value, op: "in" });
     return this;
@@ -114,6 +126,7 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       if (f.op === "eq") return row[f.column] === f.value;
       if (f.op === "gte") return String(row[f.column]) >= String(f.value);
       if (f.op === "lte") return String(row[f.column]) <= String(f.value);
+      if (f.op === "lt") return String(row[f.column]) < String(f.value);
       return (f.value as unknown[]).includes(row[f.column]);
     });
   }
@@ -123,7 +136,12 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     const error = this.db.tableErrors.get(this.call.table);
     if (error) return { data: null, error };
 
-    const rows = this.db.rows(this.call.table);
+    const view = VIEWS[this.call.table];
+    if (view && this.db.missingViews.has(this.call.table)) {
+      return { data: null, error: { message: `Could not find the table 'public.${this.call.table}' in the schema cache`, code: "PGRST205" } };
+    }
+    // A view reads its table's rows through its own columns, as Postgres would.
+    const rows = view ? this.db.rows(view.table).map((r) => Object.fromEntries(view.columns.map((c) => [c, r[c] ?? null]))) : this.db.rows(this.call.table);
     if (this.call.op === "upsert") {
       const row = this.call.row!;
       const keys = (this.call.options?.onConflict ?? Object.keys(row)[0]).split(",").map((k) => k.trim());
@@ -153,6 +171,8 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       const direction = order.ascending ? 1 : -1;
       found.sort((a, b) => String(a[order.column]).localeCompare(String(b[order.column])) * direction);
     }
+    const range = this.call.range;
+    if (range) return this.answer(found.slice(range.from, range.to + 1));
     return this.answer(this.call.limit === undefined ? found : found.slice(0, this.call.limit));
   }
 
@@ -219,6 +239,18 @@ export class RecordingChannel {
   }
 }
 
+/**
+ * The views product code reads, as their migrations declare them: each is its table's rows through
+ * these columns (supabase/migrations/20261022_insights_views.sql).
+ */
+const VIEWS: Record<string, { table: string; columns: string[] }> = {
+  insights_help_requests: {
+    table: "assistance_requests",
+    columns: ["id", "course_id", "lab_route", "step_id", "learner_id", "kind", "requested_at", "acknowledged_at", "closed_at", "closed_reason"]
+  },
+  insights_annotations: { table: "feedback_annotations", columns: ["id", "course_id", "lab_route", "step_id", "learner_id", "created_at", "revoked_at"] }
+};
+
 const DEFAULT_LIVE_SETTINGS = { live_daily_budget: 120000, slow_at: 0.7, pause_at: 0.9, watcher_ttl_seconds: 90 };
 /** topics.platformActivity() in @tutors/realtime. */
 const PLATFORM_TOPIC = "tutors-all-course-access";
@@ -231,6 +263,8 @@ export class RecordingSupabase {
   /** Whether the broker confirms joins; off plays a broker that accepts the socket but never the join. */
   confirmJoins = true;
   missingFunctions = new Set<string>();
+  /** Views the database lacks, as on a deployment whose migration has not run. */
+  missingViews = new Set<string>();
   /** realtime_settings, as supabase/migrations/20261016_realtime_live_budget.sql seeds it. */
   liveSettings = { ...DEFAULT_LIVE_SETTINGS };
   private tables = new Map<string, Row[]>();
@@ -243,6 +277,7 @@ export class RecordingSupabase {
     this.channels = [];
     this.confirmJoins = true;
     this.missingFunctions.clear();
+    this.missingViews.clear();
     this.tables.clear();
   }
 

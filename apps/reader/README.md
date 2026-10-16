@@ -44,6 +44,7 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
 - `@tutors/feedback` keeps lecturer feedback on lab steps: the `/api/feedback` handler, its Supabase store and the feedback service
+- `@tutors/insights` answers Tutors Time's `GET /api/insights`: an educator's read-only numbers over the stored help requests and annotations
 - `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
 - `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 
