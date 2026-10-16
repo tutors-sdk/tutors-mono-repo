@@ -14,7 +14,7 @@ vi.mock("$app/env/private", () => ({ PRIVATE_SUPABASE_SERVICE_ROLE_KEY: "service
 import type { HelpRequest, QueueEntry } from "../../../../packages/svelte/community/src/assistance/index.ts";
 import { GET as getQueue, POST as postHelp } from "../../../../apps/reader/src/routes/api/assistance/+server.ts";
 import { GET as getMine } from "../../../../apps/reader/src/routes/api/assistance/mine/+server.ts";
-import { tutorsJsonUrl } from "../../../../apps/reader/src/lib/server/assistance.ts";
+import { forgetCourseAccess, tutorsJsonUrl } from "../../../../apps/reader/src/lib/server/assistance.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 
 const feature = await loadFeature("tests/bdd/features/shared/help-request-server.feature");
@@ -28,6 +28,7 @@ type Notice = { courseId: string; id: string; state: string };
 describeFeature(feature, ({ Background, Rule }) => {
   let courseId: string;
   let educators: string[];
+  let whitelist: string[] | null;
   let signedIn: string | null;
   let response: Response;
   let answered: HelpRequest | null;
@@ -36,7 +37,9 @@ describeFeature(feature, ({ Background, Rule }) => {
   const firstLab = () => `/lab/${courseId}/topic-1/lab-1`;
   /** The course's tutors.json, as its site publishes it; any other URL is not on the network. */
   const courseSite = async (url: string | URL | Request) =>
-    String(url) === tutorsJsonUrl(courseId) ? Response.json({ enrollment: { educators } }) : new Response(null, { status: 404 });
+    String(url) === tutorsJsonUrl(courseId)
+      ? Response.json(whitelist ? { properties: { auth: 1 }, enrollment: { educators, whitelist } } : { enrollment: { educators } })
+      : new Response(null, { status: 404 });
   const event = (method: string, path: string, body?: unknown, origin?: string) => {
     const url = new URL(path, READER);
     const headers: Record<string, string> = body === undefined ? {} : { "content-type": "application/json" };
@@ -78,8 +81,10 @@ describeFeature(feature, ({ Background, Rule }) => {
   Background(({ Given, And }) => {
     Given("the course {string} is published with {number} labs and {string} as its educator", (_ctx, id: string, _labs: number, educator: string) => {
       recorder.reset();
+      forgetCourseAccess();
       courseId = id;
       educators = [educator];
+      whitelist = null;
       signedIn = null;
       answered = null;
       for (const key of Object.keys(requests)) delete requests[key];
@@ -123,6 +128,16 @@ describeFeature(feature, ({ Background, Rule }) => {
         Then("the reader shall answer {number}", answers);
         And("Supabase shall hold one {string} help request by {string} at the step {string} of the first lab of kind {string}", holdsOne);
         And("the request shall record it was acknowledged by {string}", (_ctx, name: string) => expect(rows()[0].acknowledged_by).toBe(name));
+      });
+
+      RuleScenario("A student outside a private course's whitelist is refused", ({ Given, And, When, Then }) => {
+        Given("the course {string} is private to {string}", (_ctx, _id: string, student: string) => {
+          whitelist = [student];
+        });
+        And("{string} is signed in to the reader", as);
+        When("the browser asks for help as {string} on the step {string} of the first lab", browserAsks);
+        Then("the reader shall answer {number}", answers);
+        And("Supabase shall hold no help request", () => expect(rows()).toEqual([]));
       });
 
       RuleScenario("Another site cannot ask for help with the student's session", ({ Given, When, Then, And }) => {

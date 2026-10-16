@@ -45,6 +45,13 @@ Feature: Help requests on the reader's server
       And Supabase shall hold one "acknowledged" help request by "alice" at the step "02" of the first lab of kind "stuck"
       And the request shall record it was acknowledged by "ellen"
 
+    Scenario: A student outside a private course's whitelist is refused
+      Given the course "cs101" is private to "alice"
+      And "bob" is signed in to the reader
+      When the browser asks for help as "stuck" on the step "02" of the first lab
+      Then the reader shall answer 403
+      And Supabase shall hold no help request
+
     Scenario: Another site cannot ask for help with the student's session
       Given "alice" is signed in to the reader
       When a page on another origin asks for help as "stuck" on the step "02" of the first lab

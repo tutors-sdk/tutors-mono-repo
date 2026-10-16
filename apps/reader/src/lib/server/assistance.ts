@@ -47,39 +47,70 @@ function serviceClient(): AssistanceClient | null {
   return service;
 }
 
-/** Where a course's tutors.json is published: a bare id is a Netlify site, anything with a dot is a host. */
-export function tutorsJsonUrl(courseId: string): string {
-  if (courseId.startsWith("localhost") || courseId.startsWith("192")) return `http://${courseId}/tutors.json`;
-  return courseId.includes(".") ? `https://${courseId}/tutors.json` : `https://${courseId}.netlify.app/tutors.json`;
-}
-
-const EDUCATORS_CACHE_MS = 5 * 60 * 1000;
-const educatorsCache = new Map<string, { at: number; educators: string[] }>();
+/** A Netlify site name: the only course ids the server reads a course from. */
+const SITE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 
 /**
- * A course's educator logins from its published enrollment, cached for five minutes. A course that
- * cannot be read has no educators, so nobody acts as its lecturer; a failed read is not cached.
+ * Where a course's tutors.json is published, or null for a course id this server will not fetch.
+ * Only a bare Netlify site name (`cs101`) or its `<site>.netlify.app` host is read, always over
+ * https, so a signed-in caller cannot point the server at a loopback, private or internal host.
  */
-async function educatorsOf(courseId: string, fetchFn: typeof fetch): Promise<string[]> {
-  const cached = educatorsCache.get(courseId);
-  if (cached && Date.now() - cached.at < EDUCATORS_CACHE_MS) return cached.educators;
+export function tutorsJsonUrl(courseId: string): string | null {
+  const site = courseId.toLowerCase().endsWith(".netlify.app") ? courseId.slice(0, -".netlify.app".length) : courseId;
+  return SITE.test(site) ? `https://${site}.netlify.app/tutors.json` : null;
+}
+
+/**
+ * What the server needs from a course's published tutors.json: its educators, and who may open it
+ * when it is private (properties `auth` 1 or more with a whitelist), else null for anyone signed in.
+ */
+export type CourseAccess = { educators: string[]; admitted: string[] | null };
+
+const ACCESS_CACHE_MS = 5 * 60 * 1000;
+const accessCache = new Map<string, { at: number; access: CourseAccess }>();
+
+const logins = (list: unknown): string[] =>
+  Array.isArray(list)
+    ? list
+        .filter((v): v is string => typeof v === "string")
+        .map((v) => v.trim())
+        .filter(Boolean)
+    : [];
+
+/**
+ * A course's access from its published tutors.json, cached for five minutes; null when it cannot
+ * be read (an id the server will not fetch, no such course, or the site down), which is not cached.
+ * Redirects are not followed, so a course site cannot send the server elsewhere.
+ */
+async function courseAccess(courseId: string, fetchFn: typeof fetch): Promise<CourseAccess | null> {
+  const cached = accessCache.get(courseId);
+  if (cached && Date.now() - cached.at < ACCESS_CACHE_MS) return cached.access;
+  const url = tutorsJsonUrl(courseId);
+  if (!url) return null;
   try {
-    const response = await fetchFn(tutorsJsonUrl(courseId));
-    if (!response.ok) return [];
-    const course = (await response.json()) as { enrollment?: { educators?: unknown } } | null;
-    const list = course?.enrollment?.educators;
-    const educators = Array.isArray(list)
-      ? list
-          .filter((v): v is string => typeof v === "string")
-          .map((v) => v.trim())
-          .filter(Boolean)
-      : [];
-    educatorsCache.set(courseId, { at: Date.now(), educators });
-    return educators;
+    const response = await fetchFn(url, { redirect: "manual" });
+    if (!response.ok) return null;
+    const course = (await response.json()) as { properties?: { auth?: unknown }; enrollment?: { educators?: unknown; whitelist?: unknown } } | null;
+    const educators = logins(course?.enrollment?.educators);
+    const whitelist = logins(course?.enrollment?.whitelist);
+    const access: CourseAccess = { educators, admitted: Number(course?.properties?.auth) >= 1 && whitelist.length > 0 ? [...educators, ...whitelist] : null };
+    accessCache.set(courseId, { at: Date.now(), access });
+    return access;
   } catch (error) {
-    log.warn("Reading a course's educators failed:", courseId, error);
-    return [];
+    log.warn("Reading a course's access failed:", courseId, error);
+    return null;
   }
+}
+
+/** Forgets every course's access read so far, so the next request reads tutors.json again. */
+export function forgetCourseAccess(): void {
+  accessCache.clear();
+}
+
+/** Whether `login` may ask for help in the course: it can be read, and admits them when it is private. */
+export async function mayAskIn(courseId: string, login: string, fetchFn: typeof fetch): Promise<boolean> {
+  const access = await courseAccess(courseId, fetchFn);
+  return access !== null && (access.admitted === null || access.admitted.includes(login));
 }
 
 /** The use cases over this server's adapters, or null when it keeps no help requests. */
@@ -90,7 +121,7 @@ export function assistance(fetchFn: typeof fetch) {
     store: supabaseAssistanceStore(client),
     feed: supabaseAssistanceFeed(client),
     clock,
-    educatorsOf: (courseId) => educatorsOf(courseId, fetchFn)
+    educatorsOf: async (courseId) => (await courseAccess(courseId, fetchFn))?.educators ?? []
   };
   return {
     request: requestHelp(deps),

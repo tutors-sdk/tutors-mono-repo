@@ -1,7 +1,7 @@
 import type { RequestHandler } from "./$types";
 import log from "@tutors/logger";
 import type { HelpKind } from "@tutors/community/assistance";
-import { HELP_REFUSALS, MAX_HELP_POST_BYTES, answer, assistance, parseHelpPost, sameOrigin } from "#lib/server/assistance.ts";
+import { HELP_REFUSALS, MAX_HELP_POST_BYTES, answer, assistance, mayAskIn, parseHelpPost, sameOrigin } from "#lib/server/assistance.ts";
 
 /**
  * /api/assistance: help requests on lab steps. A signed-in student asks, asks again, withdraws or
@@ -52,6 +52,9 @@ export const POST: RequestHandler = async ({ request, url, locals, fetch }) => {
   if (!help) return answer(503, NOT_KEPT);
   const actor = locals.actor;
   const caller = { login: actor.login };
+  if (post.action === "request" && !(await mayAskIn(post.ref.courseId, actor.login, fetch))) {
+    return answer(403, { message: "You can ask for help only in a published course you may open" });
+  }
   const result =
     post.action === "request"
       ? await help.request(post.ref, post.kind as HelpKind, { login: actor.login, name: actor.name || null })
