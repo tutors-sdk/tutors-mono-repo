@@ -468,8 +468,15 @@ describeFeature(feature, ({ Rule }) => {
         Then("it shall mutate the source files in place", () => {
           expect(nightlyStrykerConfig().inPlace).toBe(true);
         });
+        // In place, a mutated file's instrumented code would fail the strict type check in
+        // tests/unit/types, so mutated files get @ts-nocheck (restored with them), and no others.
         And("it shall not add type-check suppressions to files it does not mutate", () => {
-          expect(nightlyStrykerConfig().disableTypeChecks).toBe(false);
+          const { disableTypeChecks, mutate } = nightlyStrykerConfig();
+          expect(typeof disableTypeChecks).toBe("string");
+          const files = walk(resolve(REPO_ROOT, "packages"), (name) => name.endsWith(".ts")).map((file) => toPosix(file));
+          const suppressed = files.filter((file) => matchesGlob(file, disableTypeChecks as string));
+          expect(suppressed.length).toBeGreaterThan(50);
+          expect(suppressed.filter((file) => !strykerMutates(mutate, file))).toEqual([]);
         });
       });
     }

@@ -27,7 +27,7 @@
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
-    "e2e:stack:fixture": "deno run -A --no-lock tests/e2e-stack/fixture-course/build.ts",
+    "e2e:stack:fixture": "deno run -A --no-lock --node-modules-dir=none tests/e2e-stack/fixture-course/build.ts",
     "e2e:stack:up": "docker compose -f tests/e2e-stack/compose.yaml up -d --wait",
     "e2e:stack:down": "docker compose -f tests/e2e-stack/compose.yaml down",
     "test:e2e:stack": "playwright test --config playwright.e2e-stack.config.ts",

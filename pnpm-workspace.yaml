@@ -45,3 +45,5 @@ overrides:
   katex@>=0.11.0 <0.18.2: ">=0.18.2 <0.19"
   # GHSA-rj75-hqrm-r3gf (eslint-plugin-svelte, @marp-team/marpit > postcss-selector-parser).
   postcss-selector-parser@<7.1.6: ">=7.1.6 <8"
+patchedDependencies:
+  '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch
