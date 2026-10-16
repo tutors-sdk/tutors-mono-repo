@@ -30,9 +30,10 @@ describe("course access for feedback", () => {
     let now = 0;
     let fetches = 0;
     const read = courseAccessReader({ cacheMs: 1000, nowMs: () => now });
-    const fetchFn = async (url: string) => {
+    const fetchFn = async (url: string, init?: { redirect?: "manual" }) => {
       fetches++;
       expect(url).toBe("https://cs101.netlify.app/tutors.json");
+      expect(init).toEqual({ redirect: "manual" });
       return answer({ authLevel: 1, enrollment: { educators: ["ellen"] } })();
     };
     expect(await read("cs101", fetchFn)).toEqual({ authLevel: 1, enrollment: { educators: ["ellen"] } });
@@ -42,6 +43,8 @@ describe("course access for feedback", () => {
     await read("cs101", fetchFn);
     expect(fetches).toBe(2);
     expect(await read("gone", answer("", false))).toBeNull();
+    // A redirect is not followed, so its answer is not ok and the course is not read.
+    expect(await read("moved", answer({ authLevel: 0, enrollment: { educators: ["mallory"] } }, false))).toBeNull();
     expect(await read("broken", answer("{not json"))).toBeNull();
     expect(await read("odd.example.com", answer({}))).toBeNull();
     expect(await read("bare", answer({ enrollment: "x" }))).toEqual({ authLevel: 0, enrollment: null });

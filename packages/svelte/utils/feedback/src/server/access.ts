@@ -8,12 +8,13 @@ export type Enrollment = { educators?: string[]; whitelist?: string[] };
 export type CourseAccess = { authLevel: number; enrollment: Enrollment | null };
 
 /** Reads one URL; the reader's server passes SvelteKit's fetch. */
-export type FetchLike = (url: string) => Promise<{ ok: boolean; text(): Promise<string> }>;
+export type FetchLike = (url: string, init?: { redirect?: "manual" }) => Promise<{ ok: boolean; text(): Promise<string> }>;
 
 /**
  * Where the reader's server reads a course id's tutors.json, or null for a course it will not
  * fetch. Only a course on Netlify (`<id>` or `<id>.netlify.app`) is read, so a crafted course id
- * cannot point the server at another host; feedback is unavailable on any other course.
+ * cannot point the server at another host; feedback is unavailable on any other course. The read
+ * does not follow redirects, so a course site cannot send the server on to another host either.
  */
 export function courseJsonUrl(courseId: string): string | null {
   const id = courseId
@@ -67,7 +68,7 @@ export function courseAccessReader({
     const url = courseJsonUrl(courseId);
     if (url) {
       try {
-        const response = await fetchFn(url);
+        const response = await fetchFn(url, { redirect: "manual" });
         if (response.ok) {
           const course = JSON.parse(await response.text()) as { authLevel?: unknown; enrollment?: Record<string, unknown> } | null;
           const listed = course?.enrollment && typeof course.enrollment === "object" ? course.enrollment : null;

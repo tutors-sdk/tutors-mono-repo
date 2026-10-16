@@ -18,6 +18,8 @@ describe("parseFeedbackPost", () => {
     [null, "action is annotate or revoke"],
     [{ action: "revoke" }, "id is required"],
     [{ action: "annotate", ...ref, labRoute: "/topic/cs101" }, "labRoute is a lab's route, /lab/<courseId>/..."],
+    [{ action: "annotate", ...ref, labRoute: "/lab/other-course/lab-01" }, "labRoute is a lab's route, /lab/<courseId>/..."],
+    [{ action: "annotate", ...ref, labRoute: "/lab/cs1010/lab-01" }, "labRoute is a lab's route, /lab/<courseId>/..."],
     [{ action: "annotate", courseId: "cs101" }, "courseId, labRoute and stepId are required"],
     [{ action: "annotate", ...ref, body: " " }, "body is text of 1 to 4000 characters"],
     [{ action: "annotate", ...ref, body: "x".repeat(4001) }, "body is text of 1 to 4000 characters"],
