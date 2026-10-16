@@ -4,8 +4,14 @@
   import { currentCodeTheme, mermaidify, copyCode } from "@tutors/course/markdown";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { t } from "@tutors/i18n";
+  import { currentLabStepIndex } from "@tutors/runes";
   import WidthToggle from "../WidthToggle.svelte";
+  import HelpButton from "./HelpButton.svelte";
+  import HelpNotice from "./HelpNotice.svelte";
   let { lab }: { lab: LiveLab } = $props();
+  // The lab's route is /lab/<courseId>/...: the course a help request is raised in.
+  const courseId = $derived(lab.url.split("/")[2] ?? "");
+  const stepId = $derived(lab.steps[currentLabStepIndex.value] ?? "");
   const previous = $derived(lab.prevStep());
   const next = $derived(lab.nextStep());
 
@@ -28,7 +34,8 @@
     <nav aria-label={t("shell.steps")}><ul>{@html sanitizeHtml(lab.navbarHtml ?? "")}</ul></nav>
   </details>
   <div class="reading-panel">
-    <div class="reading-meta"><span class="ui-eyebrow">{lab.lab.title}</span><span class="reading-tools">{t("shell.steps")} {lab.index + 1} / {lab.steps.length}<WidthToggle /></span></div>
+    <div class="reading-meta"><span class="ui-eyebrow">{lab.lab.title}</span><span class="reading-tools">{t("shell.steps")} {lab.index + 1} / {lab.steps.length}<HelpButton {courseId} labRoute={lab.url} {stepId} /><WidthToggle /></span></div>
+    <HelpNotice />
     <article class="prose dark:prose-invert prose-pre:overflow-x-auto" use:mermaidify={lab.content} use:copyCode>
       {#key currentCodeTheme.value}<div id="lab-panel">{@html sanitizeHtml(lab.content ?? "")}</div>{/key}
     </article>

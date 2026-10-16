@@ -8,7 +8,7 @@
  */
 
 type Row = Record<string, unknown>;
-type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" };
+type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" | "is" };
 type DbError = { message: string; code?: string };
 type BroadcastMessage = { type: string; event: string; payload: unknown };
 type BroadcastHandler = (message: BroadcastMessage) => void;
@@ -69,6 +69,12 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
+  /** `IS NULL`: a column the row never had counts as null, as a new nullable column does. */
+  is(column: string, value: null) {
+    this.call.filters.push({ column, value, op: "is" });
+    return this;
+  }
+
   /** Compares as strings, which orders ISO timestamps correctly. */
   gte(column: string, value: unknown) {
     this.call.filters.push({ column, value, op: "gte" });
@@ -112,6 +118,7 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
   private matches(row: Row): boolean {
     return this.call.filters.every((f) => {
       if (f.op === "eq") return row[f.column] === f.value;
+      if (f.op === "is") return (row[f.column] ?? null) === f.value;
       if (f.op === "gte") return String(row[f.column]) >= String(f.value);
       if (f.op === "lte") return String(row[f.column]) <= String(f.value);
       return (f.value as unknown[]).includes(row[f.column]);
@@ -431,7 +438,8 @@ export const createClient = (_url?: string, _key?: string, options?: unknown): R
 export const publicEnv: Record<string, string> = {
   PUBLIC_SUPABASE_URL: "https://supabase.invalid",
   PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-  PUBLIC_ANON_MODE: "FALSE"
+  PUBLIC_ANON_MODE: "FALSE",
+  PUBLIC_LIVE_ORIGIN: "https://live.invalid"
 };
 
 /** A `Storage` that coerces values to strings, as the browser's does. */

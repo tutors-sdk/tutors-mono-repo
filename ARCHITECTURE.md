@@ -1326,17 +1326,21 @@ update realtime_settings set live_daily_budget = 0;                -- stop publi
 
 #### Help requests
 
-A signed-in student can say they are stuck, need a hint or need the lecturer from a lab step; an educator of the course (its published `enrollment.educators`) acknowledges, answers a hint or resolves. The domain, the use cases and the Supabase adapters are `@tutors/community/assistance` (`packages/svelte/community/src/assistance`); the reader's server composes them in `apps/reader/src/lib/server/assistance.ts` behind three routes, which only the reader's own pages may call:
+A signed-in student can say they are stuck, need a hint or need the lecturer from a lab step; an educator of the course (its published `enrollment.educators`) acknowledges, answers a hint or resolves. The domain, the use cases and the Supabase adapters are `@tutors/community/assistance` (`packages/svelte/community/src/assistance`); the reader's server composes them in `apps/reader/src/lib/server/assistance.ts` behind three routes:
 
-- `POST /api/assistance` takes `{ action, ... }` (`request`, `acknowledge`, `answer-hint`, `resolve`, `withdraw`) and runs it as the signed-in actor;
+- `POST /api/assistance` takes `{ action, ... }` (`request`, `acknowledge`, `answer-hint`, `resolve`, `withdraw`, `rate`) and runs it as the signed-in actor;
 - `GET /api/assistance?courseId=` answers the course's queue, with waiting time and escalation from the clock, to an educator of the course only;
-- `GET /api/assistance/mine?courseId=` answers the signed-in student's own live request.
+- `GET /api/assistance/mine?courseId=` answers the signed-in student's own request: the live one, or the latest one resolved in the last 4 hours while it has a hint to show or a rating to ask for.
+
+The reader's own pages call all three. Tutors Live's origin (`PUBLIC_LIVE_ORIGIN`) may call `/api/assistance` with credentials, so the course page reads and works the queue with the lecturer's reader session (the two sites share a registrable domain, so the session cookie goes with the call); any other origin gets 403.
 
 The server reads a course's `tutors.json` only from its Netlify site (`https://<id>.netlify.app`, redirects not followed), so a course id cannot point it at another host; a private course (`auth` 1 or more with a whitelist) takes requests only from its whitelist and educators, and a course it cannot read takes none.
 
 Requests live in `assistance_requests` (`supabase/migrations/20261020_assistance_requests.sql`), with RLS on and no policy, so the reader's server reaches them with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`; without it the routes answer 503. A learner has one live request per course (a partial unique index); a request still live after 4 hours withdraws itself when the queue is next read. After each change the server calls `realtime_claim_assistance_publish(course_id)` and, while a Live tab watches `topics.helpQueue(courseId)` and the day's budget is not paused, publishes `{ courseId, id, state }` there, charged to Live's budget like the activity feeds. The topic is readable with the public key, so the notice never names the student, the step or the kind; the queue itself comes from `GET /api/assistance`.
 
-Operator steps: apply the migration, then set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Supabase, Settings, API) on the reader only, never as a `PUBLIC_` variable.
+In the browser, `@tutors/community/assistance/help` is the student's help control state (`helpService`): a lab step's `HelpButton` asks, changes the kind, withdraws or marks it solved, and `HelpNotice` shows a lecturer's typed hint on the step it was asked from and asks once whether the help helped (kept as `helped`). The student's own request is read again every 30 seconds while it is live and they are on a lab. `@tutors/community/assistance/queue` is Tutors Live's queue (`helpQueueService`, `HelpQueue` on the course page): it reads `GET /api/assistance` every 60 seconds and again on each notice from `topics.helpQueue(courseId)`, drops a closed request as soon as its notice arrives, and reports the tab as a watcher of that topic through `realtime_watch` every minute. Both reach the reader through `readerHelpDesk` (`desk.ts`); neither imports the server's Supabase code.
+
+Operator steps: apply the migrations (`20261020_assistance_requests.sql`, then `20261021_assistance_helped.sql`), then set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Supabase, Settings, API) on the reader only, never as a `PUBLIC_` variable, and make sure the reader's `PUBLIC_LIVE_ORIGIN` names the deployed Tutors Live.
 
 ---
 

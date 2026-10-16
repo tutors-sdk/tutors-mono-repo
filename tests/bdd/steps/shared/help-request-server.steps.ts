@@ -20,6 +20,8 @@ import { recorder } from "../../support/supabase-recorder.ts";
 const feature = await loadFeature("tests/bdd/features/shared/help-request-server.feature");
 
 const READER = "https://reader.invalid";
+/** Tutors Live's origin, as PUBLIC_LIVE_ORIGIN names it in these scenarios. */
+const LIVE = "https://live.invalid";
 const TOPIC = (courseId: string) => `assistance:${courseId}`;
 
 type Row = Record<string, unknown>;
@@ -66,9 +68,9 @@ describeFeature(feature, ({ Background, Rule }) => {
     expect(response.status).toBe(201);
     requests[name] = ((await response.json()) as { request: HelpRequest }).request.id;
   };
-  const acknowledgesAs = async (actor: string | null, owner: string) => {
+  const acknowledgesAs = async (actor: string | null, owner: string, origin?: string) => {
     if (actor) signedIn = actor;
-    await post({ action: "acknowledge", id: requests[owner] });
+    await post({ action: "acknowledge", id: requests[owner] }, origin);
   };
   const holdsOne = (_ctx: unknown, state: string, name: string, stepId: string, kind: string) => {
     expect(rows()).toEqual([expect.objectContaining({ state, learner_id: name, step_id: stepId, lab_route: firstLab(), kind })]);
@@ -148,6 +150,18 @@ describeFeature(feature, ({ Background, Rule }) => {
         Then("the reader shall answer {number}", answers);
         And("Supabase shall hold no help request", () => expect(rows()).toEqual([]));
       });
+
+      RuleScenario("Tutors Live acknowledges with the lecturer's reader session", ({ Given, And, When, Then }) => {
+        Given("{string} has asked for help as {string} on the step {string} of the first lab", hasAsked);
+        And("{string} is signed in to the reader", as);
+        When("Tutors Live acknowledges the request of {string}", (_ctx, owner: string) => acknowledgesAs(null, owner, LIVE));
+        Then("the reader shall answer {number}", answers);
+        And("the answer shall be readable by Tutors Live with the lecturer's session", () => {
+          expect(response.headers.get("access-control-allow-origin")).toBe(LIVE);
+          expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+        });
+        And("the request shall record it was acknowledged by {string}", (_ctx, name: string) => expect(rows()[0].acknowledged_by).toBe(name));
+      });
     }
   );
 
@@ -186,7 +200,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   });
 
   Rule(
-    "Tutors shall give a course's help queue only to a signed-in educator of the course, and give a student only their own live request, read from stored rows.",
+    "Tutors shall give a course's help queue only to a signed-in educator of the course, and give a student only their own request, live or resolved in the last 4 hours, read from stored rows.",
     ({ RuleScenario }) => {
       const readsQueue = async (_ctx: unknown, id: string) => {
         response = await getQueue(event("GET", `/api/assistance?courseId=${id}`));
@@ -221,6 +235,19 @@ describeFeature(feature, ({ Background, Rule }) => {
         When("{string} reads their own help request in {string}", readsOwn);
         Then("the answer shall be the request of {string} of kind {string}", (_ctx, name: string, kind: string) => {
           expect(answered).toMatchObject({ id: requests[name], learnerId: name, kind, state: "open" });
+        });
+      });
+
+      RuleScenario("A student reads their request after the lecturer answered it", ({ Given, And, When, Then }) => {
+        Given("{string} has asked for help as {string} on the step {string} of the first lab", hasAsked);
+        And("{string} has answered the request of {string} with the hint {string}", async (_ctx, lecturer: string, owner: string, hintText: string) => {
+          signedIn = lecturer;
+          await post({ action: "answer-hint", id: requests[owner], hintText });
+          expect(response.status).toBe(200);
+        });
+        When("{string} reads their own help request in {string}", readsOwn);
+        Then("the answer shall be the request of {string} resolved with the hint {string}", (_ctx, name: string, hintText: string) => {
+          expect(answered).toMatchObject({ id: requests[name], state: "resolved", hintText, helped: null });
         });
       });
 

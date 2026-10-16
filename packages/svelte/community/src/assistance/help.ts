@@ -1,11 +1,11 @@
 /**
- * The help-request use cases: a student asks, asks again or withdraws; a lecturer acknowledges,
+ * The help-request use cases: a student asks, asks again, withdraws or says whether it helped; a lecturer acknowledges,
  * answers a hint or resolves; the queue is read with waiting time from the clock and forgotten
  * requests withdrawn on read, so nothing needs a scheduler. Each change is told to the course's
  * watchers through AssistanceFeed; a feed that fails does not undo the change.
  */
-import { askAgain, isHelpKind, isLive, openRequest, transition, type HelpAction, type HelpActor, type HelpKind, type HelpRequest, type TransitionRefusal } from "./help-request.ts";
-import { queueOrder, shouldEscalate, shouldExpire, waitingMs, type Escalation } from "./waiting.ts";
+import { askAgain, awaitsRating, isHelpKind, isLive, openRequest, rateRequest, transition, type HelpAction, type HelpActor, type HelpKind, type HelpRequest, type TransitionRefusal } from "./help-request.ts";
+import { EXPIRE_AFTER_MS, queueOrder, shouldEscalate, shouldExpire, waitingMs, type Escalation } from "./waiting.ts";
 import type { AssistanceFeed, AssistanceStore, Clock } from "./ports.ts";
 import { isStepRef, type StepRef } from "./step-ref.ts";
 
@@ -137,14 +137,44 @@ export const withdrawHelp = (deps: AssistanceDeps) => {
 };
 
 /**
- * The student's own live request in the course, or null, read from stored rows: a student never
- * reads the course's queue (Rule 0392). A request that has waited 4 hours is withdrawn on the way,
- * as the queue does.
+ * The student who asked says whether the help helped, once the request is resolved (Rule 0398).
+ * The answer is kept on the request; the queue does not hear of it, as the request has left it.
+ */
+export function rateHelp({ store }: Pick<AssistanceDeps, "store">) {
+  return async (id: string, caller: HelpCaller, helped: boolean): Promise<HelpResult> => {
+    if (typeof helped !== "boolean") return { ok: false, reason: "invalid" };
+    let current: HelpRequest | null;
+    try {
+      current = await store.get(id);
+    } catch {
+      return { ok: false, reason: "unavailable" };
+    }
+    if (!current) return { ok: false, reason: "not-found" };
+    const rated = rateRequest(current, caller.login, helped);
+    if (!rated.ok) return rated;
+    const kept = await store.replace(rated.request, current).catch(() => null);
+    if (kept === null) return { ok: false, reason: "unavailable" };
+    if (!kept) return { ok: false, reason: "conflict" };
+    return rated;
+  };
+}
+
+/**
+ * The student's own request in the course, or null, read from stored rows: a student never reads
+ * the course's queue (Rule 0392). That is their live request; or, once none is live, their latest
+ * one if it was resolved in the last 4 hours and still has a hint to show on its step (Rule 0397) or
+ * a rating to ask for (Rule 0398). A request that has waited 4 hours is withdrawn on the way, as the
+ * queue does.
  */
 export function myHelpRequest({ store, feed, clock }: Pick<AssistanceDeps, "store" | "feed" | "clock">) {
   return async (courseId: string, login: string): Promise<HelpRequest | null> => {
     const live = await expireStale({ store, feed, clock }, await store.live(courseId));
-    return live.find((r) => r.learnerId === login) ?? null;
+    const mine = live.find((r) => r.learnerId === login);
+    if (mine) return mine;
+    const latest = await store.latest(courseId, login);
+    if (!latest || latest.state !== "resolved" || !latest.closed) return null;
+    const recent = clock.nowMs() - Date.parse(latest.closed.at) < EXPIRE_AFTER_MS;
+    return recent && (awaitsRating(latest) || latest.hintText) ? latest : null;
   };
 }
 

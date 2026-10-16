@@ -4,7 +4,7 @@
  * Security admits no anon call, so the client handed in carries the service role key: only
  * POST /api/assistance writes, after it has checked who is asking (Rule 0390). A second live
  * request of a learner in a course is refused by the table's partial unique index, and `replace` is
- * a compare-and-set on the state, kind and step it was read with. The use cases answer a failed
+ * a compare-and-set on the state, kind, step and rating it was read with. The use cases answer a failed
  * query as "try again", so each one is logged here.
  *
  * `supabaseAssistanceFeed` tells Tutors Live a course's queue changed on the topic
@@ -22,7 +22,7 @@ import type { AssistanceFeed, AssistanceStore } from "./ports.ts";
 
 const TABLE = "assistance_requests";
 const COLUMNS =
-  "id, course_id, lab_route, step_id, learner_id, learner_name, kind, state, requested_at, acknowledged_by, acknowledged_at, closed_by, closed_at, closed_reason, hint_text";
+  "id, course_id, lab_route, step_id, learner_id, learner_name, kind, state, requested_at, acknowledged_by, acknowledged_at, closed_by, closed_at, closed_reason, hint_text, helped";
 
 /** A UUID; any other id names no row, so it is answered without asking the database. */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,7 +46,8 @@ function fromRow(r: Row): HelpRequest {
     requestedAt: iso(r.requested_at) as string,
     acknowledged: r.acknowledged_by && acknowledgedAt ? { by: r.acknowledged_by as string, at: acknowledgedAt } : null,
     closed: r.closed_by && closedAt && r.closed_reason ? { by: r.closed_by as string, at: closedAt, reason: r.closed_reason as HelpClosure["reason"] } : null,
-    hintText: (r.hint_text as string | null) ?? null
+    hintText: (r.hint_text as string | null) ?? null,
+    helped: typeof r.helped === "boolean" ? r.helped : null
   };
 }
 
@@ -65,7 +66,8 @@ function toRow(request: NewHelpRequest): Row {
     closed_by: request.closed?.by ?? null,
     closed_at: request.closed?.at ?? null,
     closed_reason: request.closed?.reason ?? null,
-    hint_text: request.hintText
+    hint_text: request.hintText,
+    helped: request.helped ?? null
   };
 }
 
@@ -108,20 +110,28 @@ export function supabaseAssistanceStore(client: SupabaseClient): AssistanceStore
       return (rows ?? []).map(fromRow);
     },
 
+    async latest(courseId, learnerId) {
+      if (!courseId || !learnerId) return null;
+      const row = (await run(
+        `${TABLE} latest`,
+        client.from(TABLE).select(COLUMNS).eq("course_id", courseId).eq("learner_id", learnerId).order("requested_at", { ascending: false }).limit(1).maybeSingle()
+      )) as Row | null;
+      return row ? fromRow(row) : null;
+    },
+
     async replace(next, prior) {
       if (!UUID.test(next.id)) return false;
-      const rows = (await run(
-        `${TABLE} update`,
-        client
-          .from(TABLE)
-          .update(toRow(next))
-          .eq("id", next.id)
-          .eq("state", prior.state)
-          .eq("kind", prior.kind)
-          .eq("lab_route", prior.ref.labRoute)
-          .eq("step_id", prior.ref.stepId)
-          .select("id")
-      )) as Row[] | null;
+      const update = client
+        .from(TABLE)
+        .update(toRow(next))
+        .eq("id", next.id)
+        .eq("state", prior.state)
+        .eq("kind", prior.kind)
+        .eq("lab_route", prior.ref.labRoute)
+        .eq("step_id", prior.ref.stepId);
+      // A rating is answered once: the row must still carry the rating it was read with.
+      const rated = prior.helped === null || prior.helped === undefined ? update.is("helped", null) : update.eq("helped", prior.helped);
+      const rows = (await run(`${TABLE} update`, rated.select("id"))) as Row[] | null;
       return rows?.length === 1;
     }
   };

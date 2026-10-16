@@ -55,3 +55,31 @@ claims:
     scope: "GET /_app/immutable/chunks/\\{\\{hash\\}\\}.js"
     rule: "0330"
     reason: "Rule 0330: moving learning events from browser Realtime to the reader's server adds one immutable chunk on reference:course and reference:note (#478, #481)"
+  # Help requests in labs (Rules 0393, 0395 to 0399): a signed-in student's lab step gains a help
+  # control (Ask for help, then a status chip) and reads the student's own request from the reader's
+  # GET /api/assistance/mine; visitors and anonymous mode see no change. Tutors Live's course page
+  # gains the help queue, read from the reader's GET /api/assistance with the lecturer's session.
+  - artefact: dom
+    scope: "reader:lab*"
+    rule: "0399"
+    reason: "Rule 0399: a signed-in student's lab step shows the help control; it is hidden from visitors and in anonymous mode"
+  - artefact: screenshot
+    scope: "reader:lab*"
+    rule: "0399"
+    reason: "Rule 0399: a signed-in student's lab step shows the help control; it is hidden from visitors and in anonymous mode"
+  - artefact: network
+    scope: "reader:lab*"
+    rule: "0399"
+    reason: "Rule 0399: a signed-in student's lab step reads their own help request from GET /api/assistance/mine"
+  - artefact: dom
+    scope: "live:*"
+    rule: "0395"
+    reason: "Rule 0395: Tutors Live's course page shows the course's help queue"
+  - artefact: screenshot
+    scope: "live:*"
+    rule: "0395"
+    reason: "Rule 0395: Tutors Live's course page shows the course's help queue"
+  - artefact: network
+    scope: "live:*"
+    rule: "0393"
+    reason: "Rule 0393: Tutors Live reads the course's help queue from the reader's GET /api/assistance every 60 seconds and on each notice"

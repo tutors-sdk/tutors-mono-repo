@@ -1,7 +1,8 @@
 /**
  * The reader server's side of help requests: the use cases over the Supabase store and feed, the
- * course's educators from its published enrollment, and the parsing of what a browser posts to
- * /api/assistance. Every write runs here, as the session's actor (Rule 0390); a browser only asks.
+ * course's educators from its published enrollment, the parsing of what a browser posts to
+ * /api/assistance, and the one other origin it answers (Tutors Live's). Every write runs here, as the
+ * session's actor (Rule 0390); a browser only asks.
  *
  * The rows are closed to the anon key, so the store needs PRIVATE_SUPABASE_SERVICE_ROLE_KEY. Without
  * it, or in anonymous mode, this server keeps no help requests and the routes answer 503.
@@ -15,6 +16,7 @@ import {
   answerHint,
   helpQueue,
   myHelpRequest,
+  rateHelp,
   requestHelp,
   resolveHelp,
   stepRef,
@@ -129,15 +131,19 @@ export function assistance(fetchFn: typeof fetch) {
     answerHint: answerHint(deps),
     resolve: resolveHelp(deps),
     withdraw: withdrawHelp(deps),
+    rate: rateHelp(deps),
     queue: helpQueue(deps),
     mine: myHelpRequest(deps),
     educatorsOf: deps.educatorsOf
   };
 }
 
-/** What a browser posts: a student asking on a step, or anyone acting on a request by id. */
+/** What a browser posts: a student asking on a step, anyone acting on a request by id, or the student rating it. */
 export type HelpPost =
-  { action: "request"; ref: StepRef; kind: string } | { action: "acknowledge" | "resolve" | "withdraw"; id: string } | { action: "answer-hint"; id: string; hintText: string };
+  | { action: "request"; ref: StepRef; kind: string }
+  | { action: "acknowledge" | "resolve" | "withdraw"; id: string }
+  | { action: "answer-hint"; id: string; hintText: string }
+  | { action: "rate"; id: string; helped: boolean };
 
 const text = (value: unknown, max: number): string | null => (typeof value === "string" && value.trim() && value.length <= max ? value.trim() : null);
 
@@ -156,16 +162,18 @@ export function parseHelpPost(body: unknown): HelpPost | string {
     case "acknowledge":
     case "resolve":
     case "withdraw":
-    case "answer-hint": {
+    case "answer-hint":
+    case "rate": {
       const id = text(b.id, 64);
       if (!id) return "id is required";
+      if (b.action === "rate") return typeof b.helped === "boolean" ? { action: "rate", id, helped: b.helped } : "helped is true or false";
       if (b.action !== "answer-hint") return { action: b.action, id };
       const hintText = typeof b.hintText === "string" ? b.hintText : "";
       if (hintText.length > MAX_HINT_LENGTH) return `a hint is at most ${MAX_HINT_LENGTH} characters`;
       return { action: "answer-hint", id, hintText };
     }
     default:
-      return "action is one of request, acknowledge, answer-hint, resolve, withdraw";
+      return "action is one of request, acknowledge, answer-hint, resolve, withdraw, rate";
   }
 }
 
@@ -183,13 +191,27 @@ export const HELP_REFUSALS: Record<HelpRefusal, { status: number; message: strin
 /** The largest body POST /api/assistance reads. */
 export const MAX_HELP_POST_BYTES = 8 * 1024;
 
+/** Headers that let a page on another origin read an answer. */
+export type CorsHeaders = Record<string, string>;
+
 /** A JSON answer no shared cache keeps. */
-export function answer(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "private, no-store" } });
+export function answer(status: number, body: unknown, headers: CorsHeaders = {}): Response {
+  return new Response(JSON.stringify(body), { status, headers: { ...headers, "content-type": "application/json", "cache-control": "private, no-store" } });
 }
 
-/** Only the reader's own pages may call these routes: a request from another origin is refused before anything is read. */
-export function sameOrigin(request: Request, url: URL): boolean {
+/** Tutors Live's origin (PUBLIC_LIVE_ORIGIN), as the shared shell links to it. */
+export function liveOrigin(): string {
+  return (publicEnv.PUBLIC_LIVE_ORIGIN || "https://live.tutors.dev").replace(/\/$/, "");
+}
+
+/**
+ * Who may call these routes: the reader's own pages, and for the help queue Tutors Live's course page,
+ * which reads and works the queue with the lecturer's reader session. The headers to answer with, or
+ * null for any other origin, which is refused before anything is read.
+ */
+export function allowedOrigin(request: Request, url: URL, live: boolean): CorsHeaders | null {
   const origin = request.headers.get("origin");
-  return !origin || origin === url.origin;
+  if (!origin || origin === url.origin) return {};
+  if (!live || origin !== liveOrigin()) return null;
+  return { "access-control-allow-origin": origin, "access-control-allow-credentials": "true", vary: "Origin" };
 }
