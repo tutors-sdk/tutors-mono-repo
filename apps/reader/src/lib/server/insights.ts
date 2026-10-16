@@ -21,9 +21,13 @@ function insightsRead(): InsightsRead | null {
 /** One cache of course access rules for the server's lifetime, five minutes per course. */
 const accessOf = courseAccessReader();
 
-/** The insights API for one request, reading courses with the request's fetch. */
+/**
+ * The insights API for one request, reading courses with the request's fetch. A redirect is not
+ * followed, so a course site cannot send the reader's server to another host; it reads as a course
+ * that cannot be read.
+ */
 export function insights(fetchFn: typeof fetch) {
-  return insightsApi({ read: insightsRead(), accessOf: (courseId) => accessOf(courseId, (url) => fetchFn(url)) });
+  return insightsApi({ read: insightsRead(), accessOf: (courseId) => accessOf(courseId, (url) => fetchFn(url, { redirect: "manual" })) });
 }
 
 /** Tutors Time's origin, the one other origin that may read insights with the session. */
