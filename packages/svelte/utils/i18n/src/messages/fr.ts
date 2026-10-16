@@ -445,7 +445,40 @@ Tutors est une application open source - le composant de collecte des données [
   "classTime.calendarEntries": "Entrées du calendrier",
   "classTime.notAvailable": "n.d.",
   "classTime.online": "En ligne",
-  "classTime.offline": "Hors ligne"
+  "classTime.offline": "Hors ligne",
+
+  // Private notes on a lab step
+  "notes.button": "Notes",
+  "notes.hasNote": "Cette étape a une note",
+  "notes.title": "Mes notes",
+  "notes.restore": "Ouvrir les notes",
+  "notes.resize": "Redimensionner le panneau de notes",
+  "notes.minimise": "Réduire",
+  "notes.close": "Fermer",
+  "notes.sessionOnlyTitle": "Les notes ne sont pas enregistrées",
+  "notes.sessionOnly": "Ce navigateur n'enregistre pas les notes : elles ne durent que cette session. Exportez-les pour en garder une copie.",
+  "notes.kind": "Type",
+  "notes.kind.note": "Note",
+  "notes.kind.discovery": "Découverte",
+  "notes.kind.question": "Question",
+  "notes.kind.snippet": "Extrait",
+  "notes.kind.reflection": "Réflexion",
+  "notes.view": "Affichage des notes",
+  "notes.write": "Écrire",
+  "notes.preview": "Aperçu",
+  "notes.empty": "Rien d'écrit pour cette étape.",
+  "notes.label": "Note pour cette étape",
+  "notes.placeholder": "Écrivez une note privée pour cette étape. Le markdown fonctionne.",
+  "notes.saving": "Enregistrement…",
+  "notes.saved": "Enregistrée dans ce navigateur",
+  "notes.private": "Gardée uniquement dans ce navigateur, jamais envoyée",
+  "notes.otherSteps": "Autres étapes avec des notes",
+  "notes.exportCourse": "Exporter les notes du cours",
+  "notes.exportLab": "Exporter ce lab",
+  "notes.deleteAll": "Supprimer toutes les notes de ce cours",
+  "notes.deleteAllConfirm": "Supprimer toutes vos notes de ce cours ? Cette action est irréversible.",
+  "notes.deleteAllYes": "Tout supprimer",
+  "notes.cancel": "Annuler"
 };
 
 export default fr;

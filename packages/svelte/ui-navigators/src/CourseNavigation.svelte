@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { currentCourse, currentLo, currentLabStepIndex, currentNotebookCellIndex, isEducator, tutorsId } from "@tutors/runes";
+  import { notesService } from "@tutors/course/notes";
   import { t } from "@tutors/i18n";
   import { analyticsEnabled } from "@tutors/connect";
   import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
@@ -83,7 +84,7 @@
     <p class="ui-muted text-sm list-count">{t("shell.steps")} · {currentLabStepIndex.value + 1} / {lab.steps.length}</p>
     <ol class="steps" aria-label={t("shell.steps")}>
       {#each lab.lab.los as step, i}
-        <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={currentLabStepIndex.value === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}</a></li>
+        <li><a class="nav-row" href={`${lab.url}/${encodeURI(step.shortTitle)}`} aria-current={currentLabStepIndex.value === i ? "step" : undefined}><span class="step-number">{String(i + 1).padStart(2, "0")}</span>{lab.chaptersTitles.get(step.shortTitle) ?? step.title}{#if notesService.step.value?.labRoute === lab.url && notesService.noted.value.includes(encodeURI(step.shortTitle))}<span class="note-dot" role="img" aria-label={t("notes.hasNote")}></span>{/if}</a></li>
       {/each}
     </ol>
     <hr />
@@ -214,6 +215,7 @@
   .list-count { margin-top: var(--space-5); }
   .steps { display: grid; gap: var(--space-1); margin-block: var(--space-2) var(--space-5); }
   .steps .nav-row { align-items: baseline; }
+  .note-dot { flex-shrink: 0; align-self: center; width: 8px; height: 8px; margin-inline-start: auto; border-radius: 999px; background: var(--ui-brand); }
   .step-number { flex-shrink: 0; min-width: 2ch; font-variant-numeric: tabular-nums; color: var(--ui-muted); font-size: var(--font-caption); }
   hr { border-color: var(--ui-border); }
   .course-navigation :global([data-scope="dialog"][data-part="trigger"]) { width: 100%; text-align: left; border-radius: var(--radius-control); font-weight: var(--weight-regular); }

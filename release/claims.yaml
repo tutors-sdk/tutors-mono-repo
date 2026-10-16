@@ -55,3 +55,15 @@ claims:
     scope: "GET /_app/immutable/chunks/\\{\\{hash\\}\\}.js"
     rule: "0330"
     reason: "Rule 0330: moving learning events from browser Realtime to the reader's server adds one immutable chunk on reference:course and reference:note (#478, #481)"
+
+  # Private notes on a lab step (Rules 0380 to 0383, 0554 to 0558): every lab step gains a Notes button
+  # beside the width toggle, and a step with a note a dot in the step list. The panel itself is
+  # closed until a student opens it, and notes stay in the browser, so nothing new crosses the network.
+  - artefact: dom
+    scope: "reader:lab*"
+    rule: "0554"
+    reason: "Rule 0554: a lab step shows a Notes button that opens the student's private notes panel"
+  - artefact: screenshot
+    scope: "reader:lab*"
+    rule: "0554"
+    reason: "Rule 0554: a lab step shows a Notes button that opens the student's private notes panel"

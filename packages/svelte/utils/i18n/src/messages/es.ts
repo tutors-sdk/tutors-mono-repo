@@ -445,7 +445,40 @@ Tutors es una aplicación de código abierto; el componente de recopilación de 
   "classTime.calendarEntries": "Entradas del calendario",
   "classTime.notAvailable": "N/D",
   "classTime.online": "En línea",
-  "classTime.offline": "Sin conexión"
+  "classTime.offline": "Sin conexión",
+
+  // Private notes on a lab step
+  "notes.button": "Notas",
+  "notes.hasNote": "Este paso tiene una nota",
+  "notes.title": "Mis notas",
+  "notes.restore": "Abrir notas",
+  "notes.resize": "Cambiar el tamaño del panel de notas",
+  "notes.minimise": "Minimizar",
+  "notes.close": "Cerrar",
+  "notes.sessionOnlyTitle": "Las notas no se están guardando",
+  "notes.sessionOnly": "Este navegador no guarda las notas, así que solo duran esta sesión. Expórtalas para conservar una copia.",
+  "notes.kind": "Tipo",
+  "notes.kind.note": "Nota",
+  "notes.kind.discovery": "Descubrimiento",
+  "notes.kind.question": "Pregunta",
+  "notes.kind.snippet": "Fragmento",
+  "notes.kind.reflection": "Reflexión",
+  "notes.view": "Vista de notas",
+  "notes.write": "Escribir",
+  "notes.preview": "Vista previa",
+  "notes.empty": "Aún no hay nada escrito para este paso.",
+  "notes.label": "Nota para este paso",
+  "notes.placeholder": "Escribe una nota privada para este paso. Admite markdown.",
+  "notes.saving": "Guardando…",
+  "notes.saved": "Guardada en este navegador",
+  "notes.private": "Guardada solo en este navegador, nunca se envía",
+  "notes.otherSteps": "Otros pasos con notas",
+  "notes.exportCourse": "Exportar notas del curso",
+  "notes.exportLab": "Exportar este laboratorio",
+  "notes.deleteAll": "Eliminar todas las notas de este curso",
+  "notes.deleteAllConfirm": "¿Eliminar todas las notas que escribiste en este curso? No se puede deshacer.",
+  "notes.deleteAllYes": "Eliminar todo",
+  "notes.cancel": "Cancelar"
 };
 
 export default es;

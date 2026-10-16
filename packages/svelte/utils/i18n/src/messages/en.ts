@@ -445,7 +445,40 @@ Tutors is an open source application - the data collection component [is here](h
   "classTime.calendarEntries": "Calendar entries",
   "classTime.notAvailable": "N/A",
   "classTime.online": "Online",
-  "classTime.offline": "Offline"
+  "classTime.offline": "Offline",
+
+  // Private notes on a lab step
+  "notes.button": "Notes",
+  "notes.hasNote": "This step has a note",
+  "notes.title": "My notes",
+  "notes.restore": "Open notes",
+  "notes.resize": "Resize the notes panel",
+  "notes.minimise": "Minimise",
+  "notes.close": "Close",
+  "notes.sessionOnlyTitle": "Notes are not being stored",
+  "notes.sessionOnly": "This browser is not storing notes, so they last for this session only. Export them to keep a copy.",
+  "notes.kind": "Kind",
+  "notes.kind.note": "Note",
+  "notes.kind.discovery": "Discovery",
+  "notes.kind.question": "Question",
+  "notes.kind.snippet": "Snippet",
+  "notes.kind.reflection": "Reflection",
+  "notes.view": "Notes view",
+  "notes.write": "Write",
+  "notes.preview": "Preview",
+  "notes.empty": "Nothing written for this step yet.",
+  "notes.label": "Note for this step",
+  "notes.placeholder": "Write a private note for this step. Markdown works.",
+  "notes.saving": "Saving…",
+  "notes.saved": "Saved in this browser",
+  "notes.private": "Kept only in this browser, never sent anywhere",
+  "notes.otherSteps": "Other steps with notes",
+  "notes.exportCourse": "Export course notes",
+  "notes.exportLab": "Export this lab",
+  "notes.deleteAll": "Delete all notes for this course",
+  "notes.deleteAllConfirm": "Delete every note you wrote in this course? This cannot be undone.",
+  "notes.deleteAllYes": "Delete all",
+  "notes.cancel": "Cancel"
 } as const;
 
 export default en;
