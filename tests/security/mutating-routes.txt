@@ -14,3 +14,4 @@ reader POST /api/auth/sign-out | hook | who: session holder; Better Auth verifie
 reader POST /api/auth/get-session | hook | who: session holder; Better Auth verifies cookies and renews the session
 reader POST /api/auth/update-user | hook | who: session holder; Better Auth verifies origin, adapter rejects githubId/login changes including null
 reader POST /api/live/activity | who: anyone, as the anon key it replaces allowed; the body is validated (4 KB, LoRecord shape) and published only to watched topics within the day's Live budget
+reader POST /api/feedback | who: a signed-in educator of the course, read from its published enrollment.educators, as the session actor; anyone else 401 or 403 and nothing kept

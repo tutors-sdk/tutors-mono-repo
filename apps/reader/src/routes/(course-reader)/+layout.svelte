@@ -8,6 +8,10 @@
   import { rbacService, isLoRouteLocked } from "@tutors/rbac";
   import { afterNavigate, beforeNavigate, goto } from "$app/navigation";
   import { revealMatches } from "@tutors/ui-navigators/search/resource-search";
+  import { stepRef } from "@tutors/feedback";
+  import { explanationToast, feedbackService } from "@tutors/feedback/service";
+  import { toaster } from "@tutors/ui-primitives/utils/toaster";
+  import { t } from "@tutors/i18n";
 
   type Props = { children: Snippet };
   let { children }: Props = $props();
@@ -51,6 +55,29 @@
     complete.catch(() => tutorsConnectService.navigationAbandoned(attempt));
   });
 
+  /**
+   * An explanation a lecturer posted for everyone on another step since the last look, toasted with
+   * the step's name and a link to it, at most once a minute (Rule 0564).
+   */
+  function lookForExplanations(pathname: string): void {
+    const course = currentCourse.value;
+    if (!course?.courseId) return;
+    let here = null;
+    if (pathname.startsWith("/lab/")) {
+      const last = pathname.slice(pathname.lastIndexOf("/") + 1);
+      // A lab's own page (/lab/<course>/<lab>/book-…) shows its first step, as the lab loader does.
+      const labRoute = last.startsWith("book") ? pathname : pathname.slice(0, pathname.lastIndexOf("/"));
+      const first = (course.loIndex?.get(labRoute) as { los?: { shortTitle?: string }[] } | undefined)?.los?.[0]?.shortTitle;
+      here = stepRef(course.courseId, labRoute, last.startsWith("book") ? encodeURI(first ?? "") : last);
+    }
+    void feedbackService.visit(course.courseId, tutorsId.value?.login || null, here, (annotation) => {
+      const lo = course.loIndex?.get(annotation.ref.labRoute) as { los?: { shortTitle?: string; title?: string }[] } | undefined;
+      const step = lo?.los?.find((s) => encodeURI(s.shortTitle ?? "") === annotation.ref.stepId);
+      const toast = explanationToast(annotation, step?.title?.replace(/^#+\s*/, ""));
+      toaster.create({ title: toast.title, description: t("feedback.toast"), meta: { actionUrl: toast.actionUrl, actionLabel: t("feedback.open") } });
+    });
+  }
+
   afterNavigate(({ from, to }) => {
     // The effect above runs again whenever any of the course, the learning object or the id resolves.
     // This is the one signal that says the student actually went somewhere, so it is what separates a
@@ -58,6 +85,7 @@
     // time while the navigation was in flight, so the arrival is reported here.
     tutorsConnectService.navigated(from?.url?.pathname, to?.url?.pathname);
     tutorsConnectService.learningEvent(page.params);
+    if (to?.url?.pathname) lookForExplanations(to.url.pathname);
     if (
       currentCourse.value?.hasEnrollment &&
       !isEducator.value &&

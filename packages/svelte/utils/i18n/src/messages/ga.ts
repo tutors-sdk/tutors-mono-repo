@@ -420,7 +420,33 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "classTime.calendarEntries": "Iontrálacha féilire",
   "classTime.notAvailable": "N/B",
   "classTime.online": "Ar líne",
-  "classTime.offline": "As líne"
+  "classTime.offline": "As líne",
+
+  // Lecturer feedback on lab steps
+  "feedback.banner": "Míniú do chách ar an gcéim seo",
+  "feedback.dismiss": "Folaigh",
+  "feedback.from": "Ó",
+  "feedback.forYou": "Aiseolas duit",
+  "feedback.educatorPanel": "Aiseolas ar an gcéim seo",
+  "feedback.audience": "Do",
+  "feedback.everyone": "Gach duine ar an gcéim seo",
+  "feedback.oneStudent": "Mac léinn amháin",
+  "feedback.studentLogin": "Logáil isteach GitHub an mhic léinn",
+  "feedback.body": "Aiseolas (markdown)",
+  "feedback.post": "Postáil",
+  "feedback.notSent": "Níor seoladh an t-aiseolas. Bain triail eile as.",
+  "feedback.forbidden": "Ní féidir é sin a dhéanamh ach ag oideoir an chúrsa seo.",
+  "feedback.notKept": "Ní choinnítear aiseolas ar an bhfreastalaí seo.",
+  "feedback.history": "Postáilte ar an gcéim seo",
+  "feedback.historyEmpty": "Níl aon rud postáilte ar an gcéim seo fós.",
+  "feedback.toEveryone": "Do chách",
+  "feedback.to": "Do",
+  "feedback.revoke": "Aistarraing",
+  "feedback.revoked": "Aistarraingthe",
+  "feedback.received": "Aiseolas faighte",
+  "feedback.receivedEmpty": "Níl aon aiseolas sa chúrsa seo fós.",
+  "feedback.toast": "Phostáil do léachtóir míniú do chách ar an gcéim seo",
+  "feedback.open": "Oscail an chéim"
 } as const;
 
 export default ga;

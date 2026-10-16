@@ -348,6 +348,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/feedback':
+        specifier: workspace:*
+        version: link:../../packages/svelte/utils/feedback
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../../packages/svelte/utils/i18n
@@ -771,6 +774,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../course
+      '@tutors/feedback':
+        specifier: workspace:*
+        version: link:../utils/feedback
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n
@@ -966,6 +972,18 @@ importers:
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.71.0)
+
+  packages/svelte/utils/feedback:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.117.1
+        version: 2.117.2(@opentelemetry/api@1.9.1)
+      '@tutors/runes':
+        specifier: workspace:*
+        version: link:../../runes
+      svelte:
+        specifier: ^5.0.0
+        version: 5.57.2(@typescript-eslint/types@8.71.0)
 
   packages/svelte/utils/i18n:
     dependencies:
