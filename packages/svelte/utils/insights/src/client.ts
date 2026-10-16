@@ -20,7 +20,9 @@ const reasonOf = (value: unknown): InsightsRefusal => INSIGHTS_REFUSALS.find((r)
  * only Tutors Time's own origin (PUBLIC_TIME_ORIGIN).
  */
 export function readerInsightsDesk(readerOrigin: string, fetchFn: typeof fetch = (...args) => fetch(...args)): InsightsDesk {
-  const base = `${readerOrigin.replace(/\/+$/, "")}/api/insights`;
+  let end = readerOrigin.length;
+  while (end > 0 && readerOrigin[end - 1] === "/") end--;
+  const base = `${readerOrigin.slice(0, end)}/api/insights`;
   async function ask<T>(query: Record<string, string>, key: "insights" | "progress"): Promise<InsightsAnswer<T>> {
     try {
       const response = await fetchFn(`${base}?${new URLSearchParams(query)}`, { credentials: "include", headers: { accept: "application/json" } });

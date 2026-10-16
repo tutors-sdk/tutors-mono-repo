@@ -28,7 +28,8 @@ export function insights(fetchFn: typeof fetch) {
 
 /** Tutors Time's origin, the one other origin that may read insights with the session. */
 function timeOrigin(): string {
-  return (publicEnv.PUBLIC_TIME_ORIGIN?.trim() || "https://time.tutors.dev").replace(/\/+$/, "");
+  const origin = publicEnv.PUBLIC_TIME_ORIGIN?.trim() || "https://time.tutors.dev";
+  return origin.endsWith("/") ? origin.slice(0, -1) : origin;
 }
 
 /**
