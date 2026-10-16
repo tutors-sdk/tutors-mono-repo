@@ -1,13 +1,14 @@
 import type { RequestHandler } from "./$types";
 import log from "@tutors/logger";
-import { answer, assistance, sameOrigin } from "#lib/server/assistance.ts";
+import { allowedOrigin, answer, assistance } from "#lib/server/assistance.ts";
 
 /**
- * GET /api/assistance/mine?courseId=: the signed-in student's own live help request in the course,
- * or null, read from stored rows. A student never reads the course's help queue (Rule 0392).
+ * GET /api/assistance/mine?courseId=: the signed-in student's own help request in the course (live,
+ * or resolved in the last 4 hours with a hint to show or a rating to ask for), or null, read from
+ * stored rows. A student never reads the course's help queue (Rule 0392).
  */
 export const GET: RequestHandler = async ({ request, url, locals, fetch }) => {
-  if (!sameOrigin(request, url)) return answer(403, { message: "Only the reader's own pages may use help requests" });
+  if (!allowedOrigin(request, url, false)) return answer(403, { message: "Only the reader's own pages may use help requests" });
   if (!locals.actor) return answer(401, { message: "Sign in with GitHub to ask for help" });
   const courseId = url.searchParams.get("courseId")?.trim() ?? "";
   if (!courseId) return answer(400, { message: "courseId is required" });

@@ -3,12 +3,15 @@ import {
   acknowledgeHelp,
   answerHint,
   askAgain,
+  awaitsRating,
   helpQueue,
   isHelpKind,
   isStepRef,
   myHelpRequest,
   openRequest,
   queueOrder,
+  rateHelp,
+  rateRequest,
   requestHelp,
   resolveHelp,
   shouldEscalate,
@@ -97,7 +100,7 @@ describe("waiting time", () => {
 
 /** A store over an array, with failures a test can switch on. */
 function memoryStore(rows: HelpRequest[] = []) {
-  const failing = { live: false, open: false, get: false, replace: false as boolean | "refuse" };
+  const failing = { live: false, open: false, get: false, latest: false, replace: false as boolean | "refuse" };
   let next = 1;
   const store: AssistanceStore = {
     async open(r) {
@@ -114,6 +117,11 @@ function memoryStore(rows: HelpRequest[] = []) {
     async live(courseId) {
       if (failing.live) throw new Error("down");
       return rows.filter((r) => r.ref.courseId === courseId && (r.state === "open" || r.state === "acknowledged")).map((r) => ({ ...r }));
+    },
+    async latest(courseId, learnerId) {
+      if (failing.latest) throw new Error("down");
+      const mine = rows.filter((r) => r.ref.courseId === courseId && r.learnerId === learnerId).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
+      return mine[0] ? { ...mine[0] } : null;
     },
     async replace(nextRow) {
       if (failing.replace === true) throw new Error("down");
@@ -204,6 +212,44 @@ describe("the help request use cases", () => {
     expect(await myHelpRequest(deps(store))("cs101", "bob")).toMatchObject({ id: "other" });
   });
 
+  it("rates a resolved request once, by the student who asked (Rule 0398)", async () => {
+    const resolved = request({ state: "resolved", closed: { by: "ellen", at: at(5), reason: "resolved" } });
+    expect(awaitsRating(request())).toBe(false);
+    expect(awaitsRating(resolved)).toBe(true);
+    expect(rateRequest(request(), "alice", true)).toEqual({ ok: false, reason: "not-in-state-table" });
+    expect(rateRequest(resolved, "bob", true)).toEqual({ ok: false, reason: "not-permitted" });
+    const { store, rows, failing } = memoryStore([resolved]);
+    expect(await rateHelp(deps(store))(resolved.id, { login: "alice" }, "yes" as never)).toEqual({ ok: false, reason: "invalid" });
+    expect(await rateHelp(deps(store))("missing", { login: "alice" }, true)).toEqual({ ok: false, reason: "not-found" });
+    failing.get = true;
+    expect(await rateHelp(deps(store))(resolved.id, { login: "alice" }, true)).toEqual({ ok: false, reason: "unavailable" });
+    failing.get = false;
+    failing.replace = "refuse";
+    expect(await rateHelp(deps(store))(resolved.id, { login: "alice" }, true)).toEqual({ ok: false, reason: "conflict" });
+    failing.replace = true;
+    expect(await rateHelp(deps(store))(resolved.id, { login: "alice" }, true)).toEqual({ ok: false, reason: "unavailable" });
+    failing.replace = false;
+    expect(await rateHelp(deps(store))(resolved.id, { login: "alice" }, false)).toMatchObject({ ok: true, request: { helped: false } });
+    expect(rows[0].helped).toBe(false);
+    expect(await rateHelp(deps(store))(resolved.id, { login: "alice" }, true)).toEqual({ ok: false, reason: "not-in-state-table" });
+    expect(feed.told).toEqual([]);
+  });
+
+  it("gives the student their just-resolved request while it has a hint to show or a rating to ask for", async () => {
+    const hinted = request({ state: "resolved", kind: "hint", hintText: "Check the bound", helped: true, closed: { by: "ellen", at: at(5), reason: "hint" } });
+    const { store, rows } = memoryStore([hinted]);
+    expect(await myHelpRequest(deps(store))("cs101", "alice")).toMatchObject({ id: hinted.id, hintText: "Check the bound" });
+    rows[0] = { ...hinted, hintText: null };
+    expect(await myHelpRequest(deps(store))("cs101", "alice")).toBeNull();
+    rows[0] = { ...hinted, hintText: null, helped: null };
+    expect(await myHelpRequest(deps(store))("cs101", "alice")).toMatchObject({ id: hinted.id });
+    clockAt = Date.parse(at(5 + 240));
+    expect(await myHelpRequest(deps(store))("cs101", "alice")).toBeNull();
+    rows[0] = { ...hinted, state: "withdrawn", closed: { by: "alice", at: at(5), reason: "withdrawn" } };
+    expect(await myHelpRequest(deps(store))("cs101", "alice")).toBeNull();
+    expect(await myHelpRequest(deps(store))("cs101", "bob")).toBeNull();
+  });
+
   it("keeps an expired request live when its withdrawal was not stored", async () => {
     const { store, failing } = memoryStore([request()]);
     clockAt = Date.parse(at(241));
@@ -232,6 +278,21 @@ describe("the Supabase store and feed", () => {
     expect(await store.replace({ ...opened, id: "help-1" }, opened)).toBe(false);
     await expect(store.open({ ...openRequest(ref, alice, "stuck", T0), learnerId: "" })).rejects.toThrow();
     await expect(store.open(openRequest(ref, alice, "stuck", T0))).rejects.toThrow(/duplicate key/);
+  });
+
+  it("finds the learner's latest request and keeps a rating only on the rating it was read with", async () => {
+    const store = supabaseAssistanceStore(client);
+    expect(await store.latest("", "alice")).toBeNull();
+    expect(await store.latest("cs101", "alice")).toBeNull();
+    const opened = await store.open(openRequest(ref, alice, "stuck", T0));
+    const resolved = { ...opened, state: "resolved" as const, closed: { by: "alice", at: at(1), reason: "resolved" as const } };
+    expect(await store.replace(resolved, opened)).toBe(true);
+    const second = await store.open(openRequest(ref, alice, "hint", at(2)));
+    expect(await store.latest("cs101", "alice")).toMatchObject({ id: second.id });
+    expect(await store.replace({ ...resolved, helped: true }, resolved)).toBe(true);
+    expect(await store.replace({ ...resolved, helped: false }, resolved)).toBe(false);
+    expect(await store.replace({ ...resolved, helped: false }, { ...resolved, helped: true })).toBe(true);
+    expect(await store.get(opened.id)).toMatchObject({ helped: false });
   });
 
   it("rejects when Supabase answers with an error", async () => {

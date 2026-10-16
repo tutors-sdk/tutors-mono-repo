@@ -58,6 +58,14 @@ Feature: Help requests on the reader's server
       Then the reader shall answer 403
       And Supabase shall hold no help request
 
+    Scenario: Tutors Live acknowledges with the lecturer's reader session
+      Given "alice" has asked for help as "stuck" on the step "02" of the first lab
+      And "ellen" is signed in to the reader
+      When Tutors Live acknowledges the request of "alice"
+      Then the reader shall answer 200
+      And the answer shall be readable by Tutors Live with the lecturer's session
+      And the request shall record it was acknowledged by "ellen"
+
   @rule-0391 @ears-event-driven
   Rule: When a help request changes state, tutors shall publish the changed request's id and state on the course's help queue topic once it is stored.
 
@@ -80,7 +88,7 @@ Feature: Help requests on the reader's server
       And Live's budget shall have spent nothing
 
   @rule-0392 @ears-ubiquitous
-  Rule: Tutors shall give a course's help queue only to a signed-in educator of the course, and give a student only their own live request, read from stored rows.
+  Rule: Tutors shall give a course's help queue only to a signed-in educator of the course, and give a student only their own request, live or resolved in the last 4 hours, read from stored rows.
 
     Scenario: The educator reads the queue
       Given "alice" has asked for help as "stuck" on the step "02" of the first lab
@@ -97,6 +105,12 @@ Feature: Help requests on the reader's server
       Given "alice" has asked for help as "hint" on the step "02" of the first lab
       When "alice" reads their own help request in "cs101"
       Then the answer shall be the request of "alice" of kind "hint"
+
+    Scenario: A student reads their request after the lecturer answered it
+      Given "alice" has asked for help as "hint" on the step "02" of the first lab
+      And "ellen" has answered the request of "alice" with the hint "Check the loop bound."
+      When "alice" reads their own help request in "cs101"
+      Then the answer shall be the request of "alice" resolved with the hint "Check the loop bound."
 
     Scenario: A student never reads another student's request
       Given "alice" has asked for help as "hint" on the step "02" of the first lab

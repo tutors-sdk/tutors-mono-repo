@@ -12,6 +12,8 @@
     },
     "./services/*": "./src/services/*",
     "./assistance": "./src/assistance/index.ts",
+    "./assistance/help": "./src/assistance/help.svelte.ts",
+    "./assistance/queue": "./src/assistance/live-queue.ts",
     "./utils/supabase-client": "./src/utils/supabase-client.ts",
     "./utils/error-transport": "./src/utils/error-transport.ts",
     "./utils/health-check": "./src/utils/health-check.ts"

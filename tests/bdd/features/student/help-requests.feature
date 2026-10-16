@@ -6,7 +6,8 @@ Feature: Help requests in labs
 
   A signed-in student raises one help request per course; it carries the step, the kind and the
   time. These Rules drive the Assistance use cases over in-memory adapters; the reader's server
-  routes and the Supabase store are shared/help-request-server.feature.
+  routes and the Supabase store are shared/help-request-server.feature, and the help control on the
+  lab step is student/help-button.feature.
 
   Background:
     Given "alice" is signed in and on the step "02" of the lab "/lab/cs101/lab-01" in the course "cs101"

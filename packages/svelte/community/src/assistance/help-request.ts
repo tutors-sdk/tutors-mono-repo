@@ -33,6 +33,8 @@ export type HelpRequest = {
   closed: HelpClosure | null;
   /** The lecturer's typed answer to a Need-a-hint request. */
   hintText: string | null;
+  /** Once resolved, whether the student said the help helped; null until they answer (Rule 0398). */
+  helped: boolean | null;
 };
 
 /** What the student's request carries before the store gives it an id. */
@@ -52,7 +54,7 @@ export function isLive(request: HelpRequest): boolean {
 
 /** A new open request at `at` (Rule 0385). */
 export function openRequest(ref: StepRef, learner: { login: string; name: string | null }, kind: HelpKind, at: string): NewHelpRequest {
-  return { ref, learnerId: learner.login, learnerName: learner.name, kind, state: "open", requestedAt: at, acknowledged: null, closed: null, hintText: null };
+  return { ref, learnerId: learner.login, learnerName: learner.name, kind, state: "open", requestedAt: at, acknowledged: null, closed: null, hintText: null, helped: null };
 }
 
 /**
@@ -111,4 +113,19 @@ export function transition(request: HelpRequest, action: HelpAction, actor: Help
     case "expire":
       return { ok: true, request: { ...request, state: row.to, closed: { by, at, reason: "expired" } } };
   }
+}
+
+/** Resolved by a lecturer or by the student's "Solved it", and not yet rated: the student is asked whether it helped (Rule 0398). */
+export function awaitsRating(request: HelpRequest): boolean {
+  return request.state === "resolved" && request.helped === null;
+}
+
+/**
+ * The student who asked says whether the help helped, once (Rule 0398). Only a resolved request is
+ * rated, only by the student who asked, and a second answer is refused.
+ */
+export function rateRequest(request: HelpRequest, login: string, helped: boolean): TransitionResult {
+  if (!awaitsRating(request)) return { ok: false, reason: "not-in-state-table" };
+  if (login !== request.learnerId) return { ok: false, reason: "not-permitted" };
+  return { ok: true, request: { ...request, helped } };
 }
