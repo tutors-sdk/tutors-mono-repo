@@ -228,6 +228,7 @@ needs no Supabase project. If a host port is taken, override it, for example
 | Filesystem | read-only safe; nothing is written at runtime |
 | Liveness | `GET /healthz/live` returns `{"status":"ok"}` with no dependencies |
 | Readiness | `GET /healthz` also reports Supabase reachability |
+| Healthcheck | `HEALTHCHECK` (every 15s, 3s timeout, 3 retries) runs `node -e fetch(...)` against `/healthz/live` on `PORT`, the liveness route; the image has no curl or wget (Rule 0573) |
 | Metrics | `GET /metrics` in Prometheus text format (request histogram/counter, in-flight gauge, Node process metrics) |
 | Build identity | `GET /version` returns `{"app","version","revision","built","clock"}`; the only route that answers the commit or build date |
 | Request id | `x-request-id` response header (echoes a well-formed incoming one); the only per-request value in any header besides `Date` |
@@ -303,7 +304,11 @@ Every app serves `GET /metrics` on its normal port: `http_request_duration_secon
 `http_requests_total` and `http_requests_in_flight`, labelled by method, matched
 route and status, plus the default Node.js process metrics. `/metrics` and the
 `/healthz` probes are not counted. The route label is the SvelteKit route id,
-so unmatched requests share one `unmatched` series.
+so unmatched requests share one `unmatched` series. Both request SLIs are on
+`/metrics` from the first scrape: at start each app primes
+`http_requests_total` and every `http_request_duration_seconds` bucket at 0 for
+`{method="GET",route="unmatched",status_code="404"}`, so an app that has served
+no request reads as idle, not uninstrumented (Rule 0574).
 
 Because the endpoint sits behind the public Route, set `METRICS_TOKEN` in
 production and give the scraper the same value (Prometheus `authorization`,
