@@ -26,3 +26,17 @@ claims:
     path: "tutors.json"
     pointer: "/los/[topic-01-typical]/los/[unit-2]/los/[scratch]"
     reason: "#424 Rule 0268: a folder of no kind inside a unit is left out of tutors.json"
+  # On the base, old-ideas publishes as a phantom topic: it gets a topic llms file (renumbering the
+  # rest), a section in the complete llms file, and a page and nav cards on every tutors-lite page.
+  - corpus: synthetic
+    generator: tutors
+    path: "llms/*-complete-llms.txt"
+    reason: "#424 Rule 0268: the phantom old-ideas topic leaves the complete llms file"
+  - corpus: synthetic
+    generator: tutors
+    path: "llms/topics/*"
+    reason: "#424 Rule 0268: the phantom old-ideas topic loses its llms files, so later topics renumber"
+  - corpus: synthetic
+    generator: tutors-lite
+    path: "**/*.html"
+    reason: "#424 Rule 0268: the phantom old-ideas topic loses its page and its cards on every page"
