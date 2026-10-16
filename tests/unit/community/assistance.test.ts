@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   acknowledgeHelp,
   answerHint,
@@ -20,6 +19,7 @@ import {
   transition,
   waitingMs,
   withdrawHelp,
+  type AssistanceClient,
   type AssistanceDeps,
   type AssistanceFeed,
   type AssistanceStore,
@@ -213,7 +213,7 @@ describe("the help request use cases", () => {
 });
 
 describe("the Supabase store and feed", () => {
-  const client = recorder as unknown as SupabaseClient;
+  const client = recorder as unknown as AssistanceClient;
 
   beforeEach(() => recorder.reset());
 
