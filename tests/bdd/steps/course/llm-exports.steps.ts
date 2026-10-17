@@ -19,6 +19,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   let title: string;
   let topics: LoShape[];
   let page: string;
+  let servedFrom: string | undefined;
   let downloads: string;
   const tempDirs: string[] = [];
 
@@ -31,7 +32,9 @@ describeFeature(feature, ({ Background, Rule }) => {
 
   const buildPage = () => {
     const course = loadCourse(courseId, title, topics) as Course;
-    page = buildDocsPage(course);
+    // The reader reads a localhost course over http (lo-tree.ts) and passes that protocol on to the page.
+    if (servedFrom) course.courseUrl = servedFrom;
+    page = buildDocsPage(course, undefined, servedFrom ? "http://" : "https://");
   };
 
   const writeFiles = () => {
@@ -55,6 +58,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   Background(({ Given, And }) => {
     Given("the generator has published the course {string} titled {string}", (_ctx, id: string, courseTitle: string) => {
       courseId = id;
+      servedFrom = undefined;
       title = courseTitle;
     });
     And("the course has the topics {string}, {string} and {string}, each holding one talk", (_ctx, ...names: string[]) => {
@@ -87,6 +91,27 @@ describeFeature(feature, ({ Background, Rule }) => {
         expect(page).toContain("web-development-101-complete-llms.txt");
         expect(page).not.toContain("web-development-101-complete-pdfs.zip");
       });
+    });
+  });
+
+  Rule("When the reader builds the LLM docs page of a course it fetched over http, the reader shall link the course's downloads over http.", ({ RuleScenario }) => {
+    const downloadsUnder = (_ctx: unknown, origin: string) => {
+      const hrefs = [...page.matchAll(/href="([^"]+)"/g)].map((m) => m[1]).filter((href) => /\.(txt|zip)$/.test(href));
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const href of hrefs) expect(href.startsWith(origin), href).toBe(true);
+    };
+
+    RuleScenario("A course served from localhost links its downloads on localhost", ({ Given, When, Then }) => {
+      Given("the course is served over http from {string}", (_ctx, host: string) => {
+        servedFrom = host;
+      });
+      When("the reader builds the course's LLM docs page", buildPage);
+      Then("every download the page offers is under {string}", downloadsUnder);
+    });
+
+    RuleScenario("A published course keeps its https links", ({ When, Then }) => {
+      When("the reader builds the course's LLM docs page", buildPage);
+      Then("every download the page offers is under {string}", downloadsUnder);
     });
   });
 
