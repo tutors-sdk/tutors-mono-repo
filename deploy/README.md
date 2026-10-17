@@ -112,7 +112,7 @@ repository and promotes it only when
 Promotion scans the candidate's digest with Trivy (same gate as a build), then
 retags that digest as `X.Y.Z`, `sha-<short>`, and after verifying them `X.Y` and
 `latest`, with `docker buildx imagetools create`. No image is built, so the
-digest, signature and SBOM attestation are the candidate's, and
+digest, signature, SBOM and provenance attestations are the candidate's, and
 `pnpm deploy:pin X.Y.Z`, the harness's `HARNESS_PRODUCTION_TAG` and the digests
 sent with its `deployed` event equal the digest the harness judged. Do not add a
 commit between the last candidate and the release tag.
@@ -144,10 +144,15 @@ the following, per app, in this order:
 4. Generates an SPDX JSON SBOM with syft and attaches it to the digest as a
    signed in-toto attestation (`cosign attest --type spdxjson`). The SBOM is
    also kept as a workflow artifact. It describes the amd64 image.
-5. Points every tag (`main`, `sha-<short>`, `rc-*`, the version tags) at the
+5. Attaches SLSA v1 build provenance to the digest the same way
+   (`cosign attest --type slsaprovenance1`): `runDetails.builder.id` is
+   `https://github.com/tutors-sdk/tutors-mono-repo/.github/workflows/image-build.yml@<ref>`,
+   and the predicate names the commit built and the run that built it. The
+   step verifies the attestation under the publishing identity before going on.
+6. Points every tag (`main`, `sha-<short>`, `rc-*`, the version tags) at the
    signed digest with `docker buildx imagetools create`, and fails if any
    tag resolves to another digest. A tag therefore never names an image
-   whose signature or SBOM attestation is still missing.
+   whose signature, SBOM or provenance attestation is still missing.
 
 Pull requests run only step 1, with no registry login and no OIDC token.
 
@@ -173,7 +178,11 @@ cosign verify-attestation --type spdxjson \
   quay.io/tutors-sdk/tutors-reader:<tag>
 ```
 
-Both print the verified payload as JSON and exit non-zero when nothing
+The build provenance verifies the same way (`--type slsaprovenance1`); the
+release harness's `build-provenance` check runs exactly that. Images built
+before this attestation was added (17.0.0 and earlier) carry none.
+
+All three print the verified payload as JSON and exit non-zero when nothing
 matches. To read the SBOM, decode the attestation payload:
 
 ```bash
