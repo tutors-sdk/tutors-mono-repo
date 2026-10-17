@@ -125,4 +125,12 @@ ENV GIT_SHA=${GIT_SHA} \
 USER 1001
 EXPOSE 3000
 
+# Docker, Podman and the release harness read the image's own health from the
+# liveness route Kubernetes probes (/healthz/live: cheap, no Supabase call),
+# with the same timings as compose.yaml. The runtime has no curl or wget, so
+# node's fetch asks; PORT is read so an overridden port is still probed
+# (Rule 0573).
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/healthz/live').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+
 CMD ["node", "build/index.js"]
