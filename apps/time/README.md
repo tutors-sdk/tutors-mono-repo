@@ -35,6 +35,7 @@ Runs on http://localhost:5176
 - `@tutors/ui-navigators`, `@tutors/ui-components` and `@tutors/ui-primitives` for the shell, heatmaps, tables and icons
 - `@tutors/themes` and `@tutors/i18n` for themes and interface text
 - `@tutors/community` for Supabase access
+- `@tutors/insights` for the Insights pages and the student page's Help and feedback panel, read from the reader's `GET /api/insights` with the reader's session
 - `@tutors/logger`, `@tutors/metrics` and `@tutors/runtime` for logs, `GET /metrics`, the server clock seam (`HARNESS_NOW`) and `GET /version`
 - AG Grid, Heat.js, Tailwind CSS v4 + Skeleton UI
 

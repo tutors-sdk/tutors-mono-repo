@@ -11,7 +11,9 @@ export const topics = {
   /** One course's activity feed; Tutors Live's course page is its subscriber. */
   courseActivity: (courseId: string) => courseId as Topic,
   /** Activity across every course; Tutors Live's landing page is its subscriber. */
-  platformActivity: () => "tutors-all-course-access" as Topic
+  platformActivity: () => "tutors-all-course-access" as Topic,
+  /** One course's help queue: a notice of each changed help request, never its content. */
+  helpQueue: (courseId: string) => `assistance:${courseId}` as Topic
 };
 
 /** What a broker reports about a joined channel. */
