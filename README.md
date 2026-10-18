@@ -201,7 +201,7 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
 
-Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts.
+Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts. The one exception is the whiteboard editor (`apps/reader/static/excalidraw-editor.html`): a static page cannot import workspace packages, so it opens its own `wb:{roomId}` channel and carries the same event cap and jittered rejoin inline, outside the gateway's per-tab count, until phase 4 (#477) routes it through the parent ([WHITEBOARD.md](guides/WHITEBOARD.md)). `tests/architecture/realtime-boundary.test.ts` fails on any other file that opens a channel.
 
 Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 
