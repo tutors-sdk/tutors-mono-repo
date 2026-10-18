@@ -53,8 +53,8 @@ claims:
     reason: "Rule 0331: the reader's server claims the topics to publish to, and charges the day's Live budget, through realtime_claim_live_publish (#481)"
   - artefact: persistence
     scope: "*/realtime_watch"
-    rule: "0331"
-    reason: "Rule 0331: each Tutors Live tab reports itself as a watcher of the feed it shows through realtime_watch, so the reader's server publishes only to watched feeds (#481)"
+    rule: "0334"
+    reason: "Rule 0334: while it shows a course or the platform feed, Tutors Live reports itself as a watcher of that feed through realtime_watch every 60 seconds (#481)"
   # One more immutable chunk on the reference course and note pages (JS 99 to 101 across the journey), first seen
   # the night #478 and #481 merged; the code split that moved learning events off browser Realtime.
   - artefact: network
