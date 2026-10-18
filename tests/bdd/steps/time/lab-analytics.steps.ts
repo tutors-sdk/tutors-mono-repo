@@ -1,6 +1,5 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
 import { getSupabase, initSupabase } from "../../../../packages/jsr/time/src/services/supabase.ts";
 import type { LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
@@ -42,7 +41,7 @@ describeFeature(feature, ({ Scenario, Rule }) => {
     "The time dashboard shall reuse one database client for a course's reads in a browser, so that concurrent reads never contend for the stored session.",
     ({ RuleScenario }) => {
       // The real supabase-js: each client it creates is a separate auth client on the same storage key.
-      let clients: SupabaseClient[];
+      let clients: ReturnType<typeof getSupabase>[];
       const configure = (_ctx: unknown, url: string, key: string) => initSupabase(url, key);
       const read = () => {
         clients.push(getSupabase());
