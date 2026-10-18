@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
-  import { BaseLabModel, extractLabIdentifier, extractStepName, formatDateShort } from "@tutors/tutors-time-lib";
+  import { BaseLabModel, extractStepName, formatDateShort, labColumnLabels } from "@tutors/tutors-time-lib";
   import ActivityTable from "@tutors/ui-components/time/ActivityTable.svelte";
   import Heatmap from "@tutors/ui-components/time/Heatmap.svelte";
   import { t } from "@tutors/i18n";
@@ -52,7 +52,7 @@
   {/if}
   <ActivityTable title={t("classTime.calendarMedianByWeek")} columns={dated(calModel?.weeks)} rows={[{ label: t("classTime.median"), values: medianByWeek, total: medianByWeek?.totalSeconds, median: true }]} />
   <ActivityTable title={t("classTime.calendarMedianByDay")} columns={dated(dates)} rows={[{ label: t("classTime.median"), values: medianByDay, total: medianByDay?.totalSeconds, median: true }]} />
-  <ActivityTable title={t("classTime.labMedianByLab")} columns={(labsModel?.labs ?? []).map((key) => ({ key, label: extractLabIdentifier(key) }))} rows={[{ label: t("classTime.median"), values: medianByLab, total: medianByLab?.totalMinutes, median: true }]} />
+  <ActivityTable title={t("classTime.labMedianByLab")} columns={(labsModel?.labs ?? []).map((key, i, keys) => ({ key, label: labColumnLabels(keys)[i] }))} rows={[{ label: t("classTime.median"), values: medianByLab, total: medianByLab?.totalMinutes, median: true }]} />
   <ActivityTable title={t("classTime.labMedianByStep")} columns={(labsModel?.steps ?? []).map((key) => ({ key, label: extractStepName(key) }))} rows={[{ label: t("classTime.median"), values: medianByStep, total: medianByStep?.totalMinutes, median: true }]} />
 {/if}
 

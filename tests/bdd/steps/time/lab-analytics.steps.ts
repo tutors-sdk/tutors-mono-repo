@@ -2,6 +2,7 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
 import type { LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
+import { labColumnLabels } from "../../../../packages/jsr/time/src/utils/lab-utils.ts";
 import { cells, labRecordsByStudent, stepColumn, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/time/lab-analytics.feature");
@@ -22,8 +23,8 @@ describeFeature(feature, ({ Scenario }) => {
     });
     Then("I should see the median completion time for each lab:", (_ctx, table: TableRow[]) => {
       const labs = Object.keys(table[0]);
-      expect(model.labs).toEqual(labs);
-      expect(cells(model.medianByLab.row, labs)).toEqual(labs.map((lab) => Number(table[0][lab])));
+      expect(labColumnLabels(model.labs)).toEqual(labs);
+      expect(cells(model.medianByLab.row, model.labs)).toEqual(labs.map((lab) => Number(table[0][lab])));
     });
     And("I should see the median completion time for each step:", (_ctx, table: TableRow[]) => {
       const steps = Object.keys(table[0]);
