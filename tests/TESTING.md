@@ -94,10 +94,10 @@ Playwright test with the same title, tagged with the Rule id, in `apps/reader/te
 `pnpm test:ears:audit` fails when a scenario has no test or a test has no scenario. The long
 form is [../guides/testing/EARS-METHODOLOGY.md](../guides/testing/EARS-METHODOLOGY.md#browser-proved-rules).
 
-Scenarios that describe behaviour the product does not have, or that no test can drive yet, are
-prose in [../guides/specifications/](../guides/specifications/README.md), each with the tier that
-covers it or a plain "nothing does". [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
-still owns the rest of the EARS plan: `Rule:` blocks and the structural audit. How to write and
+Existing behaviour that only a browser can check and no test drives yet is prose in
+[../guides/specifications/](../guides/specifications/README.md), each with the tier that covers it
+in part. Every executable scenario sits under a `Rule:` block, and `pnpm test:ears:audit` holds no
+baselined violations. How to write and
 bind a scenario: [../guides/testing/EARS-METHODOLOGY.md](../guides/testing/EARS-METHODOLOGY.md).
 
 ### `contract/`

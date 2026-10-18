@@ -6,33 +6,35 @@ import { cells, labRecordsByStudent, stepColumn, type TableRow } from "../../sup
 
 const feature = await loadFeature("tests/bdd/features/time/lab-analytics.feature");
 
-describeFeature(feature, ({ Scenario }) => {
+describeFeature(feature, ({ Rule }) => {
   let records: LearningRecord[];
   let model: BaseLabModel;
   let studentCount: number;
 
-  Scenario("Calculate and display lab medians", ({ Given, When, Then, And }) => {
-    Given("{number} students have completed a lab, spending these minutes on its steps:", (_ctx, students: number, table: TableRow[]) => {
-      studentCount = students;
-      records = labRecordsByStudent(table);
-    });
-    When("I view the lab analytics", () => {
-      model = new BaseLabModel(records, null);
-      expect(model.lab.rows).toHaveLength(studentCount);
-    });
-    Then("I should see the median completion time for each lab:", (_ctx, table: TableRow[]) => {
-      const labs = Object.keys(table[0]);
-      expect(model.labs).toEqual(labs);
-      expect(cells(model.medianByLab.row, labs)).toEqual(labs.map((lab) => Number(table[0][lab])));
-    });
-    And("I should see the median completion time for each step:", (_ctx, table: TableRow[]) => {
-      const steps = Object.keys(table[0]);
-      expect(model.steps).toEqual(steps.map(stepColumn));
-      expect(cells(model.medianByLabStep.row, steps.map(stepColumn))).toEqual(steps.map((step) => Number(table[0][step])));
-    });
-    And("the median row total should be {number} minutes, the median of the students' totals", (_ctx, total: number) => {
-      expect(model.medianByLab.row?.totalMinutes).toBe(total);
-      expect(model.medianByLabStep.row?.totalMinutes).toBe(total);
+  Rule("When a lecturer opens the lab view, the time dashboard shall show a median row holding the median minutes per lab and per step among the students who started it.", ({ RuleScenario }) => {
+    RuleScenario("Calculate and display lab medians", ({ Given, When, Then, And }) => {
+      Given("{number} students have completed a lab, spending these minutes on its steps:", (_ctx, students: number, table: TableRow[]) => {
+        studentCount = students;
+        records = labRecordsByStudent(table);
+      });
+      When("I view the lab analytics", () => {
+        model = new BaseLabModel(records, null);
+        expect(model.lab.rows).toHaveLength(studentCount);
+      });
+      Then("I should see the median completion time for each lab:", (_ctx, table: TableRow[]) => {
+        const labs = Object.keys(table[0]);
+        expect(model.labs).toEqual(labs);
+        expect(cells(model.medianByLab.row, labs)).toEqual(labs.map((lab) => Number(table[0][lab])));
+      });
+      And("I should see the median completion time for each step:", (_ctx, table: TableRow[]) => {
+        const steps = Object.keys(table[0]);
+        expect(model.steps).toEqual(steps.map(stepColumn));
+        expect(cells(model.medianByLabStep.row, steps.map(stepColumn))).toEqual(steps.map((step) => Number(table[0][step])));
+      });
+      And("the median row total should be {number} minutes, the median of the students' totals", (_ctx, total: number) => {
+        expect(model.medianByLab.row?.totalMinutes).toBe(total);
+        expect(model.medianByLabStep.row?.totalMinutes).toBe(total);
+      });
     });
   });
 });

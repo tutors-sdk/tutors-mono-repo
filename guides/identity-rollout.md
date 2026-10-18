@@ -180,3 +180,11 @@ configuration while preparing this stack.
 
 Pending record: rehearsal target **not selected**; live GitHub **not run**; production activation
 **not performed**; deployment rollback **not rehearsed**; retained Kit 2 image digest **not recorded**.
+
+## Identity boundary
+
+`@tutors/identity` defines `Actor`, request-scoped `SessionPort` and `IdentityClient` without framework or database imports. `@tutors/identity-sveltekit/server` owns the GitHub-only Better Auth configuration, `/api/auth` endpoints and session renewal cookies. The reader keeps `authMode()` and passes its credentials and enabled predicate into the adapter. Anonymous and unconfigured requests resolve `locals.actor` to `null`. There is one adapter and no selector or provider fallback.
+
+The adapter derives `Actor.subject=github:<numeric account id>` from GitHub's verified profile. Provider-owned `githubId` and `login` cannot be changed by profile updates or OAuth additional data. The existing Better Auth secret, cookie names, OAuth callback, stateless strategy and rolling 30-day expiry stay unchanged through cleanup. The root server layout exposes only the actor and a typed profile; nullable profile fields become strings there. Login remains the key for existing student records, analytics and enrollment. No stored rows or identifiers are migrated.
+
+The browser layout injects `createIdentityClient()` from `@tutors/identity-sveltekit/client` into connect and reconnects the profile only in the browser. Connect has no provider imports; sharing, sentiment, presence, course roles and privacy remain its existing services' responsibility.

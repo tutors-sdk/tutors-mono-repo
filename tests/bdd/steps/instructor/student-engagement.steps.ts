@@ -25,7 +25,7 @@ const feature = await loadFeature("tests/bdd/features/instructor/student-engagem
 
 type TableRow = Record<string, string>;
 
-describeFeature(feature, ({ Background, Scenario, ScenarioOutline }) => {
+describeFeature(feature, ({ Background, Rule }) => {
   let course: Course;
 
   Background(({ Given }) => {
@@ -35,66 +35,72 @@ describeFeature(feature, ({ Background, Scenario, ScenarioOutline }) => {
     });
   });
 
-  Scenario("View currently online students", ({ Given, When, Then, And }) => {
-    Given("the instructor is viewing the live dashboard", () => liveService.startGlobalPresenceService());
-    // Each student signs in to the reader and opens a lab; what reaches the dashboard is the reader's own broadcast.
-    When("the students {string} connect to the course via presence", async (_ctx, names: string) => {
-      for (const name of names.split(", ")) await studentOpensLab(name, course);
-    });
-    Then("the system shall display a count of {number} online students", (_ctx, count: number) => {
-      expect(liveService.studentsOnline.value).toHaveLength(count);
-    });
-    And("the system shall list student names and avatars:", (_ctx, table: TableRow[]) => {
-      expect(liveService.studentsOnline.value.map((lo) => ({ name: lo.user?.fullName, avatar: lo.user?.avatar }))).toEqual(table);
-    });
-  });
-
-  Scenario("View latest activity feed", ({ Given, When, Then, And }) => {
-    let feed: TutorsConnectLatestRow[];
-    /** The reader stamps each snapshot with its own clock, so the scenario sets the clock, not the row. */
-    const accessedAt = async (_ctx: unknown, name: string, lab: number, at: string) => {
-      vi.useFakeTimers({ toFake: ["Date"] });
-      vi.setSystemTime(new Date(at));
-      await studentOpensLab(name, course, lab - 1);
-      vi.useRealTimers();
-    };
-    Given("{string} accessed lab {number} of the course at {string}", accessedAt);
-    And("{string} accessed lab {number} of the course at {string}", accessedAt);
-    When("the instructor loads the latest activity for the course", async () => {
-      feed = await getTutorsConnectLatestLosByCourseId(course.courseId);
-    });
-    Then("the system shall show a feed of latest activity, most recent first", () => {
-      const received = feed.map((row) => row.received_at);
-      expect(received).toHaveLength(2);
-      expect(received).toEqual([...received].sort().reverse());
-    });
-    And("each entry shall include the student name, learning object, and timestamp:", (_ctx, table: TableRow[]) => {
-      const entries = feed.map((row) => {
-        const payload = row.payload as { title: string; user: { fullName: string } };
-        return { student: payload.user.fullName, "learning object": payload.title, timestamp: row.received_at };
+  Rule("When students open a course, the live dashboard shall show how many are online with the name and avatar of each.", ({ RuleScenario }) => {
+    RuleScenario("View currently online students", ({ Given, When, Then, And }) => {
+      Given("the instructor is viewing the live dashboard", () => liveService.startGlobalPresenceService());
+      // Each student signs in to the reader and opens a lab; what reaches the dashboard is the reader's own broadcast.
+      When("the students {string} connect to the course via presence", async (_ctx, names: string) => {
+        for (const name of names.split(", ")) await studentOpensLab(name, course);
       });
-      expect(entries).toEqual(table);
+      Then("the system shall display a count of {number} online students", (_ctx, count: number) => {
+        expect(liveService.studentsOnline.value).toHaveLength(count);
+      });
+      And("the system shall list student names and avatars:", (_ctx, table: TableRow[]) => {
+        expect(liveService.studentsOnline.value.map((lo) => ({ name: lo.user?.fullName, avatar: lo.user?.avatar }))).toEqual(table);
+      });
     });
   });
 
-  ScenarioOutline("Filter engagement by time period", ({ Given, When, Then }, variables) => {
-    let viewedAt: Date;
-    let received: string;
-    const yesNo = (placed: boolean) => (placed ? "yes" : "no");
-    // Times carry no zone, so they are local: the periods are the calendar day, Monday week, month and year of the viewer.
-    Given("the live activity feed is viewed at {string}", (_ctx, at: string) => {
-      viewedAt = new Date(at);
+  Rule("When a lecturer loads the latest activity of a course, the live dashboard shall list each student's latest learning object and time, most recent first.", ({ RuleScenario }) => {
+    RuleScenario("View latest activity feed", ({ Given, When, Then, And }) => {
+      let feed: TutorsConnectLatestRow[];
+      /** The reader stamps each snapshot with its own clock, so the scenario sets the clock, not the row. */
+      const accessedAt = async (_ctx: unknown, name: string, lab: number, at: string) => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date(at));
+        await studentOpensLab(name, course, lab - 1);
+        vi.useRealTimers();
+      };
+      Given("{string} accessed lab {number} of the course at {string}", accessedAt);
+      And("{string} accessed lab {number} of the course at {string}", accessedAt);
+      When("the instructor loads the latest activity for the course", async () => {
+        feed = await getTutorsConnectLatestLosByCourseId(course.courseId);
+      });
+      Then("the system shall show a feed of latest activity, most recent first", () => {
+        const received = feed.map((row) => row.received_at);
+        expect(received).toHaveLength(2);
+        expect(received).toEqual([...received].sort().reverse());
+      });
+      And("each entry shall include the student name, learning object, and timestamp:", (_ctx, table: TableRow[]) => {
+        const entries = feed.map((row) => {
+          const payload = row.payload as { title: string; user: { fullName: string } };
+          return { student: payload.user.fullName, "learning object": payload.title, timestamp: row.received_at };
+        });
+        expect(entries).toEqual(table);
+      });
     });
-    When("an activity was received at {string}", () => {
-      received = variables.received;
-    });
-    Then("the system shall place it in today {string}, this week {string}, this month {string} and this year {string}", () => {
-      expect({
-        today: yesNo(isReceivedAtOnLocalDay(received, viewedAt)),
-        week: yesNo(isReceivedAtInLocalWeek(received, viewedAt)),
-        month: yesNo(isReceivedAtInLocalMonth(received, viewedAt)),
-        year: yesNo(isReceivedAtInLocalYear(received, viewedAt))
-      }).toEqual({ today: variables.today, week: variables.week, month: variables.month, year: variables.year });
+  });
+
+  Rule("The live dashboard shall count each activity in today, this week, this month and this year according to when it was received.", ({ RuleScenarioOutline }) => {
+    RuleScenarioOutline("Filter engagement by time period", ({ Given, When, Then }, variables) => {
+      let viewedAt: Date;
+      let received: string;
+      const yesNo = (placed: boolean) => (placed ? "yes" : "no");
+      // Times carry no zone, so they are local: the periods are the calendar day, Monday week, month and year of the viewer.
+      Given("the live activity feed is viewed at {string}", (_ctx, at: string) => {
+        viewedAt = new Date(at);
+      });
+      When("an activity was received at {string}", () => {
+        received = variables.received;
+      });
+      Then("the system shall place it in today {string}, this week {string}, this month {string} and this year {string}", () => {
+        expect({
+          today: yesNo(isReceivedAtOnLocalDay(received, viewedAt)),
+          week: yesNo(isReceivedAtInLocalWeek(received, viewedAt)),
+          month: yesNo(isReceivedAtInLocalMonth(received, viewedAt)),
+          year: yesNo(isReceivedAtInLocalYear(received, viewedAt))
+        }).toEqual({ today: variables.today, week: variables.week, month: variables.month, year: variables.year });
+      });
     });
   });
 });
