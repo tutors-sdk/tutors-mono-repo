@@ -271,7 +271,9 @@ export class CourseTime implements TutorsTimeCourse {
  * localhost or a 192.* address is served over http, and a bare id is a Netlify site.
  */
 function courseBaseUrl(id: string): string {
-  const host = id.replace(/\/+$/, "");
+  let host = id;
+  // A loop, not /\/+$/: that regex backtracks polynomially on input with many slashes (CodeQL js/polynomial-redos).
+  while (host.endsWith("/")) host = host.slice(0, -1);
   if (/^(https?:\/\/)?[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]+)?(\/.*)?$/.test(host)) {
     return /^https?:\/\//.test(host) ? host : `https://${host}`;
   }
