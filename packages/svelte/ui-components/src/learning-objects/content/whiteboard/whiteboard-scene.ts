@@ -6,7 +6,7 @@ type SceneElement = { id: string; fileId?: string | null };
 type SceneFile = { id: string; mimeType: string; dataURL: string };
 type SceneFiles = Record<string, SceneFile>;
 
-/** The largest scene a save writes, measured as the JSON sent to whiteboard_scenes. Excalidraw caps one image at 2 MiB. */
+/** The largest scene a save writes, measured as the JSON sent to save_whiteboard_scene (which checks the stored total too). Excalidraw caps one image at 2 MiB. */
 export const MAX_WHITEBOARD_SCENE_BYTES = 4 * 1024 * 1024;
 
 export const SAVED_STATUS = "Drawing changes saved";
@@ -40,36 +40,35 @@ export async function loadWhiteboardScene(db: Db, roomId: string): Promise<any |
   return null;
 }
 
+/** SQLSTATE that save_whiteboard_scene raises when the stored scene would pass MAX_WHITEBOARD_SCENE_BYTES. */
+const SCENE_TOO_LARGE = "54000";
+
 /**
  * Write a scene-changed message from the editor to the room's row and return the status to show.
  * The files written are every image the elements reference, taken from the editor's file map, then the
  * files the editor was opened with, then the files already stored: an editor that never received an
- * image's bytes (a peer in a shared room) does not erase them. A malformed or oversize scene is not
- * written, so the last saved scene stays as it was.
+ * image's bytes (a peer in a shared room) does not erase them. The merge with the stored files happens
+ * in the database, in the same statement as the write (save_whiteboard_scene, in
+ * supabase/migrations/20261019100000_save_whiteboard_scene.sql), so a save that lands between this one's
+ * read and write cannot be overwritten. A malformed or oversize scene is not written, so the last saved
+ * scene stays as it was.
  */
 export async function saveWhiteboardScene(db: Db, roomId: string, scene: { elements: unknown; files?: unknown }, knownFiles: unknown = {}): Promise<string> {
   const { elements, files } = scene;
   if (!Array.isArray(elements) || !elements.every(isElement)) return FAILED_STATUS;
   const sent = typeof files === "object" && files !== null ? files : {};
   if (Object.entries(sent).some(([id, file]) => !isFile(id, file))) return FAILED_STATUS;
+  const available: SceneFiles = { ...validFiles(knownFiles), ...(sent as SceneFiles) };
+  const referenced: SceneFiles = {};
+  for (const element of elements) {
+    if (element.fileId && available[element.fileId]) referenced[element.fileId] = available[element.fileId];
+  }
+  const args = { p_room_id: roomId, p_elements: elements, p_files: referenced };
+  // The database checks the stored total too, since stored files it adds can push a scene over the limit.
+  if (new TextEncoder().encode(JSON.stringify(args)).length > MAX_WHITEBOARD_SCENE_BYTES) return TOO_LARGE_STATUS;
   try {
-    // Without the stored files this save could drop an image only the database holds, so it does not go ahead.
-    const { data: storedRow, error: readError } = await db.from("whiteboard_scenes").select("files").eq("room_id", roomId).maybeSingle();
-    if (readError) throw readError;
-    const available: SceneFiles = { ...validFiles(storedRow?.files), ...validFiles(knownFiles), ...(sent as SceneFiles) };
-    const referenced: SceneFiles = {};
-    for (const element of elements) {
-      if (element.fileId && available[element.fileId]) referenced[element.fileId] = available[element.fileId];
-    }
-    const row = {
-      room_id: roomId,
-      elements,
-      app_state: { viewBackgroundColor: "#ffffff" },
-      files: referenced,
-      updated_at: new Date().toISOString()
-    };
-    if (new TextEncoder().encode(JSON.stringify(row)).length > MAX_WHITEBOARD_SCENE_BYTES) return TOO_LARGE_STATUS;
-    const { error } = await db.from("whiteboard_scenes").upsert(row);
+    const { error } = await db.rpc("save_whiteboard_scene", args);
+    if (error?.code === SCENE_TOO_LARGE) return TOO_LARGE_STATUS;
     if (error) throw error;
     return SAVED_STATUS;
   } catch {

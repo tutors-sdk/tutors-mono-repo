@@ -2,7 +2,7 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 import { recorder } from "../../support/supabase-recorder.ts";
 import { mountWhiteboardEditor } from "../../support/whiteboard-editor.ts";
-import { loadWhiteboardScene, saveWhiteboardScene } from "../../../../packages/svelte/ui-components/src/learning-objects/content/whiteboard/whiteboard-scene.ts";
+import { loadWhiteboardScene, SAVED_STATUS, saveWhiteboardScene } from "../../../../packages/svelte/ui-components/src/learning-objects/content/whiteboard/whiteboard-scene.ts";
 
 const feature = await loadFeature("tests/bdd/features/student/whiteboard-saving.feature");
 
@@ -23,6 +23,39 @@ const file = (id: string, dataURL = `data:image/png;base64,${Buffer.from(`png-by
 });
 const imageElement = (fileId: string, version = 1): Element => ({ id: `image-${fileId}`, version, type: "image", fileId });
 const shape = (version = 1): Element => ({ id: "shape-1", version, type: "rectangle" });
+
+/**
+ * The store as one save sees it while another save lands: `between` runs once, after this save's first
+ * database request has been answered and before that answer reaches it. A save that reads and then writes
+ * in two requests is overwritten with what it read; a save that is one request has already been written.
+ */
+function interleaved(between: () => Promise<unknown>): Db {
+  let landed = false;
+  const wrap = <T extends object>(target: T): T =>
+    new Proxy(target, {
+      get(t, key) {
+        const value = Reflect.get(t, key);
+        if (key === "then") {
+          return (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+            (value as PromiseLike<unknown>["then"])
+              .call(t, async (answer: unknown) => {
+                if (!landed) {
+                  landed = true;
+                  await between();
+                }
+                return answer;
+              })
+              .then(resolve, reject);
+        }
+        if (typeof value !== "function") return value;
+        return (...args: unknown[]) => {
+          const result = value.apply(t, args);
+          return typeof result === "object" && result !== null ? wrap(result) : result;
+        };
+      }
+    });
+  return wrap(recorder) as unknown as Db;
+}
 
 describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
   const db = recorder as unknown as Db;
@@ -153,6 +186,19 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
         canvas = { elements: [shape(2), imageElement(fileId)], files: {} };
         editorSends();
         await save();
+      });
+      Then("the stored shared board holds the image {string} with its original bytes", holdsImage(SHARED));
+    });
+    RuleScenario("A save that references an image it did not send keeps the bytes another save stored in between", ({ Given, When, And, Then }) => {
+      let peerSave: ((between: () => Promise<unknown>) => Promise<string>) | undefined;
+      Given("the shared board is empty", () => expect(stored(SHARED)).toBeUndefined());
+      When("a peer whose editor has the image {string} but not its file starts saving the scene", (_ctx, fileId: string) => {
+        // A broadcast gave the peer the element; the bytes are only in the student's editor and the store.
+        peerSave = (between) => saveWhiteboardScene(interleaved(between), SHARED, { elements: [shape(), imageElement(fileId)], files: {} });
+      });
+      And("the student's save of the image {string} with its file lands before the peer's save finishes", async (_ctx, fileId: string) => {
+        const studentSave = () => saveWhiteboardScene(db, SHARED, { elements: [shape(), imageElement(fileId)], files: { [fileId]: file(fileId) } });
+        expect(await peerSave!(studentSave)).toBe(SAVED_STATUS);
       });
       Then("the stored shared board holds the image {string} with its original bytes", holdsImage(SHARED));
     });

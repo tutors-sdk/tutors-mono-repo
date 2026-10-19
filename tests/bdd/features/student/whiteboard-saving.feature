@@ -40,6 +40,12 @@ Feature: Whiteboard saving
       When a peer whose editor never loaded "img-1" moves the shape and the scene is saved
       Then the stored shared board holds the image "img-1" with its original bytes
 
+    Scenario: A save that references an image it did not send keeps the bytes another save stored in between
+      Given the shared board is empty
+      When a peer whose editor has the image "img-1" but not its file starts saving the scene
+      And the student's save of the image "img-1" with its file lands before the peer's save finishes
+      Then the stored shared board holds the image "img-1" with its original bytes
+
   @rule-0654 @ears-unwanted
   Rule: If a whiteboard scene is malformed or larger than 4 MiB, then the reader shall keep the last saved scene and report that the changes were not saved.
 

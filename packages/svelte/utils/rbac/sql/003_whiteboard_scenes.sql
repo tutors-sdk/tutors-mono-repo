@@ -13,3 +13,6 @@ CREATE POLICY "Anyone can read whiteboard scenes"
 
 CREATE POLICY "Authenticated users can upsert whiteboard scenes"
   ON whiteboard_scenes FOR ALL USING (auth.role() = 'authenticated');
+
+-- Saves go through save_whiteboard_scene(), which merges the stored files into the upsert atomically:
+-- supabase/migrations/20261019100000_save_whiteboard_scene.sql. Run it after this script.

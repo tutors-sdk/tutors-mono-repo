@@ -258,7 +258,8 @@ export class RecordingSupabase {
    * reports the stored value of a learning record field; `increment_calendar` adds one to a calendar
    * field; `record_page_view` and `record_heartbeat` are the single-request writes in
    * supabase/migrations/20261014_record_page_view_and_heartbeat.sql; `realtime_watch` and
-   * `realtime_claim_live_publish` are Tutors Live's budget in 20261016_realtime_live_budget.sql. A function named in
+   * `realtime_claim_live_publish` are Tutors Live's budget in 20261016_realtime_live_budget.sql;
+   * `save_whiteboard_scene` is the whiteboard save in 20261019100000_save_whiteboard_scene.sql. A function named in
    * `missingFunctions` answers as PostgREST does for one the database lacks.
    */
   rpc(fn: string, args: Row) {
@@ -280,7 +281,16 @@ export class RecordingSupabase {
     if (fn === "record_page_view") {
       const lr = record(args.p_course_id, args.p_student_id, args.p_lo_id);
       if (lr) Object.assign(lr, { duration: Number(lr.duration ?? 0) + 1, count: Number(lr.count ?? 0) + 1, date_last_accessed: new Date().toISOString(), type: args.p_lo_type });
-      else this.rows("learning_records").push({ course_id: args.p_course_id, student_id: args.p_student_id, lo_id: args.p_lo_id, duration: 1, count: 1, date_last_accessed: new Date().toISOString(), type: args.p_lo_type });
+      else
+        this.rows("learning_records").push({
+          course_id: args.p_course_id,
+          student_id: args.p_student_id,
+          lo_id: args.p_lo_id,
+          duration: 1,
+          count: 1,
+          date_last_accessed: new Date().toISOString(),
+          type: args.p_lo_type
+        });
       const cal = day(args.p_day, args.p_student_id, args.p_course_id);
       if (cal) Object.assign(cal, { timeactive: Number(cal.timeactive ?? 0) + 1, pageloads: Number(cal.pageloads ?? 0) + 1 });
       else this.rows("calendar").push({ id: args.p_day, studentid: args.p_student_id, courseid: args.p_course_id, timeactive: 1, pageloads: 1 });
@@ -293,12 +303,35 @@ export class RecordingSupabase {
       else watchers.push(row);
       return Promise.resolve({ data: { tier: this.liveTier() }, error: null });
     }
+    if (fn === "save_whiteboard_scene") return Promise.resolve(this.saveWhiteboardScene(args));
     if (fn === "realtime_claim_live_publish") return Promise.resolve({ data: this.claimLivePublish(String(args.p_course_id)), error: null });
     if (fn === "record_heartbeat") {
       if (args.p_lo_id != null) bump(record(args.p_course_id, args.p_student_id, args.p_lo_id), "duration");
       bump(day(args.p_day, args.p_student_id, args.p_course_id), "timeactive");
     }
     return Promise.resolve({ data: null, error: null });
+  }
+
+  /** One upsert of whiteboard_scenes whose files are the stored well-formed files, then the sent ones, that the new elements reference. */
+  private saveWhiteboardScene(args: Row): { data: null; error: DbError | null } {
+    const error = this.tableErrors.get("whiteboard_scenes");
+    if (error) return { data: null, error };
+    const scenes = this.rows("whiteboard_scenes");
+    const at = scenes.findIndex((row) => row.room_id === args.p_room_id);
+    const stored = (at >= 0 ? scenes[at].files : {}) as Record<string, { id?: unknown; mimeType?: unknown; dataURL?: unknown } | null>;
+    const wellFormed = Object.entries(stored ?? {}).filter(
+      ([id, f]) => typeof f === "object" && f !== null && f.id === id && typeof f.mimeType === "string" && typeof f.dataURL === "string" && f.dataURL.startsWith("data:")
+    );
+    const available: Record<string, unknown> = { ...Object.fromEntries(wellFormed), ...(args.p_files as Row) };
+    const elements = args.p_elements as { fileId?: string }[];
+    const files = Object.fromEntries(Object.entries(available).filter(([id]) => elements.some((el) => el.fileId === id)));
+    if (JSON.stringify(elements).length + JSON.stringify(files).length > 4 * 1024 * 1024) {
+      return { data: null, error: { message: "save_whiteboard_scene: scene is over the 4 MiB limit", code: "54000" } };
+    }
+    const row = { room_id: args.p_room_id, elements, app_state: { viewBackgroundColor: "#ffffff" }, files, updated_at: new Date().toISOString() };
+    if (at >= 0) scenes[at] = row;
+    else scenes.push(row);
+    return { data: null, error: null };
   }
 
   /** Today's (UTC) row of realtime_budget: the Realtime messages Live's publishing has spent. */
