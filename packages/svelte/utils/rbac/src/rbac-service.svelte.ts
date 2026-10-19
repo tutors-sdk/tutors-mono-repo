@@ -130,16 +130,23 @@ function createRbacService() {
     const courseId = resolvedCourseId();
     if (!courseId) return false;
 
+    const previous = contentLocks.value.get(loRoute);
+    applyLock(courseId, loRoute, locked);
+    if (await upsertLock(courseId, loRoute, locked)) return true;
+    // The server refused or could not be reached: put the switch back so the panel shows what is saved.
+    applyLock(courseId, loRoute, previous);
+    return false;
+  }
+
+  function applyLock(courseId: string, loRoute: string, locked: boolean | undefined) {
     const updated = new Map(contentLocks.value);
-    updated.set(loRoute, locked);
+    if (locked === undefined) updated.delete(loRoute);
+    else updated.set(loRoute, locked);
     contentLocks.value = updated;
 
     if (typeof window !== "undefined") {
       localStorage.setItem(`tutors-locks-${courseId}`, JSON.stringify(Object.fromEntries(updated)));
     }
-
-    upsertLock(courseId, loRoute, locked);
-    return true;
   }
 
   function isLocked(loRoute: string): boolean {

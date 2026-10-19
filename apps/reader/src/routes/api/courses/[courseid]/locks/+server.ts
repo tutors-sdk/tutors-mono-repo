@@ -8,6 +8,7 @@
 import { error, json } from "@sveltejs/kit";
 import { z } from "zod";
 import log from "@tutors/logger";
+import { now } from "@tutors/runtime";
 import { requireEducator } from "#lib/server/educator.ts";
 import { serviceSupabase } from "#lib/server/supabase-service.ts";
 import type { RequestHandler } from "./$types";
@@ -28,7 +29,7 @@ export const PUT: RequestHandler = async ({ locals, params, fetch, request }) =>
       lo_route: body.data.loRoute,
       locked: body.data.locked,
       locked_by: actor.login,
-      locked_at: new Date().toISOString()
+      locked_at: now().toISOString()
     },
     { onConflict: "course_id,lo_route" }
   );

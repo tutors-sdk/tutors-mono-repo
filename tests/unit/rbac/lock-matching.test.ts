@@ -18,7 +18,7 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
 });
 
 import { contentLocks, currentCourse, isEducator, locksLoaded } from "../../../packages/svelte/runes/src/index.svelte.ts";
-import { getLocksForCourse } from "../../../packages/svelte/utils/rbac/src/lock-store.ts";
+import { getLocksForCourse, upsertLock } from "../../../packages/svelte/utils/rbac/src/lock-store.ts";
 import { isLoRouteLocked, rbacService, SHOW_LOCKED_KEY } from "../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
 import type { Lo } from "@tutors/tutors-model-lib";
 
@@ -245,5 +245,30 @@ describe("route normalisation", () => {
     const start = performance.now();
     expect(isLoRouteLocked(`/topic/cs101${"/".repeat(50_000)}x`, locks)).toBe(false);
     expect(performance.now() - start).toBeLessThan(500);
+  });
+});
+
+describe("toggleContentLock", () => {
+  beforeEach(() => {
+    currentCourse.value = { courseId: "cs101" } as never;
+    contentLocks.value = new Map([["/topic/cs101/week-01", false]]);
+  });
+
+  it("keeps the change when the server saves it", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce(true);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(true);
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+  });
+
+  it("puts the switch back when the server refuses the change", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce(false);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(false);
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
+  });
+
+  it("removes a lock the server refused to create", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce(false);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-02", true)).toBe(false);
+    expect(contentLocks.value.has("/topic/cs101/week-02")).toBe(false);
   });
 });
