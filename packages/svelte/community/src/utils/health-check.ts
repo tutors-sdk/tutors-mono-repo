@@ -1,3 +1,8 @@
+/**
+ * Supabase checks for the readiness route (/healthz) of each app: a head count on
+ * tutors-connect-courses with its latency, and the last 60 minutes of error counts from the
+ * get_error_counts RPC. Without a Supabase client the check reports "skipped" and the counts are empty.
+ */
 import { supabase } from "./supabase-client.ts";
 
 interface CheckResult {

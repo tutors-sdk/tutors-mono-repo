@@ -1,3 +1,9 @@
+/**
+ * Server entry point of @tutors/identity-sveltekit: the SvelteKit handle that the reader's hooks.server.ts
+ * uses for GitHub sign-in. Sets locals.actor to null, or to the signed-in GitHub user when enabled() is true.
+ * Only the listed /api/auth/* paths are served; any other path under /api/auth/ gets 404. Responses that
+ * carry a session or a set-cookie get cache-control: private, no-store.
+ */
 import type { Handle } from "@sveltejs/kit/hooks";
 import { createBetterAuth } from "./better-auth.server.ts";
 import type { IdentityOptions } from "./options.ts";

@@ -1,3 +1,10 @@
+/**
+ * GET /api/courses/:courseid/enrollment: a draft enrollment.yaml for a course, downloaded from the
+ * educator control button. Requires a signed-in actor (401) who is listed as an educator in the course's
+ * published tutors.json (403). Only Netlify course IDs are accepted (400). Reads the calendar and
+ * tutors-connect-users tables through the public Supabase client; returns 503 without Supabase and 502
+ * when the course or a query fails. Writes nothing.
+ */
 import { error } from "@sveltejs/kit";
 import { z } from "zod";
 import { supabase } from "@tutors/community/utils/supabase-client";

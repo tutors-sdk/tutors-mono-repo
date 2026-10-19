@@ -1,3 +1,7 @@
+/**
+ * Public entry point of @tutors/rbac: roles and permissions, the content lock store, and the reader's
+ * rbacService, which decides educator status and which learning objects are locked.
+ */
 export type { Role, Permission, ContentLock } from "./types.ts";
 export { roleHasPermission, getPermissionsForRole } from "./permissions.ts";
 export { getLocksForCourse, upsertLock, removeLock } from "./lock-store.ts";

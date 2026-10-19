@@ -1,3 +1,7 @@
+/**
+ * Fetches a Moodle course's assignment modules (optionally one section) and their submitted submissions
+ * through moodle.ts. Used by AssignmentsSyncService; Moodle errors propagate to the caller.
+ */
 import {
   getCourseContents,
   getAssignmentSubmissions,

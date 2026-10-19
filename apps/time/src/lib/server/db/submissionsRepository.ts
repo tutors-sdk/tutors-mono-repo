@@ -1,3 +1,8 @@
+/**
+ * Supabase writes for the Moodle sync: upserts the assignments and assignments_submissions tables and
+ * reads the latest last_synced_at for a course. Uses PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY,
+ * so the writes run with the public anon key. Upsert failures are thrown; a failed read returns null.
+ */
 import * as env from "$app/env/public";
 import { createClient } from "@supabase/supabase-js";
 import { now } from "@tutors/runtime";
