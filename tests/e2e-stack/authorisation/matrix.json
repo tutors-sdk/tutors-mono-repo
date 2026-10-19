@@ -131,7 +131,7 @@
       "request": {
         "path": "/api/courses/harness-rules/moodle-sync",
         "body": {
-          "moodleCourseId": 1
+          "moodleCourseId": 1234
         }
       },
       "expect": {

@@ -31,18 +31,20 @@ with their tests.
 
 ## The numbers
 
-| | 1 Jun | 26 Jul | 6 Aug | 16 Sep | 21 Sep | 28 Sep |
-|---|---:|---:|---:|---:|---:|---:|
-| Declared tests | 27 | 196 | 1,409 | 1,593 | 2,124 | **2,140** |
-| Test files | 5 | 14 | 84 | 95 | 141 | **147** |
-| BDD scenarios bound to code | 0 | 0 | 0 | 0 | 74 | **184** |
-| EARS Rules | 0 | 0 | 0 | 0 | 18 | **89** |
-| CI workflows / jobs | 0 / 0 | 1 / 3 | 4 / 18 | 7 / 21 | 12 / 48 | **12 / 51** |
-| Guard scripts | 0 | 0 | 0 | 0 | 24 | **26** |
-| Shrink-only baselines | 0 | 0 | 0 | 0 | 9 | **9** |
+| | 1 Jun | 26 Jul | 6 Aug | 16 Sep | 21 Sep | 28 Sep | 19 Oct |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Declared tests | 27 | 196 | 1,409 | 1,593 | 2,124 | 2,140 | **2,298** |
+| Test files | 5 | 14 | 84 | 95 | 141 | 147 | **172** |
+| BDD scenarios bound to code | 0 | 0 | 0 | 0 | 74 | 184 | **477** |
+| EARS Rules | 0 | 0 | 0 | 0 | 18 | 89 | **251** |
+| CI workflows / jobs | 0 / 0 | 1 / 3 | 4 / 18 | 7 / 21 | 12 / 48 | 12 / 51 | **13 / 55** |
+| Guard scripts | 0 | 0 | 0 | 0 | 24 | 26 | **32** |
+| Shrink-only baselines | 0 | 0 | 0 | 0 | 9 | 9 | **11** |
 
 1 Jun and 26 Jul sum the predecessor repositories; the rest is this repository's `main` at the
-end of each day. Tests are declared `it(`, `test(` and `Deno.test(` calls, not pass counts.
+end of each day, and 19 Oct is `main` with #520 merged (`main` alone that day: 2,285 tests, 434 scenarios, 222 Rules).
+#520 adds few `it(` calls because its journeys are Playwright tests bound to Gherkin Rules: 29 Rules, 43 scenarios,
+and 21 signed-in journeys against the built images where `main` had none. Tests are declared `it(`, `test(` and `Deno.test(` calls, not pass counts.
 [measure.py](../evolution/tools/measure.py) reproduces every column.
 
 ![Test files, CI jobs, guard scripts and scenarios](../evolution/img/test-multiples.svg)
@@ -55,9 +57,9 @@ memory.
 - **One owning tier per failure class.** If no tier owns a class of bug, it ships.
 - **No tier without a negative fixture.** Every check ships with a deliberately broken input
   it must reject. A green check that has never been red proves nothing.
-- **Debt can shrink, never grow.** Nine baseline files (`known-*.txt`,
+- **Debt can shrink, never grow.** Eleven baseline files (`known-*.txt`,
   `ears-audit-baseline.txt`) list what is known to be wrong. A fix must delete its line, or a
-  stale-entry check fails. They held 169 entries on 21 Sep and 167 on 28 Sep.
+  stale-entry check fails. They held 169 entries on 21 Sep, 167 on 28 Sep and 154 on 19 Oct.
 - **Floors only climb.** Coverage floors are measured over every source file and rounded
   down; a floor more than 2 points under the measured value fails as stale. Mutation floors
   work the same way, per module.
@@ -84,12 +86,14 @@ but whether the behaviour stayed pinned.
 
 ## What is not done
 
-- The global coverage floor is 58% of statements against a 90% target. Per-package floors are
-  higher (the model package is at 98%).
+- The global coverage floor is 74% of statements (75.9% measured) against a 90% target.
+  Per-package floors are higher (the model package is at 98%).
 - The Paper components have no component tests of their own yet.
-- Tier F, authorisation, is built: a route-by-role matrix proved against the built images (Rules 0621, 0622).
+- Tiers F, H and I are built: a route-by-role matrix proved against the built images (Rules 0621, 0622), versioned
+  realtime message contracts (Rules 0623-0625), and every migration applied to a real Postgres (Rules 0626-0628).
+  Seven tables and functions the apps use are still created by no migration (`tests/data/schema/known-gaps.txt`).
 - None of the 55 pull requests merged since release 16.2.2 had an approving review. The CI
   gate, the ratchets and the harness stand in for review; they do not replace it.
 
-Updated 28 September 2026. The wider story, including the release harness, is the
+Updated 19 October 2026. The wider story, including the release harness, is the
 [evolution deck](../evolution/tutors-revolution.md).

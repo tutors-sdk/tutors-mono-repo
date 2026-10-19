@@ -181,9 +181,11 @@ is a finding. PR runs chromium and webkit; the nightly runs firefox and mobile.
 **Signed in, and when a dependency fails.** The `signed-in` project runs the reader, Live and time apps with
 authentication on, against the release harness's identity stub (GitHub) and persistence stub (Supabase), and holds
 the release harness's Rule journeys to `@journey` Rules on every pull request: sign-in, lab steps recorded, a private
-course turning a student away, preferences surviving a reload, a quiz, a lecturer's lock, presence and sentiment,
-Tutors Live, a talk and a notebook, the calendar and the course for LLMs, the time dashboard's medians and lab
-views, and a whiteboard stroke saved (`tests/bdd/features/journeys/signed-in.feature`). The resilience journeys
+course turning a student away, preferences surviving a reload, a quiz, a lecturer's lock (saved through the
+reader's educator check), presence and sentiment, Tutors Live, a talk and a notebook, the calendar and the course for
+LLMs, the time dashboard's medians and lab views, a whiteboard stroke saved, and a lecturer syncing Moodle from
+Educator Control (`tests/bdd/features/journeys/signed-in.feature`). Each journey's size and time are in
+[the E2E stack README](../../tests/e2e-stack/README.md#journey-sizes). The resilience journeys
 (`resilience.feature`, Rules 0614-0617) inject a fault where production meets it and hold the outcome to a time
 bound: a course host that never answers shows Course Unavailable within 25 seconds, the reader still shows a lab
 while the data API answers 503 or never answers, `/healthz` answers "degraded" inside the readiness probe's 3

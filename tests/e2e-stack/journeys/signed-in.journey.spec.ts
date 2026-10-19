@@ -245,6 +245,7 @@ test("A lecturer syncs Moodle from Educator Control (exercises Rules 0633, 0634)
   await page.getByRole("button", { name: "Open Educator Control", exact: true }).filter({ visible: true }).first().click();
   const control = page.getByRole("dialog", { name: "Educator Control" });
   await expect(control).toBeVisible(VISIBLE);
+  await control.getByRole("tab", { name: "Enrollment", exact: true }).click();
   await control.getByRole("textbox", { name: "Moodle course ID", exact: true }).fill("1234");
   await control.getByRole("button", { name: "Sync Moodle", exact: true }).click();
   await expect(control.getByRole("status").filter({ hasText: "Moodle assignments synced." })).toBeVisible(VISIBLE);
