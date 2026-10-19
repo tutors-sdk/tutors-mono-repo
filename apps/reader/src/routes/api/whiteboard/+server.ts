@@ -3,6 +3,8 @@ import { noContent, readJson, requireDb, requireUser, sessionUser, valid } from 
 import { getWhiteboardScene, saveWhiteboardScene, whiteboardRoomId } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
 
+/** The largest whiteboard save accepted, matching the editor's 4 MiB scene limit (#538). Excalidraw caps one image at 2 MiB. */
+const MAX_WHITEBOARD_SAVE_BYTES = 4 * 1024 * 1024;
 
 export const GET: RequestHandler = async ({ url, locals }) => {
   const courseId = valid(check.courseId(url.searchParams.get("courseId")), "courseId is required");
@@ -19,7 +21,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 export const PUT: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);
-  const body = await readJson(request, 512 * 1024);
+  const body = await readJson(request, MAX_WHITEBOARD_SAVE_BYTES);
   const courseId = valid(check.courseId(body.courseId), "courseId is required");
   const route = valid(check.loRoute(body.route), "route is required");
   if (!Array.isArray(body.elements)) error(400, "elements is a list");
