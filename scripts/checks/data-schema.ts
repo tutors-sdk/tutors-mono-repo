@@ -151,7 +151,7 @@ export function discoverDataAccess(root: string = REPO_ROOT): DataAccess {
       const file = toPosix(path, root);
       if (NOT_PRODUCT.test(file)) continue;
       let text = readFileSync(path, "utf8");
-      if (file.endsWith(".svelte")) text = [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map((m) => m[1]).join("\n");
+      if (file.endsWith(".svelte")) text = [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi)].map((m) => m[1]).join("\n");
       if (!/\.(from|rpc)\(|callRecordingFunction\(/.test(text)) continue;
       dataAccessIn(file, text, access);
     }
