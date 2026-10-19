@@ -442,7 +442,8 @@ carries the id, including lines from workspace packages that know nothing
 about requests. Supabase calls made through `@tutors/community`'s client
 forward the id in `x-request-id` (`withRequestId`); the time library's own
 client and the time app's Moodle calls do not yet. `/healthz` probes and
-`/metrics` scrapes get the header but no log line.
+`/metrics` scrapes get the header but no log line unless they answer 4xx or
+5xx (a scraper with a stale `METRICS_TOKEN` gets a 401 line).
 
 ## Kubernetes / OpenShift
 

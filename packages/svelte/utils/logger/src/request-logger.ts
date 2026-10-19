@@ -6,7 +6,10 @@ import { serializeError } from "./errors.ts";
 /** The one correlation header: read from the request, set once on the response, forwarded on outbound calls. */
 export const REQUEST_ID_HEADER = "x-request-id";
 const DEFAULT_HEADER = REQUEST_ID_HEADER;
-/** Probed by the kubelet and scraped by Prometheus every few seconds per pod: a line each would bury real traffic. */
+/**
+ * Probed by the kubelet and scraped by Prometheus every few seconds per pod: a line each would bury real
+ * traffic. Only their successes are silent; a 4xx or 5xx (a scraper with a stale METRICS_TOKEN) is logged.
+ */
 const DEFAULT_IGNORE = ["/healthz", "/metrics"];
 const DEFAULT_SLOW_MS = 2000;
 
@@ -112,7 +115,7 @@ export function createRequestLogger(options: RequestLoggerOptions = {}) {
 
     response = withHeader(response, headerName, requestId);
 
-    if (!ignored) {
+    if (!ignored || response.status >= 400) {
       const duration_ms = elapsedMs(start);
       const slow = duration_ms >= slowRequestMs;
       // SvelteKit answers a `__data.json` request whose server load threw with a 200
