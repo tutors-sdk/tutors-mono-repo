@@ -23,6 +23,7 @@ The `.env` file sits at the repository root, not in this folder. With `PUBLIC_AN
 | `PUBLIC_ANON_MODE` | `TRUE` turns off auth, presence and analytics |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Learning records and presence |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub sign-in (Better Auth) |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Keeping lecturer feedback on lab steps (`/api/feedback`); feedback is off without it |
 | `PUBLIC_PDF_KEY` | The Adobe PDF viewer for talks |
 | `METRICS_TOKEN`, `LOG_LEVEL` | Guarding `/metrics` and the log level |
 
@@ -42,6 +43,7 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 - `@tutors/connect`, `@tutors/community`, `@tutors/rbac`, `@tutors/runes` handle sign-in, presence, roles and shared state
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
+- `@tutors/feedback` keeps lecturer feedback on lab steps: the `/api/feedback` handler, its Supabase store and the feedback service
 - `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
 - `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 

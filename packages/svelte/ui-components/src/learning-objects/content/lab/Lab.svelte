@@ -5,7 +5,11 @@
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import { t } from "@tutors/i18n";
   import WidthToggle from "../WidthToggle.svelte";
+  import FeedbackBanner from "./FeedbackBanner.svelte";
+  import FeedbackCards from "./FeedbackCards.svelte";
+  import FeedbackComposer from "./FeedbackComposer.svelte";
   let { lab }: { lab: LiveLab } = $props();
+  const stepId = $derived(lab.steps[lab.index] ?? "");
   const previous = $derived(lab.prevStep());
   const next = $derived(lab.nextStep());
 
@@ -29,9 +33,12 @@
   </details>
   <div class="reading-panel">
     <div class="reading-meta"><span class="ui-eyebrow">{lab.lab.title}</span><span class="reading-tools">{t("shell.steps")} {lab.index + 1} / {lab.steps.length}<WidthToggle /></span></div>
+    <FeedbackBanner courseId={lab.course.courseId} labRoute={lab.url} {stepId} />
     <article class="prose dark:prose-invert prose-pre:overflow-x-auto" use:mermaidify={lab.content} use:copyCode>
       {#key currentCodeTheme.value}<div id="lab-panel">{@html sanitizeHtml(lab.content ?? "")}</div>{/key}
     </article>
+    <FeedbackCards courseId={lab.course.courseId} />
+    <FeedbackComposer />
     <nav class="step-pager" aria-label={t("shell.stepPager")}>
       {#if previous}<a class="ui-button" href={`${lab.url}/${previous}`}>← {t("shell.previous")}<span>{lab.chaptersTitles.get(decodeURI(previous))}</span></a>{/if}
       {#if next}<a class="ui-button ui-button-primary next" href={`${lab.url}/${next}`}>{t("shell.next")} →<span>{lab.chaptersTitles.get(decodeURI(next))}</span></a>{/if}
