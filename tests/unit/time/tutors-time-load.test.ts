@@ -25,6 +25,7 @@ vi.mock("../../../packages/jsr/time/src/services/course-time", () => ({
     title = "";
     error: string | null = null;
     learningRecords: unknown[] = [];
+    learningRecordsError: string | null = null;
     calendarModel = {
       dates: ["2026-10-12"],
       weeks: ["2026-W42"],
@@ -39,7 +40,8 @@ vi.mock("../../../packages/jsr/time/src/services/course-time", () => ({
       step: { rows: [{ studentid: "Octo Cat" }] },
     };
     async loadTime(id: string, start: string | null, end: string | null, title: string) {
-      loadTime(id, start, end, title);
+      // A test makes the learning records fail with loadTime.mockReturnValueOnce("<message>").
+      this.learningRecordsError = loadTime(id, start, end, title) ?? null;
       this.id = id;
       this.title = title;
     }
@@ -81,6 +83,24 @@ describe("TutorsTime.loadCourseTime", () => {
       ["web-2", "2026-10-01", null, "web-2"],
       ["web-2", null, null, "web-2"],
     ]);
+  });
+
+  it("does not keep a load whose learning records failed, so a retry reaches the database", async () => {
+    loadTime.mockReturnValueOnce("Failed to fetch learning records: timeout");
+    const failed = await TutorsTime.loadCourseTime("web-3", "2026-10-01", "2026-10-31");
+    expect(failed.learningRecordsError).toBe("Failed to fetch learning records: timeout");
+    const retried = await TutorsTime.loadCourseTime("web-3", "2026-10-01", "2026-10-31");
+    expect(retried).not.toBe(failed);
+    expect(retried.learningRecordsError).toBeNull();
+    expect(await TutorsTime.loadCourseTime("web-3", "2026-10-01", "2026-10-31")).toBe(retried);
+    expect(loadTime).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not keep an unfiltered load whose learning records failed", async () => {
+    loadTime.mockReturnValueOnce("Failed to fetch learning records: timeout");
+    const failed = await TutorsTime.loadCourseTime("web-4");
+    expect(await TutorsTime.loadCourseTime("web-4")).not.toBe(failed);
+    expect(loadTime).toHaveBeenCalledTimes(2);
   });
 });
 

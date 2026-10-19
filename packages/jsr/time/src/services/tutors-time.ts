@@ -101,7 +101,7 @@ export const TutorsTime: TutorsTimeService = {
   /**
    * Load a course calendar by ID for a date range (inclusive YYYY-MM-DD; either bound may be open).
    * Returns the cached CourseTime if that course was already loaded for the same range,
-   * otherwise creates and loads a new one.
+   * otherwise creates and loads a new one. Only a load with no error is cached.
    */
   async loadCourseTime(
     id: string,
@@ -124,7 +124,10 @@ export const TutorsTime: TutorsTimeService = {
     const courseTime = new CourseTime();
     await courseTime.loadTime(id, normalizedStart, normalizedEnd, title);
 
-    courseMap.set(cacheKey, courseTime);
+    // A partial load (learning records failed) is not kept, so Retry queries the database again.
+    if (!courseTime.error && !courseTime.learningRecordsError) {
+      courseMap.set(cacheKey, courseTime);
+    }
 
     return courseTime;
   },
