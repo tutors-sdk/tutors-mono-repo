@@ -439,9 +439,11 @@ and otherwise generates a UUID. It stores the id on `event.locals.requestId`,
 sets it exactly once on the response, and runs the rest of the request inside
 an `AsyncLocalStorage` context, so every line logged while serving the request
 carries the id, including lines from workspace packages that know nothing
-about requests. Server-side Supabase calls made during a request forward the
-id in `x-request-id` (`withRequestId`). `/healthz` probes get the header but no
-log line.
+about requests. Supabase calls made through `@tutors/community`'s client
+forward the id in `x-request-id` (`withRequestId`); the time library's own
+client and the time app's Moodle calls do not yet. `/healthz` probes and
+`/metrics` scrapes get the header but no log line unless they answer 4xx or
+5xx (a scraper with a stale `METRICS_TOKEN` gets a 401 line).
 
 ## Kubernetes / OpenShift
 
