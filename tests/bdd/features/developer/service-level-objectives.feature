@@ -74,3 +74,23 @@ Feature: Service level objectives
       Given the release claims workflow
       When a release branch is pushed
       Then the job that runs "pnpm check:release-claims" shall also run "pnpm check:slo"
+
+  @rule-0574 @ears-event-driven
+  Rule: When an app starts, tutors shall expose its availability and latency SLIs on /metrics, http_requests_total and the http_request_duration_seconds buckets at zero, before the app has served a request.
+
+    Scenario: An app that has served no request already carries both SLIs
+      Given an app that has just started and served no request
+      When its /metrics is scraped
+      Then the scrape shall carry "http_requests_total" at 0
+      And the scrape shall carry "http_request_duration_seconds_bucket" at le "1" and le "+Inf", each at 0
+
+    Scenario: The first request counts once against the SLIs
+      Given an app that has just started and served no request
+      When it answers a request for an unmatched path with 404
+      And its /metrics is scraped
+      Then the scrape shall carry "http_requests_total" at 1
+
+    Scenario: Every app serves the shared SLIs on /metrics
+      Given the four apps "reader, catalogue, live, time"
+      Then each app's /metrics route shall serve the shared metrics registry
+      And each app's request hooks shall count every request with the shared metrics middleware

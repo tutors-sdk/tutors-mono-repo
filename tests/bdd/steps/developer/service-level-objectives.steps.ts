@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import yaml from "js-yaml";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 import { REPO_ROOT, readText } from "../../../../scripts/checks/lib/repo.ts";
 import { ALERTS_FILE, BURN_RATES, SLO_APPS, SLO_FILE, parseSlo, sloAlertFindings, validateSloText, type SloFile } from "../../../../scripts/checks/slo.ts";
 
@@ -19,6 +19,25 @@ interface AlertDoc {
 
 interface WorkflowJob {
   steps?: { run?: string }[];
+}
+
+/** The shared metrics package, loaded afresh: a module graph with no request seen, as at an app's start. */
+type MetricsModule = typeof import("../../../../packages/svelte/utils/metrics/src/index.ts");
+async function freshMetrics(): Promise<MetricsModule> {
+  vi.resetModules();
+  return import("../../../../packages/svelte/utils/metrics/src/index.ts");
+}
+
+/** Sum the samples of one series name in a Prometheus exposition, as the release harness reads it; `le` narrows to one bucket. */
+function seriesTotal(exposition: string, name: string, le?: string): number | undefined {
+  let total: number | undefined;
+  for (const line of exposition.split("\n")) {
+    const m = /^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?\s+(\S+)/.exec(line);
+    if (!m || m[1] !== name) continue;
+    if (le !== undefined && !(m[2] ?? "").includes(`le="${le}"`)) continue;
+    total = (total ?? 0) + Number(m[3]);
+  }
+  return total;
 }
 
 describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
@@ -175,6 +194,65 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
         const job = Object.values(workflow.jobs).find((j) => runs(j).some((r) => r.startsWith(claims)));
         expect(job, `a job runs ${claims}`).toBeDefined();
         expect(runs(job!).some((r) => r.startsWith(other))).toBe(true);
+      });
+    });
+  });
+
+  let metrics: MetricsModule;
+  let exposition = "";
+  let apps: string[] = [];
+  const started = async () => {
+    metrics = await freshMetrics();
+  };
+  const scraped = async () => {
+    const response = await metrics.metricsEndpoint({ env: {} });
+    expect(response.status).toBe(200);
+    exposition = await response.text();
+  };
+  const carries = (_ctx: unknown, name: string, value: number) => {
+    expect(seriesTotal(exposition, name), `${name} is on /metrics`).toBe(value);
+  };
+
+  Rule("When an app starts, tutors shall expose its availability and latency SLIs on /metrics, http_requests_total and the http_request_duration_seconds buckets at zero, before the app has served a request.", ({ RuleScenario }) => {
+    RuleScenario("An app that has served no request already carries both SLIs", ({ Given, When, Then, And }) => {
+      Given("an app that has just started and served no request", started);
+      When("its /metrics is scraped", scraped);
+      Then("the scrape shall carry {string} at {number}", carries);
+      And("the scrape shall carry {string} at le {string} and le {string}, each at {number}", (_ctx: unknown, name: string, le1: string, le2: string, value: number) => {
+        expect(seriesTotal(exposition, name, le1), `${name}{le="${le1}"}`).toBe(value);
+        expect(seriesTotal(exposition, name, le2), `${name}{le="${le2}"}`).toBe(value);
+      });
+    });
+
+    RuleScenario("The first request counts once against the SLIs", ({ Given, When, And, Then }) => {
+      Given("an app that has just started and served no request", started);
+      When("it answers a request for an unmatched path with {number}", async (_ctx: unknown, status: number) => {
+        const url = new URL("http://localhost/no-such-page");
+        const event = { request: new Request(url), url, route: { id: null }, locals: {} };
+        await metrics.metricsHandle({ event: event as never, resolve: async () => new Response("no", { status }) });
+      });
+      And("its /metrics is scraped", scraped);
+      Then("the scrape shall carry {string} at {number}", carries);
+    });
+
+    RuleScenario("Every app serves the shared SLIs on /metrics", ({ Given, Then, And }) => {
+      Given("the four apps {string}", (_ctx: unknown, list: string) => {
+        apps = list.split(",").map((a) => a.trim());
+        expect(apps).toEqual([...SLO_APPS]);
+      });
+      Then("each app's /metrics route shall serve the shared metrics registry", () => {
+        for (const app of apps) {
+          const route = readText(resolve(REPO_ROOT, `apps/${app}/src/routes/metrics/+server.ts`));
+          expect(route, app).toMatch(/import \{ metricsEndpoint \} from "@tutors\/metrics"/);
+          expect(route, app).toMatch(/export const GET\b[^\n]*metricsEndpoint\(/);
+        }
+      });
+      And("each app's request hooks shall count every request with the shared metrics middleware", () => {
+        for (const app of apps) {
+          const hooks = readText(resolve(REPO_ROOT, `apps/${app}/src/hooks.server.ts`));
+          expect(hooks, app).toMatch(/import \{ metricsHandle \} from "@tutors\/metrics"/);
+          expect(hooks, app).toMatch(/export const handle = sequence\(.*\bmetricsHandle\b/);
+        }
       });
     });
   });
