@@ -1,7 +1,16 @@
+/**
+ * Moodle web-service client for the Moodle sync (Rules 0633-0634). Reads MOODLE_WS_URL, MOODLE_WS_TOKEN
+ * and MOODLE_WS_REST_FORMAT from the reader's private env; the token never leaves the server.
+ */
 import * as env from "$app/env/private";
 
 type MoodleScalar = string | number | boolean;
 type MoodleParams = Record<string, MoodleScalar | null | undefined>;
+
+/** True when the reader has the Moodle web-service URL and token it needs to sync. */
+export function moodleConfigured(): boolean {
+  return Boolean(env.MOODLE_WS_URL && env.MOODLE_WS_TOKEN);
+}
 
 interface MoodleErrorResponse {
   exception?: string;

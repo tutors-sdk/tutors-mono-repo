@@ -1,3 +1,4 @@
+/** Reads a Moodle course's assignment modules and their submitted work through the Moodle client. */
 import {
   getCourseContents,
   getAssignmentSubmissions,
@@ -5,7 +6,7 @@ import {
   type MoodleAssignSubmissionsResponse,
   type MoodleModule,
   type CourseContentsOptions
-} from "#lib/server/api/moodle.ts";
+} from "#lib/server/moodle/moodle-client.ts";
 
 export type { MoodleAssignSubmission, MoodleAssignSubmissionsResponse, MoodleModule };
 

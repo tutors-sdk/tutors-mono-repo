@@ -38,6 +38,31 @@
     }
   }
 
+  // Moodle sync (Rules 0633-0634): the reader checks the educator on the server, then copies the
+  // course's Moodle assignments and submissions into the tables Tutors Time reads.
+  let moodleCourseId = $state("");
+  let moodleSectionId = $state("");
+  let syncing = $state(false);
+  let syncResult = $state<"done" | "error" | null>(null);
+
+  async function syncMoodle() {
+    if (!course || syncing || !moodleCourseId.trim()) return;
+    syncing = true;
+    syncResult = null;
+    try {
+      const response = await fetch(`/api/courses/${encodeURIComponent(course.courseId)}/moodle-sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moodleCourseId: moodleCourseId.trim(), moodleSectionId: moodleSectionId.trim() || undefined })
+      });
+      syncResult = response.ok ? "done" : "error";
+    } catch {
+      syncResult = "error";
+    } finally {
+      syncing = false;
+    }
+  }
+
   type LockGroup = { title?: string; los: Lo[] };
 
   const lockGroups = $derived.by((): LockGroup[] => {
@@ -137,6 +162,25 @@
           </p>
           {#if exportError}<p role="alert" class="info-text">{t("lecturer.enrollment.exportError")}</p>{/if}
         </div>
+        <form class="info-divider space-y-2" onsubmit={(event) => { event.preventDefault(); syncMoodle(); }}>
+          <h4 class="info-heading">{t("lecturer.moodle.title")}</h4>
+          <p id="moodle-sync-help" class="ui-muted info-text">{t("lecturer.moodle.help")}</p>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="info-text">
+              {t("lecturer.moodle.courseId")}
+              <input class="input w-full" inputmode="numeric" required bind:value={moodleCourseId} placeholder={`${t("lecturer.moodle.example")} 1234`} />
+            </label>
+            <label class="info-text">
+              {t("lecturer.moodle.sectionId")}
+              <input class="input w-full" inputmode="numeric" bind:value={moodleSectionId} placeholder={`${t("lecturer.moodle.example")} 5678`} />
+            </label>
+          </div>
+          <button type="submit" class="ui-button" disabled={syncing || !exportSupported || !moodleCourseId.trim()} aria-describedby="moodle-sync-help">
+            {syncing ? t("lecturer.moodle.syncing") : t("lecturer.moodle.sync")}
+          </button>
+          {#if syncResult === "done"}<p role="status" class="info-text">{t("lecturer.moodle.done")}</p>{/if}
+          {#if syncResult === "error"}<p role="alert" class="info-text">{t("lecturer.moodle.error")}</p>{/if}
+        </form>
         {#if enrollment?.educators && enrollment.educators.length > 0}
           <div>
             <h4 class="info-heading">Educators</h4>

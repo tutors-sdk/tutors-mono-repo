@@ -47,6 +47,10 @@ For a Netlify-hosted course, open **Educator Control → Enrollment → Export e
 
 The server verifies the signed-in user against the published course's educators before reading student data. To start collecting a new class, publish an enrollment file listing the educators with an empty whitelist, and ask students to sign in and visit the course. Anonymous visits and activity recorded while analytics are disabled cannot supply GitHub usernames.
 
+### Moodle sync
+
+**Educator Control → Enrollment → Moodle sync** copies a course's Moodle assignments and submissions into the `assignments` and `assignments_submissions` tables that Tutors Time shows. The reader's `POST /api/courses/:courseid/moodle-sync` runs the same educator check as the export before it contacts Moodle, then writes with the server-only `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Rules 0633-0634). The Moodle settings (`MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES`) belong to the reader; Tutors Time only reads the tables.
+
 The exported file is a draft: visitors can include staff or former students, GitHub names are not verified class-list names, and students who have not visited are missing. Review it, add it to the course source and rebuild to apply it. The export does not update the repository or change access by itself. Custom-hosted courses are not supported by this export yet.
 
 ## Auth Levels
