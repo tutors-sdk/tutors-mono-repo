@@ -13,4 +13,5 @@ reader POST /api/auth/callback/github | hook | who: OAuth callback holder; Bette
 reader POST /api/auth/sign-out | hook | who: session holder; Better Auth verifies origin and deletes browser cookies
 reader POST /api/auth/get-session | hook | who: session holder; Better Auth verifies cookies and renews the session
 reader POST /api/auth/update-user | hook | who: session holder; Better Auth verifies origin, adapter rejects githubId/login changes including null
+reader PUT /api/courses/[courseid]/locks | who: signed-in educators of the published course (requireEducator; Rules 0630-0632); locked_by comes from the session
 reader POST /api/live/activity | who: anyone, as the anon key it replaces allowed; the body is validated (4 KB, LoRecord shape) and published only to watched topics within the day's Live budget

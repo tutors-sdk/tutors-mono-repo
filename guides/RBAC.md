@@ -81,7 +81,7 @@ Educators can lock and unlock top-level learning objects (topics, units) to hide
 
 1. When an educator visits a course, content locks are loaded from Supabase (`tutors_content_locks` table) with a localStorage fallback.
 2. The educator panel (integrated into the Info sidebar) shows a **Locks** tab with toggle switches for each top-level learning object.
-3. When a lock is toggled, the change is applied immediately to the reactive `contentLocks` map, persisted to localStorage, and upserted to Supabase.
+3. When a lock is toggled, the change is applied immediately to the reactive `contentLocks` map, persisted to localStorage, and sent to the reader's server as `PUT /api/courses/:courseid/locks`. The server checks that the signed-in user is an educator of the published course (the same check as the enrollment export), records their GitHub login as `locked_by`, and writes `tutors_content_locks` with the server-only `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Rules 0630-0632). The browser never writes the table.
 4. Locked content is **completely hidden** from students — not blurred or greyed out.
 5. A `locksLoaded` rune prevents locked content from flashing briefly before the lock state is fetched.
 
@@ -131,7 +131,7 @@ Located at `packages/svelte/utils/rbac/`. Contains:
 |------|---------|
 | `src/types.ts` | `Role`, `Permission`, and `ContentLock` type definitions |
 | `src/permissions.ts` | Static role-to-permission mapping and query functions |
-| `src/lock-store.ts` | Supabase CRUD operations for `tutors_content_locks` table |
+| `src/lock-store.ts` | Reads `tutors_content_locks` with the anon key; sends lock changes to the reader's server |
 | `src/rbac-service.svelte.ts` | Main service: role resolution, lock management, educator status, `isLoRouteLocked` / `isLoLocked` |
 | `src/index.ts` | Public exports (`rbacService`, `isLoRouteLocked`) |
 
