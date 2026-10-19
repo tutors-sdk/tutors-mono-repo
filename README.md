@@ -78,7 +78,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | Directory | Package | What it is |
 |---|---|---|
 | `packages/svelte/runes` | `@tutors/runes` | Svelte 5 reactive state shared across packages |
-| `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
+| `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown; a learner's private notes per lab step, kept in the browser (`@tutors/course/notes`) |
 | `packages/svelte/utils/a11y` | `@tutors/a11y` | Accessibility utilities |
 | `packages/svelte/utils/i18n` | `@tutors/i18n` | Internationalization (six locales) |
 

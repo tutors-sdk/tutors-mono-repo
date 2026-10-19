@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./course": "./src/course/index.ts",
-    "./markdown": "./src/markdown/index.ts"
+    "./markdown": "./src/markdown/index.ts",
+    "./notes": "./src/notes/index.ts"
   },
   "dependencies": {
     "@marp-team/marp-core": "^4.3.1",

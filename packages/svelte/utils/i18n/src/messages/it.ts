@@ -449,7 +449,40 @@ Tutors è un'applicazione open source: il componente di raccolta dati [si trova 
   "classTime.calendarEntries": "Voci del calendario",
   "classTime.notAvailable": "N/D",
   "classTime.online": "Online",
-  "classTime.offline": "Offline"
+  "classTime.offline": "Offline",
+
+  // Private notes on a lab step
+  "notes.button": "Note",
+  "notes.hasNote": "Questo passaggio ha una nota",
+  "notes.title": "Le mie note",
+  "notes.restore": "Apri le note",
+  "notes.resize": "Ridimensiona il pannello delle note",
+  "notes.minimise": "Riduci",
+  "notes.close": "Chiudi",
+  "notes.sessionOnlyTitle": "Le note non vengono salvate",
+  "notes.sessionOnly": "Questo browser non salva le note, quindi durano solo per questa sessione. Esportale per conservarne una copia.",
+  "notes.kind": "Tipo",
+  "notes.kind.note": "Nota",
+  "notes.kind.discovery": "Scoperta",
+  "notes.kind.question": "Domanda",
+  "notes.kind.snippet": "Frammento",
+  "notes.kind.reflection": "Riflessione",
+  "notes.view": "Vista delle note",
+  "notes.write": "Scrivi",
+  "notes.preview": "Anteprima",
+  "notes.empty": "Ancora niente per questo passaggio.",
+  "notes.label": "Nota per questo passaggio",
+  "notes.placeholder": "Scrivi una nota privata per questo passaggio. Il markdown funziona.",
+  "notes.saving": "Salvataggio…",
+  "notes.saved": "Salvata in questo browser",
+  "notes.private": "Conservata solo in questo browser, mai inviata",
+  "notes.otherSteps": "Altri passaggi con note",
+  "notes.exportCourse": "Esporta le note del corso",
+  "notes.exportLab": "Esporta questo lab",
+  "notes.deleteAll": "Elimina tutte le note di questo corso",
+  "notes.deleteAllConfirm": "Eliminare tutte le note scritte in questo corso? L'operazione non può essere annullata.",
+  "notes.deleteAllYes": "Elimina tutto",
+  "notes.cancel": "Annulla"
 };
 
 export default it;
