@@ -14,7 +14,7 @@
 
   const course = $derived(currentCourse.value);
   const enrollment = $derived(course?.enrollment);
-  const exportSupported = $derived(/^[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?$/i.test(course?.courseId ?? ""));
+  const exportSupported = $derived(/^(?:https?:\/\/)?[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?$/i.test(course?.courseId ?? ""));
   let exporting = $state(false);
   let exportError = $state(false);
 

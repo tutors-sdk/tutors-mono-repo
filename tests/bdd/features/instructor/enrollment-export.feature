@@ -27,6 +27,19 @@ Feature: Export course enrollment
       When "LECTURER" requests the enrollment export
       Then the student names shall be "alice, bob"
 
+    Scenario Outline: Export retains activity for URL-derived course IDs
+      Given the reader identifies the course as "<courseId>"
+      And "alice" has recorded activity for that course
+      And "outsider" has activity under the plain site name
+      When "lecturer" requests the enrollment export
+      Then the draft shall contain only the visitor "alice"
+      And the published enrollment shall be fetched from "https://pf1.netlify.app/tutors.json"
+
+      Examples:
+        | courseId    |
+        | https://pf1 |
+        | http://pf1  |
+
     Scenario: A course with no recorded activity still has a valid draft
       When "lecturer" requests the enrollment export
       Then the draft shall contain empty student and whitelist arrays
@@ -72,7 +85,7 @@ Feature: Export course enrollment
         | names      |
 
   @rule-0374 @ears-unwanted
-  Rule: If an export request supplies a course identifier other than a Netlify site name, then the data API shall reject it before fetching course content.
+  Rule: If an export request supplies a course identifier outside the supported Netlify forms, then the data API shall reject it before fetching course content.
 
     Scenario Outline: Untrusted course URLs are not fetched by the server
       Given the export targets "<course>"
@@ -81,9 +94,11 @@ Feature: Export course enrollment
       And no external fetch shall have been made
 
       Examples:
-        | course               |
-        | localhost:5432       |
-        | 127.0.0.1            |
-        | host.example/path    |
-        | alice@host.example   |
-        | https://host.example |
+        | course                               |
+        | localhost:5432                       |
+        | 127.0.0.1                            |
+        | host.example/path                    |
+        | alice@host.example                   |
+        | https://host.example                 |
+        | https://pf1.netlify.app.evil.example |
+        | https://pf1/path                     |

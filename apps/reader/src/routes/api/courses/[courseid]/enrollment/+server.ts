@@ -16,12 +16,14 @@ export const GET: RequestHandler = async ({ locals, params, fetch }) => {
   const actor = locals.actor;
   if (!actor) error(401, "Sign in to export enrollment.");
   const courseId = params.courseid;
+  // The reader retains the scheme in IDs derived from full Netlify URLs; activity uses that exact ID.
+  const siteName = courseId.replace(/^https?:\/\//i, "");
   // shortcut: only Netlify course IDs are exported; custom hosts need vetted server-side fetching before support is added.
-  if (!/^[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?$/i.test(courseId)) error(400, "Enrollment export requires a Netlify course ID.");
+  if (!/^[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?$/i.test(siteName)) error(400, "Enrollment export requires a Netlify course ID.");
 
   let published: unknown;
   try {
-    const response = await fetch(`https://${courseId}.netlify.app/tutors.json`, {
+    const response = await fetch(`https://${siteName}.netlify.app/tutors.json`, {
       credentials: "omit",
       redirect: "error",
       signal: AbortSignal.timeout(10_000)

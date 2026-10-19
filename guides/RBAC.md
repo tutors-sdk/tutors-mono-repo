@@ -43,7 +43,7 @@ When a user visits a course with an enrollment file and is authenticated, the sy
 
 ### Exporting a starting list
 
-For a Netlify-hosted course, open **Educator Control → Enrollment → Export enrollment.yaml**. The download adds unique GitHub usernames from the course's recorded calendar activity to the existing whitelist and student list. It keeps educators, manually entered names and other enrollment fields, excludes educators from new student entries, and uses stored GitHub display names where available (otherwise the username).
+For a Netlify-hosted course, open **Educator Control → Enrollment → Export enrollment.yaml**. This also supports courses opened through a full Netlify URL, preserving the course ID used by their activity records. The download adds unique GitHub usernames from the course's recorded calendar activity to the existing whitelist and student list. It keeps educators, manually entered names and other enrollment fields, excludes educators from new student entries, and uses stored GitHub display names where available (otherwise the username).
 
 The server verifies the signed-in user against the published course's educators before reading student data. To start collecting a new class, publish an enrollment file listing the educators with an empty whitelist, and ask students to sign in and visit the course. Anonymous visits and activity recorded while analytics are disabled cannot supply GitHub usernames.
 

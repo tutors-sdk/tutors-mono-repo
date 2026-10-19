@@ -49,3 +49,35 @@ test("A failed enrollment export can be retried", { tag: "@rule-0376" }, async (
   await button.click();
   await expect(panel.getByRole("alert")).toContainText("Export failed.");
 });
+
+test("An educator exports a course identified by a full Netlify URL", { tag: "@rule-0375" }, async ({ page }) => {
+  const courseId = "https://reference-course";
+  const exportPath = `/api/courses/${encodeURIComponent(courseId)}/enrollment`;
+  expect((await page.request.get(exportPath)).status()).toBe(401);
+  let requestedPath = "";
+  await page.route("**/api/courses/**/enrollment", (route) => {
+    requestedPath = new URL(route.request().url()).pathname;
+    return route.fulfill({ contentType: "application/yaml", body: "# Draft enrollment\n" });
+  });
+  await page.goto(course);
+  await signInAs(page, "lecturer");
+  await page.evaluate(async (id) => {
+    const runes = performance
+      .getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .find((url) => url.includes("/runes/src/index.svelte.ts"))!;
+    const { currentCourse } = await import(runes);
+    // Course content only: the reader assigns this ID when given a full Netlify URL.
+    currentCourse.value.courseId = id;
+    currentCourse.value.courseUrl = "https://reference-course.netlify.app";
+  }, courseId);
+  await page.locator(".shell-navigation").getByRole("button", { name: "Open Educator Control", exact: true }).click();
+  const panel = page.getByRole("dialog", { name: "Educator Control", exact: true });
+  await panel.getByRole("tab", { name: "Enrollment", exact: true }).click();
+  const button = panel.getByRole("button", { name: "Export enrollment.yaml", exact: true });
+  await expect(button).toBeEnabled();
+  const downloading = page.waitForEvent("download");
+  await button.click();
+  expect((await downloading).suggestedFilename()).toBe("enrollment.yaml");
+  expect(requestedPath).toBe(exportPath);
+});

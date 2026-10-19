@@ -64,7 +64,7 @@ describeFeature(feature, ({ Background, Rule }) => {
 
   Rule(
     "When a course educator exports enrollment, the data API shall download a draft enrollment.yaml containing each recorded course visitor once and preserving existing enrollment entries.",
-    ({ RuleScenario }) => {
+    ({ RuleScenario, RuleScenarioOutline }) => {
       RuleScenario("Export adds visitors and preserves manually entered details", ({ Given, And, When, Then }) => {
         Given("the enrollment already lists {string} as {string} and whitelists {string}", (_ctx, id: string, name: string, absent: string) => {
           enrollment.students.push({ name, id });
@@ -112,6 +112,27 @@ describeFeature(feature, ({ Background, Rule }) => {
         Then("the student names shall be {string}", (_ctx, names: string) => {
           expect(failed).toBeUndefined();
           expect(draft.students.map((student) => student.name)).toEqual(csv(names));
+        });
+      });
+
+      RuleScenarioOutline("Export retains activity for URL-derived course IDs", ({ Given, And, When, Then }, variables) => {
+        Given("the reader identifies the course as {string}", () => {
+          courseId = variables.courseId;
+        });
+        And("{string} has recorded activity for that course", (_ctx, studentid: string) => {
+          recorder.seed("calendar", [{ id: "2026-09-01", studentid, courseid: courseId }]);
+        });
+        And("{string} has activity under the plain site name", (_ctx, studentid: string) => {
+          recorder.seed("calendar", [{ id: "2026-09-01", studentid, courseid: "pf1" }]);
+        });
+        When("{string} requests the enrollment export", request);
+        Then("the draft shall contain only the visitor {string}", (_ctx, login: string) => {
+          expect(failed).toBeUndefined();
+          expect(draft.whitelist).toEqual([login]);
+          expect(draft.students).toEqual([{ id: login, name: login }]);
+        });
+        And("the published enrollment shall be fetched from {string}", (_ctx, url: string) => {
+          expect(fetchCourse).toHaveBeenCalledWith(url, expect.objectContaining({ credentials: "omit", redirect: "error" }));
         });
       });
 
@@ -191,7 +212,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   });
 
   Rule(
-    "If an export request supplies a course identifier other than a Netlify site name, then the data API shall reject it before fetching course content.",
+    "If an export request supplies a course identifier outside the supported Netlify forms, then the data API shall reject it before fetching course content.",
     ({ RuleScenarioOutline }) => {
       RuleScenarioOutline("Untrusted course URLs are not fetched by the server", ({ Given, When, Then, And }, variables) => {
         Given("the export targets {string}", () => {

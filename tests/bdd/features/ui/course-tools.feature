@@ -16,6 +16,12 @@ Feature: Course tools
       Then enrollment.yaml is downloaded with the draft returned by the data API
       And the panel explains that the draft needs review
 
+    Scenario: An educator exports a course identified by a full Netlify URL
+      Given an educator is viewing a course with a URL-derived course ID
+      When the educator exports enrollment from the Enrollment tab
+      Then enrollment.yaml is downloaded
+      And the export request preserves the URL-derived course ID
+
   @rule-0376 @ears-unwanted
   Rule: If the enrollment export fails, then the reader shall announce the failure and allow the educator to retry.
 
