@@ -598,6 +598,11 @@ jobs:
       - name: Run create scaffolder tests
         run: cd packages/jsr/create && deno test test/ --allow-all
 
+      # --no-check: these tests load the generator, whose model lib does not type-check under
+      # Deno's markdown-it types; `deno run` (how tutors-lite ships) never type-checks either.
+      - name: Run tutors-lite CLI tests
+        run: cd packages/jsr/tutors-lite && deno test --no-check test/ --allow-all
+
   # The one check to mark as required in branch protection. A skipped or
   # cancelled job counts as a failure.
   ci-success:
