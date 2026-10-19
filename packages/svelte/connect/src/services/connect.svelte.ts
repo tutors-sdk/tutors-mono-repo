@@ -269,10 +269,11 @@ export const tutorsConnectService: TutorsConnectService = {
 
   /**
    * Starts periodic analytics update timer
-   * Updates page counts every 30 seconds when page is visible
+   * Updates page counts every 30 seconds when page is visible.
+   * One timer per tab: a start while one is running keeps it, so repeated starts never stack heartbeats.
    */
   startTimer() {
-    if (anonMode) return;
+    if (anonMode || this.intervalId !== null) return;
     this.intervalId = setInterval(() => {
       if (!document.hidden && currentCourse.value && currentLo.value && tutorsId.value) {
         if (analyticsEnabled) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
@@ -284,7 +285,7 @@ export const tutorsConnectService: TutorsConnectService = {
    * Stops analytics update timer
    */
   stopTimer() {
-    if (this.intervalId) {
+    if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
