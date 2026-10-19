@@ -75,7 +75,7 @@ describeFeature(feature, ({ Background, Rule }) => {
           browserFetch = vi.fn(async () => Response.json({ ok: true }));
           vi.stubGlobal("fetch", browserFetch);
           try {
-            expect(await upsertLock("pf1", loRoute, true)).toBe(true);
+            expect(await upsertLock("pf1", loRoute, true)).toBe("saved");
           } finally {
             vi.unstubAllGlobals();
           }

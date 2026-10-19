@@ -132,8 +132,8 @@ function createRbacService() {
 
     const previous = contentLocks.value.get(loRoute);
     applyLock(courseId, loRoute, locked);
-    if (await upsertLock(courseId, loRoute, locked)) return true;
-    // The server refused or could not be reached: put the switch back so the panel shows what is saved.
+    if ((await upsertLock(courseId, loRoute, locked)) !== "refused") return true;
+    // The server refused the change: put the switch back so the panel shows what is saved.
     applyLock(courseId, loRoute, previous);
     return false;
   }
