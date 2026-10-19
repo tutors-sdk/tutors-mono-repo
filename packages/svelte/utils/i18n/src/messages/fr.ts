@@ -162,6 +162,7 @@ const fr: Record<string, string> = {
   // Auth
   "auth.signIn": "Connexion Tutors",
   "auth.signInWithGithub": "Se connecter avec GitHub",
+  "auth.signInFailed": "La connexion avec GitHub n'a pas abouti. Réessayez dans quelques minutes.",
   "auth.terms": `Vous êtes sur le point d'être authentifié via vos identifiants Github pour accéder à Tutors. **Pour la plupart des cours, vous n'avez pas besoin de vous connecter du tout. Si vous préférez, vous pouvez donc revenir à la page du cours et le suivre comme n'importe quel site web public.**
 
 Si vous vous inscrivez ou vous connectez, vous aurez d'abord besoin d'un compte Github. La connexion mettra ensuite à votre disposition un tableau de bord simple et pratique avec des liens rapides vers tous les cours Tutors auxquels vous avez accédé récemment.

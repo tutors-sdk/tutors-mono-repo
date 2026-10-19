@@ -87,7 +87,7 @@ but whether the behaviour stayed pinned.
 - The global coverage floor is 58% of statements against a 90% target. Per-package floors are
   higher (the model package is at 98%).
 - The Paper components have no component tests of their own yet.
-- Tier F, authorisation, is planned (#77) but not built.
+- Tier F, authorisation, is built: a route-by-role matrix proved against the built images (Rules 0621, 0622).
 - None of the 55 pull requests merged since release 16.2.2 had an approving review. The CI
   gate, the ratchets and the harness stand in for review; they do not replace it.
 

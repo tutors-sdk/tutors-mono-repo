@@ -21,10 +21,10 @@ first gate is the pull request.
 | **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
 | **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
 | **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
-| **F** | Authorisation — who may call what | Planned ([#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77)) | — |
-| **G** | User journeys — the whole system through a real browser, against built images | In repo | PR: `e2e-stack` (chromium, webkit). Nightly: `e2e-stack-nightly` (firefox, mobile) |
-| **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | Planned, no issue yet | Shapes are snapshot-checked under tier "contract" below |
-| **I** | Data — migration and the Supabase exit | Planned, no issue yet | — |
+| **F** | Authorisation — who may call what | In repo | PR: `e2e-stack` (`--project=signed-in`, every route as every role) and `build-and-test` (the matrix lists every route) |
+| **G** | User journeys — the whole system through a real browser, against built images, anonymous and signed in, with injected faults | In repo | PR: `e2e-stack` (chromium, webkit, and the `signed-in` project). Nightly: `e2e-stack-nightly` (firefox, mobile) |
+| **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | In repo | PR: `build-and-test` (`vitest`) |
+| **I** | Data — migrations applied to a real Postgres, rows kept, the code's tables and functions present | In repo | PR: `build-and-test` (`vitest`, PGlite) |
 | **J** | Platform — kustomize overlays, restricted-SCC policy, arbitrary UID, read-only root, env-var completeness | In repo | PR: `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, and `vitest` |
 | **K** | Observability — log schema, request-id correlation, hook order, metrics an alert queries | In repo | PR: `build-and-test` (`vitest`) and `container-smoke` |
 | **L** | Performance and capacity — client bundle ceilings, Lighthouse floors, latency, memory growth | In repo | PR: `bundle-budgets`. Nightly: `lighthouse`, `load` |

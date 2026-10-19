@@ -160,6 +160,7 @@ const ga = {
   // Auth
   "auth.signIn": "Sínigh Isteach le Tutors",
   "auth.signInWithGithub": "Sínigh isteach le GitHub",
+  "auth.signInFailed": "Níor críochnaíodh síniú isteach le GitHub. Bain triail eile as i gceann cúpla nóiméad.",
   "auth.terms": `Tá tú ar tí bheith fíordheimhnithe trí do chuid dintiúirí Github chuig Tutors. **Ní gá duit logáil isteach le haghaidh an chuid is mó de na cúrsaí, mar sin más fearr leat, is féidir leat dul ar ais chuig leathanach an chúrsa agus dul ar aghaidh tríd an gcúrsa mar aon láithreán gréasáin poiblí.**
 
 Má shíníonn tú isteach, beidh cuntas Github uait ar dtús. Trí logáil isteach, beidh deais áisiúil simplí ar fáil ina mbeidh naisc thapa chuig na cúrsaí Tutors uile a bhfuil rochtain agat orthu le déanaí.

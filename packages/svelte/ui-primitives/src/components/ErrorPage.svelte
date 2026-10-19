@@ -21,6 +21,10 @@
     500: {
       heading: "Server Error",
       guidance: "Something went wrong on our end. Try refreshing the page or come back later."
+    },
+    504: {
+      heading: "Course Unavailable",
+      guidance: "The site that hosts this course did not answer in time. Try again in a few minutes."
     }
   };
 

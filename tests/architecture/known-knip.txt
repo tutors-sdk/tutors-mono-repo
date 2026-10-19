@@ -52,15 +52,10 @@ exports: tests/contract/support/schema-generators.ts: getCountLearningRecordsPar
 exports: tests/contract/support/schema-generators.ts: loRecordUserArb
 exports: tests/contract/support/schema-generators.ts: whiteboardCursorUpdateArb
 exports: tests/contract/support/schema-generators.ts: whiteboardInitEditorArb
-exports: tests/contract/support/schema-generators.ts: whiteboardRoomArb
-exports: tests/contract/support/schema-generators.ts: whiteboardSceneInitArb
-exports: tests/contract/support/schema-generators.ts: whiteboardSceneSnapshotArb
 exports: tests/contract/support/schema-generators.ts: whiteboardSceneUpdateArb
 exports: tests/contract/support/schema-generators.ts: zodToArbitrary
-exports: tests/contract/support/schemas.ts: WhiteboardAppStateSchema
 exports: tests/contract/support/schemas.ts: WhiteboardElementSchema
 exports: tests/contract/support/schemas.ts: WhiteboardPointerSchema
-exports: tests/contract/support/schemas.ts: WhiteboardUserSchema
 types: apps/time/src/lib/server/api/moodle.ts: MoodleAssignSubmissionPlugin
 types: apps/time/src/lib/server/api/moodle.ts: MoodleAssignSubmissionsByAssignment
 types: apps/time/src/lib/server/api/moodle.ts: MoodleContentFile
@@ -77,6 +72,4 @@ types: tests/contract/support/schemas.ts: ConnectUser
 types: tests/contract/support/schemas.ts: LearningRecord
 types: tests/contract/support/schemas.ts: LoRecord
 types: tests/contract/support/schemas.ts: WhiteboardCursorUpdate
-types: tests/contract/support/schemas.ts: WhiteboardSceneInit
-types: tests/contract/support/schemas.ts: WhiteboardSceneSnapshot
 types: tests/contract/support/schemas.ts: WhiteboardSceneUpdate

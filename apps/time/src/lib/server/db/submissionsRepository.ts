@@ -1,6 +1,7 @@
 import * as env from "$app/env/public";
 import { createClient } from "@supabase/supabase-js";
 import { now } from "@tutors/runtime";
+import { withTimeout } from "@tutors/logger";
 import type { MoodleAssignSubmission, MoodleModule } from "#lib/server/api/moodle.ts";
 
 export interface AssignmentRow {
@@ -85,7 +86,7 @@ function toSubmissionRow(
 }
 
 function getClient() {
-  return createClient(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+  return createClient(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "", { global: { fetch: withTimeout() } });
 }
 
 export async function getLastSyncedAt(courseId: string): Promise<string | null> {
