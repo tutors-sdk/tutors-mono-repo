@@ -609,5 +609,5 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
   contract in a real browser instead.
 - 48 specified scenarios are prose, many with no tier covering them: [specifications/](../specifications/README.md).
 - Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
-- `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
+- `rc-validation.yml` Gate 4 needs the fix described above.
 - Tiers F, H and I are not built.
