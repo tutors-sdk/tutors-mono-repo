@@ -24,6 +24,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   let moodle: ReturnType<typeof vi.fn>;
   let response: Response | undefined;
   let failed: { status: number } | undefined;
+  let courseId: string;
 
   const sync = async (login: string, moodleCourseId: string) => {
     response = undefined;
@@ -32,7 +33,7 @@ describeFeature(feature, ({ Background, Rule }) => {
     vi.stubGlobal("fetch", moodle);
     try {
       response = await POST({
-        params: { courseid: "pf1" },
+        params: { courseid: courseId },
         locals: { actor: login === "anonymous" ? null : { login } },
         fetch: fetchCourse,
         request: new Request("http://reader.test/", { method: "POST", body: JSON.stringify({ moodleCourseId }) })
@@ -53,6 +54,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   Background(({ Given, And }) => {
     Given("{string} publishes an enrollment with {string} as educator", (_ctx, _id: string, educator: string) => {
       recorder.reset();
+      courseId = "pf1";
       fetchCourse = vi.fn(async () => Response.json({ enrollment: { educators: [educator], whitelist: [], students: [] } }));
     });
     And(
@@ -75,19 +77,31 @@ describeFeature(feature, ({ Background, Rule }) => {
   Rule(
     "When a course educator syncs a Moodle course, the data API shall copy that course's Moodle assignments and submissions into the tables Tutors Time reads.",
     ({ RuleScenario }) => {
+      const succeeds = () => {
+        expect(failed).toBeUndefined();
+        expect(response!.status).toBe(200);
+        expect(response!.headers.get("cache-control")).toBe("private, no-store");
+      };
+      const savedFor = (_ctx: unknown, id: number, name: string, course: string) => {
+        expect(recorder.rows("assignments")).toEqual([expect.objectContaining({ id, name, courseid: course })]);
+      };
+
       RuleScenario("An educator's sync copies assignments and submissions", ({ When, Then, And }) => {
         When("{string} syncs Moodle course {string}", (_ctx, login: string, id: string) => sync(login, id));
-        Then("the sync shall succeed", () => {
-          expect(failed).toBeUndefined();
-          expect(response!.status).toBe(200);
-          expect(response!.headers.get("cache-control")).toBe("private, no-store");
-        });
-        And("assignment {int} {string} shall be saved for course {string}", (_ctx, id: number, name: string, courseId: string) => {
-          expect(recorder.rows("assignments")).toEqual([expect.objectContaining({ id, name, courseid: courseId })]);
-        });
+        Then("the sync shall succeed", succeeds);
+        And("assignment {int} {string} shall be saved for course {string}", savedFor);
         And("a submission from Moodle user {int} shall be saved for assignment {int}", (_ctx, userId: number, assignmentId: number) => {
           expect(recorder.rows("assignments_submissions")).toEqual([expect.objectContaining({ external_userid: userId, assignmentId })]);
         });
+      });
+
+      RuleScenario("A course opened from its full Netlify URL is saved under its site name", ({ Given, When, Then, And }) => {
+        Given("the reader opened the course from its full URL as {string}", (_ctx, id: string) => {
+          courseId = id;
+        });
+        When("{string} syncs Moodle course {string}", (_ctx, login: string, id: string) => sync(login, id));
+        Then("the sync shall succeed", succeeds);
+        And("assignment {int} {string} shall be saved for course {string}", savedFor);
       });
     }
   );

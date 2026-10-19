@@ -3,7 +3,8 @@
  * tables Tutors Time reads, from Educator Control (Rules 0633-0634). Body: { moodleCourseId, moodleSectionId? }.
  * Only a signed-in educator of the published course may sync (requireEducator: 401, 400, 502, 403), and
  * that check runs before Moodle is contacted. 503 when Moodle or the service key is not configured,
- * 502 when Moodle or the write fails.
+ * 502 when Moodle or the write fails. Rows are keyed by the course's bare Netlify site name, the key Tutors Time
+ * reads, whichever form (id or full URL) the reader opened the course with.
  */
 import { error, json } from "@sveltejs/kit";
 import { z } from "zod";
@@ -28,8 +29,9 @@ export const POST: RequestHandler = async ({ locals, params, fetch, request }) =
   if (!moodleConfigured() || !serviceSupabase()) error(503, "Moodle sync is unavailable.");
 
   const { moodleCourseId, moodleSectionId } = body.data;
+  const siteName = courseId.replace(/^https?:\/\//i, "").replace(/\.netlify\.app$/i, "");
   try {
-    await new AssignmentsSyncService().sync(courseId, moodleCourseId, moodleSectionId);
+    await new AssignmentsSyncService().sync(siteName, moodleCourseId, moodleSectionId);
   } catch (cause) {
     log.error("Moodle sync failed", { courseId, moodleCourseId, moodleSectionId, actor: actor.login, error: cause });
     error(502, "Moodle sync failed.");

@@ -20,6 +20,12 @@ Feature: Moodle sync is for a course's educators
       And assignment 11 "Lab report" shall be saved for course "pf1"
       And a submission from Moodle user 42 shall be saved for assignment 11
 
+    Scenario: A course opened from its full Netlify URL is saved under its site name
+      Given the reader opened the course from its full URL as "https://pf1"
+      When "lecturer" syncs Moodle course "1234"
+      Then the sync shall succeed
+      And assignment 11 "Lab report" shall be saved for course "pf1"
+
   @rule-0634 @ears-unwanted
   Rule: If the requester is not a verified educator of the published course, or the Moodle ids are not positive whole numbers, then the data API shall refuse the Moodle sync without contacting Moodle.
 
