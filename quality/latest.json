@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "83d4ccf7f5ca2440bbc94224e40c5bfef3e410d9",
+  "commit": "2bff81a779424d44aab12c4e4074a75c4457eac8",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-19T02:25:17Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39185594908",
+  "generatedAt": "2026-10-19T09:38:43Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39224727587",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -49,8 +49,8 @@
     },
     {
       "name": "@tutors/metrics",
-      "mutationScore": 68,
-      "changed": false,
+      "mutationScore": 75.93,
+      "changed": true,
       "path": "packages/svelte/utils/metrics"
     },
     {
