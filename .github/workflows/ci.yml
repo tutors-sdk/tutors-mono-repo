@@ -498,6 +498,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 2
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -513,6 +514,23 @@ jobs:
 
       - name: Audit Rule blocks (new violations only; the baseline can only shrink)
         run: pnpm test:ears:audit
+
+      # The EARS dashboard (pnpm ears:dashboard, Rules 0510-0515): every Rule, its proof and its audit
+      # findings on one page, built even when the audit fails. On a pull request it marks the Rules
+      # changed since the base branch (HEAD^1 of the merge commit, hence fetch-depth 2).
+      - name: Build the EARS dashboard
+        if: ${{ !cancelled() }}
+        env:
+          SINCE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+        run: pnpm ears:dashboard --summary "$GITHUB_STEP_SUMMARY" ${SINCE:+--since "$SINCE"}
+
+      - name: Upload the EARS dashboard
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ears-dashboard
+          path: reports/ears-dashboard/
+          retention-days: 14
 
   # The reader's @ui Rules (tests/bdd/features/ui): every scenario is a Playwright test in
   # apps/reader/tests/e2e, run against the dev server. Release candidates add Firefox and WebKit.
