@@ -22,7 +22,7 @@ Class activity for lecturers: how long students spend in a course, day by day, w
 ## Development
 
 ```bash
-npm run dev
+pnpm --filter tutors-time dev
 ```
 
 Runs on http://localhost:5176
@@ -34,7 +34,7 @@ Runs on http://localhost:5176
 - `@tutors/tutors-time-lib` for course time, calendar and lab models
 - `@tutors/ui-navigators`, `@tutors/ui-components` and `@tutors/ui-primitives` for the shell, heatmaps, tables and icons
 - `@tutors/themes` and `@tutors/i18n` for themes and interface text
-- `@tutors/community` for Supabase access
+- `@tutors/tutors-time-lib` (`getSupabase`) for Supabase access, and `@tutors/community` for the browser error transport and the `/healthz` check
 - `@tutors/logger`, `@tutors/metrics` and `@tutors/runtime` for logs, `GET /metrics`, the server clock seam (`HARNESS_NOW`) and `GET /version`
 - AG Grid, Heat.js, Tailwind CSS v4 + Skeleton UI
 

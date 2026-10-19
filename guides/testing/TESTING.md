@@ -36,12 +36,11 @@ listed with a reason in `NETWORK_ALLOWED_FILES`.
 | `pnpm check:load` and the other Docker checks | Docker Desktop maps volume ownership, so the k6 `--user` flag the Linux runner needs is skipped on Windows. Keep other compose stacks off ports 3000–3003 and 8080 before starting the e2e stack |
 | `pnpm check:k8s`, `pnpm check:container`, `pnpm test:e2e:stack` | Need Docker (and `kustomize` via the script) running. They are CI jobs, not part of the expected local run |
 
-### `pnpm check` is broken at the root
+### `pnpm check` at the root
 
-The root `check` script runs `npm run check --workspace=apps/reader`, but the repo has no
-npm `workspaces` field — it is a pnpm workspace — so npm answers `No workspaces found`. Use
-`pnpm --filter tutors-reader check`, which is what CI's type-check steps run. `rc-validation.yml`
-Gate 1 still calls the broken form.
+The root `check` script type-checks all four apps
+(`pnpm --filter tutors-reader --filter tutors-catalogue --filter tutors-live --filter tutors-time check`).
+`rc-validation.yml` Gate 1 runs the same command.
 
 ## Tier A — structure
 
@@ -537,9 +536,8 @@ Gate 1 lint and type check, 2a unit and BDD with a coverage upload, 2b contract,
 audit, 4 cross-browser E2E for the reader, 6 artifact regression, then an `RC Readiness Report`
 that fails if any gate failed.
 
-This workflow has not kept pace with the runway and two of its gates cannot pass as written:
-Gate 1 runs the broken root `pnpm check`, and Gate 4 runs `pnpm --filter tutors-reader test:e2e`,
-a script the apps do not define. It also duplicates work `ci.yml` now does better. Reconciling it
+This workflow has not kept pace with the runway and one of its gates cannot pass as written:
+Gate 4 runs `pnpm --filter tutors-reader test:e2e`, a script the apps do not define. It also duplicates work `ci.yml` now does better. Reconciling it
 is open work; do not read it as the authority on what a release is checked against.
 
 ### `release-testing.yml` — push to `rc/**`, or `workflow_dispatch` with a baseline version

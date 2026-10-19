@@ -51,7 +51,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Packages
 
-**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; three of them also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
+**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; six of them (create, identity, model, realtime, time, types) also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
 
 | Directory | Package | What it is |
 |---|---|---|
@@ -71,6 +71,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/svelte/utils/runtime` | `@tutors/runtime` | Server runtime seams: the clock (`HARNESS_NOW`) and the `/version` endpoint |
 | `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 
 **Core services.**
@@ -113,7 +114,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so the `$env` modules resolve from the same file. There is nothing further to copy.
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so `$app/env/public` and `$app/env/private` resolve from the same file. There is nothing further to copy.
 
 Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 
@@ -182,7 +183,7 @@ Docs live in five places. This is the index.
 
 ## Technology Stack
 
-- **Framework:** SvelteKit 2.x with Svelte 5
+- **Framework:** SvelteKit 3 with Svelte 5
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4.x + Skeleton UI
 - **Package Manager:** pnpm workspaces (Deno for the JSR packages)
