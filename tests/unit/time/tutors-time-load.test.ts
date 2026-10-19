@@ -67,13 +67,19 @@ describe("TutorsTime.loadCourseTime", () => {
     expect(loadTime.mock.calls).toEqual([["web-1", null, null, "Web Dev"]]);
   });
 
-  it("loads afresh, with trimmed dates, when a date range is given", async () => {
+  it("loads a date range once, with trimmed dates, and keeps it apart from other ranges", async () => {
     const first = await TutorsTime.loadCourseTime("web-2", " 2026-10-01 ", "2026-10-31");
     const second = await TutorsTime.loadCourseTime("web-2", "2026-10-01", "2026-10-31");
-    expect(second).not.toBe(first);
+    const other = await TutorsTime.loadCourseTime("web-2", "2026-10-01", null);
+    const whole = await TutorsTime.loadCourseTime("web-2");
+    expect(second).toBe(first);
+    expect(other).not.toBe(first);
+    expect(whole).not.toBe(first);
+    expect(whole).not.toBe(other);
     expect(loadTime.mock.calls).toEqual([
       ["web-2", "2026-10-01", "2026-10-31", "web-2"],
-      ["web-2", "2026-10-01", "2026-10-31", "web-2"],
+      ["web-2", "2026-10-01", null, "web-2"],
+      ["web-2", null, null, "web-2"],
     ]);
   });
 });

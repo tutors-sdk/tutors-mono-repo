@@ -1233,6 +1233,7 @@ PRIVATE_AUTH_SECRET=...
 - `/[courseid]/lab` — Lab views (by step, by lab, learning records)
 - `/[courseid]/[studentid]` — Individual student calendar view
 - `/[courseid]/assignments` — Moodle assignment data
+- Every course route takes an optional reporting period, `?start=YYYY-MM-DD&end=YYYY-MM-DD` (inclusive, either bound optional), read and validated by `src/lib/dateRange.ts`; navigation, drill-down links and redirects keep it, and a malformed or reversed period is a 400
 
 **Notes**:
 - Runs with `ssr = false` — all rendering is client-side (Supabase client is browser-only)

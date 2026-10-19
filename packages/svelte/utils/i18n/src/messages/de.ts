@@ -406,6 +406,8 @@ Tutors ist eine Open-Source-Anwendung - die Komponente zur Datenerfassung [finde
   "classTime.startDate": "Startdatum (optional)",
   "classTime.endDate": "Enddatum (optional)",
   "classTime.dateRangeError": "Das Startdatum muss vor dem Enddatum liegen oder gleich sein",
+  "classTime.invalidDate": "Daten müssen Kalenderdaten im Format JJJJ-MM-TT sein",
+  "classTime.period": "Berichtszeitraum",
   "classTime.loadCourse": "Kurs laden",
   "classTime.disclaimer": "Erfasste Aktivität misst Zeit, keine Lernergebnisse.",
   "classTime.pinTitle": "PIN eingeben",
