@@ -183,6 +183,19 @@ export const WhiteboardInitEditorSchema = z.object({
   theme: z.enum(["light", "dark"]).optional(),
 });
 
+/** Posted by the editor iframe to the reader after a batch of edits: the whole scene, with its image files. */
+export const WhiteboardSceneChangedSchema = z.object({
+  type: z.literal("scene-changed"),
+  elements: z.array(WhiteboardElementSchema),
+  files: z.record(
+    z.object({
+      id: z.string(),
+      mimeType: z.string(),
+      dataURL: z.string(),
+    }).passthrough()
+  ),
+});
+
 /** Sent to the viewer or editor iframe when the reader's appearance changes. */
 export const WhiteboardSetThemeSchema = z.object({
   type: z.literal("set-theme"),

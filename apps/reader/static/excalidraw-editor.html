@@ -85,6 +85,9 @@
       const hasPeersRef = useRef(true);
       const participantsRef = useRef(2);
       const latestElementsRef = useRef(null);
+      // Image bytes live in Excalidraw's file map, not in the elements; the ids already handed to the parent.
+      const latestFilesRef = useRef(null);
+      const sentFileIdsRef = useRef(new Set(Object.keys(config.initialScene?.files || {})));
       const lastCursorRef = useRef(null);
       const cursorArmedAtRef = useRef(0);
       const [collaborators, setCollaborators] = useState(new Map());
@@ -214,6 +217,7 @@
           cursorTimerRef.current = null;
           pendingCursorRef.current = null;
           latestElementsRef.current = null;
+          latestFilesRef.current = null;
           pendingSceneRef.current.clear();
           subscribedRef.current = false;
           hasPeersRef.current = false;
@@ -222,17 +226,21 @@
         };
       }, [config]);
 
-      const handleChange = useCallback((elements) => {
+      const handleChange = useCallback((elements, _appState, files) => {
         if (isRemoteUpdateRef.current) return;
 
         // Batch rather than debounce: a long drag still reaches peers, at most 4 times a second.
+        // Elements and files are taken from the same change, so a save never pairs them across edits.
         latestElementsRef.current = elements;
+        latestFilesRef.current = files || {};
         if (debounceTimerRef.current !== null) return;
 
         debounceTimerRef.current = setTimeout(() => {
           debounceTimerRef.current = null;
           const elements = latestElementsRef.current;
+          const files = latestFilesRef.current || {};
           latestElementsRef.current = null;
+          latestFilesRef.current = null;
           const channel = channelRef.current;
           if (!channel || !elements) return;
 
@@ -241,14 +249,17 @@
             const lastVersion = versionMap.get(el.id);
             return lastVersion === undefined || el.version > lastVersion;
           });
+          // An image's file can load after its element, with no element version change.
+          const newFileIds = Object.keys(files).filter(id => !sentFileIdsRef.current.has(id));
 
-          if (changed.length === 0) return;
+          if (changed.length === 0 && newFileIds.length === 0) return;
 
           for (const el of changed) {
             versionMap.set(el.id, el.version);
           }
+          for (const id of newFileIds) sentFileIdsRef.current.add(id);
 
-          if (hasPeersRef.current) {
+          if (changed.length > 0 && hasPeersRef.current) {
             channel.send({
               type: "broadcast",
               event: "scene-update",
@@ -261,6 +272,7 @@
           window.parent.postMessage({
             type: "scene-changed",
             elements: elements,
+            files,
           }, location.origin);
         }, SCENE_BATCH_MS);
       }, []);

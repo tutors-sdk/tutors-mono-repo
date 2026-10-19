@@ -348,7 +348,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       expect(whiteboard!.postMessage).toHaveBeenCalledWith(
         {
           type: "scene-changed",
-          elements: [{ id: "shape-1", version: 1 }]
+          elements: [{ id: "shape-1", version: 1 }],
+          files: {}
         },
         "https://reader.invalid"
       );
@@ -396,7 +397,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("a scene edit has been saved without broadcasting", () => {
         whiteboard!.editor.onChange([{ id: "shape-1", version: 1 }]);
         vi.advanceTimersByTime(250);
-        expect(whiteboard!.postMessage).toHaveBeenCalledWith({ type: "scene-changed", elements: [{ id: "shape-1", version: 1 }] }, "https://reader.invalid");
+        expect(whiteboard!.postMessage).toHaveBeenCalledWith({ type: "scene-changed", elements: [{ id: "shape-1", version: 1 }], files: {} }, "https://reader.invalid");
         expect(whiteboard!.channel.send).not.toHaveBeenCalled();
       });
       When("another editor becomes visible in Presence", peerArrives);
