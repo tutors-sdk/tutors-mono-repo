@@ -250,31 +250,60 @@ describe("route normalisation", () => {
 
 describe("toggleContentLock", () => {
   beforeEach(() => {
+    rbacService.clear();
+    vi.mocked(upsertLock).mockClear();
     currentCourse.value = { courseId: "cs101" } as never;
     contentLocks.value = new Map([["/topic/cs101/week-01", false]]);
   });
 
   it("keeps the change when the server saves it", async () => {
     vi.mocked(upsertLock).mockResolvedValueOnce("saved");
-    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(true);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("saved");
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+    expect(rbacService.locksSavedLocally).toBe(false);
   });
 
   it("puts the switch back when the server refuses the change", async () => {
     vi.mocked(upsertLock).mockResolvedValueOnce("refused");
-    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(false);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("unsaved");
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
   });
 
-  it("keeps the browser's copy when the server has no database to save to", async () => {
+  it("puts the switch back when the server cannot be reached", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("unreachable");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("unsaved");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
+  });
+
+  it("keeps the browser's copy, marked local, when the server has no database to save to", async () => {
     vi.mocked(upsertLock).mockResolvedValueOnce("unavailable");
-    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(true);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("local");
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+    expect(rbacService.locksSavedLocally).toBe(true);
   });
 
   it("removes a lock the server refused to create", async () => {
     vi.mocked(upsertLock).mockResolvedValueOnce("refused");
-    expect(await rbacService.toggleContentLock("/topic/cs101/week-02", true)).toBe(false);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-02", true)).toBe("unsaved");
     expect(contentLocks.value.has("/topic/cs101/week-02")).toBe(false);
+  });
+
+  it("refuses a second change to a lock while the first is waiting, so a late answer cannot undo it", async () => {
+    let answer!: (result: "refused") => void;
+    vi.mocked(upsertLock).mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    const first = rbacService.toggleContentLock("/topic/cs101/week-01", true);
+    expect(rbacService.isLockPending("/topic/cs101/week-01")).toBe(true);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", false)).toBe("unsaved");
+    expect(upsertLock).toHaveBeenCalledTimes(1);
+    answer("refused");
+    expect(await first).toBe("unsaved");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
+    expect(rbacService.isLockPending("/topic/cs101/week-01")).toBe(false);
+  });
+
+  it("gives the show-locked setting the same outcome", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("refused");
+    expect(await rbacService.setShowLockedToStudents(true)).toBe("unsaved");
+    expect(rbacService.showLockedToStudents()).toBe(false);
   });
 });

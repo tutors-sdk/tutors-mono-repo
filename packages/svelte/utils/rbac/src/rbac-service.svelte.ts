@@ -13,6 +13,12 @@ import { getLocksForCourse, upsertLock } from "./lock-store.ts";
  */
 export const SHOW_LOCKED_KEY = "@settings/show-locked";
 
+/**
+ * What a lock change from Educator Control came to (Rules 0657-0658): saved by the server; kept in this
+ * browser only, because the server has no lock database; or not saved, so the previous setting is back.
+ */
+export type LockChangeResult = "saved" | "local" | "unsaved";
+
 /** Drops trailing slashes. A loop, not /\/+$/, which backtracks polynomially on long runs of "/" (CodeQL js/polynomial-redos). */
 function normalizeRoute(route: string): string {
   let end = route.length;
@@ -61,6 +67,10 @@ function createRbacService() {
   const currentRole = rune<Role>("student");
   const currentUserId = rune("");
   const currentCourseId = rune("");
+  // Routes with a lock change waiting for the server; Educator Control disables their switches (Rule 0658).
+  const pendingLocks = rune<Set<string>>(new Set());
+  // Set once the server answers that it has no lock database, so Educator Control says changes stay in this browser.
+  const savedLocally = rune(false);
   let loadedLocksCourseId = "";
 
   function loadRole(userId: string, courseId: string, course?: { enrollment?: { educators?: string[] } }): void {
@@ -126,16 +136,41 @@ function createRbacService() {
     }
   }
 
-  async function toggleContentLock(loRoute: string, locked: boolean): Promise<boolean> {
+  async function toggleContentLock(loRoute: string, locked: boolean): Promise<LockChangeResult> {
     const courseId = resolvedCourseId();
-    if (!courseId) return false;
+    // One change per lock at a time, so a late answer can never undo a newer change.
+    if (!courseId || pendingLocks.value.has(loRoute)) return "unsaved";
 
     const previous = contentLocks.value.get(loRoute);
+    setPending(loRoute, true);
     applyLock(courseId, loRoute, locked);
-    if ((await upsertLock(courseId, loRoute, locked)) !== "refused") return true;
-    // The server refused the change: put the switch back so the panel shows what is saved.
-    applyLock(courseId, loRoute, previous);
-    return false;
+    try {
+      const result = await upsertLock(courseId, loRoute, locked);
+      if (result === "saved") {
+        savedLocally.value = false;
+        return "saved";
+      }
+      if (result === "unavailable") {
+        savedLocally.value = true;
+        return "local";
+      }
+      // Refused or unreachable: put the switch back so the panel shows what students see.
+      applyLock(courseId, loRoute, previous);
+      return "unsaved";
+    } finally {
+      setPending(loRoute, false);
+    }
+  }
+
+  function setPending(loRoute: string, pending: boolean) {
+    const updated = new Set(pendingLocks.value);
+    if (pending) updated.add(loRoute);
+    else updated.delete(loRoute);
+    pendingLocks.value = updated;
+  }
+
+  function isLockPending(loRoute: string): boolean {
+    return pendingLocks.value.has(loRoute);
   }
 
   function applyLock(courseId: string, loRoute: string, locked: boolean | undefined) {
@@ -182,7 +217,7 @@ function createRbacService() {
     return contentLocks.value.get(SHOW_LOCKED_KEY) === true;
   }
 
-  function setShowLockedToStudents(show: boolean): Promise<boolean> {
+  function setShowLockedToStudents(show: boolean): Promise<LockChangeResult> {
     return toggleContentLock(SHOW_LOCKED_KEY, show);
   }
 
@@ -211,6 +246,8 @@ function createRbacService() {
     currentUserId.value = "";
     currentCourseId.value = "";
     contentLocks.value = new Map();
+    pendingLocks.value = new Set();
+    savedLocally.value = false;
     isEducator.value = false;
     // Lock state is known - there are none - so consumers must not treat this as pending.
     locksLoaded.value = true;
@@ -228,10 +265,16 @@ function createRbacService() {
       return currentRole.value === "educator";
     },
 
+    /** Whether lock changes are kept only in this browser because the server has no lock database. */
+    get locksSavedLocally(): boolean {
+      return savedLocally.value;
+    },
+
     loadRole,
     hasPermission,
     loadContentLocks,
     toggleContentLock,
+    isLockPending,
     isLocked,
     isLoLocked,
     isLoVisibleToStudent,
