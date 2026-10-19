@@ -14,6 +14,29 @@
 
   const course = $derived(currentCourse.value);
   const enrollment = $derived(course?.enrollment);
+  const exportSupported = $derived(/^[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?$/i.test(course?.courseId ?? ""));
+  let exporting = $state(false);
+  let exportError = $state(false);
+
+  async function exportEnrollment() {
+    if (!course || exporting) return;
+    exporting = true;
+    exportError = false;
+    try {
+      const response = await fetch(`/api/courses/${encodeURIComponent(course.courseId)}/enrollment`);
+      if (!response.ok) throw new Error(`Enrollment export returned ${response.status}`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "enrollment.yaml";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      exportError = true;
+    } finally {
+      exporting = false;
+    }
+  }
 
   type LockGroup = { title?: string; los: Lo[] };
 
@@ -105,6 +128,15 @@
 
     <Tabs.Content value="enrollment">
       <div class="space-y-3 p-2">
+        <div class="space-y-2">
+          <button class="ui-button" onclick={exportEnrollment} disabled={exporting || !exportSupported} aria-describedby="enrollment-export-help">
+            {exporting ? t("lecturer.enrollment.exporting") : t("lecturer.enrollment.export")}
+          </button>
+          <p id="enrollment-export-help" class="ui-muted info-text">
+            {exportSupported ? t("lecturer.enrollment.exportHelp") : t("lecturer.enrollment.exportUnsupported")}
+          </p>
+          {#if exportError}<p role="alert" class="info-text">{t("lecturer.enrollment.exportError")}</p>{/if}
+        </div>
         {#if enrollment?.educators && enrollment.educators.length > 0}
           <div>
             <h4 class="info-heading">Educators</h4>

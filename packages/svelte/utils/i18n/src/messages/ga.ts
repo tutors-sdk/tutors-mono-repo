@@ -1,4 +1,9 @@
 const ga = {
+  "lecturer.enrollment.export": "Easpórtáil enrollment.yaml",
+  "lecturer.enrollment.exporting": "Á easpórtáil…",
+  "lecturer.enrollment.exportHelp": "Cuir cuairteoirí taifeadta an chúrsa leis an liosta atá agat. Athbhreithnigh an dréacht sula gcuireann tú srian ar rochtain.",
+  "lecturer.enrollment.exportError": "Theip ar an easpórtáil. Seiceáil do shíniú isteach agus nasc an chúrsa, ansin bain triail eile as.",
+  "lecturer.enrollment.exportUnsupported": "Tacaíonn an easpórtáil le cúrsaí ar Netlify faoi láthair.",
   "shell.light": "Geal",
   "shell.dark": "Dorcha",
   "shell.portrait": "Portráid",
