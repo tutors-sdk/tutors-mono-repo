@@ -255,19 +255,25 @@ describe("toggleContentLock", () => {
   });
 
   it("keeps the change when the server saves it", async () => {
-    vi.mocked(upsertLock).mockResolvedValueOnce(true);
+    vi.mocked(upsertLock).mockResolvedValueOnce("saved");
     expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(true);
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
   });
 
   it("puts the switch back when the server refuses the change", async () => {
-    vi.mocked(upsertLock).mockResolvedValueOnce(false);
+    vi.mocked(upsertLock).mockResolvedValueOnce("refused");
     expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(false);
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
   });
 
+  it("keeps the browser's copy when the server has no database to save to", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("unavailable");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe(true);
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+  });
+
   it("removes a lock the server refused to create", async () => {
-    vi.mocked(upsertLock).mockResolvedValueOnce(false);
+    vi.mocked(upsertLock).mockResolvedValueOnce("refused");
     expect(await rbacService.toggleContentLock("/topic/cs101/week-02", true)).toBe(false);
     expect(contentLocks.value.has("/topic/cs101/week-02")).toBe(false);
   });
