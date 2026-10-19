@@ -43,8 +43,8 @@ export const VISIBLE = { timeout: 15_000 };
 
 /**
  * A browser context whose GitHub OAuth hops go to the identity stub, signing in as `role` (GitHub's own `login_hint`,
- * which the stub reads), and whose request for the signed-in course's PIN (the time dashboard reads it from Netlify)
- * is answered by the course server.
+ * which the stub reads), and whose requests for the signed-in course by its Netlify name (the time dashboard's PIN, and
+ * the reader opening it as `harness-rules`, which the educator-checked routes need) are answered by the course server.
  */
 export async function contextFor(browser: Browser, role: Role): Promise<BrowserContext> {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, timezoneId: "Europe/Dublin", locale: "en-IE" });
@@ -53,8 +53,9 @@ export async function contextFor(browser: Browser, role: Role): Promise<BrowserC
     if (original.pathname === "/login/oauth/authorize") original.searchParams.set("login_hint", role);
     await route.fulfill({ response: await route.fetch({ url: `${signedIn.identity}${original.pathname}${original.search}`, maxRedirects: 0 }) });
   });
-  await context.route(`https://${signedInCourse.timeId}.netlify.app/tutors.json`, async (route) => {
-    await route.fulfill({ response: await route.fetch({ url: `http://${signedIn.courseId}/tutors.json` }) });
+  await context.route(`https://${signedInCourse.timeId}.netlify.app/**`, async (route) => {
+    const original = new URL(route.request().url());
+    await route.fulfill({ response: await route.fetch({ url: `http://${signedIn.courseId}${original.pathname}${original.search}` }) });
   });
   return context;
 }

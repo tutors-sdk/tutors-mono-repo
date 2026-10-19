@@ -95,20 +95,23 @@ test("An enrolled student submits a quiz and sees their score (exercises Rules 0
   await context.close();
 });
 
-test("A lecturer locks a topic and the enrolled student no longer sees it (exercises Rules 0052, 0053)", { tag: "@rule-0611" }, async ({ browser }) => {
+test("A lecturer locks a topic and the enrolled student no longer sees it (exercises Rules 0052, 0053, 0630)", { tag: "@rule-0611" }, async ({ browser }) => {
+  // The lock goes through the reader's educator check, which reads the enrollment from Netlify by the course's name.
+  await persistence.reset();
   const lecturer = await (await contextFor(browser, "lecturer")).newPage();
-  await signInToCourse(lecturer, signedIn.courseId, signedInCourse.title);
+  await signInToCourse(lecturer, signedInCourse.timeId, signedInCourse.title);
   await lecturer.getByRole("button", { name: "Open Educator Control", exact: true }).filter({ visible: true }).first().click();
   await expect(lecturer.getByRole("dialog", { name: "Educator Control" })).toBeVisible(VISIBLE);
   const lock = lecturer.getByRole("switch", { name: "Lock Topic 2", exact: true }).or(lecturer.getByRole("checkbox", { name: "Lock Topic 2", exact: true })).first();
   // Skeleton's switch is a visually hidden checkbox inside its label: click it as the label would.
   await lock.evaluate((input: HTMLInputElement) => input.click());
   await expect(lock).toBeChecked();
+  await expect.poll(async () => written(await persistence.writes()), VISIBLE).toContain("POST tutors_content_locks");
   await lecturer.keyboard.press("Escape");
   await expect(lecturer.getByRole("button", { name: "Unlock Topic 2", exact: true }).filter({ visible: true }).first()).toBeVisible(VISIBLE);
 
   const student = await (await contextFor(browser, "enrolled")).newPage();
-  await signInToCourse(student, signedIn.courseId, signedInCourse.title);
+  await signInToCourse(student, signedInCourse.timeId, signedInCourse.title);
   await expect(student.getByRole("main").getByRole("heading", { name: "Topic 1", exact: true })).toBeVisible(VISIBLE);
   await expect(student.getByRole("main").getByRole("heading", { name: "Topic 2", exact: true })).toHaveCount(0);
   await lecturer.context().close();
@@ -232,5 +235,19 @@ test("One stroke drawn alone on a whiteboard is saved (exercises Rules 0275, 027
   await drawStroke(page, "Whiteboard 1");
   await expect(page.getByRole("status").filter({ hasText: "Drawing changes saved" })).toBeVisible(VISIBLE);
   expect(written(await persistence.writes()).filter((w) => w.endsWith(" whiteboard_scenes"))).toHaveLength(1);
+  await page.context().close();
+});
+
+test("A lecturer syncs Moodle from Educator Control (exercises Rules 0633, 0634)", { tag: "@rule-0640" }, async ({ browser }) => {
+  await persistence.reset();
+  const page = await (await contextFor(browser, "lecturer")).newPage();
+  await signInToCourse(page, signedInCourse.timeId, signedInCourse.title);
+  await page.getByRole("button", { name: "Open Educator Control", exact: true }).filter({ visible: true }).first().click();
+  const control = page.getByRole("dialog", { name: "Educator Control" });
+  await expect(control).toBeVisible(VISIBLE);
+  await control.getByRole("textbox", { name: "Moodle course ID", exact: true }).fill("1234");
+  await control.getByRole("button", { name: "Sync Moodle", exact: true }).click();
+  await expect(control.getByRole("status").filter({ hasText: "Moodle assignments synced." })).toBeVisible(VISIBLE);
+  expect(written(await persistence.writes())).toEqual(expect.arrayContaining(["POST assignments", "POST assignments_submissions"]));
   await page.context().close();
 });

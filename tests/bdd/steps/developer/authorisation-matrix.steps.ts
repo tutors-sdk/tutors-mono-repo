@@ -8,6 +8,7 @@ import {
   matrixFindings,
   parseMatrix,
   parseGaps,
+  type KnownGap,
   type Matrix,
   type Observation
 } from "../../../../scripts/checks/authorisation.ts";
@@ -59,19 +60,20 @@ describeFeature(feature, ({ Rule }) => {
         Given("the committed matrix", () => {
           matrix = committed();
         });
-        When("the enrollment export answers 200 to a student and the listed sync gap now answers 401", () => {
+        const gaps: KnownGap[] = [{ key: "reader PUT /api/courses/[courseid]/locks", role: "lecturer", got: 503, why: "a fixture gap" }];
+        When("the enrollment export answers 200 to a student and a listed lock gap now answers 200", () => {
           observations = [
             { key: "reader GET /api/courses/[courseid]/enrollment", role: "student", status: 200 },
             { key: "reader GET /api/courses/[courseid]/enrollment", role: "lecturer", status: 200 },
-            { key: "time POST /api/sync", role: "anonymous", status: 401 },
-            { key: "time POST /api/sync", role: "student", status: 400 }
+            { key: "reader PUT /api/courses/[courseid]/locks", role: "lecturer", status: 200 },
+            { key: "reader PUT /api/courses/[courseid]/locks", role: "student", status: 403 }
           ];
         });
         Then("the findings say {string} and {string}", (_ctx, unexpected: string, stale: string) => {
-          const findings = cellFindings(observations, matrix, committedGaps());
+          const findings = cellFindings(observations, matrix, gaps);
           expect(findings.some((f) => f.startsWith(unexpected)), findings.join("\n")).toBe(true);
           expect(findings.some((f) => f.startsWith(stale)), findings.join("\n")).toBe(true);
-          expect(findings, "the lecturer's 200 and the student's recorded 400 pass").toHaveLength(2);
+          expect(findings, "the lecturer's enrollment 200 and the student's lock 403 pass").toHaveLength(2);
         });
       });
 
@@ -85,7 +87,6 @@ describeFeature(feature, ({ Rule }) => {
         });
         And("every known gap names a matrix entry and a role", () => {
           const gaps = committedGaps();
-          expect(gaps.length).toBeGreaterThan(0);
           for (const gap of gaps) {
             expect(matrix.entries.map((e) => e.key), gap.key).toContain(gap.key);
             expect(ROLES, gap.key).toContain(gap.role);

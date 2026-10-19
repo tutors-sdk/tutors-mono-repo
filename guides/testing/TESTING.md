@@ -152,8 +152,9 @@ action with no row in the matrix fails `vitest` (Rule 0622), so a new route says
 **Proves it can fail** with negative fixtures for a route missing from the matrix, a stale entry, a role with no
 expected status, a cell answering something the matrix does not expect, and a known gap that no longer occurs.
 
-**Baselines** `tests/e2e-stack/authorisation/known-gaps.txt` (shrink-only): the time app's `POST /api/sync` needs no
-sign-in today, so every role gets 400 for the empty body where the matrix says 401.
+**Baselines** `tests/e2e-stack/authorisation/known-gaps.txt` (shrink-only). It is empty: the one gap it held, the time
+app's unauthenticated `POST /api/sync`, went when the Moodle sync moved to the reader behind the educator check
+(Rules 0633-0634). The matrix holds both reader routes from that work, the content locks and the Moodle sync.
 
 ## Tier G — user journeys against built images
 
@@ -695,6 +696,6 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 - 48 specified scenarios are prose, many with no tier covering them: [specifications/](../specifications/README.md).
 - Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
-- The authorisation matrix and the schema each carry known gaps (`tests/e2e-stack/authorisation/known-gaps.txt`,
-  `tests/data/schema/known-gaps.txt`); both files may only shrink.
+- The schema carries known gaps (`tests/data/schema/known-gaps.txt`): tables and functions no migration creates. The
+  authorisation matrix's known-gaps file is empty. Both files may only shrink.
 - No Playwright configuration retries (Rule 0620), so a flaky journey fails the pull request; that is the point.

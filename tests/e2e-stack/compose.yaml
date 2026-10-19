@@ -36,6 +36,13 @@ x-signed-in-env: &signed-in-env
   PRIVATE_AUTH_GITHUB_SECRET: e2e-client-secret
   PUBLIC_SUPABASE_URL: http://persistence.e2e.test:8090
   PUBLIC_SUPABASE_ANON_KEY: e2e-anon-key
+  # The reader writes content locks and Moodle rows with the service key (Rules 0630, 0633); the stub takes any key.
+  PRIVATE_SUPABASE_SERVICE_ROLE_KEY: e2e-service-key
+  # Moodle is the persistence stub's web service (Rule 0640); the token is not checked.
+  MOODLE_WS_URL: http://persistence.e2e.test:8090/moodle/webservice/rest/server.php
+  MOODLE_WS_TOKEN: e2e-moodle-token
+  MOODLE_WS_REST_FORMAT: json
+  SYNC_INTERVAL_MINUTES: "60"
   NODE_EXTRA_CA_CERTS: /e2e/ca.pem
   PROTOCOL_HEADER: x-forwarded-proto
   HOST_HEADER: x-forwarded-host

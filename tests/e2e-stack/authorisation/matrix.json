@@ -109,6 +109,41 @@
       "why": "only the course's educators export its enrollment; an enrolled student is not an educator"
     },
     {
+      "key": "reader PUT /api/courses/[courseid]/locks",
+      "request": {
+        "path": "/api/courses/harness-rules/locks",
+        "body": {
+          "loRoute": "/topic/harness-rules/topic-02",
+          "locked": false
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators change a content lock (Rules 0630-0632); the write goes through the server's service key"
+    },
+    {
+      "key": "reader POST /api/courses/[courseid]/moodle-sync",
+      "request": {
+        "path": "/api/courses/harness-rules/moodle-sync",
+        "body": {
+          "moodleCourseId": 1
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators sync Moodle (Rules 0633-0634); the stack's Moodle is the persistence stub"
+    },
+    {
       "key": "reader GET /healthz",
       "request": {
         "path": "/healthz"
@@ -207,17 +242,6 @@
         "*": 200
       },
       "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
-    },
-    {
-      "key": "time POST /api/sync",
-      "request": {
-        "path": "/api/sync",
-        "body": {}
-      },
-      "expect": {
-        "*": 401
-      },
-      "why": "syncing Moodle assignments must need a lecturer; today it needs nothing (known-gaps.txt)"
     }
   ]
 }

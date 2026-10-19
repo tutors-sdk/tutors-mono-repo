@@ -22,7 +22,8 @@
   async function load() {
     loading = true;
     error = null;
-    const id = courseId.trim();
+    // The reader's Moodle sync keys rows by the bare Netlify site name (Rule 0633).
+    const id = courseId.trim().replace(/^https?:\/\//i, "").replace(/\.netlify\.app$/i, "");
     if (!id) {
       error = "Course ID is required.";
       loading = false;

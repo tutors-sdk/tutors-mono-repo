@@ -58,9 +58,10 @@ Feature: Signed-in journeys across the built apps
   @rule-0611 @ears-event-driven
   Rule: When a lecturer locks a topic of a course, the reader shall leave that topic out of the course page an enrolled student sees.
 
-    Scenario: A lecturer locks a topic and the enrolled student no longer sees it (exercises Rules 0052, 0053)
+    Scenario: A lecturer locks a topic and the enrolled student no longer sees it (exercises Rules 0052, 0053, 0630)
       Given the lecturer has signed in from the signed-in course
       When they lock Topic 2 from Educator Control
+      And the reader saved the lock through its educator check
       And the enrolled student signs in from the course in their own browser
       Then the student's course page shows Topic 1 and not Topic 2
 
@@ -128,3 +129,12 @@ Feature: Signed-in journeys across the built apps
       When they open Whiteboard 1 in Edit mode and draw one stroke
       Then the whiteboard says the drawing changes are saved
       And the data API recorded one write of the whiteboard's scene
+
+  @rule-0640 @ears-event-driven
+  Rule: When a lecturer syncs a Moodle course from Educator Control, the reader shall say the assignments synced once the data API holds the assignments and submissions.
+
+    Scenario: A lecturer syncs Moodle from Educator Control (exercises Rules 0633, 0634)
+      Given the lecturer has signed in from the signed-in course
+      When they enter Moodle course 1234 in Educator Control and press Sync Moodle
+      Then Educator Control says the Moodle assignments synced
+      And the data API recorded writes of the assignments and their submissions

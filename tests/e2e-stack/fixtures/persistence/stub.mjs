@@ -22,6 +22,9 @@
 //   POST   /_harness/fault         -> {"mode": "down" | "hang" | "off"}: until the next reset, every /rest/v1 and /auth/v1
 //                                     call answers 503 (down) or is never answered (hang). Added in the monorepo's copy
 //                                     (tests/e2e-stack) for its resilience journeys, Rules 0615 and 0616.
+//   POST   /moodle/webservice/rest/server.php -> a Moodle web service with one course (1234) holding assignment 11
+//                                     "Lab report" and one submission from Moodle user 42. Added in the monorepo's copy
+//                                     for the Moodle sync journey, Rule 0640; not recorded (the writes it causes are).
 //
 // Since 1.45.0 the stub keeps the rows written to the tables in KEPT until the next reset, and answers reads of
 // them with those rows (filtered by `col=eq.value`, upserted by `on_conflict`): a lecturer's content lock is read
@@ -120,6 +123,19 @@ const server = createServer(async (req, res) => {
     return send(503, { message: "the data API is down (fault injected)" });
   }
 
+  if (url.pathname === "/moodle/webservice/rest/server.php" && req.method === "POST") {
+    const form = new URLSearchParams(await readBody(req));
+    switch (form.get("wsfunction")) {
+      case "core_course_get_contents":
+        if (form.get("courseid") !== "1234") return send(200, { exception: "dml_missing_record_exception", errorcode: "invalidrecord", message: "No such course" });
+        return send(200, [{ id: 1, modules: [{ id: 7, instance: 11, name: "Lab report", modname: "assign" }] }]);
+      case "mod_assign_get_submissions":
+        return send(200, { assignments: [{ assignmentid: 11, submissions: [{ id: 901, userid: 42, status: "submitted" }] }], warnings: [] });
+      default:
+        return send(200, { exception: "webservice_access_exception", errorcode: "accessexception", message: "Access control exception" });
+    }
+  }
+
   const rest = /^\/rest\/v1\/(rpc\/)?([^/?]+)/.exec(url.pathname);
   if (rest) {
     const [, rpc, name] = rest;
@@ -178,18 +194,36 @@ const server = createServer(async (req, res) => {
   return send(404, { message: "not found" });
 });
 
-const OPS = { eq: (x, y) => x === y, gt: (x, y) => x > y, gte: (x, y) => x >= y, lt: (x, y) => x < y, lte: (x, y) => x <= y, in: (x, y) => y.replace(/^\(|\)$/g, "").split(",").map((v) => v.replace(/^"|"$/g, "")).includes(x) };
+/** One filter operator, by name; a switch rather than a lookup so a request's text cannot pick the function. */
+function compare(op, x, y) {
+  switch (op) {
+    case "eq":
+      return x === y;
+    case "gt":
+      return x > y;
+    case "gte":
+      return x >= y;
+    case "lt":
+      return x < y;
+    case "lte":
+      return x <= y;
+    case "in":
+      return y.replace(/^\(|\)$/g, "").split(",").map((v) => v.replace(/^"|"$/g, "")).includes(x);
+    default:
+      return false;
+  }
+}
 /** PostgREST's `col=<op>.value` filters (eq, gt, gte, lt, lte, in; compared as strings, as ISO times are); every other parameter (select, order, limit, on_conflict) is not a filter. */
 function filtersOf(params) {
   const out = [];
   for (const [key, value] of params) {
     const m = /^(eq|gte?|lte?|in)\.(.*)$/s.exec(value);
-    if (m && !["select", "order", "limit", "offset", "on_conflict"].includes(key)) out.push([key, OPS[m[1]], m[2]]);
+    if (m && !["select", "order", "limit", "offset", "on_conflict"].includes(key)) out.push([key, m[1], m[2]]);
   }
   return out;
 }
 function matches(row, filters) {
-  return filters.every(([key, op, value]) => op(String(row[key]), value));
+  return filters.every(([key, op, value]) => compare(op, String(row[key]), value));
 }
 /** The kept rows a read asks for: filtered, then `order=col.asc|desc` (first column only), then `limit`. */
 function matching(table, params) {

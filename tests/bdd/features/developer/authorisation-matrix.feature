@@ -23,8 +23,8 @@ Feature: Authorisation matrix completeness
 
     Scenario: A mismatch no gap explains fails, and a gap that no longer occurs fails
       Given the committed matrix
-      When the enrollment export answers 200 to a student and the listed sync gap now answers 401
-      Then the findings say "unexpected: reader GET /api/courses/[courseid]/enrollment as student answered 200" and "stale gap: time POST /api/sync as anonymous now answers 401"
+      When the enrollment export answers 200 to a student and a listed lock gap now answers 200
+      Then the findings say "unexpected: reader GET /api/courses/[courseid]/enrollment as student answered 200" and "stale gap: reader PUT /api/courses/[courseid]/locks as lecturer now answers 200"
 
     Scenario: The committed matrix lists every route the apps declare
       Given the committed matrix and known gaps

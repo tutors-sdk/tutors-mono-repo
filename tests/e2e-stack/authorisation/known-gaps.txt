@@ -1,11 +1,4 @@
 # Cells of the authorisation matrix (matrix.json) that answer something else today (Rule 0621).
 # Format: `<app> <METHOD> <route id> | <role> | got <status> | why: <reason>`
 # This file may only shrink: the authorisation journey fails on a new mismatch and on a line that no longer occurs.
-
-# The time app has no sign-in; /api/sync runs a Moodle sync for anyone who can reach it. It answers 400 here
-# only because the matrix sends an empty body. Fixing it needs the time app to know who is asking.
-time POST /api/sync | anonymous | got 400 | why: no authentication on the route; the empty body is refused before anything runs
-time POST /api/sync | student | got 400 | why: no authentication on the route; the empty body is refused before anything runs
-time POST /api/sync | enrolled | got 400 | why: no authentication on the route; the empty body is refused before anything runs
-time POST /api/sync | lecturer | got 400 | why: no authentication on the route; the empty body is refused before anything runs
-time POST /api/sync | operator | got 400 | why: no authentication on the route; the empty body is refused before anything runs
+# Empty since the Moodle sync moved to the reader behind the educator check (Rules 0633-0634).
