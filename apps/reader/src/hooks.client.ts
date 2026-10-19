@@ -1,3 +1,10 @@
+/**
+ * Browser hooks for the reader app, loaded by SvelteKit once per page load.
+ * Hands PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY to @tutors/tutors-time-lib and makes a missing or
+ * unreachable course a 404 page. Warn and error log lines are batched to the Supabase app_errors table
+ * (skipped when Supabase is not configured), unhandled promise rejections are logged, and unexpected
+ * errors show a generic 500 message.
+ */
 import { error } from "@sveltejs/kit";
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import * as env from "$app/env/public";

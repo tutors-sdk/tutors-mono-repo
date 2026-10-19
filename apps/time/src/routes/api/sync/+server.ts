@@ -1,3 +1,9 @@
+/**
+ * POST /api/sync: copies a Moodle course's assignments and submitted work into Supabase, called from the
+ * time app's home page when a Moodle course id is given. Body: courseId, moodleCourseId and an optional
+ * moodleSectionId (400 when invalid). No authentication: any caller can trigger a sync.
+ * Moodle or Supabase failures are thrown and become a 500.
+ */
 import { json, error } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { AssignmentsSyncService } from "#lib/server/services/AssignmentsSyncService.ts";

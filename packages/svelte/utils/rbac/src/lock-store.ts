@@ -1,3 +1,9 @@
+/**
+ * Reads and writes the tutors_content_locks table (content locks set by educators), called by
+ * rbac-service.svelte.ts. Uses the public Supabase client and checks no role itself; the policies in
+ * sql/002_content_locks.sql allow any caller to insert, update or delete. Without Supabase it returns
+ * no locks; query errors are logged and reported as an empty list or false.
+ */
 import { supabase } from "@tutors/community";
 import log from "@tutors/logger";
 import type { ContentLock } from "./types.ts";

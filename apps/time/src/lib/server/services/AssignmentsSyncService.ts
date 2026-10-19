@@ -1,3 +1,8 @@
+/**
+ * Runs one Moodle to Supabase sync for /api/sync: fetches assignments, upserts them, then upserts their
+ * submitted submissions. Skips the sync when the course was synced within SYNC_INTERVAL_MINUTES; if that
+ * variable is unset or not a number, it never skips. Errors propagate to the route.
+ */
 import * as env from "$app/env/private";
 import { nowMs } from "@tutors/runtime";
 import { AssignmentsService, type MoodleModule } from "#lib/server/services/AssignmentsService.ts";

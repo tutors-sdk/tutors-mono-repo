@@ -1,3 +1,9 @@
+/**
+ * Minimal client for the Moodle web service REST API, used by AssignmentsService during /api/sync.
+ * Reads MOODLE_WS_URL, MOODLE_WS_TOKEN and MOODLE_WS_REST_FORMAT (default json). Throws when
+ * MOODLE_WS_URL is unset, on a non-2xx response (the error includes the response body) and on a Moodle
+ * error payload.
+ */
 import * as env from "$app/env/private";
 
 type MoodleScalar = string | number | boolean;
