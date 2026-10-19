@@ -3,7 +3,9 @@ import { expect, vi } from "vitest";
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
 // SvelteKit and the identity adapter. Everything between them is product code.
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
+  createClient: (await import("../../support/supabase-recorder.ts")).createClient
+}));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 // The time library builds its own client; locally it resolves a different copy of supabase-js, so its seam is `getSupabase`.
 vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({ getSupabase: (await import("../../support/supabase-recorder.ts")).createClient }));
@@ -27,7 +29,7 @@ const feature = await loadFeature("tests/bdd/features/student/learning-progress.
 
 type TableRow = Record<string, string>;
 
-describeFeature(feature, ({ Background, Scenario, Rule }) => {
+describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => {
   const courses = new Map<string, Course>();
   let course: Course;
   let login: string;
@@ -229,10 +231,13 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
         tutorsConnectService.learningEvent(paramsOf(lab));
         await settle();
       });
-      Then("the system shall count {number} page load for lab {number} and {number} for lab {number}", (_ctx, first: number, firstLab: number, second: number, secondLab: number) => {
-        expect(learningRecord(course.courseId, firstLab)).toMatchObject({ count: first });
-        expect(learningRecord(course.courseId, secondLab)).toMatchObject({ count: second });
-      });
+      Then(
+        "the system shall count {number} page load for lab {number} and {number} for lab {number}",
+        (_ctx, first: number, firstLab: number, second: number, secondLab: number) => {
+          expect(learningRecord(course.courseId, firstLab)).toMatchObject({ count: first });
+          expect(learningRecord(course.courseId, secondLab)).toMatchObject({ count: second });
+        }
+      );
       And("the reader shall have reported {number} learning events for {string}", reportedCount);
     });
 
@@ -268,13 +273,18 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     });
   });
 
-  Rule("When a student opens a learning object, the reader shall record the page view against the learning object and the day's calendar in one database request.", ({ RuleScenario }) => {
-    RuleScenario("A page view is one request", ({ When, Then, And }) => {
-      When("the student views lab {number} of the course {number} times", viewLab);
-      Then("the reader shall have made {number} page-view requests and no other learning record or calendar requests", (ctx, count: number) => requests(ctx, count, "record_page_view"));
-      And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
-    });
-  });
+  Rule(
+    "When a student opens a learning object, the reader shall record the page view against the learning object and the day's calendar in one database request.",
+    ({ RuleScenario }) => {
+      RuleScenario("A page view is one request", ({ When, Then, And }) => {
+        When("the student views lab {number} of the course {number} times", viewLab);
+        Then("the reader shall have made {number} page-view requests and no other learning record or calendar requests", (ctx, count: number) =>
+          requests(ctx, count, "record_page_view")
+        );
+        And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
+      });
+    }
+  );
 
   Rule("While a course page is visible, the reader shall record each 30 seconds of activity in one database request.", ({ RuleScenario }) => {
     const activityRequests = (ctx: unknown, count: number) => requests(ctx, count, "record_heartbeat");
@@ -290,6 +300,65 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
       And("the student stays on that page for {number} seconds", staysOnPage);
       Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", activityRequests);
       And("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    });
+  });
+
+  // The course-reader layout starts the activity timer when it mounts and stops it when it is destroyed,
+  // so a student entering and leaving the course pages is the layout's start and stop, under a fake clock.
+  const coursePagesOpen = () => {
+    // Installing the fake clock again would drop the intervals already on it.
+    if (!vi.isFakeTimers()) vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    tutorsConnectService.startTimer();
+  };
+  const coursePagesClose = () => tutorsConnectService.stopTimer();
+  const spendsOnCoursePages = async (_ctx: unknown, seconds: number) => {
+    await vi.advanceTimersByTimeAsync(seconds * 1000);
+    await settle();
+  };
+  const heartbeatRequests = (ctx: unknown, count: number) => requests(ctx, count, "record_heartbeat");
+  // The timer is one per tab: a scenario that leaves it running would hold back the next scenario's start.
+  AfterEachScenario(() => {
+    tutorsConnectService.stopTimer();
+    vi.useRealTimers();
+  });
+
+  Rule("When a student opens the course pages again in the same tab, the reader shall record each 30 seconds of activity in one database request.", ({ RuleScenario }) => {
+    RuleScenario("Opening the course pages twice records one heartbeat per 30 seconds", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the course pages open", coursePagesOpen);
+      And("the course pages open again", coursePagesOpen);
+      And("the student spends {number} seconds on the course pages", spendsOnCoursePages);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", heartbeatRequests);
+    });
+    RuleScenario("Returning to the course pages twice records one heartbeat per 30 seconds", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the course pages open", coursePagesOpen);
+      And("the course pages close", coursePagesClose);
+      And("the course pages open again", coursePagesOpen);
+      And("the course pages open once more", coursePagesOpen);
+      And("the student spends {number} seconds on the course pages", spendsOnCoursePages);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", heartbeatRequests);
+    });
+  });
+
+  Rule("When a student leaves the course pages, the reader shall stop recording activity for that tab.", ({ RuleScenario }) => {
+    RuleScenario("No heartbeat follows leaving the course pages", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the course pages open", coursePagesOpen);
+      And("the course pages open again", coursePagesOpen);
+      And("the course pages close", coursePagesClose);
+      And("the student spends {number} seconds on the course pages", spendsOnCoursePages);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", heartbeatRequests);
+    });
+    RuleScenario("Leaving twice is harmless and the next visit records again", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the course pages open", coursePagesOpen);
+      And("the course pages open again", coursePagesOpen);
+      And("the course pages close", coursePagesClose);
+      And("the course pages close again", coursePagesClose);
+      And("the course pages open once more", coursePagesOpen);
+      And("the student spends {number} seconds on the course pages", spendsOnCoursePages);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", heartbeatRequests);
     });
   });
 
@@ -310,39 +379,42 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     });
   });
 
-  Rule("When a lecturer loads a course's time report for a date range, the time dashboard shall read only that course's calendar days within the range from the database.", ({ RuleScenario }) => {
-    let report: CourseTime;
-    const seedDays = (_ctx: unknown, blocks: number, student: string, days: string) => {
-      recorder.seed(
-        "calendar",
-        days.split(",").map((day) => ({ id: day.trim(), studentid: student, courseid: course.courseId, timeactive: blocks, pageloads: 1 }))
-      );
-    };
-    const load = async (startDate: string | null, endDate: string | null) => {
-      report = new CourseTime();
-      await report.loadTime(course.courseId, startDate, endDate, course.title);
-    };
-    const returnedDays = (_ctx: unknown, count: number) => {
-      const reads = recorder.tableCalls.filter((call) => call.table === "calendar" && call.op === "select");
-      expect(reads.map((call) => call.returned)).toEqual([count]);
-    };
-    const coveredDays = (_ctx: unknown, days: string) => {
-      expect(report.calendarModel.dates).toEqual(days.split(",").map((day) => day.trim()));
-    };
-    const seedStep = "the calendar holds {number} thirty-second blocks of time active for {string} on each of {string}";
+  Rule(
+    "When a lecturer loads a course's time report for a date range, the time dashboard shall read only that course's calendar days within the range from the database.",
+    ({ RuleScenario }) => {
+      let report: CourseTime;
+      const seedDays = (_ctx: unknown, blocks: number, student: string, days: string) => {
+        recorder.seed(
+          "calendar",
+          days.split(",").map((day) => ({ id: day.trim(), studentid: student, courseid: course.courseId, timeactive: blocks, pageloads: 1 }))
+        );
+      };
+      const load = async (startDate: string | null, endDate: string | null) => {
+        report = new CourseTime();
+        await report.loadTime(course.courseId, startDate, endDate, course.title);
+      };
+      const returnedDays = (_ctx: unknown, count: number) => {
+        const reads = recorder.tableCalls.filter((call) => call.table === "calendar" && call.op === "select");
+        expect(reads.map((call) => call.returned)).toEqual([count]);
+      };
+      const coveredDays = (_ctx: unknown, days: string) => {
+        expect(report.calendarModel.dates).toEqual(days.split(",").map((day) => day.trim()));
+      };
+      const seedStep = "the calendar holds {number} thirty-second blocks of time active for {string} on each of {string}";
 
-    RuleScenario("A date range is read, not the whole calendar", ({ Given, When, Then, And }) => {
-      Given(seedStep, seedDays);
-      When("the time report for the course is loaded from {string} to {string}", (_ctx, start: string, end: string) => load(start, end));
-      Then("the database shall have returned {number} calendar days for the course", returnedDays);
-      And("the report shall cover the days {string}", coveredDays);
-    });
+      RuleScenario("A date range is read, not the whole calendar", ({ Given, When, Then, And }) => {
+        Given(seedStep, seedDays);
+        When("the time report for the course is loaded from {string} to {string}", (_ctx, start: string, end: string) => load(start, end));
+        Then("the database shall have returned {number} calendar days for the course", returnedDays);
+        And("the report shall cover the days {string}", coveredDays);
+      });
 
-    RuleScenario("A report with no range still reads the whole course", ({ Given, When, Then, And }) => {
-      Given(seedStep, seedDays);
-      When("the time report for the course is loaded with no date range", () => load(null, null));
-      Then("the database shall have returned {number} calendar days for the course", returnedDays);
-      And("the report shall cover the days {string}", coveredDays);
-    });
-  });
+      RuleScenario("A report with no range still reads the whole course", ({ Given, When, Then, And }) => {
+        Given(seedStep, seedDays);
+        When("the time report for the course is loaded with no date range", () => load(null, null));
+        Then("the database shall have returned {number} calendar days for the course", returnedDays);
+        And("the report shall cover the days {string}", coveredDays);
+      });
+    }
+  );
 });
