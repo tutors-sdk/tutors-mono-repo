@@ -6,7 +6,8 @@ import { serializeError } from "./errors.ts";
 /** The one correlation header: read from the request, set once on the response, forwarded on outbound calls. */
 export const REQUEST_ID_HEADER = "x-request-id";
 const DEFAULT_HEADER = REQUEST_ID_HEADER;
-const DEFAULT_IGNORE = ["/healthz"];
+/** Probed by the kubelet and scraped by Prometheus every few seconds per pod: a line each would bury real traffic. */
+const DEFAULT_IGNORE = ["/healthz", "/metrics"];
 const DEFAULT_SLOW_MS = 2000;
 
 /** Incoming ids are echoed into logs and headers, so only accept a conservative charset. */

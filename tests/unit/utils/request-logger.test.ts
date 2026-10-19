@@ -192,6 +192,14 @@ describe("request logger: ignored paths", () => {
     expect(event.locals.requestId).toMatch(UUID);
   });
 
+  it("does not log Prometheus scrapes", async () => {
+    const { logger, entries } = capture();
+    const handle = createRequestLogger({ logger });
+    const response = await handle({ event: makeEvent({ path: "/metrics", routeId: "/metrics" }), resolve: respond() });
+    expect(entries).toHaveLength(0);
+    expect(response.headers.get("x-request-id")).toMatch(UUID);
+  });
+
   it("accepts custom prefixes", async () => {
     const { logger, entries } = capture();
     const handle = createRequestLogger({ logger, ignorePaths: ["/metrics"] });

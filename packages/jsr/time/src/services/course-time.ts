@@ -86,7 +86,7 @@ export class CourseTime implements TutorsTimeCourse {
     const { data, error } = await query;
 
     if (error) {
-      process.stderr.write(`Failed to fetch learning records: ${error.message}\n`);
+      console.warn("Failed to fetch learning records", { error: error.message, courseId, type });
       return [];
     }
 
