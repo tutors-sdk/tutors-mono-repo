@@ -1,12 +1,13 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
+import { getSupabase, initSupabase } from "../../../../packages/jsr/time/src/services/supabase.ts";
 import type { LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
 import { cells, labRecordsByStudent, stepColumn, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/time/lab-analytics.feature");
 
-describeFeature(feature, ({ Scenario }) => {
+describeFeature(feature, ({ Scenario, Rule }) => {
   let records: LearningRecord[];
   let model: BaseLabModel;
   let studentCount: number;
@@ -35,4 +36,53 @@ describeFeature(feature, ({ Scenario }) => {
       expect(model.medianByLabStep.row?.totalMinutes).toBe(total);
     });
   });
+
+  Rule(
+    "The time dashboard shall reuse one database client for a course's reads in a browser, so that concurrent reads never contend for the stored session.",
+    ({ RuleScenario }) => {
+      // The real supabase-js: each client it creates is a separate auth client on the same storage key.
+      let clients: ReturnType<typeof getSupabase>[];
+      const configure = (_ctx: unknown, url: string, key: string) => initSupabase(url, key);
+      const read = () => {
+        clients.push(getSupabase());
+      };
+      const configureFirst = (ctx: unknown, url: string, key: string) => {
+        clients = [];
+        configure(ctx, url, key);
+      };
+      const sameClient = () => {
+        expect(clients).toHaveLength(2);
+        expect(clients[1]).toBe(clients[0]);
+      };
+      const configuredStep = "the time dashboard is configured with the database {string} and the key {string}";
+      const configuredAgainStep = "the time dashboard is configured again with the database {string} and the key {string}";
+
+      RuleScenario("Every read of a course gets the same client", ({ Given, When, And, Then }) => {
+        Given(configuredStep, configureFirst);
+        When("a read of the course asks for a database client", read);
+        And("another read of the course asks for a database client", read);
+        Then("both reads shall have been given the same database client", sameClient);
+      });
+
+      RuleScenario("Loading the course layout again keeps the client", ({ Given, And, When, Then }) => {
+        Given(configuredStep, configureFirst);
+        And("a read of the course asks for a database client", read);
+        When(configuredAgainStep, configure);
+        And("another read of the course asks for a database client", read);
+        Then("both reads shall have been given the same database client", sameClient);
+      });
+
+      RuleScenario("A different database gives a new client", ({ Given, And, When, Then }) => {
+        Given(configuredStep, configureFirst);
+        And("a read of the course asks for a database client", read);
+        When(configuredAgainStep, configure);
+        And("another read of the course asks for a database client", read);
+        Then("the second read shall have been given a new database client", () => {
+          expect(clients).toHaveLength(2);
+          expect(clients[1]).not.toBe(clients[0]);
+          expect(clients[1].auth).not.toBe(clients[0].auth);
+        });
+      });
+    }
+  );
 });
