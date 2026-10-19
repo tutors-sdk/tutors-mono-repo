@@ -9,15 +9,13 @@ import { error } from "@sveltejs/kit";
 import { z } from "zod";
 import log from "@tutors/logger";
 
-export const enrollmentSchema = z
+const enrollmentSchema = z
   .object({
     educators: z.array(z.string()).default([]),
     whitelist: z.array(z.string()).default([]),
     students: z.array(z.object({ name: z.string(), id: z.string() }).passthrough()).default([])
   })
   .passthrough();
-
-export type Enrollment = z.infer<typeof enrollmentSchema>;
 
 interface EducatorRequest {
   locals: App.Locals;
