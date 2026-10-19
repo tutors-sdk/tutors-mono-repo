@@ -4,7 +4,8 @@
  * Only a signed-in educator of the published course may sync (requireEducator: 401, 400, 502, 403), and
  * that check runs before Moodle is contacted. 503 when Moodle or the service key is not configured,
  * 502 when Moodle or the write fails. Rows are keyed by the course's bare Netlify site name, the key Tutors Time
- * reads, whichever form (id or full URL) the reader opened the course with.
+ * reads, whichever form (id or full URL) the reader opened the course with. A repeat inside SYNC_INTERVAL_MINUTES
+ * of the last completed sync answers ok without contacting Moodle; a failed sync can be retried at once (Rules 0651-0652).
  */
 import { error, json } from "@sveltejs/kit";
 import { z } from "zod";

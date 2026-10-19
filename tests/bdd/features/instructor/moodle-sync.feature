@@ -45,3 +45,55 @@ Feature: Moodle sync is for a course's educators
       Then the sync shall fail with status 400
       And Moodle shall not have been contacted
       And nothing shall have been written
+
+  @rule-0651 @ears-unwanted
+  Rule: If a Moodle sync fails before every assignment, submission and the sync's completion time is saved, then the data API shall report the sync as failed and run the next sync request for that course without waiting for the sync interval.
+
+    Scenario Outline: A sync that fails part way can be retried at once
+      Given Moodle course 1234 also has assignment 12 "Project" with one submission from Moodle user 43
+      And <failing step> fails
+      When "lecturer" syncs Moodle course "1234" at "2026-10-19T09:00:00Z"
+      Then the sync shall fail with status 502
+      And no completed sync shall be recorded for course "pf1"
+      Given the failure has cleared
+      When "lecturer" syncs Moodle course "1234" again at "2026-10-19T09:01:00Z"
+      Then the sync shall succeed
+      And Moodle shall have been contacted again
+      And a submission from Moodle user 43 shall be saved for assignment 12
+
+      Examples:
+        | failing step                             |
+        | fetching submissions from Moodle         |
+        | saving the submissions for assignment 12 |
+        | saving the assignments                   |
+        | recording the completed sync             |
+
+  @rule-0652 @ears-event-driven
+  Rule: When a course educator syncs the same Moodle course and section again within SYNC_INTERVAL_MINUTES of its last completed sync, the data API shall answer success without contacting Moodle.
+
+    Scenario: A repeat inside the interval is skipped
+      Given "lecturer" synced Moodle course "1234" at "2026-10-19T09:00:00Z"
+      When "lecturer" syncs Moodle course "1234" again at "2026-10-19T09:30:00Z"
+      Then the sync shall succeed
+      And Moodle shall not have been contacted
+      And the completed sync for course "pf1" shall be recorded at "2026-10-19T09:00:00.000Z"
+
+    Scenario: A repeat after the interval runs again
+      Given "lecturer" synced Moodle course "1234" at "2026-10-19T09:00:00Z"
+      When "lecturer" syncs Moodle course "1234" again at "2026-10-19T10:01:00Z"
+      Then the sync shall succeed
+      And Moodle shall have been contacted again
+      And the completed sync for course "pf1" shall be recorded at "2026-10-19T10:01:00.000Z"
+
+    Scenario: A Moodle course with no assignments still completes the sync
+      Given Moodle course 5678 has no assignments
+      And "lecturer" synced Moodle course "5678" at "2026-10-19T09:00:00Z"
+      When "lecturer" syncs Moodle course "5678" again at "2026-10-19T09:30:00Z"
+      Then the sync shall succeed
+      And Moodle shall not have been contacted
+
+    Scenario: A section sync does not count as a sync of the whole course
+      Given "lecturer" synced section 3 of Moodle course "1234" at "2026-10-19T09:00:00Z"
+      When "lecturer" syncs Moodle course "1234" again at "2026-10-19T09:30:00Z"
+      Then the sync shall succeed
+      And Moodle shall have been contacted again

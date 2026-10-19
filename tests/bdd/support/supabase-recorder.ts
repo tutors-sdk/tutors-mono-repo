@@ -124,6 +124,11 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     this.db.tableCalls.push(this.call);
     const error = this.db.tableErrors.get(this.call.table);
     if (error) return { data: null, error };
+    if (this.call.op === "upsert") {
+      const sent = this.call.rows ?? [this.call.row!];
+      const rejected = this.db.upsertErrors.find((e) => e.table === this.call.table && sent.some(e.when));
+      if (rejected) return { data: null, error: rejected.error };
+    }
 
     const rows = this.db.rows(this.call.table);
     if (this.call.op === "upsert") {
@@ -221,6 +226,8 @@ export class RecordingSupabase {
   tableCalls: TableCall[] = [];
   rpcCalls: RpcCall[] = [];
   tableErrors = new Map<string, DbError>();
+  /** Upserts the database rejects when any of their rows matches, as a constraint or a failed batch would. */
+  upsertErrors: { table: string; when: (row: Row) => boolean; error: DbError }[] = [];
   channels: RecordingChannel[] = [];
   /** Whether the broker confirms joins; off plays a broker that accepts the socket but never the join. */
   confirmJoins = true;
@@ -234,6 +241,7 @@ export class RecordingSupabase {
     this.tableCalls = [];
     this.rpcCalls = [];
     this.tableErrors.clear();
+    this.upsertErrors = [];
     this.channels = [];
     this.confirmJoins = true;
     this.missingFunctions.clear();
@@ -280,7 +288,16 @@ export class RecordingSupabase {
     if (fn === "record_page_view") {
       const lr = record(args.p_course_id, args.p_student_id, args.p_lo_id);
       if (lr) Object.assign(lr, { duration: Number(lr.duration ?? 0) + 1, count: Number(lr.count ?? 0) + 1, date_last_accessed: new Date().toISOString(), type: args.p_lo_type });
-      else this.rows("learning_records").push({ course_id: args.p_course_id, student_id: args.p_student_id, lo_id: args.p_lo_id, duration: 1, count: 1, date_last_accessed: new Date().toISOString(), type: args.p_lo_type });
+      else
+        this.rows("learning_records").push({
+          course_id: args.p_course_id,
+          student_id: args.p_student_id,
+          lo_id: args.p_lo_id,
+          duration: 1,
+          count: 1,
+          date_last_accessed: new Date().toISOString(),
+          type: args.p_lo_type
+        });
       const cal = day(args.p_day, args.p_student_id, args.p_course_id);
       if (cal) Object.assign(cal, { timeactive: Number(cal.timeactive ?? 0) + 1, pageloads: Number(cal.pageloads ?? 0) + 1 });
       else this.rows("calendar").push({ id: args.p_day, studentid: args.p_student_id, courseid: args.p_course_id, timeactive: 1, pageloads: 1 });

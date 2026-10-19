@@ -134,6 +134,19 @@ Per-submission records synced from Moodle. Keyed on `id`.
 **Consent required:** No
 **Deletion impact:** Removes a student's assessment submission history. **Identifier is the Moodle `external_userid`, not the GitHub login** — see the deletion note below.
 
+### `moodle_syncs`
+When each Moodle sync last completed, used to throttle repeats. Authoritative columns from `supabase/migrations/20261019152400_moodle_syncs.sql`. No PII.
+
+| Field | Type | PII | Description |
+|-------|------|-----|-------------|
+| courseid | string | No | Course identifier (key, with scope) |
+| scope | string | No | Moodle course id, or `<course>/<section>` for a section sync (key, with courseid) |
+| synced_at | timestamp | No | When the sync completed |
+
+**Legal basis:** Legitimate interest (assessment administration)
+**Consent required:** No
+**Deletion impact:** None per-user
+
 ### `tutors_content_locks`
 RBAC content-lock state. Composite key `course_id, lo_route`.
 
@@ -209,7 +222,7 @@ User browses course → learning_records          (per-LO activity)
                     → Supabase Realtime          (ephemeral presence)
 
 Errors             → app_errors                  (observability)
-Moodle sync        → assignments, assignments_submissions (assessment)
+Moodle sync        → assignments, assignments_submissions, moodle_syncs (assessment)
 Instructor action  → tutors_content_locks        (RBAC locks)
 Course catalogue   → "tutors-connect-courses"    (aggregate visits, no PII)
 ```
