@@ -4,8 +4,9 @@
   import { onMount } from "svelte";
   import { locale, t } from "@tutors/i18n";
   import log from "@tutors/logger";
+  import type { DateRange } from "#lib/dateRange.ts";
 
-  let { courseId }: { courseId: string } = $props();
+  let { courseId, period }: { courseId: string; period: DateRange } = $props();
 
   let course = $state<TutorsTimeCourse | null>(null);
   let loading = $state(true);
@@ -21,7 +22,7 @@
       return;
     }
     try {
-      const courseTime = await TutorsTime.loadCourseTime(id);
+      const courseTime = await TutorsTime.loadCourseTime(id, period.startDate, period.endDate);
       course = courseTime;
       error = course?.learningRecordsError ?? null;
     } catch (e) {

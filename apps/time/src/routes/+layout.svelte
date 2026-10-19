@@ -5,6 +5,8 @@
   import { browser } from "$app/env";
   import TutorsShell from "@tutors/ui-navigators/TutorsShell.svelte";
   import Navigation from "#lib/components/Navigation.svelte";
+  import { page } from "$app/state";
+  import { withDateRange } from "#lib/dateRange.ts";
 
   let { children, data } = $props();
 
@@ -20,7 +22,7 @@
   });
 </script>
 
-<TutorsShell showConnect={false} title={data.courseTitle ?? t("classTime.app")} titleHref={data.courseId ? `/${data.courseId}` : "/"}>
+<TutorsShell showConnect={false} title={data.courseTitle ?? t("classTime.app")} titleHref={data.courseId ? withDateRange(`/${data.courseId}`, page.url.search) : "/"}>
   {#snippet navigation()}<Navigation courseId={data.courseId ?? ""} />{/snippet}
   {@render children()}
 </TutorsShell>

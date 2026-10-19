@@ -99,9 +99,9 @@ export const TutorsTime: TutorsTimeService = {
   },
 
   /**
-   * Load a course calendar by ID. Returns cached CourseTime if already loaded (when no date filter),
-   * otherwise creates and loads a new one.
-   * Caching only applies when both startDate and endDate are null/undefined.
+   * Load a course calendar by ID for a date range (inclusive YYYY-MM-DD; either bound may be open).
+   * Returns the cached CourseTime if that course was already loaded for the same range,
+   * otherwise creates and loads a new one. Only a load with no error is cached.
    */
   async loadCourseTime(
     id: string,
@@ -110,23 +110,23 @@ export const TutorsTime: TutorsTimeService = {
   ): Promise<CourseTime> {
     if (!id) throw new Error("Course ID is required");
 
-    const useCache = (startDate == null || startDate === "") && (endDate == null || endDate === "");
     const normalizedStart = startDate && startDate.trim() ? startDate.trim() : null;
     const normalizedEnd = endDate && endDate.trim() ? endDate.trim() : null;
+    // One entry per course and range, so every view of a filtered course reuses one load.
+    const cacheKey = `${id}|${normalizedStart ?? ""}|${normalizedEnd ?? ""}`;
 
-    if (useCache) {
-      const cached = courseMap.get(id);
-      if (cached) {
-        return cached;
-      }
+    const cached = courseMap.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     const { title } = await this.getCourseDisplayInfo(id);
     const courseTime = new CourseTime();
     await courseTime.loadTime(id, normalizedStart, normalizedEnd, title);
 
-    if (useCache) {
-      courseMap.set(id, courseTime);
+    // A partial load (learning records failed) is not kept, so Retry queries the database again.
+    if (!courseTime.error && !courseTime.learningRecordsError) {
+      courseMap.set(cacheKey, courseTime);
     }
 
     return courseTime;
