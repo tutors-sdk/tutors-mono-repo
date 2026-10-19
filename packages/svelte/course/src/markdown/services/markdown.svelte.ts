@@ -51,7 +51,8 @@ import xml from "shiki/langs/xml.mjs";
 import vue from "shiki/langs/vue.mjs";
 import { browser } from "$app/env";
 import type { MarkdownService } from "../types.ts";
-import { courseProtocol, rune } from "@tutors/runes";
+import { rune } from "@tutors/runes";
+import { courseProtocolOf } from "../../course/services/lo-tree.ts";
 
 /** Supported programming languages for syntax highlighting */
 const languages = [
@@ -144,7 +145,7 @@ export const markdownService: MarkdownService = {
     const url = lab.route.replace(`/lab/${course.courseId}`, course.courseUrl);
     lab?.los?.forEach((step) => {
       if (course.courseUrl && !refreshOnly) {
-        step.contentMd = filter(step.contentMd, url, courseProtocol.value);
+        step.contentMd = filter(step.contentMd, url, courseProtocolOf(course));
       }
       step.contentHtml = convertMdToHtml(step.contentMd, currentCodeTheme.value);
       step.parentLo = lab;
@@ -161,7 +162,7 @@ export const markdownService: MarkdownService = {
   convertNoteToHtml(course: Course, note: Note, refreshOnly: boolean = false) {
     const url = note.route.replace(`/note/${course.courseId}`, course.courseUrl);
     if (!refreshOnly) {
-      note.contentMd = filter(note.contentMd, url, courseProtocol.value);
+      note.contentMd = filter(note.contentMd, url, courseProtocolOf(course));
     }
     note.contentHtml = convertMdToHtml(note.contentMd, currentCodeTheme.value);
   },
@@ -184,7 +185,7 @@ export const markdownService: MarkdownService = {
       if (cell.cellType === "markdown") {
         let md = cell.source || "";
         if (!refreshOnly) {
-          md = filter(md, url, courseProtocol.value);
+          md = filter(md, url, courseProtocolOf(course));
         }
         cell.sourceHtml = convertMdToHtml(md, currentCodeTheme.value);
       } else if (cell.cellType === "code") {

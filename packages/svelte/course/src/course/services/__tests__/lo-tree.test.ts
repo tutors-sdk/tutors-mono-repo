@@ -11,8 +11,9 @@ describe('determineCourseUrl()', () => {
   describe('WHEN a full Netlify URL is provided', () => {
     it('should extract courseId by removing .netlify.app', () => {
       const result = determineCourseUrl('https://test-course.netlify.app');
-      expect(result.courseId).toBe('https://test-course');
-      expect(result.courseUrl).toBe('https://test-course.netlify.app');
+      expect(result.courseId).toBe('test-course');
+      expect(result.courseUrl).toBe('test-course.netlify.app');
+      expect(result.protocol).toBe('https://');
     });
 
     it('should handle Netlify URL without protocol', () => {
@@ -25,8 +26,8 @@ describe('determineCourseUrl()', () => {
   describe('WHEN a custom domain URL is provided', () => {
     it('should use the full URL as both courseId and courseUrl', () => {
       const result = determineCourseUrl('https://example.com');
-      expect(result.courseId).toBe('https://example.com');
-      expect(result.courseUrl).toBe('https://example.com');
+      expect(result.courseId).toBe('example.com');
+      expect(result.courseUrl).toBe('example.com');
     });
 
     it('should handle custom domain without protocol', () => {
@@ -37,8 +38,8 @@ describe('determineCourseUrl()', () => {
 
     it('should handle URLs with paths', () => {
       const result = determineCourseUrl('https://example.com/my-course');
-      expect(result.courseId).toBe('https://example.com/my-course');
-      expect(result.courseUrl).toBe('https://example.com/my-course');
+      expect(result.courseId).toBe('example.com/my-course');
+      expect(result.courseUrl).toBe('example.com/my-course');
     });
   });
 
@@ -47,12 +48,14 @@ describe('determineCourseUrl()', () => {
       const result = determineCourseUrl('localhost:3000');
       expect(result.courseId).toBe('localhost:3000');
       expect(result.courseUrl).toBe('localhost:3000');
+      expect(result.protocol).toBe('http://');
     });
 
     it('should set protocol to http:// for IP addresses starting with 192', () => {
       const result = determineCourseUrl('192.168.1.100:8080');
       expect(result.courseId).toBe('192.168.1.100:8080');
       expect(result.courseUrl).toBe('192.168.1.100:8080');
+      expect(result.protocol).toBe('http://');
     });
   });
 

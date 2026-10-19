@@ -236,8 +236,8 @@ describe("determineCourseUrl() - Regex Edge Cases", () => {
     it("shall detect URL with protocol and TLD", () => {
       const result = determineCourseUrl("https://example.com");
 
-      expect(result.courseId).toBe("https://example.com");
-      expect(result.courseUrl).toBe("https://example.com");
+      expect(result.courseId).toBe("example.com");
+      expect(result.courseUrl).toBe("example.com");
     });
 
     it("shall detect URL without protocol but with TLD", () => {
@@ -278,8 +278,8 @@ describe("determineCourseUrl() - Regex Edge Cases", () => {
     it("shall detect Netlify URL with https protocol", () => {
       const result = determineCourseUrl("https://my-course.netlify.app");
 
-      expect(result.courseId).toBe("https://my-course");
-      expect(result.courseUrl).toBe("https://my-course.netlify.app");
+      expect(result.courseId).toBe("my-course");
+      expect(result.courseUrl).toBe("my-course.netlify.app");
     });
   });
 
@@ -299,53 +299,53 @@ describe("determineCourseUrl() - Regex Edge Cases", () => {
     });
   });
 
-  describe("WHEN input starts with 192 or localhost", () => {
-    it("shall set protocol to http:// for 192.x.x.x", () => {
+  describe("WHEN input is localhost or an IP address", () => {
+    it("shall resolve to http:// for 192.x.x.x", () => {
       const result = determineCourseUrl("192.168.1.1");
 
       expect(result.courseId).toBe("192.168.1.1");
       expect(result.courseUrl).toBe("192.168.1.1");
-      expect(courseProtocol.value).toBe("http://");
+      expect(result.protocol).toBe("http://");
     });
 
-    it("shall set protocol to http:// for 192.x.x.x with port", () => {
+    it("shall resolve to http:// for 192.x.x.x with port", () => {
       const result = determineCourseUrl("192.168.1.100:3000");
 
       expect(result.courseId).toBe("192.168.1.100:3000");
-      expect(courseProtocol.value).toBe("http://");
+      expect(result.protocol).toBe("http://");
     });
 
-    it("shall set protocol to http:// for localhost", () => {
+    it("shall resolve to http:// for localhost", () => {
       const result = determineCourseUrl("localhost");
 
       expect(result.courseId).toBe("localhost");
       expect(result.courseUrl).toBe("localhost");
-      expect(courseProtocol.value).toBe("http://");
+      expect(result.protocol).toBe("http://");
     });
 
-    it("shall set protocol to http:// for localhost with port", () => {
+    it("shall resolve to http:// for localhost with port", () => {
       const result = determineCourseUrl("localhost:3000");
 
       expect(result.courseId).toBe("localhost:3000");
-      expect(courseProtocol.value).toBe("http://");
+      expect(result.protocol).toBe("http://");
     });
   });
 
   describe("WHEN input does NOT start with 192 or localhost", () => {
-    it("shall not change protocol for regular domains", () => {
+    it("shall resolve to https:// for regular domains", () => {
       courseProtocol.value = "https://";
 
       const result = determineCourseUrl("example.com");
 
-      expect(courseProtocol.value).toBe("https://");
+      expect(result.protocol).toBe("https://");
     });
 
-    it("shall not change protocol for plain courseIds", () => {
+    it("shall resolve to https:// for plain courseIds", () => {
       courseProtocol.value = "https://";
 
       const result = determineCourseUrl("my-course");
 
-      expect(courseProtocol.value).toBe("https://");
+      expect(result.protocol).toBe("https://");
     });
   });
 });
