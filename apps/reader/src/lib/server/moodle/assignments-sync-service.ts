@@ -1,7 +1,11 @@
+/**
+ * Copies one course's Moodle assignments and submissions into Supabase, at most once per
+ * SYNC_INTERVAL_MINUTES per course. Called only by the educator-checked moodle-sync route.
+ */
 import * as env from "$app/env/private";
 import { nowMs } from "@tutors/runtime";
-import { AssignmentsService, type MoodleModule } from "#lib/server/services/AssignmentsService.ts";
-import { getLastSyncedAt, upsertAssignments, upsertSubmissions } from "#lib/server/db/submissionsRepository.ts";
+import { AssignmentsService, type MoodleModule } from "#lib/server/moodle/assignments-service.ts";
+import { getLastSyncedAt, upsertAssignments, upsertSubmissions } from "#lib/server/moodle/submissions-repository.ts";
 
 export class AssignmentsSyncService {
   private readonly assignmentsService = new AssignmentsService();

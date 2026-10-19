@@ -488,7 +488,7 @@ lands.
 
 | Tier | Would own | Tracked by |
 |---|---|---|
-| F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](../RBAC.md) |
+| F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); the Moodle sync is educator-only in the reader (Rules 0633-0634). See [RBAC.md](../RBAC.md) |
 | H | Message contracts for the realtime and broadcast protocols, versioned | No issue yet; shapes are snapshot-checked in `tests/contract/` |
 | I | Data migration and the Supabase exit | No issue yet |
 

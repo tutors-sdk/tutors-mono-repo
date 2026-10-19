@@ -18,6 +18,8 @@ export type TableCall = {
   op: "select" | "upsert" | "update";
   columns?: string;
   row?: Row;
+  /** Every row of a bulk upsert (an array passed to upsert); `row` is unset then. */
+  rows?: Row[];
   options?: { onConflict?: string };
   filters: Filter[];
   /** How many rows a select handed back, so a step can see what the database actually returned. */
@@ -44,9 +46,10 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     return this;
   }
 
-  upsert(row: Row, options?: { onConflict?: string }) {
+  upsert(row: Row | Row[], options?: { onConflict?: string }) {
     this.call.op = "upsert";
-    this.call.row = row;
+    if (Array.isArray(row)) this.call.rows = row;
+    else this.call.row = row;
     this.call.options = options;
     return this;
   }
@@ -124,11 +127,12 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
 
     const rows = this.db.rows(this.call.table);
     if (this.call.op === "upsert") {
-      const row = this.call.row!;
-      const keys = (this.call.options?.onConflict ?? Object.keys(row)[0]).split(",").map((k) => k.trim());
-      const at = rows.findIndex((existing) => keys.every((k) => existing[k] === row[k]));
-      if (at >= 0) rows[at] = { ...rows[at], ...row };
-      else rows.push({ ...row });
+      for (const row of this.call.rows ?? [this.call.row!]) {
+        const keys = (this.call.options?.onConflict ?? Object.keys(row)[0]).split(",").map((k) => k.trim());
+        const at = rows.findIndex((existing) => keys.every((k) => existing[k] === row[k]));
+        if (at >= 0) rows[at] = { ...rows[at], ...row };
+        else rows.push({ ...row });
+      }
       return { data: null, error: null };
     }
     if (this.call.op === "update") {
@@ -377,7 +381,7 @@ export class RecordingSupabase {
   }
 
   upserts(table: string): Row[] {
-    return this.tableCalls.filter((c) => c.table === table && c.op === "upsert").map((c) => c.row!);
+    return this.tableCalls.filter((c) => c.table === table && c.op === "upsert").flatMap((c) => c.rows ?? [c.row!]);
   }
 }
 

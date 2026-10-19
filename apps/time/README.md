@@ -4,7 +4,7 @@ Class activity for lecturers: how long students spend in a course, day by day, w
 
 ## Features
 
-- Open a course by URL, optionally for a date range, with an optional Moodle assignment sync
+- Open a course by URL, optionally for a date range
 - Medians, calendar and lab views, a student drill-down, raw records and Moodle assignments
 - Heatmaps and heat-tinted tables on the Paper tokens, shared with the reader's My time page
 - Uses `TutorsShell` with its own Class activity sidebar
@@ -16,7 +16,7 @@ Class activity for lecturers: how long students spend in a course, day by day, w
 - `/[courseid]/medians` - Course medians (`/[courseid]` redirects here)
 - `/[courseid]/calendar/byweek`, `/byday`, `/raw` - Calendar views
 - `/[courseid]/lab/bylab`, `/bystep`, `/learning-records` - Lab views
-- `/[courseid]/assignments` - Moodle assignments and submission counts
+- `/[courseid]/assignments` - Moodle assignments and submission counts, synced by an educator from Educator Control in the reader
 - `/[courseid]/[studentid]` - One student beside the course median
 
 ## Development

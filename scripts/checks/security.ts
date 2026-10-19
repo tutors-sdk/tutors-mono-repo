@@ -195,7 +195,7 @@ export interface InventoryEntry {
 
 /**
  * The mutating-route inventory, one route per line:
- *   `time POST /api/sync | who: ...`
+ *   `reader PUT /api/courses/[courseid]/locks | who: ...`
  *   `reader POST /auth/* | hook | who: ...`
  */
 export function parseInventory(text: string): InventoryEntry[] {
