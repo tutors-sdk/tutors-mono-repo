@@ -1,4 +1,9 @@
 const en = {
+  "lecturer.enrollment.export": "Export enrollment.yaml",
+  "lecturer.enrollment.exporting": "Exporting…",
+  "lecturer.enrollment.exportHelp": "Add recorded course visitors to your existing list. Review the draft before using it to restrict access.",
+  "lecturer.enrollment.exportError": "Export failed. Check your sign-in and course connection, then try again.",
+  "lecturer.enrollment.exportUnsupported": "Enrollment export currently supports Netlify-hosted courses.",
   "shell.light": "Light",
   "shell.dark": "Dark",
   "shell.portrait": "Portrait",

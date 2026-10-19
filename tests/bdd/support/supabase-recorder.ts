@@ -24,12 +24,14 @@ export type TableCall = {
   returned?: number;
   order?: { column: string; ascending: boolean };
   limit?: number;
+  range?: [number, number];
 };
 
 export type RpcCall = { fn: string; args: Row };
 
 class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | null }> {
   private mode: "many" | "single" | "maybeSingle" = "many";
+  private orders: { column: string; ascending: boolean }[] = [];
 
   constructor(
     private readonly db: RecordingSupabase,
@@ -78,11 +80,17 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
 
   order(column: string, options?: { ascending?: boolean }) {
     this.call.order = { column, ascending: options?.ascending ?? true };
+    this.orders.push(this.call.order);
     return this;
   }
 
   limit(count: number) {
     this.call.limit = count;
+    return this;
+  }
+
+  range(from: number, to: number) {
+    this.call.range = [from, to];
     return this;
   }
 
@@ -130,12 +138,17 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
 
     const found = rows.filter((r) => this.matches(r));
     this.call.returned = found.length;
-    const order = this.call.order;
-    if (order) {
-      const direction = order.ascending ? 1 : -1;
-      found.sort((a, b) => String(a[order.column]).localeCompare(String(b[order.column])) * direction);
+    found.sort((a, b) => {
+      for (const order of this.orders) {
+        const compared = String(a[order.column]).localeCompare(String(b[order.column])) * (order.ascending ? 1 : -1);
+        if (compared) return compared;
+      }
+      return 0;
+    });
+    if (this.mode === "many") {
+      const page = this.call.range ? found.slice(this.call.range[0], this.call.range[1] + 1) : found;
+      return { data: this.call.limit === undefined ? page : page.slice(0, this.call.limit), error: null };
     }
-    if (this.mode === "many") return { data: this.call.limit === undefined ? found : found.slice(0, this.call.limit), error: null };
     if (found.length === 0 && this.mode === "single") return { data: null, error: { message: "no rows", code: "PGRST116" } };
     return { data: found[0] ?? null, error: null };
   }

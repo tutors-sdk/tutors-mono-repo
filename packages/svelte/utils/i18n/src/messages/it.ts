@@ -1,4 +1,9 @@
 const it: Record<string, string> = {
+  "lecturer.enrollment.export": "Esporta enrollment.yaml",
+  "lecturer.enrollment.exporting": "Esportazione…",
+  "lecturer.enrollment.exportHelp": "Aggiungi i visitatori registrati del corso all’elenco esistente. Verifica la bozza prima di limitare l’accesso.",
+  "lecturer.enrollment.exportError": "Esportazione non riuscita. Verifica l’accesso e la connessione al corso, poi riprova.",
+  "lecturer.enrollment.exportUnsupported": "L’esportazione supporta attualmente i corsi ospitati su Netlify.",
   "shell.light": "Chiaro",
   "shell.dark": "Scuro",
   "shell.portrait": "Verticale",

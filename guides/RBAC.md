@@ -41,6 +41,14 @@ students:
 
 When a user visits a course with an enrollment file and is authenticated, the system checks their GitHub login against the `educators` array. If matched, they receive the educator role; otherwise they are a student.
 
+### Exporting a starting list
+
+For a Netlify-hosted course, open **Educator Control → Enrollment → Export enrollment.yaml**. This also supports courses opened through a full Netlify URL, preserving the course ID used by their activity records. The download adds unique GitHub usernames from the course's recorded calendar activity to the existing whitelist and student list. It keeps educators, manually entered names and other enrollment fields, excludes educators from new student entries, and uses stored GitHub display names where available (otherwise the username).
+
+The server verifies the signed-in user against the published course's educators before reading student data. To start collecting a new class, publish an enrollment file listing the educators with an empty whitelist, and ask students to sign in and visit the course. Anonymous visits and activity recorded while analytics are disabled cannot supply GitHub usernames.
+
+The exported file is a draft: visitors can include staff or former students, GitHub names are not verified class-list names, and students who have not visited are missing. Review it, add it to the course source and rebuild to apply it. The export does not update the repository or change access by itself. Custom-hosted courses are not supported by this export yet.
+
 ## Auth Levels
 
 Auth levels are set in `properties.yaml`:
