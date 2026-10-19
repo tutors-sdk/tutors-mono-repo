@@ -12,12 +12,14 @@ vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 import { goto } from "$app/navigation";
 import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
+import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
+import { supabaseProfile } from "../../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/whitelist-management.feature");
 
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-describeFeature(feature, ({ Scenario }) => {
+describeFeature(feature, ({ Scenario, Rule }) => {
   let course: Course;
 
   // `auth: 1` in properties.yaml is what makes the reader demand a sign-in; the whitelist comes from enrollment.yaml.
@@ -28,6 +30,16 @@ describeFeature(feature, ({ Scenario }) => {
   const signedIn = (_ctx: unknown, name: string) => signIn(githubUser(name));
   const openCourse = () => openLo(course, labsOf(course)[0]);
   const granted = () => expect(goto).not.toHaveBeenCalled();
+  /** The course ids My courses lists under Recently accessed, read as a newly opened page reads them: from the stored profile. */
+  const recentlyAccessed = async () => {
+    supabaseProfile.courseVisits = [];
+    return (await tutorsConnectService.getCourseVisits()).filter((visit) => !visit.favourite).map((visit) => visit.id);
+  };
+  // `private: 1` and `auth: 1` in properties.yaml, as the harness's private course has them.
+  const privateCourse = (_ctx: unknown, courseId: string, whitelist: string, educators: string) => {
+    freshBrowser();
+    course = publishedCourse(courseId, 1, { auth: 1, private: 1 }, { whitelist: list(whitelist), educators: list(educators), students: [] });
+  };
 
   Scenario("Private course requires authentication", ({ Given, And, When, Then }) => {
     Given("the course {string} requires authentication", (_ctx, courseId: string) => {
@@ -66,4 +78,30 @@ describeFeature(feature, ({ Scenario }) => {
     When("the course is opened", openCourse);
     Then("the system shall grant access regardless of whitelist status", granted);
   });
+
+  Rule(
+    "If a signed-in student on neither the whitelist nor the educators of a private course opens it, then the reader shall leave that course out of the student's Recently accessed courses.",
+    ({ RuleScenario }) => {
+      RuleScenario("A student turned away from a private course does not see it in Recently accessed", ({ Given, And, When, Then }) => {
+        Given("the private course {string}, with the whitelist {string} and the educators {string}", privateCourse);
+        And("{string} is signed in", signedIn);
+        When("the course is opened", openCourse);
+        Then("the student is sent to {string}", (_ctx, path: string) => {
+          expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
+        });
+        And("{string} is not among the student's Recently accessed courses", async (_ctx, courseId: string) => {
+          expect(await recentlyAccessed()).not.toContain(courseId);
+        });
+      });
+
+      RuleScenario("A whitelisted student sees the private course in Recently accessed", ({ Given, And, When, Then }) => {
+        Given("the private course {string}, with the whitelist {string} and the educators {string}", privateCourse);
+        And("{string} is signed in", signedIn);
+        When("the course is opened", openCourse);
+        Then("{string} is among the student's Recently accessed courses", async (_ctx, courseId: string) => {
+          expect(await recentlyAccessed()).toContain(courseId);
+        });
+      });
+    }
+  );
 });
