@@ -44,7 +44,7 @@ with their tests.
 1 Jun and 26 Jul sum the predecessor repositories; the rest is this repository's `main` at the
 end of each day, and 19 Oct is `main` with #520 merged (`main` alone that day: 2,285 tests, 434 scenarios, 222 Rules).
 #520 adds few `it(` calls because its journeys are Playwright tests bound to Gherkin Rules: 29 Rules, 43 scenarios,
-and 21 signed-in journeys against the built images where `main` had none. Tests are declared `it(`, `test(` and `Deno.test(` calls, not pass counts.
+and 20 signed-in journeys against the built images where `main` had none. Tests are declared `it(`, `test(` and `Deno.test(` calls, not pass counts.
 [measure.py](../evolution/tools/measure.py) reproduces every column.
 
 ![Test files, CI jobs, guard scripts and scenarios](../evolution/img/test-multiples.svg)
