@@ -97,6 +97,17 @@ Feature: Content lock changes are checked on the server
       And this browser shall store "/topic/pf1/topic-01" as "locked"
       And Educator Control shall say lock changes are saved in this browser only
 
+    Scenario: A change the server refuses after the educator has moved to another course leaves that course alone
+      Given Educator Control shows "/topic/pf1/topic-01" as "unlocked"
+      And the server is slow to answer lock changes
+      When the educator sets "/topic/pf1/topic-01" to "locked"
+      And the educator opens course "pf2" with "/topic/pf2/topic-01" locked
+      And the server refuses the waiting lock change
+      Then Educator Control shall show "/topic/pf2/topic-01" as "locked"
+      And Educator Control shall show "/topic/pf1/topic-01" as "no lock"
+      And this browser shall store "/topic/pf1/topic-01" as "unlocked"
+      And the educator shall be told "Lock change not saved"
+
   @rule-0658 @ears-state-driven
   Rule: While a content lock change is waiting for the server, the reader shall refuse another change to that lock.
 

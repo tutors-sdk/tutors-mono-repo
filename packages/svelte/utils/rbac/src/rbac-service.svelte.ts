@@ -106,6 +106,8 @@ function createRbacService() {
     // for enrolled students while locks are refreshed for the same course.
     if (loadedLocksCourseId !== courseId) {
       locksLoaded.value = false;
+      // Whether the server keeps lock changes is learned again for each course.
+      savedLocally.value = false;
     }
 
     try {
@@ -138,49 +140,64 @@ function createRbacService() {
 
   async function toggleContentLock(loRoute: string, locked: boolean): Promise<LockChangeResult> {
     const courseId = resolvedCourseId();
+    const pendingKey = `${courseId}|${loRoute}`;
     // One change per lock at a time, so a late answer can never undo a newer change.
-    if (!courseId || pendingLocks.value.has(loRoute)) return "unsaved";
+    if (!courseId || pendingLocks.value.has(pendingKey)) return "unsaved";
 
+    // The course whose locks are on screen: an answer that arrives after the educator has moved to another
+    // course must not touch that course's locks or the local-only notice.
+    const shownCourseId = loadedLocksCourseId;
+    const stillShown = () => loadedLocksCourseId === shownCourseId;
     const previous = contentLocks.value.get(loRoute);
-    setPending(loRoute, true);
+    setPending(pendingKey, true);
     applyLock(courseId, loRoute, locked);
     try {
       const result = await upsertLock(courseId, loRoute, locked);
       if (result === "saved") {
-        savedLocally.value = false;
+        if (stillShown()) savedLocally.value = false;
         return "saved";
       }
       if (result === "unavailable") {
-        savedLocally.value = true;
+        if (stillShown()) savedLocally.value = true;
         return "local";
       }
       // Refused or unreachable: put the switch back so the panel shows what students see.
-      applyLock(courseId, loRoute, previous);
+      applyLock(courseId, loRoute, previous, stillShown());
       return "unsaved";
     } finally {
-      setPending(loRoute, false);
+      setPending(pendingKey, false);
     }
   }
 
-  function setPending(loRoute: string, pending: boolean) {
+  function setPending(pendingKey: string, pending: boolean) {
     const updated = new Set(pendingLocks.value);
-    if (pending) updated.add(loRoute);
-    else updated.delete(loRoute);
+    if (pending) updated.add(pendingKey);
+    else updated.delete(pendingKey);
     pendingLocks.value = updated;
   }
 
   function isLockPending(loRoute: string): boolean {
-    return pendingLocks.value.has(loRoute);
+    return pendingLocks.value.has(`${resolvedCourseId()}|${loRoute}`);
   }
 
-  function applyLock(courseId: string, loRoute: string, locked: boolean | undefined) {
-    const updated = new Map(contentLocks.value);
+  /** Sets one lock in the course's localStorage copy and, when that course is on screen, in contentLocks too. */
+  function applyLock(courseId: string, loRoute: string, locked: boolean | undefined, onScreen = true) {
+    const updated = new Map(onScreen ? contentLocks.value : storedLocks(courseId));
     if (locked === undefined) updated.delete(loRoute);
     else updated.set(loRoute, locked);
-    contentLocks.value = updated;
+    if (onScreen) contentLocks.value = updated;
 
     if (typeof window !== "undefined") {
       localStorage.setItem(`tutors-locks-${courseId}`, JSON.stringify(Object.fromEntries(updated)));
+    }
+  }
+
+  function storedLocks(courseId: string): Map<string, boolean> {
+    if (typeof window === "undefined") return new Map();
+    try {
+      return new Map(Object.entries(JSON.parse(localStorage.getItem(`tutors-locks-${courseId}`) ?? "{}") as Record<string, boolean>));
+    } catch {
+      return new Map();
     }
   }
 

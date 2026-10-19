@@ -105,6 +105,7 @@ describeFeature(feature, ({ Background, Rule }) => {
       vi.mocked(toaster.error).mockClear();
       answer = "saved";
       lockRequests = 0;
+      releaseWaiting = undefined;
       service.configured = true;
       courseId = id;
       fetchCourse = vi.fn(async () => Response.json({ enrollment: { educators: [educator], whitelist: [], students: [] } }));
@@ -233,6 +234,31 @@ describeFeature(feature, ({ Background, Rule }) => {
           expect(rbacService.locksSavedLocally).toBe(true);
           expect(toaster.error).not.toHaveBeenCalled();
         });
+      });
+
+      RuleScenario("A change the server refuses after the educator has moved to another course leaves that course alone", ({ Given, When, Then, And }) => {
+        Given("Educator Control shows {string} as {string}", (_ctx, loRoute: string, state: string) => openEducatorControl(loRoute, state));
+        And("the server is slow to answer lock changes", () => {
+          answer = "slow";
+        });
+        When("the educator sets {string} to {string}", (ctx, loRoute: string, state: string) => {
+          waitingChange = setLock(ctx, loRoute, state);
+        });
+        And("the educator opens course {string} with {string} locked", async (_ctx, otherCourse: string, loRoute: string) => {
+          recorder.seed("tutors_content_locks", [{ course_id: otherCourse, lo_route: loRoute, locked: true }]);
+          rbacService.loadRole("lecturer", otherCourse, { enrollment: { educators: ["lecturer"] } });
+          await rbacService.loadContentLocks(otherCourse);
+        });
+        And("the server refuses the waiting lock change", async () => {
+          await vi.waitFor(() => expect(releaseWaiting).toBeDefined());
+          answer = "refused";
+          releaseWaiting!();
+          await waitingChange;
+        });
+        Then("Educator Control shall show {string} as {string}", showsLock);
+        And("Educator Control shall show {string} as {string}", showsLock);
+        And("this browser shall store {string} as {string}", storesLock);
+        And("the educator shall be told {string}", toldNotSaved);
       });
     }
   );
