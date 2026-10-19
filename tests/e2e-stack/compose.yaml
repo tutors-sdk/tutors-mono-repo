@@ -21,8 +21,10 @@ networks:
     ipam:
       config:
         # Fixed so the apps' extra_hosts can point github.com at the identity stub and
-        # persistence.e2e.test at the persistence stub.
+        # persistence.e2e.test at the persistence stub. Every other container takes an address from
+        # ip_range, so none can take .10 or .11 before the stubs start ("Address already in use").
         - subnet: 172.30.0.0/24
+          ip_range: 172.30.0.128/25
 
 # Sign-in on: GitHub OAuth goes to the identity stub (github.com resolves to it, its CA is trusted) and
 # Supabase to the persistence stub. Not real secrets; they exist only inside this stack. HARNESS_NOW is the
