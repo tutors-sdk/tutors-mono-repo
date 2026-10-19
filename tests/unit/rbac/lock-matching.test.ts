@@ -3,7 +3,6 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
   getLocksForCourse: vi.fn(),
   upsertLock: vi.fn(),
-  removeLock: vi.fn(),
 }));
 
 vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
