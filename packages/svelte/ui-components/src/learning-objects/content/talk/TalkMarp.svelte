@@ -4,6 +4,7 @@
   import type { Talk } from "@tutors/tutors-model-lib";
   import { renderMarpSlides, buildMarpMarkdown } from "@tutors/course/markdown";
   import { mermaidify } from "@tutors/course/markdown";
+  import { marpSlideElements } from "./marp-slides";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
   import log from "@tutors/logger";
@@ -25,27 +26,16 @@
   const currentSlideHtml = $derived(slideElements[slideIndex] ?? "");
 
   onMount(() => {
-
     loadSlides();
   });
 
-
   async function loadSlides() {
-    loading = true; error = "";
+    loading = true;
+    error = "";
     try {
       const { html, css } = await renderMarpSlides(buildMarpMarkdown(lo));
       marpCss = css;
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      const svgs = doc.querySelectorAll("svg[data-marpit-svg]");
-      if (svgs.length > 0) {
-        slideElements = Array.from(svgs).map((svg) => svg.outerHTML);
-      } else {
-        const sections = doc.querySelectorAll("section");
-        slideElements = Array.from(sections).map((s) => s.outerHTML);
-      }
+      slideElements = marpSlideElements(html);
       loading = false;
     } catch (e) {
       log.error("Error rendering Marp slides:", e);
@@ -88,7 +78,7 @@
   {/if}
 </svelte:head>
 
-<svelte:document onfullscreenchange={() => fullscreen = document.fullscreenElement === viewport} />
+<svelte:document onfullscreenchange={() => (fullscreen = document.fullscreenElement === viewport)} />
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (The focused presentation surface owns arrow-key slide navigation.) -->
 <section bind:this={viewport} class="ui-panel media-viewer" aria-label={lo.title} tabindex="0" onkeydown={keypressInput}>
@@ -121,9 +111,7 @@
       <button class="ui-button" onclick={loadSlides}>Retry</button>
     </div>
   {:else if totalSlides === 0}
-    <div class="ui-empty flex items-center justify-center">
-      No slides found in this presentation.
-    </div>
+    <div class="ui-empty flex items-center justify-center">No slides found in this presentation.</div>
   {:else}
     <div class="marp-viewport not-prose" use:mermaidify={currentSlideHtml}>
       <div class="marp-slides">

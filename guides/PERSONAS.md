@@ -11,9 +11,11 @@ Three user personas drive the BDD test suite. Each represents a distinct stakeho
 **Permissions**: View public courses, access enrolled private courses, track own activity, search content, participate in live presence.
 
 **Test Coverage**:
+
 - `course-discovery.feature` — Browsing and searching the catalogue
 - `learning-progress.feature` — Time tracking, favourites, dashboards
 - `lab-interaction.feature` — Step navigation, content rendering, breadcrumbs
+- `marp-talks.feature` — Marp slide decks: course HTML cannot run script, slide structure survives
 - `live-presence.feature` — Online users, sentiment, privacy controls
 - `search-content.feature` — Full-text search, fenced code, result limits
 - [specifications/accessibility.md](./specifications/accessibility.md) — Keyboard nav, ARIA landmarks, alt text (prose; needs a browser)
@@ -27,6 +29,7 @@ Three user personas drive the BDD test suite. Each represents a distinct stakeho
 **Permissions**: All student permissions, plus: view analytics, view calendar heatmaps, view lab analytics, manage whitelists, view student engagement feeds.
 
 **Test Coverage**:
+
 - `course-authoring.feature` — Structure, LO types, ordering, properties
 - `analytics-calendar.feature` — Day/week pivots, medians, colour coding
 - `analytics-lab.feature` — Per-step analytics, zero-engagement detection
@@ -42,6 +45,7 @@ Three user personas drive the BDD test suite. Each represents a distinct stakeho
 **Permissions**: All instructor permissions, plus: configure themes, configure i18n, manage auth, access system internals.
 
 **Test Coverage**:
+
 - `theme-customisation.feature` — Themes, icon libraries, light/dark, code styles
 - [specifications/auth-integration.md](./specifications/auth-integration.md) — GitHub OAuth, sessions, expiry, error states (prose; needs a browser)
 - `i18n-localisation.feature` — 5 locales, fallbacks, cookie persistence
