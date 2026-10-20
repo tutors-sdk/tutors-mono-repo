@@ -1,0 +1,98 @@
+name: CHANGELOG Hint
+
+# The release harness reads a pull request's artefact hint, `fix(reader): x (persistence, sbom)`, to count the
+# differences it makes as declared rather than owed (CONTRIBUTING.md#changelog-entries). The hint is written from
+# memory; this checks it against the diff (scripts/checks/changelog-hint.ts, Rules 0664-0666):
+#
+#   1. check  reads the diff with no write access and names the artefacts it is certain to move that the hint leaves
+#             out (sbom, image-manifest, logs), and the title to use.
+#   2. fix    on a branch of this repository, sets that title and says why in one comment. The edit does not start
+#             another run: a GITHUB_TOKEN edit never does. On a fork, whose token cannot edit, it fails with the title
+#             to use; on a bot's pull request it warns.
+#
+# Permissions: the check job reads; only the fix job can write, and it runs no code from the pull request. The title,
+# the body and the outputs reach the shell only through env.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+concurrency:
+  group: changelog-hint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: The CHANGELOG hint names what the diff moves
+    # A release branch merges main back: every PR it carries was checked on its own way in.
+    if: ${{ !startsWith(github.head_ref, 'release/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      missing: ${{ steps.hint.outputs.missing }}
+      title: ${{ steps.hint.outputs.title }}
+      because: ${{ steps.hint.outputs.because }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      # The check needs tsx and js-yaml from the root package only.
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter .
+
+      - name: Read the diff against the hint
+        id: hint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm check:changelog-hint --base "$BASE_SHA" --head "$HEAD_SHA"
+
+  fix:
+    name: Add what the hint left out
+    needs: check
+    if: ${{ needs.check.outputs.missing != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write # set the title and leave one comment; nothing else
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      NUMBER: ${{ github.event.pull_request.number }}
+      TITLE: ${{ needs.check.outputs.title }}
+      BECAUSE: ${{ needs.check.outputs.because }}
+      HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+      AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+    steps:
+      - name: Set the title, or say what it should be
+        run: |
+          if [ "$AUTHOR_TYPE" = "Bot" ]; then
+            echo "::warning title=CHANGELOG hint::The hint leaves out artefacts this diff moves ($BECAUSE). Retitle the pull request to: $TITLE"
+            exit 0
+          fi
+          if [ "$HEAD_REPO" != "$REPO" ]; then
+            echo "::error title=CHANGELOG hint::The hint leaves out artefacts this diff moves ($BECAUSE). Retitle the pull request to: $TITLE"
+            exit 1
+          fi
+          gh api -X PATCH "repos/$REPO/pulls/$NUMBER" -f title="$TITLE" --silent
+          gh api "repos/$REPO/issues/$NUMBER/comments" --silent -f body="Added the artefacts this diff moves to the title's CHANGELOG hint ($BECAUSE), so the release harness counts their differences as declared. Title now: \`$TITLE\`"
+          echo "Title set to: $TITLE" >> "$GITHUB_STEP_SUMMARY"

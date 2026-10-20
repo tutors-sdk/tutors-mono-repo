@@ -39,7 +39,7 @@ Everything else runs in CI or nightly and is **not** expected of you locally: fu
 
 ## If a student, lecturer or operator can observe the change
 
-- [ ] The CHANGELOG line (or the line to add at release time) names the artefacts it moves, e.g. `(axe, dom)`; see [Changelog Entries](../CONTRIBUTING.md#changelog-entries). Write `none` if nothing observable should differ
+- [ ] The CHANGELOG line (or the line to add at release time) names the artefacts it moves, e.g. `(axe, dom)`; see [Changelog Entries](../CONTRIBUTING.md#changelog-entries). Write `none` if nothing observable should differ. CI adds `sbom`, `image-manifest` or `logs` to the title when the diff moves them
 - [ ] A migration under `supabase/migrations/` is expand-only and `pnpm check:migrations` passes; see [guides/MIGRATIONS.md](../guides/MIGRATIONS.md)
 
 ## Anything the reviewer should know
