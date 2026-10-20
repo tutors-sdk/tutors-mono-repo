@@ -76,7 +76,7 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
   );
 
   Rule(
-    "When a pull request's CHANGELOG hint leaves out an artefact its diff requires, tutors shall add the missing artefact to the title's hint, keeping every artefact the title or the CHANGELOG line already declared.",
+    "When a pull request's title hint leaves out an artefact its diff requires, tutors shall set the title's hint to every artefact the title or the CHANGELOG line declared and every artefact the diff requires.",
     ({ RuleScenario }) => {
       RuleScenario("The missing artefact joins the title's hint", ({ Given, And, When, Then }) => {
         Given("a pull request titled {string}", titled);
@@ -88,6 +88,18 @@ describeFeature(feature, ({ Rule, BeforeEachScenario }) => {
       });
 
       RuleScenario("A hint in the CHANGELOG line moves to the title with the missing artefact", ({ Given, And, When, Then }) => {
+        Given("a pull request titled {string}", titled);
+        And("its body has the CHANGELOG line {string}", (_ctx, line: string) => {
+          body = `## Changes\n\n${line}\n`;
+        });
+        And("a pull request that adds {string} to the dependencies of {string}", addsDependency);
+        When("the CHANGELOG hint is checked", () => {});
+        Then("the title shall become {string}", (_ctx, expected: string) => {
+          expect(fixedTitle(title, body, requiredHints(changes))).toBe(expected);
+        });
+      });
+
+      RuleScenario("A complete hint in the CHANGELOG line moves to the title, where the release changelog reads it", ({ Given, And, When, Then }) => {
         Given("a pull request titled {string}", titled);
         And("its body has the CHANGELOG line {string}", (_ctx, line: string) => {
           body = `## Changes\n\n${line}\n`;

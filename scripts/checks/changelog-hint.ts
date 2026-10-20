@@ -146,13 +146,22 @@ export function declaredHints(title: string, body: string): string[] {
   return (line !== undefined ? hintOf(line) : undefined) ?? [];
 }
 
-/** The title with every required artefact in its hint, or undefined when it already declares them all (Rule 0665). */
+/** The required artefacts the title's own hint leaves out: the release changelog draft reads the title, never the body. */
+export function missingFromTitle(title: string, required: Requirement[]): Requirement[] {
+  const inTitle = hintOf(title) ?? [];
+  return required.filter((r) => !inTitle.includes(r.artefact));
+}
+
+/**
+ * The title with every required artefact in its hint, or undefined when its own hint already names them all (Rule 0665).
+ * The hint keeps what was declared, from the title or else the CHANGELOG line, and adds what the diff requires.
+ */
 export function fixedTitle(title: string, body: string, required: Requirement[]): string | undefined {
+  if (missingFromTitle(title, required).length === 0) return undefined;
   const declared = declaredHints(title, body);
-  const missing = required.map((r) => r.artefact).filter((a) => !declared.includes(a));
-  if (missing.length === 0) return undefined;
+  const added = required.map((r) => r.artefact).filter((a) => !declared.includes(a));
   const plain = hintOf(title) ? title.trim().replace(HINT, "") : title.trim();
-  return `${plain} (${[...declared, ...missing].join(", ")})`;
+  return `${plain} (${[...declared, ...added].join(", ")})`;
 }
 
 /** What to do about a missing artefact: edit the title where the token can, else fail, a bot's pull request warned (Rule 0666). */
@@ -182,14 +191,19 @@ const at = (ref: string, path: string): string | null => {
   }
 };
 
-/** The files a pull request changes, between the merge base of `base` and `head`, and `head`. */
+/**
+ * The files a pull request changes, between the merge base of `base` and `head`, and `head`. A renamed or moved file
+ * is read against its old path, so the log calls it already had are not counted as added.
+ */
 export function changesBetween(base: string, head: string): FileChange[] {
   const mergeBase = git("merge-base", base, head).trim();
-  return git("diff", "--name-only", "--no-renames", mergeBase, head)
+  return git("diff", "--name-status", "-M", mergeBase, head)
     .split("\n")
     .filter(Boolean)
-    .filter((path) => MANIFEST.test(path) || DOCKERFILE.test(path) || SOURCE.test(path))
-    .map((path) => ({ path, before: at(mergeBase, path), after: at(head, path) }));
+    .map((line) => line.split("\t"))
+    .map((cols) => (cols[0]!.startsWith("R") ? { from: cols[1]!, path: cols[2]! } : { from: cols[1]!, path: cols[1]! }))
+    .filter(({ path }) => MANIFEST.test(path) || DOCKERFILE.test(path) || SOURCE.test(path))
+    .map(({ from, path }) => ({ path, before: at(mergeBase, from), after: at(head, path) }));
 }
 
 function main(argv: string[]): number {
@@ -204,7 +218,7 @@ function main(argv: string[]): number {
   const required = requiredHints(changesBetween(base, head));
   const fixed = fixedTitle(title, body, required);
   const declared = declaredHints(title, body);
-  const missing = required.filter((r) => !declared.includes(r.artefact));
+  const missing = missingFromTitle(title, required);
   process.stdout.write(`Required by the diff: ${required.length ? required.map((r) => `${r.artefact} (${r.because})`).join(", ") : "nothing"}` + "\n");
   process.stdout.write(`Declared: ${declared.length ? declared.join(", ") : "nothing"}` + "\n");
   process.stdout.write((fixed ? `Title to use: ${fixed}` : "The hint names every artefact this diff is certain to move.") + "\n");

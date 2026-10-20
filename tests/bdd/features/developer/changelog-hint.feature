@@ -33,7 +33,7 @@ Feature: CHANGELOG hint check
       Then no hint shall be required
 
   @rule-0665 @ears-event-driven
-  Rule: When a pull request's CHANGELOG hint leaves out an artefact its diff requires, tutors shall add the missing artefact to the title's hint, keeping every artefact the title or the CHANGELOG line already declared.
+  Rule: When a pull request's title hint leaves out an artefact its diff requires, tutors shall set the title's hint to every artefact the title or the CHANGELOG line declared and every artefact the diff requires.
 
     Scenario: The missing artefact joins the title's hint
       Given a pull request titled "fix(reader): check the educator on the server (persistence)"
@@ -47,6 +47,13 @@ Feature: CHANGELOG hint check
       And a pull request that adds "@supabase/supabase-js" to the dependencies of "apps/reader/package.json"
       When the CHANGELOG hint is checked
       Then the title shall become "fix(reader): check the educator on the server (persistence, sbom)"
+
+    Scenario: A complete hint in the CHANGELOG line moves to the title, where the release changelog reads it
+      Given a pull request titled "chore(reader): bump the Supabase client"
+      And its body has the CHANGELOG line "- [x] CHANGELOG: `Supabase client 2.118 (sbom)`"
+      And a pull request that adds "@supabase/supabase-js" to the dependencies of "apps/reader/package.json"
+      When the CHANGELOG hint is checked
+      Then the title shall become "chore(reader): bump the Supabase client (sbom)"
 
     Scenario: A title that already declares the artefact is left alone
       Given a pull request titled "fix(reader): check the educator on the server (sbom, persistence)"
