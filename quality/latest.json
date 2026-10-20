@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "commit": "a31e5effdb4f36eac11748a40010331ef9bd6d04",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-20T02:26:59Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39353711750",
+  "generatedAt": "2026-10-20T09:21:14Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39393099881",
   "packages": [
     {
       "name": "@tutors/a11y",
