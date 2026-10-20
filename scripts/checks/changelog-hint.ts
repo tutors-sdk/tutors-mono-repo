@@ -111,9 +111,23 @@ const hintOf = (text: string): string[] | undefined => {
   return names.every((n) => (ARTEFACTS as readonly string[]).includes(n)) ? names : undefined;
 };
 
+/** The body without its HTML comments (the template's guidance); an unclosed one runs to the end. Never rendered. */
+function withoutComments(body: string): string {
+  let out = "";
+  let at = 0;
+  for (;;) {
+    const open = body.indexOf("<!--", at);
+    if (open < 0) return out + body.slice(at);
+    out += body.slice(at, open);
+    const close = body.indexOf("-->", open + 4);
+    if (close < 0) return out;
+    at = close + 3;
+  }
+}
+
 /** The body's CHANGELOG line, as the PR template asks for it; a line left unticked does not count. */
 function changelogLine(body: string): string | undefined {
-  for (const line of body.replace(/<!--[\s\S]*?-->/g, "").split(/\r?\n/)) {
+  for (const line of withoutComments(body).split(/\r?\n/)) {
     if (/^\s*[-*]\s*\[\s\]/.test(line)) continue;
     const m = /\bCHANGELOG(?: line| entry| hint)?\s*:\s*(.+)$/.exec(line);
     if (!m) continue;
