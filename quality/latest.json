@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "2bff81a779424d44aab12c4e4074a75c4457eac8",
+  "commit": "a31e5effdb4f36eac11748a40010331ef9bd6d04",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-19T09:38:43Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39224727587",
+  "generatedAt": "2026-10-20T02:26:59Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39353711750",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -19,7 +19,7 @@
     },
     {
       "name": "@tutors/connect",
-      "mutationScore": 87.12,
+      "mutationScore": 87.5,
       "changed": true,
       "path": "packages/svelte/connect"
     },
@@ -67,8 +67,8 @@
     },
     {
       "name": "@tutors/rbac",
-      "mutationScore": 50.71,
-      "changed": false,
+      "mutationScore": 65.4,
+      "changed": true,
       "path": "packages/svelte/utils/rbac"
     },
     {
@@ -130,6 +130,12 @@
       "mutationScore": 85.71,
       "changed": false,
       "path": "packages/jsr/types"
+    },
+    {
+      "name": "@tutors/ui-components",
+      "mutationScore": 50,
+      "changed": true,
+      "path": "packages/svelte/ui-components"
     },
     {
       "name": "@tutors/ui-navigators",
@@ -223,11 +229,11 @@
     }
   ],
   "nightly": {
-    "result": "success",
+    "result": "failure",
     "jobs": {
       "contract-snapshots": "success",
-      "mutation": "success",
-      "mutation-nightly": "success",
+      "mutation": "failure",
+      "mutation-nightly": "failure",
       "suite-health": "success",
       "e2e-stack-nightly": "success",
       "timezone-matrix": "success",
