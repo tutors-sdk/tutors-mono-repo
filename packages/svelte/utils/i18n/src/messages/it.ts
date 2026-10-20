@@ -171,6 +171,7 @@ const it: Record<string, string> = {
   // Auth
   "auth.signIn": "Accesso Tutors",
   "auth.signInWithGithub": "Accedi con GitHub",
+  "auth.signInFailed": "L'accesso con GitHub non è stato completato. Riprova tra qualche minuto.",
   "auth.terms": `Stai per autenticarti su Tutors tramite le tue credenziali Github. **Per la maggior parte dei corsi non è necessario effettuare alcun accesso, quindi se preferisci puoi tornare alla pagina del corso e proseguire come faresti su qualsiasi sito web pubblico.**
 
 Se ti registri o accedi, avrai prima bisogno di un account Github. L'accesso renderà poi disponibile una dashboard semplice e comoda con link rapidi a tutti i corsi Tutors a cui hai avuto accesso di recente.

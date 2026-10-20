@@ -103,12 +103,9 @@ export const RealtimeChannelSchema = z.object({
 // Whiteboard collaboration schemas
 // ---------------------------------------------------------------------------
 
-export const WhiteboardUserSchema = z.object({
-  name: z.string(),
-  id: z.string(),
-  avatar: z.string(),
-  color: z.string().optional(),
-});
+// The broadcasts below are what apps/reader/static/excalidraw-editor.html sends on its `wb:<room id>` channel, as
+// payloads (the broker carries the event name). Their versions are in tests/contract/messages/contracts.ts (Rules
+// 0623-0625), which drives the editor's own script to prove it sends and accepts these shapes.
 
 export const WhiteboardPointerSchema = z.object({
   x: z.number(),
@@ -121,51 +118,26 @@ export const WhiteboardElementSchema = z.object({
   type: z.string(),
 }).passthrough();
 
-export const WhiteboardAppStateSchema = z.object({
-  viewBackgroundColor: z.string(),
-});
-
-export const WhiteboardSceneInitSchema = z.object({
-  type: z.literal("scene-init"),
-  elements: z.array(WhiteboardElementSchema),
-  appState: WhiteboardAppStateSchema,
-  files: z.record(z.unknown()).optional(),
-});
-
+/** `scene-update`: the elements that changed since this editor last sent them, at most four times a second. */
 export const WhiteboardSceneUpdateSchema = z.object({
-  type: z.literal("scene-update"),
   elements: z.array(WhiteboardElementSchema),
-  source: z.string().optional(),
 });
 
-export const WhiteboardSceneSnapshotSchema = z.object({
-  type: z.literal("scene-snapshot"),
-  elements: z.array(WhiteboardElementSchema),
-  appState: WhiteboardAppStateSchema,
-  files: z.record(z.unknown()),
-});
-
+/** `cursor-update`: one collaborator's pointer, coalesced to one broadcast per interval. */
 export const WhiteboardCursorUpdateSchema = z.object({
-  type: z.literal("cursor-update"),
-  user: WhiteboardUserSchema,
+  userId: z.string(),
+  userName: z.string(),
+  color: z.string(),
   pointer: WhiteboardPointerSchema,
   button: z.enum(["up", "down"]),
-  source: z.string().optional(),
 });
 
-export const WhiteboardUserJoinedSchema = z.object({
-  type: z.literal("user-joined"),
-  user: WhiteboardUserSchema,
-});
-
-export const WhiteboardUserLeftSchema = z.object({
-  type: z.literal("user-left"),
+/** What each editor tracks in the channel's presence: who is in the room, and their cursor colour. */
+export const WhiteboardPresenceSchema = z.object({
   userId: z.string(),
-});
-
-export const WhiteboardRoomSchema = z.object({
-  roomId: z.string().regex(/^wb-/),
-  type: z.literal("whiteboard"),
+  userName: z.string(),
+  avatar: z.string(),
+  color: z.string(),
 });
 
 export const WhiteboardInitEditorSchema = z.object({
@@ -200,7 +172,5 @@ export type ConnectProfile = z.infer<typeof ConnectProfileSchema>;
 export type ConnectCourse = z.infer<typeof ConnectCourseSchema>;
 export type ConnectLatest = z.infer<typeof ConnectLatestSchema>;
 export type LoRecord = z.infer<typeof LoRecordSchema>;
-export type WhiteboardSceneInit = z.infer<typeof WhiteboardSceneInitSchema>;
 export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
-export type WhiteboardSceneSnapshot = z.infer<typeof WhiteboardSceneSnapshotSchema>;
 export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;

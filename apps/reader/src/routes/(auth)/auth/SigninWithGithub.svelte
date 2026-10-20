@@ -4,6 +4,7 @@
   import { tutorsConnectService } from "@tutors/connect";
   import TutorsTerms from "./TutorsTerms.svelte";
   import { t } from "@tutors/i18n";
+  import { page } from "$app/state";
 
   let showProgress = $state(false);
   let failed = $state(false);
@@ -12,6 +13,9 @@
   }
 
   let { redirect = "" }: Props = $props();
+
+  // Better Auth sends a sign-in that GitHub did not complete back here with ?error=… (Rule 0617).
+  const returnedWithError = $derived(page.url.searchParams.has("error"));
 
   async function handleSignInWithProgress() {
     showProgress = true;
@@ -29,7 +33,7 @@
   <p class="ui-eyebrow">Tutors</p>
   <h1 class="ui-title mb-6">{t("auth.signIn")}</h1>
   <section class="ui-panel mb-6">
-    {#if failed}<p role="alert">{t("shell.loadError")}</p>{/if}
+    {#if failed}<p role="alert">{t("shell.loadError")}</p>{:else if returnedWithError && !showProgress}<p role="alert">{t("auth.signInFailed")}</p>{/if}
     <button class="ui-button ui-button-primary" disabled={showProgress} onclick={handleSignInWithProgress}><Icon icon="mdi:github" />{showProgress ? t("shell.loading") : t("auth.signInWithGithub")}</button>
     {#if showProgress}<div role="status" class="mt-4"><Progress value={null} /></div>{/if}
   </section>
