@@ -25,10 +25,16 @@ describeFeature(feature, ({ Background, Rule }) => {
   let response: Response | undefined;
   let failed: { status: number } | undefined;
   let courseId: string;
+  // What Moodle holds: each course's assignment modules, and each assignment's submissions.
+  let moodleCourses: Map<number, { id: number; instance: number; name: string; modname: string }[]>;
+  let moodleSubmissions: Map<number, { id: number; userid: number; status: string }[]>;
+  let moodleFails: Set<string>;
 
-  const sync = async (login: string, moodleCourseId: string) => {
+  const sync = async (login: string, moodleCourseId: string, moodleSectionId?: number) => {
     response = undefined;
     failed = undefined;
+    // Each sync is judged on its own calls to Moodle.
+    moodle.mockClear();
     // Moodle is reached through the global fetch; the course check uses the event's fetch.
     vi.stubGlobal("fetch", moodle);
     try {
@@ -36,7 +42,7 @@ describeFeature(feature, ({ Background, Rule }) => {
         params: { courseid: courseId },
         locals: { actor: login === "anonymous" ? null : { login } },
         fetch: fetchCourse,
-        request: new Request("http://reader.test/", { method: "POST", body: JSON.stringify({ moodleCourseId }) })
+        request: new Request("http://reader.test/", { method: "POST", body: JSON.stringify({ moodleCourseId, moodleSectionId }) })
       } as never);
     } catch (cause) {
       failed = cause as { status: number };
@@ -45,30 +51,66 @@ describeFeature(feature, ({ Background, Rule }) => {
     }
   };
   const failsWith = (status: number) => expect(failed).toMatchObject({ status });
+  const succeeds = () => {
+    expect(failed).toBeUndefined();
+    expect(response!.status).toBe(200);
+    expect(response!.headers.get("cache-control")).toBe("private, no-store");
+  };
   const moodleUntouched = () => expect(moodle).not.toHaveBeenCalled();
+  const moodleContacted = () => expect(moodle).toHaveBeenCalled();
   const noWrites = () => {
     expect(recorder.upserts("assignments")).toEqual([]);
     expect(recorder.upserts("assignments_submissions")).toEqual([]);
+  };
+  const submissionSaved = (_ctx: unknown, userId: number, assignmentId: number) => {
+    expect(recorder.rows("assignments_submissions")).toContainEqual(expect.objectContaining({ external_userid: userId, assignmentId }));
+  };
+  // The sync service reads the time through the @tutors/runtime clock seam, which HARNESS_NOW freezes.
+  const syncsAt = (_ctx: unknown, login: string, id: string, instant: string) => {
+    vi.stubEnv("HARNESS_NOW", instant);
+    return sync(login, id);
+  };
+  const syncedAt = async (_ctx: unknown, login: string, id: string, instant: string) => {
+    await syncsAt(_ctx, login, id, instant);
+    succeeds();
+  };
+  const completedSyncs = (course: string) => recorder.rows("moodle_syncs").filter((row) => row.courseid === course);
+  const recordedAt = (_ctx: unknown, course: string, instant: string) => {
+    expect(completedSyncs(course)).toEqual([expect.objectContaining({ synced_at: instant })]);
+  };
+  const addAssignment = (courseId: number, assignmentId: number, name: string, userId: number) => {
+    moodleCourses.set(courseId, [...(moodleCourses.get(courseId) ?? []), { id: assignmentId + 100, instance: assignmentId, name, modname: "assign" }]);
+    moodleSubmissions.set(assignmentId, [{ id: 900 + userId, userid: userId, status: "submitted" }]);
   };
 
   Background(({ Given, And }) => {
     Given("{string} publishes an enrollment with {string} as educator", (_ctx, _id: string, educator: string) => {
       recorder.reset();
+      vi.unstubAllEnvs();
       courseId = "pf1";
       fetchCourse = vi.fn(async () => Response.json({ enrollment: { educators: [educator], whitelist: [], students: [] } }));
     });
     And(
       "Moodle course {int} has assignment {int} {string} with one submission from Moodle user {int}",
       (_ctx, courseId: number, assignmentId: number, name: string, userId: number) => {
+        moodleCourses = new Map();
+        moodleSubmissions = new Map();
+        moodleFails = new Set();
+        addAssignment(courseId, assignmentId, name, userId);
         moodle = vi.fn(async (_url: string, init: RequestInit) => {
           const body = init.body as URLSearchParams;
-          if (body.get("wsfunction") === "core_course_get_contents" && body.get("courseid") === String(courseId)) {
-            return Response.json([{ id: 1, modules: [{ id: 7, instance: assignmentId, name, modname: "assign" }] }]);
+          const wsfunction = body.get("wsfunction")!;
+          if (moodleFails.has(wsfunction)) return Response.json({ exception: "moodle_exception", message: "Moodle is unavailable" });
+          if (wsfunction === "core_course_get_contents") {
+            const course = moodleCourses.get(Number(body.get("courseid")));
+            if (course) return Response.json([{ id: 1, modules: course }]);
           }
-          if (body.get("wsfunction") === "mod_assign_get_submissions") {
-            return Response.json({ assignments: [{ assignmentid: assignmentId, submissions: [{ id: 901, userid: userId, status: "submitted" }] }], warnings: [] });
+          if (wsfunction === "mod_assign_get_submissions") {
+            const ids = [...body.entries()].filter(([key]) => key.startsWith("assignmentids")).map(([, value]) => Number(value));
+            const assignments = ids.map((assignmentid) => ({ assignmentid, submissions: moodleSubmissions.get(assignmentid) ?? [] }));
+            return Response.json({ assignments, warnings: [] });
           }
-          return Response.json({ exception: "unexpected", message: body.get("wsfunction") });
+          return Response.json({ exception: "unexpected", message: wsfunction });
         });
       }
     );
@@ -77,11 +119,6 @@ describeFeature(feature, ({ Background, Rule }) => {
   Rule(
     "When a course educator syncs a Moodle course, the data API shall copy that course's Moodle assignments and submissions into the tables Tutors Time reads.",
     ({ RuleScenario }) => {
-      const succeeds = () => {
-        expect(failed).toBeUndefined();
-        expect(response!.status).toBe(200);
-        expect(response!.headers.get("cache-control")).toBe("private, no-store");
-      };
       const savedFor = (_ctx: unknown, id: number, name: string, course: string) => {
         expect(recorder.rows("assignments")).toEqual([expect.objectContaining({ id, name, courseid: course })]);
       };
@@ -121,6 +158,84 @@ describeFeature(feature, ({ Background, Rule }) => {
         Then("the sync shall fail with status {int}", (_ctx, status: number) => failsWith(status));
         And("Moodle shall not have been contacted", moodleUntouched);
         And("nothing shall have been written", noWrites);
+      });
+    }
+  );
+
+  Rule(
+    "If a Moodle sync fails before every assignment, submission and the sync's completion time is saved, then the data API shall report the sync as failed and run the next sync request for that course without waiting for the sync interval.",
+    ({ RuleScenarioOutline }) => {
+      const failure = { message: "the database is unavailable" };
+      const failures: Record<string, () => void> = {
+        "fetching submissions from Moodle": () => moodleFails.add("mod_assign_get_submissions"),
+        // Assignment 11's submissions are saved first, so the retry starts after some writes succeeded.
+        "saving the submissions for assignment 12": () => recorder.upsertErrors.push({ table: "assignments_submissions", when: (row) => row.assignmentId === 12, error: failure }),
+        "saving the assignments": () => recorder.tableErrors.set("assignments", failure),
+        "recording the completed sync": () => recorder.tableErrors.set("moodle_syncs", failure)
+      };
+
+      RuleScenarioOutline("A sync that fails part way can be retried at once", ({ Given, When, Then, And }, variables) => {
+        Given(
+          "Moodle course {int} also has assignment {int} {string} with one submission from Moodle user {int}",
+          (_ctx, courseId: number, assignmentId: number, name: string, userId: number) => addAssignment(courseId, assignmentId, name, userId)
+        );
+        And("<failing step> fails", () => failures[variables["failing step"]]());
+        When("{string} syncs Moodle course {string} at {string}", syncsAt);
+        Then("the sync shall fail with status {int}", (_ctx, status: number) => failsWith(status));
+        And("no completed sync shall be recorded for course {string}", (_ctx, course: string) => {
+          expect(completedSyncs(course)).toEqual([]);
+        });
+        Given("the failure has cleared", () => {
+          moodleFails.clear();
+          recorder.tableErrors.clear();
+          recorder.upsertErrors = [];
+        });
+        When("{string} syncs Moodle course {string} again at {string}", syncsAt);
+        Then("the sync shall succeed", succeeds);
+        And("Moodle shall have been contacted again", moodleContacted);
+        And("a submission from Moodle user {int} shall be saved for assignment {int}", submissionSaved);
+      });
+    }
+  );
+
+  Rule(
+    "When a course educator syncs the same Moodle course and section again within SYNC_INTERVAL_MINUTES of its last completed sync, the data API shall answer success without contacting Moodle.",
+    ({ RuleScenario }) => {
+      RuleScenario("A repeat inside the interval is skipped", ({ Given, When, Then, And }) => {
+        Given("{string} synced Moodle course {string} at {string}", syncedAt);
+        When("{string} syncs Moodle course {string} again at {string}", syncsAt);
+        Then("the sync shall succeed", succeeds);
+        And("Moodle shall not have been contacted", moodleUntouched);
+        And("the completed sync for course {string} shall be recorded at {string}", recordedAt);
+      });
+
+      RuleScenario("A repeat after the interval runs again", ({ Given, When, Then, And }) => {
+        Given("{string} synced Moodle course {string} at {string}", syncedAt);
+        When("{string} syncs Moodle course {string} again at {string}", syncsAt);
+        Then("the sync shall succeed", succeeds);
+        And("Moodle shall have been contacted again", moodleContacted);
+        And("the completed sync for course {string} shall be recorded at {string}", recordedAt);
+      });
+
+      RuleScenario("A Moodle course with no assignments still completes the sync", ({ Given, When, Then, And }) => {
+        Given("Moodle course {int} has no assignments", (_ctx, id: number) => {
+          moodleCourses.set(id, []);
+        });
+        And("{string} synced Moodle course {string} at {string}", syncedAt);
+        When("{string} syncs Moodle course {string} again at {string}", syncsAt);
+        Then("the sync shall succeed", succeeds);
+        And("Moodle shall not have been contacted", moodleUntouched);
+      });
+
+      RuleScenario("A section sync does not count as a sync of the whole course", ({ Given, When, Then, And }) => {
+        Given("{string} synced section {int} of Moodle course {string} at {string}", async (_ctx, login: string, section: number, id: string, instant: string) => {
+          vi.stubEnv("HARNESS_NOW", instant);
+          await sync(login, id, section);
+          succeeds();
+        });
+        When("{string} syncs Moodle course {string} again at {string}", syncsAt);
+        Then("the sync shall succeed", succeeds);
+        And("Moodle shall have been contacted again", moodleContacted);
       });
     }
   );
