@@ -2,15 +2,20 @@
 
 A central, reusable way to release a versioned package: conventional commits decide the version, a bot keeps the release pull request, merging it tags and publishes with provenance, and a canary checks what the registry actually serves. Any workflow in this repository, or in another repository, can call it.
 
-Today it releases the six JSR libraries in `packages/jsr` that version together (`@tutors/tutors-model-lib`, `-time-lib`, `-gen-lib`, `-create`, `tutors-lite`, `tutors`). The apps are not released this way: they ship through release branches, candidates and the release harness in [Release-Strategy.md](Release-Strategy.md) and [release/SOP.md](../release/SOP.md), whose final tag must be the candidate's tree, which a bot-made release commit cannot be.
+It keeps two release pull requests, one per product, so they never ship together:
+
+- **The apps** (the `.` package, component `apps`): one `vX.Y.Z` tag, with no component, and the version bumped in the root `package.json` and the four `apps/*/package.json`. Its changelog goes to `release/CHANGELOG.generated.md`, a draft; the curated `CHANGELOG.md` stays hand-written on `main`. The apps still go through candidates and the release harness ([Release-Strategy.md](Release-Strategy.md), [release/SOP.md](../release/SOP.md)). A bot-made release commit can still be the candidate, because `scripts/promote-image.ts` compares trees, not commits: the release pull request's head is the candidate, and its merge has the same tree while `main` has not moved.
+- **The JSR libraries**: the six in `packages/jsr` that version together (`@tutors/tutors-model-lib`, `-time-lib`, `-gen-lib`, `-create`, `tutors-lite`, `tutors`), tagged per component.
+
+Until the apps' candidate is wired to the release pull request (release-dispatch.yml still starts on a `release/**` push), do not merge the apps' release pull request: cut releases with [release/SOP.md](../release/SOP.md).
 
 ## How it works
 
 | Step | Where | What happens |
 | --- | --- | --- |
-| 1. Gate | [reusable-release-please.yml](../.github/workflows/reusable-release-please.yml) | On every push to `main`, a release is due only when a commit touching a released path since its last tag is a `feat`, carries `!` or `BREAKING CHANGE:`, or has a `Release-As:` footer. Fixes and chores wait and ship with the next minor. |
-| 2. Release pull request | same | [release-please](https://github.com/googleapis/release-please) keeps one pull request with the version bumps (`deno.json`, `package.json`) and a `CHANGELOG.md` per package. It is opened with the release GitHub App's token so its CI starts without approval. |
-| 3. Tag | same | Merging that pull request tags each package `<component>-vX.Y.Z` (for example `tutors-model-lib-v5.4.0`) and creates its GitHub release, kept from becoming the repository's Latest, which stays the apps' `vX.Y.Z`. These tags never match `v*`, so they start no image build. |
+| 1. Gate | [reusable-release-please.yml](../.github/workflows/reusable-release-please.yml) | On every push to `main`, a release is due only when a commit touching a released path since its last tag is a `feat`, carries `!` or `BREAKING CHANGE:`, or has a `Release-As:` footer. A path's commits leave out the paths of the packages inside it, as release-please splits them, so a `feat` in `packages/jsr` does not make the apps due. The last tag is the last final tag: candidate tags (`vX.Y.Z-rc.N`) are skipped. Fixes and chores wait and ship with the next minor. |
+| 2. Release pull requests | same | [release-please](https://github.com/googleapis/release-please) keeps one pull request per product (`separate-pull-requests`; the JSR libraries share one through `linked-versions`) with the version bumps (`deno.json`, `package.json`) and a changelog per package. They are opened with the release GitHub App's token so their CI starts without approval. |
+| 3. Tag | same | Merging the JSR pull request tags each library `<component>-vX.Y.Z` (for example `tutors-model-lib-v5.4.0`) and creates its GitHub release, kept from becoming the repository's Latest, which stays the apps' `vX.Y.Z`. These tags never match `v*`, so they start no image build. Merging the apps' pull request tags `vX.Y.Z`. |
 | 4. Validate and publish | [reusable-publish-jsr.yml](../.github/workflows/reusable-publish-jsr.yml) | In the same run: `deno publish --dry-run` for each released package, then `deno publish` in the config's order, so a library goes out before the packages that import it. GitHub's OIDC token authenticates the publish and JSR records Sigstore provenance; no publish token is stored. |
 | 5. Canary | same | From an empty directory: JSR serves the exact version, it has provenance, and `deno cache jsr:@tutors/<pkg>@X.Y.Z` resolves its whole graph. A failure opens an issue. |
 
@@ -31,7 +36,8 @@ These need a maintainer with admin rights; the workflows cannot do them.
 ## Day to day
 
 - **Write conventional commits** (or squash-merge with a conventional pull request title). `feat(gen): ...` asks for a minor, `feat(gen)!: ...` or a `BREAKING CHANGE:` footer for a major, and `fix`, `refactor`, `perf` are listed but wait for the next feature.
-- **Release** by merging the open `chore: release main` pull request once its CI is green. Edit its changelog in the pull request first if a line reads badly.
+- **Release the libraries** by merging their open release pull request once its CI is green. Edit its changelog in the pull request first if a line reads badly.
+- **Write the apps' changelog and claims on `main`,** never on the apps' release pull request. release-please owns that branch and rewrites it on every push to `main`, so anything pushed there is lost. Each feature PR adds its `CHANGELOG.md` line (with its artefact hints, which `changelog-hint.yml` asks for) and its `release/claims.yaml` entry; `pnpm check:release-claims` runs on every PR to `main` (release-claims.yml). `release/CHANGELOG.generated.md` in the release pull request and `pnpm release:changelog` are drafts to check `CHANGELOG.md` against.
 - **Ship a fix now:** Actions, Release Please, Run workflow, tick `force-release`. Or put `Release-As: 5.3.1` in a commit's footer to choose the version.
 - **A major bump** also needs the `jsr:@tutors/...@^5.3.0` imports in `gen`, `tutors` and `tutors-lite` raised in the release pull request, because release-please does not rewrite import ranges.
 - **When the canary fails,** a published JSR version cannot be replaced: yank it on jsr.io if it is broken, fix forward and release again. Re-running the workflow is safe, since `deno publish` skips versions JSR already has.
@@ -69,4 +75,5 @@ With no `config-file` or `manifest-file` inputs it reads release-please's defaul
 ## Known limits
 
 - A merge commit repeats its pull request's title in its body, so a change merged without squashing can appear twice in the release pull request's changelog. Squash-merge library changes, or delete the duplicate line in the release pull request before merging.
+- With separate pull requests, the gate still decides for the whole run: once one product is due, release-please also opens or updates the other's pull request if it has fixes. Leave that one open; it waits for its own feature.
 - The gate reads tags as `<component><tag-separator>vX.Y.Z` (or `vX.Y.Z` with `include-component-in-tag: false`). A config that changes `include-v-in-tag` needs the gate's pattern changed too.

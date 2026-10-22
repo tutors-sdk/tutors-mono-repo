@@ -121,6 +121,10 @@ jobs:
           worthy='^(feat(\([^)]*\))?!?|[a-z]+(\([^)]*\))?!): |^BREAKING[ -]CHANGE: |^Release-As: '
           bootstrap=$(jq -r '."bootstrap-sha" // empty' "$CONFIG")
           separator=$(jq -r '."tag-separator" // "-"' "$CONFIG")
+          # A package's commits are those under its path and not under a
+          # deeper package's path, as release-please splits them, so the root
+          # package "." does not count a feat in packages/jsr.
+          mapfile -t all_paths < <(jq -r '.packages | keys[]' "$CONFIG")
           due=false
           while IFS=$'\t' read -r path component with_component; do
             if [ "$with_component" = "true" ]; then
@@ -128,9 +132,17 @@ jobs:
             else
               pattern="v[0-9]*.[0-9]*.[0-9]*"
             fi
-            last=$(git describe --tags --abbrev=0 --match "$pattern" HEAD 2>/dev/null || true)
+            # Candidate tags (vX.Y.Z-rc.N) also match the pattern; the last
+            # release is the last final tag, or a second rc is never due.
+            last=$(git describe --tags --abbrev=0 --match "$pattern" --exclude '*-rc.*' HEAD 2>/dev/null || true)
             base=${last:-$bootstrap}
-            if git log "${base:+$base..}HEAD" --format=%B -- "$path" | grep -qE "$worthy"; then
+            pathspec=("$path")
+            for other in "${all_paths[@]}"; do
+              if [ "$other" != "$path" ] && { [ "$path" = "." ] || [[ "$other" == "$path"/* ]]; }; then
+                pathspec+=(":(exclude)$other")
+              fi
+            done
+            if git log "${base:+$base..}HEAD" --format=%B -- "${pathspec[@]}" | grep -qE "$worthy"; then
               echo "$path: release-worthy commits since ${base:-the start}"
               due=true
             else

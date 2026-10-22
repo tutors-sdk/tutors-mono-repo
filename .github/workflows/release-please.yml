@@ -1,10 +1,11 @@
 name: Release Please
 
-# Releases the JSR libraries in packages/jsr (the six 5.x packages that version
-# together) with the central release capability: reusable-release-please.yml
-# keeps the release pull request, and merging it publishes to JSR with
-# provenance and runs the post-publish canary, all in this one run.
-# The apps are not released here: they follow release/SOP.md.
+# The central release capability for this repository: reusable-release-please.yml
+# keeps one release pull request for the apps (one vX.Y.Z, package.json bumps)
+# and one for the JSR libraries in packages/jsr (the six 5.x packages that
+# version together). Merging the libraries' one publishes to JSR with
+# provenance and runs the post-publish canary, all in this one run. The apps'
+# candidate and harness run still follow release/SOP.md.
 # guides/Release-Capability.md is the guide.
 
 on:

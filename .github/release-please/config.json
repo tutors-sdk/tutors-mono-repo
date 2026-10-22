@@ -3,7 +3,7 @@
   "bootstrap-sha": "f87f0f9a8a6f8c8a1823d4a117e53eb9ced19f0d",
   "release-type": "simple",
   "include-component-in-tag": true,
-  "separate-pull-requests": false,
+  "separate-pull-requests": true,
   "bump-minor-pre-major": true,
   "changelog-sections": [
     {
@@ -53,6 +53,35 @@
     }
   ],
   "packages": {
+    ".": {
+      "component": "apps",
+      "package-name": "tutors-mono-repo",
+      "release-type": "node",
+      "include-component-in-tag": false,
+      "changelog-path": "release/CHANGELOG.generated.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "apps/reader/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "apps/live/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "apps/catalogue/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "apps/time/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
     "packages/jsr/model": {
       "component": "tutors-model-lib",
       "package-name": "@tutors/tutors-model-lib",
