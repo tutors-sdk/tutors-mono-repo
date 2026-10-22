@@ -253,7 +253,8 @@ Runtime configuration and overlay metadata:
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
-| `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader only, server only: writes content locks after the educator check; unset makes lock changes answer 503 |
+| `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Reader only, server only: the educator-only Moodle sync in Educator Control; unset makes the sync answer 503 |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
 | `HARNESS_NOW` | **Release harness only.** An ISO 8601 instant that freezes the clock the server stamps into responses and records. Never set it in a deployment |
@@ -527,7 +528,7 @@ applying. The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
 `overlays/reader/secrets.yaml.example`
 to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads
 an optional `<app>-tutors-app-secrets` Secret for `METRICS_TOKEN`
-(`base/secrets.yaml.example`); the time app's example adds `MOODLE_WS_TOKEN`.
+(`base/secrets.yaml.example`). The reader's `MOODLE_WS_TOKEN` goes in its `reader-tutors-app-oauth` Secret.
 
 `pnpm check:k8s` renders every overlay and checks it against the policies in
 `scripts/checks/conformance.ts`: registry-qualified and pinned images (a short

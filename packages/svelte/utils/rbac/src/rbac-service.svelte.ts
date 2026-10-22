@@ -82,10 +82,6 @@ function createRbacService() {
     return currentCourseId.value || currentCourse.value?.courseId || "";
   }
 
-  function resolvedUserId(): string {
-    return currentUserId.value || tutorsId.value?.login || "dev-user";
-  }
-
   function hasPermission(permission: Permission): boolean {
     return roleHasPermission(currentRole.value, permission);
   }
@@ -132,19 +128,25 @@ function createRbacService() {
 
   async function toggleContentLock(loRoute: string, locked: boolean): Promise<boolean> {
     const courseId = resolvedCourseId();
-    const userId = resolvedUserId();
     if (!courseId) return false;
 
+    const previous = contentLocks.value.get(loRoute);
+    applyLock(courseId, loRoute, locked);
+    if ((await upsertLock(courseId, loRoute, locked)) !== "refused") return true;
+    // The server refused the change: put the switch back so the panel shows what is saved.
+    applyLock(courseId, loRoute, previous);
+    return false;
+  }
+
+  function applyLock(courseId: string, loRoute: string, locked: boolean | undefined) {
     const updated = new Map(contentLocks.value);
-    updated.set(loRoute, locked);
+    if (locked === undefined) updated.delete(loRoute);
+    else updated.set(loRoute, locked);
     contentLocks.value = updated;
 
     if (typeof window !== "undefined") {
       localStorage.setItem(`tutors-locks-${courseId}`, JSON.stringify(Object.fromEntries(updated)));
     }
-
-    upsertLock(courseId, loRoute, locked, userId);
-    return true;
   }
 
   function isLocked(loRoute: string): boolean {

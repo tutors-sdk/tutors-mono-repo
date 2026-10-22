@@ -201,6 +201,7 @@ Rules of thumb:
 - No hint means "nothing observable should differ": internal refactors, tests, docs, dependency bumps that leave output alone. If the harness finds a difference under such an entry, the entry was incomplete; fix the entry, do not widen the claim.
 - The claim's `reason` is `CHANGELOG <version>: <the entry text>`, or a Rule reference such as `Rule 0031` where the change implements one. TODO(#214): the final Rule id format and a matching `@artefact:<name>` tag on a Rule follow that issue; this section only fixes the artefact vocabulary, which is the harness's.
 - The same words help in the commit subject and PR title (`fix(reader): raise nav contrast (axe, dom)`), so the entry is easy to write from them.
+- CI checks the PR title's hint against the diff (`.github/workflows/changelog-hint.yml`, Rules 0664-0666). A change to an app's or a package's `dependencies` needs `sbom`, a Dockerfile instruction `image-manifest`, a new `log.error` or `log.warn` call `logs`. On a branch of this repository it adds what is missing to the title and comments why; on a fork it fails with the title to use. It never removes an artefact you declared, and the release harness reads the title's hint before the body's CHANGELOG line. `pnpm check:changelog-hint --base origin/main` runs it locally (with `PR_TITLE` set).
 
 Database changes follow their own rules: read [guides/MIGRATIONS.md](guides/MIGRATIONS.md) before adding a file under `supabase/migrations/`.
 

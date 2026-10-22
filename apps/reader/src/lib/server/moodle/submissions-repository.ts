@@ -1,7 +1,11 @@
-import * as env from "$app/env/public";
-import { createClient } from "@supabase/supabase-js";
+/**
+ * Writes Moodle assignments and submissions into the Supabase tables Tutors Time reads (assignments,
+ * assignments_submissions). Uses the server-only service client, so only the educator-checked
+ * moodle-sync route (Rules 0633-0634) may call it.
+ */
 import { now } from "@tutors/runtime";
-import type { MoodleAssignSubmission, MoodleModule } from "#lib/server/api/moodle.ts";
+import type { MoodleAssignSubmission, MoodleModule } from "#lib/server/moodle/moodle-client.ts";
+import { serviceSupabase } from "#lib/server/supabase-service.ts";
 
 export interface AssignmentRow {
   courseid: string;
@@ -85,7 +89,9 @@ function toSubmissionRow(
 }
 
 function getClient() {
-  return createClient(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+  const db = serviceSupabase();
+  if (!db) throw new Error("PRIVATE_SUPABASE_SERVICE_ROLE_KEY is not configured");
+  return db;
 }
 
 export async function getLastSyncedAt(courseId: string): Promise<string | null> {
