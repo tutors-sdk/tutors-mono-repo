@@ -1,9 +1,10 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
 import { toSnakeCase, generateLlms } from "../../../packages/jsr/gen/src/utils/llms.ts";
+import * as fileUtils from "../../../packages/jsr/gen/src/utils/file-utils.ts";
 
 describe("llms: toSnakeCase", () => {
   it("converts spaces to hyphens", () => {
@@ -57,7 +58,7 @@ function makeCourse(overrides: Record<string, unknown> = {}): any {
     route: "/course/{{COURSEURL}}",
     los: [],
     properties: { credits: "Lecturer Name", llm: 0, ...(overrides.properties as Record<string, unknown>) },
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -65,6 +66,7 @@ describe("llms: generateLlms", () => {
   let testDir: string;
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     // compressToZip is async and not awaited by generateLlms, so its
     // createWriteStream file-open may still be in flight when the test ends.
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -87,6 +89,72 @@ describe("llms: generateLlms", () => {
     expect(fs.existsSync(path.join(testDir, "llms"))).toBe(false);
   });
 
+  it("excludes hidden content and descendants from markdown and PDF exports while preserving topic filenames", () => {
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), "llms-test-"));
+    const compressToZip = vi.spyOn(fileUtils, "compressToZip").mockResolvedValue(undefined);
+    const talk = {
+      type: "talk",
+      title: "Public Talk",
+      contentMd: "# Public Talk\nPublic slides",
+      route: "/talk/{{COURSEURL}}/public-talk",
+      pdfFile: "slides.pdf"
+    };
+    const course = makeCourse({
+      properties: { credits: "Author", llm: 1 },
+      los: [
+        {
+          type: "topic",
+          title: "Hidden Topic",
+          contentMd: "# Hidden Topic\nHidden topic body",
+          hide: true,
+          los: [
+            { ...talk, title: "Hidden Topic Talk", route: "/talk/{{COURSEURL}}/hidden-topic-talk" },
+            {
+              type: "topic",
+              title: "Hidden Descendant",
+              contentMd: "# Hidden Descendant\nHidden descendant body",
+              los: []
+            }
+          ]
+        },
+        {
+          type: "topic",
+          title: "Public Topic",
+          contentMd: "# Public Topic\nPublic topic body",
+          los: [
+            talk,
+            { ...talk, title: "Hidden Talk", hide: true, route: "/talk/{{COURSEURL}}/hidden-talk" },
+            { type: "note", title: "Hidden Note", contentMd: "# Hidden Note\nHidden note body", hide: true },
+            {
+              type: "unit",
+              title: "Hidden Unit",
+              contentMd: "# Hidden Unit\nHidden unit body",
+              hide: true,
+              los: [{ ...talk, title: "Hidden Unit Talk", route: "/talk/{{COURSEURL}}/hidden-unit-talk" }]
+            }
+          ]
+        }
+      ]
+    });
+
+    generateLlms(course, testDir);
+
+    const llmFolder = path.join(testDir, "llms");
+    const topicsFolder = path.join(llmFolder, "topics");
+    expect(fs.readdirSync(topicsFolder)).toEqual(["02-public-topic-llms.txt"]);
+    for (const file of [path.join(llmFolder, "test-course-complete-llms.txt"), path.join(topicsFolder, "02-public-topic-llms.txt")]) {
+      const content = fs.readFileSync(file, "utf-8");
+      expect(content).toContain("Public Topic");
+      expect(content).toContain("Public slides");
+      expect(content).not.toContain("Hidden");
+    }
+    expect(compressToZip.mock.calls).toEqual([
+      [[".//public-talk/slides.pdf"], path.join(llmFolder, "test-course-complete-pdfs.zip")],
+      [[".//public-talk/slides.pdf"], path.join(topicsFolder, "02-public-topic-pdfs.zip")]
+    ]);
+    expect(course.los[0].los[0].hide).toBeUndefined();
+  });
+
   it("creates llms output with expected content when llm is 1", async () => {
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), "llms-test-"));
 
@@ -103,12 +171,12 @@ describe("llms: generateLlms", () => {
               type: "note",
               title: "A Note",
               contentMd: "# A Note\nNote body text",
-              route: "/note/{{COURSEURL}}/topic-one/a-note",
-            },
-          ],
-        },
+              route: "/note/{{COURSEURL}}/topic-one/a-note"
+            }
+          ]
+        }
       ],
-      properties: { credits: "Test Author", llm: 1 },
+      properties: { credits: "Test Author", llm: 1 }
     });
 
     generateLlms(course, testDir);

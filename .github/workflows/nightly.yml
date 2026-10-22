@@ -501,10 +501,11 @@ jobs:
 
   # Rules 0224 and 0225: the night's quality record (mutation score per package and every job's result above),
   # which the release harness reads with --test-signal, on the `quality` branch. Runs after a failed night too.
+  # Only for main: a run dispatched on a branch to try a fix must not replace main's latest record.
   quality:
     name: Publish the quality record
     needs: [contract-snapshots, mutation, mutation-nightly, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load, generator-corpus]
-    if: always()
+    if: always() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write # push the quality branch, and nothing else

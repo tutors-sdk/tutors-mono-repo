@@ -1,6 +1,6 @@
 {
   "name": "tutors-reader",
-  "version": "16.2.2",
+  "version": "17.0.0",
   "license": "MIT",
   "description": "Tutors - Clean modern course reader",
   "private": true,
@@ -15,6 +15,7 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
+    "@supabase/supabase-js": "^2.117.1",
     "dompurify": "^3.4.14",
     "isomorphic-dompurify": "^4.5.0"
   },

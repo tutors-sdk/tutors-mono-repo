@@ -87,3 +87,21 @@ Feature: Calendar Analytics
     Then the day grid and the week grid shall have 0 rows
     And the calendar shall have 0 day columns and 0 week columns
     And no daily or weekly median row shall be produced
+
+  @rule-0604 @ears-event-driven
+  Rule: When the time dashboard draws a heat map, the time dashboard shall lay out its day grid only after the page has been laid out and its web fonts have loaded.
+
+    Scenario: A heat map waits for the web fonts before laying out its day grid
+      Given the page's web fonts are still loading
+      When the time dashboard draws a heat map
+      And the browser lays the page out
+      Then the heat map's day grid shall not be laid out yet
+      When the page's web fonts finish loading
+      Then the heat map's day grid shall be laid out once
+
+    Scenario: A heat map waits for the page layout before laying out its day grid
+      Given the page's web fonts have loaded
+      When the time dashboard draws a heat map
+      Then the heat map's day grid shall not be laid out yet
+      When the browser lays the page out
+      Then the heat map's day grid shall be laid out once

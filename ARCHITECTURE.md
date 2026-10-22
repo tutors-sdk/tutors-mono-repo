@@ -126,16 +126,16 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 **Build & Package Management**:
 - **pnpm 8+**: Fast, disk-efficient package manager with workspace support
 - **Vite 8.x**: Next-generation build tool and dev server
-- **TypeScript 5+**: Type-safe development across all packages
+- **TypeScript 6**: Type-safe development across all packages
 
 **Runtime Environments**:
 - **Deno**: For JSR packages and CLI tools
-- **Node.js 22.12+**: For Svelte packages and applications (`engines.node` in `package.json`)
+- **Node.js 22.17+**: For Svelte packages and applications (`engines.node` in `package.json`)
 - **Browser**: For client-side applications
 
 **Frontend Framework**:
 - **Svelte 5**: Reactive UI framework with runes-based state
-- **SvelteKit 2**: Full-stack framework with SSR/CSR
+- **SvelteKit 3**: Full-stack framework with SSR/CSR
 - **Tailwind CSS 4**: Utility-first styling
 - **Skeleton UI 5**: Svelte component library
 
@@ -173,7 +173,8 @@ tutors-mono-repo/
 │   │   ├── tutors-lite/        # @tutors/tutors-lite (static HTML generator CLI)
 │   │   ├── create/             # @tutors/tutors-create (course scaffolder)
 │   │   ├── types/              # @tutors/tutors-types (shared types)
-│   │   └── identity/           # @tutors/identity (identity contracts)
+│   │   ├── identity/           # @tutors/identity (identity contracts)
+│   │   └── realtime/           # @tutors/realtime (Realtime port and budgeted gateway)
 │   │
 │   └── svelte/                 # Svelte-specific packages
 │       ├── runes/              # @tutors/runes
@@ -181,6 +182,7 @@ tutors-mono-repo/
 │       ├── themes/             # @tutors/themes
 │       ├── community/          # @tutors/community
 │       ├── connect/            # @tutors/connect
+│       ├── realtime-supabase/  # @tutors/realtime-supabase (Supabase Realtime adapter)
 │       ├── ui-primitives/      # @tutors/ui-primitives
 │       ├── ui-navigators/      # @tutors/ui-navigators
 │       ├── ui-components/      # @tutors/ui-components
@@ -522,7 +524,7 @@ json/
 
 ```bash
 # Generate JSON course
-deno run -A jsr:@tutors/reader
+deno run -A jsr:@tutors/tutors
 
 # Or locally
 deno run -A packages/jsr/tutors/main.ts
@@ -1276,29 +1278,50 @@ Real-time features use **Supabase Realtime Broadcast channels**, which are part 
 
 #### Client Usage
 
-Readers subscribe to their current course only while activity sharing is enabled, update their own activity locally without a server echo, and leave the channel when the course view closes. Tutors Live subscribes to the platform-wide feed only while its landing page is mounted. Reader broadcasts to that feed use HTTP without joining it.
+Readers never join a course channel: a course channel delivers every student's page view to every other student, so its cost grows with the square of the class. While activity sharing is enabled, the reader stores each page view in `tutors-connect-latest`, updates its own activity locally, sends the page view to its own server (`POST /api/live/activity`), and reads the course online list from `tutors-connect-latest` (rows from the last 5 minutes) on entry and every 60 seconds while the tab is visible. The browser broadcasts nothing; the reader's server publishes to Tutors Live within a daily budget (below). Tutors Live's course page is the only subscriber to a course channel, and its landing page the only subscriber to the platform-wide feed, each only while mounted.
+
+Every channel and broadcast goes through the Realtime port, `@tutors/realtime`, and the tab's one gateway in `@tutors/community` (`services/realtime.ts`). Only the Supabase adapter, `@tutors/realtime-supabase`, calls `.channel()`; `tests/architecture/realtime-boundary.test.ts` holds that line. The gateway keeps a tab within its budget (10 broadcasts a second, 3 joined channels), leaves a failing channel and rejoins it after a full-jitter exponential backoff (1 s doubling to 30 s), and counts what each topic sends, receives, drops and refuses. Topic names come from `topics`, so they change in one place.
 
 ```typescript
-import { supabase } from "../utils/supabase-client";
+import { topics } from "@tutors/realtime";
+import { realtime } from "./realtime.ts";
 
-// Subscribe to a channel (equivalent to joining a room)
-const channel = supabase
-  .channel(courseId, { config: { broadcast: { self: false } } })
-  .on("broadcast", { event: "lo-event" }, (payload) => {
-    const data = payload.payload;
+// Publish without joining: one HTTP request, delivered only to the topic's subscribers
+realtime.publish(topics.courseActivity(courseId), "lo-event", loRecord);
+
+// Join (Tutors Live only); the gateway shares the channel if this tab already joined it
+const subscription = realtime.subscribe(topics.courseActivity(courseId), {
+  events: ["lo-event"],
+  onMessage: (event, payload) => {
     // Handle presence update
-  })
-  .subscribe();
-
-// Send a broadcast message
-channel.send({
-  type: "broadcast",
-  event: "lo-event",
-  payload: { type: "presence", user: userId, page: currentPage }
+  }
 });
 
-// Cleanup
-supabase.removeChannel(channel);
+subscription.send("lo-event", loRecord); // false while the link is degraded or the budget is spent
+await subscription.close();
+```
+
+#### Tutors Live's daily budget
+
+Supabase bills one Realtime message per send plus one per subscriber it is delivered to. The daily budget is 160k messages: 120k for Tutors Live, 30k for whiteboards and presence, 10k headroom. Live's share is enforced in the database by `supabase/migrations/20261016_realtime_live_budget.sql`:
+
+- Each Tutors Live tab calls `realtime_watch(topic, watcher)` when it opens the platform feed or a course page and every 60 seconds after; a watcher not heard from for 90 seconds no longer counts.
+- For each page view, the reader's server (`apps/reader/src/routes/api/live/activity`, logic in `@tutors/community/services/live-activity.ts`) calls `realtime_claim_live_publish(course_id)`, which returns the topics to publish to and charges them (1 + watchers each) to today's `realtime_budget` row. Topics nobody watches cost nothing. From 70% of the day's budget only the course feed is published (the platform feed carries every course and costs most); from 90% nothing is, and Live reads stored activity from `tutors-connect-latest` every 60 seconds instead. If the claim fails (the migration not applied, the database unreachable) the server publishes nothing.
+- The day is the UTC day. The server publishes each event as it arrives, with the public anon key; batching events over a few seconds needs state that outlives a request, which the reader's Netlify functions do not keep, so it waits for the reader to run as one long-lived server on OpenShift. Private topics, and with them a key Live tabs cannot share, follow in phase 4 (#477).
+
+Operator steps, in order:
+
+1. Apply the migration to the Supabase project (SQL editor, or `supabase db push`). Until it is applied the new reader publishes nothing to Live, and Live reads stored activity every 60 seconds.
+2. Deploy the reader and Tutors Live. Readers still on the previous release keep broadcasting from the browser until they reload; Live accepts those events too.
+
+Read today's spend, and change the budget or the thresholds:
+
+```sql
+select * from realtime_budget order by day desc limit 7;
+select * from realtime_settings;
+update realtime_settings set live_daily_budget = 150000;           -- messages a day for Live
+update realtime_settings set slow_at = 0.7, pause_at = 0.9;        -- fractions of the budget
+update realtime_settings set live_daily_budget = 0;                -- stop publishing to Live until raised again
 ```
 
 ---
@@ -1318,7 +1341,7 @@ Author Creates Content
         ▼
 ┌────────────────────────────────────────┐
 │  tutors CLI                             │
-│  $ deno run -A jsr:@tutors/reader      │
+│  $ deno run -A jsr:@tutors/tutors      │
 │  $ deno run -A jsr:@tutors/tutors-lite │
 └──────────────┬─────────────────────────┘
                │
@@ -1360,7 +1383,7 @@ Author Creates Content
 **JSON Mode** (Default):
 
 ```bash
-deno run -A jsr:@tutors/reader
+deno run -A jsr:@tutors/tutors
 ```
 
 Output: `json/tutors.json` + markdown files
@@ -1724,9 +1747,9 @@ pnpm build     # Build reader app
 **Per App**:
 
 ```bash
-pnpm --filter reader dev
-pnpm --filter catalogue dev
-pnpm --filter live dev
+pnpm --filter tutors-reader dev
+pnpm --filter tutors-catalogue dev
+pnpm --filter tutors-live dev
 pnpm --filter tutors-time dev
 ```
 
@@ -1844,7 +1867,7 @@ After generating course:
 ```bash
 # Generate course
 cd /path/to/course-source
-deno run -A jsr:@tutors/reader
+deno run -A jsr:@tutors/tutors
 
 # Deploy json/ folder
 cd json

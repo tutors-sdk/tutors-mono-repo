@@ -4,15 +4,29 @@ import type { Course, Lo } from "@tutors/tutors-model-lib";
 import { rune } from "@tutors/runes";
 import { LoRecord, type LoUser, type PresenceService } from "../types.svelte.ts";
 import type { TutorsId } from "@tutors/tutors-model-lib";
-import { supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
+import { topics } from "@tutors/realtime";
+import { getTutorsConnectRecentLosByCourseId, supabase, upsertTutorsConnectLatestLo } from "../utils/supabase-client.ts";
+import { realtime } from "./realtime.ts";
+import { watchLiveFeed } from "./live-feed.ts";
 import log from "@tutors/logger";
 
-const BROADCAST_CONFIG = { config: { broadcast: { self: false } } };
-let courseChannelRemoval: Promise<unknown> | null = null;
+/**
+ * The reader's online list is read from stored activity, not delivered over Realtime. A course channel
+ * delivers every student's page view to every other student, so its cost grows with the square of the
+ * class; reading the latest-activity table once a minute grows with the class.
+ */
+const ROSTER_REFRESH_MS = 60 * 1000;
+const ROSTER_WINDOW_MS = 5 * 60 * 1000;
+let rosterTimer: ReturnType<typeof setInterval> | null = null;
+/** Bumped on every load and stop, so a slow response for a course already left is dropped. */
+let rosterGeneration = 0;
+/** The student this browser reports as; kept on the list even when their stored row has aged out. */
+let selfId = "";
+/** Stops Tutors Live's watcher reports for the course page it shows. */
+let stopLiveFeed: (() => void) | null = null;
 
 export const presenceService: PresenceService = {
-  channelAll: null,
-  channelCourse: null,
+  courseSubscription: null,
   listeningTo: "",
   studentsOnline: rune<LoRecord[]>([]),
   studentEventMap: new Map<string, LoRecord>(),
@@ -33,31 +47,81 @@ export const presenceService: PresenceService = {
     }
   },
 
-  /** Publish-only: joining here multiplies billed platform-wide deliveries by every reader.
-   * Only Tutors Live's landing page subscribes to this feed.
-   */
-  connectToAllCourseAccess(): void {
-    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
-    if (this.channelAll) return;
-    this.channelAll = supabase.channel("tutors-all-course-access", BROADCAST_CONFIG);
-  },
-
   async startPresenceListener(courseId: string) {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
     if (this.listeningTo === courseId) return;
 
     this.stopPresenceListener();
     this.listeningTo = courseId;
-    // Supabase reuses channels by topic, so wait until the previous instance has left.
-    if (courseChannelRemoval) await courseChannelRemoval;
-    if (this.listeningTo !== courseId || this.channelCourse) return;
+    // The gateway waits for a previous channel on this topic to finish leaving before it joins again.
+    this.courseSubscription = realtime.subscribe(topics.courseActivity(courseId), {
+      events: ["lo-event"],
+      onMessage: (event, payload) => this.studentListener({ type: "broadcast", event, payload })
+    });
+    stopLiveFeed = watchLiveFeed(
+      topics.courseActivity(courseId),
+      (since) => getTutorsConnectRecentLosByCourseId(courseId, since),
+      (record) => this.studentListener({ type: "broadcast", event: "lo-event", payload: record })
+    );
+  },
 
-    this.channelCourse = supabase.channel(courseId, BROADCAST_CONFIG).on("broadcast", { event: "lo-event" }, this.studentListener.bind(this)).subscribe();
+  async startCourseRoster(courseId: string) {
+    if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return;
+    if (this.listeningTo === courseId && rosterTimer) return;
+
+    this.stopPresenceListener();
+    this.listeningTo = courseId;
+    rosterTimer = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void this.refreshCourseRoster();
+    }, ROSTER_REFRESH_MS);
+    await this.refreshCourseRoster();
+  },
+
+  async refreshCourseRoster() {
+    const courseId = this.listeningTo;
+    if (!courseId || !rosterTimer) return;
+
+    const generation = ++rosterGeneration;
+    const since = new Date(Date.now() - ROSTER_WINDOW_MS).toISOString();
+    const rows = await getTutorsConnectRecentLosByCourseId(courseId, since);
+    // A failed read keeps the last list rather than emptying it until the next refresh.
+    if (!rows || generation !== rosterGeneration || this.listeningTo !== courseId) return;
+
+    const recent = new Set<string>();
+    for (const row of rows) {
+      const record = row.payload as unknown as LoRecord;
+      const id = record?.user?.id;
+      if (!id || record.courseId !== courseId) continue;
+      recent.add(id);
+      const existing = this.studentEventMap.get(id);
+      if (!existing) {
+        const latestLo = new LoRecord(record);
+        this.studentsOnline.value.push(latestLo);
+        this.studentEventMap.set(id, latestLo);
+      } else if (id !== selfId) {
+        // This browser's own record is updated locally as the student moves, ahead of the stored row.
+        refreshLoRecord(existing, record);
+      }
+    }
+
+    const kept = this.studentsOnline.value.filter((lo) => recent.has(lo.user!.id) || lo.user!.id === selfId);
+    if (kept.length !== this.studentsOnline.value.length) {
+      for (const [id] of this.studentEventMap) {
+        if (!recent.has(id) && id !== selfId) this.studentEventMap.delete(id);
+      }
+      this.studentsOnline.value = kept;
+    }
   },
 
   stopPresenceListener() {
-    if (this.channelCourse && supabase) courseChannelRemoval = supabase.removeChannel(this.channelCourse);
-    this.channelCourse = null;
+    stopLiveFeed?.();
+    stopLiveFeed = null;
+    if (rosterTimer) clearInterval(rosterTimer);
+    rosterTimer = null;
+    rosterGeneration++;
+    void this.courseSubscription?.close();
+    this.courseSubscription = null;
     this.listeningTo = "";
     this.studentsOnline.value = [];
     this.studentEventMap.clear();
@@ -81,32 +145,32 @@ export const presenceService: PresenceService = {
       loRecord.icon = lo.icon;
     }
 
-    // Publish by HTTP because the global channel is deliberately never joined.
-    try {
-      void this.channelAll?.httpSend("lo-event", loRecord).catch((error) => log.error("Broadcast to tutors-all-course-access failed:", error));
-    } catch (error) {
-      log.error("Broadcast to tutors-all-course-access failed:", error);
-    }
-    const message = { type: "broadcast" as const, event: "lo-event", payload: loRecord };
-    this.studentListener(message);
-    try {
-      const channel = this.listeningTo === course.courseId ? this.channelCourse : null;
-      if (channel) {
-        void channel.send(message);
-      } else {
-        // Navigation can report activity before the old course channel has finished leaving.
-        void supabase
-          .channel(course.courseId, BROADCAST_CONFIG)
-          .httpSend("lo-event", loRecord)
-          .catch((error) => log.error("Broadcast to course failed:", error));
-      }
-    } catch (error) {
-      log.error("Broadcast to course failed:", error);
-    }
-
+    selfId = loRecord.user?.id ?? "";
+    this.studentListener({ type: "broadcast", event: "lo-event", payload: loRecord });
+    // The browser publishes nothing over Realtime: the reader's server publishes to Tutors Live, and only
+    // to the feeds a Live tab is watching, within the day's budget.
+    reportLiveActivity(loRecord);
     void upsertTutorsConnectLatestLo(loRecord);
   }
 };
+
+/** The reader's server route that publishes learning events to Tutors Live (apps/reader/src/routes/api/live/activity). */
+export const LIVE_ACTIVITY_ROUTE = "/api/live/activity";
+
+/** Fire-and-forget: `keepalive` lets the request finish when the student is leaving the page. */
+function reportLiveActivity(loRecord: LoRecord) {
+  if (typeof fetch !== "function") return;
+  try {
+    void fetch(LIVE_ACTIVITY_ROUTE, {
+      method: "POST",
+      keepalive: true,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(loRecord)
+    }).catch((error: unknown) => log.warn("Reporting live activity failed:", error));
+  } catch (error) {
+    log.warn("Reporting live activity failed:", error);
+  }
+}
 
 export function refreshLoRecord(loEvent: LoRecord, nextLoEvent: LoRecord) {
   loEvent.loRoute = nextLoEvent.loRoute;

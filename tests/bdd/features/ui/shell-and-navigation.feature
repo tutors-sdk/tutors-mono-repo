@@ -80,7 +80,7 @@ Feature: Reader shell and navigation
 
     Scenario: Closing the preferences menu returns focus to its button
       When a student opens Preferences and presses Escape
-      Then focus is on the "Open Theme Menu" button
+      Then focus is on the "Preferences" button
 
     Scenario: Closing the online dialog returns focus to its course tools row
       Given a signed-in student sees one student online

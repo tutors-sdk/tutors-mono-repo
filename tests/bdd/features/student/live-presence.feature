@@ -7,6 +7,7 @@ Feature: Live Presence
   Background:
     Given the course "web-dev-101" is published with 2 labs
     And the student "Alice" is signed in
+    And a live dashboard is watching the course and the platform feeds
 
   @ears-event-driven
   Scenario: See online students count
@@ -15,7 +16,7 @@ Feature: Live Presence
     Then the system shall display 3 students currently online
 
   @ears-event-driven
-  Scenario: Receive real-time presence updates
+  Scenario: Receive presence updates
     Given "Alice" has opened lab 1 of the course
     When another student "Bob" joins the course at lab 1
     Then the system shall update the online count to 2
