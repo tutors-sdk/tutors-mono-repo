@@ -19,15 +19,18 @@ export async function getLocksForCourse(courseId: string): Promise<ContentLock[]
   return (data ?? []) as ContentLock[];
 }
 
-/** What happened to a lock change: saved by the server, refused by it, or no server store to save it in. */
-type LockWriteResult = "saved" | "refused" | "unavailable";
+/**
+ * What happened to a lock change: saved by the server, refused by it, sent to a server with no lock database
+ * to save it in, or not answered because the server could not be reached.
+ */
+type LockWriteResult = "saved" | "refused" | "unavailable" | "unreachable";
 
 /**
  * Ask the reader's server to lock or unlock one learning object (PUT /api/courses/:id/locks, Rule 0630).
  * The server checks the signed-in educator and records who made the change; the browser never writes
- * the table itself. "refused" when the server rejects the change or cannot save it (4xx, 502);
- * "unavailable" when it has no database to save to (503) or cannot be reached, so the browser's
- * localStorage copy stays the record, as it does in a reader without Supabase.
+ * the table itself. "refused" when the server rejects the change or cannot save it (4xx, 502, other 5xx);
+ * "unavailable" when it has no database to save to (503), so the browser's localStorage copy stays the
+ * record, as it does in a reader without Supabase; "unreachable" when the request never got an answer.
  */
 export async function upsertLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWriteResult> {
   if (!courseId || !loRoute) return "refused";
@@ -42,6 +45,6 @@ export async function upsertLock(courseId: string, loRoute: string, locked: bool
     return response.status === 503 ? "unavailable" : "refused";
   } catch (error) {
     log.error("upsertLock failed:", error);
-    return "unavailable";
+    return "unreachable";
   }
 }
