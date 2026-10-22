@@ -42,7 +42,7 @@ Before starting work on a significant change, please open an issue or comment on
 
 ### Prerequisites
 
-- Node.js >= 22.12.0 (the `engines` field in `package.json` is the source of truth)
+- Node.js >= 22.17.0 (the `engines` field in `package.json` is the source of truth)
 - pnpm >= 8.0.0
 - Git
 
@@ -60,8 +60,8 @@ Open **http://localhost:5173/course/reference-course**. You should see a rendere
 
 What just happened:
 
-- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); a devcontainer that avoids the local install is tracked in [#236](https://github.com/tutors-sdk/tutors-mono-repo/issues/236).
-- The copied `.env` sits at the repository root and every app reads it: each app's Vite config sets `envDir` there, and its SvelteKit config sets `kit.env.dir` to match, so the `$env` modules resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); the devcontainer in `.devcontainer/` avoids the local install.
+- The copied `.env` sits at the repository root and every app reads it: each app's Vite config calls `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` there and the SvelteKit plugin's `env.dir` to match, so `$app/env/public` and `$app/env/private` resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
 - If you set up Tutors before the root `.env` change, delete any leftover per-app files such as `apps/reader/.env`. No app reads them, so editing one has no effect.
 - `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
 - `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.

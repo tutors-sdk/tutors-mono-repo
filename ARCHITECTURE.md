@@ -126,16 +126,16 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 **Build & Package Management**:
 - **pnpm 8+**: Fast, disk-efficient package manager with workspace support
 - **Vite 8.x**: Next-generation build tool and dev server
-- **TypeScript 5+**: Type-safe development across all packages
+- **TypeScript 6**: Type-safe development across all packages
 
 **Runtime Environments**:
 - **Deno**: For JSR packages and CLI tools
-- **Node.js 22.12+**: For Svelte packages and applications (`engines.node` in `package.json`)
+- **Node.js 22.17+**: For Svelte packages and applications (`engines.node` in `package.json`)
 - **Browser**: For client-side applications
 
 **Frontend Framework**:
 - **Svelte 5**: Reactive UI framework with runes-based state
-- **SvelteKit 2**: Full-stack framework with SSR/CSR
+- **SvelteKit 3**: Full-stack framework with SSR/CSR
 - **Tailwind CSS 4**: Utility-first styling
 - **Skeleton UI 5**: Svelte component library
 
@@ -524,7 +524,7 @@ json/
 
 ```bash
 # Generate JSON course
-deno run -A jsr:@tutors/reader
+deno run -A jsr:@tutors/tutors
 
 # Or locally
 deno run -A packages/jsr/tutors/main.ts
@@ -1341,7 +1341,7 @@ Author Creates Content
         ▼
 ┌────────────────────────────────────────┐
 │  tutors CLI                             │
-│  $ deno run -A jsr:@tutors/reader      │
+│  $ deno run -A jsr:@tutors/tutors      │
 │  $ deno run -A jsr:@tutors/tutors-lite │
 └──────────────┬─────────────────────────┘
                │
@@ -1383,7 +1383,7 @@ Author Creates Content
 **JSON Mode** (Default):
 
 ```bash
-deno run -A jsr:@tutors/reader
+deno run -A jsr:@tutors/tutors
 ```
 
 Output: `json/tutors.json` + markdown files
@@ -1747,9 +1747,9 @@ pnpm build     # Build reader app
 **Per App**:
 
 ```bash
-pnpm --filter reader dev
-pnpm --filter catalogue dev
-pnpm --filter live dev
+pnpm --filter tutors-reader dev
+pnpm --filter tutors-catalogue dev
+pnpm --filter tutors-live dev
 pnpm --filter tutors-time dev
 ```
 
@@ -1867,7 +1867,7 @@ After generating course:
 ```bash
 # Generate course
 cd /path/to/course-source
-deno run -A jsr:@tutors/reader
+deno run -A jsr:@tutors/tutors
 
 # Deploy json/ folder
 cd json

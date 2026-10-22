@@ -223,7 +223,7 @@ in front of "shall":
 | `apps/catalogue` | `the catalogue` |
 | `apps/live` | `the live dashboard` |
 | `apps/time` | `the time dashboard` |
-| `@tutors/data-api` and the reader's `/api` routes | `the data API` |
+| The reader's `/api` routes | `the data API` |
 
 "The system shall" is not a system name.
 
