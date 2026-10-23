@@ -65,6 +65,28 @@ function fromLines(): { image: string; stage?: string }[] {
   }));
 }
 
+/** Compose files and the devcontainer that name images (Production hardening 1.3, Rule 0668). */
+const PINNED_IMAGE_FILES = [
+  "compose.yaml",
+  "observability/compose.yaml",
+  "observability/grafana/docker-compose.yml",
+  "tests/e2e-stack/compose.yaml",
+  "deploy/staging/compose.yaml",
+  ".devcontainer/devcontainer.json"
+];
+
+/** Every image a compose file or the devcontainer names, with the file it is in. */
+function namedImages(): { file: string; image: string }[] {
+  return PINNED_IMAGE_FILES.flatMap((file) => {
+    const text = readFileSync(join(REPO_ROOT, file), "utf8");
+    const pattern = file.endsWith(".json") ? /"image"\s*:\s*"([^"]+)"/g : /^\s*image:\s*(\S+)/gm;
+    return [...text.matchAll(pattern)].map((m) => ({ file, image: m[1]! }));
+  });
+}
+
+/** Images Tutors builds itself: tagged by the build, never by a registry digest. */
+const OWN_IMAGE = /^(?:\$\{TUTORS_IMAGE_PREFIX:-tutors\/\}|tutors\/|quay\.io\/tutors-sdk\/)/;
+
 describeFeature(feature, ({ Rule, AfterEachScenario }) => {
   let stage = "";
   const givenStage = () => {
@@ -125,6 +147,43 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       And("it ignores no update to it", () => {
         // Node patch releases and Debian fixes are what the base image carries: an ignore would let the pin go stale.
         expect(docker!.ignore ?? []).toEqual([]);
+      });
+    });
+  });
+
+  Rule("Tutors shall pin every third-party image its compose files and devcontainer name by sha256 digest, moved only by a Dependabot pull request.", ({ RuleScenario }) => {
+    let images: { file: string; image: string }[] = [];
+    RuleScenario("The compose files and the devcontainer pin their images by digest", ({ Given, Then, And }) => {
+      Given("the repository's compose files and devcontainer", () => {
+        images = namedImages();
+      });
+      Then("every image they name from a registry carries a sha256 digest", () => {
+        const thirdParty = images.filter((i) => !OWN_IMAGE.test(i.image));
+        expect(thirdParty.length, "the files name at least one third-party image").toBeGreaterThan(0);
+        for (const i of thirdParty) expect(i.image, `${i.file}: ${i.image}`).toMatch(/^[\w.-]+(?:\/[\w.-]+)+:[\w.-]+@sha256:[0-9a-f]{64}$/);
+      });
+      And("only the images Tutors builds itself go unpinned", () => {
+        for (const i of images.filter((i) => !/@sha256:/.test(i.image))) expect(i.image, `${i.file}: ${i.image}`).toMatch(OWN_IMAGE);
+      });
+    });
+
+    type Update = { "package-ecosystem": string; directory?: string; directories?: string[] };
+    let updates: Update[] = [];
+    RuleScenario("Dependabot watches the compose files and the devcontainer", ({ Given, Then, And }) => {
+      Given("the repository's Dependabot configuration", () => {
+        updates = (load(readFileSync(join(REPO_ROOT, ".github/dependabot.yml"), "utf8")) as { updates: Update[] }).updates;
+      });
+      Then("its {string} ecosystem covers every directory that holds a pinned compose file", (_ctx: unknown, ecosystem: string) => {
+        const covered = new Set(updates.filter((u) => u["package-ecosystem"] === ecosystem).flatMap((u) => u.directories ?? (u.directory ? [u.directory] : [])));
+        const dirs = new Set(
+          namedImages()
+            .filter((i) => !i.file.endsWith(".json") && /@sha256:/.test(i.image))
+            .map((i) => "/" + i.file.split("/").slice(0, -1).join("/"))
+        );
+        for (const dir of dirs) expect(covered, `${ecosystem} covers ${dir}`).toContain(dir);
+      });
+      And("it updates the {string} ecosystem in {string}", (_ctx: unknown, ecosystem: string, directory: string) => {
+        expect(updates.some((u) => u["package-ecosystem"] === ecosystem && (u.directory === directory || u.directories?.includes(directory)))).toBe(true);
       });
     });
   });

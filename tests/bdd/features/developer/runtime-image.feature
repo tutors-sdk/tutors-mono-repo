@@ -68,3 +68,16 @@ Feature: Runtime image
       Given the repository's Dependabot configuration
       Then it updates the "docker" ecosystem in "/"
       And it ignores no update to it
+
+  @rule-0668 @ears-ubiquitous
+  Rule: Tutors shall pin every third-party image its compose files and devcontainer name by sha256 digest, moved only by a Dependabot pull request.
+
+    Scenario: The compose files and the devcontainer pin their images by digest
+      Given the repository's compose files and devcontainer
+      Then every image they name from a registry carries a sha256 digest
+      And only the images Tutors builds itself go unpinned
+
+    Scenario: Dependabot watches the compose files and the devcontainer
+      Given the repository's Dependabot configuration
+      Then its "docker-compose" ecosystem covers every directory that holds a pinned compose file
+      And it updates the "devcontainers" ecosystem in "/"
