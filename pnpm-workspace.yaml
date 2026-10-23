@@ -35,8 +35,13 @@ overrides:
   # GHSA-9rgm-9g3h-6x36 (@sveltejs/kit > devalue).
   devalue@<5.9.1: ">=5.9.1 <6"
   brace-expansion@>=4.0.0 <5.0.12: ">=5.0.12 <6"
-  dompurify@>=3.4.13 <3.4.16: ">=3.4.16 <4"
-  "@marp-team/marpit>markdown-it": ">=14.3.1 <15"
+  # GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f (reader, isomorphic-dompurify > dompurify).
+  dompurify@<3.4.17: ">=3.4.17 <4"
+  # GHSA-gfr2-rv44-r23c, GHSA-vfgh-jcmw-g37q (marp, katex plugin > markdown-it).
+  "@marp-team/marpit>markdown-it": ">=14.3.3 <15"
+  markdown-it@>=15.0.0 <15.0.3: ">=15.0.3 <16"
+  # GHSA-587h-7wmj-h5pm and four more (vitest > vite).
+  vite@>=8.3.0 <8.3.3: ">=8.3.3 <9"
   undici@>=8.0.0 <8.10.2: ">=8.10.2 <9"
   # GHSA-68fv-2mgg-jv7q: the sanitizer runtime now includes source-map-js.
   source-map-js@>=1.0.0 <1.2.2: ">=1.2.2 <2"

@@ -16,6 +16,7 @@ jobs:
   analyze:
     name: Analyze (JavaScript/TypeScript)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       security-events: write
       contents: read
