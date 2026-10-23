@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "commit": "180700e171ab642aa5eeefbf34b4c35e2be958d9",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-23T01:59:44Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39884227605",
+  "generatedAt": "2026-10-23T09:21:36Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/39924565287",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -238,7 +238,7 @@
       "e2e-stack-nightly": "failure",
       "timezone-matrix": "success",
       "lighthouse": "success",
-      "load": "failure",
+      "load": "success",
       "generator-corpus": "success"
     }
   }
