@@ -72,14 +72,14 @@ const PINNED_IMAGE_FILES = [
   "observability/grafana/docker-compose.yml",
   "tests/e2e-stack/compose.yaml",
   "deploy/staging/compose.yaml",
-  ".devcontainer/devcontainer.json"
+  ".devcontainer/Dockerfile"
 ];
 
 /** Every image a compose file or the devcontainer names, with the file it is in. */
 function namedImages(): { file: string; image: string }[] {
   return PINNED_IMAGE_FILES.flatMap((file) => {
     const text = readFileSync(join(REPO_ROOT, file), "utf8");
-    const pattern = file.endsWith(".json") ? /"image"\s*:\s*"([^"]+)"/g : /^\s*image:\s*(\S+)/gm;
+    const pattern = file.endsWith("Dockerfile") ? /^FROM\s+(\S+)/gm : /^\s*image:\s*(\S+)/gm;
     return [...text.matchAll(pattern)].map((m) => ({ file, image: m[1]! }));
   });
 }
@@ -177,7 +177,7 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
         const covered = new Set(updates.filter((u) => u["package-ecosystem"] === ecosystem).flatMap((u) => u.directories ?? (u.directory ? [u.directory] : [])));
         const dirs = new Set(
           namedImages()
-            .filter((i) => !i.file.endsWith(".json") && /@sha256:/.test(i.image))
+            .filter((i) => !i.file.endsWith("Dockerfile") && /@sha256:/.test(i.image))
             .map((i) => "/" + i.file.split("/").slice(0, -1).join("/"))
         );
         for (const dir of dirs) expect(covered, `${ecosystem} covers ${dir}`).toContain(dir);

@@ -80,4 +80,4 @@ Feature: Runtime image
     Scenario: Dependabot watches the compose files and the devcontainer
       Given the repository's Dependabot configuration
       Then its "docker-compose" ecosystem covers every directory that holds a pinned compose file
-      And it updates the "devcontainers" ecosystem in "/"
+      And it updates the "docker" ecosystem in "/.devcontainer"

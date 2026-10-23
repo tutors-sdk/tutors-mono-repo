@@ -83,9 +83,10 @@ updates:
       - "dependencies"
       - "docker"
 
-  # The devcontainer's image is pinned by digest and moves here.
-  - package-ecosystem: "devcontainers"
-    directory: "/"
+  # The devcontainer's image is pinned by digest in .devcontainer/Dockerfile and
+  # moves here: the "devcontainers" ecosystem only updates Features, not images.
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
     schedule:
       interval: "weekly"
       day: "monday"
