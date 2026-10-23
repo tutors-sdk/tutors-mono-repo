@@ -14,13 +14,15 @@ docker build --build-arg APP_NAME=live -t tutors/live .
 docker build --build-arg APP_NAME=time -t tutors/time .
 ```
 
-Optional build args: `NODE_VERSION` (default `22`), `VERSION`, `GIT_SHA` and
+Optional build args: `VERSION`, `GIT_SHA` and
 `BUILD_DATE` for the OCI labels and `GET /version`, and `SOURCE_DATE_EPOCH` for
 reproducible static-file headers (see [Deterministic responses](#deterministic-responses)).
 The build needs BuildKit (default in Docker 23+). Base images are fully
 qualified (`docker.io/library/node`), so the same file builds under
 Podman/Buildah and Quay's builders; `NODE_IMAGE` overrides the base for a
-mirror.
+mirror. The default base, `node:22-bookworm-slim`, is pinned by digest, so the
+same commit always builds on the same Node and Debian; Dependabot moves the
+digest in its own pull request.
 
 ```bash
 docker build --build-arg APP_NAME=reader \
