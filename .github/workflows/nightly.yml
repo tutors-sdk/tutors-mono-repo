@@ -131,7 +131,19 @@ jobs:
           push: false
           cache-from: type=gha,scope=smoke-live
 
-      - name: Build fixture course
+      # The signed-in half of the stack runs the time app too (tests/e2e-stack/compose.yaml time-signed-in), so
+      # compose cannot start without its image; ci.yml builds the same four.
+      - name: Build time image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          build-args: APP_NAME=time
+          tags: tutors/time:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-time
+
+      - name: Build fixture courses
         run: pnpm e2e:stack:fixture
 
       - name: Start stack
