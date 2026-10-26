@@ -1,13 +1,21 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+// The seams: Supabase (by the path product code resolves, by name for a hoisted install, and the reader's
+// server-only service client), the public env and SvelteKit. The consent, connect service and route are product code.
+vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
+  createClient: (await import("../../support/supabase-recorder.ts")).createClient
+}));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
-vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
-vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
-vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
+vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
+vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("../../../../apps/reader/src/lib/server/supabase-service.ts", async () => {
+  const { recorder } = await import("../../support/supabase-recorder.ts");
+  return { serviceSupabase: () => recorder };
+});
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, reloadPage, signIn } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, readerServer, reloadPage, signIn } from "../../support/connect.ts";
+import type { LoRecord } from "../../../../packages/svelte/community/src/types.svelte.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { consent } from "../../../../packages/svelte/utils/privacy/src/index.ts";
@@ -32,11 +40,14 @@ describeFeature(feature, ({ Background, Rule }) => {
   const lab = (n: number) => labsOf(course)[n - 1];
   const both = { analytics: true, presence: true };
   const signInWith = (choice: { analytics: boolean; presence: boolean } | null) => (_ctx: unknown, name: string) => signIn(githubUser(name), choice);
+  // Learning events now go to the reader server (/api/live/activity), which stores them; the browser no longer broadcasts.
   const broadcasts = () => [...recorder.sentOn(course.courseId), ...recorder.sentOn(ALL_COURSES_CHANNEL)];
+  const postsOf = (login: string) => readerServer.posts.filter((post) => (post.body as LoRecord).user?.id === login);
+  const recordingCalls = (fn: string, login: string) => recorder.rpcCalls.filter((call) => call.fn === fn && call.args.p_student_id === login);
   const learningRecordsOf = (login: string) => recorder.rows("learning_records").filter((row) => row.student_id === login);
   const calendarOf = (login: string) => [
     ...recorder.rows("calendar").filter((row) => row.studentid === login),
-    ...recorder.rpcCalls.filter((call) => call.fn === "increment_calendar" && call.args.student_id_value === login)
+    ...recorder.rpcCalls.filter((call) => call.args.p_student_id === login)
   ];
 
   async function viewAndStay(_ctx: unknown, n: number, seconds: number) {
@@ -60,8 +71,8 @@ describeFeature(feature, ({ Background, Rule }) => {
   }
 
   async function requestData(login: string | null, query = "") {
-    const session = login ? { user: { login } } : null;
-    download = await downloadData({ locals: { auth: async () => session }, url: new URL(`http://reader.test/api/privacy${query}`) } as never);
+    const actor = login ? { login } : null;
+    download = await downloadData({ locals: { actor }, url: new URL(`http://reader.test/api/privacy${query}`) } as never);
     body = await download.json();
   }
 
@@ -100,7 +111,8 @@ describeFeature(feature, ({ Background, Rule }) => {
       Then("the reader shall store {number} page load and {number} blocks of time active for {string}", (_ctx, loads: number, blocks: number, login: string) => {
         expect(learningRecordsOf(login)).toMatchObject([{ lo_id: lab(1).route, count: loads }]);
         expect(recorder.rows("calendar")).toMatchObject([{ studentid: login, pageloads: loads }]);
-        expect(recorder.rpcCalls.filter((call) => call.fn === "increment_calendar" && call.args.student_id_value === login)).toHaveLength(blocks);
+        expect(recordingCalls("record_page_view", login)).toHaveLength(loads);
+        expect(recordingCalls("record_heartbeat", login)).toHaveLength(blocks);
       });
     });
   });
@@ -115,6 +127,7 @@ describeFeature(feature, ({ Background, Rule }) => {
       When("the student views lab {number} of the course", (_ctx, n: number) => openLo(course, lab(n)));
       Then("the reader shall broadcast nothing and save no latest activity for {string}", () => {
         expect(broadcasts()).toEqual([]);
+        expect(readerServer.posts).toEqual([]);
         expect(recorder.rows("tutors-connect-latest")).toEqual([]);
       });
       And("the reader shall mark {string} as {string}", markedAs);
@@ -124,7 +137,7 @@ describeFeature(feature, ({ Background, Rule }) => {
       Given("the student {string} signs in having allowed presence sharing only", signInWith({ analytics: false, presence: true }));
       When("the student views lab {number} of the course", (_ctx, n: number) => openLo(course, lab(n)));
       Then("the reader shall broadcast the visit to lab {number} and save it as the latest activity of {string}", (_ctx, n: number, login: string) => {
-        expect(broadcasts().map((message) => (message.payload as { loRoute: string }).loRoute)).toEqual([lab(n).route, lab(n).route]);
+        expect(postsOf(login).map((post) => (post.body as LoRecord).loRoute)).toEqual([lab(n).route]);
         expect(recorder.rows("tutors-connect-latest")).toMatchObject([{ course_id: course.courseId, student_id: login }]);
       });
       And("the reader shall mark {string} as {string}", markedAs);

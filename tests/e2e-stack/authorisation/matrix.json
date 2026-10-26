@@ -203,6 +203,20 @@
       "why": "anyone may report a learning event, as the anon key it replaced allowed; the body is validated and the day's Live budget applies (tests/security/mutating-routes.txt)"
     },
     {
+      "key": "reader GET /api/privacy",
+      "request": {
+        "path": "/api/privacy"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "any signed-in reader downloads their own records; the login comes from the session, never the query"
+    },
+    {
       "key": "time GET /healthz",
       "request": {
         "path": "/healthz"
