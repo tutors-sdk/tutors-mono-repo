@@ -28,7 +28,7 @@ overrides:
   nanoid@<3.3.18: ">=3.3.18 <4"
   qs@>=6.11.1 <=6.15.1: ">=6.15.2 <7"
   "@sveltejs/kit@<=2.70.1": ">=2.70.2 <3"
-  fast-uri@<3.1.8: ">=3.1.8 <4"
+  fast-uri@<3.1.9: ">=3.1.9 <4"
   "@xmldom/xmldom@>=0.9.0 <0.9.12": ">=0.9.12 <0.10"
   # GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh (mermaid > chevrotain > lodash-es).
   lodash-es@<4.18.1: ">=4.18.1 <5"
@@ -42,7 +42,12 @@ overrides:
   markdown-it@>=15.0.0 <15.0.3: ">=15.0.3 <16"
   # GHSA-587h-7wmj-h5pm and four more (vitest > vite).
   vite@>=8.3.0 <8.3.3: ">=8.3.3 <9"
-  undici@>=8.0.0 <8.10.2: ">=8.10.2 <9"
+  # GHSA-xjj6-f33q-929c (Node fetch in the apps > undici).
+  undici@>=8.0.0 <8.12.2: ">=8.12.2 <9"
+  # GHSA-mrhx-c7xc-m3w5 (better-auth and others > zod).
+  zod@>=4.0.0 <4.6.6: ">=4.6.6 <5"
+  # GHSA-834v-8h66-3h79 (test runner > happy-dom, dev only).
+  happy-dom@>=21.0.0 <21.0.4: ">=21.0.4 <22"
   # GHSA-68fv-2mgg-jv7q: the sanitizer runtime now includes source-map-js.
   source-map-js@>=1.0.0 <1.2.2: ">=1.2.2 <2"
   # GHSA-238p-pmpm-9mq7 (@marp-team/marp-core > katex). marp-core 5.0.2 still asks for ^0.17.0;
