@@ -3,6 +3,7 @@
  * @module
  */
 
-export { courseService, CourseNotFoundError, setCourseNotFoundHandler, setCourseUnreachableHandler } from "./services/course.svelte.ts";
+export { courseService, CourseNotFoundError, setCourseNotFoundHandler, setCourseTimedOutHandler, setCourseUnreachableHandler, COURSE_FETCH_TIMEOUT_MS } from "./services/course.svelte.ts";
 export { LiveLab } from "./services/live-lab.ts";
 export { LiveNotebook } from "./services/live-notebook.ts";
+export type { NotebookService } from "./types.ts";

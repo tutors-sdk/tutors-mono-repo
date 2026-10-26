@@ -62,6 +62,24 @@ describe("extractQuizBlock", () => {
     expect(quizSource).toContain("x()");
   });
 
+  it("keeps a tilde fence inside a backtick quiz, even a bare one", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\nquestion: Why?\n~~~\n```\n~~~\n```\nafter");
+    expect(quizSource).toBe("question: Why?\n~~~\n```\n~~~");
+    expect(prose).toBe("after");
+  });
+
+  it("closes a three-backtick quiz on a bare fence, so only a named inner fence nests", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\nquestion: Why?\n```\nx()\n```");
+    expect(quizSource).toBe("question: Why?");
+    expect(prose).toBe("x()\n```");
+  });
+
+  it("keeps a fence opened on an option's dash line inside a three-backtick quiz", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\noptions:\n  - ```js\n    a()\n    ```\n  - b\n```\nafter");
+    expect(quizSource).toBe("options:\n  - ```js\n    a()\n    ```\n  - b");
+    expect(prose).toBe("after");
+  });
+
   it("runs an unterminated fence to the end of the document", () => {
     const { prose, quizSource } = extractQuizBlock("intro\n```quiz\nquestion: Why?");
     expect(prose).toBe("intro");
@@ -77,5 +95,24 @@ describe("extractQuizBlock", () => {
   it("ignores a fence whose info string merely starts with quiz", () => {
     const { quizSource } = extractQuizBlock("```quizzical\nnot a quiz\n```");
     expect(quizSource).toBeNull();
+  });
+  it("opens a quiz only on a line that starts with the fence, with spaces allowed before quiz", () => {
+    expect(extractQuizBlock("see ```quiz\nx\n```").quizSource).toBeNull();
+    expect(extractQuizBlock("x```quiz\nx\n```").quizSource).toBeNull();
+    expect(extractQuizBlock("```  quiz\nquestion: Why?\n```").quizSource).toBe("question: Why?");
+  });
+
+  it("nests only a line that starts with a fence of three or more", () => {
+    for (const line of ["see ```js here", "`x` is inline", "~ roughly"]) {
+      const { prose, quizSource } = extractQuizBlock(`\`\`\`quiz\n${line}\n\`\`\`\nafter`);
+      expect(quizSource).toBe(line);
+      expect(prose).toBe("after");
+    }
+  });
+
+  it("nests a fence opened after a dash and several spaces", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\n-   ```js\n    a()\n    ```\n```\nafter");
+    expect(quizSource).toBe("-   ```js\n    a()\n    ```");
+    expect(prose).toBe("after");
   });
 });

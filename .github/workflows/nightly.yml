@@ -23,7 +23,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -47,7 +47,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -71,10 +71,14 @@ jobs:
         if: always()
         run: pnpm check:test-time reports/vitest-nightly.json
 
+  # Runway tier G: named journeys and axe/reduced-motion ratchets against the built images and a fixture
+  # course server, never vite dev. Nightly only, not a pull request check: building four images and
+  # installing three browsers took one run past its 30 minute limit, so the journeys report the
+  # morning after instead of blocking a merge.
   e2e-stack-nightly:
-    name: E2E journeys (firefox, mobile)
+    name: E2E journeys (built images)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -85,7 +89,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -99,10 +103,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build reader image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           build-args: APP_NAME=reader
@@ -112,7 +116,7 @@ jobs:
           cache-from: type=gha,scope=smoke-reader
 
       - name: Build catalogue image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           build-args: APP_NAME=catalogue
@@ -122,7 +126,7 @@ jobs:
           cache-from: type=gha,scope=smoke-catalogue
 
       - name: Build live image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           build-args: APP_NAME=live
@@ -131,7 +135,19 @@ jobs:
           push: false
           cache-from: type=gha,scope=smoke-live
 
-      - name: Build fixture course
+      # The signed-in half of the stack runs the time app too (tests/e2e-stack/compose.yaml time-signed-in), so
+      # compose cannot start without its image; ci.yml builds the same four.
+      - name: Build time image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          build-args: APP_NAME=time
+          tags: tutors/time:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-time
+
+      - name: Build fixture courses
         run: pnpm e2e:stack:fixture
 
       - name: Start stack
@@ -139,11 +155,17 @@ jobs:
         env:
           TUTORS_TAG: ci
 
+      # The step that hung until the job's limit: bound it so a stalled download fails here, by name.
       - name: Install browsers
-        run: pnpm exec playwright install --with-deps firefox chromium
+        timeout-minutes: 10
+        run: pnpm exec playwright install --with-deps chromium webkit firefox
 
       - name: Journeys
-        run: pnpm test:e2e:stack --project=firefox --project=mobile
+        run: pnpm test:e2e:stack --project=chromium --project=webkit --project=firefox --project=mobile
+
+      # Rules 0606-0617 (tests/bdd/features/journeys): signed in, as a lecturer, and with a dependency failing.
+      - name: Signed-in and resilience journeys
+        run: pnpm test:e2e:stack --project=signed-in
 
       - name: Baselines have no stale lines
         run: pnpm test:e2e:stack:ratchet
@@ -178,7 +200,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -220,7 +242,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -235,10 +257,10 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build reader image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           build-args: APP_NAME=reader
@@ -283,7 +305,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -292,10 +314,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build reader image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           build-args: APP_NAME=reader
@@ -342,7 +364,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -395,7 +417,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -433,7 +455,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -489,7 +511,7 @@ jobs:
           echo "| Mutation | ${{ needs.mutation.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Mutation (every library module) | ${{ needs.mutation-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Journeys (built images) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Lighthouse | ${{ needs.lighthouse.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Load and Soak | ${{ needs.load.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -498,3 +520,60 @@ jobs:
       - name: Fail if any job failed
         if: needs.contract-snapshots.result == 'failure' || needs.mutation.result == 'failure' || needs.mutation-nightly.result == 'failure' || needs.suite-health.result == 'failure' || needs.e2e-stack-nightly.result == 'failure' || needs.timezone-matrix.result == 'failure' || needs.lighthouse.result == 'failure' || needs.load.result == 'failure' || needs.generator-corpus.result == 'failure'
         run: exit 1
+
+  # Rules 0224 and 0225: the night's quality record (mutation score per package and every job's result above),
+  # which the release harness reads with --test-signal, on the `quality` branch. Runs after a failed night too.
+  # Only for main: a run dispatched on a branch to try a fix must not replace main's latest record.
+  quality:
+    name: Publish the quality record
+    needs: [contract-snapshots, mutation, mutation-nightly, suite-health, e2e-stack-nightly, timezone-matrix, lighthouse, load, generator-corpus]
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the quality branch, and nothing else
+    concurrency:
+      group: quality-branch
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0 # `changed` diffs against the production commit
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Absent when the nightly mutation run wrote nothing: the record then has no mutation scores (Rule 0225).
+      - name: Download the nightly mutation report
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: mutation-nightly-report
+          path: reports/mutation-nightly
+
+      - name: Write quality.json and push it to the quality branch
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pnpm release:quality --jobs "$NEEDS" --evidence "$RUN_URL" --out quality.json
+          remote="https://github.com/${GITHUB_REPOSITORY}.git"
+          auth="http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c "$auth" clone -q --depth 1 --branch quality "$remote" quality-branch || git init -q -b quality quality-branch
+          mkdir -p quality-branch/quality
+          cp quality.json "quality-branch/quality/${GITHUB_SHA}.json"
+          cp quality.json quality-branch/quality/latest.json
+          cd quality-branch
+          git add quality
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "quality: ${GITHUB_SHA}"
+          git -c "$auth" push "$remote" HEAD:quality

@@ -34,9 +34,10 @@ name: Container Image Build
 # with Trivy before anything is pushed; CRITICAL and HIGH findings with an
 # available fix stop the workflow. The image is pushed by digest, with no
 # tag; that digest is signed with cosign (keyless, GitHub OIDC) and carries
-# an SPDX SBOM attestation, and only then are the tags above pointed at it,
-# so no tag is ever visible unsigned. The release harness verifies both, see
-# "Verifying an image" in deploy/README.md.
+# an SPDX SBOM attestation and a SLSA v1 build provenance attestation, and
+# only then are the tags above pointed at it, so no tag is ever visible
+# unsigned. The release harness verifies all three, see "Verifying an image"
+# in deploy/README.md.
 #
 # Promotion. The release harness judges the X.Y.Z-rc.N images, so the final
 # tag must ship those images, not a rebuild with a new digest. scripts/
@@ -44,7 +45,7 @@ name: Container Image Build
 # X.Y.Z-rc.N, the git tree of v<X.Y.Z-rc.N> equals the tree of the final tag's
 # commit, the image's revision label is the rc commit and its cosign signature
 # (image-build.yml at that rc tag) verifies. The promoted digest keeps its
-# signature and SBOM attestation, which are attached by digest. Every build,
+# signature, SBOM and SLSA provenance attestations, which are attached by digest. Every build,
 # sign and attest step below is skipped for a promoted app; the test
 # tests/conformance/promote-image.test.ts holds the workflow to that. Trivy runs
 # again, against the promoted digest, before any tag moves. Whether an app was
@@ -111,12 +112,12 @@ jobs:
       # The Dockerfile uses BuildKit cache mounts for the pnpm store, which
       # need the buildx container driver.
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       # The cache scope is per app: the four builds share the deps stage but
       # would otherwise overwrite one another's cache entry.
       - name: Build (linux/amd64, loaded for the scan)
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -213,7 +214,7 @@ jobs:
       # installed on a job that holds the registry credentials.
       - name: Set up Node.js (promotion script)
         if: steps.what.outputs.final == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24
           package-manager-cache: false
@@ -287,7 +288,7 @@ jobs:
       # need the buildx container driver; so does a multi-platform build.
       - name: Set up Docker Buildx
         if: steps.plan.outputs.promoted != 'true'
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       # latest is handled by the explicit raw rule below (release tags only,
       # never a backfill), so the action's automatic latest is switched off.
@@ -349,7 +350,7 @@ jobs:
       # published image picks up current Debian security fixes.
       - name: Build (linux/amd64, loaded for the scan)
         if: steps.plan.outputs.promoted != 'true'
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -393,7 +394,7 @@ jobs:
       - name: Build and push by digest (linux/amd64, linux/arm64)
         id: push
         if: steps.plan.outputs.promoted != 'true'
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./Dockerfile
@@ -443,6 +444,76 @@ jobs:
           SBOM: sbom-${{ matrix.app }}.spdx.json
         run: cosign attest --yes --type spdxjson --predicate "${SBOM}" "${IMAGE}@${DIGEST}"
 
+      # SLSA v1 build provenance for the same digest: which workflow built it
+      # (runDetails.builder.id names image-build.yml at the ref that ran), from
+      # which commit, in which run. Written with jq from the run's own context,
+      # so no third-party action sees the registry credentials.
+      - name: Write the SLSA provenance predicate
+        if: steps.plan.outputs.promoted != 'true'
+        env:
+          APP: ${{ matrix.app }}
+          SOURCE_REF: ${{ steps.what.outputs.ref }}
+          SOURCE_SHA: ${{ steps.epoch.outputs.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          PREDICATE: provenance-${{ matrix.app }}.slsa.json
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg server "$GITHUB_SERVER_URL" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg workflow_ref "$GITHUB_WORKFLOW_REF" \
+            --arg workflow_sha "$GITHUB_WORKFLOW_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg event "$EVENT_NAME" \
+            --arg app "$APP" \
+            --arg source_ref "$SOURCE_REF" \
+            --arg source_sha "$SOURCE_SHA" \
+            --arg finished "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              buildDefinition: {
+                buildType: "https://actions.github.io/buildtypes/workflow/v1",
+                externalParameters: {
+                  workflow: {
+                    ref: ($workflow_ref | sub("^[^@]*@"; "")),
+                    repository: "\($server)/\($repo)",
+                    path: ($workflow_ref | sub("^[^/]+/[^/]+/"; "") | sub("@.*$"; ""))
+                  },
+                  app: $app
+                },
+                internalParameters: { github: { event_name: $event, workflow_sha: $workflow_sha } },
+                resolvedDependencies: [
+                  { uri: "git+\($server)/\($repo)@\($source_ref)", digest: { gitCommit: $source_sha } }
+                ]
+              },
+              runDetails: {
+                builder: { id: "\($server)/\($workflow_ref)" },
+                metadata: {
+                  invocationId: "\($server)/\($repo)/actions/runs/\($run_id)/attempts/\($attempt)",
+                  finishedOn: $finished
+                }
+              }
+            }' > "$PREDICATE"
+          cat "$PREDICATE"
+
+      # Attested keyless, as the signature and the SBOM are, so it verifies
+      # under the same identity; the release harness reads it with
+      # `cosign verify-attestation --type slsaprovenance1` (its build-provenance
+      # check). Verified here the same way before any tag points at the digest.
+      - name: Attest the SLSA provenance to the pushed digest
+        if: steps.plan.outputs.promoted != 'true'
+        env:
+          IMAGE: ${{ env.REGISTRY_IMAGE_PREFIX }}${{ matrix.app }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+          PREDICATE: provenance-${{ matrix.app }}.slsa.json
+        run: |
+          set -euo pipefail
+          cosign attest --yes --type slsaprovenance1 --predicate "${PREDICATE}" "${IMAGE}@${DIGEST}"
+          cosign verify-attestation --type slsaprovenance1 \
+            --certificate-identity-regexp "^${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/\.github/workflows/image-build\.yml@" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "${IMAGE}@${DIGEST}" > /dev/null
+
       # Only now, signed and attested, does the digest get its tags (main,
       # sha-<short>, rc-*, X.Y.Z-rc.N, X.Y.Z, X.Y, latest: whatever metadata
       # produced above). With one source and no annotations, imagetools
@@ -488,3 +559,19 @@ jobs:
             echo
             echo "${TAGS}"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # A final vX.Y.Z tag whose four images are published: open the pull request that
+  # pins production to it (pnpm deploy:pin; deploy-pin-pr.yml). It deploys nothing:
+  # merging that pull request is the deploy. An rc tag is a no-op there.
+  pin-pr:
+    name: Open the deploy pin pull request
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v') && inputs.release_tag == ''
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/deploy-pin-pr.yml
+    with:
+      version: ${{ github.ref_name }}
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}

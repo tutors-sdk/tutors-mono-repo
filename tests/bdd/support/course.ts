@@ -16,9 +16,11 @@ export function labShape(title: string, steps: { title: string; contentMd: strin
 }
 
 /** Publish `children` as generator JSON and decorate it the way the reader does on load. */
-export function loadCourse(courseId: string, title: string, children: LoShape[], properties: Record<string, unknown> = {}): Course {
+export function loadCourse(courseId: string, title: string, children: LoShape[], properties: Record<string, unknown> = {}, calendar?: Record<string, unknown>): Course {
   const raw = materialiseCourse({ title, summary: `${title} summary`, contentMd: `# ${title}`, children });
   Object.assign(raw.properties, properties);
+  // The generator copies calendar.yaml into tutors.json as `calendar` only when the course has one.
+  if (calendar) Object.assign(raw, { calendar });
   const course = structuredClone(raw) as unknown as Course;
   decorateCourseTree(course, courseId, `${courseId}.netlify.app`);
   return course;

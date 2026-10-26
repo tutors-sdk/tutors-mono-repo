@@ -20,7 +20,7 @@ The existing workflow stages commits on a `development` branch for extended peri
 - **No incremental feedback loop.** Changes are not validated against `main` until the batch merge, meaning integration bugs are discovered late.
 - **Unclear release state.** It is difficult to answer "what is in production?" or "when will this feature ship?" when the pipeline is a single long-lived branch.
 - **Rollback granularity is lost.** If a batch merge introduces a regression, reverting means reverting the entire batch rather than a single scoped change.
-- **Changelog and version gaps.** The changelog currently stops at v11.3.0 while `package.json` reports v15.2.0, indicating version bumps happened without corresponding release documentation.
+- **Changelog and version gaps.** When this strategy was written, the changelog stopped at v11.3.0 while `package.json` reported v15.2.0, indicating version bumps happened without corresponding release documentation.
 
 ## Branching Model
 
@@ -266,7 +266,7 @@ If the run has not finished after 45 minutes the comment says **PENDING** with t
   ```
 
   The workflow matches a title that names the candidate as a whole tag (`release 16.3.0-rc.1`; `rc.10` does not match `rc.1`). **Without it** the workflow falls back to time: the only `repository_dispatch` run that started within 15 minutes after the dispatch is taken, and the comment says it was matched by time. It then refuses to post when the report's side b does not name the candidate, and takes nothing when two runs qualify (two release branches pushed in the same minutes), because guessing which harness run belongs to which release would put the wrong verdict on a pull request.
-- **The artifact name `release-report`**, uploaded from the `release` job with the run's whole `out/` directory, so that `<timestamp>-release/report.json` is inside it. It is in the harness's `docs/contract/workflows.json` (`artifacts.release-report`, 30 days) and is what `release.yml` uploads today; renaming it is a breaking change of that contract.
+- **The artifact name `release-report`**, uploaded from the `release` job with the run's whole `out/` directory, so that `<timestamp>-release/report.json` is inside it. It is in `docs/contract/workflows.json` in tutors-sdk/tutors-release-harness (`artifacts.release-report`, 30 days) and is what `release.yml` uploads today; renaming it is a breaking change of that contract.
 
 #### Setup
 
@@ -295,7 +295,7 @@ Kustomize renders that as `quay.io/tutors-sdk/tutors-reader:16.2.2@sha256:7567..
 
 Deploying a release, once `vX.Y.Z` is tagged and `image-build.yml` has published it:
 
-1. **Pin.** `pnpm deploy:pin X.Y.Z` asks Quay for the digest of each `tutors-<app>:X.Y.Z`, checks that digest is signed by `image-build.yml` (`cosign verify`, by digest) and rewrites the four overlays together, or none of them. Open a pull request. Needs docker (buildx) and cosign 3 or later.
+1. **Pin.** `pnpm deploy:pin X.Y.Z` asks Quay for the digest of each `tutors-<app>:X.Y.Z`, checks that digest is signed by `image-build.yml` (`cosign verify`, by digest) and rewrites the four overlays together, or none of them. Open a pull request. Needs docker (buildx) and cosign 3 or later. Since 15 October 2026 `deploy-pin-pr.yml` does this for you: `image-build.yml` calls it once a final `vX.Y.Z` tag's four images are published, and it branches `deploy/pin-X.Y.Z` from `main`, merges `vX.Y.Z` in when `main` does not contain it yet (the version bump, CHANGELOG and claims), runs `pnpm deploy:pin X.Y.Z` and opens the pull request. It opens none when `main` already pins the release, one is already open, the merge conflicts or an image does not verify, and says why in its summary; run it by hand with the version to retry. The pull request is opened with the release app's token when `RELEASE_APP_CLIENT_ID` and `RELEASE_APP_PRIVATE_KEY` are set, so its CI starts by itself; with `GITHUB_TOKEN` it waits for a re-run. 17.0.0 is why: it was tagged, nobody ran this step, and the release harness kept judging `main` against 16.2.2.
 2. **Verify.** `deploy.yml` runs on that pull request and again on `main` (`pnpm check:deploy-pins --registry`). It fails when an overlay has no digest or a malformed one, when the tag is not a release `X.Y.Z`, when the four overlays name different releases or share a digest, when a tag no longer resolves to its digest, or when a digest is not signed by `image-build.yml`. Without `--registry` the same form checks run in the unit tests (`tests/conformance/deploy-pins.test.ts`), and `pnpm check:k8s` fails any rendered image that is not digest-pinned.
 3. **Roll out.** `oc apply -k deploy/k8s/variants/openshift/<app>`, or a GitOps controller syncing `main`. This happens outside the repository.
 4. **Announce.** After a push to `main` that changed a pin, the `announce` job of `deploy.yml` waits for approval in the `production` environment, then sets `HARNESS_PRODUCTION_TAG` on `tutors-sdk/tutors-release-harness` to `X.Y.Z` (`gh variable set`), so nightly noise, the weekly mutants and the harness's CI compare against what is deployed, and sends `repository_dispatch` of type `deployed`. That runs the harness's `post-deploy.yml`: the reference-course journeys against production, compared with the candidate's recorded release run; a new difference opens a `rollback` issue there.
@@ -309,6 +309,10 @@ The order in step 4 is deliberate: a failure setting the variable stops the job 
 **What closes it, and what is still open.** Harness contract 1.3.0 (the harness's PR #5, not yet released) enforces the equality, and the payloads above already carry what it reads: `release-candidate` takes `production_digests` and `candidate_digests` and pins `--a` and `--b` by digest (`repo:tag@sha256:...`; a tag that now resolves to another digest is exit 2, cannot judge), and `deployed` takes `production` and `digests` and compares them with the release record it kept when it judged the candidate, warning when they differ. Until a harness that speaks 1.3.0 is running, an older one ignores the fields and the equality is not enforced.
 
 An app that could not be promoted is rebuilt, so its pinned digest differs from the judged one; the promote step says so loudly (`REBUILT`), and for that app `post-deploy` is the check that what is deployed behaves like what was judged.
+
+#### One command: tag, publish, judge
+
+`pnpm release:candidate X.Y.Z` is steps 1, 2 and 5 to 7 of the [release SOP](../release/SOP.md) (steps 3 and 4, the changelog and the claims, are done before it and read from the branch): it tags the next free `vX.Y.Z-rc.N` on `HEAD` (reusing an rc tag already on the commit), pushes it so `image-build.yml` publishes the four images, waits until quay.io serves them, and runs `harness release --candidate X.Y.Z-rc.N --baseline prod --monorepo <this checkout>` from `HARNESS_DIR`, else `npx github:tutors-sdk/tutors-release-harness`; set `HARNESS_DIR`, because through npx the harness state (noise store, scoreboard) and the kaizen register do not persist. The harness reads production from `release/deployed.json`, which `pnpm deploy:pin` writes. `--dry-run` prints every command and runs none.
 
 #### Running the harness locally
 
@@ -347,7 +351,7 @@ Transitioning from the `development` branch model:
 2. **Break into PRs.** Decompose the ready changes into scoped PRs against `main`. Each PR should be independently reviewable and mergeable.
 3. **Discard or re-branch WIP.** Incomplete work should be rebased onto `main` as new `feature/*` branches, not carried forward as a lump.
 4. **Archive and delete.** Once all valuable work is extracted, archive `development` (tag it as `archive/development-final` for reference) and delete the branch.
-5. **Align version and changelog.** The current `package.json` version (15.2.0) and last changelog entry (11.3.0) are out of sync. As part of the first release under this strategy, reconcile these: update the changelog to reflect what shipped between 11.3.0 and the current state, and cut the next release with a clean semver baseline.
+5. **Align version and changelog.** When this strategy was written, the `package.json` version (15.2.0) and last changelog entry (11.3.0) were out of sync. As part of the first release under this strategy, reconcile these: update the changelog to reflect what shipped between 11.3.0 and the current state, and cut the next release with a clean semver baseline.
 
 ## Release Cadence
 

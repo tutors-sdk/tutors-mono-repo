@@ -90,11 +90,11 @@ export class CourseTime implements TutorsTimeCourse;
 
 // --- functions ---
 
-// (from src/utils/calendar-utils.ts)
-export function cellColorForMinutes(minutes: number | null | undefined) : string;
-
 // (from src/utils/lab-utils.ts)
 export function extractLabIdentifier(loId: string) : string;
+
+// (from src/utils/lab-utils.ts)
+export function extractLabPath(loId: string) : string;
 
 // (from src/utils/lab-utils.ts)
 export function extractStepName(loId: string) : string;
@@ -126,8 +126,17 @@ export function getMondayForDate(dateString: string) : string;
 // (from src/services/supabase.ts)
 export function getSupabase() : SupabaseClient;
 
+// (from src/utils/calendar-utils.ts)
+export function heatColor(minutes: number) : string;
+
 // (from src/services/supabase.ts)
 export function initSupabase(url: string, anonKey: string) : void;
+
+// (from src/utils/lab-utils.ts)
+export function labColumnLabels(labs: string[]) : string[];
+
+// (from src/utils/calendar-utils.ts)
+export function minutesOf(value: unknown) : number;
 
 // (from src/utils/lab-utils.ts)
 export function toggleLabViewMode(current: LabViewMode) : LabViewMode;
@@ -146,7 +155,7 @@ export const TutorsTime: TutorsTimeService;
 |------|-------|
 | class | 3 |
 | const | 1 |
-| function | 14 |
+| function | 17 |
 | interface | 7 |
 | type | 14 |
-| **Total** | **39** |
+| **Total** | **42** |

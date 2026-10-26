@@ -20,6 +20,11 @@
  * (`test("<scenario>", { tag: "@rule-0031" }, ...)`), and a test that cites a
  * Rule id must be one of that Rule's scenarios.
  *
+ * A feature tagged `@journey` states what a person does end to end across the built
+ * images (signed in, as a lecturer, or with a dependency failing). Its scenarios are
+ * proved the same way, by Playwright tests under tests/e2e-stack/journeys that run
+ * against the E2E stack (tests/e2e-stack/compose.yaml).
+ *
  * Written in TypeScript so it runs where the other checks run (`tsx`, no new
  * toolchain) and shares the ratchet with them.
  */
@@ -39,12 +44,16 @@ export const CONFIG_FILE = "tests/bdd/ears-audit.config.json";
 export const UI_TAG = "@ui";
 /** Where those Playwright tests live: apps/<app>/tests/e2e. */
 export const UI_TESTS_DIR = "apps";
+/** Feature tag for Rules proved by the E2E stack's journeys (built images, stub identity and data API). */
+export const JOURNEY_TAG = "@journey";
+/** Where those journeys live. */
+export const JOURNEY_TESTS_DIR = "tests/e2e-stack/journeys";
 
 export type EarsPattern = "ubiquitous" | "event-driven" | "state-driven" | "unwanted" | "optional";
 const PATTERNS: readonly EarsPattern[] = ["ubiquitous", "event-driven", "state-driven", "unwanted", "optional"];
 
 export interface AuditConfig {
-  /** The names allowed in front of "shall". Scope table: guides/EARS-METHODOLOGY.md. */
+  /** The names allowed in front of "shall". Scope table: guides/testing/EARS-METHODOLOGY.md. */
   systems: string[];
   /** Obligation words other than "shall". */
   wrongObligations: string[];
@@ -234,10 +243,13 @@ export interface UiTest {
   modifier: string | undefined;
 }
 
-/** Playwright tests that declare tags: `test("title", { tag: ... }, ...)` in apps/<app>/tests/e2e. */
+/** Playwright tests that declare tags: `test("title", { tag: ... }, ...)` in apps/<app>/tests/e2e and tests/e2e-stack/journeys. */
 export function indexUiTests(root: string = REPO_ROOT): UiTest[] {
   const tests: UiTest[] = [];
-  const specs = walk(join(root, UI_TESTS_DIR), (name) => name.endsWith(".spec.ts")).filter((path) => /[\\/]tests[\\/]e2e[\\/]/.test(path));
+  const specs = [
+    ...walk(join(root, UI_TESTS_DIR), (name) => name.endsWith(".spec.ts")).filter((path) => /[\\/]tests[\\/]e2e[\\/]/.test(path)),
+    ...(existsSync(join(root, JOURNEY_TESTS_DIR)) ? walk(join(root, JOURNEY_TESTS_DIR), (name) => name.endsWith(".spec.ts")) : [])
+  ];
   for (const path of specs) {
     const text = readText(path);
     for (const match of text.matchAll(/\btest(?:\.(skip|fixme|fail|only))?\(\s*(["'`])((?:\\.|(?!\2)[^\\])*)\2\s*,\s*\{\s*tag:\s*(\[[^\]]*\]|["'`][^"'`]*["'`])/g)) {
@@ -253,7 +265,8 @@ export function indexUiTests(root: string = REPO_ROOT): UiTest[] {
   return tests;
 }
 
-const isUiFeature = (doc: GherkinDocument) => doc.featureTags.includes(UI_TAG);
+/** `@ui` and `@journey` features are proved in a browser by Playwright tests, not by a steps file. */
+const isUiFeature = (doc: GherkinDocument) => doc.featureTags.includes(UI_TAG) || doc.featureTags.includes(JOURNEY_TAG);
 
 export interface AuditOptions {
   config?: AuditConfig;
@@ -311,7 +324,7 @@ function auditUiBinding(file: string, doc: GherkinDocument, uiTests: UiTest[]): 
     for (const scenario of rule.scenarios) {
       const test = uiTests.find((t) => t.title === scenario.title && t.tags.includes(subject));
       if (!test) {
-        out.push({ code: "unproved-scenario", file, line: scenario.line, subject, message: `No Playwright test proves "${scenario.title}": expected test("${scenario.title}", { tag: "${subject}" }, ...) under ${UI_TESTS_DIR}/<app>/tests/e2e.` });
+        out.push({ code: "unproved-scenario", file, line: scenario.line, subject, message: `No Playwright test proves "${scenario.title}": expected test("${scenario.title}", { tag: "${subject}" }, ...) under ${doc.featureTags.includes(JOURNEY_TAG) ? JOURNEY_TESTS_DIR : `${UI_TESTS_DIR}/<app>/tests/e2e`}.` });
       } else if (test.modifier === "skip" || test.modifier === "fixme") {
         out.push({ code: "rule-not-run", file, line: scenario.line, subject, message: `test.${test.modifier}(...) at ${test.file}:${test.line} turns this scenario off.` });
       }
@@ -336,7 +349,7 @@ export function orphanUiTests(docs: { file: string; doc: GherkinDocument }[], ui
         subject: `${tag} ${test.title}`,
         message: scenarios.has(tag)
           ? `"${test.title}" is not a scenario of ${tag}; rename the test to the scenario it proves, or add the scenario to the Rule.`
-          : `${tag} is not a Rule in a ${UI_TAG} feature under ${FEATURES_DIR}.`
+          : `${tag} is not a Rule in a ${UI_TAG} or ${JOURNEY_TAG} feature under ${FEATURES_DIR}.`
       }))
   );
 }

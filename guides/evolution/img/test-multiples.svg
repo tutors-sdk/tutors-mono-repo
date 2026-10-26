@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 420" width="1240" height="420" font-family="'Segoe UI', Inter, system-ui, sans-serif"><rect width="100%" height="100%" fill="#0f1720" rx="10"/>
+<text x="60.0" y="40.0" font-size="17" fill="#e8edf2" text-anchor="start" font-weight="600">Test files</text>
+<line x1="60.0" y1="340.0" x2="295.0" y2="340.0" stroke="#22303f" stroke-width="1"/>
+<text x="54.0" y="344.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">0</text>
+<line x1="60.0" y1="215.0" x2="295.0" y2="215.0" stroke="#22303f" stroke-width="1"/>
+<text x="54.0" y="219.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">100</text>
+<line x1="60.0" y1="90.0" x2="295.0" y2="90.0" stroke="#22303f" stroke-width="1"/>
+<text x="54.0" y="94.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">200</text>
+<text x="60.0" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Jun</text>
+<text x="178.5" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Aug</text>
+<text x="238.7" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Sep</text>
+<path d="M60.0,333.8 L166.8,333.8 L166.8,322.5 L168.8,322.5 L168.8,328.8 L176.5,328.8 L176.5,328.8 L180.4,328.8 L180.4,328.8 L188.2,328.8 L188.2,235.0 L194.0,235.0 L194.0,235.0 L207.6,235.0 L207.6,235.0 L221.2,235.0 L221.2,232.5 L234.8,232.5 L234.8,231.2 L248.4,231.2 L248.4,231.2 L262.0,231.2 L262.0,227.5 L267.8,227.5 L267.8,221.2 L269.8,221.2 L269.8,186.2 L273.6,186.2 L273.6,178.8 L277.5,178.8 L277.5,163.8 L283.3,163.8 L283.3,171.2 L287.2,171.2 L287.2,160.0 L289.2,160.0 L289.2,156.2 L291.1,156.2 L291.1,156.2" fill="none" stroke="#f5b642" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="291.1" cy="156.2" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="283.1" y="146.2" font-size="15" fill="#e8edf2" text-anchor="end" font-weight="600">147</text>
+<text x="360.0" y="40.0" font-size="17" fill="#e8edf2" text-anchor="start" font-weight="600">CI jobs</text>
+<line x1="360.0" y1="340.0" x2="595.0" y2="340.0" stroke="#22303f" stroke-width="1"/>
+<text x="354.0" y="344.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">0</text>
+<line x1="360.0" y1="215.0" x2="595.0" y2="215.0" stroke="#22303f" stroke-width="1"/>
+<text x="354.0" y="219.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">50</text>
+<line x1="360.0" y1="90.0" x2="595.0" y2="90.0" stroke="#22303f" stroke-width="1"/>
+<text x="354.0" y="94.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">100</text>
+<text x="360.0" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Jun</text>
+<text x="478.5" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Aug</text>
+<text x="538.7" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Sep</text>
+<path d="M360.0,340.0 L466.8,340.0 L466.8,332.5 L468.8,332.5 L468.8,340.0 L476.5,340.0 L476.5,340.0 L480.4,340.0 L480.4,340.0 L488.2,340.0 L488.2,295.0 L494.0,295.0 L494.0,295.0 L507.6,295.0 L507.6,295.0 L521.2,295.0 L521.2,295.0 L534.8,295.0 L534.8,292.5 L548.4,292.5 L548.4,287.5 L562.0,287.5 L562.0,287.5 L567.8,287.5 L567.8,287.5 L569.8,287.5 L569.8,255.0 L573.6,255.0 L573.6,235.0 L577.5,235.0 L577.5,220.0 L583.3,220.0 L583.3,217.5 L587.2,217.5 L587.2,212.5 L589.2,212.5 L589.2,212.5 L591.1,212.5 L591.1,212.5" fill="none" stroke="#f5b642" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="591.1" cy="212.5" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="583.1" y="202.5" font-size="15" fill="#e8edf2" text-anchor="end" font-weight="600">51</text>
+<text x="660.0" y="40.0" font-size="17" fill="#e8edf2" text-anchor="start" font-weight="600">Guard scripts</text>
+<text x="660.0" y="62.0" font-size="13" fill="#8b98a8" text-anchor="start" font-weight="normal">dashed: shrink-only baselines</text>
+<line x1="660.0" y1="340.0" x2="895.0" y2="340.0" stroke="#22303f" stroke-width="1"/>
+<text x="654.0" y="344.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">0</text>
+<line x1="660.0" y1="215.0" x2="895.0" y2="215.0" stroke="#22303f" stroke-width="1"/>
+<text x="654.0" y="219.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">20</text>
+<line x1="660.0" y1="90.0" x2="895.0" y2="90.0" stroke="#22303f" stroke-width="1"/>
+<text x="654.0" y="94.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">40</text>
+<text x="660.0" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Jun</text>
+<text x="778.5" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Aug</text>
+<text x="838.7" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Sep</text>
+<path d="M660.0,340.0 L766.8,340.0 L766.8,340.0 L768.8,340.0 L768.8,340.0 L776.5,340.0 L776.5,340.0 L780.4,340.0 L780.4,340.0 L788.2,340.0 L788.2,340.0 L794.0,340.0 L794.0,340.0 L807.6,340.0 L807.6,340.0 L821.2,340.0 L821.2,340.0 L834.8,340.0 L834.8,340.0 L848.4,340.0 L848.4,340.0 L862.0,340.0 L862.0,340.0 L867.8,340.0 L867.8,340.0 L869.8,340.0 L869.8,227.5 L873.6,227.5 L873.6,221.2 L877.5,221.2 L877.5,190.0 L883.3,190.0 L883.3,190.0 L887.2,190.0 L887.2,177.5 L889.2,177.5 L889.2,177.5 L891.1,177.5 L891.1,177.5" fill="none" stroke="#f5b642" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M660.0,340.0 L766.8,340.0 L766.8,340.0 L768.8,340.0 L768.8,340.0 L776.5,340.0 L776.5,340.0 L780.4,340.0 L780.4,340.0 L788.2,340.0 L788.2,340.0 L794.0,340.0 L794.0,340.0 L807.6,340.0 L807.6,340.0 L821.2,340.0 L821.2,340.0 L834.8,340.0 L834.8,340.0 L848.4,340.0 L848.4,340.0 L862.0,340.0 L862.0,340.0 L867.8,340.0 L867.8,340.0 L869.8,340.0 L869.8,290.0 L873.6,290.0 L873.6,290.0 L877.5,290.0 L877.5,283.8 L883.3,283.8 L883.3,283.8 L887.2,283.8 L887.2,283.8 L889.2,283.8 L889.2,283.8 L891.1,283.8 L891.1,283.8" fill="none" stroke="#3fd0c2" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4"/>
+<circle cx="891.1" cy="177.5" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="883.1" y="167.5" font-size="15" fill="#e8edf2" text-anchor="end" font-weight="600">26</text>
+<text x="897.1" y="303.8" font-size="14" fill="#3fd0c2" text-anchor="start" font-weight="600">9</text>
+<text x="960.0" y="40.0" font-size="17" fill="#e8edf2" text-anchor="start" font-weight="600">Executable BDD scenarios</text>
+<text x="960.0" y="62.0" font-size="13" fill="#8b98a8" text-anchor="start" font-weight="normal">dashed: EARS Rules</text>
+<line x1="960.0" y1="340.0" x2="1195.0" y2="340.0" stroke="#22303f" stroke-width="1"/>
+<text x="954.0" y="344.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">0</text>
+<line x1="960.0" y1="215.0" x2="1195.0" y2="215.0" stroke="#22303f" stroke-width="1"/>
+<text x="954.0" y="219.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">100</text>
+<line x1="960.0" y1="90.0" x2="1195.0" y2="90.0" stroke="#22303f" stroke-width="1"/>
+<text x="954.0" y="94.0" font-size="12" fill="#8b98a8" text-anchor="end" font-weight="normal">200</text>
+<text x="960.0" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Jun</text>
+<text x="1078.5" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Aug</text>
+<text x="1138.7" y="362.0" font-size="13" fill="#b6c1cd" text-anchor="start" font-weight="normal">Sep</text>
+<path d="M960.0,340.0 L1066.8,340.0 L1066.8,340.0 L1068.8,340.0 L1068.8,340.0 L1076.5,340.0 L1076.5,340.0 L1080.4,340.0 L1080.4,340.0 L1088.2,340.0 L1088.2,340.0 L1094.0,340.0 L1094.0,340.0 L1107.6,340.0 L1107.6,340.0 L1121.2,340.0 L1121.2,340.0 L1134.8,340.0 L1134.8,340.0 L1148.4,340.0 L1148.4,340.0 L1162.0,340.0 L1162.0,340.0 L1167.8,340.0 L1167.8,340.0 L1169.8,340.0 L1169.8,340.0 L1173.6,340.0 L1173.6,248.8 L1177.5,248.8 L1177.5,247.5 L1183.3,247.5 L1183.3,173.8 L1187.2,173.8 L1187.2,136.2 L1189.2,136.2 L1189.2,112.5 L1191.1,112.5 L1191.1,110.0" fill="none" stroke="#f5b642" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M960.0,340.0 L1066.8,340.0 L1066.8,340.0 L1068.8,340.0 L1068.8,340.0 L1076.5,340.0 L1076.5,340.0 L1080.4,340.0 L1080.4,340.0 L1088.2,340.0 L1088.2,340.0 L1094.0,340.0 L1094.0,340.0 L1107.6,340.0 L1107.6,340.0 L1121.2,340.0 L1121.2,340.0 L1134.8,340.0 L1134.8,340.0 L1148.4,340.0 L1148.4,340.0 L1162.0,340.0 L1162.0,340.0 L1167.8,340.0 L1167.8,340.0 L1169.8,340.0 L1169.8,340.0 L1173.6,340.0 L1173.6,340.0 L1177.5,340.0 L1177.5,317.5 L1183.3,317.5 L1183.3,262.5 L1187.2,262.5 L1187.2,247.5 L1189.2,247.5 L1189.2,230.0 L1191.1,230.0 L1191.1,228.8" fill="none" stroke="#3fd0c2" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 4"/>
+<circle cx="1191.1" cy="110.0" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="1183.1" y="100.0" font-size="15" fill="#e8edf2" text-anchor="end" font-weight="600">184</text>
+<text x="1197.1" y="248.8" font-size="14" fill="#3fd0c2" text-anchor="start" font-weight="600">89</text>
+</svg>

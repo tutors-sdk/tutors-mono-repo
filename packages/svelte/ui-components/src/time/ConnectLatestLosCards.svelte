@@ -9,10 +9,10 @@
   let { los, emptyMessage }: Props = $props();
 </script>
 
-<div class="ui-grid pt-4">
+<div class="ui-grid card-grid">
   {#each los as lo}
-    <StudentCard {lo} />
+    <div class="min-w-0"><StudentCard {lo} /></div>
   {:else}
-    <p class="text-surface-600-300-token text-sm">{emptyMessage}</p>
+    <p class="ui-empty">{emptyMessage}</p>
   {/each}
 </div>

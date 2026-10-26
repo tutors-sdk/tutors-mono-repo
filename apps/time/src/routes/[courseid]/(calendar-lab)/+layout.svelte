@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PinDialog from "$lib/components/PinDialog.svelte";
+  import PinDialog from "#lib/components/PinDialog.svelte";
   import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 
   interface Props {
@@ -22,6 +22,4 @@
   onVerified={onVerified}
 />
 
-<div class="flex-1 min-h-0 flex flex-col h-full">
-  {@render children()}
-</div>
+{@render children()}

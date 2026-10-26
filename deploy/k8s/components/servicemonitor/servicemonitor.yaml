@@ -13,6 +13,11 @@ spec:
       path: /metrics
       interval: 15s
       scrapeTimeout: 5s
+      # The burn-rate alerts (release/slo.yaml, docs/slo.md) select each app by an `app` label, as the
+      # local Prometheus (observability/prometheus) sets it: take it from the overlay's component label.
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_component]
+          targetLabel: app
       # When the app runs with METRICS_TOKEN, present it from a Secret:
       # authorization:
       #   credentials:

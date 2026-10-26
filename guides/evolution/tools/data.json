@@ -1,0 +1,122 @@
+{
+ "monthly": {
+  "pred": {
+   "2026-07": 119,
+   "2026-06": 9
+  },
+  "mono": {
+   "2026-09": 415,
+   "2026-08": 252,
+   "2026-07": 73
+  },
+  "harness": {
+   "2026-09": 213
+  }
+ },
+ "weekly": {
+  "pred": {
+   "2026-07-20": 26,
+   "2026-07-13": 81,
+   "2026-07-06": 12,
+   "2026-06-15": 1,
+   "2026-06-08": 6,
+   "2026-06-01": 2
+  },
+  "mono": {
+   "2026-09-28": 5,
+   "2026-09-21": 171,
+   "2026-09-14": 196,
+   "2026-09-07": 27,
+   "2026-08-31": 49,
+   "2026-08-24": 29,
+   "2026-08-17": 26,
+   "2026-08-10": 86,
+   "2026-08-03": 74,
+   "2026-07-27": 77
+  },
+  "harness": {
+   "2026-09-28": 6,
+   "2026-09-21": 197,
+   "2026-09-14": 10
+  }
+ },
+ "types_now": {
+  "fix": 82,
+  "docs": 21,
+  "feat": 63,
+  "test": 36,
+  "ci": 17,
+  "refactor": 5,
+  "chore": 51,
+  "build": 2,
+  "perf": 3,
+  "style": 1,
+  "security": 2
+ },
+ "types_21": {
+  "fix": 70,
+  "feat": 60,
+  "ci": 16,
+  "docs": 17,
+  "chore": 51,
+  "test": 31,
+  "build": 2,
+  "perf": 3,
+  "style": 1,
+  "refactor": 3,
+  "security": 2
+ },
+ "mono_total": 740,
+ "mono_to21": 626,
+ "harness_total": 213,
+ "mono_nonmerge_by": {
+  "Claude": 21,
+  "Jordan Harrison": 69,
+  "Eamonn de Leastar": 158,
+  "Leigh Griffin": 194,
+  "yuwk": 1,
+  "Polly Labs": 1,
+  "dependabot[bot]": 11,
+  "Danny-Cert-AI": 6,
+  "Hazey000": 5
+ },
+ "mono_nonmerge_by_22": {
+  "Claude": 21,
+  "Jordan Harrison": 67,
+  "Eamonn de Leastar": 3
+ },
+ "mono_all_by": {
+  "Leigh Griffin": 302,
+  "Eamonn de Leastar": 318,
+  "Claude": 21,
+  "Jordan Harrison": 75,
+  "yuwk": 1,
+  "Polly Labs": 1,
+  "dependabot[bot]": 11,
+  "Danny-Cert-AI": 6,
+  "Hazey000": 5
+ },
+ "harness_nonmerge_by": {
+  "Leigh Griffin": 124,
+  "Claude": 18
+ },
+ "orig_yearly": {
+  "2026|Eamonn de Leastar": 64,
+  "2026|Leigh Griffin": 32,
+  "2025|Leigh Griffin": 1,
+  "2025|Eamonn de Leastar": 242,
+  "2025|Others": 8,
+  "2024|Eamonn de Leastar": 308,
+  "2024|Others": 116,
+  "2024|Leigh Griffin": 1,
+  "2024|Jordan Harrison": 4,
+  "2023|Eamonn de Leastar": 462,
+  "2023|Others": 71,
+  "2023|Jordan Harrison": 480,
+  "2022|Others": 16,
+  "2022|Eamonn de Leastar": 183,
+  "2022|Jordan Harrison": 268,
+  "2022|Leigh Griffin": 5
+ },
+ "orig_total": 2261
+}

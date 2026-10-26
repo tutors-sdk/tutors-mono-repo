@@ -15,7 +15,7 @@ async function openProfileMenu(page: Page) {
 
 test("Privacy dialog asks a student who has not chosen", { tag: "@rule-0070" }, async ({ page }) => {
   await openCourse(page);
-  await signInAs(page, "student", [], null);
+  await signInAs(page, "student", null);
   const dialog = privacyDialog(page);
   await expect(dialog).toBeVisible();
   const box = (await dialog.boundingBox())!;

@@ -1,12 +1,11 @@
 <script lang="ts">
-  type Selection = { courseId: string; startDate: string | null; endDate: string | null; moodleCourseId: string | null; moodleSectionId: string | null };
+  import { t } from "@tutors/i18n";
+  type Selection = { courseId: string; startDate: string | null; endDate: string | null };
   let { loading, error, onsubmit }: { loading: boolean; error: string | null; onsubmit: (selection: Selection) => void } = $props();
 
   let courseIdsInput = $state("");
   let startDateInput = $state('');
   let endDateInput = $state('');
-  let moodleCourseIdInput = $state('');
-  let moodleSectionIdInput = $state('');
   let dateRangeError = $state<string | null>(null);
 
 
@@ -63,104 +62,78 @@
     const endDate = endDateInput.trim() || null;
 
     if (startDate && endDate && startDate > endDate) {
-      dateRangeError = "Start date must be before or equal to end date";
+      dateRangeError = t("classTime.dateRangeError");
       return;
     }
 
     dateRangeError = null;
 
-    const moodleCourseId = moodleCourseIdInput.trim() || null;
-    const moodleSectionId = moodleSectionIdInput.trim() || null;
-
     onsubmit({
       courseId,
       startDate,
-      endDate,
-      moodleCourseId,
-      moodleSectionId
+      endDate
     });
   }
 
 </script>
 
-<section class="ui-panel mx-auto w-full max-w-2xl space-y-6">
-    <div><p class="ui-eyebrow">Tutors Time</p><h1 class="ui-title mt-2">Open a course</h1></div>
-    <p class="text-[var(--ui-muted)]">
-      Enter a course URL to view calendar data. Optionally select a date range to filter the data.
-    </p>
+<header>
+  <p class="ui-eyebrow">Tutors Time</p>
+  <h1 class="ui-title mt-2">{t("classTime.openCourse")}</h1>
+  <p class="ui-muted mt-2">{t("classTime.openCourseDescription")}</p>
+</header>
+<section class="ui-panel course-form">
     <form class="space-y-5" onsubmit={(event) => { event.preventDefault(); handleSubmit(); }}>
       <div>
-        <label for="courseids-input" class="label">Course URL</label>
+        <label for="courseids-input" class="ui-label">{t("classTime.courseUrl")}</label>
         <input
           id="courseids-input"
           type="text"
           required
           bind:value={courseIdsInput}
-          placeholder="Enter course URL"
+          placeholder={t("classTime.courseUrlPlaceholder")}
           class="input w-full"
         />
         {#if error}
-          <p role="alert" class="text-sm text-error-500 mt-1">{error}</p>
+          <p role="alert" class="mt-1 text-sm text-[var(--ui-danger)]">{error}</p>
         {/if}
       </div>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label for="start-date-input" class="label">Start Date (optional)</label>
+          <label for="start-date-input" class="ui-label">{t("classTime.startDate")}</label>
           <input
             id="start-date-input"
             type="date"
             bind:value={startDateInput}
-            class="input"
+            class="input w-full"
           />
         </div>
         <div>
-          <label for="end-date-input" class="label">End Date (optional)</label>
+          <label for="end-date-input" class="ui-label">{t("classTime.endDate")}</label>
           <input
             id="end-date-input"
             type="date"
             bind:value={endDateInput}
-            class="input"
+            class="input w-full"
           />
         </div>
       </div>
       {#if dateRangeError}
-        <p role="alert" class="text-sm text-error-500">{dateRangeError}</p>
+        <p role="alert" class="text-sm text-[var(--ui-danger)]">{dateRangeError}</p>
       {/if}
-      <details class="border-t border-[var(--ui-border)] pt-3">
-        <summary class="flex cursor-pointer items-center font-medium">Advanced · Moodle sync</summary>
-        <p class="ui-muted my-3 text-sm">Providing a Moodle course ID syncs assignments when you load the course.</p>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label for="moodle-course-id-input" class="label">Moodle Course ID (optional)</label>
-          <input
-            id="moodle-course-id-input"
-            type="text"
-            bind:value={moodleCourseIdInput}
-            placeholder="e.g. 1234"
-            class="input"
-          />
-        </div>
-        <div>
-          <label for="moodle-section-id-input" class="label">Moodle Section ID (optional)</label>
-          <input
-            id="moodle-section-id-input"
-            type="text"
-            bind:value={moodleSectionIdInput}
-            placeholder="e.g. 5678"
-            class="input"
-          />
-        </div>
-      </div>
-      </details>
       <div class="flex justify-end gap-2">
         <button
           type="submit"
           class="ui-button ui-button-primary"
           disabled={loading}
         >
-          {loading ? 'Loading…' : moodleCourseIdInput.trim() ? 'Load & sync Moodle' : 'Load course'}
+          {loading ? t("shell.loading") : t("classTime.loadCourse")}
         </button>
       </div>
     </form>
-    <p class="ui-muted text-sm">Recorded activity measures time, not learning outcomes.</p>
+    <p class="ui-muted mt-6 text-sm">{t("classTime.disclaimer")}</p>
 </section>
+
+<style>
+  .course-form { max-width: 720px; margin-top: var(--space-8); }
+</style>

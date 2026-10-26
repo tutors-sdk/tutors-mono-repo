@@ -6,12 +6,13 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import type { TutorsConnectLatestRow } from "../types.svelte.ts";
-import log, { withRequestId } from "@tutors/logger";
+import log, { withRequestId, withTimeout } from "@tutors/logger";
+import { realtimeClientOptions } from "@tutors/realtime-supabase";
 
 export let supabase: SupabaseClient;
 
@@ -24,7 +25,7 @@ const supabaseConfigured = Boolean(env.PUBLIC_SUPABASE_URL && env.PUBLIC_SUPABAS
 if (env.PUBLIC_ANON_MODE !== "TRUE") {
   if (supabaseConfigured) {
     // On the server, calls made while serving a request carry its x-request-id; in the browser this is plain fetch.
-    supabase = createClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, { global: { fetch: withRequestId() } });
+    supabase = createClient(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, { global: { fetch: withTimeout(withRequestId()) }, realtime: realtimeClientOptions() });
   } else {
     log.warn("Supabase is not configured (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY missing); running without it");
   }
@@ -135,6 +136,93 @@ export async function getTutorsConnectLatestLosByCourseId(courseId: string): Pro
   }
 
   return (data ?? []) as TutorsConnectLatestRow[];
+}
+
+/**
+ * Stored Lo snapshots for a course received at or after `sinceIso`: the students active recently.
+ * Sorted by `received_at` descending (most recently updated first).
+ * @returns null when the read fails, so a caller can tell a failure from a course nobody is in
+ */
+export async function getTutorsConnectRecentLosByCourseId(courseId: string, sinceIso: string): Promise<TutorsConnectLatestRow[] | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
+
+  const id = courseId?.trim();
+  if (!id) return [];
+
+  const { data, error } = await supabase
+    .from("tutors-connect-latest")
+    .select("course_id, student_id, payload, received_at")
+    .eq("course_id", id)
+    .gte("received_at", sinceIso)
+    .order("received_at", { ascending: false });
+
+  if (error) {
+    log.error("getTutorsConnectRecentLosByCourseId failed:", error);
+    return null;
+  }
+
+  return (data ?? []) as TutorsConnectLatestRow[];
+}
+
+/**
+ * Stored Lo snapshots across every course received at or after `sinceIso`, at most `limit` of them:
+ * Tutors Live's platform feed while it reads stored activity instead of Realtime.
+ * Sorted by `received_at` descending (most recently updated first).
+ * @returns null when the read fails
+ */
+export async function getTutorsConnectRecentLos(sinceIso: string, limit = 200): Promise<TutorsConnectLatestRow[] | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return [];
+
+  const { data, error } = await supabase
+    .from("tutors-connect-latest")
+    .select("course_id, student_id, payload, received_at")
+    .gte("received_at", sinceIso)
+    .order("received_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    log.error("getTutorsConnectRecentLos failed:", error);
+    return null;
+  }
+
+  return (data ?? []) as TutorsConnectLatestRow[];
+}
+
+/** How much of the day's Live Realtime budget is spent: under 70%, from 70%, from 90% (supabase/migrations/20261016_realtime_live_budget.sql). */
+export type LiveBudgetTier = "normal" | "slow" | "paused";
+
+/**
+ * Reports this Tutors Live tab as a watcher of a Realtime topic, so the reader's server publishes to it.
+ * @returns the day's budget tier, or null when the report failed (including before the migration is applied)
+ */
+export async function watchLiveTopic(topic: string, watcher: string): Promise<LiveBudgetTier | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return null;
+
+  const { data, error } = await supabase.rpc("realtime_watch", { p_topic: topic, p_watcher: watcher });
+  if (error) {
+    log.warn("realtime_watch failed:", error);
+    return null;
+  }
+  const tier = (data as { tier?: string } | null)?.tier;
+  return tier === "normal" || tier === "slow" || tier === "paused" ? tier : null;
+}
+
+/**
+ * Asks the database which Realtime topics a course's learning event may be published to, and charges
+ * them to the day's Live budget. Called by the reader's server only.
+ * @returns the tier and topics, or null when the claim failed (the caller publishes nothing)
+ */
+export async function claimLivePublish(courseId: string): Promise<{ tier: LiveBudgetTier; topics: string[] } | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return null;
+
+  const { data, error } = await supabase.rpc("realtime_claim_live_publish", { p_course_id: courseId });
+  if (error) {
+    log.warn("realtime_claim_live_publish failed:", error);
+    return null;
+  }
+  const claim = data as { tier?: LiveBudgetTier; topics?: unknown } | null;
+  if (!claim?.tier || !Array.isArray(claim.topics)) return null;
+  return { tier: claim.tier, topics: claim.topics.filter((topic): topic is string => typeof topic === "string") };
 }
 
 /**
@@ -303,8 +391,65 @@ async function handleInteractionData(courseId: string, studentId: string, loId: 
  * @param student - Student data
  */
 export async function storeStudentCourseLearningObjectInSupabase(course: Course, loid: string, lo: Lo, student: TutorsId) {
-  await handleInteractionData(course.courseId, student.login, loid, lo);
-  await insertOrUpdateCalendar(student.login, course.courseId);
+  const courseId = course.courseId;
+  const studentId = student.login;
+  if (courseId && studentId && loid) {
+    const recorded = await callRecordingFunction("record_page_view", {
+      p_course_id: courseId,
+      p_student_id: studentId,
+      p_lo_id: loid,
+      p_lo_type: lo.type,
+      p_day: formatDate(new Date())
+    });
+    if (recorded) return;
+  }
+  await handleInteractionData(courseId, studentId, loid, lo);
+  await insertOrUpdateCalendar(studentId, courseId);
+}
+
+/**
+ * Records 30 seconds of activity against the learning object (when there is one) and the day's calendar.
+ * @param courseId - Identifier of the course
+ * @param studentId - Identifier of the student
+ * @param loId - Identifier of the learning object, or null when the page has none
+ */
+export async function recordHeartbeat(courseId: string, studentId: string, loId: string | null) {
+  if (!courseId || !studentId) return;
+  const recorded = await callRecordingFunction("record_heartbeat", {
+    p_course_id: courseId,
+    p_student_id: studentId,
+    p_lo_id: loId || null,
+    p_day: formatDate(new Date())
+  });
+  if (recorded) return;
+  if (loId) await updateLearningRecordsDuration(courseId, studentId, loId);
+  await updateCalendarDuration(formatDate(new Date()), studentId, courseId);
+}
+
+/** PostgREST's code for a function its schema cache does not hold: the migration is not applied yet. */
+const MISSING_FUNCTION = "PGRST202";
+/**
+ * Both functions ship in one migration, so once the database answers that one is missing, this tab
+ * uses the per-table requests until it reloads, without asking again.
+ */
+export const recordingFunctions = { missing: false };
+
+/**
+ * Calls one of the single-request recording functions (supabase/migrations/20261014_record_page_view_and_heartbeat.sql).
+ * Each replaces several read-then-write requests with one atomic write.
+ * @returns true when the write is done (or failed and was logged); false when the caller should use the per-table requests
+ */
+async function callRecordingFunction(fn: "record_page_view" | "record_heartbeat", args: Record<string, unknown>): Promise<boolean> {
+  if (recordingFunctions.missing) return false;
+  const { error } = await supabase.rpc(fn, args);
+  if (!error) return true;
+  if (error.code === MISSING_FUNCTION) {
+    recordingFunctions.missing = true;
+    log.warn("Single-request recording functions are missing; using per-table requests");
+    return false;
+  }
+  log.error("Single-request recording failed:", fn, error);
+  return true;
 }
 
 /**

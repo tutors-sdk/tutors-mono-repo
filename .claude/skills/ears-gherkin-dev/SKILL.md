@@ -88,4 +88,4 @@ Do them in order. Do not write application code before step 6.
 Read [references/ears-rules.md](references/ears-rules.md) before writing a Rule,
 [references/vitest-cucumber.md](references/vitest-cucumber.md) before binding one, and
 [references/audit-codes.md](references/audit-codes.md) when the audit names a violation. The long
-form is [guides/EARS-METHODOLOGY.md](../../../guides/EARS-METHODOLOGY.md).
+form is [guides/testing/EARS-METHODOLOGY.md](../../../guides/testing/EARS-METHODOLOGY.md).

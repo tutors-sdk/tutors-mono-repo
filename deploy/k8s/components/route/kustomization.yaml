@@ -10,19 +10,19 @@ kind: Component
 #     - ../../../components/route
 #
 # Not inside the overlay itself: a component runs before its own
-# kustomization's patches and namePrefix, so it would read the base ORIGIN and
+# kustomization's patches and namePrefix, so it would read the base TUTORS_ORIGIN and
 # the unprefixed Service name. `pnpm check:k8s` rejects that rendering.
 resources:
   - route.yaml
 
-# The overlay states the public host once, in ORIGIN. Everything the Route
+# The overlay states the public host once, in TUTORS_ORIGIN. Everything the Route
 # needs is copied from the rendered overlay; both sources are selected by kind,
 # so the overlay must render exactly one ConfigMap and one Service.
 replacements:
   # https://reader.tutors.dev -> reader.tutors.dev
   - source:
       kind: ConfigMap
-      fieldPath: data.ORIGIN
+      fieldPath: data.TUTORS_ORIGIN
       options:
         delimiter: "/"
         index: 2

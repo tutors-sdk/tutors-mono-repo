@@ -1,4 +1,6 @@
-/// <reference types="@sveltejs/kit" />
+/// <reference types="$app/types" />
+
+import type { Actor } from "@tutors/identity";
 
 declare global {
   const APP_VERSION: string;
@@ -6,24 +8,14 @@ declare global {
     // interface Error {}
     interface Locals {
       locale: string;
+      /** Verified identity for this request, resolved by the server adapter. */
+      actor: Actor | null;
       /** Correlation id set by the request logger hook; echoed as x-request-id. */
       requestId?: string;
     }
     // interface PageData {}
     // interface PageState {}
     // interface Platform {}
-  }
-}
-
-declare module "@auth/core/types" {
-  interface User {
-    login?: string;
-  }
-}
-
-declare module "@auth/core/jwt" {
-  interface JWT {
-    login?: string;
   }
 }
 

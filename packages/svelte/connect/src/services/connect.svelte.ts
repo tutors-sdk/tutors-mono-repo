@@ -4,14 +4,12 @@
  * Supports both authenticated and anonymous modes.
  */
 
-import { signOut } from "@auth/sveltekit/client";
-import { signIn } from "@auth/sveltekit/client";
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { goto } from "$app/navigation";
 import type { Course } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
@@ -19,7 +17,7 @@ import { consent, readConsent, saveConsent } from "@tutors/privacy";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
-import { type CourseVisit, type TutorsConnectService, type TutorsId } from "../types.ts";
+import { type ConnectUser, type CourseVisit, type TutorsConnectService } from "../types.ts";
 import { supabaseProfile } from "./supabaseProfile.svelte.ts";
 import {
   addOrUpdateStudent,
@@ -42,6 +40,7 @@ if (env.PUBLIC_ANON_MODE === "TRUE") {
 export const tutorsConnectService: TutorsConnectService = {
   /** Active user profile implementation */
   profile: localStorageProfile,
+  identityClient: null,
   /** Timer ID for analytics updates */
   intervalId: null,
   /** Local anonymous mode flag */
@@ -53,7 +52,8 @@ export const tutorsConnectService: TutorsConnectService = {
    * @returns Promise from auth provider
    */
   async connect(redirectStr: string) {
-    return await signIn("github", { callbackUrl: redirectStr });
+    if (!this.identityClient) throw new Error("Identity client is not configured");
+    return this.identityClient.signIn(redirectStr);
   },
 
   /**
@@ -62,23 +62,27 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param user - User identity to reconnect
    */
 
-  async reconnect(user: TutorsId) {
+  async reconnect(user: ConnectUser) {
     if (anonMode) return;
-    presenceService.connectToAllCourseAccess();
     if (user) {
       this.profile = supabaseProfile;
-      if (browser) {
-        consent.value = readConsent(user.login);
-        user.share = consent.value?.presence ? "true" : "false";
-      }
-      tutorsId.value = user;
+      // Presence is shared only once the person has chosen to share it (the privacy choices dialog); until
+      // then, and in a browser that kept no choice, they are offline.
+      const choice = browser ? readConsent(user.login) : null;
+      consent.value = choice;
+      tutorsId.value = { ...user, share: choice?.presence ? "true" : "false", sentiment: "neutral" };
       tutorsId.value.sentiment! = (await getTutorsConnectUserSentiment(user.login)) ?? "neutral";
-      if (browser && localStorage.loginCourse) {
-        const courseId = localStorage.loginCourse;
-        localStorage.removeItem("loginCourse");
-        goto(`/course/${courseId}`);
+      addOrUpdateStudent(tutorsId.value).catch((err) => log.error("Failed to update student record:", err));
+      if (browser) {
+        if (localStorage.loginCourse) {
+          const courseId = localStorage.loginCourse;
+          localStorage.removeItem("loginCourse");
+          goto(`/course/${courseId}`);
+        }
+        if (currentCourse.value && tutorsId.value.share === "true") {
+          void presenceService.startCourseRoster(currentCourse.value.courseId);
+        }
       }
-      addOrUpdateStudent(user).catch((err) => log.error("Failed to update student record:", err));
     }
   },
 
@@ -86,23 +90,30 @@ export const tutorsConnectService: TutorsConnectService = {
    * Terminates user session
    * @param redirectStr - URL to redirect to after logout
    */
-  disconnect(redirectStr: string) {
-    signOut({ callbackUrl: redirectStr });
+  async disconnect(redirectStr: string) {
+    if (!this.identityClient) throw new Error("Identity client is not configured");
+    return this.identityClient.signOut(redirectStr);
   },
 
-  /**
-   * Toggles user's content sharing preference
-   * Updates both local storage and current session
-   */
+  /** Flips presence sharing, keeping the analytics choice as it is. */
   toggleShare() {
     this.setConsent({ analytics: consent.value?.analytics ?? false, presence: tutorsId.value?.share !== "true" });
   },
 
+  /**
+   * Records the signed-in person's privacy choices in this browser and acts on them at once: presence
+   * joins or leaves the open course's roster, and analytics stops or starts with the next event.
+   */
   setConsent(choice: { analytics: boolean; presence: boolean }) {
     const login = tutorsId.value?.login;
     if (!login || !browser) return;
     consent.value = saveConsent(login, choice);
     tutorsId.value!.share = choice.presence ? "true" : "false";
+    if (choice.presence && currentCourse.value) {
+      void presenceService.startCourseRoster(currentCourse.value.courseId);
+    } else {
+      presenceService.stopPresenceListener();
+    }
     if (!anonMode) {
       void updateTutorsConnectUserOnlineStatus(login, choice.presence ? "online" : "offline").catch((err) => log.error("Failed to update online status:", err));
     }
@@ -137,11 +148,16 @@ export const tutorsConnectService: TutorsConnectService = {
       rbacService.clear();
     }
     if (anonMode) return;
-    if (analyticsEnabled) {
+    // A course that turns the person away is not one they visited, so it stays out of their Recently accessed.
+    if (analyticsEnabled && !turnsAway(course)) {
       updateCourseList(course);
       this.profile.logCourseVisit(course);
     }
-    presenceService.startPresenceListener(course.courseId);
+    if (tutorsId.value?.login && tutorsId.value.share === "true") {
+      void presenceService.startCourseRoster(course.courseId);
+    } else {
+      presenceService.stopPresenceListener();
+    }
     if (course.authLevel! > 0 && !tutorsId.value?.login) {
       localStorage.loginCourse = course.courseId;
       goto(`/auth`);
@@ -184,13 +200,65 @@ export const tutorsConnectService: TutorsConnectService = {
     return this.profile.getCourseVisits();
   },
 
+  lastLearningEvent: "",
+  /** The first page of a session is arrived at, so there is a navigation to report from the start. */
+  pendingNavigation: true,
+
+  /**
+   * Nothing is reported while a navigation is in flight. The destination's load sets `currentLo` before
+   * SvelteKit commits the new `page.params`, so a report taken mid-flight pairs the page being left with
+   * the learning object being arrived at, and counts a page load nobody made. Starts true: the first page
+   * of a session is still being arrived at until the layout's first `afterNavigate`.
+   */
+  navigationInFlight: true,
+  navigationAttempt: 0,
+
+  /**
+   * A navigation has started. One that keeps the path - an anchor, the skip link, a search filter - is
+   * not a move to another page, so it holds nothing. Returns the attempt, for {@link navigationAbandoned}.
+   */
+  navigating(from?: string, to?: string): number {
+    if (from !== undefined && from === to) return this.navigationAttempt;
+    this.navigationInFlight = true;
+    return ++this.navigationAttempt;
+  },
+
+  /** A navigation was cancelled before it landed, so no `afterNavigate` will release the hold it set. */
+  navigationAbandoned(attempt: number): void {
+    if (attempt === this.navigationAttempt) this.navigationInFlight = false;
+  },
+
+  navigated(from?: string, to?: string): void {
+    this.navigationInFlight = false;
+    if (from !== undefined && from === to) return;
+    this.pendingNavigation = true;
+  },
+
   /**
    * Records a learning event and broadcasts if sharing enabled
+   *
+   * Reports once per page the student arrives at. The course layout calls this from an `$effect`
+   * tracking the course, the learning object and the id, so one navigation runs it several times as
+   * those resolve: once with the previous learning object still in place, again when the new one
+   * arrives, again when the id settles. Each repeat cost a page-load count the student had not made
+   * and a broadcast to every other student in the course.
+   *
+   * Two things make an event worth reporting, and payload alone cannot tell them apart. A navigation
+   * means the student went somewhere, including back to a page they had already read, which is a
+   * second genuine page load. A change in the payload - a new learning object, or a mood Tutors Live
+   * renders - means something worth telling others even with no navigation. A repeat of the same
+   * payload with no navigation behind it is neither, and is the only case dropped here.
+   *
    * @param params - Event parameters to record
    */
   learningEvent(params: Record<string, string>): void {
-    if (anonMode) return;
+    if (anonMode || this.navigationInFlight) return;
     if (currentCourse.value && currentLo.value && tutorsId.value) {
+      const identity = [params.loid ?? "", currentLo.value.route, tutorsId.value.login ?? "", tutorsId.value.sentiment ?? "", tutorsId.value.share ?? ""].join("|");
+      if (!this.pendingNavigation && identity === this.lastLearningEvent) return;
+      this.pendingNavigation = false;
+      this.lastLearningEvent = identity;
+
       if (analyticsEnabled && consent.value?.analytics) analyticsService.learningEvent(currentCourse.value, params, currentLo.value, tutorsId.value);
       if (tutorsId.value.share === "true" && !currentCourse.value.isPrivate) {
         presenceService.sendLoEvent(currentCourse.value, currentLo.value, tutorsId.value);
@@ -223,18 +291,19 @@ export const tutorsConnectService: TutorsConnectService = {
 
   checkWhiteList(): void {
     const course = currentCourse.value;
-    if (!course?.authLevel || course.authLevel < 1) return;
-    const enrollment = course.enrollment;
-    if (enrollment?.whitelist && enrollment.whitelist.length > 0) {
-      if (!tutorsId.value?.login) {
-        goto(`/`);
-      } else {
-        const login = tutorsId.value.login;
-        const isEducator = enrollment.educators?.includes(login) ?? false;
-        if (!isEducator && !enrollment.whitelist.includes(login)) {
-          goto(`/`);
-        }
-      }
-    }
+    if (course && turnsAway(course)) goto(`/`);
   }
 };
+
+/**
+ * A course that needs a sign-in and has a whitelist turns away everyone not on the whitelist or among its
+ * educators, including someone not yet signed in.
+ */
+function turnsAway(course: Course): boolean {
+  if (!course.authLevel || course.authLevel < 1) return false;
+  const whitelist = course.enrollment?.whitelist;
+  if (!whitelist || whitelist.length === 0) return false;
+  const login = tutorsId.value?.login;
+  if (!login) return true;
+  return !(course.enrollment?.educators?.includes(login) ?? false) && !whitelist.includes(login);
+}

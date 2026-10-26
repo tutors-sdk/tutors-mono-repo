@@ -27,7 +27,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -38,7 +38,7 @@ jobs:
       - name: Create .env for SvelteKit apps
         run: cp .env.example .env
 
-      # Generates each app's .svelte-kit/tsconfig.json, which the app tsconfigs extend.
+      # Generates Kit 3 route types and manifests; tsconfigs extend $app/tsconfig.
       # Tests import app source files (e.g. legacy hooks), so every app must be synced,
       # not only the ones that get type-checked below.
       - name: Sync SvelteKit apps
@@ -58,6 +58,9 @@ jobs:
 
       - name: Type check (live)
         run: pnpm --filter tutors-live check
+
+      - name: Type check (time)
+        run: pnpm --filter tutors-time check
 
       - name: Lint
         run: pnpm lint
@@ -95,7 +98,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -145,7 +148,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -154,10 +157,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           build-args: APP_NAME=${{ matrix.app }}
@@ -174,7 +177,7 @@ jobs:
           MATRIX_APP: ${{ matrix.app }}
 
       # .env.example runs the image anonymously. The reader is the only app with a
-      # sign-in flow, so probe it again with Auth.js on: the release harness found
+      # sign-in flow, so probe it again with authentication enabled: the release harness found
       # /auth/<courseid> answering 500 (jsdom's __dirname in the ESM server bundle)
       # in exactly this mode.
       - name: Smoke test the image with authentication enabled
@@ -195,7 +198,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -238,7 +241,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -262,99 +265,6 @@ jobs:
         if: github.event_name != 'pull_request'
         run: pnpm check:audit
 
-  # Runway tier G: named journeys and axe/reduced-motion ratchets against the
-  # built images and a fixture course server, never vite dev.
-  e2e-stack:
-    name: E2E journeys (built images)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
-        with:
-          deno-version: v2.x
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-
-      - name: Build reader image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          build-args: APP_NAME=reader
-          tags: tutors/reader:ci
-          load: true
-          push: false
-          cache-from: type=gha,scope=smoke-reader
-
-      - name: Build catalogue image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          build-args: APP_NAME=catalogue
-          tags: tutors/catalogue:ci
-          load: true
-          push: false
-          cache-from: type=gha,scope=smoke-catalogue
-
-      - name: Build live image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          build-args: APP_NAME=live
-          tags: tutors/live:ci
-          load: true
-          push: false
-          cache-from: type=gha,scope=smoke-live
-
-      - name: Build fixture course
-        run: pnpm e2e:stack:fixture
-
-      - name: Start stack
-        run: pnpm e2e:stack:up
-        env:
-          TUTORS_TAG: ci
-
-      - name: Install browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
-
-      - name: Journeys
-        run: pnpm test:e2e:stack --project=chromium --project=webkit
-
-      - name: Baselines have no stale lines
-        run: pnpm test:e2e:stack:ratchet
-
-      - name: Stack logs on failure
-        if: failure()
-        run: docker compose -f tests/e2e-stack/compose.yaml logs --no-color
-
-      - name: Upload report
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: e2e-stack-report
-          path: |
-            playwright-report/e2e-stack
-            test-results/e2e-stack
-          retention-days: 14
-
   # Runway tier L: per-app client bundle ceilings (tests/performance/bundle-budgets.json).
   bundle-budgets:
     name: Bundle budgets
@@ -370,7 +280,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -394,11 +304,14 @@ jobs:
       - name: Check bundle budgets
         run: pnpm check:bundle
 
-      # The built server, run with Auth.js on: no CommonJS globals in the ES module
+      # The built server, run with authentication enabled: no CommonJS globals in the ES module
       # bundle, and no 5xx on the routes in tests/security/header-contract.json
       # (v16.2.0 answered 500 on /auth/<courseid>). Needs no Docker.
       - name: Smoke test the built servers
         run: pnpm check:server
+
+      - name: Prove both identity adapters against the built reader
+        run: pnpm test:identity:built
 
       # Starts each built server with the commit above and a sentinel build date and looks for them
       # anywhere but GET /version: headers, pages, the error page, /_app/version.json and every built file.
@@ -427,7 +340,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-)'; then
+          if [ "$EVENT" = "pull_request" ] && git diff --name-only "origin/${BASE_REF}...HEAD"             | grep -qE '^(packages/jsr/(gen|tutors|tutors-lite|model|types)/|deno\.(json|lock)$|tests/generator/|scripts/checks/generator-|scripts/checks/lib/tutors-json\.ts)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -445,7 +358,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.gen.outputs.run == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -492,12 +405,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 2
 
       - name: Setup pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -507,6 +421,23 @@ jobs:
 
       - name: Audit Rule blocks (new violations only; the baseline can only shrink)
         run: pnpm test:ears:audit
+
+      # The EARS dashboard (pnpm ears:dashboard, Rules 0510-0515): every Rule, its proof and its audit
+      # findings on one page, built even when the audit fails. On a pull request it marks the Rules
+      # changed since the base branch (HEAD^1 of the merge commit, hence fetch-depth 2).
+      - name: Build the EARS dashboard
+        if: ${{ !cancelled() }}
+        env:
+          SINCE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+        run: pnpm ears:dashboard --summary "$GITHUB_STEP_SUMMARY" ${SINCE:+--since "$SINCE"}
+
+      - name: Upload the EARS dashboard
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ears-dashboard
+          path: reports/ears-dashboard/
+          retention-days: 14
 
   # The reader's @ui Rules (tests/bdd/features/ui): every scenario is a Playwright test in
   # apps/reader/tests/e2e, run against the dev server. Release candidates add Firefox and WebKit.
@@ -524,7 +455,7 @@ jobs:
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: pnpm
@@ -538,12 +469,73 @@ jobs:
       - name: Prove every @ui scenario
         run: pnpm test:e2e:reader --project=chromium
 
+      - name: Build reader for the identity browser regression
+        run: SVELTEKIT_ADAPTER=node pnpm build
+
+      - name: Built reader sign-in, reload and logout
+        run: pnpm test:e2e:reader authentication.spec.ts --project=chromium --grep-invert="Forged browser identity"
+        env:
+          TEST_READER_BUILT: "1"
+
       - name: Upload report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ui-contract-report
           path: apps/reader/playwright-report/
+          retention-days: 14
+
+  # Rules 0618 and 0619: mutate the library modules this change touches, with the nightly configuration, and hold
+  # each to its nightly floor (tests/mutation/nightly-mutation-floors.json) before it merges, not the morning after.
+  mutation-pr:
+    name: Mutation of changed modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env for SvelteKit apps
+        run: |
+          for dir in apps/reader apps/catalogue apps/live apps/time; do
+            cp .env.example "$dir/.env"
+          done
+
+      - name: Sync SvelteKit apps
+        run: pnpm -r --filter "./apps/**" exec svelte-kit sync
+
+      # A pull request compares with its base branch; a push to main with the commit before it.
+      - name: Mutate the changed modules
+        run: pnpm test:mutation:pr --summary "$GITHUB_STEP_SUMMARY"
+        env:
+          MUTATION_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+
+      # The nightly configuration mutates in place: every source must be restored, even when the run failed.
+      - name: Check the in-place run restored every source
+        if: always()
+        run: git diff --exit-code --stat
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-pr-report
+          path: reports/mutation-pr/
           retention-days: 14
 
   # Deno tests have no runner config, so this step is what collects them:
@@ -571,7 +563,7 @@ jobs:
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, e2e-stack, bundle-budgets, generator-diff, cli-tests, ears-audit, ui-contract]
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, bundle-budgets, generator-diff, cli-tests, ears-audit, ui-contract, mutation-pr]
     runs-on: ubuntu-latest
     steps:
       - name: Every job succeeded

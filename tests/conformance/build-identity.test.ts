@@ -1,7 +1,10 @@
+import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { variables } from "../../packages/svelte/app-config/src/env.js";
+import { createSvelteKitOptions } from "../../packages/svelte/app-config/src/svelte.js";
 import {
   APPS,
   buildIdentityFindings,
@@ -40,6 +43,55 @@ describe("GET /version on every app", () => {
     const apps = walk(join(REPO_ROOT, "apps"), (name) => name === "package.json").map((file) => toPosix(join(file, ".."), join(REPO_ROOT, "apps")));
     expect([...apps].sort()).toEqual([...APPS].sort());
   });
+
+  it("every app reports the release version, because each bakes APP_VERSION from its own manifest", () => {
+    // `createViteConfig` reads the calling app's package.json, so a release that bumps only the root
+    // manifest ships apps that report the version before it - in /version, in the footer and in the
+    // startup log. 16.2.3 went out that way. The overlay tags are checked elsewhere; this is the half
+    // of the version that the running app speaks for itself.
+    const version = (manifest: string) => JSON.parse(readText(join(REPO_ROOT, manifest))).version as string;
+    const release = version("package.json");
+    expect(Object.fromEntries(APPS.map((app) => [app, version(join("apps", app, "package.json"))]))).toEqual(
+      Object.fromEntries(APPS.map((app) => [app, release]))
+    );
+  });
+});
+
+const SHARED_SVELTE_CONFIG = "packages/svelte/app-config/src/svelte.js";
+
+describe("shared SvelteKit options", () => {
+  it("declares environment variables as dynamic, with only PUBLIC_ values exposed", () => {
+    for (const [name, config] of Object.entries(variables)) {
+      expect("static" in config).toBe(false);
+      expect("public" in config && config.public).toBe(name.startsWith("PUBLIC_"));
+      expect(config.schema).toBeDefined();
+    }
+    expect(variables.PRIVATE_AUTH_SECRET).toBeDefined();
+    for (const app of APPS) {
+      expect(readText(join(REPO_ROOT, "apps", app, "src/env.js"))).toContain("@tutors/app-config/env");
+    }
+  });
+  it("preserves the Node/auto choice, repo environment and warning handler", () => {
+    const saved = process.env.SVELTEKIT_ADAPTER;
+    try {
+      delete process.env.SVELTEKIT_ADAPTER;
+      expect(createSvelteKitOptions().adapter?.name).toBe("@sveltejs/adapter-auto");
+      process.env.SVELTEKIT_ADAPTER = "node";
+      const options = createSvelteKitOptions();
+      expect(options.adapter?.name).toBe("@sveltejs/adapter-node");
+      expect(options.env).toEqual({ dir: "../.." });
+      const warn = vi.fn();
+      options.onwarn?.({ code: "state_referenced_locally" }, warn);
+      expect(warn).not.toHaveBeenCalled();
+      const warning = { code: "other" };
+      options.onwarn?.(warning, warn);
+      expect(warn).toHaveBeenCalledWith(warning);
+      expect(createSvelteKitOptions({ env: { dir: "/fixture" } }).env).toEqual({ dir: "/fixture" });
+    } finally {
+      if (saved === undefined) delete process.env.SVELTEKIT_ADAPTER;
+      else process.env.SVELTEKIT_ADAPTER = saved;
+    }
+  });
 });
 
 describe("the sources that read build identity", () => {
@@ -48,19 +100,44 @@ describe("the sources that read build identity", () => {
     .map((file) => toPosix(file))
     .filter((file) => !file.includes("/static/") && !file.includes("/__tests__/") && !/\.(test|spec)\./.test(file));
 
-  it("are the runtime package, the /version routes and the build configs, and nothing else", () => {
+  it("are the runtime package, the /version routes and the shared build config, and nothing else", () => {
     const readers = sources
       .filter((file) => !file.startsWith("packages/svelte/utils/runtime/"))
       .filter((file) => /\b(GIT_SHA|BUILD_DATE)\b|\bversionInfo\b|\bversionEndpoint\b/.test(readText(join(REPO_ROOT, file))));
-    expect(readers.sort()).toEqual(APPS.flatMap((app) => [`apps/${app}/src/routes/version/+server.ts`, `apps/${app}/svelte.config.js`]).sort());
+    expect(readers.sort()).toEqual([...APPS.map((app) => `apps/${app}/src/routes/version/+server.ts`), SHARED_SVELTE_CONFIG].sort());
   });
 
-  it.each(APPS)("%s names its SvelteKit build after a hash of the commit, never the commit", (app) => {
-    const config = readText(join(REPO_ROOT, "apps", app, "svelte.config.js"));
+  it.each(APPS)("%s takes its SvelteKit config from the shared helper", (app) => {
+    const config = readText(join(REPO_ROOT, "apps", app, "vite.config.ts"));
+    expect(config).toContain("from '@tutors/app-config/vite'");
+    expect(config).not.toMatch(/\bkit\s*:/);
+  });
+
+  it("names every app's SvelteKit build after a hash of the commit, never the commit", () => {
+    const config = readText(join(REPO_ROOT, SHARED_SVELTE_CONFIG));
     // The build name is served in /_app/version.json and compiled into the client bundle.
     expect(config).not.toMatch(/name:\s*gitSha\b/);
     expect(config).toMatch(/createHash\('sha256'\)\.update\(gitSha\)/);
     expect(config).toMatch(/version:\s*\{\s*name:\s*buildName\s*\}/);
+  });
+
+  it("names a Netlify build after its commit too (COMMIT_REF when there is no GIT_SHA)", async () => {
+    // tutors.dev is deployed by hand from Netlify; without this its build is named after the clock and says nothing
+    // about what it runs (release harness rollback report, tutors-sdk/tutors-release-harness#38).
+    const load = async (env: Record<string, string | undefined>) => {
+      const saved = { GIT_SHA: process.env.GIT_SHA, COMMIT_REF: process.env.COMMIT_REF };
+      Object.assign(process.env, env);
+      for (const [k, v] of Object.entries(env)) if (v === undefined) delete process.env[k];
+      try {
+        return createSvelteKitOptions().version?.name;
+      } finally {
+        for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+      }
+    };
+    const hash = (sha: string) => createHash("sha256").update(sha).digest("hex").slice(0, 16);
+    expect(await load({ GIT_SHA: undefined, COMMIT_REF: identity.revision })).toBe(hash(identity.revision));
+    expect(await load({ GIT_SHA: "0".repeat(40), COMMIT_REF: identity.revision })).toBe(hash("0".repeat(40)));
+    expect(await load({ GIT_SHA: "unknown", COMMIT_REF: undefined })).toBeUndefined();
   });
 });
 

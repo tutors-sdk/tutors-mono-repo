@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" font-family="'Segoe UI', Inter, system-ui, sans-serif"><rect width="100%" height="100%" fill="#0f1720" rx="10"/>
+<line x1="70.0" y1="460.0" x2="1160.0" y2="460.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="465.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">0</text>
+<line x1="70.0" y1="380.0" x2="1160.0" y2="380.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="385.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">500</text>
+<line x1="70.0" y1="300.0" x2="1160.0" y2="300.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="305.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">1,000</text>
+<line x1="70.0" y1="220.0" x2="1160.0" y2="220.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="225.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">1,500</text>
+<line x1="70.0" y1="140.0" x2="1160.0" y2="140.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="145.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">2,000</text>
+<line x1="70.0" y1="60.0" x2="1160.0" y2="60.0" stroke="#22303f" stroke-width="1"/>
+<text x="60.0" y="65.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">2,500</text>
+<text x="70.0" y="484.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Jun</text>
+<text x="340.2" y="484.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Jul</text>
+<text x="619.5" y="484.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Aug</text>
+<text x="898.8" y="484.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Sep</text>
+<line x1="574.5" y1="60.0" x2="574.5" y2="460.0" stroke="#8b98a8" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="580.5" y="74.0" font-size="12" fill="#8b98a8" text-anchor="start" font-weight="normal">monorepo founded</text>
+<path d="M70.0,455.7 L565.5,455.7 L565.5,428.6 L574.5,428.6 L574.5,439.4 L610.5,439.4 L610.5,439.4 L628.5,439.4 L628.5,439.4 L664.5,439.4 L664.5,234.6 L691.6,234.6 L691.6,234.6 L754.6,234.6 L754.6,234.1 L817.7,234.1 L817.7,223.8 L880.7,223.8 L880.7,220.3 L943.8,220.3 L943.8,220.0 L1006.9,220.0 L1006.9,214.7 L1033.9,214.7 L1033.9,205.1 L1042.9,205.1 L1042.9,167.4 L1060.9,167.4 L1060.9,156.6 L1078.9,156.6 L1078.9,120.2 L1106.0,120.2 L1106.0,147.4 L1124.0,147.4 L1124.0,119.0 L1133.0,119.0 L1133.0,115.7 L1142.0,115.7 L1142.0,117.6" fill="none" stroke="#f5b642" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M1042.9,443.7 L1060.9,443.7 L1060.9,431.0 L1078.9,431.0 L1078.9,307.7 L1124.0,307.7 L1124.0,301.8 L1133.0,301.8 L1133.0,253.4 L1142.0,253.4 L1142.0,250.4" fill="none" stroke="#3fd0c2" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="70.0" cy="455.7" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="78.0" y="443.7" font-size="14" fill="#e8edf2" text-anchor="start" font-weight="600">27</text>
+<circle cx="664.5" cy="234.6" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="656.5" y="222.6" font-size="14" fill="#e8edf2" text-anchor="end" font-weight="600">1,409 · framework</text>
+<circle cx="1042.9" cy="167.4" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="1034.9" y="155.4" font-size="14" fill="#e8edf2" text-anchor="end" font-weight="600">runway</text>
+<circle cx="1078.9" cy="120.2" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="1070.9" y="108.2" font-size="14" fill="#e8edf2" text-anchor="end" font-weight="600">2,124</text>
+<circle cx="1106.0" cy="147.4" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="1098.0" y="203.4" font-size="14" fill="#e8edf2" text-anchor="end" font-weight="600">Paper rebuild −170</text>
+<circle cx="1142.0" cy="117.6" r="4.5" fill="#f5b642" stroke="#0f1720" stroke-width="2"/>
+<text x="1150.0" y="103.6" font-size="14" fill="#e8edf2" text-anchor="start" font-weight="600">2,140</text>
+<circle cx="1142.0" cy="250.4" r="4.5" fill="#3fd0c2" stroke="#0f1720" stroke-width="2"/>
+<text x="1150.0" y="268.4" font-size="14" fill="#e8edf2" text-anchor="start" font-weight="600">1,310</text>
+<rect x="70.0" y="19.0" width="13.0" height="13.0" fill="#f5b642" rx="3"/>
+<text x="89.0" y="30.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Monorepo and predecessors</text>
+<rect x="309.0" y="19.0" width="13.0" height="13.0" fill="#3fd0c2" rx="3"/>
+<text x="328.0" y="30.0" font-size="14" fill="#b6c1cd" text-anchor="start" font-weight="normal">Release harness</text>
+<text x="1160.0" y="30.0" font-size="13" fill="#8b98a8" text-anchor="end" font-weight="normal">declared tests, measured at each date</text>
+</svg>

@@ -1,18 +1,20 @@
+import { t } from "@tutors/i18n";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import type { LabModel, LabRow, LabMedianRow } from "@tutors/tutors-time-lib";
 import {
-  cellColorForMinutes,
+  heatColor,
+  minutesOf,
   formatTimeMinutesOnly,
   formatDateShort,
-  extractLabIdentifier,
-  extractStepName
+  extractStepName,
+  labColumnLabels
 } from "@tutors/tutors-time-lib";
-import { OnlineCellRenderer } from "$lib/components/calendar/OnlineCellRenderer";
-import { SentimentCellRenderer } from "$lib/components/calendar/SentimentCellRenderer";
-import { StudentAvatarCellRenderer } from "$lib/components/calendar/StudentAvatarCellRenderer";
+import { OnlineCellRenderer } from "#lib/components/calendar/OnlineCellRenderer.ts";
+import { SentimentCellRenderer } from "#lib/components/calendar/SentimentCellRenderer.ts";
+import { StudentAvatarCellRenderer } from "#lib/components/calendar/StudentAvatarCellRenderer.ts";
 
-/** Header mode: "lab" = book segment, "step" = step name (last segment), "raw" = full id. */
-type LabColumnHeaderMode = "lab" | "step" | "raw";
+/** Header mode: "lab" = lab id (with its topic when two labs share an id), "step" = step name (last segment). */
+type LabColumnHeaderMode = "lab" | "step";
 
 const NO_DATE_KEY = "__no_date__";
 
@@ -59,34 +61,25 @@ export class GridLabModel {
     };
   }
 
-  private buildTotalMinutesColumn<T>(field: string = "totalMinutes", headerName = "Total"): ColDef<T> {
+  private buildTotalMinutesColumn<T>(field: string = "totalMinutes", headerName = t("time.total")): ColDef<T> {
     return {
       field: field as never,
       headerName,
-      headerClass: "ag-header-vertical",
       sort: "desc",
       valueFormatter: (p) =>
         p.value != null && Number(p.value) > 0 ? String(Math.round(Number(p.value))) : "",
       cellClass: "ag-right-aligned-cell",
-      cellStyle: (p) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
-        paddingLeft: "4px"
-      }),
-      width: 60,
-      maxWidth: 72
+      cellStyle: { fontWeight: "600", paddingLeft: "4px" },
+      width: 96,
+      maxWidth: 112
     };
   }
 
-  private buildLabColumns<T>(
-    labIds: string[],
-    headerMode: LabColumnHeaderMode | boolean = false
-  ): ColDef<T>[] {
-    const mode: LabColumnHeaderMode =
-      headerMode === true ? "lab" : headerMode === false ? "raw" : headerMode;
-    return labIds.map((labId) => {
-      const headerName =
-        mode === "lab" ? extractLabIdentifier(labId) : mode === "step" ? extractStepName(labId) : labId;
-      const headerTooltip = mode === "step" && labId !== headerName ? labId : undefined;
+  private buildLabColumns<T>(labIds: string[], mode: LabColumnHeaderMode): ColDef<T>[] {
+    const labLabels = mode === "lab" ? labColumnLabels(labIds) : [];
+    return labIds.map((labId, index) => {
+      const headerName = mode === "lab" ? labLabels[index] : extractStepName(labId);
+      const headerTooltip = labId !== headerName ? labId : undefined;
       return {
         field: labId as never,
         headerName,
@@ -96,7 +89,7 @@ export class GridLabModel {
           p.value != null && Number(p.value) > 0 ? formatTimeMinutesOnly(Number(p.value)) : "",
         cellClass: "ag-right-aligned-cell",
         cellStyle: (p) => ({
-          backgroundColor: cellColorForMinutes(p.value as number),
+          backgroundColor: heatColor(minutesOf(p.value)),
           textAlign: "center",
           paddingLeft: "4px"
         }),
@@ -110,7 +103,7 @@ export class GridLabModel {
     return [
       {
         field: "full_name",
-        headerName: "Name",
+        headerName: t("classTime.name"),
         minWidth: 160,
         flex: 1,
         pinned: "left",
@@ -119,7 +112,7 @@ export class GridLabModel {
           const name = String(params.value ?? "");
           const studentId = String(params.data?.studentid ?? "");
           if (!studentId || !courseId) return name;
-          return `<a href="/${courseId}/${studentId}" class="underline text-primary-600">${name}</a>`;
+          return `<a href="/${courseId}/${studentId}" class="underline text-[var(--ui-brand)]">${name}</a>`;
         }
       },
       {
@@ -137,7 +130,7 @@ export class GridLabModel {
       },
       {
         field: "online_status",
-        headerName: "Share",
+        headerName: t("classTime.share"),
         headerClass: "ag-header-vertical",
         minWidth: 44,
         maxWidth: 56,
@@ -149,7 +142,7 @@ export class GridLabModel {
       {
         colId: "sentiment",
         field: "sentiment",
-        headerName: "Mood",
+        headerName: t("classTime.mood"),
         headerClass: "ag-header-vertical",
         minWidth: 44,
         maxWidth: 56,
@@ -162,7 +155,7 @@ export class GridLabModel {
       },
       {
         field: "studentid",
-        headerName: "Github",
+        headerName: t("classTime.github"),
         minWidth: 120,
         maxWidth: 112,
         width: 96,
@@ -171,7 +164,7 @@ export class GridLabModel {
         cellRenderer: (params: ICellRendererParams<LabRow>) => {
           const studentId = String(params.value ?? "");
           if (!studentId || studentId === "Course median") return studentId === "Course median" ? "—" : studentId;
-          return `<a href="https://github.com/${studentId}" target="_blank" rel="noopener noreferrer" class="underline text-primary-600">${studentId}</a>`;
+          return `<a href="https://github.com/${studentId}" target="_blank" rel="noopener noreferrer" class="underline text-[var(--ui-brand)]">${studentId}</a>`;
         }
       }
     ];
@@ -180,29 +173,29 @@ export class GridLabModel {
   private buildLabColumnDefs(model: LabModel): ColDef<LabRow>[] {
     return [
       ...this.buildStudentColumns(model.courseId),
-      this.buildTotalMinutesColumn<LabRow>("totalMinutes", "Total"),
-      ...this.buildLabColumns<LabRow>(model.labs, false)
+      this.buildTotalMinutesColumn<LabRow>("totalMinutes", t("time.total")),
+      ...this.buildLabColumns<LabRow>(model.labs, "lab")
     ];
   }
 
   private buildStepColumnDefs(model: LabModel): ColDef<LabRow>[] {
     return [
       ...this.buildStudentColumns(model.courseId),
-      this.buildTotalMinutesColumn<LabRow>("totalMinutes", "Total"),
+      this.buildTotalMinutesColumn<LabRow>("totalMinutes", t("time.total")),
       ...this.buildLabColumns<LabRow>(model.steps, "step")
     ];
   }
 
   private buildMedianByLabStepColumnDefs(model: LabModel): ColDef<LabMedianRow>[] {
     return [
-      this.buildTotalMinutesColumn<LabMedianRow>("totalMinutes", "Total"),
+      this.buildTotalMinutesColumn<LabMedianRow>("totalMinutes", t("time.total")),
       ...this.buildLabColumns<LabMedianRow>(model.steps, "step")
     ];
   }
 
   private buildMedianByLabColumnDefs(model: LabModel): ColDef<LabMedianRow>[] {
     return [
-      this.buildTotalMinutesColumn<LabMedianRow>("totalMinutes", "Total"),
+      this.buildTotalMinutesColumn<LabMedianRow>("totalMinutes", t("time.total")),
       ...this.buildLabColumns<LabMedianRow>(model.labs, "lab")
     ];
   }
@@ -211,13 +204,13 @@ export class GridLabModel {
   buildDateColumnsForLabs<T>(dates: string[]): ColDef<T>[] {
     return dates.map((d) => ({
       field: d as never,
-      headerName: d === NO_DATE_KEY ? "No date" : formatDateShort(d),
+      headerName: d === NO_DATE_KEY ? t("classTime.noDate") : formatDateShort(d),
       headerClass: "ag-header-vertical",
       valueFormatter: (p: { value?: unknown }) =>
         p.value != null && Number(p.value) > 0 ? formatTimeMinutesOnly(Number(p.value)) : "",
       cellClass: "ag-right-aligned-cell",
       cellStyle: (p: { value?: unknown }) => ({
-        backgroundColor: cellColorForMinutes(p.value as number),
+        backgroundColor: heatColor(minutesOf(p.value)),
         textAlign: "center",
         paddingLeft: "4px"
       }),

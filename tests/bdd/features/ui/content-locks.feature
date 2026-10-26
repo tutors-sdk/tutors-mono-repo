@@ -41,7 +41,7 @@ Feature: Content locks
       Then every card is in full colour and links to its resource
 
   @rule-0053 @ears-event-driven
-  Rule: When a lecturer locks a resource from the lecturer panel, the reader shall grey out its card and offer an Unlock button on it.
+  Rule: When a lecturer locks a resource from Educator Control, the reader shall grey out its card and offer an Unlock button on it.
 
     Scenario: Locking greys the card out and Unlock restores it
       Given a lecturer is viewing a topic

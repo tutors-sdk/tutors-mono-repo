@@ -1,7 +1,7 @@
 import { getSupabase } from "@tutors/tutors-time-lib";
 import log from "@tutors/logger";
 import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
-import type { ConnectUserFieldsRow } from "$lib/connectUserFieldsRow";
+import type { ConnectUserFieldsRow } from "#lib/connectUserFieldsRow.ts";
 
 type UserFields = { online_status: string; sentiment: string; avatar_url: string };
 

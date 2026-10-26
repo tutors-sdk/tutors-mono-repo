@@ -1,11 +1,22 @@
 <script lang="ts">
   import Iconify from "@iconify/svelte";
-  import type { LoEvent } from "@tutors/community";
+  import type { IconType } from "@tutors/tutors-model-lib";
   import { themeService } from "@tutors/themes";
   import Icon from "./Icon.svelte";
-  let { lo, showCourseTitle = false }: { lo: LoEvent; showCourseTitle?: boolean } = $props();
+  import { siteUrls } from "../utils/site-urls";
+  /** What the card shows of a student's activity. Community's `LoEvent` has this shape; a primitive takes it as a prop and never imports community. */
+  type StudentActivity = {
+    courseTitle: string;
+    title: string;
+    loRoute: string;
+    type: string;
+    img?: string;
+    icon?: IconType;
+    user?: { fullName: string; avatar: string; id: string; sentiment: string };
+  };
+  let { lo, showCourseTitle = false }: { lo: StudentActivity; showCourseTitle?: boolean } = $props();
   const student = $derived(lo.user!);
-  const route = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? lo.loRoute : `https://tutors.dev${lo.loRoute}`);
+  const route = $derived(lo.type === "web" && lo.loRoute.startsWith("http") ? lo.loRoute : `${siteUrls.reader}${lo.loRoute}`);
   const sentiment = $derived(student.sentiment ?? "neutral");
 </script>
 

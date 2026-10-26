@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LoRecord } from "@tutors/community";
-  import { type CardConfig, type CardDetails } from "@tutors/themes";
+  import { loTypeColour, type CardConfig, type CardDetails } from "@tutors/themes";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { currentCourse } from "@tutors/runes";
   import { themeService } from "@tutors/themes";
@@ -15,25 +15,6 @@
    * when `onUnlock` is given (the lock is on this resource, not inherited), an Unlock button.
    */
   let { cardDetails, cardLayout, children, locked = false, lecturer = false, onUnlock } = $props<{ cardDetails: CardDetails; cardLayout?: CardConfig; children?: Snippet; locked?: boolean; lecturer?: boolean; onUnlock?: () => void }>();
-
-  const legacyCardColours: Record<string, { border: string; background: string }> = {
-    course: { border: "#37919b", background: "#d3ecee" },
-    topic: { border: "#53a878", background: "#d9eee0" },
-    talk: { border: "#cb9d00", background: "#f4ecce" },
-    paneltalk: { border: "#cb9d00", background: "#f4ecce" },
-    reference: { border: "#37919b", background: "#d3ecee" },
-    lab: { border: "#d00034", background: "#fcd6d8" },
-    archive: { border: "#d00034", background: "#fcd6d8" },
-    panelvideo: { border: "#ff0032", background: "#ffd6dd" },
-    video: { border: "#ff0032", background: "#ffd6dd" },
-    github: { border: "#cb9d00", background: "#f4ecce" },
-    web: { border: "#008c8f", background: "#d6e9e9" },
-    note: { border: "#53a878", background: "#d9eee0" },
-    tutorial: { border: "#008c8f", background: "#d6e9e9" },
-    podcast: { border: "#008c8f", background: "#d6e9e9" },
-    notebook: { border: "#557927", background: "#d9eee0" },
-    quiz: { border: "#6366f1", background: "#e0e7ff" }
-  };
 
   function plainFromSummary(html: string | undefined): string {
     if (!html) return "";
@@ -60,18 +41,16 @@
   const target = $derived(["web", "github"].includes(cardDetails.type) && cardDetails.route.startsWith("http") ? "_blank" : "");
   const route = $derived(cardDetails.type === "video" ? (cardDetails.video || cardDetails.route) : cardDetails.route);
   const hideVideoIcon = $derived(currentCourse.value?.areVideosHidden);
-  const cardColour = $derived.by(() => {
-    const c = legacyCardColours[cardDetails.type] ?? legacyCardColours.course;
-    // Pastel backgrounds would wash out on a dark surface, so dark mode darkens them first.
-    return { border: c.border, background: `light-dark(${c.background}, color-mix(in srgb, ${c.background} 35%, black))` };
-  });
+  const cardColour = $derived(loTypeColour(cardDetails.type));
 </script>
 
 {#if cardDetails.student}
   <StudentCard lo={studentLoFromCard} {cardLayout} />
 {:else}
   {@const openable = !locked || lecturer}
-  <article style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
+  <!-- data-lo-type is what the guided tour reads: it walks the distinct types on the canvas and explains
+       each one, so the type has to be in the DOM and not only in the icon it picks. -->
+  <article data-lo-type={cardDetails.type} style:--resource-accent={cardColour.border} style:--resource-background={cardColour.background} class="resource-card" class:ui-lift={openable} class:locked data-locked={locked ? "true" : undefined}>
     <div class="resource-body">
     <svelte:element this={openable ? "a" : "div"} class="resource-link" href={openable ? route : undefined} target={openable && target ? target : undefined} rel={openable && target === "_blank" ? "noopener noreferrer" : undefined}>
       <div class="resource-heading">
@@ -127,7 +106,7 @@
   .resource-summary { flex: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: var(--space-4); text-align: center; font-size: var(--font-label); line-height: var(--ui-summary-leading); color: var(--ui-muted); overflow-wrap: anywhere; }
   .resource-summary :global(a), .companion-video { position: relative; z-index: 1; }
   .companion-video { display: inline-flex; align-items: center; min-height: 44px; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--font-label); color: var(--ui-brand); }
-  .resource-metric { font-size: var(--font-caption); color: var(--ui-muted); }
+  .resource-metric { margin-top: var(--space-2); text-align: center; font-size: var(--font-caption); color: var(--ui-muted); }
   /* The artwork takes whatever height the title and summary leave, up to --card-artwork (tuned in
      paper-tokens.css) and never below 80px: a one-line title gets the full picture, a two-line title with
      a three-line summary gets a smaller one, and the text keeps its padding either way. */

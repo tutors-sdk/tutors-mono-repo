@@ -8,14 +8,18 @@
  * quay.io/tutors-sdk/tutors-<app>:X.Y.Z. For each overlay it asks the registry
  * which digest that tag is, checks the digest is signed by image-build.yml
  * (cosign verify, by digest), and writes `newTag` and `digest` side by side.
+ * It also writes release/deployed.json (tag, the commit v<version> names, the time
+ * of the pin, the four digests): what the release harness reads as production
+ * (`--baseline prod`), and what pnpm check:deploy-pins holds to the overlays.
  * Then open a pull request; deploy.yml verifies the same pins again and, once the
  * pull request is merged and the rollout confirmed, tells the release harness.
  *
  * Needs docker (buildx) and cosign 3 or later on the PATH. The registry is public.
  */
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { overlayPinFindings, pinOverlayText, readOverlays } from "./checks/deploy-pins.ts";
+import { DEPLOYED_FILE, deployedFindings, deployedRecord, overlayPinFindings, pinOverlayText, readDeployed, readOverlays, renderDeployed } from "./checks/deploy-pins.ts";
 import { resolveDigest, verifySignature } from "./checks/lib/registry.ts";
 import { REPO_ROOT } from "./checks/lib/repo.ts";
 
@@ -26,6 +30,14 @@ if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
   process.exit(2);
 }
 const dryRun = args.includes("--dry-run");
+
+let commit: string;
+try {
+  commit = execFileSync("git", ["rev-parse", "--verify", "--quiet", `refs/tags/v${version}^{commit}`], { cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+} catch {
+  process.stderr.write(`FAIL: v${version} is not a tag in this clone, so ${DEPLOYED_FILE} cannot name its commit. Run git fetch origin --tags.\n`);
+  process.exit(1);
+}
 
 const overlays = readOverlays();
 const rewrites: { file: string; text: string }[] = [];
@@ -63,10 +75,15 @@ if (dryRun) {
 for (const { file, text } of rewrites) writeFileSync(file, text);
 
 const packageVersion: string = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")).version;
-const { findings } = overlayPinFindings(readOverlays(), { packageVersion });
+const { findings: pinFindings, pins } = overlayPinFindings(readOverlays(), { packageVersion });
+const findings = [...pinFindings];
+if (findings.length === 0) {
+  writeFileSync(join(REPO_ROOT, DEPLOYED_FILE), renderDeployed(deployedRecord({ pins, commit, deployedAt: new Date() })));
+  findings.push(...deployedFindings(pins, readDeployed()));
+}
 if (findings.length > 0) {
   process.stderr.write("\nThe rewritten overlays fail the pin check:\n");
   for (const finding of findings) process.stderr.write(`  ${finding}\n`);
   process.exit(1);
 }
-process.stdout.write(`\nPinned ${overlays.length} overlays to ${version}. Next: pnpm check:k8s, commit, open a pull request.\n`);
+process.stdout.write(`\nPinned ${overlays.length} overlays to ${version} and wrote ${DEPLOYED_FILE}. Next: pnpm check:k8s, commit, open a pull request.\n`);
