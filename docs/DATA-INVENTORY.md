@@ -186,7 +186,7 @@ Client/server error aggregation for observability. Authoritative columns from `s
 **Deletion impact:** Removes error records attributable to the user
 
 ### `assistance_requests`
-Help requests students raise on lab steps (I'm stuck, Need a hint, Request lecturer help). Authoritative columns from `supabase/migrations/20261020_assistance_requests.sql`. RLS is on with no policy: only the reader's server reaches the rows, with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`, through `/api/assistance`.
+Help requests students raise on lab steps (I'm stuck, Need a hint, Request lecturer help). Authoritative columns from `supabase/migrations/20261020_assistance_requests.sql` and `20261021_assistance_helped.sql`. RLS is on with no policy: only the reader's server reaches the rows, with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`, through `/api/assistance`.
 
 | Field | Type | PII | Description |
 |-------|------|-----|-------------|
@@ -200,6 +200,7 @@ Help requests students raise on lab steps (I'm stuck, Need a hint, Request lectu
 | acknowledged_by, closed_by | string | Yes | GitHub login of the educator (or student) who acted; `system` for an expiry |
 | closed_reason | string | No | `resolved`, `hint`, `withdrawn` or `expired` |
 | hint_text | string | Yes | The lecturer's typed hint (free text) |
+| helped | boolean | No | Once resolved, whether the student said the help helped; null until they answer (`20261021_assistance_helped.sql`) |
 
 **Legal basis:** Legitimate interest (teaching support the student asks for)
 **Consent required:** No — the student raises each request themselves

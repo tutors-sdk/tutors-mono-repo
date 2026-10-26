@@ -26,3 +26,8 @@ export function isStepRef(value: unknown): value is StepRef {
   const v = value as Record<string, unknown>;
   return stepRef(v.courseId, v.labRoute, v.stepId) !== null;
 }
+
+/** True when two references name the same step of the same lab and course. */
+export function sameStep(a: StepRef, b: StepRef): boolean {
+  return a.courseId === b.courseId && a.labRoute === b.labRoute && a.stepId === b.stepId;
+}

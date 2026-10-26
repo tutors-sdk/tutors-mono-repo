@@ -14,5 +14,5 @@ reader POST /api/auth/get-session | hook | who: session holder; Better Auth veri
 reader POST /api/auth/update-user | hook | who: session holder; Better Auth verifies origin, adapter rejects githubId/login changes including null
 reader PUT /api/courses/[courseid]/locks | who: signed-in educators of the published course (requireEducator; Rules 0630-0632); locked_by comes from the session
 reader POST /api/live/activity | who: anyone, as the anon key it replaces allowed; the body is validated (4 KB, LoRecord shape) and published only to watched topics within the day's Live budget
-reader POST /api/assistance | who: a signed-in student asks, asks again, withdraws or resolves their own help request; an educator of the course (its published enrollment) acknowledges, answers a hint or resolves; other origins get 403, nobody signed in 401
+reader POST /api/assistance | who: a signed-in student asks, asks again, withdraws, resolves or rates their own help request; an educator of the course (its published enrollment) acknowledges, answers a hint or resolves, from the reader or Tutors Live (PUBLIC_LIVE_ORIGIN, credentialed CORS); other origins get 403, nobody signed in 401
 reader POST /api/courses/[courseid]/moodle-sync | who: signed-in educators of the published course (requireEducator, checked before Moodle is contacted)

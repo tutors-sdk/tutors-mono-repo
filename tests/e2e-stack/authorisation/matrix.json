@@ -133,6 +133,16 @@
       "why": "only someone the private course admits (its whitelist and educators) asks for help in it (tests/security/mutating-routes.txt)"
     },
     {
+      "key": "reader OPTIONS /api/assistance",
+      "request": {
+        "path": "/api/assistance"
+      },
+      "expect": {
+        "*": 204
+      },
+      "why": "the CORS preflight answers everyone and grants nothing: without an Origin header it is same-origin, and the POST it precedes still checks the session"
+    },
+    {
       "key": "reader GET /api/auth/get-session",
       "hook": true,
       "request": {

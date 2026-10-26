@@ -15,6 +15,7 @@
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import type { Course } from "@tutors/tutors-model-lib";
+  import HelpQueue from "#lib/components/HelpQueue.svelte";
 
   interface Props {
     data: { courseid: string; course: Course };
@@ -48,6 +49,9 @@
   });
 
   const studentsOnlineVisible = $derived(presenceService.studentsOnline.value.filter((lo) => lo?.user?.fullName !== "Anon"));
+  // Whether a student who asked for help is still on the course (Rule 0395).
+  const onlineLogins = $derived(new Set(studentsOnlineVisible.map((lo) => lo.user?.id).filter(Boolean)));
+  const isOnline = (login: string) => onlineLogins.has(login);
 
   $effect(() => {
     const courseid = data.courseid;
@@ -78,6 +82,8 @@
   </header>
 
   <div class="live-body">
+    <HelpQueue courseId={data.courseid} online={isOnline} />
+
     <section class="ui-panel">
       <h2 class="ui-section-title">{t("live.onlineNow")}</h2>
       <ConnectLatestLosCards los={studentsOnlineVisible} emptyMessage={t("live.emptyOnline")} />
