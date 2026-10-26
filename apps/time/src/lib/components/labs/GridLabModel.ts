@@ -6,15 +6,15 @@ import {
   minutesOf,
   formatTimeMinutesOnly,
   formatDateShort,
-  extractLabIdentifier,
-  extractStepName
+  extractStepName,
+  labColumnLabels
 } from "@tutors/tutors-time-lib";
 import { OnlineCellRenderer } from "#lib/components/calendar/OnlineCellRenderer.ts";
 import { SentimentCellRenderer } from "#lib/components/calendar/SentimentCellRenderer.ts";
 import { StudentAvatarCellRenderer } from "#lib/components/calendar/StudentAvatarCellRenderer.ts";
 
-/** Header mode: "lab" = book segment, "step" = step name (last segment), "raw" = full id. */
-type LabColumnHeaderMode = "lab" | "step" | "raw";
+/** Header mode: "lab" = lab id (with its topic when two labs share an id), "step" = step name (last segment). */
+type LabColumnHeaderMode = "lab" | "step";
 
 const NO_DATE_KEY = "__no_date__";
 
@@ -75,16 +75,11 @@ export class GridLabModel {
     };
   }
 
-  private buildLabColumns<T>(
-    labIds: string[],
-    headerMode: LabColumnHeaderMode | boolean = false
-  ): ColDef<T>[] {
-    const mode: LabColumnHeaderMode =
-      headerMode === true ? "lab" : headerMode === false ? "raw" : headerMode;
-    return labIds.map((labId) => {
-      const headerName =
-        mode === "lab" ? extractLabIdentifier(labId) : mode === "step" ? extractStepName(labId) : labId;
-      const headerTooltip = mode === "step" && labId !== headerName ? labId : undefined;
+  private buildLabColumns<T>(labIds: string[], mode: LabColumnHeaderMode): ColDef<T>[] {
+    const labLabels = mode === "lab" ? labColumnLabels(labIds) : [];
+    return labIds.map((labId, index) => {
+      const headerName = mode === "lab" ? labLabels[index] : extractStepName(labId);
+      const headerTooltip = labId !== headerName ? labId : undefined;
       return {
         field: labId as never,
         headerName,
@@ -179,7 +174,7 @@ export class GridLabModel {
     return [
       ...this.buildStudentColumns(model.courseId),
       this.buildTotalMinutesColumn<LabRow>("totalMinutes", t("time.total")),
-      ...this.buildLabColumns<LabRow>(model.labs, false)
+      ...this.buildLabColumns<LabRow>(model.labs, "lab")
     ];
   }
 

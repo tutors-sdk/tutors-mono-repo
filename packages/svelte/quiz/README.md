@@ -74,10 +74,50 @@ Every **remaining section** is a question:
 
 | Field | Meaning |
 | --- | --- |
-| `question` | The question text. Required. (`text` is accepted as an alias.) |
+| `question` | The question text. Required. (`text` is accepted as an alias.) Runs to the next field, so it can span lines and hold a code block. |
 | `type` | `multiple-choice` (default) or `true-false`. |
-| `options` | A `- ` list. Required for multiple-choice; at least two. |
+| `options` | A `- ` list. Required for multiple-choice; at least two. Lines indented under an item belong to it. |
 | `correct` | Required. 0-based index for multiple-choice; `true`/`false` for true-false. |
+
+## Code blocks
+
+A question or an option can carry a fenced code block, highlighted with the
+same code theme as labs and notes.
+
+Open the quiz with **four** backticks (or with `~~~quiz`) so an ordinary
+three-backtick fence can sit inside it:
+
+`````markdown
+````quiz
+question: What does this print?
+
+```js
+console.log([1, 2, 3].map((x) => x * 2));
+```
+type: multiple-choice
+options:
+  - |
+    ```js
+    [2, 4, 6]
+    ```
+  - "`[1, 2, 3]`"
+  - It throws a `TypeError`
+correct: 0
+````
+`````
+
+- A question's text runs from `question:` to the next field line (`type:`,
+  `options:`, `correct:`, ...), blank lines and code included.
+- An option is a `- ` item plus every line indented under it. A YAML-style `|`
+  after the dash (or after `question:`) is accepted and ignored.
+- Inside a code fence, a `---` line or a `field:` line is code: it never starts
+  a new question or field.
+- A three-backtick ```` ```quiz ```` block still works when every code fence
+  inside it names its language (```` ```js ````). A bare ```` ``` ```` opener
+  would close the quiz, which is why four backticks is the recommended form.
+
+Text on one line renders inline, exactly as before. Text that spans lines
+renders as a markdown block, so it can also hold paragraphs and lists.
 
 ## Validation
 

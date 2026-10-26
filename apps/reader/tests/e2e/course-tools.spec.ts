@@ -93,7 +93,7 @@ async function advanceTo(page: Page, title: string) {
 
 test("Tour points at the visible course tree control", { tag: "@rule-0044" }, async ({ page }) => {
   await page.goto(manual);
-  const preferences = page.getByRole("button", { name: "Open Theme Menu", exact: true });
+  const preferences = page.getByRole("button", { name: "Preferences", exact: true });
   const tour = page.getByRole("dialog", { name: "Guided tour", exact: true });
   // Responsive layouts can leave a hidden copy ahead of the visible target.
   await page.evaluate(() => {
@@ -286,7 +286,7 @@ test("Learn section withholds Educator Control from a student", { tag: "@rule-02
  * "n / total", so the count comes from the tour itself rather than from a number this file guesses.
  */
 async function tourStepTitles(page: Page): Promise<string[]> {
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   await page.getByRole("button", { name: "Start Tour", exact: true }).click();
   const tour = page.getByRole("dialog", { name: "Guided tour", exact: true });
   await expect(tour).toBeVisible();
@@ -336,7 +336,7 @@ test("Tour crosses the header, descends the side menu, then reaches the cards", 
     ]);
   }
   // Back never opens the drawer for the reader; cancellation restores its closed state.
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   await page.getByRole("button", { name: "Start Tour", exact: true }).click();
   const tour = page.getByRole("dialog", { name: "Guided tour", exact: true });
   await advanceTo(page, "Open the Menu");

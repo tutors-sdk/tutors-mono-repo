@@ -11,7 +11,7 @@ vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () =>
   }
 }));
 
-import { checkSupabase, getRecentErrorCounts } from "../../../packages/svelte/community/src/utils/health-check.ts";
+import { HEALTH_CHECK_TIMEOUT_MS, checkSupabase, getRecentErrorCounts } from "../../../packages/svelte/community/src/utils/health-check.ts";
 
 function clientReturning({ select, rpc }: { select?: unknown; rpc?: unknown } = {}) {
   return {
@@ -93,6 +93,78 @@ describe("getRecentErrorCounts", () => {
 
   it("returns nothing when the call throws, so a health page still renders", async () => {
     client = { rpc: () => Promise.reject(new Error("socket closed")) };
+    expect(await getRecentErrorCounts()).toEqual([]);
+  });
+});
+
+describe("the readiness check's deadline (Rule 0616)", () => {
+  const stalled = () => ({ from: vi.fn(() => ({ select: () => new Promise(() => {}) })), rpc: vi.fn(() => new Promise(() => {})) });
+
+  it("reports an error once Supabase has not answered within HEALTH_CHECK_TIMEOUT_MS", async () => {
+    vi.useFakeTimers();
+    try {
+      client = stalled();
+      const check = checkSupabase();
+      await vi.advanceTimersByTimeAsync(HEALTH_CHECK_TIMEOUT_MS);
+      expect(await check).toMatchObject({ status: "error", message: `no answer within ${HEALTH_CHECK_TIMEOUT_MS} ms` });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("answers no error counts once the counts have not come back in time", async () => {
+    vi.useFakeTimers();
+    try {
+      client = stalled();
+      const counts = getRecentErrorCounts();
+      await vi.advanceTimersByTimeAsync(HEALTH_CHECK_TIMEOUT_MS);
+      expect(await counts).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves no timer behind once Supabase has answered", async () => {
+    vi.useFakeTimers();
+    try {
+      client = clientReturning({ select: { error: null }, rpc: { data: [], error: null } });
+      await checkSupabase();
+      await getRecentErrorCounts();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("gives up before the 3-second readiness probe does", () => {
+    expect(HEALTH_CHECK_TIMEOUT_MS).toBeLessThan(3_000);
+  });
+});
+
+describe("what the readiness check measures and asks", () => {
+  it("asks for an exact count of the head only", async () => {
+    const select = vi.fn(() => Promise.resolve({ error: null }));
+    client = { from: vi.fn(() => ({ select })) };
+    await checkSupabase();
+    expect(select).toHaveBeenCalledWith("count", { count: "exact", head: true });
+  });
+
+  it("reports the time the query took, whether it answered or threw", async () => {
+    const now = vi.spyOn(performance, "now");
+    try {
+      now.mockReturnValueOnce(100).mockReturnValueOnce(150);
+      client = clientReturning({ select: { error: null } });
+      expect((await checkSupabase()).latencyMs).toBe(50);
+      now.mockReturnValueOnce(200).mockReturnValueOnce(230);
+      client = { from: vi.fn(() => ({ select: () => Promise.reject(new Error("network down")) })) };
+      expect((await checkSupabase()).latencyMs).toBe(30);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it("returns no counts when the function answers with an error, even alongside data", async () => {
+    client = clientReturning({ rpc: { data: [{ app: "reader", level: "error", count: 3 }], error: { message: "denied" } } });
     expect(await getRecentErrorCounts()).toEqual([]);
   });
 });

@@ -32,3 +32,19 @@ Feature: Whitelist Management
     And "Lecturer" is signed in
     When the course is opened
     Then the system shall grant access regardless of whitelist status
+
+  @rule-0605 @ears-unwanted
+  Rule: If a signed-in student on neither the whitelist nor the educators of a private course opens it, then the reader shall leave that course out of the student's Recently accessed courses.
+
+    Scenario: A student turned away from a private course does not see it in Recently accessed
+      Given the private course "secure-101", with the whitelist "alice, bob" and the educators "lecturer"
+      And "Mallory" is signed in
+      When the course is opened
+      Then the student is sent to "/"
+      And "secure-101" is not among the student's Recently accessed courses
+
+    Scenario: A whitelisted student sees the private course in Recently accessed
+      Given the private course "secure-101", with the whitelist "alice, bob" and the educators "lecturer"
+      And "Alice" is signed in
+      When the course is opened
+      Then "secure-101" is among the student's Recently accessed courses

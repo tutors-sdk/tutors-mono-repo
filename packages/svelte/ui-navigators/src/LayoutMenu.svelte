@@ -33,7 +33,7 @@
     <button class="tour-button" onclick={() => { open = false; setTimeout(() => tourService.start(), 150); }}>{t("tour.startButton")}<span aria-hidden="true">→</span></button>
   </div>
 {/snippet}
-<Menu bind:open {menuSelector} {menuContent} ariaLabel={t("nav.layout.tip")} title={t("shell.preferences")} width="22rem" />
+<Menu bind:open {menuSelector} {menuContent} ariaLabel={t("shell.preferences")} width="22rem" />
 <style>
   h2 { font-size: var(--font-body); font-weight: var(--weight-semibold); padding: var(--space-1) var(--space-1) var(--space-4); }
   section + section { border-top: 1px solid var(--ui-border); margin-top: var(--space-4); padding-top: var(--space-4); }
