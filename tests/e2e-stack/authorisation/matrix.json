@@ -243,6 +243,30 @@
       "why": "only the course's educators post feedback (Rules 0400-0402); an enrolled student is not an educator"
     },
     {
+      "key": "reader GET /api/insights",
+      "request": {
+        "path": "/api/insights?courseId=harness-rules&span=week&day=2026-09-16"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators read its insights (Rules 0412-0415); an enrolled student is not an educator"
+    },
+    {
+      "key": "reader OPTIONS /api/insights",
+      "request": {
+        "path": "/api/insights"
+      },
+      "expect": {
+        "*": 204
+      },
+      "why": "the CORS preflight answers everyone and grants nothing: without an Origin header it is same-origin, and the GET it precedes still checks the session"
+    },
+    {
       "key": "reader GET /healthz",
       "request": {
         "path": "/healthz"
