@@ -37,12 +37,13 @@ overrides:
   brace-expansion@>=4.0.0 <5.0.12: ">=5.0.12 <6"
   # GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f (reader, isomorphic-dompurify > dompurify).
   dompurify@<3.4.17: ">=3.4.17 <4"
-  # GHSA-gfr2-rv44-r23c, GHSA-vfgh-jcmw-g37q (marp, katex plugin > markdown-it).
+  # GHSA-gfr2-rv44-r23c, GHSA-vfgh-jcmw-g37q, CVE-2026-111758, CVE-2026-111759 (marp, katex plugin > markdown-it).
   "@marp-team/marpit>markdown-it": ">=14.3.3 <15"
+  markdown-it@>=14.0.0 <14.3.3: ">=14.3.3 <15"
   markdown-it@>=15.0.0 <15.0.3: ">=15.0.3 <16"
-  # GHSA-587h-7wmj-h5pm and four more (vitest > vite).
-  vite@>=8.3.0 <8.3.3: ">=8.3.3 <9"
-  # GHSA-xjj6-f33q-929c (Node fetch in the apps > undici).
+  # GHSA-587h-7wmj-h5pm and four more, CVE-2026-112942 (vitest > vite, vite > launch-editor).
+  vite@>=8.0.0 <8.3.3: ">=8.3.3 <9"
+  # GHSA-xjj6-f33q-929c, CVE-2026-109869 (Node fetch in the apps > undici).
   undici@>=8.0.0 <8.12.2: ">=8.12.2 <9"
   # GHSA-mrhx-c7xc-m3w5 (better-auth and others > zod).
   zod@>=4.0.0 <4.6.6: ">=4.6.6 <5"

@@ -2,7 +2,7 @@
 Feature: Authorisation matrix
   As a maintainer of Tutors
   I want every server route asked as every kind of caller, against the built images
-  So that a route that hands a student what only a lecturer or an operator may have fails the pull request
+  So that a route that hands a student what only a lecturer or an operator may have fails the nightly run
 
   The matrix is tests/e2e-stack/authorisation/matrix.json: for each endpoint a route file declares, the request to
   send and the status anonymous, student, enrolled, lecturer and operator callers get. Cells that answer something
