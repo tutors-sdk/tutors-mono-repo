@@ -8,14 +8,14 @@
  */
 
 type Row = Record<string, unknown>;
-type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" };
+type Filter = { column: string; value: unknown; op: "eq" | "in" | "gte" | "lte" | "lt" };
 type DbError = { message: string; code?: string };
 type BroadcastMessage = { type: string; event: string; payload: unknown };
 type BroadcastHandler = (message: BroadcastMessage) => void;
 
 export type TableCall = {
   table: string;
-  op: "select" | "upsert" | "update";
+  op: "select" | "upsert" | "update" | "insert";
   columns?: string;
   row?: Row;
   /** Every row of a bulk upsert (an array passed to upsert); `row` is unset then. */
@@ -26,6 +26,10 @@ export type TableCall = {
   returned?: number;
   order?: { column: string; ascending: boolean };
   limit?: number;
+  /** `.range(from, to)`: the rows from index `from` to `to`, both included. */
+  range?: { from: number; to: number };
+  /** An insert or update followed by `.select()`: the written rows come back. */
+  returning?: string;
   range?: [number, number];
 };
 
@@ -41,8 +45,15 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
   ) {}
 
   select(columns = "*") {
-    this.call.op = "select";
+    if (this.call.op === "insert" || this.call.op === "update") this.call.returning = columns;
+    else this.call.op = "select";
     this.call.columns = columns;
+    return this;
+  }
+
+  insert(row: Row) {
+    this.call.op = "insert";
+    this.call.row = row;
     return this;
   }
 
@@ -73,6 +84,16 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
 
   lte(column: string, value: unknown) {
     this.call.filters.push({ column, value, op: "lte" });
+    return this;
+  }
+
+  lt(column: string, value: unknown) {
+    this.call.filters.push({ column, value, op: "lt" });
+    return this;
+  }
+
+  range(from: number, to: number) {
+    this.call.range = { from, to };
     return this;
   }
 
@@ -116,6 +137,7 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       if (f.op === "eq") return row[f.column] === f.value;
       if (f.op === "gte") return String(row[f.column]) >= String(f.value);
       if (f.op === "lte") return String(row[f.column]) <= String(f.value);
+      if (f.op === "lt") return String(row[f.column]) < String(f.value);
       return (f.value as unknown[]).includes(row[f.column]);
     });
   }
@@ -125,7 +147,12 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
     const error = this.db.tableErrors.get(this.call.table);
     if (error) return { data: null, error };
 
-    const rows = this.db.rows(this.call.table);
+    const view = VIEWS[this.call.table];
+    if (view && this.db.missingViews.has(this.call.table)) {
+      return { data: null, error: { message: `Could not find the table 'public.${this.call.table}' in the schema cache`, code: "PGRST205" } };
+    }
+    // A view reads its table's rows through its own columns, as Postgres would.
+    const rows = view ? this.db.rows(view.table).map((r) => Object.fromEntries(view.columns.map((c) => [c, r[c] ?? null]))) : this.db.rows(this.call.table);
     if (this.call.op === "upsert") {
       for (const row of this.call.rows ?? [this.call.row!]) {
         const keys = (this.call.options?.onConflict ?? Object.keys(row)[0]).split(",").map((k) => k.trim());
@@ -135,9 +162,18 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       }
       return { data: null, error: null };
     }
+    if (this.call.op === "insert") {
+      const row: Row = { id: crypto.randomUUID(), ...this.call.row };
+      if (this.db.violatesUnique(this.call.table, row, rows)) {
+        return { data: null, error: { message: "duplicate key value violates unique constraint", code: "23505" } };
+      }
+      rows.push(row);
+      return this.answer([{ ...row }]);
+    }
     if (this.call.op === "update") {
-      for (const row of rows.filter((r) => this.matches(r))) Object.assign(row, this.call.row);
-      return { data: null, error: null };
+      const changed = rows.filter((r) => this.matches(r));
+      for (const row of changed) Object.assign(row, this.call.row);
+      return this.call.returning === undefined ? { data: null, error: null } : this.answer(changed.map((row) => ({ ...row })));
     }
 
     const found = rows.filter((r) => this.matches(r));
@@ -153,6 +189,14 @@ class RecordingQuery implements PromiseLike<{ data: unknown; error: DbError | nu
       const page = this.call.range ? found.slice(this.call.range[0], this.call.range[1] + 1) : found;
       return { data: this.call.limit === undefined ? page : page.slice(0, this.call.limit), error: null };
     }
+    const range = this.call.range;
+    if (range) return this.answer(found.slice(range.from, range.to + 1));
+    return this.answer(this.call.limit === undefined ? found : found.slice(0, this.call.limit));
+  }
+
+  /** The rows as PostgREST hands them back for the query's mode. */
+  private answer(found: Row[]): { data: unknown; error: DbError | null } {
+    if (this.mode === "many") return { data: found, error: null };
     if (found.length === 0 && this.mode === "single") return { data: null, error: { message: "no rows", code: "PGRST116" } };
     return { data: found[0] ?? null, error: null };
   }
@@ -213,6 +257,18 @@ export class RecordingChannel {
   }
 }
 
+/**
+ * The views product code reads, as their migrations declare them: each is its table's rows through
+ * these columns (supabase/migrations/20261022_insights_views.sql).
+ */
+const VIEWS: Record<string, { table: string; columns: string[] }> = {
+  insights_help_requests: {
+    table: "assistance_requests",
+    columns: ["id", "course_id", "lab_route", "step_id", "learner_id", "kind", "requested_at", "acknowledged_at", "closed_at", "closed_reason"]
+  },
+  insights_annotations: { table: "feedback_annotations", columns: ["id", "course_id", "lab_route", "step_id", "learner_id", "created_at", "revoked_at"] }
+};
+
 const DEFAULT_LIVE_SETTINGS = { live_daily_budget: 120000, slow_at: 0.7, pause_at: 0.9, watcher_ttl_seconds: 90 };
 /** topics.platformActivity() in @tutors/realtime. */
 const PLATFORM_TOPIC = "tutors-all-course-access";
@@ -225,6 +281,8 @@ export class RecordingSupabase {
   /** Whether the broker confirms joins; off plays a broker that accepts the socket but never the join. */
   confirmJoins = true;
   missingFunctions = new Set<string>();
+  /** Views the database lacks, as on a deployment whose migration has not run. */
+  missingViews = new Set<string>();
   /** realtime_settings, as supabase/migrations/20261016_realtime_live_budget.sql seeds it. */
   liveSettings = { ...DEFAULT_LIVE_SETTINGS };
   private tables = new Map<string, Row[]>();
@@ -237,7 +295,18 @@ export class RecordingSupabase {
     this.channels = [];
     this.confirmJoins = true;
     this.missingFunctions.clear();
+    this.missingViews.clear();
     this.tables.clear();
+  }
+
+  /**
+   * The unique indexes product code relies on, as their migrations declare them:
+   * assistance_requests holds one live request per learner and course (20261020_assistance_requests.sql).
+   */
+  violatesUnique(table: string, row: Row, rows: Row[]): boolean {
+    if (table !== "assistance_requests") return false;
+    const live = (r: Row) => r.state === "open" || r.state === "acknowledged";
+    return live(row) && rows.some((r) => live(r) && r.course_id === row.course_id && r.learner_id === row.learner_id);
   }
 
   rows(table: string): Row[] {
@@ -258,7 +327,8 @@ export class RecordingSupabase {
    * reports the stored value of a learning record field; `increment_calendar` adds one to a calendar
    * field; `record_page_view` and `record_heartbeat` are the single-request writes in
    * supabase/migrations/20261014_record_page_view_and_heartbeat.sql; `realtime_watch` and
-   * `realtime_claim_live_publish` are Tutors Live's budget in 20261016_realtime_live_budget.sql. A function named in
+   * `realtime_claim_live_publish` are Tutors Live's budget in 20261016_realtime_live_budget.sql, and
+   * `realtime_claim_assistance_publish` its help queue's share in 20261020_assistance_requests.sql. A function named in
    * `missingFunctions` answers as PostgREST does for one the database lacks.
    */
   rpc(fn: string, args: Row) {
@@ -294,6 +364,7 @@ export class RecordingSupabase {
       return Promise.resolve({ data: { tier: this.liveTier() }, error: null });
     }
     if (fn === "realtime_claim_live_publish") return Promise.resolve({ data: this.claimLivePublish(String(args.p_course_id)), error: null });
+    if (fn === "realtime_claim_assistance_publish") return Promise.resolve({ data: this.claimAssistancePublish(String(args.p_course_id)), error: null });
     if (fn === "record_heartbeat") {
       if (args.p_lo_id != null) bump(record(args.p_course_id, args.p_student_id, args.p_lo_id), "duration");
       bump(day(args.p_day, args.p_student_id, args.p_course_id), "timeactive");
@@ -336,6 +407,18 @@ export class RecordingSupabase {
     }
     if (cost > 0) this.spendLive(cost);
     return { tier, topics };
+  }
+
+  /** realtime_claim_assistance_publish: publish only while a Live tab watches the course's help queue, charged at 1 + watchers. */
+  private claimAssistancePublish(courseId: string): { tier: string; publish: boolean } {
+    const cutoff = Date.now() - this.liveSettings.watcher_ttl_seconds * 1000;
+    const watchers = this.rows("realtime_watchers");
+    watchers.splice(0, watchers.length, ...watchers.filter((w) => Date.parse(String(w.seen_at)) >= cutoff));
+    const tier = this.liveTier();
+    const count = watchers.filter((w) => w.topic === `assistance:${courseId}`).length;
+    if (tier === "paused" || count === 0) return { tier, publish: false };
+    this.spendLive(1 + count);
+    return { tier, publish: true };
   }
 
   /** Adds to today's realtime_budget row, as a claim does; a scenario uses it to put the day at a given spend. */

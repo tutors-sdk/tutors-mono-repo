@@ -84,6 +84,55 @@
       "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
     },
     {
+      "key": "reader GET /api/assistance",
+      "request": {
+        "path": "/api/assistance?courseId=harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators read its help queue (Rule 0392); an enrolled student is not an educator"
+    },
+    {
+      "key": "reader GET /api/assistance/mine",
+      "request": {
+        "path": "/api/assistance/mine?courseId=harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "anyone signed in reads only their own live help request (Rule 0392); the persistence stub has none, so it answers null"
+    },
+    {
+      "key": "reader POST /api/assistance",
+      "request": {
+        "path": "/api/assistance",
+        "body": {
+          "action": "request",
+          "courseId": "harness-rules",
+          "labRoute": "/lab/harness-rules/topic-01/lab-01",
+          "stepId": "step-01",
+          "kind": "stuck"
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 201,
+        "lecturer": 201
+      },
+      "why": "only someone the private course admits (its whitelist and educators) asks for help in it (tests/security/mutating-routes.txt)"
+    },
+    {
       "key": "reader GET /api/auth/get-session",
       "hook": true,
       "request": {
@@ -142,6 +191,80 @@
         "lecturer": 200
       },
       "why": "only the course's educators sync Moodle (Rules 0633-0634); the stack's Moodle is the persistence stub"
+    },
+    {
+      "key": "reader GET /api/feedback",
+      "request": {
+        "path": "/api/feedback?courseId=harness-rules&labRoute=/lab/harness-rules/topic-01/lab-01&stepId=step-01"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "only someone the private course admits reads a step's feedback (Rule 0403); the educator also sees its history"
+    },
+    {
+      "key": "reader GET /api/feedback/mine",
+      "request": {
+        "path": "/api/feedback/mine?courseId=harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "only someone the private course admits reads the feedback sent to them in it (Rule 0409)"
+    },
+    {
+      "key": "reader POST /api/feedback",
+      "request": {
+        "path": "/api/feedback",
+        "body": {
+          "action": "annotate",
+          "courseId": "harness-rules",
+          "labRoute": "/lab/harness-rules/topic-01/lab-01",
+          "stepId": "step-01",
+          "body": "Check the loop bound",
+          "everyone": true
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 201
+      },
+      "why": "only the course's educators post feedback (Rules 0400-0402); an enrolled student is not an educator"
+    },
+    {
+      "key": "reader GET /api/insights",
+      "request": {
+        "path": "/api/insights?courseId=harness-rules&span=week&day=2026-09-16"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators read its insights (Rules 0412-0415); an enrolled student is not an educator"
+    },
+    {
+      "key": "reader OPTIONS /api/insights",
+      "request": {
+        "path": "/api/insights"
+      },
+      "expect": {
+        "*": 204
+      },
+      "why": "the CORS preflight answers everyone and grants nothing: without an Origin header it is same-origin, and the GET it precedes still checks the session"
     },
     {
       "key": "reader GET /healthz",

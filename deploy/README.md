@@ -253,7 +253,7 @@ Runtime configuration and overlay metadata:
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
-| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader only, server only: writes content locks after the educator check; unset makes lock changes answer 503 |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader only, server only: writes content locks after the educator check and keeps help requests and lecturer feedback on lab steps (`feedback_annotations`); unset makes lock changes answer 503 and turns help requests and feedback off |
 | `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Reader only, server only: the educator-only Moodle sync in Educator Control; unset makes the sync answer 503 |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
