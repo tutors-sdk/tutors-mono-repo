@@ -91,8 +91,8 @@ most of it sign-in, which is paced under Better Auth's limit.
 
 The whiteboard journey loads Excalidraw from esm.sh, which the machine these were measured on cannot reach, so its
 time comes from CI. The authorisation journey is one test: 20 endpoints asked as 5 roles, 100 cells held to the
-matrix. The 8 anonymous journeys (`student.journey.spec.ts`) run on chromium and webkit on every pull request and on
-firefox and mobile nightly.
+matrix. The 8 anonymous journeys (`student.journey.spec.ts`) run nightly on chromium, webkit,
+firefox and mobile.
 
 ## The anonymous half
 
