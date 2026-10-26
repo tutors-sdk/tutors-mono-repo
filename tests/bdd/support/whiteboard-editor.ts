@@ -7,7 +7,8 @@ export function mountWhiteboardEditor() {
   const html = readFileSync("apps/reader/static/excalidraw-editor.html", "utf8");
   const script = html.match(/<script type="module">([\s\S]*?)<\/script>/)![1].replace(/^\s*import .*;$/gm, "");
   const effects: (() => void | (() => void))[] = [];
-  const handlers = new Map<string, () => void>();
+  const handlers = new Map<string, (message?: { payload: unknown }) => void>();
+  const stateSetters: ReturnType<typeof vi.fn>[] = [];
   let subscription: (status: string) => void;
   const channel = {
     on: vi.fn(),
@@ -20,7 +21,7 @@ export function mountWhiteboardEditor() {
     presenceState: vi.fn<() => Record<string, { userId: string }[]>>().mockReturnValue({}),
     unsubscribe: vi.fn(() => Promise.resolve("ok"))
   };
-  channel.on.mockImplementation((type: string, filter: { event: string }, handler: () => void) => {
+  channel.on.mockImplementation((type: string, filter: { event: string }, handler: (message?: { payload: unknown }) => void) => {
     handlers.set(`${type}:${filter.event}`, handler);
     return channel;
   });
@@ -34,7 +35,11 @@ export function mountWhiteboardEditor() {
     createElement: (_component: unknown, props: unknown) => props,
     Excalidraw: {},
     useRef: (current: unknown) => ({ current }),
-    useState: (initial: unknown) => [initial, vi.fn()],
+    useState: (initial: unknown) => {
+      const set = vi.fn();
+      stateSetters.push(set);
+      return [initial, set];
+    },
     useCallback: (callback: unknown) => callback,
     useEffect: (effect: () => void | (() => void)) => effects.push(effect),
     createClient: (_url: string, _key: string, options: typeof clientOptions) => {
@@ -68,6 +73,10 @@ export function mountWhiteboardEditor() {
     supabase,
     postMessage,
     status: (status: string) => subscription(status),
+    /** A peer's broadcast of `event` arriving on the room's channel. */
+    receive: (event: string, payload: unknown) => handlers.get(`broadcast:${event}`)!({ payload }),
+    /** Every React state setter the editor took, in the order it took them. */
+    stateSetters,
     clientOptions: () => clientOptions,
     participants: (count: number, sameUser = false) => {
       const ownKey = supabase.channel.mock.lastCall![1].config.presence.key || "session-alice";

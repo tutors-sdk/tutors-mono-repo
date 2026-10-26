@@ -31,7 +31,7 @@ export { createRequestLogger, logRequestError, requestIdFrom, levelForStatus, RE
 export { currentRequestId, runWithRequestContext, type RequestContext } from "./context.ts";
 export { serializeError, safeStringify, type SerializedError } from "./errors.ts";
 export { installProcessLogging, type ProcessLoggingOptions } from "./process.ts";
-export { withRequestId } from "./outbound.ts";
+export { withRequestId, withTimeout, OUTBOUND_TIMEOUT_MS } from "./outbound.ts";
 export { LOG_EVENT_FIELDS, VARIABLE_LOG_FIELDS } from "./contract.ts";
 
 export function createLogger(options?: LoggerOptions): Logger {

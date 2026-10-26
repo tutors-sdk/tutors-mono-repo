@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TutorsTimeStudent } from "@tutors/tutors-time-lib";
-  import { extractLabIdentifier, extractStepName, formatDateShort } from "@tutors/tutors-time-lib";
+  import { extractStepName, formatDateShort, labColumnLabels } from "@tutors/tutors-time-lib";
   import { t } from "@tutors/i18n";
   import ActivityTable from "./ActivityTable.svelte";
 
@@ -17,7 +17,7 @@
   { label: studentCalendar.calendarByDay?.full_name ?? "", values: studentCalendar.calendarByDay, total: studentCalendar.calendarByDay?.totalSeconds },
   { label: t("time.median"), values: course?.calendarModel?.medianByDay?.row, total: course?.calendarModel?.medianByDay?.row?.totalSeconds, median: true }
 ]} />
-<ActivityTable title={t("time.labByLab")} columns={(course?.labColumns ?? []).map(key => ({ key, label: extractLabIdentifier(key) }))} rows={[
+<ActivityTable title={t("time.labByLab")} columns={(course?.labColumns ?? []).map((key, i, keys) => ({ key, label: labColumnLabels(keys)[i] }))} rows={[
   { label: studentCalendar.labsByLab?.full_name ?? "", values: studentCalendar.labsByLab, total: studentCalendar.labsByLab?.totalMinutes },
   { label: t("time.median"), values: course?.labsModel?.medianByLab?.row, total: course?.labsModel?.medianByLab?.row?.totalMinutes, median: true }
 ]} />

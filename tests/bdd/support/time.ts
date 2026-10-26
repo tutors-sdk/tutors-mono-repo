@@ -37,16 +37,16 @@ export function calendarEntriesByStudent(table: TableRow[]): CalendarEntry[] {
 }
 
 /** The lo_id the reader records for a lab step: the lab is the path segment starting with "book". */
-function stepLoId(lab: string, step: string): string {
-  return `/lab/${COURSE_ID}/topic-01/${lab}/${step}`;
+function stepLoId(lab: string, step: string, topic = "topic-01"): string {
+  return `/lab/${COURSE_ID}/${topic}/${lab}/${step}`;
 }
 
-function labRecord(student: string, lab: string, step: string, minutes: number): LearningRecord {
+function labRecord(student: string, lab: string, step: string, minutes: number, topic?: string): LearningRecord {
   return {
     course_id: COURSE_ID,
     student_id: student,
     full_name: student,
-    lo_id: stepLoId(lab, step),
+    lo_id: stepLoId(lab, step, topic),
     duration: minutes,
     count: 1,
     date_last_accessed: "2025-01-06T12:00:00.000Z",
@@ -54,9 +54,9 @@ function labRecord(student: string, lab: string, step: string, minutes: number):
   };
 }
 
-/** Rows of `| student | lab | step | minutes |`. */
+/** Rows of `| student | lab | step | minutes |`, with an optional `topic` column (topic-01 when absent). */
 export function labRecords(table: TableRow[]): LearningRecord[] {
-  return table.map((row) => labRecord(row.student, row.lab, row.step, Number(row.minutes)));
+  return table.map((row) => labRecord(row.student, row.lab, row.step, Number(row.minutes), row.topic));
 }
 
 /** The `{number}` columns of a pivoted grid row, in the order the scenario names them. */

@@ -3,7 +3,7 @@
   import { currentCourse, currentLo, currentLabStepIndex, currentNotebookCellIndex, isEducator, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
   import { analyticsEnabled } from "@tutors/connect";
-  import LoContextTree from "@tutors/ui-primitives/components/LoContextTree.svelte";
+  import LoContextTree from "./LoContextTree.svelte";
   import type { LiveLab, NotebookService } from "@tutors/course/course";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import Image from "@tutors/ui-primitives/components/Image.svelte";

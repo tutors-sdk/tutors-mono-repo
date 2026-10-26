@@ -42,7 +42,7 @@ Before starting work on a significant change, please open an issue or comment on
 
 ### Prerequisites
 
-- Node.js >= 22.12.0 (the `engines` field in `package.json` is the source of truth)
+- Node.js >= 22.17.0 (the `engines` field in `package.json` is the source of truth)
 - pnpm >= 8.0.0
 - Git
 
@@ -60,8 +60,8 @@ Open **http://localhost:5173/course/reference-course**. You should see a rendere
 
 What just happened:
 
-- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); a devcontainer that avoids the local install is tracked in [#236](https://github.com/tutors-sdk/tutors-mono-repo/issues/236).
-- The copied `.env` sits at the repository root and every app reads it: each app's Vite config sets `envDir` there, and its SvelteKit config sets `kit.env.dir` to match, so the `$env` modules resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); the devcontainer in `.devcontainer/` avoids the local install.
+- The copied `.env` sits at the repository root and every app reads it: each app's Vite config calls `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` there and the SvelteKit plugin's `env.dir` to match, so `$app/env/public` and `$app/env/private` resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
 - If you set up Tutors before the root `.env` change, delete any leftover per-app files such as `apps/reader/.env`. No app reads them, so editing one has no effect.
 - `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
 - `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.
@@ -201,6 +201,7 @@ Rules of thumb:
 - No hint means "nothing observable should differ": internal refactors, tests, docs, dependency bumps that leave output alone. If the harness finds a difference under such an entry, the entry was incomplete; fix the entry, do not widen the claim.
 - The claim's `reason` is `CHANGELOG <version>: <the entry text>`, or a Rule reference such as `Rule 0031` where the change implements one. TODO(#214): the final Rule id format and a matching `@artefact:<name>` tag on a Rule follow that issue; this section only fixes the artefact vocabulary, which is the harness's.
 - The same words help in the commit subject and PR title (`fix(reader): raise nav contrast (axe, dom)`), so the entry is easy to write from them.
+- CI checks the PR title's hint against the diff (`.github/workflows/changelog-hint.yml`, Rules 0664-0666). A change to an app's or a package's `dependencies` needs `sbom`, a Dockerfile instruction `image-manifest`, a new `log.error` or `log.warn` call `logs`. On a branch of this repository it adds what is missing to the title and comments why; on a fork it fails with the title to use. It never removes an artefact you declared, and the release harness reads the title's hint before the body's CHANGELOG line. `pnpm check:changelog-hint --base origin/main` runs it locally (with `PR_TITLE` set).
 
 Database changes follow their own rules: read [guides/MIGRATIONS.md](guides/MIGRATIONS.md) before adding a file under `supabase/migrations/`.
 

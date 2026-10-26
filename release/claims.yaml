@@ -34,226 +34,30 @@
 # Each CHANGELOG line names the artefacts it expects to move, e.g. "(axe, dom)":
 # one claim per artefact, reason "CHANGELOG <version>: <the entry>" (CONTRIBUTING.md).
 #
-# Reset to `claims: []` when the next release branch is cut. Field reference:
+# Reset to `claims: []` when the next release branch is cut, archiving the old list as
+# release/claims/<version>.yaml (17.0.0's is there). Field reference:
 # release/README.md here, claims/README.md in the harness repository.
 claims:
-  # Accessibility fixes the Paper rebuild (#313) made. axe found each on production
-  # (16.2.2) and not on main, and the Main-to-RC run listed them as unclaimed.
-  - artefact: axe
-    scope: "reader-auth:sign-in"
-    rule: "0216"
-    reason: "sign-in button text contrast (color-contrast, serious) fixed by #313; page title added (document-title, serious)"
-  - artefact: axe
-    scope: "reference:course"
-    rule: "0051"
-    reason: "navigation dialog trigger no longer wraps a control (nested-interactive, serious) fixed by #313"
-  - artefact: axe
-    scope: "reference:topic"
-    rule: "0051"
-    reason: "navigation dialog trigger no longer wraps a control (nested-interactive, serious) fixed by #313"
-  - artefact: axe
-    scope: "reference:note"
-    rule: "0036"
-    reason: "code block copy buttons are named \"Copy code\" (button-name, critical) fixed by #313"
-  # PR #143 (commit 4070315) dropped npm, npx, corepack and yarn from the runtime image: npm's bundled tar and
-  # brace-expansion failed the Trivy gate, and the runtime only runs `node build/index.js`. The SBOM of each of the
-  # four images loses the same 174 packages (696 diffs). One claim, the exact package list, generated from the
-  # Main-to-RC report with the jq in the harness's claims/README.md ("A tool removed from an image"). The 72
-  # advisories that left with npm are vulns info hunks and need no claim.
-  - artefact: sbom
-    scope: "*/{@isaacs/cliui,@isaacs/fs-minipass,@isaacs/string-locale-compare,@npmcli/agent,@npmcli/arborist,@npmcli/config,@npmcli/fs,@npmcli/git,@npmcli/installed-package-contents,@npmcli/map-workspaces,@npmcli/metavuln-calculator,@npmcli/name-from-folder,@npmcli/node-gyp,@npmcli/package-json,@npmcli/promise-spawn,@npmcli/query,@npmcli/redact,@npmcli/run-script,@pkgjs/parseargs,@sigstore/bundle,@sigstore/core,@sigstore/protobuf-specs,@sigstore/sign,@sigstore/tuf,@sigstore/verify,@tufjs/canonical-json,@tufjs/models,abbrev,agent-base,ansi-regex,ansi-styles,aproba,archy,balanced-match,bin-links,binary-extensions,brace-expansion,cacache,chalk,chownr,ci-info,cidr-regex,cli-columns,cmd-shim,color-convert,color-name,common-ancestor-path,corepack,cross-spawn,cssesc,debug,diff,eastasianwidth,emoji-regex,encoding,env-paths,err-code,exponential-backoff,fastest-levenshtein,fdir,foreground-child,fs-minipass,glob,graceful-fs,hosted-git-info,http-cache-semantics,http-proxy-agent,https-proxy-agent,iconv-lite,ignore-walk,imurmurhash,ini,init-package-json,ip-address,ip-regex,is-cidr,is-fullwidth-code-point,isexe,jackspeak,json-parse-even-better-errors,json-stringify-nice,jsonparse,just-diff,just-diff-apply,libnpmaccess,libnpmdiff,libnpmexec,libnpmfund,libnpmhook,libnpmorg,libnpmpack,libnpmpublish,libnpmsearch,libnpmteam,libnpmversion,lru-cache,make-fetch-happen,minimatch,minipass,minipass-collect,minipass-fetch,minipass-flush,minipass-pipeline,minipass-sized,minizlib,ms,mute-stream,negotiator,node-gyp,nopt,normalize-package-data,npm,npm-audit-report,npm-bundled,npm-install-checks,npm-normalize-package-bin,npm-package-arg,npm-packlist,npm-pick-manifest,npm-profile,npm-registry-fetch,npm-user-validate,p-map,package-json-from-dist,pacote,parse-conflict-json,path-key,path-scurry,picomatch,postcss-selector-parser,proc-log,proggy,promise-all-reject-late,promise-call-limit,promise-retry,promzard,qrcode-terminal,read,read-cmd-shim,read-package-json-fast,retry,safer-buffer,semver,shebang-command,shebang-regex,signal-exit,sigstore,smart-buffer,socks,socks-proxy-agent,spdx-correct,spdx-exceptions,spdx-expression-parse,spdx-license-ids,ssri,string-width,strip-ansi,supports-color,text-table,tiny-relative-date,tinyglobby,treeverse,tuf-js,unique-filename,unique-slug,util-deprecate,validate-npm-package-license,validate-npm-package-name,walk-up-path,which,wrap-ansi,write-file-atomic,yallist,yarn}"
-    rule: "0220"
-    reason: "runtime image ships no package manager: npm, npx, corepack and yarn removed by #143 (4070315), rationale in tests/bdd/features/developer/runtime-image.feature"
-  # PR #475: each page view and each 30 seconds of activity is one database function call
-  # (record_page_view, record_heartbeat) instead of several read-then-write requests. The signed-in journey's
-  # writes move from the per-table requests to the two functions; both functions ship in
-  # supabase/migrations/20261014_record_page_view_and_heartbeat.sql (additions only).
-  - artefact: persistence
-    scope: "*/record_page_view"
-    rule: "0303"
-    reason: "a page view is recorded against the learning object and the day's calendar in one request (#475)"
-  - artefact: persistence
-    scope: "*/{learning_records,calendar,get_count_learning_records}"
-    rule: "0303"
-    reason: "the per-table page-view requests are replaced by record_page_view (#475)"
-  - artefact: persistence
-    scope: "*/record_heartbeat"
-    rule: "0304"
-    reason: "each 30 seconds of activity on a visible course page is one request (#475)"
-  - artefact: persistence
-    scope: "*/increment_calendar"
-    rule: "0304"
-    reason: "the calendar's time-active increment is replaced by record_heartbeat (#475)"
-
-  # ---------------------------------------------------------------------------
-  # 17.0.0. Production is 16.2.2, so the claims above have still not shipped and
-  # stay. What follows is this release's own intended differences.
-  #
-  # The Paper rebuild (#313, #331) redraws every page of all four apps, so its
-  # dom, screenshot and axe claims are one per app rather than one per page:
-  # there is no page it does not touch. They carry `until: "17.0.0"` so they
-  # expire with this release instead of covering the next one silently.
-  # ---------------------------------------------------------------------------
-
-  - artefact: dom
-    scope: "reader:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Reader: Tutors is rebuilt on the Paper design system (Rules 0019-0058, #313)"
-    until: "17.0.0"
-  - artefact: screenshot
-    scope: "reader:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Reader: Tutors is rebuilt on the Paper design system (Rules 0019-0058, #313)"
-    until: "17.0.0"
-  - artefact: axe
-    scope: "reader:*"
-    rule: "0051"
-    reason: "CHANGELOG 17.0.0 Reader: course pages carry no critical or serious WCAG 2.1 AA violations after the Paper rebuild (#313, #338, #364, #420)"
-    until: "17.0.0"
-  - artefact: dom
-    scope: "live:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Live: Live is brought onto the Paper design system and the reader's UX patterns (#313, #331)"
-    until: "17.0.0"
-  - artefact: screenshot
-    scope: "live:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Live: Live is brought onto the Paper design system and the reader's UX patterns (#313, #331)"
-    until: "17.0.0"
-  - artefact: axe
-    scope: "live:*"
-    rule: "0051"
-    reason: "CHANGELOG 17.0.0 Live: Live is brought onto the Paper design system and the reader's UX patterns (#313, #331)"
-    until: "17.0.0"
-  - artefact: dom
-    scope: "catalogue:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Catalogue: the catalogue is brought onto the Paper design system (#313, #331)"
-    until: "17.0.0"
-  - artefact: screenshot
-    scope: "catalogue:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Catalogue: the catalogue is brought onto the Paper design system (#313, #331)"
-    until: "17.0.0"
-  - artefact: axe
-    scope: "catalogue:*"
-    rule: "0173"
-    reason: "CHANGELOG 17.0.0 Catalogue: every link in the catalogue header has an accessible name no other header link shares (#338)"
-    until: "17.0.0"
-  - artefact: dom
-    scope: "time:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Time: Time is brought onto the Paper design system (#313, #331)"
-    until: "17.0.0"
-  - artefact: screenshot
-    scope: "time:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Time: Time is brought onto the Paper design system (#313, #331)"
-    until: "17.0.0"
-  - artefact: axe
-    scope: "time:*"
-    rule: "0019"
-    reason: "CHANGELOG 17.0.0 Time: Time is brought onto the Paper design system (#313, #331)"
-    until: "17.0.0"
-
-  # Sign-in moves from Auth.js at /auth to Better Auth at /api/auth: the old
-  # routes 404 and the new ones appear, and the session cookie is a new one.
+  # Since 17.0.0 (Main to RC forecast of 15 Oct 2026, sha-d3d7227 beside 17.0.0): Tutors Live within a daily
+  # Realtime budget (#476, #478, #481). The reader posts each learning event to its own server, which asks the
+  # database which feeds to publish to and charges the day's budget.
   - artefact: network
-    scope: "*/api/auth/*"
-    rule: "0250"
-    reason: "CHANGELOG 17.0.0 Reader: the GitHub OAuth callback URL has moved to /api/auth/callback/github (#417, #461, #463)"
+    scope: "POST /api/live/activity"
+    rule: "0330"
+    reason: "Rule 0330: the reader sends each learning event to its own server (POST /api/live/activity) instead of broadcasting it from the browser (#481)"
+  # Every signed-in journey that records learning events reaches it, the harness's Rule journeys (0582, 0583, 0589)
+  # as well as student-signs-in, so the claim covers every journey.
+  - artefact: persistence
+    scope: "*/realtime_claim_live_publish"
+    rule: "0331"
+    reason: "Rule 0331: the reader's server claims the topics to publish to, and charges the day's Live budget, through realtime_claim_live_publish (#481)"
+  - artefact: persistence
+    scope: "*/realtime_watch"
+    rule: "0334"
+    reason: "Rule 0334: while it shows a course or the platform feed, Tutors Live reports itself as a watcher of that feed through realtime_watch every 60 seconds (#481)"
+  # One more immutable chunk on the reference course and note pages (JS 99 to 101 across the journey), first seen
+  # the night #478 and #481 merged; the code split that moved learning events off browser Realtime.
   - artefact: network
-    scope: "*/auth/*"
-    rule: "0250"
-    reason: "CHANGELOG 17.0.0 Reader: the Auth.js routes under /auth are gone with the move to Better Auth (#463)"
-  - artefact: headers
-    scope: "reader:*"
-    rule: "0259"
-    reason: "CHANGELOG 17.0.0 Reader: the session cookie is Better Auth's, set HttpOnly, Secure and SameSite=Lax (#417, #461)"
-  - artefact: dom
-    scope: "reader-auth:sign-in"
-    rule: "0250"
-    reason: "CHANGELOG 17.0.0 Reader: sign-in runs on Better Auth (#417, #461, #463)"
-
-  # Realtime: the reader stops joining channels it never read, and the online
-  # list is read from stored activity instead of broadcast.
-  - artefact: network
-    scope: "reader:*"
-    rule: "0317"
-    reason: "CHANGELOG 17.0.0 Reader: readers no longer join a course Realtime channel; the online list is read from stored activity (#414, #429, #474)"
-  - artefact: bus
-    scope: "reader:*"
-    rule: "0271"
-    reason: "CHANGELOG 17.0.0 Reader: the reader no longer subscribes to tutors-all-course-access and course activity channels (#414, #429, #474)"
-  - artefact: bus
-    scope: "live:*"
-    rule: "0272"
-    reason: "CHANGELOG 17.0.0 Live: Live's landing page is the only subscriber to tutors-all-course-access (#414, #429, #474)"
-
-  # The two migrations this release needs applied, both additions only.
-  - artefact: migration
-    scope: "*/idx_tutors_connect_latest_course_recent"
-    rule: "0317"
-    reason: "CHANGELOG 17.0.0 Infrastructure: 20261013_tutors_connect_latest_recent_index.sql indexes (course_id, received_at DESC) for the online list (#474)"
-  - artefact: migration
-    scope: "*/record_page_view"
-    rule: "0303"
-    reason: "CHANGELOG 17.0.0 Infrastructure: 20261014_record_page_view_and_heartbeat.sql adds record_page_view (#475)"
-  - artefact: migration
-    scope: "*/record_heartbeat"
-    rule: "0304"
-    reason: "CHANGELOG 17.0.0 Infrastructure: 20261014_record_page_view_and_heartbeat.sql adds record_heartbeat (#475)"
-
-  # Deterministic responses and a stable log and metrics shape (#282, #283)
-  # landed after 16.2.2, so production still emits the older shapes.
-  - artefact: logs
-    scope: "reader:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable log and metrics shape, and variable data kept out of log messages (#283, #297)"
-    until: "17.0.0"
-  - artefact: logs
-    scope: "live:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable log and metrics shape (#283)"
-    until: "17.0.0"
-  - artefact: logs
-    scope: "catalogue:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable log and metrics shape (#283)"
-    until: "17.0.0"
-  - artefact: logs
-    scope: "time:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable log and metrics shape (#283)"
-    until: "17.0.0"
-  - artefact: metrics
-    scope: "reader:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable metrics shape for release-harness A/A runs (#283)"
-    until: "17.0.0"
-  - artefact: metrics
-    scope: "live:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable metrics shape for release-harness A/A runs (#283)"
-    until: "17.0.0"
-  - artefact: metrics
-    scope: "catalogue:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable metrics shape for release-harness A/A runs (#283)"
-    until: "17.0.0"
-  - artefact: metrics
-    scope: "time:*"
-    reason: "CHANGELOG 17.0.0 Infrastructure: stable metrics shape for release-harness A/A runs (#283)"
-    until: "17.0.0"
-
-  # SvelteKit 3 rewrites the build output of all four apps. asset-graph is an
-  # informing check, claimed so the report reads as intended rather than noisy.
-  - artefact: asset-graph
-    scope: "reader:*"
-    reason: "CHANGELOG 17.0.0 Reader: the reader runs on SvelteKit 3 (#466)"
-    until: "17.0.0"
-  - artefact: asset-graph
-    scope: "live:*"
-    reason: "CHANGELOG 17.0.0 Live: Live runs on SvelteKit 3 (#466)"
-    until: "17.0.0"
-  - artefact: asset-graph
-    scope: "catalogue:*"
-    reason: "CHANGELOG 17.0.0 Catalogue: the catalogue runs on SvelteKit 3 (#466)"
-    until: "17.0.0"
-  - artefact: asset-graph
-    scope: "time:*"
-    reason: "CHANGELOG 17.0.0 Time: Time runs on SvelteKit 3 (#466)"
-    until: "17.0.0"
+    scope: "GET /_app/immutable/chunks/\\{\\{hash\\}\\}.js"
+    rule: "0330"
+    reason: "Rule 0330: moving learning events from browser Realtime to the reader's server adds one immutable chunk on reference:course and reference:note (#478, #481)"
