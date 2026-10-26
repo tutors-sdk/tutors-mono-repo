@@ -1326,6 +1326,20 @@ update realtime_settings set slow_at = 0.7, pause_at = 0.9;        -- fractions 
 update realtime_settings set live_daily_budget = 0;                -- stop publishing to Live until raised again
 ```
 
+#### Help requests
+
+A signed-in student can say they are stuck, need a hint or need the lecturer from a lab step; an educator of the course (its published `enrollment.educators`) acknowledges, answers a hint or resolves. The domain, the use cases and the Supabase adapters are `@tutors/community/assistance` (`packages/svelte/community/src/assistance`); the reader's server composes them in `apps/reader/src/lib/server/assistance.ts` behind three routes, which only the reader's own pages may call:
+
+- `POST /api/assistance` takes `{ action, ... }` (`request`, `acknowledge`, `answer-hint`, `resolve`, `withdraw`) and runs it as the signed-in actor;
+- `GET /api/assistance?courseId=` answers the course's queue, with waiting time and escalation from the clock, to an educator of the course only;
+- `GET /api/assistance/mine?courseId=` answers the signed-in student's own live request.
+
+The server reads a course's `tutors.json` only from its Netlify site (`https://<id>.netlify.app`, redirects not followed), so a course id cannot point it at another host; a private course (`auth` 1 or more with a whitelist) takes requests only from its whitelist and educators, and a course it cannot read takes none.
+
+Requests live in `assistance_requests` (`supabase/migrations/20261020_assistance_requests.sql`), with RLS on and no policy, so the reader's server reaches them with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`; without it the routes answer 503. A learner has one live request per course (a partial unique index); a request still live after 4 hours withdraws itself when the queue is next read. After each change the server calls `realtime_claim_assistance_publish(course_id)` and, while a Live tab watches `topics.helpQueue(courseId)` and the day's budget is not paused, publishes `{ courseId, id, state }` there, charged to Live's budget like the activity feeds. The topic is readable with the public key, so the notice never names the student, the step or the kind; the queue itself comes from `GET /api/assistance`.
+
+Operator steps: apply the migration, then set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Supabase, Settings, API) on the reader only, never as a `PUBLIC_` variable.
+
 ---
 
 ## Content Generation Pipeline
