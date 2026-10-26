@@ -19,6 +19,15 @@ export function getLoType(route: string): string {
   return lotype;
 }
 
+/**
+ * True when the folder's own name starts with a learning-object kind. getLoType reads the whole route,
+ * so a folder of no kind takes the kind of its nearest typed ancestor; inside a composite that would
+ * publish it as a learning object.
+ */
+export function namesItsKind(lr: LearningResource): boolean {
+  return findLastMatchingString(loSignatures, lr.id, "") !== "unknown";
+}
+
 export function build(dir: string): LearningResource {
   const tree: LearningResource = {
     courseRoot: root,
