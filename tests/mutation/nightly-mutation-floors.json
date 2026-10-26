@@ -85,6 +85,14 @@
     "packages/svelte/ui-primitives/src/utils/site-urls.ts": 0,
     "packages/svelte/ui-primitives/src/utils/toaster.ts": 0,
     "packages/svelte/utils/a11y/src/reduced-motion.svelte.ts": 0,
+    "packages/svelte/utils/badges/src/credential.ts": 100,
+    "packages/svelte/utils/badges/src/criteria.ts": 89,
+    "packages/svelte/utils/badges/src/definitions.ts": 50,
+    "packages/svelte/utils/badges/src/image.ts": 90,
+    "packages/svelte/utils/badges/src/issue.ts": 100,
+    "packages/svelte/utils/badges/src/share.ts": 100,
+    "packages/svelte/utils/badges/src/signing-client.ts": 83,
+    "packages/svelte/utils/badges/src/slashes.ts": 90,
     "packages/svelte/utils/i18n/src/index.ts": 72,
     "packages/svelte/utils/i18n/src/messages/de.ts": 100,
     "packages/svelte/utils/i18n/src/messages/es.ts": 100,
@@ -109,6 +117,10 @@
     "packages/svelte/utils/runtime/src/clock.ts": 94,
     "packages/svelte/utils/runtime/src/version.ts": 63,
     "packages/svelte/utils/tour/src/steps.ts": 85,
-    "packages/svelte/utils/tour/src/tour-service.svelte.ts": 57
+    "packages/svelte/utils/tour/src/tour-service.svelte.ts": 57,
+    "packages/svelte/utils/xapi/src/lrs-client.ts": 81,
+    "packages/svelte/utils/xapi/src/recorder.ts": 100,
+    "packages/svelte/utils/xapi/src/slashes.ts": 95,
+    "packages/svelte/utils/xapi/src/statement.ts": 100
   }
 }
