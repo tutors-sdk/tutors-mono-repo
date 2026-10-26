@@ -10,13 +10,14 @@
   }
   let { questionIndex, text, options, questionType, selectedIndex, disabled, showCorrect, correctIndex, onselect }: Props = $props();
   const id = $props.id();
+  // Only the radios are disabled: a disabled fieldset would also disable the code-copy buttons in submitted results.
   // A question with a code block cannot sit in a <legend>, which holds phrasing content only, so it names the fieldset instead.
   let blockStem = $derived(isBlockQuizText(text));
   function render(md: string) { return quizTextToHtml(md, currentCodeTheme.value); }
 </script>
 
 {#key currentCodeTheme.value}
-<fieldset class="space-y-4" {disabled} use:copyCode aria-labelledby={blockStem ? `${id}-stem` : undefined}>
+<fieldset class="space-y-4" use:copyCode aria-labelledby={blockStem ? `${id}-stem` : undefined}>
   {#if blockStem}
     <div id="{id}-stem" class="quiz-legend quiz-block"><span class="ui-muted">{questionIndex + 1}.</span> {@html render(text)}</div>
   {:else}
@@ -25,8 +26,8 @@
   {#if questionType === 'true-false'}<p class="ui-muted quiz-kind">True / False</p>{/if}
   <div class="grid gap-3">
     {#each options as option, i}
-      <label class="quiz-option" class:selected={i === selectedIndex} class:correct={showCorrect && i === correctIndex}>
-        <input type="radio" name={id} value={i} checked={i === selectedIndex} onchange={() => onselect?.(i)} />
+      <label class="quiz-option" class:disabled class:selected={i === selectedIndex} class:correct={showCorrect && i === correctIndex}>
+        <input type="radio" name={id} value={i} {disabled} checked={i === selectedIndex} onchange={() => onselect?.(i)} />
         <span class:quiz-block={isBlockQuizText(option)}>{@html render(option)}</span>
         {#if showCorrect && i === correctIndex}<strong>Correct</strong>
         {:else if showCorrect && i === selectedIndex}<strong>Your answer</strong>{/if}
@@ -45,7 +46,7 @@
   .quiz-option.correct { border-color: var(--ui-brand); }
   .quiz-option strong { font-size: var(--font-small); }
   input { accent-color: var(--ui-brand); width: 18px; height: 18px; }
-  fieldset:disabled label { cursor: default; }
+  .quiz-option.disabled { cursor: default; }
   /* Block text renders outside the prose styles, so code blocks get their spacing and scrolling here. */
   .quiz-block :global(p) { margin-block: var(--space-2); }
   .quiz-block > span:first-child + :global(p) { display: inline; }
