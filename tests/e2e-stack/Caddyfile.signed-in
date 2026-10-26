@@ -1,0 +1,17 @@
+# The signed-in apps of the E2E stack (compose.yaml, proxy-signed-in). Like deploy/local/Caddyfile, the
+# proxy owns the public ports and supplies the X-Forwarded-Proto and X-Forwarded-Host the Kit 3 apps
+# take their origin from.
+{
+	admin off
+	auto_https off
+}
+
+http://:3100 {
+	reverse_proxy reader-signed-in:3000
+}
+http://:3102 {
+	reverse_proxy live-signed-in:3000
+}
+http://:3104 {
+	reverse_proxy time-signed-in:3000
+}

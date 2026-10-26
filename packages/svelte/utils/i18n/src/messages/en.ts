@@ -171,6 +171,7 @@ const en = {
   // Auth
   "auth.signIn": "Tutors Sign In",
   "auth.signInWithGithub": "Sign in with GitHub",
+  "auth.signInFailed": "Signing in with GitHub did not finish. Try again in a few minutes.",
   "auth.terms": `You are about to be authenticated via your Github credentials to Tutors. **For most courses, you do not need to log in at all, so if you prefer you can go back to the course page and proceed through the course as for any public web site.**
 
 If you do sign up/log in, then you will need a github account first. Logging in will then make a simple convenient dashboard available of quick links to all recent Tutors courses you have accessed.

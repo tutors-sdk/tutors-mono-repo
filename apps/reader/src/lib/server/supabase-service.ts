@@ -7,7 +7,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import * as publicEnv from "$app/env/public";
 import * as env from "$app/env/private";
-import { withRequestId } from "@tutors/logger";
+import { withRequestId, withTimeout } from "@tutors/logger";
 
 let client: SupabaseClient | null | undefined;
 
@@ -15,6 +15,6 @@ export function serviceSupabase(): SupabaseClient | null {
   if (client !== undefined) return client;
   const url = publicEnv.PUBLIC_SUPABASE_URL;
   const key = env.PRIVATE_SUPABASE_SERVICE_ROLE_KEY;
-  client = url && key ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: withRequestId() } }) : null;
+  client = url && key ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: withTimeout(withRequestId()) } }) : null;
   return client;
 }

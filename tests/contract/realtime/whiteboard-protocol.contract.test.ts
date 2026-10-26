@@ -1,16 +1,17 @@
 import { describe, it, expect } from "vitest";
 import {
-  WhiteboardSceneInitSchema,
   WhiteboardSceneUpdateSchema,
-  WhiteboardSceneSnapshotSchema,
   WhiteboardCursorUpdateSchema,
-  WhiteboardUserJoinedSchema,
-  WhiteboardUserLeftSchema,
-  WhiteboardRoomSchema,
+  WhiteboardPresenceSchema,
   WhiteboardInitEditorSchema,
   WhiteboardSetThemeSchema,
 } from "../support/schemas";
 import { validateAgainstSchema, assertSchemaMatch } from "../support/validators";
+
+const validAppState = { viewBackgroundColor: "#ffffff" };
+
+// The broadcasts' versions, recorded payloads and the editor's own script are held together in
+// tests/contract/messages (Rules 0623-0625); these cases pin the individual fields.
 
 const validElement = {
   id: "elem-1",
@@ -22,254 +23,49 @@ const validElement = {
   height: 50,
 };
 
-const validUser = {
-  name: "Alice Smith",
-  id: "alice-gh",
-  avatar: "https://avatars.githubusercontent.com/u/12345",
-  color: "#FF6B6B",
-};
-
-const validAppState = {
-  viewBackgroundColor: "#ffffff",
-};
-
-describe("Whiteboard scene-init message", () => {
-  const validSceneInit = {
-    type: "scene-init" as const,
-    elements: [validElement],
-    appState: validAppState,
-  };
-
-  it("valid scene-init passes", () => {
-    const result = validateAgainstSchema(validSceneInit, WhiteboardSceneInitSchema);
-    expect(result.valid).toBe(true);
-    expect(result.errors).toHaveLength(0);
-  });
-
-  it("scene-init with files passes", () => {
-    const record = { ...validSceneInit, files: { "file-1": { mimeType: "image/png", data: "base64..." } } };
-    const result = validateAgainstSchema(record, WhiteboardSceneInitSchema);
+describe("Whiteboard scene-update broadcast", () => {
+  it("valid payload passes, and an element keeps Excalidraw's own fields", () => {
+    const result = validateAgainstSchema({ elements: [validElement] }, WhiteboardSceneUpdateSchema);
     expect(result.valid).toBe(true);
   });
 
-  it("files is optional", () => {
-    const result = validateAgainstSchema(validSceneInit, WhiteboardSceneInitSchema);
-    expect(result.valid).toBe(true);
+  it("element without a version fails: peers compare versions to keep the newest", () => {
+    const { version, ...element } = validElement;
+    const result = validateAgainstSchema({ elements: [element] }, WhiteboardSceneUpdateSchema);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("version"))).toBe(true);
   });
 
   it("missing elements fails", () => {
-    const { elements, ...record } = validSceneInit;
-    const result = validateAgainstSchema(record, WhiteboardSceneInitSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("missing appState fails", () => {
-    const { appState, ...record } = validSceneInit;
-    const result = validateAgainstSchema(record, WhiteboardSceneInitSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("elements require id and version", () => {
-    const record = { ...validSceneInit, elements: [{ type: "rectangle" }] };
-    const result = validateAgainstSchema(record, WhiteboardSceneInitSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("id"))).toBe(true);
-  });
-
-  it("wrong type literal fails", () => {
-    const record = { ...validSceneInit, type: "scene-update" };
-    const result = validateAgainstSchema(record, WhiteboardSceneInitSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("assertSchemaMatch returns parsed scene-init", () => {
-    const parsed = assertSchemaMatch(validSceneInit, WhiteboardSceneInitSchema, "scene-init");
-    expect(parsed.type).toBe("scene-init");
-    expect(parsed.elements).toHaveLength(1);
-    expect(parsed.elements[0].id).toBe("elem-1");
+    expect(validateAgainstSchema({}, WhiteboardSceneUpdateSchema).valid).toBe(false);
   });
 });
 
-describe("Whiteboard scene-update message", () => {
-  it("valid client->server update (no source) passes", () => {
-    const record = { type: "scene-update" as const, elements: [validElement] };
-    const result = validateAgainstSchema(record, WhiteboardSceneUpdateSchema);
-    expect(result.valid).toBe(true);
-  });
+describe("Whiteboard cursor-update broadcast", () => {
+  const cursor = { userId: "alice", userName: "Alice", color: "#FF6B6B", pointer: { x: 4, y: 5 }, button: "up" };
 
-  it("valid server->client update (with source) passes", () => {
-    const record = { type: "scene-update" as const, elements: [validElement], source: "conn-123" };
-    const result = validateAgainstSchema(record, WhiteboardSceneUpdateSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("empty elements array passes", () => {
-    const record = { type: "scene-update" as const, elements: [] };
-    const result = validateAgainstSchema(record, WhiteboardSceneUpdateSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("missing elements fails", () => {
-    const record = { type: "scene-update" as const };
-    const result = validateAgainstSchema(record, WhiteboardSceneUpdateSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("extra element fields are allowed (passthrough)", () => {
-    const elem = { ...validElement, strokeColor: "#000", fillStyle: "solid" };
-    const record = { type: "scene-update" as const, elements: [elem] };
-    const result = validateAgainstSchema(record, WhiteboardSceneUpdateSchema);
-    expect(result.valid).toBe(true);
-  });
-});
-
-describe("Whiteboard scene-snapshot message", () => {
-  const validSnapshot = {
-    type: "scene-snapshot" as const,
-    elements: [validElement],
-    appState: validAppState,
-    files: {},
-  };
-
-  it("valid snapshot passes", () => {
-    const result = validateAgainstSchema(validSnapshot, WhiteboardSceneSnapshotSchema);
-    expect(result.valid).toBe(true);
-    expect(result.errors).toHaveLength(0);
-  });
-
-  it("missing appState fails", () => {
-    const { appState, ...record } = validSnapshot;
-    const result = validateAgainstSchema(record, WhiteboardSceneSnapshotSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("missing files fails (required on snapshot)", () => {
-    const { files, ...record } = validSnapshot;
-    const result = validateAgainstSchema(record, WhiteboardSceneSnapshotSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("assertSchemaMatch returns parsed snapshot", () => {
-    const parsed = assertSchemaMatch(validSnapshot, WhiteboardSceneSnapshotSchema, "snapshot");
-    expect(parsed.type).toBe("scene-snapshot");
-    expect(parsed.appState.viewBackgroundColor).toBe("#ffffff");
-  });
-});
-
-describe("Whiteboard cursor-update message", () => {
-  const validCursor = {
-    type: "cursor-update" as const,
-    user: validUser,
-    pointer: { x: 150.5, y: 200.3 },
-    button: "down" as const,
-  };
-
-  it("valid cursor update passes", () => {
-    const result = validateAgainstSchema(validCursor, WhiteboardCursorUpdateSchema);
-    expect(result.valid).toBe(true);
+  it("valid payload passes", () => {
+    expect(validateAgainstSchema(cursor, WhiteboardCursorUpdateSchema).valid).toBe(true);
   });
 
   it("button must be up or down", () => {
-    const record = { ...validCursor, button: "middle" };
-    const result = validateAgainstSchema(record, WhiteboardCursorUpdateSchema);
+    const result = validateAgainstSchema({ ...cursor, button: "middle" }, WhiteboardCursorUpdateSchema);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("button"))).toBe(true);
   });
 
-  it("pointer requires x and y numbers", () => {
-    const record = { ...validCursor, pointer: { x: "not-a-number", y: 10 } };
-    const result = validateAgainstSchema(record, WhiteboardCursorUpdateSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("missing pointer fails", () => {
-    const { pointer, ...record } = validCursor;
-    const result = validateAgainstSchema(record, WhiteboardCursorUpdateSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("missing user fails", () => {
-    const { user, ...record } = validCursor;
-    const result = validateAgainstSchema(record, WhiteboardCursorUpdateSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("source is optional (present on server->client)", () => {
-    const record = { ...validCursor, source: "conn-456" };
-    const result = validateAgainstSchema(record, WhiteboardCursorUpdateSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("user color is optional", () => {
-    const record = { ...validCursor, user: { name: "Bob", id: "bob", avatar: "https://example.com/bob.png" } };
-    const result = validateAgainstSchema(record, WhiteboardCursorUpdateSchema);
-    expect(result.valid).toBe(true);
+  it("missing userId fails: peers key collaborators by it", () => {
+    const { userId, ...rest } = cursor;
+    expect(validateAgainstSchema(rest, WhiteboardCursorUpdateSchema).valid).toBe(false);
   });
 });
 
-describe("Whiteboard user-joined / user-left messages", () => {
-  it("valid user-joined passes", () => {
-    const record = { type: "user-joined" as const, user: validUser };
-    const result = validateAgainstSchema(record, WhiteboardUserJoinedSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("user-joined missing user fails", () => {
-    const record = { type: "user-joined" as const };
-    const result = validateAgainstSchema(record, WhiteboardUserJoinedSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("valid user-left passes", () => {
-    const record = { type: "user-left" as const, userId: "conn-123" };
-    const result = validateAgainstSchema(record, WhiteboardUserLeftSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("user-left missing userId fails", () => {
-    const record = { type: "user-left" as const };
-    const result = validateAgainstSchema(record, WhiteboardUserLeftSchema);
-    expect(result.valid).toBe(false);
-  });
-});
-
-describe("Whiteboard room schema", () => {
-  it("room ID starting with wb- passes", () => {
-    const room = { roomId: "wb-cs101-topic-01-whiteboard-01", type: "whiteboard" as const };
-    const result = validateAgainstSchema(room, WhiteboardRoomSchema);
-    expect(result.valid).toBe(true);
-  });
-
-  it("room ID not starting with wb- fails", () => {
-    const room = { roomId: "cs101-whiteboard", type: "whiteboard" as const };
-    const result = validateAgainstSchema(room, WhiteboardRoomSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("type must be whiteboard", () => {
-    const room = { roomId: "wb-test", type: "course" };
-    const result = validateAgainstSchema(room, WhiteboardRoomSchema);
-    expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("type"))).toBe(true);
-  });
-
-  it("missing roomId fails", () => {
-    const room = { type: "whiteboard" };
-    const result = validateAgainstSchema(room, WhiteboardRoomSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("missing type fails", () => {
-    const room = { roomId: "wb-test" };
-    const result = validateAgainstSchema(room, WhiteboardRoomSchema);
-    expect(result.valid).toBe(false);
-  });
-
-  it("assertSchemaMatch returns parsed room", () => {
-    const room = { roomId: "wb-cs101-drawing", type: "whiteboard" as const };
-    const parsed = assertSchemaMatch(room, WhiteboardRoomSchema, "whiteboard room");
-    expect(parsed.roomId).toBe("wb-cs101-drawing");
-    expect(parsed.type).toBe("whiteboard");
+describe("Whiteboard presence", () => {
+  it("valid presence passes; missing color fails", () => {
+    const presence = { userId: "alice", userName: "Alice", avatar: "alice.png", color: "#4ECDC4" };
+    expect(validateAgainstSchema(presence, WhiteboardPresenceSchema).valid).toBe(true);
+    const { color, ...rest } = presence;
+    expect(validateAgainstSchema(rest, WhiteboardPresenceSchema).valid).toBe(false);
   });
 });
 

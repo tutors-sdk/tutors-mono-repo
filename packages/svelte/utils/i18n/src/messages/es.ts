@@ -171,6 +171,7 @@ const es: Record<string, string> = {
   // Auth
   "auth.signIn": "Inicio de sesión en Tutors",
   "auth.signInWithGithub": "Iniciar sesión con GitHub",
+  "auth.signInFailed": "El inicio de sesión con GitHub no se completó. Inténtalo de nuevo en unos minutos.",
   "auth.terms": `Estás a punto de autenticarte en Tutors con tus credenciales de Github. **Para la mayoría de los cursos no necesitas iniciar sesión en absoluto, así que si lo prefieres puedes volver a la página del curso y continuar como en cualquier sitio web público.**
 
 Si te registras o inicias sesión, primero necesitarás una cuenta de Github. Al iniciar sesión tendrás disponible un panel sencillo y práctico con enlaces rápidos a todos los cursos de Tutors a los que has accedido recientemente.

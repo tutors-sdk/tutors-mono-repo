@@ -325,8 +325,9 @@ production and give the scraper the same value (Prometheus `authorization`,
 ServiceMonitor `endpoints[].authorization`).
 
 `observability/compose.yaml` starts Prometheus and Grafana, provisioned with
-the data source, alert rules (error rate, p99 latency, target down) and a
-contact point template. It scrapes the apps through their host ports, so it
+the data source, alert rules (per-objective burn-rate alerts generated from
+`release/slo.yaml` by `pnpm slo:alerts`, see [docs/slo.md](../docs/slo.md), plus
+target down) and a contact point template. It scrapes the apps through their host ports, so it
 runs alongside either the local stack or the staging stack:
 
 ```bash

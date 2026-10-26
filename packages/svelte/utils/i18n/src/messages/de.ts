@@ -171,6 +171,7 @@ const de: Record<string, string> = {
   // Auth
   "auth.signIn": "Tutors Anmeldung",
   "auth.signInWithGithub": "Mit GitHub anmelden",
+  "auth.signInFailed": "Die Anmeldung mit GitHub wurde nicht abgeschlossen. Versuchen Sie es in ein paar Minuten erneut.",
   "auth.terms": `Sie werden gleich mit Ihren Github-Zugangsdaten bei Tutors authentifiziert. **Für die meisten Kurse müssen Sie sich gar nicht anmelden. Wenn Sie möchten, können Sie daher zur Kursseite zurückkehren und den Kurs wie auf jeder öffentlichen Website fortsetzen.**
 
 Wenn Sie sich registrieren oder anmelden, benötigen Sie zuerst ein Github-Konto. Nach der Anmeldung steht Ihnen dann ein einfaches, praktisches Dashboard mit Schnelllinks zu allen Tutors-Kursen zur Verfügung, auf die Sie kürzlich zugegriffen haben.
