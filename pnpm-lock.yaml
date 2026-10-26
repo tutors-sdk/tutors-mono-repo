@@ -928,9 +928,6 @@ importers:
       '@tutors/i18n':
         specifier: workspace:*
         version: link:../utils/i18n
-      '@tutors/rbac':
-        specifier: workspace:*
-        version: link:../utils/rbac
       '@tutors/runes':
         specifier: workspace:*
         version: link:../runes

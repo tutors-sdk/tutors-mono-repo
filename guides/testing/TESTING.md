@@ -47,7 +47,9 @@ The root `check` script type-checks all four apps
 **Protects** the layering in [../ARCHITECTURE.md](../../ARCHITECTURE.md): nothing imports up a
 layer, apps do not import each other, no relative import crosses a workspace, no cycle spans
 packages, `deno.json` and `package.json` agree for every JSR package, and no file, export or
-dependency is dead.
+dependency is dead. Violations that predate a rule are baselined rather than fixed at once
+(`tests/architecture/known-violations.txt`, `known-knip.txt`, `known-manifest-drift.txt`); each
+baseline may only shrink, and the suite fails on any entry that no longer occurs.
 
 **Lives in** `.dependency-cruiser.cjs` (layers and rules), `knip.json`,
 `scripts/checks/architecture.ts`, `scripts/checks/manifest-parity.ts`, `scripts/checks/knip.ts`,
