@@ -30,6 +30,9 @@
       "project": [
         "scripts/**/*.ts",
         "tests/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "archiver"
       ]
     },
     "apps/*": {
