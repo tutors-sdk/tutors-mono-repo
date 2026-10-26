@@ -22,6 +22,7 @@
     "packages/jsr/logger-core/src/context.ts": 71,
     "packages/jsr/logger-core/src/errors.ts": 93,
     "packages/jsr/logger-core/src/formatter.ts": 85,
+    "packages/jsr/logger-core/src/index.ts": 100,
     "packages/jsr/logger-core/src/logger.ts": 71,
     "packages/jsr/model/src/services/lo-tree.ts": 74,
     "packages/jsr/model/src/services/search.ts": 96,
