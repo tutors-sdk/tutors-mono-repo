@@ -208,6 +208,14 @@ describe("request logger: ignored paths", () => {
     expect(entries[0]).toMatchObject({ level: "warn", path: "/metrics", status: 401 });
   });
 
+  it("logs an ignored path from 400 up", async () => {
+    const { logger, entries } = capture();
+    const handle = createRequestLogger({ logger });
+    await handle({ event: makeEvent({ path: "/healthz", routeId: "/healthz" }), resolve: respond(400) });
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ path: "/healthz", status: 400 });
+  });
+
   it("accepts custom prefixes", async () => {
     const { logger, entries } = capture();
     const handle = createRequestLogger({ logger, ignorePaths: ["/metrics"] });
