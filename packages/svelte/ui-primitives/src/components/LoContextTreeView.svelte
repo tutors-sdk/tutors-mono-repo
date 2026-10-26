@@ -4,11 +4,10 @@
   import { page } from "$app/state";
   import LoReference from "./LoReference.svelte";
   import Icon from "./Icon.svelte";
-  import { isEducator } from "@tutors/runes";
-  import { rbacService } from "@tutors/rbac";
   import { t } from "@tutors/i18n";
 
-  let { lo, expandAll = false }: { lo: Lo; expandAll?: boolean } = $props();
+  /** `isVisible` decides which children appear, so the caller owns lock and permission state. */
+  let { lo, expandAll = false, isVisible }: { lo: Lo; expandAll?: boolean; isVisible: (child: Lo) => boolean } = $props();
 
   type Node = { id: string; name: string; lo?: Lo; children?: Node[] };
 
@@ -21,11 +20,6 @@
   /** Titles can carry inline markup (LoReference renders them as HTML); accessible names are plain text. */
   function plainText(html: string): string {
     return html.replace(/<[^>]*>/g, "").trim();
-  }
-
-  function isVisible(child: Lo): boolean {
-    if (isEducator.value) return !child.hide;
-    return rbacService.isLoVisibleToStudent(child);
   }
 
   function mapLoToNode(item: Lo, parentPath: string, index: number): Node | null {

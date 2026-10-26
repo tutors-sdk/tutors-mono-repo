@@ -1,0 +1,10 @@
+{
+  "courseId": "contract-course",
+  "courseUrl": "contract-course.netlify.app",
+  "courseTitle": "Course contract-course",
+  "title": "Lab 1",
+  "loRoute": "/lab/contract-course/topic-1/lab-1",
+  "type": "lab",
+  "isPrivate": "false",
+  "user": { "fullName": "Ann", "avatar": "https://avatars.example/ann.png", "id": "ann" }
+}
