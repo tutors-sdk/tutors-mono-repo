@@ -1,3 +1,10 @@
+/**
+ * GET /api/courses/:courseid/enrollment: a draft enrollment.yaml for a course, downloaded from the
+ * educator control button. requireEducator (educator.ts) checks the signed-in actor is an educator in the
+ * course's published tutors.json (401, 400, 403, or 502 when it cannot be read). Reads the calendar and
+ * tutors-connect-users tables through the public Supabase client; returns 503 without Supabase and 502
+ * when a query fails. Writes nothing.
+ */
 import { error } from "@sveltejs/kit";
 import { supabase } from "@tutors/community/utils/supabase-client";
 import log from "@tutors/logger";
