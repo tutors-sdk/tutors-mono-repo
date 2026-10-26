@@ -98,6 +98,7 @@ export default tseslint.config(
       "**/build/**",
       "**/dist/**",
       "**/.svelte-kit/**",
+      "**/.netlify/**",
       "**/coverage/**",
       "**/static/**",
       "services/**",

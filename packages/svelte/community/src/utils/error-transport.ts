@@ -1,6 +1,6 @@
 import type { LogEntry } from "@tutors/logger";
 import { supabase } from "./supabase-client.ts";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 
 let buffer: LogEntry[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;

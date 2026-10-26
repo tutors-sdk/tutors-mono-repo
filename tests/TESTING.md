@@ -13,8 +13,9 @@ it can fail and when CI runs it are in the long form,
 | `fuzz/` | B | Vitest, `vitest.config.fuzz.ts` (threads pool) | `pnpm test:fuzz` |
 | `generator/` | C | Vitest + Deno generator | `pnpm exec vitest run tests/generator`, `pnpm check:generator-diff` |
 | `bdd/` | D | Vitest collects `steps/**/*.steps.ts`, each of which loads its `features/**` file through `vitest-cucumber`; `features/ui/` is proved by Playwright instead | `pnpm test:bdd` |
-| `contract/` | Contract | Vitest, with `__snapshots__/` | `pnpm test:contract` |
-| `e2e-stack/` | G | Playwright, `playwright.e2e-stack.config.ts` | `pnpm test:e2e:stack` |
+| `contract/` | Contract, H | Vitest, with `__snapshots__/`; `contract/messages/` holds the versioned realtime message contracts, proved by `bdd/steps/developer/message-contracts.steps.ts` | `pnpm test:contract` |
+| `data/` | I | Fixtures only (`schema/`): the Supabase baseline, legacy tables, seed rows and known gaps that `bdd/steps/developer/data-migrations.steps.ts` applies to PGlite | `pnpm exec vitest run tests/bdd/steps/developer/data-migrations.steps.ts` |
+| `e2e-stack/` | G, F | Playwright, `playwright.e2e-stack.config.ts`; the `signed-in` project runs the signed-in, resilience and authorisation journeys | `pnpm test:e2e:stack` |
 | `../apps/reader/tests/e2e/` | UI contract | Playwright, `apps/reader/playwright.config.ts`; one test per scenario of `bdd/features/ui/` | `pnpm test:e2e:reader` |
 | `conformance/` | J | Vitest + `pnpm check:k8s`, `pnpm check:container`, `pnpm check:server` | `pnpm exec vitest run tests/conformance` |
 | `observability/` | K | Vitest | `pnpm exec vitest run tests/observability` |
@@ -23,7 +24,7 @@ it can fail and when CI runs it are in the long form,
 | `completeness/` | N | Vitest | `pnpm exec vitest run tests/completeness` |
 | `architecture/` | A | Vitest + `pnpm check:knip` | `pnpm exec vitest run tests/architecture` |
 | `suite-health/` | O | Vitest + `pnpm check:test-time` | `pnpm exec vitest run tests/suite-health` |
-| `mutation/` | Mutation / schema | Stryker: targeted (`stryker.config.json`, `vitest.config.mutation.ts`) and comprehensive (`stryker.nightly.config.json`, `vitest.config.mutation-nightly.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation`, `pnpm test:mutation:nightly` |
+| `mutation/` | Mutation / schema | Stryker: targeted (`stryker.config.json`, `vitest.config.mutation.ts`), comprehensive (`stryker.nightly.config.json`, `vitest.config.mutation-nightly.ts`) and the changed modules of a pull request (`scripts/checks/mutation-pr.ts`); `schema-snapshot.test.ts` runs under Vitest | `pnpm test:mutation`, `pnpm test:mutation:nightly`, `pnpm test:mutation:pr` |
 | `release/` | Release | Deno scripts | `deno run -A tests/release/scripts/run-release-tests.ts --mode=all` |
 | `support/` | — | Shared setup, stubs and arbitraries; not a suite | — |
 
@@ -146,7 +147,7 @@ it can fail, then against the real repo.
 | J | `conformance/` | An env var the code reads that is missing from `.env.example` or the kustomize manifests; a workload that breaks the restricted-SCC policies; an overlay image tag that is not the `package.json` version |
 | K | `observability/` | A log line outside the schema; a failed request whose lines lack its request id, or with other than one error line carrying a stack; an app whose hooks do not put the request logger first; a Grafana alert querying a series `/metrics` does not export |
 | L | `performance/` | A client bundle over its ceiling (`bundle-budgets.json`), a Lighthouse median below its floor (`lighthouse.json`), a k6 threshold crossed, memory growing after warm-up, a soak whose late p95 doubled. See [performance/README.md](./performance/README.md) |
-| M | `security/` | A `svelte.config.js` that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
+| M | `security/` | A Vite/SvelteKit configuration that turns off SvelteKit's cross-site form check; a `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action missing from `mutating-routes.txt`, or listed without who may call it; a malformed audit allowance. Against the image: a response missing a header from `header-contract.json` or answering 5xx on a probed path, a cookie without `HttpOnly`/`SameSite`/`Secure`, a mutating route that accepts a cross-site form post |
 | N | `completeness/` | A missing, orphan or blank translation, or an unknown `t("key")`; a theme missing a base token, or offered but not loaded; an icon library missing an icon; a dead relative link or anchor in tracked Markdown; an app README out of step with its `@tutors/*` dependencies |
 | O | `suite-health/` | `.only`; a skip, todo or fixme without a dated quarantine; a test with no assertion; a `.feature` file that no steps file binds and no cucumber config loads, or one with an EARS keyword Gherkin drops (`While`, `Where`, `If`) or an `@ignore` tag; a test file no Vitest or Playwright config, and no `deno test` workflow step, collects. Nightly: a no-retry run, and a test file over its budget in `time-budgets.json` |
 
@@ -203,11 +204,11 @@ pnpm check:k8s --out rendered                      # also write the output for k
 docker build --build-arg APP_NAME=reader -t tutors/reader:local .
 pnpm check:container --image tutors/reader:local   # random UID, read-only root, .env.example only: healthz, metrics, log contract, identical headers on repeat requests (except Date and x-request-id), /version shape
 pnpm check:container --image tutors/reader:local --app reader   # plus tier M: headers, cookies, CSRF
-pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with Auth.js on (CI runs both for the reader)
+pnpm check:container --image tutors/reader:local --app reader --env PUBLIC_ANON_MODE=FALSE   # the same with authentication enabled (CI runs both for the reader)
 pnpm check:build-identity                          # after building the apps with SVELTEKIT_ADAPTER=node and GIT_SHA: only GET /version answers the commit and build date
 pnpm check:audit                                   # pnpm audit against security/audit-allowlist.json
 pnpm check:audit --base-dir base                   # PR mode: only advisories absent from base/pnpm-lock.yaml fail
-pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with Auth.js on, no Docker
+pnpm check:server                                  # after building the apps with SVELTEKIT_ADAPTER=node: no __dirname/__filename in build/server, no 5xx from node build/index.js with authentication enabled, no Docker
 pnpm check:bundle                                  # after building the apps with SVELTEKIT_ADAPTER=node
 pnpm check:load --image tutors/reader:ci --rate 50 --duration 3m --runs 3
 pnpm check:lighthouse --image tutors/reader:ci

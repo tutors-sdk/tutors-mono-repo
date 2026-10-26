@@ -1,11 +1,11 @@
 /**
  * Minimal stand-ins for the SvelteKit `$app/*` virtual modules, which only
  * exist inside a SvelteKit build. Aliased from vitest.config.ts so unit tests
- * can import app code (and libraries such as @auth/sveltekit) that reference
+ * can import app code that reference
  * them. Individual tests can still `vi.mock` these specifiers for assertions.
  */
 
-/** `$app/environment` */
+/** `$app/env` */
 export const browser = false;
 export const dev = true;
 export const building = false;

@@ -16,6 +16,7 @@
  *   - @tutors/tutors-types     (packages/jsr/types)
  *   - @tutors/identity         (packages/jsr/identity)
  *   - @tutors/logger-core      (packages/jsr/logger-core)
+ *   - @tutors/realtime         (packages/jsr/realtime)
  */
 
 import * as fs from "fs";
@@ -49,6 +50,12 @@ const TRACKED_PACKAGES: PackageConfig[] = [
     dir: "packages/jsr/logger-core",
     entry: "src/index.ts",
     reportFile: "logger-core.api.md",
+  },
+  {
+    name: "@tutors/realtime",
+    dir: "packages/jsr/realtime",
+    entry: "src/index.ts",
+    reportFile: "realtime.api.md",
   },
   {
     name: "@tutors/tutors-model-lib",

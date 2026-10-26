@@ -23,6 +23,7 @@ import {
   type MutationFloors,
   type MutationReport
 } from "../../../../scripts/checks/mutation-floors.ts";
+import { changedModules, pullRequestFailures, pullRequestFindings } from "../../../../scripts/checks/mutation-pr.ts";
 import { REPO_ROOT, readText, toPosix, walk } from "../../../../scripts/checks/lib/repo.ts";
 
 const feature = await loadFeature("tests/bdd/features/developer/test-quality-ratchets.feature");
@@ -40,6 +41,8 @@ const recordedMutationFloors = (): MutationFloors => JSON.parse(readText(MUTATIO
 const strykerConfig = () => JSON.parse(readText(resolve(REPO_ROOT, "stryker.config.json")));
 const nightlyStrykerConfig = () => JSON.parse(readText(resolve(REPO_ROOT, "stryker.nightly.config.json")));
 const recordedNightlyFloors = (): MutationFloors => JSON.parse(readText(NIGHTLY_MUTATION_FLOORS_PATH));
+const ciJobs = () =>
+  (yaml.load(readText(resolve(REPO_ROOT, ".github/workflows/ci.yml"))) as { jobs: Record<string, NightlyJob> }).jobs;
 const nightlyJobs = () =>
   (yaml.load(readText(resolve(REPO_ROOT, ".github/workflows/nightly.yml"))) as { jobs: Record<string, NightlyJob> }).jobs;
 
@@ -468,8 +471,15 @@ describeFeature(feature, ({ Rule }) => {
         Then("it shall mutate the source files in place", () => {
           expect(nightlyStrykerConfig().inPlace).toBe(true);
         });
+        // In place, a mutated file's instrumented code would fail the strict type check in
+        // tests/unit/types, so mutated files get @ts-nocheck (restored with them), and no others.
         And("it shall not add type-check suppressions to files it does not mutate", () => {
-          expect(nightlyStrykerConfig().disableTypeChecks).toBe(false);
+          const { disableTypeChecks, mutate } = nightlyStrykerConfig();
+          expect(typeof disableTypeChecks).toBe("string");
+          const files = walk(resolve(REPO_ROOT, "packages"), (name) => name.endsWith(".ts")).map((file) => toPosix(file));
+          const suppressed = files.filter((file) => matchesGlob(file, disableTypeChecks as string));
+          expect(suppressed.length).toBeGreaterThan(50);
+          expect(suppressed.filter((file) => !strykerMutates(mutate, file))).toEqual([]);
         });
       });
     }
@@ -496,6 +506,103 @@ describeFeature(feature, ({ Rule }) => {
           const check = checksFloorsWith(command);
           expect(check).toContain(stale);
           expect(check).toContain(`${summary} "$GITHUB_STEP_SUMMARY"`);
+        });
+      });
+    }
+  );
+
+  // Rules 0618 and 0619: the nightly floors, held on a pull request by the modules it changes (scripts/checks/mutation-pr.ts).
+  let prModules: string[] = [];
+  const prFindings = () => pullRequestFindings(report, mutationFloors, prModules);
+
+  Rule(
+    "If a pull request changes a library module whose mutation score on that pull request is below its nightly floor, or that has no nightly floor, then tutors shall fail the pull request and name the module.",
+    ({ RuleScenario }) => {
+      const changes = (_ctx: unknown, file: string) => {
+        prModules = [file];
+        // The report holds only what the pull request mutated.
+        report = { files: {} };
+      };
+      const fails = (_ctx: unknown, finding: string) => {
+        expect(pullRequestFailures(prFindings())).toContain(finding);
+      };
+
+      RuleScenario("A changed module below its nightly floor fails the pull request", ({ Given, And, When, Then }) => {
+        Given("a recorded nightly mutation floor of {number} percent for {string}", givenNightlyFloor);
+        And("a pull request that changes {string}", changes);
+        When("the pull request's mutation run kills {number} and misses {number} of the mutants in {string}", nightlyRun);
+        Then("the pull request's mutation check shall fail with {string}", fails);
+      });
+
+      RuleScenario("A new library module without a nightly floor fails the pull request", ({ Given, And, When, Then }) => {
+        Given("a recorded nightly mutation floor of {number} percent for {string}", givenNightlyFloor);
+        And("a pull request that changes {string}", changes);
+        When("the pull request's mutation run kills {number} and misses {number} of the mutants in {string}", nightlyRun);
+        Then("the pull request's mutation check shall fail with {string}", fails);
+      });
+
+      RuleScenario("A module that rose past its floor on a pull request passes and is reported", ({ Given, And, When, Then }) => {
+        Given("a recorded nightly mutation floor of {number} percent for {string}", givenNightlyFloor);
+        And("a pull request that changes {string}", changes);
+        When("the pull request's mutation run kills {number} and misses {number} of the mutants in {string}", nightlyRun);
+        Then("the pull request's mutation check shall pass", () => {
+          expect(pullRequestFailures(prFindings())).toEqual([]);
+        });
+        And("it shall report {string}", (_ctx, finding: string) => {
+          expect(prFindings()).toContain(finding);
+        });
+      });
+    }
+  );
+
+  Rule(
+    "When a pull request changes a library module, tutors shall mutate the library modules it changes, and only those, with the nightly mutation configuration.",
+    ({ RuleScenario }) => {
+      RuleScenario("Only the changed library modules are mutated", ({ Given, When, Then }) => {
+        let changed: string[] = [];
+        Given("the nightly Stryker configuration", nightlyStryker);
+        When("a pull request changes {string}, {string}, {string} and {string}", (_ctx, a: string, b: string, c: string, d: string) => {
+          changed = [a, b, c, d];
+        });
+        Then("the pull request's mutation run shall mutate only {string}", (_ctx, file: string) => {
+          expect(changedModules(changed, nightlyStrykerConfig().mutate)).toEqual([file]);
+        });
+      });
+
+      RuleScenario("The pull request workflow runs the changed-module mutation gate", ({ Given, Then, And }) => {
+        let job: NightlyJob | undefined;
+        let at = -1;
+        Given("the pull request workflow", () => {
+          expect(Object.keys(ciJobs()).length).toBeGreaterThan(0);
+        });
+        Then("a job shall run {string} and write the step summary", (_ctx, command: string) => {
+          job = Object.values(ciJobs()).find((j) => (at = j.steps?.findIndex((s) => s.run?.trim().startsWith(`${command} `)) ?? -1) >= 0);
+          expect(job, `no ci.yml job runs ${command}`).toBeDefined();
+          expect(job!.steps![at].run).toContain('--summary "$GITHUB_STEP_SUMMARY"');
+        });
+        And("that job shall run {string} after it, even when it fails", (_ctx, clean: string) => {
+          const step = job!.steps!.slice(at + 1).find((s) => s.run?.trim() === clean);
+          expect(step, `no step runs ${clean}`).toBeDefined();
+          expect(step!.if).toContain("always()");
+        });
+      });
+    }
+  );
+
+  Rule(
+    "Tutors shall run every Playwright suite with no retries, so that a test which passes only on a second attempt fails.",
+    ({ RuleScenario }) => {
+      RuleScenario("No Playwright configuration retries a failed test", ({ Given, Then }) => {
+        let configs: string[] = [];
+        Given("the repository's Playwright configurations", () => {
+          configs = walk(REPO_ROOT, (name) => /^playwright(\.[\w-]+)?\.config\.ts$/.test(name))
+            .map((file) => toPosix(file))
+            .filter((file) => !file.includes("node_modules") && !file.startsWith("tests/suite-health/fixtures/"));
+        });
+        Then("each of {string}, {string}, {string} and {string} shall set retries to 0", (_ctx, ...files: string[]) => {
+          // Every config in the repo is named, so a new one is held to the Rule too.
+          expect([...configs].sort()).toEqual([...files].sort());
+          for (const file of files) expect(readText(resolve(REPO_ROOT, file)), file).toMatch(/^\s*retries:\s*0,/m);
         });
       });
     }

@@ -6,7 +6,7 @@
 
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
-import { storeStudentCourseLearningObjectInSupabase, updateLearningRecordsDuration, updateCalendarDuration, addOrUpdateStudent, formatDate } from "../utils/supabase-client.ts";
+import { storeStudentCourseLearningObjectInSupabase, recordHeartbeat, addOrUpdateStudent } from "../utils/supabase-client.ts";
 import type { AnalyticsService } from "../types.svelte.ts";
 import log from "@tutors/logger";
 
@@ -62,8 +62,7 @@ export const analyticsService: AnalyticsService = {
   updatePageCount(course: Course, lo: Lo, student: TutorsId) {
     try {
       if (student) {
-        if (lo.route) updateLearningRecordsDuration(course.courseId, student.login, this.loRoute);
-        updateCalendarDuration(formatDate(new Date()), student.login, course.courseId);
+        void recordHeartbeat(course.courseId, student.login, lo.route ? this.loRoute : null);
       }
     } catch (error: unknown) {
       log.error("TutorStore Error:", error);

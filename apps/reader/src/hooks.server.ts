@@ -1,15 +1,15 @@
 /* global APP_VERSION */
-import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit";
+import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
-import { building } from "$app/environment";
+import { building } from "$app/env";
 import { createIdentityHandle } from "@tutors/identity-sveltekit/server";
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
+import * as env from "$app/env/private";
+import * as publicEnv from "$app/env/public";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 import { announceClock } from "@tutors/runtime";
-import { authMode } from "$lib/server/auth-mode";
+import { authMode } from "#lib/server/auth-mode.ts";
 
 setAppName("tutors-reader");
 // From here on every stdout/stderr line of the running server is one JSON object: stray console
@@ -57,7 +57,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
     setSecurityHeaders(response.headers);
     return response;
   } catch {
-    // A `Response.redirect()` has immutable headers. Auth.js answers a failed sign-in with one,
+    // A `Response.redirect()` has immutable headers. OAuth can answer a failed sign-in with one,
     // so without a copy "GitHub said no" would become a 500 (Rule 0255).
     const copy = new Response(response.body, response);
     setSecurityHeaders(copy.headers);
@@ -67,9 +67,11 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(requestLogger, metricsHandle, localeHandle, securityHeaders, authHandle);
 
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
-  logRequestError({ error, event, status, message });
+export const handleError: HandleServerError = ({ kind, error, event }) => {
+  if (kind !== "unknown") return;
+  logRequestError({ error, event, status: 500, message: "Internal Error" });
   return {
+    status: 500,
     message: "An unexpected error occurred"
   };
 };

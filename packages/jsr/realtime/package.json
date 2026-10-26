@@ -1,0 +1,10 @@
+{
+  "name": "@tutors/realtime",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Framework-free Realtime port for Tutors: topics, adapter contract and a budgeted gateway",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

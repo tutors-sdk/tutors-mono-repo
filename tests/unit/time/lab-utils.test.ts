@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   extractLabIdentifier,
+  extractLabPath,
   extractStepName,
+  labColumnLabels,
   getDistinctSortedDatesFromRecords,
   toggleLabViewMode
 } from "../../../packages/jsr/time/src/utils/lab-utils";
@@ -188,5 +190,36 @@ describe("toggleLabViewMode", () => {
   it("round-trips back to original", () => {
     const start: LabViewMode = "lab";
     expect(toggleLabViewMode(toggleLabViewMode(start))).toBe(start);
+  });
+});
+
+// ===========================================================================
+// extractLabPath / labColumnLabels
+// ===========================================================================
+describe("extractLabPath", () => {
+  it("keeps the path up to and including the book segment", () => {
+    expect(extractLabPath("/lab/c/topic-01/book-lab-01/01")).toBe("/lab/c/topic-01/book-lab-01");
+  });
+
+  it("returns the lo_id when no segment starts with book", () => {
+    expect(extractLabPath("topic/talk-1/unit-01")).toBe("topic/talk-1/unit-01");
+  });
+});
+
+describe("labColumnLabels", () => {
+  it("labels a lab by its id when the id is unique", () => {
+    expect(labColumnLabels(["/lab/c/topic-01/book-a", "/lab/c/topic-02/book-b"])).toEqual(["book-a", "book-b"]);
+  });
+
+  it("adds the topic when two labs share an id", () => {
+    expect(labColumnLabels(["/lab/c/topic-01/book-a", "/lab/c/topic-02/book-a"])).toEqual(["topic-01/book-a", "topic-02/book-a"]);
+  });
+
+  it("falls back to the whole path when the topic does not tell them apart", () => {
+    expect(labColumnLabels(["/lab/c1/topic/book-a", "/lab/c2/topic/book-a"])).toEqual(["/lab/c1/topic/book-a", "/lab/c2/topic/book-a"]);
+  });
+
+  it("labels a top-level lab by its id alone", () => {
+    expect(labColumnLabels(["book-a", "x/book-a"])).toEqual(["book-a", "x/book-a"]);
   });
 });

@@ -355,12 +355,24 @@ describe("initCalendar — mutation killing", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("produces an empty week list when weeks is not an array", () => {
+  it("gives the course no calendar when weeks is not an array", () => {
     const spy = vi.spyOn(log, "error").mockImplementation(() => {});
     const course = makeCourse({ calendar: { title: "T", weeks: "nope" } });
     initCalendar(course, 0);
-    expect(course.courseCalendar).toEqual({ title: "T", year: undefined, weeks: [], currentWeek: undefined });
+    expect(course.courseCalendar).toBeUndefined();
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("gives the course no calendar when weeks is empty", () => {
+    const course = makeCourse({ calendar: { title: "T", weeks: [] } });
+    initCalendar(course, 0);
+    expect(course.courseCalendar).toBeUndefined();
+  });
+
+  it("gives the course a calendar of one week", () => {
+    const course = makeCourse({ calendar: { title: "T", weeks: [{ date: "2026-09-07", week: 1, topic: "One" }] } });
+    initCalendar(course, 0);
+    expect(course.courseCalendar?.weeks.map((week) => week.title)).toEqual(["One"]);
   });
 
   it("parses the new format including breaks, week numbers and assessments", () => {

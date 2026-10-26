@@ -345,9 +345,11 @@ describe("observability contracts (runway tier K)", () => {
     it("negative fixture: renaming a metric names the alert that broke", async () => {
       await metricsHandle({ event: makeEvent("/course/cs101") as never, resolve: async () => new Response("ok") });
       const renamed = (await metricsRegistry.metrics()).replaceAll("http_requests_total", "http_requests_count");
-      expect(alertParityFindings(ALERTS, renamed)).toEqual([
-        "alert high-error-rate queries http_requests_total, which /metrics does not export"
-      ]);
+      const findings = alertParityFindings(ALERTS, renamed);
+      // Every availability objective's burn-rate alerts (release/slo.yaml, Rule 0297) query it; nothing else does.
+      expect(findings).toContain("alert slo-reader-availability-page-fast queries http_requests_total, which /metrics does not export");
+      expect(findings).toHaveLength(4 * 3);
+      expect(findings.every((f) => f.endsWith("queries http_requests_total, which /metrics does not export"))).toBe(true);
     });
 
     it("extracts metric names from PromQL and exposition text", () => {

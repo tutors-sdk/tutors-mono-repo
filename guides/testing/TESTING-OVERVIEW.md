@@ -21,10 +21,10 @@ first gate is the pull request.
 | **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
 | **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
 | **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
-| **F** | Authorisation — who may call what | Planned ([#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77)) | — |
-| **G** | User journeys — the whole system through a real browser, against built images | In repo | PR: `e2e-stack` (chromium, webkit). Nightly: `e2e-stack-nightly` (firefox, mobile) |
-| **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | Planned, no issue yet | Shapes are snapshot-checked under tier "contract" below |
-| **I** | Data — migration and the Supabase exit | Planned, no issue yet | — |
+| **F** | Authorisation — who may call what | In repo | PR: `build-and-test` (the matrix lists every route). Nightly: `e2e-stack-nightly` (`--project=signed-in`, every route as every role) |
+| **G** | User journeys — the whole system through a real browser, against built images, anonymous and signed in, with injected faults | In repo | Nightly: `e2e-stack-nightly` (chromium, webkit, firefox, mobile, and the `signed-in` project). Not a PR check |
+| **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | In repo | PR: `build-and-test` (`vitest`) |
+| **I** | Data — migrations applied to a real Postgres, rows kept, the code's tables and functions present | In repo | PR: `build-and-test` (`vitest`, PGlite) |
 | **J** | Platform — kustomize overlays, restricted-SCC policy, arbitrary UID, read-only root, env-var completeness | In repo | PR: `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, and `vitest` |
 | **K** | Observability — log schema, request-id correlation, hook order, metrics an alert queries | In repo | PR: `build-and-test` (`vitest`) and `container-smoke` |
 | **L** | Performance and capacity — client bundle ceilings, Lighthouse floors, latency, memory growth | In repo | PR: `bundle-budgets`. Nightly: `lighthouse`, `load` |
@@ -59,7 +59,7 @@ Every command below exists in the root `package.json`.
 | `pnpm test:mutation` | Stryker over the twelve targeted modules (break at 90%), then `pnpm check:mutation-floors` |
 | `pnpm test:mutation:nightly` | Stryker over every library source file against the unit, BDD and contract suites, in place (`stryker.nightly.config.json`) |
 | `pnpm test:e2e` | The three per-app Playwright configs in sequence, each against `vite dev` |
-| `pnpm test:e2e:reader` | The reader's UI contract: one test per scenario of `tests/bdd/features/ui/`. Runs on every PR in Chromium |
+| `pnpm test:e2e:reader` | The reader's UI contract plus signed-session browser regressions. Uses isolated OAuth fixtures; runs on PRs targeting `main` in Chromium |
 | `pnpm test:e2e:catalogue` / `:live` | One app's smoke config. Local only |
 | `pnpm e2e:stack:fixture` | Builds the fixture course (needs Deno) |
 | `pnpm e2e:stack:up` / `:down` | The tier G compose stack |
@@ -70,7 +70,7 @@ Every command below exists in the root `package.json`.
 | `pnpm check:knip` | Unused files, exports and dependencies |
 | `pnpm check:audit` | `pnpm audit` against `tests/security/audit-allowlist.json` |
 | `pnpm check:bundle` | Per-app client bundle ceilings |
-| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with Auth.js on |
+| `pnpm check:server` | Built server: no CommonJS globals in the ES module bundle, no 5xx from `node build/index.js` with authentication enabled |
 | `pnpm check:lighthouse` | Lighthouse floors on three reader pages |
 | `pnpm check:load` | k6 load or soak against a built image |
 | `pnpm check:k8s` | Render every overlay and apply the manifest policies |
@@ -132,7 +132,7 @@ it.skip("flaky in webkit", () => { ... });
 
 `ci.yml` ends in one job, **`CI success`**, which needs `build-and-test`,
 `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, `dependency-audit`,
-`e2e-stack`, `bundle-budgets` and `generator-diff`. It treats a skipped or cancelled job
+`bundle-budgets` and `generator-diff`. It treats a skipped or cancelled job
 as a failure. It is the one check to mark as required in branch protection, so adding a job
 to its `needs` extends the gate without touching repository settings. Whether it is currently
 marked required is a setting, not something this repository can show you.
@@ -143,7 +143,7 @@ Only what CI enforces today.
 
 | Stage | Blocks on |
 |---|---|
-| PR to `main` | `CI success`. That includes coverage below a floor in `tests/suite-health/coverage-floors.json` or 2+ points above one (`pnpm check:coverage-floors`, Rules 0111 and 0112), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
+| PR to `main` | `CI success`. That includes coverage below a floor in `tests/suite-health/coverage-floors.json` or 2+ points above one (`pnpm check:coverage-floors`, Rules 0111 and 0112), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, and a new dependency advisory the PR introduces. The tier G journeys run nightly, not on the PR |
 | Push to `rc/**` | `rc-validation.yml` — its `RC Readiness Report` fails if any gate failed — and `release-testing.yml`, whose report blocks on artifact regression and smoke tests and only warns on the performance benchmark |
 | Nightly | Nothing. A red nightly is a bug to chase, not a merge block |
 

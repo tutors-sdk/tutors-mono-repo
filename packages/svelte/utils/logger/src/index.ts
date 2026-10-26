@@ -11,7 +11,7 @@ export * from "@tutors/logger-core";
 export type { RequestLikeEvent, RequestLoggerOptions, RequestErrorInput } from "./types.ts";
 export { createRequestLogger, logRequestError, requestIdFrom, levelForStatus, REQUEST_ID_HEADER } from "./request-logger.ts";
 export { installProcessLogging, type ProcessLoggingOptions } from "./process.ts";
-export { withRequestId } from "./outbound.ts";
+export { withRequestId, withTimeout, OUTBOUND_TIMEOUT_MS } from "./outbound.ts";
 export { LOG_EVENT_FIELDS, VARIABLE_LOG_FIELDS } from "./contract.ts";
 
 export default log;

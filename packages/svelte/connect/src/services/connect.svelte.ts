@@ -4,12 +4,12 @@
  * Supports both authenticated and anonymous modes.
  */
 
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { goto } from "$app/navigation";
 import type { Course } from "@tutors/tutors-model-lib";
 
 import { analyticsService, presenceService } from "@tutors/community";
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
@@ -64,7 +64,6 @@ export const tutorsConnectService: TutorsConnectService = {
 
   async reconnect(user: ConnectUser) {
     if (anonMode) return;
-    presenceService.connectToAllCourseAccess();
     if (user) {
       this.profile = supabaseProfile;
       tutorsId.value = { ...user, share: "true", sentiment: "neutral" };
@@ -82,7 +81,7 @@ export const tutorsConnectService: TutorsConnectService = {
           goto(`/course/${courseId}`);
         }
         if (currentCourse.value && tutorsId.value.share === "true") {
-          void presenceService.startPresenceListener(currentCourse.value.courseId);
+          void presenceService.startCourseRoster(currentCourse.value.courseId);
         }
       }
     }
@@ -110,7 +109,7 @@ export const tutorsConnectService: TutorsConnectService = {
       }
       const login = tutorsId.value.login;
       if (tutorsId.value.share === "true" && login && currentCourse.value) {
-        void presenceService.startPresenceListener(currentCourse.value.courseId);
+        void presenceService.startCourseRoster(currentCourse.value.courseId);
       } else {
         presenceService.stopPresenceListener();
       }
@@ -150,12 +149,13 @@ export const tutorsConnectService: TutorsConnectService = {
       rbacService.clear();
     }
     if (anonMode) return;
-    if (analyticsEnabled) {
+    // A course that turns the person away is not one they visited, so it stays out of their Recently accessed.
+    if (analyticsEnabled && !turnsAway(course)) {
       updateCourseList(course);
       this.profile.logCourseVisit(course);
     }
     if (tutorsId.value?.login && tutorsId.value.share === "true") {
-      void presenceService.startPresenceListener(course.courseId);
+      void presenceService.startCourseRoster(course.courseId);
     } else {
       presenceService.stopPresenceListener();
     }
@@ -205,7 +205,33 @@ export const tutorsConnectService: TutorsConnectService = {
   /** The first page of a session is arrived at, so there is a navigation to report from the start. */
   pendingNavigation: true,
 
-  navigated(): void {
+  /**
+   * Nothing is reported while a navigation is in flight. The destination's load sets `currentLo` before
+   * SvelteKit commits the new `page.params`, so a report taken mid-flight pairs the page being left with
+   * the learning object being arrived at, and counts a page load nobody made. Starts true: the first page
+   * of a session is still being arrived at until the layout's first `afterNavigate`.
+   */
+  navigationInFlight: true,
+  navigationAttempt: 0,
+
+  /**
+   * A navigation has started. One that keeps the path - an anchor, the skip link, a search filter - is
+   * not a move to another page, so it holds nothing. Returns the attempt, for {@link navigationAbandoned}.
+   */
+  navigating(from?: string, to?: string): number {
+    if (from !== undefined && from === to) return this.navigationAttempt;
+    this.navigationInFlight = true;
+    return ++this.navigationAttempt;
+  },
+
+  /** A navigation was cancelled before it landed, so no `afterNavigate` will release the hold it set. */
+  navigationAbandoned(attempt: number): void {
+    if (attempt === this.navigationAttempt) this.navigationInFlight = false;
+  },
+
+  navigated(from?: string, to?: string): void {
+    this.navigationInFlight = false;
+    if (from !== undefined && from === to) return;
     this.pendingNavigation = true;
   },
 
@@ -227,7 +253,7 @@ export const tutorsConnectService: TutorsConnectService = {
    * @param params - Event parameters to record
    */
   learningEvent(params: Record<string, string>): void {
-    if (anonMode) return;
+    if (anonMode || this.navigationInFlight) return;
     if (currentCourse.value && currentLo.value && tutorsId.value) {
       const identity = [params.loid ?? "", currentLo.value.route, tutorsId.value.login ?? "", tutorsId.value.sentiment ?? "", tutorsId.value.share ?? ""].join("|");
       if (!this.pendingNavigation && identity === this.lastLearningEvent) return;
@@ -266,18 +292,19 @@ export const tutorsConnectService: TutorsConnectService = {
 
   checkWhiteList(): void {
     const course = currentCourse.value;
-    if (!course?.authLevel || course.authLevel < 1) return;
-    const enrollment = course.enrollment;
-    if (enrollment?.whitelist && enrollment.whitelist.length > 0) {
-      if (!tutorsId.value?.login) {
-        goto(`/`);
-      } else {
-        const login = tutorsId.value.login;
-        const isEducator = enrollment.educators?.includes(login) ?? false;
-        if (!isEducator && !enrollment.whitelist.includes(login)) {
-          goto(`/`);
-        }
-      }
-    }
+    if (course && turnsAway(course)) goto(`/`);
   }
 };
+
+/**
+ * A course that needs a sign-in and has a whitelist turns away everyone not on the whitelist or among its
+ * educators, including someone not yet signed in.
+ */
+function turnsAway(course: Course): boolean {
+  if (!course.authLevel || course.authLevel < 1) return false;
+  const whitelist = course.enrollment?.whitelist;
+  if (!whitelist || whitelist.length === 0) return false;
+  const login = tutorsId.value?.login;
+  if (!login) return true;
+  return !(course.enrollment?.educators?.includes(login) ?? false) && !whitelist.includes(login);
+}

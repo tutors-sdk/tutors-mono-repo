@@ -17,7 +17,7 @@ Browse all Tutors courses with visitor statistics.
 ## Development
 
 ```bash
-npm run dev
+pnpm --filter tutors-catalogue dev
 ```
 
 Runs on http://localhost:5175
@@ -25,9 +25,10 @@ Runs on http://localhost:5175
 ## Technology
 
 - SvelteKit + Svelte 5
-- `@tutors/ui` components
-- `@tutors/course` for catalogue data
-- `@tutors/app-config` for the shared `vite.config.ts` / `svelte.config.js` (build time only)
+- `@tutors/ui-components`, `@tutors/ui-navigators` and `@tutors/ui-primitives` components
+- `@tutors/community` for catalogue data
+- `@tutors/course` (a declared dependency; no catalogue source imports it today)
+- `@tutors/app-config` for the shared Vite-based SvelteKit configuration (build time only)
 - `@tutors/i18n` for interface text in the reader's six languages
 - `@tutors/runtime` for the server clock seam (`HARNESS_NOW`) and the `GET /version` endpoint
 - Tailwind CSS v4 + Skeleton UI

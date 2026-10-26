@@ -1,25 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const {
-  mockStoreStudentCourseLearningObjectInSupabase,
-  mockUpdateLearningRecordsDuration,
-  mockUpdateCalendarDuration,
-  mockAddOrUpdateStudent,
-  mockFormatDate
-} = vi.hoisted(() => ({
+const { mockStoreStudentCourseLearningObjectInSupabase, mockRecordHeartbeat, mockAddOrUpdateStudent } = vi.hoisted(() => ({
   mockStoreStudentCourseLearningObjectInSupabase: vi.fn(),
-  mockUpdateLearningRecordsDuration: vi.fn(),
-  mockUpdateCalendarDuration: vi.fn(),
-  mockAddOrUpdateStudent: vi.fn(),
-  mockFormatDate: vi.fn(() => "2026-07-30")
+  mockRecordHeartbeat: vi.fn(),
+  mockAddOrUpdateStudent: vi.fn()
 }));
 
 vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
   storeStudentCourseLearningObjectInSupabase: mockStoreStudentCourseLearningObjectInSupabase,
-  updateLearningRecordsDuration: mockUpdateLearningRecordsDuration,
-  updateCalendarDuration: mockUpdateCalendarDuration,
+  recordHeartbeat: mockRecordHeartbeat,
   addOrUpdateStudent: mockAddOrUpdateStudent,
-  formatDate: mockFormatDate,
   supabase: {}
 }));
 
@@ -190,58 +180,36 @@ describe("analyticsService.reportPageLoad", () => {
 });
 
 describe("analyticsService.updatePageCount", () => {
-  it("updates learning records duration when student and lo.route are present", () => {
-    const course = makeCourse({ courseId: "c1" });
-    const lo = makeLo({ route: "course/c1/topic" });
-    const student = makeStudent({ login: "stu1" });
+  it("records a heartbeat against the tracked route when student and lo.route are present", () => {
     analyticsService.loRoute = "tracked/route";
 
-    analyticsService.updatePageCount(course, lo, student);
+    analyticsService.updatePageCount(makeCourse({ courseId: "c1" }), makeLo({ route: "course/c1/topic" }), makeStudent({ login: "stu1" }));
 
-    expect(mockUpdateLearningRecordsDuration).toHaveBeenCalledWith("c1", "stu1", "tracked/route");
+    expect(mockRecordHeartbeat).toHaveBeenCalledWith("c1", "stu1", "tracked/route");
   });
 
-  it("updates calendar duration with formatted date", () => {
-    const course = makeCourse({ courseId: "c1" });
-    const lo = makeLo({ route: "course/c1/topic" });
-    const student = makeStudent({ login: "stu1" });
-
-    analyticsService.updatePageCount(course, lo, student);
-
-    expect(mockFormatDate).toHaveBeenCalled();
-    expect(mockUpdateCalendarDuration).toHaveBeenCalledWith("2026-07-30", "stu1", "c1");
-  });
-
-  it("does not call any helper when student is falsy", () => {
+  it("does not record when student is falsy", () => {
     analyticsService.updatePageCount(makeCourse(), makeLo({ route: "course/c1/topic" }), null as any);
 
-    expect(mockUpdateLearningRecordsDuration).not.toHaveBeenCalled();
-    expect(mockUpdateCalendarDuration).not.toHaveBeenCalled();
+    expect(mockRecordHeartbeat).not.toHaveBeenCalled();
   });
 
-  it("skips learning records update when lo.route is empty", () => {
-    analyticsService.updatePageCount(
-      makeCourse({ courseId: "c1" }),
-      makeLo({ route: "" }),
-      makeStudent({ login: "stu1" })
-    );
+  it("records against the calendar only when lo.route is empty", () => {
+    analyticsService.loRoute = "tracked/route";
 
-    expect(mockUpdateLearningRecordsDuration).not.toHaveBeenCalled();
-    expect(mockUpdateCalendarDuration).toHaveBeenCalled();
+    analyticsService.updatePageCount(makeCourse({ courseId: "c1" }), makeLo({ route: "" }), makeStudent({ login: "stu1" }));
+
+    expect(mockRecordHeartbeat).toHaveBeenCalledWith("c1", "stu1", null);
   });
 
-  it("logs error when a helper throws", () => {
-    mockUpdateLearningRecordsDuration.mockImplementation(() => {
-      throw new Error("duration fail");
+  it("logs error when recording throws", () => {
+    mockRecordHeartbeat.mockImplementation(() => {
+      throw new Error("heartbeat fail");
     });
 
-    analyticsService.updatePageCount(
-      makeCourse(),
-      makeLo({ route: "course/c1/topic" }),
-      makeStudent()
-    );
+    analyticsService.updatePageCount(makeCourse(), makeLo({ route: "course/c1/topic" }), makeStudent());
 
-    expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "duration fail" }));
+    expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "heartbeat fail" }));
   });
 });
 

@@ -1,6 +1,6 @@
 import type { Composite, Course, Lo, Talk, Topic } from "@tutors/tutors-model-lib";
 import { compressToZip, removeFirstLine, writeFile } from "./file-utils.ts";
-import { filterByType, flattenLos, removeLeadingHashes } from "@tutors/tutors-model-lib";
+import { filterByType, removeLeadingHashes } from "@tutors/tutors-model-lib";
 
 let header = "";
 
@@ -18,6 +18,7 @@ function printLo(lo: Lo, level: number) {
 }
 
 function generateLo(lo: Lo, llmsTxt: string[], level: number) {
+  if (lo.hide) return;
   llmsTxt.push(printLo(lo, level));
   if (Object.hasOwn(lo, "los")) {
     const compositeLo = lo as Composite;
@@ -25,6 +26,13 @@ function generateLo(lo: Lo, llmsTxt: string[], level: number) {
       generateLo(childLo, llmsTxt, level + 1);
     });
   }
+}
+
+function flattenVisibleLos(los: Lo[]): Lo[] {
+  return los.flatMap((lo) => {
+    if (lo.hide) return [];
+    return [lo, ...flattenVisibleLos((lo as Composite).los ?? [])];
+  });
 }
 
 function generateAll(course: Course) {
@@ -48,8 +56,9 @@ function generatePdfs(pdfs: Talk[], folder: string) {
 
 export function generateLlmsByTopic(course: Course, folder: string) {
   const topicLos = filterByType(course.los, "topic");
+  const visibleLos = new Set(flattenVisibleLos(course.los));
   topicLos.forEach((lo: Lo, index) => {
-    if (lo.type === "topic" && lo.hide !== true) {
+    if (lo.type === "topic" && visibleLos.has(lo)) {
       const topic = lo as Topic;
       let allTxt: string[] = [];
       header = `<SYSTEM> This is the Tutors course ${course.title} topic ${topic.title} by ${course.properties.credits}</SYSTEM>\n\n`;
@@ -61,7 +70,7 @@ export function generateLlmsByTopic(course: Course, folder: string) {
 
       writeFile(folder, `${title}-llms.txt`, allTxt.join("\n"));
 
-      const allLos = flattenLos(topic.los);
+      const allLos = flattenVisibleLos(topic.los);
       const talks = allLos.filter((lo) => lo.type === "talk");
       generatePdfs(talks as Talk[], `${folder}/${title}-pdfs.zip`);
     }
@@ -75,7 +84,7 @@ export function generateLlms(course: Course, folder: string) {
   const llmFolder = `${folder}/llms`;
   header = `<SYSTEM> This is the Tutors course ${course.title} by ${course.properties.credits}</SYSTEM>\n\n`;
 
-  const allLos = flattenLos(course.los);
+  const allLos = flattenVisibleLos(course.los);
   const pdfs = allLos.filter((lo) => lo.type === "talk");
   const fileName = toSnakeCase(course.title);
 

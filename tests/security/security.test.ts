@@ -64,13 +64,13 @@ describe("security contracts (runway tier M)", () => {
   });
 
   describe("cookies", () => {
-    it("accepts the flags Auth.js sets over HTTPS and ignores deleted cookies", () => {
+    it("accepts the flags Better Auth sets over HTTPS and ignores deleted cookies", () => {
       expect(
         cookieFindings(
           "reader",
           [
-            "__Secure-authjs.callback-url=https%3A%2F%2Freader.tutors.dev; Path=/; HttpOnly; Secure; SameSite=Lax",
-            "__Host-authjs.csrf-token=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
+            "__Secure-better-auth.session_token=signed-token; Path=/; HttpOnly; Secure; SameSite=Lax",
+            "__Secure-better-auth.session_data=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax"
           ],
           { https: true }
         )
@@ -102,7 +102,7 @@ describe("security contracts (runway tier M)", () => {
     });
 
     it.each(APPS)("apps/%s keeps SvelteKit's cross-site form check on", (app) => {
-      const file = `apps/${app}/svelte.config.js`;
+      const file = `apps/${app}/vite.config.ts`;
       expect(csrfConfigFindings(file, readText(join(REPO_ROOT, file)))).toEqual([]);
     });
 

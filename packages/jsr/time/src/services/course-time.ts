@@ -8,7 +8,6 @@ import type {
 } from "../types/index.ts";
 import { BaseCalendarModel } from "./base-calendar-model.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
-import { filterByDateRange } from "../utils/index.ts";
 import { getSupabase } from "./supabase.ts";
 import log from "@tutors/logger-core";
 
@@ -39,8 +38,7 @@ export class CourseTime implements TutorsTimeCourse {
     if (!id) throw new Error("Course ID is required");
 
     try {
-      const rawData = await CourseTime.getCalendarData(id);
-      const filteredData = filterByDateRange(rawData, startDate, endDate);
+      const filteredData = await CourseTime.getCalendarData(id, startDate, endDate);
 
       let learningRecords: LearningRecord[] = [];
       let learningRecordsError: string | null = null;
@@ -97,16 +95,28 @@ export class CourseTime implements TutorsTimeCourse {
   }
 
   /**
-   * Retrieve calendar data for a given course (or all courses if courseId is not provided).
+   * Retrieve calendar data for a given course (or all courses if courseId is not provided),
+   * limited to days from startDate to endDate (inclusive, YYYY-MM-DD) when given.
+   * The range is applied in the query so only those days leave the database.
    * Enriches entries with student full names from tutors-connect-users.
    * Throws an error if the database query fails.
    */
-  static async getCalendarData(courseId?: string): Promise<CalendarEntry[]> {
+  static async getCalendarData(
+    courseId?: string,
+    startDate?: string | null,
+    endDate?: string | null
+  ): Promise<CalendarEntry[]> {
     const supabase = getSupabase();
     let query = supabase.from("calendar").select("*").order("id", { ascending: true });
 
     if (courseId) {
       query = query.eq("courseid", courseId);
+    }
+    if (startDate) {
+      query = query.gte("id", startDate);
+    }
+    if (endDate) {
+      query = query.lte("id", endDate);
     }
 
     const { data, error } = await query;
@@ -235,7 +245,7 @@ export class CourseTime implements TutorsTimeCourse {
   }
 
   /**
-   * Fetch tutors.json from the course's Netlify deployment and extract ignorePin.
+   * Fetch tutors.json from the host that serves the course and extract ignorePin.
    * Returns empty string if fetch fails, JSON is invalid, or ignorePin is missing.
    */
   static async getCoursePin(courseId: string): Promise<string> {
@@ -243,7 +253,7 @@ export class CourseTime implements TutorsTimeCourse {
     if (!id) return "";
 
     try {
-      const url = `https://${id}.netlify.app/tutors.json`;
+      const url = `${courseBaseUrl(id)}/tutors.json`;
       const res = await fetch(url);
       if (!res.ok) return "";
 
@@ -254,4 +264,20 @@ export class CourseTime implements TutorsTimeCourse {
       return "";
     }
   }
+}
+
+/**
+ * Resolve a course id to the base URL that serves it, as the reader does
+ * (determineCourseUrl in @tutors/course): a domain or full URL is used as given,
+ * localhost or a 192.* address is served over http, and a bare id is a Netlify site.
+ */
+function courseBaseUrl(id: string): string {
+  let host = id;
+  // A loop, not /\/+$/: that regex backtracks polynomially on input with many slashes (CodeQL js/polynomial-redos).
+  while (host.endsWith("/")) host = host.slice(0, -1);
+  if (/^(https?:\/\/)?[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]+)?(\/.*)?$/.test(host)) {
+    return /^https?:\/\//.test(host) ? host : `https://${host}`;
+  }
+  if (host.startsWith("localhost") || host.startsWith("192")) return `http://${host}`;
+  return `https://${host}.netlify.app`;
 }

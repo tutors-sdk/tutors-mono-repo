@@ -88,7 +88,7 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   const header = page.locator(".shell-header");
   for (const theme of ["tutors", "dyslexia"]) {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await header.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+    await header.getByRole("button", { name: "Preferences", exact: true }).click();
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
     for (const width of [320, 390, 768]) {
@@ -155,7 +155,7 @@ test("Desktop sidebar holds course info and the tools", { tag: "@rule-0024" }, a
 
 test("Closing the preferences menu returns focus to its button", { tag: "@rule-0025" }, async ({ page }) => {
   await page.goto(course);
-  const button = page.getByRole("button", { name: "Open Theme Menu", exact: true });
+  const button = page.getByRole("button", { name: "Preferences", exact: true });
   await button.click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   await expect(preferences).toBeVisible();
@@ -302,13 +302,20 @@ test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, asy
       await expect(heading).toBeVisible();
       await expect(card).toBeHidden();
       const artwork = (await heading.locator(".lo-artwork").boundingBox())!;
-      expect(artwork.width).toBe(48);
-      expect(artwork.height).toBe(48);
+      // A scaled layout can land a 48px box a few millionths short (47.99999809 in CI), so compare to the pixel.
+      expect(artwork.width).toBeCloseTo(48, 1);
+      expect(artwork.height).toBeCloseTo(48, 1);
       const headingBox = (await heading.boundingBox())!;
       expect(headingBox.height).toBeGreaterThanOrEqual(44);
       expect(headingBox.height).toBeLessThan(160);
-      expect((await column.locator(".back-link").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
-      expect((await column.locator(".steps").boundingBox())!.y).toBeGreaterThan(headingBox.y + headingBox.height);
+      // Measure together so hydration or font loading cannot leave a stale heading position.
+      await expect.poll(() => column.evaluate(el => {
+        const bottom = el.querySelector(".lo-context summary")!.getBoundingClientRect().bottom;
+        return Math.min(
+          el.querySelector(".back-link")!.getBoundingClientRect().top - bottom,
+          el.querySelector(".steps")!.getBoundingClientRect().top - bottom
+        );
+      })).toBeGreaterThan(0);
       expect(await fitsViewport(page), `${route} at ${width}px`).toBe(true);
       // Native disclosure works with a keyboard and exposes the existing full card.
       const title = await heading.locator("strong").textContent();

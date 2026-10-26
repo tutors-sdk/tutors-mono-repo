@@ -3,13 +3,14 @@ import { expect } from "vitest";
 import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
 import type { CalendarEntry, CalendarRow } from "../../../../packages/jsr/time/src/types/calendar-types.ts";
 import { heatColor } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { whenLayoutSettled } from "../../../../packages/svelte/ui-components/src/time/heatmap-layout.ts";
 import { calendarEntries, calendarEntriesByStudent, cells, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/analytics-calendar.feature");
 
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-describeFeature(feature, ({ Scenario }) => {
+describeFeature(feature, ({ Scenario, Rule }) => {
   let entries: CalendarEntry[];
   let model: BaseCalendarModel;
 
@@ -121,6 +122,55 @@ describeFeature(feature, ({ Scenario }) => {
       // The grids check `row != null` before drawing a median, so an empty course shows none.
       expect(model.medianByDay.row).toBeNull();
       expect(model.medianByWeek.row).toBeNull();
+    });
+  });
+
+  Rule("When the time dashboard draws a heat map, the time dashboard shall lay out its day grid only after the page has been laid out and its web fonts have loaded.", ({ RuleScenario }) => {
+    // A page whose font loading and next frame the scenario controls: Heat.js measures text and
+    // day widths once when it lays the grid out, so it must not run on fallback fonts or before layout.
+    let fontsLoaded: () => void;
+    let frames: (() => void)[];
+    let page: Document;
+    let layouts: number;
+
+    const fonts = (loaded: boolean) => () => {
+      const ready = new Promise<void>((resolve) => (fontsLoaded = resolve));
+      if (loaded) fontsLoaded();
+      frames = [];
+      layouts = 0;
+      page = { fonts: { ready }, defaultView: { requestAnimationFrame: (frame: () => void) => frames.push(frame) } } as unknown as Document;
+    };
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const draw = async () => {
+      void whenLayoutSettled(page).then(() => layouts++);
+      await settle();
+    };
+    const layOut = async () => {
+      for (const frame of frames.splice(0)) frame();
+      await settle();
+    };
+    const finishFonts = async () => {
+      fontsLoaded();
+      await settle();
+    };
+    const notLaidOut = () => expect(layouts).toBe(0);
+    const laidOutOnce = () => expect(layouts).toBe(1);
+
+    RuleScenario("A heat map waits for the web fonts before laying out its day grid", ({ Given, When, And, Then }) => {
+      Given("the page's web fonts are still loading", fonts(false));
+      When("the time dashboard draws a heat map", draw);
+      And("the browser lays the page out", layOut);
+      Then("the heat map's day grid shall not be laid out yet", notLaidOut);
+      When("the page's web fonts finish loading", finishFonts);
+      Then("the heat map's day grid shall be laid out once", laidOutOnce);
+    });
+
+    RuleScenario("A heat map waits for the page layout before laying out its day grid", ({ Given, When, Then }) => {
+      Given("the page's web fonts have loaded", fonts(true));
+      When("the time dashboard draws a heat map", draw);
+      Then("the heat map's day grid shall not be laid out yet", notLaidOut);
+      When("the browser lays the page out", layOut);
+      Then("the heat map's day grid shall be laid out once", laidOutOnce);
     });
   });
 });
