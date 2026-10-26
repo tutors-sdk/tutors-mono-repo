@@ -6,6 +6,14 @@ import {
   formatCli,
   formatPretty,
 } from "../../../packages/jsr/logger-core/src/formatter.ts";
+import {
+  clearGlobalContext,
+  DEFAULT_LOG_EVENT,
+  getGlobalContext,
+  setRawConsole,
+  TutorsLogger,
+  useCliOutput,
+} from "../../../packages/jsr/logger-core/src/logger.ts";
 
 function createTestLogger(overrides: Record<string, unknown> = {}) {
   const entries: LogEntry[] = [];
@@ -420,5 +428,107 @@ describe("logger: CLI format", () => {
     expect(formatCli(entry({ message: "bad yaml", error: "line one\nline two\r\nthree", note: "x\ry" }))).toBe(
       "tutors error: bad yaml: line one\\nline two\\nthree (note=x\\ny)"
     );
+  });
+});
+
+describe("logger: CLI and pretty format edges", () => {
+  const entry = (fields: Record<string, unknown>): LogEntry => ({ timestamp: "t", level: "warn", message: "m", ...fields });
+
+  it("names the app when it has one and falls back to tutors for an empty one", () => {
+    expect(formatCli(entry({ app: "tutors-lite" }))).toBe("tutors-lite warn: m");
+    expect(formatCli(entry({ app: "" }))).toBe("tutors warn: m");
+    expect(formatPretty(entry({ app: "tutors-reader" }))).toBe("[t] [tutors-reader:warn] m");
+    expect(formatPretty(entry({ app: "" }))).toBe("[t] [tutors:warn] m");
+  });
+
+  it("adds the error only when it is text that says more than the message", () => {
+    expect(formatCli(entry({ error: "m" }))).toBe("tutors warn: m");
+    expect(formatCli(entry({ error: "" }))).toBe("tutors warn: m");
+    expect(formatCli(entry({ error: { code: 1 } }))).toBe("tutors warn: m");
+    expect(formatCli(entry({ error: "x" }))).toBe("tutors warn: m: x");
+  });
+
+  it("drops empty values, prints others as text or JSON, and omits the brackets when nothing is left", () => {
+    expect(formatCli(entry({ a: null, b: undefined }))).toBe("tutors warn: m");
+    expect(formatCli(entry({ n: 2, o: { k: "v" }, s: "t" }))).toBe('tutors warn: m (n=2, o={"k":"v"}, s=t)');
+  });
+});
+
+describe("logger: argument shapes", () => {
+  it("keeps a lone string as the message with no context", () => {
+    const { logger, entries } = createTestLogger();
+    logger.info("only");
+    expect(entries[0].message).toBe("only");
+    expect(Object.keys(entries[0]).filter((k) => !["timestamp", "level", "message"].includes(k))).toEqual([]);
+  });
+
+  it("serialises an Error passed after the message", () => {
+    const { logger, entries } = createTestLogger();
+    logger.error("failed", new Error("boom"));
+    expect(entries[0]).toMatchObject({ message: "failed", error: "boom" });
+  });
+
+  it("keeps one extra value as details and several as a list", () => {
+    const { logger, entries } = createTestLogger();
+    logger.info("one", 7);
+    logger.info("many", 7, "x");
+    expect(entries[0].details).toBe(7);
+    expect(entries[1].details).toEqual([7, "x"]);
+  });
+
+  it("uses an Error's message when the Error comes first, and stringifies anything else", () => {
+    const { logger, entries } = createTestLogger();
+    logger.error(new Error("first"));
+    logger.info(42);
+    logger.info(42, "a", "b");
+    expect(entries[0]).toMatchObject({ message: "first", error: "first" });
+    expect(entries[1].message).toBe("42");
+    expect(entries[1].details).toBeUndefined();
+    expect(entries[2].details).toEqual(["a", "b"]);
+  });
+});
+
+describe("logger: structured core keys", () => {
+  it("fills a missing event, hostname and pid with the default event and null", () => {
+    const { logger, entries } = createTestLogger({ structured: true, context: { event: "" } });
+    clearGlobalContext();
+    logger.info("hi");
+    expect(entries[0].event).toBe(DEFAULT_LOG_EVENT);
+    expect(entries[0]).toHaveProperty("hostname");
+    expect(entries[0]).toHaveProperty("pid");
+  });
+
+  it("keeps an event the call names", () => {
+    const { logger, entries } = createTestLogger({ structured: true });
+    logger.info("hi", { event: "course.loaded" });
+    expect(entries[0].event).toBe("course.loaded");
+  });
+});
+
+describe("logger: CLI output", () => {
+  afterEach(() => {
+    useCliOutput(false);
+    setRawConsole(null);
+    clearGlobalContext();
+  });
+
+  it("prints one CLI line through the raw console and tags entries with the tool once a CLI asks", () => {
+    const lines: string[] = [];
+    setRawConsole({ warn: (line) => lines.push(line) });
+    useCliOutput("tutors-create");
+    new TutorsLogger({ level: "debug", structured: false }).warn("folder exists", { path: "x" });
+    expect(lines).toEqual(["tutors-create warn: folder exists (path=x)"]);
+    expect(getGlobalContext().app).toBe("tutors-create");
+  });
+
+  it("goes back to the usual format and leaves the app alone after useCliOutput(false)", () => {
+    const lines: string[] = [];
+    setRawConsole({ warn: (line) => lines.push(line) });
+    useCliOutput(false);
+    new TutorsLogger({ level: "debug", structured: false }).warn("plain");
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).not.toMatch(/^tutors warn: plain$/);
+    expect(lines[0]).toContain("plain");
+    expect(getGlobalContext().app).toBeUndefined();
   });
 });
