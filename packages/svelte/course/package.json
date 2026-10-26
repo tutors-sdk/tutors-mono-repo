@@ -16,7 +16,7 @@
     "@tutors/runtime": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "mermaid": "^12.1.0",
+    "mermaid": "^12.2.0",
     "shiki": "^4.5.0"
   },
   "peerDependencies": {
