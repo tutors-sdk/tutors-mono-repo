@@ -43,7 +43,6 @@ readme-unlisted-package: apps/catalogue: @tutors/logger
 readme-unlisted-package: apps/catalogue: @tutors/metrics
 readme-unlisted-package: apps/catalogue: @tutors/runes
 readme-unlisted-package: apps/catalogue: @tutors/themes
-readme-unlisted-package: apps/catalogue: @tutors/tutors-model-lib
 readme-unlisted-package: apps/live: @tutors/logger
 readme-unlisted-package: apps/live: @tutors/metrics
 readme-unlisted-package: apps/live: @tutors/runes
