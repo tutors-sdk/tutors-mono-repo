@@ -2,14 +2,14 @@
 Feature: Signed-in journeys across the built apps
   As a student or a lecturer
   I want what I do signed in to work from end to end in the apps we ship
-  So that a change that breaks sign-in, a write or a second person's view fails the pull request, not the next release
+  So that a change that breaks sign-in, a write or a second person's view fails the nightly run, not the next release
 
   Each scenario is proved by the Playwright journey with the same title, tagged with the Rule id, in
   tests/e2e-stack/journeys/signed-in.journey.spec.ts. The journeys run against the built images of the
   E2E stack (tests/e2e-stack/compose.yaml) with the release harness's identity stub (GitHub sign-in) and
   persistence stub (the data API and Realtime), so they need no GitHub, Supabase or Netlify, and can
   read back what the apps wrote. They are the release harness's Rule journeys (its Rules 0582-0592),
-  run on every pull request instead of after a release candidate is built.
+  run every night instead of after a release candidate is built.
 
   @rule-0606 @ears-event-driven
   Rule: When a student signs in from a course, the reader shall return them to that course signed in and record their visit to it.
