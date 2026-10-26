@@ -20,25 +20,25 @@ function buildCourse(): Course {
             title: "Intro Video",
             route: "/video/test-course/week-01/intro",
             video: "youtube=abc123",
-            los: [],
-          } as Lo,
-        ],
+            los: []
+          } as Lo
+        ]
       } as Lo,
       {
         type: "topic",
         id: "week-02",
         title: "Week 02",
         route: "/topic/test-course/week-02",
-        los: [],
+        los: []
       } as Lo,
       {
         type: "talk",
         id: "talk-01",
         title: "Talk 01",
         route: "/talk/test-course/talk-01",
-        los: [],
-      } as Lo,
-    ],
+        los: []
+      } as Lo
+    ]
   } as Course;
 }
 
@@ -54,10 +54,39 @@ describe("reader generateLlms RBAC filtering", () => {
     expect(html).toContain("Intro Video");
   });
 
+  it.each([undefined, { isVisible: () => true, hideCourseWideLinks: false }])("omits hidden topics and their videos regardless of visibility overrides (%s)", (visibility) => {
+    const course = buildCourse();
+    course.los[0].hide = true;
+
+    const html = generateLlms(course, visibility);
+
+    expect(html).not.toContain("Week 01");
+    expect(html).not.toContain("week-01");
+    expect(html).not.toContain("Intro Video");
+    expect(html).not.toContain("youtube.com");
+    expect(html).toContain("Week 02");
+    expect(html).toContain("/llms/topics/01-week-02-llms.txt");
+    expect(html).toContain("/llms/topics/01-week-02-pdfs.zip");
+  });
+
+  it("omits hidden videos within a visible topic and course-wide PDFs when all talks are hidden", () => {
+    const course = buildCourse();
+    (course.los[0] as Lo & { los: Lo[] }).los[0].hide = true;
+    course.los[2].hide = true;
+
+    const html = generateLlms(course);
+
+    expect(html).toContain("Week 01");
+    expect(html).not.toContain("Intro Video");
+    expect(html).not.toContain("youtube.com");
+    expect(html).toContain("test-course-complete-llms.txt");
+    expect(html).not.toContain("test-course-complete-pdfs.zip");
+  });
+
   it("omits locked topics and their videos for students", () => {
     const html = generateLlms(course, {
       isVisible: (lo) => lo.route !== "/topic/test-course/week-01",
-      hideCourseWideLinks: false,
+      hideCourseWideLinks: false
     });
     expect(html).not.toContain("Week 01");
     expect(html).not.toContain("Intro Video");
@@ -68,7 +97,7 @@ describe("reader generateLlms RBAC filtering", () => {
   it("hides course-wide download links when locks are active", () => {
     const html = generateLlms(course, {
       isVisible: () => true,
-      hideCourseWideLinks: true,
+      hideCourseWideLinks: true
     });
     expect(html).not.toContain("test-course-complete-llms.txt");
     expect(html).not.toContain("test-course-complete-pdfs.zip");

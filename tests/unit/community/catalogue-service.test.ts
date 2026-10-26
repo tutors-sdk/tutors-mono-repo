@@ -121,6 +121,7 @@ describe("catalogueService.getStudentCount", () => {
     const result = await catalogueService.getStudentCount();
 
     expect(result).toBe(0);
+    expect(log.error).toHaveBeenCalledWith("Error fetching course count:", { message: "no profiles" });
   });
 });
 
@@ -141,6 +142,8 @@ describe("catalogueService.pruneCatalogue", () => {
     const remaining = mockClient.getTableData("tutors-connect-courses") as any[];
     expect(remaining).toHaveLength(1);
     expect(remaining[0].course_id).toBe("alive-course");
+    expect(log.debug).toHaveBeenCalledWith("Catalogue size", { count: 2 });
+    expect(log.debug).toHaveBeenCalledWith("Invalid catalogue courses", { count: 1, courseIds: ["dead-course"] });
   });
 
   it("does not remove any courses when all are alive", async () => {
@@ -154,9 +157,13 @@ describe("catalogueService.pruneCatalogue", () => {
       "alive-2": async () => new Response(null, { status: 200 })
     });
 
+    const deleteCourses = vi.spyOn(catalogueService, "deleteCourses");
+
     await catalogueService.pruneCatalogue(mockFetch as any);
 
     expect(mockClient.getTableData("tutors-connect-courses")).toHaveLength(2);
+    expect(deleteCourses).not.toHaveBeenCalled();
+    deleteCourses.mockRestore();
   });
 
   it("treats fetch errors as dead courses", async () => {
@@ -231,5 +238,6 @@ describe("catalogueService.deleteCourses", () => {
     await expect(catalogueService.deleteCourses(["c1"])).rejects.toEqual({ message: "permission denied" });
 
     expect(log.error).toHaveBeenCalledWith("Error deleting courses:", { message: "permission denied" });
+    expect(log.error).toHaveBeenCalledWith("Error in deleteCourses:", { message: "permission denied" });
   });
 });

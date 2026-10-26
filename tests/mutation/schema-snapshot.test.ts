@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   SCHEMA_SNAPSHOTS,
   compareSchemas,
-  zodToJsonSchema,
   getSchemaSnapshot,
   listSchemaFields,
 } from "../contract/support/schema-snapshots";
@@ -15,14 +14,11 @@ import {
   ConnectLatestSchema,
   LoRecordSchema,
   RealtimeChannelSchema,
-  CourseJsonSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
-  WhiteboardSceneInitSchema,
   WhiteboardSceneUpdateSchema,
-  WhiteboardSceneSnapshotSchema,
   WhiteboardCursorUpdateSchema,
-  WhiteboardRoomSchema,
+  WhiteboardPresenceSchema,
   WhiteboardInitEditorSchema,
 } from "../contract/support/schemas";
 
@@ -36,14 +32,11 @@ describe("Schema Snapshot Regression", () => {
     { name: "ConnectLatest", schema: ConnectLatestSchema },
     { name: "LoRecord", schema: LoRecordSchema },
     { name: "RealtimeChannel", schema: RealtimeChannelSchema },
-    { name: "CourseJson", schema: CourseJsonSchema },
     { name: "IncrementCalendarParams", schema: IncrementCalendarParamsSchema },
     { name: "GetCountLearningRecordsParams", schema: GetCountLearningRecordsParamsSchema },
-    { name: "WhiteboardSceneInit", schema: WhiteboardSceneInitSchema },
     { name: "WhiteboardSceneUpdate", schema: WhiteboardSceneUpdateSchema },
-    { name: "WhiteboardSceneSnapshot", schema: WhiteboardSceneSnapshotSchema },
     { name: "WhiteboardCursorUpdate", schema: WhiteboardCursorUpdateSchema },
-    { name: "WhiteboardRoom", schema: WhiteboardRoomSchema },
+    { name: "WhiteboardPresence", schema: WhiteboardPresenceSchema },
     { name: "WhiteboardInitEditor", schema: WhiteboardInitEditorSchema },
   ];
 
@@ -85,11 +78,5 @@ describe("Schema Snapshot Regression", () => {
     expect(fields).toContain("user.fullName");
     expect(fields).toContain("user.avatar");
     expect(fields).toContain("user.id");
-  });
-
-  it("CourseJson has nested los array", () => {
-    const jsonSchema = zodToJsonSchema(CourseJsonSchema);
-    expect(jsonSchema.properties?.los).toBeDefined();
-    expect(jsonSchema.properties?.los?.type).toBe("array");
   });
 });

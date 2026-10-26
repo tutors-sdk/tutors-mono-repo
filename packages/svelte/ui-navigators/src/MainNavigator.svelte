@@ -4,6 +4,7 @@
   import Image from "@tutors/ui-primitives/components/Image.svelte";
   import { currentCourse, tutorsId } from "@tutors/runes";
   import { t } from "@tutors/i18n";
+  import { tourService } from "@tutors/tour";
   import TutorsIcon from "@tutors/ui-primitives/components/TutorsIcon.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { siteUrls } from "@tutors/ui-primitives/utils/site-urls";
@@ -22,9 +23,9 @@
 {#snippet menuSelector()}<span class="menu-toggle"><Icon icon="lucide:menu" height="22" /></span>{/snippet}
 {#snippet sidebarContent()}<div class="mobile-course-navigation">{#if navigation}{@render navigation()}{:else}<CourseNavigation {showConnect} {current} mobile />{/if}</div>{/snippet}
 <nav class="main-navigation" aria-label={t("a11y.mainNavigation")}>
-  <div class="mobile-menu"><Sidebar position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
+  <div class="mobile-menu"><Sidebar bind:open={tourService.navigationOpen.value} position="left" {menuSelector} {sidebarContent} ariaLabel={t("shell.navigation")} /></div>
   {#if !currentCourse.value}
-    <a class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label={t("shell.tutorsHome")}><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
+    <a data-tour="brand" class="brand" href={showConnect ? "/" : `${siteUrls.reader}/`} aria-label={t("shell.tutorsHome")}><TutorsIcon widthPlease="38px" /><span>tutors</span></a>
   {/if}
   <div class="course-heading" class:without-course={!currentCourse.value && !title}>
     {#if currentCourse.value}<span class="course-artwork"><Image lo={currentCourse.value} miniImage /></span>{/if}
@@ -32,6 +33,7 @@
       <svelte:element this={isCourseHome ? "h1" : "div"} class="course-title">
         <a data-tour="course-title" title={currentCourse.value?.title} href={currentCourse.value?.route ?? titleHref ?? "/"}>{currentCourse.value?.title ?? title ?? (showConnect ? t("shell.myCourses") : "Tutors")}</a>
       </svelte:element>
+      {#if currentCourse.value?.properties?.credits}<span class="course-credits" title={currentCourse.value.properties.credits}>{currentCourse.value.properties.credits}</span>{/if}
     </div>
     {#if currentCourse.value}
       {#if !currentCourse.value.isPortfolio}<div class="mobile-tree"><TocButton /></div>{/if}
@@ -52,6 +54,9 @@
   .course-title-row { display: flex; flex: 1; min-width: 0; align-items: center; gap: var(--space-2); }
   .course-artwork { display: flex; }
   .course-title { min-width: 0; font-size: var(--font-heading); font-weight: var(--weight-semibold); line-height: var(--leading-heading); color: var(--ui-ink); overflow-wrap: anywhere; }
+  /* The course's credits line from properties.yaml: free text of any length, so it gives way to the
+     title and is cut off rather than pushing the header's actions off the end. */
+  .course-credits { min-width: 0; font-size: var(--font-meta); color: var(--ui-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mobile-tree { display: none; }
   .header-actions { display: flex; align-self: stretch; align-items: center; gap: var(--space-2); margin-left: auto; }
   .header-actions :global([data-tour="profile"]) { display: flex; align-self: stretch; }
@@ -63,7 +68,7 @@
     .main-navigation { min-height: 64px; gap: var(--space-2); padding-inline: var(--space-4); }
     .course-heading { gap: var(--space-1); }
     .course-title { flex: 1; font-size: var(--font-section); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: normal; }
-    .course-artwork, .without-course { display: none; }
+    .course-artwork, .course-credits, .without-course { display: none; }
     .brand + .course-heading { margin-left: var(--space-2); padding-left: var(--space-3); border-left: 1px solid var(--ui-border); }
     .mobile-tree { display: block; flex-shrink: 0; }
     .mobile-tree :global(button) { width: 44px; height: 44px; border-radius: var(--radius-control); color: var(--ui-ink); }

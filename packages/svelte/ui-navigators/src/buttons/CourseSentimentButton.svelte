@@ -2,7 +2,8 @@
   import { Popover, Portal } from "@skeletonlabs/skeleton-svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { tutorsId } from "@tutors/runes";
-  import { tutorsConnectService, COURSE_SENTIMENT_IDS, type CourseSentimentId } from "@tutors/connect";
+  import { tutorsConnectService } from "@tutors/connect";
+  import { COURSE_SENTIMENT_IDS, type CourseSentimentId } from "@tutors/tutors-model-lib";
   import log from "@tutors/logger";
   import { t } from "@tutors/i18n";
 

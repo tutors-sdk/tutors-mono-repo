@@ -112,7 +112,7 @@ repository and promotes it only when
 Promotion scans the candidate's digest with Trivy (same gate as a build), then
 retags that digest as `X.Y.Z`, `sha-<short>`, and after verifying them `X.Y` and
 `latest`, with `docker buildx imagetools create`. No image is built, so the
-digest, signature and SBOM attestation are the candidate's, and
+digest, signature, SBOM and provenance attestations are the candidate's, and
 `pnpm deploy:pin X.Y.Z`, the harness's `HARNESS_PRODUCTION_TAG` and the digests
 sent with its `deployed` event equal the digest the harness judged. Do not add a
 commit between the last candidate and the release tag.
@@ -144,10 +144,15 @@ the following, per app, in this order:
 4. Generates an SPDX JSON SBOM with syft and attaches it to the digest as a
    signed in-toto attestation (`cosign attest --type spdxjson`). The SBOM is
    also kept as a workflow artifact. It describes the amd64 image.
-5. Points every tag (`main`, `sha-<short>`, `rc-*`, the version tags) at the
+5. Attaches SLSA v1 build provenance to the digest the same way
+   (`cosign attest --type slsaprovenance1`): `runDetails.builder.id` is
+   `https://github.com/tutors-sdk/tutors-mono-repo/.github/workflows/image-build.yml@<ref>`,
+   and the predicate names the commit built and the run that built it. The
+   step verifies the attestation under the publishing identity before going on.
+6. Points every tag (`main`, `sha-<short>`, `rc-*`, the version tags) at the
    signed digest with `docker buildx imagetools create`, and fails if any
    tag resolves to another digest. A tag therefore never names an image
-   whose signature or SBOM attestation is still missing.
+   whose signature, SBOM or provenance attestation is still missing.
 
 Pull requests run only step 1, with no registry login and no OIDC token.
 
@@ -173,7 +178,11 @@ cosign verify-attestation --type spdxjson \
   quay.io/tutors-sdk/tutors-reader:<tag>
 ```
 
-Both print the verified payload as JSON and exit non-zero when nothing
+The build provenance verifies the same way (`--type slsaprovenance1`); the
+release harness's `build-provenance` check runs exactly that. Images built
+before this attestation was added (17.0.0 and earlier) carry none.
+
+All three print the verified payload as JSON and exit non-zero when nothing
 matches. To read the SBOM, decode the attestation payload:
 
 ```bash
@@ -200,8 +209,7 @@ IMAGE_TAG=16.3.0-rc.1 docker compose up -d
 docker compose pull && docker compose up -d   # roll forward
 ```
 
-Set each `*_ORIGIN` to the URL users reach the app on; adapter-node uses it
-for absolute URLs and CSRF checks.
+The default Compose stack uses the pinned local Caddy proxy for HTTP. It preserves the public host/port and supplies `X-Forwarded-Proto` and `X-Forwarded-Host`. For HTTPS, replace its mounted Caddyfile with your TLS configuration or attach the private app services to your trusted TLS edge. The edge must overwrite those headers; do not publish app ports directly. Kit 3 has removed runtime `ORIGIN`.
 Set `PUBLIC_*_ORIGIN` to those same four URLs so navigation stays inside the
 stack. These are runtime environment values; changing them does not rebuild an image.
 
@@ -212,13 +220,13 @@ A step-by-step walkthrough, including troubleshooting, is in
 
 ```bash
 docker compose up --build          # all four apps on ports 3000-3003
-docker compose up --build reader   # one app
+docker compose up --build reader proxy # one app
 ```
 
 Compose reads an optional `.env` in the repo root (see `.env.example`).
 Without one the apps start in anonymous mode (`PUBLIC_ANON_MODE=TRUE`), which
 needs no Supabase project. If a host port is taken, override it, for example
-`READER_PORT=3010 docker compose up reader`.
+`READER_PORT=3010 docker compose up reader proxy`.
 
 ## Image contract
 
@@ -229,22 +237,24 @@ needs no Supabase project. If a host port is taken, override it, for example
 | Filesystem | read-only safe; nothing is written at runtime |
 | Liveness | `GET /healthz/live` returns `{"status":"ok"}` with no dependencies |
 | Readiness | `GET /healthz` also reports Supabase reachability |
+| Healthcheck | `HEALTHCHECK` (every 15s, 3s timeout, 3 retries) runs `node -e fetch(...)` against `/healthz/live` on `PORT`, the liveness route; the image has no curl or wget (Rule 0573) |
 | Metrics | `GET /metrics` in Prometheus text format (request histogram/counter, in-flight gauge, Node process metrics) |
 | Build identity | `GET /version` returns `{"app","version","revision","built","clock"}`; the only route that answers the commit or build date |
 | Request id | `x-request-id` response header (echoes a well-formed incoming one); the only per-request value in any header besides `Date` |
 | Entrypoint | `node build/index.js` (SvelteKit adapter-node) |
 
-Environment variables the server reads at startup:
+Runtime configuration and overlay metadata:
 
 | Variable | Purpose |
 | --- | --- |
-| `ORIGIN` | Public URL of the app, required for correct absolute URLs and CSRF checks |
+| `TUTORS_ORIGIN` | Overlay metadata for the Route/Ingress host; request origins come from trusted proxy headers |
 | `PUBLIC_READER_ORIGIN`, `PUBLIC_CATALOGUE_ORIGIN`, `PUBLIC_LIVE_ORIGIN`, `PUBLIC_TIME_ORIGIN` | Destinations for links between the four apps |
 | `PROTOCOL_HEADER`, `HOST_HEADER`, `ADDRESS_HEADER`, `XFF_DEPTH` | Trust proxy headers when behind a Route or Ingress |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
-| `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Moodle sync for the time app |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader only, server only: writes content locks after the educator check; unset makes lock changes answer 503 |
+| `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Reader only, server only: the educator-only Moodle sync in Educator Control; unset makes the sync answer 503 |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
 | `HARNESS_NOW` | **Release harness only.** An ISO 8601 instant that freezes the clock the server stamps into responses and records. Never set it in a deployment |
@@ -264,7 +274,7 @@ every comparison. The image keeps that to a known, short list:
   rendered into every course page) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
   an ISO 8601 instant (`2026-09-16T09:05:00.000Z`) it answers that instant;
   otherwise the system clock. Log timestamps, metrics, request durations and
-  everything Auth.js does with session expiry stay on the real clock: the seam
+  identity session expiry stay on the real clock: the seam
   never patches `Date`, so a frozen clock cannot keep an expired session alive.
   The image always runs with `NODE_ENV=production`, so the guard against
   running frozen by accident is that nothing sets the variable: it is absent
@@ -304,15 +314,20 @@ Every app serves `GET /metrics` on its normal port: `http_request_duration_secon
 `http_requests_total` and `http_requests_in_flight`, labelled by method, matched
 route and status, plus the default Node.js process metrics. `/metrics` and the
 `/healthz` probes are not counted. The route label is the SvelteKit route id,
-so unmatched requests share one `unmatched` series.
+so unmatched requests share one `unmatched` series. Both request SLIs are on
+`/metrics` from the first scrape: at start each app primes
+`http_requests_total` and every `http_request_duration_seconds` bucket at 0 for
+`{method="GET",route="unmatched",status_code="404"}`, so an app that has served
+no request reads as idle, not uninstrumented (Rule 0574).
 
 Because the endpoint sits behind the public Route, set `METRICS_TOKEN` in
 production and give the scraper the same value (Prometheus `authorization`,
 ServiceMonitor `endpoints[].authorization`).
 
 `observability/compose.yaml` starts Prometheus and Grafana, provisioned with
-the data source, alert rules (error rate, p99 latency, target down) and a
-contact point template. It scrapes the apps through their host ports, so it
+the data source, alert rules (per-objective burn-rate alerts generated from
+`release/slo.yaml` by `pnpm slo:alerts`, see [docs/slo.md](../docs/slo.md), plus
+target down) and a contact point template. It scrapes the apps through their host ports, so it
 runs alongside either the local stack or the staging stack:
 
 ```bash
@@ -434,13 +449,13 @@ log line.
 
 `deploy/k8s/base` holds a shared Deployment, Service, ConfigMap and
 PodDisruptionBudget. Each overlay under `deploy/k8s/overlays/<app>` sets the
-image, the name prefix, labels and the public `ORIGIN`.
+image, the name prefix, labels and the public `TUTORS_ORIGIN`.
 
 For the parallel `next` deployment, use `deploy/k8s/next/<app>` or its
 `deploy/k8s/variants/<substrate>/next-<app>` entry point. It reuses each
 production overlay's pinned image and sets runtime ConfigMap URLs:
 
-| App | `ORIGIN` |
+| App | `TUTORS_ORIGIN` |
 | --- | --- |
 | reader | `https://next.tutors.dev` |
 | catalogue | `https://next.catalogue.tutors.dev` |
@@ -513,7 +528,7 @@ applying. The reader overlay expects a `reader-tutors-app-oauth` Secret; copy
 `overlays/reader/secrets.yaml.example`
 to `secrets.yaml` (git-ignored) and apply it separately. Every app also reads
 an optional `<app>-tutors-app-secrets` Secret for `METRICS_TOKEN`
-(`base/secrets.yaml.example`); the time app's example adds `MOODLE_WS_TOKEN`.
+(`base/secrets.yaml.example`). The reader's `MOODLE_WS_TOKEN` goes in its `reader-tutors-app-oauth` Secret.
 
 `pnpm check:k8s` renders every overlay and checks it against the policies in
 `scripts/checks/conformance.ts`: registry-qualified and pinned images (a short
@@ -544,7 +559,7 @@ oc apply -k deploy/k8s/variants/openshift/reader
 | `components/route` | `route.openshift.io/v1` Route, edge TLS with the router's certificate, plain HTTP redirected, to the Service's `http` port |
 | `components/ingress` | `networking.k8s.io/v1` Ingress, `ingressClassName: nginx`, no TLS block, to the Service's `http` port |
 
-The host is stated once, in the overlay's `ORIGIN`. The component copies the
+The host is stated once, in the overlay's `TUTORS_ORIGIN`. The component copies the
 host out of it (`https://reader.tutors.dev` becomes `reader.tutors.dev`) and
 takes its name, labels and backend from the rendered Service. For that it has
 to sit one layer above the overlay, as the variants do:
@@ -561,14 +576,14 @@ component before that kustomization's patches and `namePrefix`, so the host
 would be the base `tutors.dev` and the backend the unprefixed Service.
 `pnpm check:k8s` fails such a rendering (`host-not-origin`,
 `backend-service-not-rendered`). The same ordering applies to a changed host:
-patch `ORIGIN` in a layer below the component (a kustomization over the
-overlay, then one that adds the component), or patch both `ORIGIN` and the
+patch `TUTORS_ORIGIN` in a layer below the component (a kustomization over the
+overlay, then one that adds the component), or patch both `TUTORS_ORIGIN` and the
 host in a kustomization over the variant and let the check confirm they agree.
-An `ORIGIN` with a port needs the second form, since a host cannot carry one.
+A `TUTORS_ORIGIN` with a port needs the second form, since a host cannot carry one.
 
-adapter-node uses `ORIGIN` as given, so an `https://` origin needs TLS in
+The proxy must supply the public protocol, so an `https://` origin needs TLS in
 front of the pod: the Route terminates it, while the Ingress needs either a
-TLS block or an `http://` `ORIGIN`. Another class or TLS is a patch in a
+TLS block or an `http://` `TUTORS_ORIGIN`. Another class or TLS is a patch in a
 kustomization over `variants/kind/<app>`:
 
 ```yaml
@@ -593,7 +608,7 @@ survive one proxy hop; raise `XFF_DEPTH` if a load balancer in front adds
 another.
 
 `pnpm check:k8s` renders the variants along with the overlays and adds entry
-point policies: the host equals the `ORIGIN` host, the backend is a rendered
+point policies: the host equals the `TUTORS_ORIGIN` host, the backend is a rendered
 Service and port, a Route terminates TLS and redirects plain HTTP, an Ingress
 names its class and any TLS block covers its host. kubeconform skips the Route
 kind only, as it is not in the Kubernetes schemas.

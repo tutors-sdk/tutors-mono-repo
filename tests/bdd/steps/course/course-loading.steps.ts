@@ -11,10 +11,11 @@ describeFeature(feature, ({ Background, Rule }) => {
   let title: string;
   let topics: LoShape[];
   let course: Course;
+  let calendar: Record<string, unknown> | undefined;
 
   const firstTopic = () => course.los[0] as Composite;
   const load = () => {
-    course = loadCourse(courseId, title, topics);
+    course = loadCourse(courseId, title, topics, {}, calendar);
   };
 
   // The Background runs before every scenario, so each one starts from a freshly published course.
@@ -22,6 +23,7 @@ describeFeature(feature, ({ Background, Rule }) => {
     Given("the generator has published the course {string} titled {string}", (_ctx, id: string, courseTitle: string) => {
       courseId = id;
       title = courseTitle;
+      calendar = undefined;
     });
     And("the course has {number} topics with {number} labs each", (_ctx, topicCount: number, labCount: number) => {
       topics = Array.from({ length: topicCount }, (_, t) =>
@@ -91,6 +93,39 @@ describeFeature(feature, ({ Background, Rule }) => {
       And("no route in the course should carry an unresolved course placeholder", () => {
         for (const lo of indexedLos(course)) expect(lo.route).not.toContain("{{COURSEURL}}");
       });
+    });
+  });
+
+  Rule("Where a course's calendar.yaml lists at least one week, the reader shall load that course's calendar.", ({ RuleScenario }) => {
+    const givenCalendar = (_ctx: unknown, calendarTitle: string, weekCount: number) => {
+      calendar = {
+        title: calendarTitle,
+        year: 2026,
+        weeks: Array.from({ length: weekCount }, (_, w) => ({ date: `2026-09-${String(7 + 7 * w).padStart(2, "0")}`, week: w + 1, topic: `Week ${w + 1}` }))
+      };
+    };
+    const noCalendar = () => {
+      expect(course.courseCalendar).toBeUndefined();
+    };
+
+    RuleScenario("A calendar with weeks is loaded", ({ Given, When, Then }) => {
+      Given("the course has a calendar.yaml titled {string} with {number} weeks", givenCalendar);
+      When("the reader loads the course", load);
+      Then("the course should have the calendar {string} with {number} weeks", (_ctx, calendarTitle: string, weekCount: number) => {
+        expect(course.courseCalendar?.title).toBe(calendarTitle);
+        expect(course.courseCalendar?.weeks.map((week) => week.title)).toEqual(Array.from({ length: weekCount }, (_, w) => `Week ${w + 1}`));
+      });
+    });
+
+    RuleScenario("A course with no calendar.yaml has no calendar", ({ When, Then }) => {
+      When("the reader loads the course", load);
+      Then("the course should have no calendar", noCalendar);
+    });
+
+    RuleScenario("A calendar.yaml with no weeks has no calendar", ({ Given, When, Then }) => {
+      Given("the course has a calendar.yaml titled {string} with {number} weeks", givenCalendar);
+      When("the reader loads the course", load);
+      Then("the course should have no calendar", noCalendar);
     });
   });
 });

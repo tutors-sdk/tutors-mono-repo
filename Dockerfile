@@ -4,7 +4,7 @@
 # Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time>.
 #
 #   docker build --build-arg APP_NAME=reader -t tutors/reader .
-#   docker run --rm -p 3000:3000 -e ORIGIN=http://localhost:3000 tutors/reader
+#   docker compose up --no-build reader proxy # local HTTP origin headers
 #
 # Published images live at quay.io/tutors-sdk/tutors-<app> (Quay repositories
 # are exactly <org>/<repo>, so the app is part of the repository name):
@@ -43,6 +43,8 @@ RUN corepack enable && corepack install
 # ---------------------------------------------------------------------------
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+# pnpm-workspace.yaml's patchedDependencies (dev tooling only) must resolve for the lockfile to install.
+COPY patches ./patches
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm fetch
 
@@ -122,5 +124,13 @@ ENV GIT_SHA=${GIT_SHA} \
 
 USER 1001
 EXPOSE 3000
+
+# Docker, Podman and the release harness read the image's own health from the
+# liveness route Kubernetes probes (/healthz/live: cheap, no Supabase call),
+# with the same timings as compose.yaml. The runtime has no curl or wget, so
+# node's fetch asks; PORT is read so an overridden port is still probed
+# (Rule 0573).
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/healthz/live').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
 
 CMD ["node", "build/index.js"]

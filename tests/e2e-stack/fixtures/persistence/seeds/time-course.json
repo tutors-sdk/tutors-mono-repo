@@ -1,0 +1,183 @@
+{
+  "_comment": "Since 1.47.0: what the time app reads for the Rule journeys' course in Rules 0590 and 0591 (fixtures/persistence/seeds/README.md). timeactive and duration are 30-second blocks, as the database keeps them.",
+  "tutors-connect-courses": [
+    {
+      "course_id": "harness-rules",
+      "course_record": {
+        "title": "Harness Rules Course"
+      }
+    }
+  ],
+  "tutors-connect-users": [
+    {
+      "github_id": "harness-enrolled",
+      "full_name": "Harness Enrolled Student",
+      "avatar_url": null,
+      "online_status": "offline",
+      "sentiment": "neutral"
+    },
+    {
+      "github_id": "harness-student",
+      "full_name": "Harness Student",
+      "avatar_url": null,
+      "online_status": "offline",
+      "sentiment": "neutral"
+    },
+    {
+      "github_id": "harness-quiet",
+      "full_name": "Harness Quiet Student",
+      "avatar_url": null,
+      "online_status": "offline",
+      "sentiment": "neutral"
+    }
+  ],
+  "calendar": [
+    {
+      "id": "2026-09-08",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 40,
+      "pageloads": 4
+    },
+    {
+      "id": "2026-09-08",
+      "studentid": "harness-student",
+      "courseid": "harness-rules",
+      "timeactive": 20,
+      "pageloads": 2
+    },
+    {
+      "id": "2026-09-09",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 60,
+      "pageloads": 6
+    },
+    {
+      "id": "2026-09-10",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 20,
+      "pageloads": 2
+    },
+    {
+      "id": "2026-09-10",
+      "studentid": "harness-student",
+      "courseid": "harness-rules",
+      "timeactive": 80,
+      "pageloads": 8
+    },
+    {
+      "id": "2026-09-11",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 90,
+      "pageloads": 9
+    },
+    {
+      "id": "2026-09-12",
+      "studentid": "harness-student",
+      "courseid": "harness-rules",
+      "timeactive": 30,
+      "pageloads": 3
+    },
+    {
+      "id": "2026-09-14",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 30,
+      "pageloads": 3
+    },
+    {
+      "id": "2026-09-14",
+      "studentid": "harness-student",
+      "courseid": "harness-rules",
+      "timeactive": 60,
+      "pageloads": 6
+    },
+    {
+      "id": "2026-09-15",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 120,
+      "pageloads": 12
+    },
+    {
+      "id": "2026-09-15",
+      "studentid": "harness-student",
+      "courseid": "harness-rules",
+      "timeactive": 40,
+      "pageloads": 4
+    },
+    {
+      "id": "2026-09-16",
+      "studentid": "harness-enrolled",
+      "courseid": "harness-rules",
+      "timeactive": 10,
+      "pageloads": 1
+    },
+    {
+      "id": "2026-09-16",
+      "studentid": "harness-student",
+      "courseid": "harness-rules",
+      "timeactive": 50,
+      "pageloads": 5
+    }
+  ],
+  "learning_records": [
+    {
+      "course_id": "harness-rules",
+      "student_id": "harness-enrolled",
+      "lo_id": "/lab/harness-rules/unit-1/topic-01/book-lab-01/01",
+      "duration": 20,
+      "count": 3,
+      "date_last_accessed": "2026-09-15T10:00:00+00:00",
+      "type": "lab"
+    },
+    {
+      "course_id": "harness-rules",
+      "student_id": "harness-enrolled",
+      "lo_id": "/lab/harness-rules/unit-1/topic-01/book-lab-01/02",
+      "duration": 30,
+      "count": 2,
+      "date_last_accessed": "2026-09-15T10:20:00+00:00",
+      "type": "lab"
+    },
+    {
+      "course_id": "harness-rules",
+      "student_id": "harness-enrolled",
+      "lo_id": "/lab/harness-rules/unit-1/topic-02/book-lab-01/01",
+      "duration": 10,
+      "count": 1,
+      "date_last_accessed": "2026-09-16T08:30:00+00:00",
+      "type": "lab"
+    },
+    {
+      "course_id": "harness-rules",
+      "student_id": "harness-student",
+      "lo_id": "/lab/harness-rules/unit-1/topic-01/book-lab-01/01",
+      "duration": 16,
+      "count": 2,
+      "date_last_accessed": "2026-09-14T11:00:00+00:00",
+      "type": "lab"
+    },
+    {
+      "course_id": "harness-rules",
+      "student_id": "harness-student",
+      "lo_id": "/lab/harness-rules/unit-1/topic-01/book-lab-01/02",
+      "duration": 8,
+      "count": 1,
+      "date_last_accessed": "2026-09-14T11:10:00+00:00",
+      "type": "lab"
+    },
+    {
+      "course_id": "harness-rules",
+      "student_id": "harness-quiet",
+      "lo_id": "/lab/harness-rules/unit-1/topic-01/book-lab-01/01",
+      "duration": 2,
+      "count": 1,
+      "date_last_accessed": "2026-09-10T09:00:00+00:00",
+      "type": "lab"
+    }
+  ]
+}

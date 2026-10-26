@@ -19,7 +19,7 @@
     aria-expanded={solutionRevealed}
     onclick={(e) => { e.stopPropagation(); onToggleSolution(); }}
   >
-    <span class="text-base">{solutionRevealed ? "▾" : "▸"}</span>
+    <span class="text-base" aria-hidden="true">{solutionRevealed ? "▾" : "▸"}</span>
     <span>{solutionRevealed ? "Hide Solution" : "Show Solution"}</span>
   </button>
   {#if solutionRevealed}
@@ -38,7 +38,7 @@
               aria-expanded={outputRevealed}
               onclick={(e) => { e.stopPropagation(); onToggleOutput(); }}
             >
-              <span class="text-sm">{outputRevealed ? "▾" : "▸"}</span>
+              <span class="text-sm" aria-hidden="true">{outputRevealed ? "▾" : "▸"}</span>
               {outputRevealed ? "Hide Output" : "Show saved output"}
             </button>
           </div>

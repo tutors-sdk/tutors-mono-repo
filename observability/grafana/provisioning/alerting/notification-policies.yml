@@ -1,4 +1,6 @@
 # Notification routing policy.
+# Pages (severity critical: the SLO page-fast and page-slow burn-rate alerts, and healthz-failing) go to the on-call
+# contact point. Tickets (severity warning: the SLO ticket alerts) go to tutors-tickets and never page (docs/slo.md).
 apiVersion: 1
 
 policies:
@@ -8,3 +10,10 @@ policies:
     group_wait: 30s
     group_interval: 5m
     repeat_interval: 4h
+    routes:
+      - receiver: tutors-tickets
+        object_matchers:
+          - ["severity", "=", "warning"]
+        group_wait: 5m
+        group_interval: 1h
+        repeat_interval: 24h

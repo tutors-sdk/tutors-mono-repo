@@ -1,0 +1,187 @@
+name: Deploy Pin PR
+
+# Opens the pin pull request for a final release tag, so step 10 of release/SOP.md
+# ("pnpm deploy:pin X.Y.Z PR merged") cannot be forgotten. 17.0.0 was tagged on
+# 15 October 2026 and nobody ran deploy:pin, so main kept pinning 16.2.2 and the
+# release harness went on judging main against the release before.
+#
+# image-build.yml calls it (its last job, after all four images are published) for a
+# v* tag; for a final vX.Y.Z (never an rc) it:
+#   1. branches deploy/pin-X.Y.Z from main (never release/*: that fires release-dispatch.yml)
+#   2. merges vX.Y.Z into it when main does not contain it yet, so the release's
+#      version bump, CHANGELOG and claims land with the pin (as #264 did for 16.2.2)
+#   3. runs pnpm deploy:pin X.Y.Z, which resolves each tag on quay.io, verifies the
+#      cosign signature by digest, and writes the overlays and release/deployed.json
+#   4. opens the pull request
+#
+# It deploys nothing: merging the pull request is the deploy, and deploy.yml
+# verifies the pins again and announces to the harness. A conflicting merge, an
+# image that does not verify, or a pin already on main opens no pull request and
+# says why in the run summary. Run it by hand with a version to retry.
+#
+# The pull request is opened with the release app's token when the RELEASE_APP_CLIENT_ID
+# variable and RELEASE_APP_PRIVATE_KEY secret are set (guides/Release-Capability.md),
+# so its CI starts by itself. Without them GITHUB_TOKEN opens it and its CI waits until
+# someone pushes to the branch or re-runs it. guides/Release-Strategy.md#deploy-and-post-deploy.
+
+# Called, not triggered by workflow_run: a workflow_run job runs with the base
+# repository's write token whatever started the run (zizmor: dangerous-triggers).
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "The tag image-build.yml published (vX.Y.Z or X.Y.Z); anything else is a no-op"
+        type: string
+        required: true
+    secrets:
+      RELEASE_APP_PRIVATE_KEY:
+        required: false
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release to pin (X.Y.Z; the vX.Y.Z tag and its images must exist)"
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: deploy-pin-pr
+  cancel-in-progress: false
+
+jobs:
+  pin:
+    name: Open the pin pull request
+    env:
+      HAS_APP_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+    if: github.repository == 'tutors-sdk/tutors-mono-repo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Anything that is not a final vX.Y.Z (an rc) stops here, quietly.
+      - name: Which release
+        id: version
+        env:
+          REF: ${{ inputs.version }}
+        run: |
+          version="${REF#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "not a final release tag: ${REF}; nothing to pin"
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout main
+        if: steps.version.outputs.version != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Is there anything to do?
+        id: todo
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          branch="deploy/pin-$VERSION"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          if ! git rev-parse --verify --quiet "refs/tags/v$VERSION^{commit}" > /dev/null; then
+            echo "::error title=Deploy pin::v$VERSION is not a tag"
+            exit 1
+          fi
+          pinned="$(jq -r '.tag // empty' release/deployed.json 2>/dev/null || true)"
+          if [ "$pinned" = "$VERSION" ]; then
+            echo "main already pins $VERSION: nothing to do" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          open="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$open" ]; then
+            echo "a pin pull request for $VERSION is already open: $open" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Setup pnpm
+        if: steps.todo.outputs.skip == 'false'
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      # No dependency cache: what this job pins decides what is deployed.
+      - name: Setup Node.js
+        if: steps.todo.outputs.skip == 'false'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install root dependencies
+        if: steps.todo.outputs.skip == 'false'
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter .
+
+      - name: Install cosign
+        if: steps.todo.outputs.skip == 'false'
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Merge the release and pin it
+        if: steps.todo.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ steps.todo.outputs.branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          if git merge-base --is-ancestor "v$VERSION" HEAD; then
+            echo "main already contains v$VERSION"
+          elif ! git merge --no-ff -m "Merge the $VERSION release into main" "v$VERSION"; then
+            git merge --abort
+            echo "::error title=Deploy pin::v$VERSION does not merge cleanly into main. Merge release/$VERSION into main by hand, then run this workflow with version $VERSION."
+            exit 1
+          fi
+          pnpm --silent deploy:pin "$VERSION"
+          git add deploy/k8s/overlays release/deployed.json
+          git commit -m "deploy: pin production to $VERSION" -m "pnpm deploy:pin $VERSION, opened by deploy-pin-pr.yml after image-build.yml published v$VERSION."
+
+      - name: Mint the release app token
+        id: app-token
+        if: steps.todo.outputs.skip == 'false' && vars.RELEASE_APP_CLIENT_ID != '' && env.HAS_APP_KEY == 'true'
+        continue-on-error: true
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Warn when the pull request's CI will not start by itself
+        if: steps.todo.outputs.skip == 'false' && steps.app-token.outcome != 'success'
+        run: echo "::warning title=Deploy pin::Opened with GITHUB_TOKEN, so the pin pull request's CI does not start by itself. Re-run it from the pull request, or set up the release app (guides/Release-Capability.md)."
+
+      - name: Push and open the pull request
+        if: steps.todo.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ steps.todo.outputs.branch }}
+        run: |
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          # Forced: no open pull request uses this branch (checked above), so a tip left by an
+          # earlier run that failed before opening its pull request, or whose pull request was
+          # closed, is stale and is replaced rather than rejecting the retry.
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push --force "https://github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
+          body="$(printf '%s\n' \
+            "Pins production to $VERSION (release/SOP.md, step 10), opened by deploy-pin-pr.yml after image-build.yml published \`v$VERSION\`." \
+            "" \
+            "- Merges \`v$VERSION\` into main when main did not contain it yet." \
+            "- \`pnpm deploy:pin $VERSION\`: each overlay's \`newTag\` and \`digest\`, verified on quay.io and against image-build.yml's cosign identity, and \`release/deployed.json\`." \
+            "" \
+            "**Merging this pull request is the deploy.** deploy.yml verifies the pins again and, after the \`production\` environment approval, tells the release harness, which judges main against $VERSION from then on.")"
+          url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "Deploy $VERSION: pin production to it" --body "$body")"
+          echo "Opened $url" | tee -a "$GITHUB_STEP_SUMMARY"

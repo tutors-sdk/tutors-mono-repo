@@ -6,7 +6,6 @@
   import ThemeSwitcher from "./layout/ThemeSwitcher.svelte";
   import CodeThemeSwitcher from "./layout/CodeThemeSwitcher.svelte";
   import { t } from "@tutors/i18n";
-  import { currentCourse } from "@tutors/runes";
   import { tourService } from "@tutors/tour";
   let open = $state(false);
 </script>
@@ -29,10 +28,12 @@
     <section aria-label={t("shell.contentLanguage")}>
       <div class="preference-field"><span>{t("nav.layout.language")}</span><div class="preference-control"><LanguageSwitcher /></div></div>
     </section>
-    {#if currentCourse.value}<button class="tour-button" onclick={() => { open = false; setTimeout(() => tourService.start(), 150); }}>{t("tour.startButton")}<span aria-hidden="true">→</span></button>{/if}
+    <!-- Offered off a course too (#371): the home page has its own menus and its own card, and a reader
+         who has not opened a course yet is exactly the one who needs showing round. -->
+    <button class="tour-button" onclick={() => { open = false; setTimeout(() => tourService.start(), 150); }}>{t("tour.startButton")}<span aria-hidden="true">→</span></button>
   </div>
 {/snippet}
-<Menu bind:open {menuSelector} {menuContent} ariaLabel={t("nav.layout.tip")} title={t("shell.preferences")} width="22rem" />
+<Menu bind:open {menuSelector} {menuContent} ariaLabel={t("shell.preferences")} width="22rem" />
 <style>
   h2 { font-size: var(--font-body); font-weight: var(--weight-semibold); padding: var(--space-1) var(--space-1) var(--space-4); }
   section + section { border-top: 1px solid var(--ui-border); margin-top: var(--space-4); padding-top: var(--space-4); }

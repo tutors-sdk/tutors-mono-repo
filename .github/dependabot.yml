@@ -1,44 +1,44 @@
 version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+multi-ecosystem-groups:
+  dependencies:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 1
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     ignore:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-patch"
+      # TypeScript 7 (the native compiler) has no JS API yet: svelte2tsx refuses it
+      # ("emitDts is not compatible with TypeScript 7"), so svelte-package and svelte-check
+      # cannot run. Lift this once the Svelte tooling supports 7.
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
     groups:
-      svelte:
+      # Security updates are grouped per ecosystem, outside the weekly batch.
+      npm-security:
+        applies-to: "security-updates"
         patterns:
-          - "svelte*"
-          - "@sveltejs/*"
-        update-types:
-          - "minor"
-      skeleton:
-        patterns:
-          - "@skeletonlabs/*"
-        update-types:
-          - "minor"
-      testing:
-        patterns:
-          - "vitest"
-          - "@vitest/*"
-          - "playwright*"
-          - "@playwright/*"
-        update-types:
-          - "minor"
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
+    patterns:
+      - "*"
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "ci"
@@ -47,9 +47,7 @@ updates:
         update-types:
           - "version-update:semver-patch"
     groups:
-      actions:
+      actions-security:
+        applies-to: "security-updates"
         patterns:
           - "*"
-        update-types:
-          - "minor"
-          - "major"

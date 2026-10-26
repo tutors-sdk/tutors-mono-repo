@@ -26,6 +26,8 @@ const LAYERS = [
       "packages/svelte/themes",
       "packages/svelte/community",
       "packages/svelte/connect",
+      "packages/svelte/identity-sveltekit",
+      "packages/svelte/realtime-supabase",
       "packages/svelte/utils/rbac",
       "packages/svelte/utils/privacy",
       "packages/svelte/utils/tour"
@@ -57,6 +59,34 @@ module.exports = {
   forbidden: [
     ...layerRules,
     {
+      name: "identity-provider-only-in-adapter",
+      comment: "Better Auth belongs to the identity adapter; consumers depend on identity contracts.",
+      severity: "error",
+      from: { path: "^(apps|packages)/", pathNot: "^packages/svelte/identity-sveltekit/" },
+      to: { path: "(^|/)(@better-auth/|better-auth(/|$))" }
+    },
+    {
+      name: "identity-contracts-self-contained",
+      comment: "Identity contracts import no framework, database, provider or other package.",
+      severity: "error",
+      from: { path: "^packages/jsr/identity/" },
+      to: { pathNot: "^packages/jsr/identity/" }
+    },
+    {
+      name: "realtime-contracts-self-contained",
+      comment: "The Realtime port imports no framework, broker client or other package; adapters depend on it, not the reverse.",
+      severity: "error",
+      from: { path: "^packages/jsr/realtime/" },
+      to: { pathNot: "^packages/jsr/realtime/" }
+    },
+    {
+      name: "identity-no-server-in-browser",
+      comment: "Browser entry points cannot reach server adapters or private environment modules, even through a shared barrel.",
+      severity: "error",
+      from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/svelte/identity-sveltekit/src/client\\.ts$)" },
+      to: { path: "(\\.server\\.[jt]s$|/server/|\\$env/(static|dynamic)/private|\\$app/env/private|(^|/)(?:better-auth/(?:dist/)?(?:auth/|api/|cookies/|integrations/|index\\.)))", reachable: true }
+    },
+    {
       name: "no-app-to-app",
       comment: "Apps are deployed separately; share code through a package instead of importing another app.",
       severity: "error",
@@ -78,6 +108,14 @@ module.exports = {
       severity: "error",
       from: { path: "^packages/svelte/ui-primitives/" },
       to: { path: "^packages/svelte/(community|connect|utils/rbac)/" }
+    },
+    {
+      name: "tutors-types-self-contained",
+      comment:
+        "@tutors/tutors-types is the vocabulary every layer shares, so it imports nothing outside its own files: no other workspace, no npm package, no Node built-in (Rule 0130).",
+      severity: "error",
+      from: { path: "^packages/jsr/types/" },
+      to: { pathNot: "^packages/jsr/types/" }
     },
     {
       name: "no-cross-package-cycle",

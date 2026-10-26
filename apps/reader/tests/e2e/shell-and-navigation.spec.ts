@@ -88,7 +88,7 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   const header = page.locator(".shell-header");
   for (const theme of ["tutors", "dyslexia"]) {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await header.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+    await header.getByRole("button", { name: "Preferences", exact: true }).click();
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
     for (const width of [320, 390, 768]) {
@@ -113,7 +113,9 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   await expect(navigation.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "View Calendar for this course", exact: true })).toBeVisible();
   await expect(navigation.locator(".calendar-week")).toContainText("This week");
+  await expect.poll(() => navigation.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");
+  await expect(navigation).not.toBeVisible();
   await expect(menu).toBeFocused();
 });
 
@@ -153,7 +155,7 @@ test("Desktop sidebar holds course info and the tools", { tag: "@rule-0024" }, a
 
 test("Closing the preferences menu returns focus to its button", { tag: "@rule-0025" }, async ({ page }) => {
   await page.goto(course);
-  const button = page.getByRole("button", { name: "Open Theme Menu", exact: true });
+  const button = page.getByRole("button", { name: "Preferences", exact: true });
   await button.click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   await expect(preferences).toBeVisible();
@@ -166,9 +168,9 @@ test("Closing the preferences menu returns focus to its button", { tag: "@rule-0
 
 test("Closing the online dialog returns focus to its course tools row", { tag: "@rule-0025" }, async ({ page }) => {
   await seedOneOnline(page);
-  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View 1 Online", exact: true });
+  const viewOnline = page.locator(".shell-navigation").getByRole("button", { name: "View Online 1", exact: true });
   await viewOnline.click();
-  const online = page.getByRole("dialog", { name: "View 1 Online", exact: true });
+  const online = page.getByRole("dialog", { name: "View Online", exact: true });
   await expect(online).toBeVisible();
   await online.getByRole("button", { name: "Close", exact: true }).click();
   await expect(online).not.toBeVisible();
@@ -216,6 +218,28 @@ async function scrollMain(page: Page, top: number) {
   await page.locator(".shell-main").evaluate((main, to) => main.scrollTo({ top: to }), top);
 }
 
+test("Footer fills short pages and follows long content", { tag: "@rule-0241" }, async ({ page }) => {
+  await page.goto("/llm/tutors-reference-manual");
+  await expect(page.getByRole("heading", { name: "Docs for LLMs", exact: true })).toBeVisible();
+  const footer = page.getByRole("contentinfo", { name: "Site footer", exact: true });
+  const scroller = page.locator(".shell-main");
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 2000 });
+    await scrollMain(page, 0);
+    await expect.poll(() => footer.evaluate(el => Math.round(el.getBoundingClientRect().bottom)), `${width}px short page`).toBe(2000);
+    expect(await scroller.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+
+    await page.setViewportSize({ width, height: 400 });
+    await scrollMain(page, 0);
+    await expect(footer).not.toBeInViewport();
+    const mainBox = (await page.getByRole("main").boundingBox())!;
+    expect((await footer.boundingBox())!.y).toBeGreaterThanOrEqual(mainBox.y + mainBox.height);
+    await scrollMain(page, 1_000_000);
+    await expect(footer).toBeInViewport();
+    await expect.poll(() => footer.evaluate(el => Math.round(el.getBoundingClientRect().bottom)), `${width}px long page`).toBe(400);
+  }
+});
+
 test("Phone header hides on scroll down and returns on scroll up", { tag: "@rule-0062" }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(course);
@@ -234,4 +258,161 @@ test("Desktop header stays while scrolling", { tag: "@rule-0062" }, async ({ pag
   for (const top of [200, 400, 700]) await scrollMain(page, top);
   await page.waitForTimeout(300);
   expect((await page.locator(".shell-header").boundingBox())!.y).toBe(0);
+});
+
+test("The side menu leads with a card for what is open", { tag: "@rule-0260" }, async ({ page }) => {
+  await page.goto("/topic/reference-course/topic-01-typical");
+  const column = page.locator(".shell-navigation .navigation-scroll");
+  const card = column.locator(".lo-card");
+  await expect(card).toBeVisible();
+  await expect(column.locator("> *").first()).toHaveClass(/lo-card/);
+  // Title, artwork and summary: the three things the canvas heading used to carry.
+  await expect(card.getByRole("heading")).toHaveText("Simple");
+  await expect(card.locator(".lo-artwork")).toBeVisible();
+  await expect(card.locator(".lo-card-summary")).toHaveText("Units with presentations, labs + resources");
+  // Scaled to the column: as wide as the menu allows, and no wider.
+  const [cardBox, columnBox] = [(await card.boundingBox())!, (await column.boundingBox())!];
+  expect(Math.round(cardBox.width)).toBeLessThanOrEqual(Math.round(columnBox.width));
+  expect(cardBox.width).toBeGreaterThan(columnBox.width * 0.8);
+  // The way out sits right under the card. From a topic that is the course.
+  const back = column.locator(".back-link");
+  await expect(back).toHaveText("← Reference Course");
+  await expect(back).toHaveAttribute("href", course);
+  expect((await back.boundingBox())!.y).toBeGreaterThan(cardBox.y + cardBox.height - 1);
+  // And the canvas no longer shows it: its only heading naming the topic is the hidden level-1 one (Rule 0262).
+  await expect(page.locator("#main-content").getByRole("heading", { name: "Simple", exact: true, level: 2 })).toHaveCount(0);
+  // Opening a note swaps the card for that note's.
+  await page.goto("/note/tutors-reference-manual/unit-1-getting-started/note-a-getting-started");
+  await expect(card.getByRole("heading")).toHaveText("Getting Started");
+  await expect(card.locator(".lo-card-summary")).toHaveText("The basic model of Tutors");
+});
+
+test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, async ({ page }) => {
+  const notebook = "/notebook/reference-course/topic-01-typical/unit-1/notebook-a";
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 720 });
+    for (const route of [lab, notebook]) {
+      await page.goto(route);
+      if (width < 1024) await page.getByRole("button", { name: "Course navigation", exact: true }).click();
+      const column = page.locator(width < 1024 ? ".drawer-body .navigation-scroll" : ".shell-navigation .navigation-scroll");
+      const context = column.locator(".lo-context");
+      const heading = context.locator("summary");
+      const card = context.locator(".lo-card");
+      await expect(column.locator("> *").first()).toHaveClass(/lo-context/);
+      await expect(heading).toBeVisible();
+      await expect(card).toBeHidden();
+      const artwork = (await heading.locator(".lo-artwork").boundingBox())!;
+      // A scaled layout can land a 48px box a few millionths short (47.99999809 in CI), so compare to the pixel.
+      expect(artwork.width).toBeCloseTo(48, 1);
+      expect(artwork.height).toBeCloseTo(48, 1);
+      const headingBox = (await heading.boundingBox())!;
+      expect(headingBox.height).toBeGreaterThanOrEqual(44);
+      expect(headingBox.height).toBeLessThan(160);
+      // Measure together so hydration or font loading cannot leave a stale heading position.
+      await expect.poll(() => column.evaluate(el => {
+        const bottom = el.querySelector(".lo-context summary")!.getBoundingClientRect().bottom;
+        return Math.min(
+          el.querySelector(".back-link")!.getBoundingClientRect().top - bottom,
+          el.querySelector(".steps")!.getBoundingClientRect().top - bottom
+        );
+      })).toBeGreaterThan(0);
+      expect(await fitsViewport(page), `${route} at ${width}px`).toBe(true);
+      // Native disclosure works with a keyboard and exposes the existing full card.
+      const title = await heading.locator("strong").textContent();
+      await heading.focus();
+      await page.keyboard.press("Space");
+      await expect(context).toHaveAttribute("open", "");
+      await expect(card).toBeVisible();
+      await expect(card.getByRole("heading")).toHaveText(title!);
+      await expect(card.locator(".lo-card-summary")).toBeVisible();
+      await page.keyboard.press("Enter");
+      await expect(context).not.toHaveAttribute("open");
+      await expect(card).toBeHidden();
+      if (width < 1024) {
+        await column.locator(".steps a").first().click();
+        await expect(page.getByRole("dialog", { name: "Course navigation", exact: true })).toBeHidden();
+      }
+    }
+  }
+});
+
+test("Every kind of resource gets the same way back", { tag: "@rule-0260" }, async ({ page }) => {
+  const topic = "/topic/reference-course/topic-01-typical";
+  const column = page.locator(".shell-navigation .navigation-scroll");
+  const back = column.locator(".back-link");
+  // A lab's compact context keeps the same way back above the step list.
+  await page.goto(`${topic}/unit-1/book-a`.replace("/topic/", "/lab/"));
+  await expect(column.locator(".lo-context-heading strong")).toHaveText("Lab-01-(md)");
+  await expect(back).toHaveText("← Simple");
+  await expect(back).toHaveAttribute("href", topic);
+  expect((await back.boundingBox())!.y).toBeLessThan((await column.locator(".steps").boundingBox())!.y);
+  // The kinds that never had one get the same link to the same place.
+  for (const route of [`${topic}/unit-1/notebook-a`.replace("/topic/", "/notebook/"), `${topic}/unit-1/talk-1-intro`.replace("/topic/", "/talk/")]) {
+    await page.goto(route);
+    await expect(back, route).toHaveText("← Simple");
+    await expect(back, route).toHaveAttribute("href", topic);
+  }
+});
+
+test("A topic page keeps a hidden level-1 heading", { tag: "@rule-0262" }, async ({ page }) => {
+  await page.goto("/topic/reference-course/topic-01-typical");
+  const h1 = page.getByRole("heading", { level: 1 });
+  await expect(h1).toHaveCount(1);
+  await expect(h1).toHaveText("Simple");
+  // Present for screen readers and heading navigation, but not drawn: the side menu's card shows the title.
+  const box = (await h1.boundingBox())!;
+  expect(box.width * box.height).toBeLessThanOrEqual(1);
+  await expect(page.locator(".shell-navigation .lo-card").getByRole("heading")).toHaveText("Simple");
+});
+
+const CREDITS = "A reference course containing all supported learning objects";
+
+test("Credits follow the course title in the header", { tag: "@rule-0261" }, async ({ page }) => {
+  const title = page.locator(".shell-header .course-title");
+  const credits = page.locator(".shell-header .course-credits");
+  const fontSize = (what: typeof title) => what.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(course);
+  await expect(title).toHaveText("Reference Course");
+  await expect(credits).toHaveText(CREDITS);
+  // After the title, and quieter than it.
+  const titleBox = (await title.boundingBox())!;
+  expect((await credits.boundingBox())!.x).toBeGreaterThanOrEqual(titleBox.x + titleBox.width);
+  expect(await fontSize(credits)).toBeLessThan(await fontSize(title));
+  // The credits belong to the course, so they travel with its title rather than staying on its front page.
+  await page.goto(lab);
+  await expect(credits).toHaveText(CREDITS);
+  // Too long for the header: one line, cut off at the end, and nothing scrolls sideways.
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const shape = await credits.evaluate((el) => ({ lines: el.scrollHeight / parseFloat(getComputedStyle(el).lineHeight), clipped: el.scrollWidth > el.clientWidth }));
+  expect(shape.lines).toBeLessThan(2);
+  expect(shape.clipped).toBe(true);
+  expect(await fitsViewport(page)).toBe(true);
+});
+
+test("A narrow header carries the title alone", { tag: "@rule-0261" }, async ({ page }) => {
+  const credits = page.locator(".shell-header .course-credits");
+  for (const width of [1023, 390]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(course);
+    await expect(page.locator(".shell-header .course-title"), `${width}px`).toHaveText("Reference Course");
+    await expect(credits, `${width}px`).toBeHidden();
+  }
+  // The same course one pixel wider does name them, so the narrow header is hiding the credits, not missing them.
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await expect(credits).toHaveText(CREDITS);
+});
+
+test("Away from a course the navigation leads with its own sections", { tag: "@rule-0260" }, async ({ page }) => {
+  const column = page.locator(".shell-navigation .navigation-scroll");
+  // The course's own front page: the header names and pictures the course, so the menu does not repeat it.
+  await page.goto(course);
+  await expect(column.locator("> *").first()).toHaveText("Learn");
+  await expect(column.locator(".lo-card, .lo-context")).toHaveCount(0);
+  await page.goto("/topic/reference-course/topic-01-typical");
+  await expect(column.locator(".lo-card")).toBeVisible();
+  // currentLo survives leaving the course, so the home page is where a stale card would show up.
+  await page.goto("/");
+  await expect(column.locator("> *").first()).toHaveText("Tutors");
+  await expect(column.locator(".lo-card, .lo-context")).toHaveCount(0);
 });

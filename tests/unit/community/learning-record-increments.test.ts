@@ -26,12 +26,10 @@ const net = vi.hoisted(() => {
   return state;
 });
 
-vi.mock("$env/dynamic/public", () => ({
-  env: {
-    PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-    PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-    PUBLIC_ANON_MODE: "FALSE"
-  }
+vi.mock("$app/env/public", () => ({
+  PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
+  PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
+  PUBLIC_ANON_MODE: "FALSE"
 }));
 
 import { updateLearningRecordsDuration } from "../../../packages/svelte/community/src/utils/supabase-client.ts";

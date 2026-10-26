@@ -2,17 +2,16 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env,
-// SvelteKit and Auth.js. Everything between them is product code.
+// SvelteKit and the identity adapter. Everything between them is product code.
 vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 // The time library builds its own client; locally it resolves a different copy of supabase-js, so its seam is `getSupabase`.
 vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({ getSupabase: (await import("../../support/supabase-recorder.ts")).createClient }));
-vi.mock("$env/dynamic/public", async () => ({ env: (await import("../../support/supabase-recorder.ts")).publicEnv }));
-// `$app/environment` and `$app/navigation` are aliased to one stub file, so one mock serves both.
-vi.mock("$app/environment", () => ({ browser: true, goto: vi.fn() }));
-vi.mock("@auth/sveltekit/client", () => ({ signIn: vi.fn(), signOut: vi.fn() }));
+vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
+// `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
+vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import { freshBrowser, liveActivityStored, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { BaseCalendarModel } from "../../../../packages/jsr/time/src/services/base-calendar-model.ts";
@@ -20,6 +19,7 @@ import { CourseTime } from "../../../../packages/jsr/time/src/services/course-ti
 import { formatTimeNearestMinute } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
 import { formatDate } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
+import { currentLo } from "../../../../packages/svelte/runes/src/index.svelte.ts";
 import { supabaseProfile } from "../../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
 import type { CourseVisit } from "../../../../packages/svelte/connect/src/types.ts";
 
@@ -27,7 +27,7 @@ const feature = await loadFeature("tests/bdd/features/student/learning-progress.
 
 type TableRow = Record<string, string>;
 
-describeFeature(feature, ({ Background, Scenario }) => {
+describeFeature(feature, ({ Background, Scenario, Rule }) => {
   const courses = new Map<string, Course>();
   let course: Course;
   let login: string;
@@ -82,32 +82,40 @@ describeFeature(feature, ({ Background, Scenario }) => {
     });
   });
 
+  let durationBefore: number;
+  let timeActiveBefore: number;
+  const today = () => recorder.rows("calendar").find((r) => r.id === formatDate(new Date()) && r.studentid === login && r.courseid === course.courseId);
+  const viewLab = async (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
+  const staysOnPage = async (_ctx: unknown, seconds: number) => {
+    durationBefore = learningRecord(course.courseId, 1)!.duration as number;
+    timeActiveBefore = today()!.timeactive as number;
+    vi.useFakeTimers();
+    tutorsConnectService.startTimer();
+    await vi.advanceTimersByTimeAsync(seconds * 1000);
+    tutorsConnectService.stopTimer();
+    vi.useRealTimers();
+    await settle();
+  };
+  const recordedBlocks = (_ctx: unknown, blocks: number) => {
+    expect((learningRecord(course.courseId, 1)!.duration as number) - durationBefore).toBe(blocks);
+    expect((today()!.timeactive as number) - timeActiveBefore).toBe(blocks);
+  };
+  const countedPageLoads = (_ctx: unknown, count: number) => {
+    expect(learningRecord(course.courseId, 1)).toMatchObject({ count, type: "lab" });
+    expect(recorder.rows("calendar")).toMatchObject([{ id: formatDate(new Date()), studentid: login, courseid: course.courseId, pageloads: count }]);
+  };
+  const LEGACY_FUNCTIONS = ["get_count_learning_records", "increment_calendar"];
+  const requests = (_ctx: unknown, count: number, fn: string) => {
+    expect(recorder.rpcCalls.filter((call) => call.fn === fn)).toHaveLength(count);
+    expect(recorder.rpcCalls.filter((call) => LEGACY_FUNCTIONS.includes(call.fn))).toEqual([]);
+    expect(recorder.tableCalls.filter((call) => call.table === "learning_records" || call.table === "calendar")).toEqual([]);
+  };
+
   Scenario("Record learning activity", ({ When, Then, And }) => {
-    let durationBefore: number;
-    When("the student views lab {number} of the course {number} times", async (_ctx, lab: number, times: number) => {
-      await view(course.courseId, lab, times);
-    });
-    And("the student stays on that page for {number} seconds", async (_ctx, seconds: number) => {
-      durationBefore = learningRecord(course.courseId, 1)!.duration as number;
-      vi.useFakeTimers();
-      tutorsConnectService.startTimer();
-      await vi.advanceTimersByTimeAsync(seconds * 1000);
-      tutorsConnectService.stopTimer();
-      vi.useRealTimers();
-      await settle();
-    });
-    Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", (_ctx, blocks: number) => {
-      expect((learningRecord(course.courseId, 1)!.duration as number) - durationBefore).toBe(blocks);
-      const increments = recorder.rpcCalls.filter((call) => call.fn === "increment_calendar");
-      expect(increments).toHaveLength(blocks);
-      for (const call of increments) {
-        expect(call.args).toEqual({ field_name: "timeactive", row_id: formatDate(new Date()), student_id_value: login, course_id_value: course.courseId });
-      }
-    });
-    And("the system shall increment the page load count for the lab to {number}", (_ctx, count: number) => {
-      expect(learningRecord(course.courseId, 1)).toMatchObject({ count, type: "lab" });
-      expect(recorder.rows("calendar")).toMatchObject([{ id: formatDate(new Date()), studentid: login, courseid: course.courseId, pageloads: count }]);
-    });
+    When("the student views lab {number} of the course {number} times", viewLab);
+    And("the student stays on that page for {number} seconds", staysOnPage);
+    Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
   });
 
   Scenario("Resume from last accessed position", ({ Given, When, Then, And }) => {
@@ -159,6 +167,182 @@ describeFeature(feature, ({ Background, Scenario }) => {
     And("the records shall be grouped by course, {number} for {string} and {number} for {string}", (_ctx, n1: number, c1: string, n2: number, c2: string) => {
       const perCourse = (courseId: string) => recorder.rows("learning_records").filter((r) => r.course_id === courseId).length;
       expect([perCourse(c1), perCourse(c2)]).toEqual([n1, n2]);
+    });
+  });
+
+  Rule("When a student opens a learning object, the reader shall report one learning event for it.", ({ RuleScenario }) => {
+    /** Every event the reader stored for Tutors Live for `name`, in order: one upsert per learning event. */
+    const reported = (name: string) => liveActivityStored(name);
+    const viewLab = (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
+    const countedViews = (_ctx: unknown, count: number) => expect(learningRecord(course.courseId, 1)).toMatchObject({ count });
+    const reportedCount = (_ctx: unknown, count: number, name: string) => expect(reported(name)).toHaveLength(count);
+
+    RuleScenario("Page data settling does not report the view again", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      // The course layout reports from an `$effect` tracking the course, the learning object and the
+      // id, so it runs again each time one of those resolves. Nothing about the page has changed.
+      And("the course, the learning object and the identity of the student settle", async () => {
+        tutorsConnectService.learningEvent({});
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the system shall increment the page load count for the lab to {number}", countedViews);
+      And("the reader shall have reported {number} learning event for {string}", reportedCount);
+    });
+
+    RuleScenario("A change of mood on the same page is still reported", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student changes their sentiment to {string}", async (_ctx, sentiment: string) => {
+        await tutorsConnectService.updateSentiment(sentiment);
+        // The id rune changed, so the layout's effect runs again - this time with something to say.
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the reader shall have reported {number} learning events for {string}", reportedCount);
+      And("the last reported event shall carry the sentiment {string}", (_ctx, sentiment: string) => {
+        expect(reported("Alice").at(-1)?.user?.sentiment).toBe(sentiment);
+      });
+    });
+  });
+
+  Rule("When a student moves to another learning object, the reader shall report one learning event, for the learning object they arrive at.", ({ RuleScenario }) => {
+    const reported = (name: string) => liveActivityStored(name);
+    const reportedCount = (_ctx: unknown, count: number, name: string) => expect(reported(name)).toHaveLength(count);
+    const viewLab = (_ctx: unknown, lab: number, times: number) => view(course.courseId, lab, times);
+    /** The route params SvelteKit gives a lab page: `/lab/[courseid]/[...loid]`. */
+    const paramsOf = (lab: number) => {
+      const [, , courseid, ...loid] = labsOf(course)[lab - 1].route.split("/");
+      return { courseid, loid: loid.join("/") };
+    };
+
+    RuleScenario("The learning object loading before the address changes is not reported as a page", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      // What the course layout sees on a client-side move: navigation starts, the destination's load sets
+      // `currentLo` while `page.params` still names the page being left, so the layout's effect runs with
+      // the old address and the new learning object. Only when SvelteKit commits do the params catch up.
+      And("the student moves to lab {number}, which loads before the address changes", async (_ctx, lab: number) => {
+        const leaving = paramsOf(lab - 1);
+        tutorsConnectService.navigating(labsOf(course)[lab - 2].route, labsOf(course)[lab - 1].route);
+        currentLo.value = labsOf(course)[lab - 1];
+        tutorsConnectService.learningEvent(leaving);
+        tutorsConnectService.navigated();
+        tutorsConnectService.learningEvent(paramsOf(lab));
+        await settle();
+      });
+      Then("the system shall count {number} page load for lab {number} and {number} for lab {number}", (_ctx, first: number, firstLab: number, second: number, secondLab: number) => {
+        expect(learningRecord(course.courseId, firstLab)).toMatchObject({ count: first });
+        expect(learningRecord(course.courseId, secondLab)).toMatchObject({ count: second });
+      });
+      And("the reader shall have reported {number} learning events for {string}", reportedCount);
+    });
+
+    // An anchor link, the skip link or a search filter changes the hash or query, which SvelteKit treats
+    // as a navigation, but the student is still on the same page.
+    RuleScenario("A jump within the same page is not a new page load", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student jumps to a heading on the same page", async () => {
+        const path = labsOf(course)[0].route;
+        tutorsConnectService.navigating(path, path);
+        tutorsConnectService.navigated(path, path);
+        // The same params `openLo` reported the view with: the page has not changed.
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the system shall increment the page load count for the lab to {number}", (_ctx, count: number) => expect(learningRecord(course.courseId, 1)).toMatchObject({ count }));
+      And("the reader shall have reported {number} learning event for {string}", reportedCount);
+    });
+
+    // The quiz asks before a student leaves it; declining cancels the navigation, so no `afterNavigate` follows.
+    RuleScenario("A move the student cancels does not hold back later reports", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student starts to move to lab {number} but cancels", (_ctx, lab: number) => {
+        const attempt = tutorsConnectService.navigating(labsOf(course)[0].route, labsOf(course)[lab - 1].route);
+        tutorsConnectService.navigationAbandoned(attempt);
+      });
+      And("the student changes their sentiment to {string}", async (_ctx, sentiment: string) => {
+        await tutorsConnectService.updateSentiment(sentiment);
+        tutorsConnectService.learningEvent({});
+        await settle();
+      });
+      Then("the reader shall have reported {number} learning events for {string}", reportedCount);
+    });
+  });
+
+  Rule("When a student opens a learning object, the reader shall record the page view against the learning object and the day's calendar in one database request.", ({ RuleScenario }) => {
+    RuleScenario("A page view is one request", ({ When, Then, And }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      Then("the reader shall have made {number} page-view requests and no other learning record or calendar requests", (ctx, count: number) => requests(ctx, count, "record_page_view"));
+      And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
+    });
+  });
+
+  Rule("While a course page is visible, the reader shall record each 30 seconds of activity in one database request.", ({ RuleScenario }) => {
+    const activityRequests = (ctx: unknown, count: number) => requests(ctx, count, "record_heartbeat");
+    RuleScenario("Time on a visible page is one request per 30 seconds", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", activityRequests);
+      And("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    });
+    RuleScenario("Time on a hidden page is not recorded", ({ When, And, Then }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the page is hidden", () => vi.stubGlobal("document", { hidden: true }));
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the reader shall have made {number} activity requests and no other learning record or calendar requests", activityRequests);
+      And("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+    });
+  });
+
+  Rule("If the database lacks the single-request recording functions, then the reader shall record page views and activity with the per-table requests.", ({ RuleScenario }) => {
+    RuleScenario("Recording falls back before the migration is applied", ({ Given, When, And, Then }) => {
+      Given("the database lacks the single-request recording functions", () => {
+        recorder.missingFunctions.add("record_page_view");
+        recorder.missingFunctions.add("record_heartbeat");
+      });
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+      And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
+      // Both functions ship in one migration, so the first missing answer settles it for the tab.
+      And("the reader shall have asked for a recording function once", () => {
+        expect(recorder.rpcCalls.filter((call) => call.fn === "record_page_view" || call.fn === "record_heartbeat")).toHaveLength(1);
+      });
+    });
+  });
+
+  Rule("When a lecturer loads a course's time report for a date range, the time dashboard shall read only that course's calendar days within the range from the database.", ({ RuleScenario }) => {
+    let report: CourseTime;
+    const seedDays = (_ctx: unknown, blocks: number, student: string, days: string) => {
+      recorder.seed(
+        "calendar",
+        days.split(",").map((day) => ({ id: day.trim(), studentid: student, courseid: course.courseId, timeactive: blocks, pageloads: 1 }))
+      );
+    };
+    const load = async (startDate: string | null, endDate: string | null) => {
+      report = new CourseTime();
+      await report.loadTime(course.courseId, startDate, endDate, course.title);
+    };
+    const returnedDays = (_ctx: unknown, count: number) => {
+      const reads = recorder.tableCalls.filter((call) => call.table === "calendar" && call.op === "select");
+      expect(reads.map((call) => call.returned)).toEqual([count]);
+    };
+    const coveredDays = (_ctx: unknown, days: string) => {
+      expect(report.calendarModel.dates).toEqual(days.split(",").map((day) => day.trim()));
+    };
+    const seedStep = "the calendar holds {number} thirty-second blocks of time active for {string} on each of {string}";
+
+    RuleScenario("A date range is read, not the whole calendar", ({ Given, When, Then, And }) => {
+      Given(seedStep, seedDays);
+      When("the time report for the course is loaded from {string} to {string}", (_ctx, start: string, end: string) => load(start, end));
+      Then("the database shall have returned {number} calendar days for the course", returnedDays);
+      And("the report shall cover the days {string}", coveredDays);
+    });
+
+    RuleScenario("A report with no range still reads the whole course", ({ Given, When, Then, And }) => {
+      Given(seedStep, seedDays);
+      When("the time report for the course is loaded with no date range", () => load(null, null));
+      Then("the database shall have returned {number} calendar days for the course", returnedDays);
+      And("the report shall cover the days {string}", coveredDays);
     });
   });
 });

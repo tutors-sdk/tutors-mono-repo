@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MockSupabaseClient } from "../../bdd/support/mocks";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: {
-    PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
-    PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
-    PUBLIC_ANON_MODE: "TRUE"
-  }
+vi.mock("$app/env/public", () => ({
+  PUBLIC_SUPABASE_URL: "https://mock.supabase.co",
+  PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key",
+  PUBLIC_ANON_MODE: "TRUE"
 }));
 
 vi.mock("@tutors/community/utils/supabase-client", async () => {

@@ -1,13 +1,7 @@
-import type { Course, IconType } from "@tutors/tutors-model-lib";
-import type { TutorsId as TutorsIdType, CourseSentimentId as CourseSentimentIdType } from "@tutors/tutors-model-lib";
-import { COURSE_SENTIMENT_IDS as SENTIMENT_IDS } from "@tutors/tutors-model-lib";
+import type { IdentityClient } from "@tutors/identity";
+import type { Course, IconType, TutorsId } from "@tutors/tutors-model-lib";
 
-/**
- * Re-exports from @tutors/types for backward compatibility
- */
-export type { TutorsIdType as TutorsId };
-export type { CourseSentimentIdType as CourseSentimentId };
-export { SENTIMENT_IDS as COURSE_SENTIMENT_IDS };
+export type ConnectUser = Pick<TutorsId, "login" | "name" | "email" | "image">;
 
 /**
  * Record of a user's interaction with a course
@@ -45,12 +39,13 @@ export interface ProfileStore {
  */
 export interface TutorsConnectService {
   profile: ProfileStore;
+  identityClient: IdentityClient | null;
   intervalId: any;
   anonMode: boolean;
 
-  connect(redirectStr: string): void;
-  reconnect(user: TutorsIdType): void;
-  disconnect(redirectStr: string): void;
+  connect(redirectStr: string): Promise<void>;
+  reconnect(user: ConnectUser): Promise<void>;
+  disconnect(redirectStr: string): Promise<void>;
   toggleShare(): void;
   /** Persists sentiment locally and, when signed in, in tutors-connect-users. */
   updateSentiment(sentiment: string): Promise<void>;
@@ -61,6 +56,20 @@ export interface TutorsConnectService {
   favouriteCourse(courseId: string): void;
   unfavouriteCourse(courseId: string): void;
 
+  /** Identity of the last reported learning event, so a repeat of it can be dropped. */
+  lastLearningEvent: string;
+  /** Set by {@link TutorsConnectService.navigated}; makes the next learning event report. */
+  pendingNavigation: boolean;
+  /** True from {@link TutorsConnectService.navigating} until {@link TutorsConnectService.navigated}; no learning event reports meanwhile. */
+  navigationInFlight: boolean;
+  /** Number of the latest navigation that changes page, so a stale cancellation releases nothing. */
+  navigationAttempt: number;
+  /** Tells the service a navigation from one path to another has started, so nothing is reported until it lands. */
+  navigating(from?: string, to?: string): number;
+  /** Releases the hold {@link TutorsConnectService.navigating} set, when that navigation was cancelled. */
+  navigationAbandoned(attempt: number): void;
+  /** Tells the service the student arrived at a page, so the next report is a genuine page load; a same-path arrival is not one. */
+  navigated(from?: string, to?: string): void;
   learningEvent(params: Record<string, string>): void;
   startTimer(): void;
   stopTimer(): void;

@@ -59,7 +59,7 @@ describe("clock seam (HARNESS_NOW)", () => {
     expect(clockStatus()).toEqual({ mode: "system" });
   });
 
-  it("does not patch the global Date: code that never imports the seam (Auth.js expiry, log timestamps) keeps real time", () => {
+  it("does not patch the global Date: code that never imports the seam (identity session expiry, log timestamps) keeps real time", () => {
     process.env.HARNESS_NOW = FROZEN;
     now();
     expect(Date.now()).not.toBe(Date.parse(FROZEN));

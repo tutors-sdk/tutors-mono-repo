@@ -42,7 +42,7 @@ Before starting work on a significant change, please open an issue or comment on
 
 ### Prerequisites
 
-- Node.js >= 22.12.0 (the `engines` field in `package.json` is the source of truth)
+- Node.js >= 22.17.0 (the `engines` field in `package.json` is the source of truth)
 - pnpm >= 8.0.0
 - Git
 
@@ -60,8 +60,9 @@ Open **http://localhost:5173/course/reference-course**. You should see a rendere
 
 What just happened:
 
-- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); a devcontainer that avoids the local install is tracked in [#236](https://github.com/tutors-sdk/tutors-mono-repo/issues/236).
-- The copied `.env` sits at the repository root and every app reads it: each app's Vite config sets `envDir` there, and its SvelteKit config sets `kit.env.dir` to match, so the `$env` modules resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); the devcontainer in `.devcontainer/` avoids the local install.
+- The copied `.env` sits at the repository root and every app reads it: each app's Vite config calls `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` there and the SvelteKit plugin's `env.dir` to match, so `$app/env/public` and `$app/env/private` resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
+- If you set up Tutors before the root `.env` change, delete any leftover per-app files such as `apps/reader/.env`. No app reads them, so editing one has no effect.
 - `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
 - `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.
 
@@ -123,10 +124,12 @@ The repository has several test tiers. You are expected to run three things befo
 ```bash
 pnpm lint                        # ESLint
 pnpm test                        # vitest: unit, BDD steps, component, contract and the repo-level checks
-pnpm check                       # svelte-check on the reader, catalogue and live apps
+pnpm check                       # svelte-check on the reader, catalogue, live and time apps
 ```
 
 The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
+
+Formatting follows the root `.editorconfig` and `.prettierrc` (2 spaces, double quotes, 180 columns, the same settings `deno fmt` applies to the jsr packages listed in `deno.json`). Your editor picks them up; `pnpm format:check` lists files that drift and `pnpm format` rewrites them. Existing files have not been reformatted in bulk, so format only the files you touch.
 
 Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation` and `pnpm test:mutation:nightly`, both nightly), the browser journeys against built images (`pnpm test:e2e:stack`), the reader's UI contract (`pnpm test:e2e:reader`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
 
@@ -182,6 +185,14 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `security`, `perf`
 | `vulns` | the known vulnerabilities in an image, one per advisory |
 | `runtime` | how a container runs: user, privileges, read-only root filesystem, capabilities, writes outside `/tmp` |
 | `startup` | how a container starts: root, time to ready, boot |
+| `image-hardening` | a policy check on the candidate's image alone: root user, no `HEALTHCHECK`, a secret in its environment or layers |
+| `build-provenance` | a policy check: the candidate's image has no SLSA provenance from `image-build.yml` |
+| `vuln-ceiling` | a policy check: a critical or high advisory with a fix available in the candidate's image |
+| `timing-tolerance` | informing until harness 2.0: a page, journey or load p95 significantly slower on the candidate by 10% or more |
+| `asset-graph` | informing until harness 2.0: an app's build chunks under `/_app/immutable/` changed, one finding per app (scope `<app>`) |
+| `replay` | informing until harness 2.0: status, headers or network of a URL in the harness's replay set (scope `replay:<key>...`) |
+| `slo` | informing until harness 2.0: the candidate misses a service level objective (the stricter of `release/slo.yaml` and the harness's floors), or regressed against production (scope `<objective id>`, `<id>/load`, `<id>/regression`) |
+| `realtime` | informing until harness 2.0: a reader page opened a Realtime websocket on the candidate, or Realtime messages per reader page view rose against production (scope `<page>/websocket`, `<app>/messages`) |
 
 Rules of thumb:
 
@@ -190,6 +201,7 @@ Rules of thumb:
 - No hint means "nothing observable should differ": internal refactors, tests, docs, dependency bumps that leave output alone. If the harness finds a difference under such an entry, the entry was incomplete; fix the entry, do not widen the claim.
 - The claim's `reason` is `CHANGELOG <version>: <the entry text>`, or a Rule reference such as `Rule 0031` where the change implements one. TODO(#214): the final Rule id format and a matching `@artefact:<name>` tag on a Rule follow that issue; this section only fixes the artefact vocabulary, which is the harness's.
 - The same words help in the commit subject and PR title (`fix(reader): raise nav contrast (axe, dom)`), so the entry is easy to write from them.
+- CI checks the PR title's hint against the diff (`.github/workflows/changelog-hint.yml`, Rules 0664-0666). A change to an app's or a package's `dependencies` needs `sbom`, a Dockerfile instruction `image-manifest`, a new `log.error` or `log.warn` call `logs`. On a branch of this repository it adds what is missing to the title and comments why; on a fork it fails with the title to use. It never removes an artefact you declared, and the release harness reads the title's hint before the body's CHANGELOG line. `pnpm check:changelog-hint --base origin/main` runs it locally (with `PR_TITLE` set).
 
 Database changes follow their own rules: read [guides/MIGRATIONS.md](guides/MIGRATIONS.md) before adding a file under `supabase/migrations/`.
 
