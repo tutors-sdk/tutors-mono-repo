@@ -149,7 +149,8 @@ export const tutorsConnectService: TutorsConnectService = {
       rbacService.clear();
     }
     if (anonMode) return;
-    if (analyticsEnabled) {
+    // A course that turns the person away is not one they visited, so it stays out of their Recently accessed.
+    if (analyticsEnabled && !turnsAway(course)) {
       updateCourseList(course);
       this.profile.logCourseVisit(course);
     }
@@ -291,18 +292,19 @@ export const tutorsConnectService: TutorsConnectService = {
 
   checkWhiteList(): void {
     const course = currentCourse.value;
-    if (!course?.authLevel || course.authLevel < 1) return;
-    const enrollment = course.enrollment;
-    if (enrollment?.whitelist && enrollment.whitelist.length > 0) {
-      if (!tutorsId.value?.login) {
-        goto(`/`);
-      } else {
-        const login = tutorsId.value.login;
-        const isEducator = enrollment.educators?.includes(login) ?? false;
-        if (!isEducator && !enrollment.whitelist.includes(login)) {
-          goto(`/`);
-        }
-      }
-    }
+    if (course && turnsAway(course)) goto(`/`);
   }
 };
+
+/**
+ * A course that needs a sign-in and has a whitelist turns away everyone not on the whitelist or among its
+ * educators, including someone not yet signed in.
+ */
+function turnsAway(course: Course): boolean {
+  if (!course.authLevel || course.authLevel < 1) return false;
+  const whitelist = course.enrollment?.whitelist;
+  if (!whitelist || whitelist.length === 0) return false;
+  const login = tutorsId.value?.login;
+  if (!login) return true;
+  return !(course.enrollment?.educators?.includes(login) ?? false) && !whitelist.includes(login);
+}
