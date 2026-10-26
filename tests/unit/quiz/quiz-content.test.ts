@@ -62,6 +62,24 @@ describe("extractQuizBlock", () => {
     expect(quizSource).toContain("x()");
   });
 
+  it("keeps a tilde fence inside a backtick quiz, even a bare one", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\nquestion: Why?\n~~~\n```\n~~~\n```\nafter");
+    expect(quizSource).toBe("question: Why?\n~~~\n```\n~~~");
+    expect(prose).toBe("after");
+  });
+
+  it("closes a three-backtick quiz on a bare fence, so only a named inner fence nests", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\nquestion: Why?\n```\nx()\n```");
+    expect(quizSource).toBe("question: Why?");
+    expect(prose).toBe("x()\n```");
+  });
+
+  it("keeps a fence opened on an option's dash line inside a three-backtick quiz", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\noptions:\n  - ```js\n    a()\n    ```\n  - b\n```\nafter");
+    expect(quizSource).toBe("options:\n  - ```js\n    a()\n    ```\n  - b");
+    expect(prose).toBe("after");
+  });
+
   it("runs an unterminated fence to the end of the document", () => {
     const { prose, quizSource } = extractQuizBlock("intro\n```quiz\nquestion: Why?");
     expect(prose).toBe("intro");
