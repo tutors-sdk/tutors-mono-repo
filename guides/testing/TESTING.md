@@ -36,19 +36,20 @@ listed with a reason in `NETWORK_ALLOWED_FILES`.
 | `pnpm check:load` and the other Docker checks | Docker Desktop maps volume ownership, so the k6 `--user` flag the Linux runner needs is skipped on Windows. Keep other compose stacks off ports 3000–3003 and 8080 before starting the e2e stack |
 | `pnpm check:k8s`, `pnpm check:container`, `pnpm test:e2e:stack` | Need Docker (and `kustomize` via the script) running. They are CI jobs, not part of the expected local run |
 
-### `pnpm check` is broken at the root
+### `pnpm check` at the root
 
-The root `check` script runs `npm run check --workspace=apps/reader`, but the repo has no
-npm `workspaces` field — it is a pnpm workspace — so npm answers `No workspaces found`. Use
-`pnpm --filter tutors-reader check`, which is what CI's type-check steps run. `rc-validation.yml`
-Gate 1 still calls the broken form.
+The root `check` script type-checks all four apps
+(`pnpm --filter tutors-reader --filter tutors-catalogue --filter tutors-live --filter tutors-time check`).
+`rc-validation.yml` Gate 1 runs the same command.
 
 ## Tier A — structure
 
 **Protects** the layering in [../ARCHITECTURE.md](../../ARCHITECTURE.md): nothing imports up a
 layer, apps do not import each other, no relative import crosses a workspace, no cycle spans
 packages, `deno.json` and `package.json` agree for every JSR package, and no file, export or
-dependency is dead.
+dependency is dead. Violations that predate a rule are baselined rather than fixed at once
+(`tests/architecture/known-violations.txt`, `known-knip.txt`, `known-manifest-drift.txt`); each
+baseline may only shrink, and the suite fails on any entry that no longer occurs.
 
 **Lives in** `.dependency-cruiser.cjs` (layers and rules), `knip.json`,
 `scripts/checks/architecture.ts`, `scripts/checks/manifest-parity.ts`, `scripts/checks/knip.ts`,
@@ -137,6 +138,25 @@ needs the `approve-broad-claim` label on the PR.
 **Proves it can fail** with the planted template change (`--plant`), which CI runs as a step
 before the real comparison.
 
+## Tier F — authorisation matrix
+
+**Protects** who may call what: every server endpoint the apps declare, asked as an anonymous caller, a signed-in
+student, an enrolled student, a course educator and a metrics operator, answers the status
+`tests/e2e-stack/authorisation/matrix.json` commits to. The roles sign in through the release harness's identity
+stub, against the built images, in the E2E stack's `signed-in` project (Rule 0621). A `+server` endpoint or form
+action with no row in the matrix fails `vitest` (Rule 0622), so a new route says who may call it before it ships.
+
+**Lives in** `scripts/checks/authorisation.ts`, `tests/e2e-stack/authorisation/`,
+`tests/e2e-stack/journeys/authorisation.journey.spec.ts`, and the steps in
+`tests/bdd/steps/developer/authorisation-matrix.steps.ts`.
+
+**Proves it can fail** with negative fixtures for a route missing from the matrix, a stale entry, a role with no
+expected status, a cell answering something the matrix does not expect, and a known gap that no longer occurs.
+
+**Baselines** `tests/e2e-stack/authorisation/known-gaps.txt` (shrink-only). It is empty: the one gap it held, the time
+app's unauthenticated `POST /api/sync`, went when the Moodle sync moved to the reader behind the educator check
+(Rules 0633-0634). The matrix holds both reader routes from that work, the content locks and the Moodle sync.
+
 ## Tier G — user journeys against built images
 
 **Protects** the journeys a person actually walks, in a real browser, against the **built
@@ -157,13 +177,76 @@ pnpm e2e:stack:down
 ```
 
 Journeys select by role and accessible name only, and never retry: a journey that needs a retry
-is a finding. PR runs chromium and webkit; the nightly runs firefox and mobile.
+is a finding. They run nightly (`e2e-stack-nightly` in `nightly.yml`) on chromium, webkit, firefox and mobile, not on pull requests.
+
+**Signed in, and when a dependency fails.** The `signed-in` project runs the reader, Live and time apps with
+authentication on, against the release harness's identity stub (GitHub) and persistence stub (Supabase), and holds
+the release harness's Rule journeys to `@journey` Rules every night: sign-in, lab steps recorded, a private
+course turning a student away, preferences surviving a reload, a quiz, a lecturer's lock (saved through the
+reader's educator check), presence and sentiment, Tutors Live, a talk and a notebook, the calendar and the course for
+LLMs, the time dashboard's medians and lab views, a whiteboard stroke saved, and a lecturer syncing Moodle from
+Educator Control (`tests/bdd/features/journeys/signed-in.feature`). Each journey's size and time are in
+[the E2E stack README](../../tests/e2e-stack/README.md#journey-sizes). The resilience journeys
+(`resilience.feature`, Rules 0614-0617) inject a fault where production meets it and hold the outcome to a time
+bound: a course host that never answers shows Course Unavailable within 25 seconds, the reader still shows a lab
+while the data API answers 503 or never answers, `/healthz` answers "degraded" inside the readiness probe's 3
+seconds while the data API hangs, and GitHub failing the token exchange leaves the student on the sign-in page with
+a message. A `@journey` Rule is bound by `pnpm test:ears:audit` to the test with its scenario's title, as `@ui`
+Rules are.
+
+```bash
+pnpm test:e2e:stack --project=signed-in   # NO_PROXY=$NO_PROXY,.e2e.test behind a proxy
+```
 
 **Proves it can fail** with `tests/e2e-stack/journeys/negative.journey.spec.ts`, a set of
-`test.fail()` journeys that both demonstrate a journey can fail and pin known product bugs.
+`test.fail()` journeys that both demonstrate a journey can fail and pin known product bugs. The resilience
+journeys failed against images built before their fixes: the stalled course host never resolved, `/healthz` took
+longer than 10 seconds, and the sign-in page said nothing.
 
 **Baselines** `a11y-known-violations.txt` and `reduced-motion-known.txt`, keyed
 `<project> | <page> :: <finding>`, checked for stale lines by `pnpm test:e2e:stack:ratchet`.
+
+## Tier H — realtime message contracts
+
+**Protects** the messages Tutors sends through the Realtime broker, so a reader, Tutors Live and a whiteboard on
+different releases still understand each other. `tests/contract/messages/contracts.ts` gives each message (lo-event,
+the whiteboard's scene-update and cursor-update, and what a whiteboard editor tracks in presence) a version, and:
+
+- the real producers' payloads parse under the current version with no undeclared field, and have the fields of the
+  recording for that version (Rule 0623): the reader's presence service and `/api/live/activity` route through the
+  BDD connect support, the whiteboard editor's own script through `tests/bdd/support/whiteboard-editor.ts`;
+- the shape of each schema equals the committed `versions/<name>.v<N>.json`, so a change to a shape is a new version
+  with its own recording, not an edit (Rule 0624);
+- the consumers read the recording of every version a contract still `accepts`, and the reader's server refuses each
+  negative fixture with 400 (Rule 0625).
+
+**Lives in** `tests/contract/messages/` and `tests/bdd/steps/developer/message-contracts.steps.ts`. Refresh the
+recordings with `UPDATE_MESSAGE_CONTRACTS=1 pnpm exec vitest run tests/bdd/steps/developer/message-contracts.steps.ts`
+and read the diff.
+
+**Proves it can fail** with a field added under an unchanged version, and `negative/` payloads for every message.
+
+## Tier I — data and migrations
+
+**Protects** the database a release migrates. `scripts/checks/migrations.ts` reads the SQL; this runs it. Every migration
+in `supabase/migrations` is applied in name order to PGlite (Postgres in process, so it runs in `vitest` with no
+Docker) holding `tests/data/schema/supabase-baseline.sql` and `supabase-legacy-tables.sql`, the release harness's
+migration-mode fixtures (Rule 0626). The baseline doubles as the inventory of what the schema needs from Supabase.
+Every table the code names in `.from()` and every function it calls with `.rpc()`, with the argument names
+PostgREST matches, must exist in the migrated schema (Rule 0627). Each migration is applied to a database holding the
+rows in `tests/data/schema/seed.sql`, which must keep every row, with the same values, in the columns it had
+(Rule 0628).
+
+**Lives in** `scripts/checks/data-schema.ts`, `tests/data/schema/` and
+`tests/bdd/steps/developer/data-migrations.steps.ts`. The release harness still rehearses a release's migrations
+against the deployed version's (`--mode migration`).
+
+**Proves it can fail** with a migration indexing a table nothing creates, a call with a renamed argument, a table no
+migration creates, and a migration that rewrites stored rows.
+
+**Baselines** `tests/data/schema/known-gaps.txt` (shrink-only): five tables and two functions the code uses that no
+migration creates (the schema predates `supabase/migrations`, and the content locks and whiteboard scenes are
+created by SQL under `packages/svelte/utils/rbac/sql`).
 
 ## Tier J — platform conformance
 
@@ -264,8 +347,8 @@ pnpm check:container --image tutors/reader:local --app reader   # headers, cooki
 ```
 
 A new `POST`/`PUT`/`PATCH`/`DELETE` endpoint or form action fails the suite until it is listed in
-`mutating-routes.txt` with its callers. Authorisation itself — whether the right person may call
-it — is tier F, and is not built yet.
+`mutating-routes.txt` with its callers. Authorisation itself, whether the right person may call
+it, is tier F below.
 
 **Proves it can fail** with negative fixtures for a dropped CSP, a weakened frame policy, a short
 HSTS, each missing cookie flag, `SameSite=None` without `Secure`, a disabled origin check, an
@@ -389,10 +472,25 @@ mutants sit in code no test reaches, so the report doubles as a map of where tes
 - A module 2 or more points above its floor is listed in the job summary as a floor to raise and
   does not fail the night (Rule 0119); raise it with `--update` in any later change.
 - The run mutates files in place, because a `vi.mock` by relative `node_modules` path cannot
-  match inside Stryker's symlinked sandbox. Type-check suppression is off so only mutated files
-  are touched, and `git diff --exit-code --stat` runs after Stryker even when it fails, so a
+  match inside Stryker's symlinked sandbox. `disableTypeChecks` names only the mutated files
+  (their instrumented code would otherwise fail the strict check in `tests/unit/types`), so only
+  mutated files are touched, and `git diff --exit-code --stat` runs after Stryker even when it fails, so a
   source left mutated fails the night (Rule 0118). Locally, an interrupted run leaves mutated
   sources behind: restore them with `git checkout -- packages`.
+
+### Changed modules on every pull request (`mutation-pr`)
+
+```bash
+pnpm test:mutation:pr                      # modules changed since the merge base with origin/main
+pnpm test:mutation:pr --base <ref>         # ... or MUTATION_BASE_REF=<ref>
+```
+
+The nightly run finds a weakened module the morning after it merged. `scripts/checks/mutation-pr.ts` mutates only
+the library modules a pull request changes, with the nightly configuration, and holds each to its nightly floor
+before it merges (Rules 0618, 0619): below the floor, or a new module with no floor, fails; a module that rose only
+warns. A change that touches no library module passes without running Stryker, and with no base to compare against
+the check fails rather than pass on nothing. The `mutation-pr` job in `ci.yml` runs it and writes the table to the
+job summary.
 
 Details and how to read a survivor: [MUTATION-TESTING.md](./MUTATION-TESTING.md).
 
@@ -483,17 +581,6 @@ It is not wired into this repository yet: nothing here publishes an image for it
 workflow dispatches it. Treat its findings as pre-release evidence recorded by hand until that
 lands.
 
-## Planned tiers
-
-| Tier | Would own | Tracked by |
-|---|---|---|
-| F | The authorisation matrix — every route against every role | RBAC [#77](https://github.com/tutors-sdk/tutors-mono-repo/issues/77); `/api/sync` auth is the open decision. See [RBAC.md](../RBAC.md) |
-| H | Message contracts for the realtime and broadcast protocols, versioned | No issue yet; shapes are snapshot-checked in `tests/contract/` |
-| I | Data migration and the Supabase exit | No issue yet |
-
-Do not claim these in documentation or PR descriptions until the suite and its negative fixture
-exist.
-
 ## CI schedule
 
 ### `ci.yml` — push to `main`, and every PR to `main`
@@ -505,11 +592,11 @@ exist.
 | `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …`; the reader a second time with `--env PUBLIC_ANON_MODE=FALSE` so its sign-in pages are probed with authentication enabled |
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
 | `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
-| `e2e-stack` | Build reader, catalogue and live images, build the fixture course, bring the stack up, run the journeys on chromium and webkit, then the baseline stale-line check; uploads the report and compose logs on failure |
+| `mutation-pr` | `pnpm test:mutation:pr` against the PR's base: Stryker over the changed library modules, each held to its nightly floor; the table goes to the job summary |
 | `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` and `pnpm check:server` |
 | `generator-diff` | Only when the PR touches `packages/jsr/{gen,tutors,tutors-lite,model}`, `deno.json(.lock)`, `tests/generator/` or `scripts/checks/generator-*`: the planted-change self-test, then every difference must be claimed |
-| `ears-audit` | `pnpm test:ears:audit`: the structure of the `Rule:` blocks in `tests/bdd/features` (one shall, system name, EARS tag, unique id, a scenario per Rule). Only violations outside `tests/bdd/ears-audit-baseline.txt` fail. `continue-on-error` and not in `CI success` needs until the seed features are migrated ([#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)) |
-| `CI success` | Needs all eight (not `ears-audit`); a skipped or cancelled job counts as a failure. The one required check |
+| `ears-audit` | `pnpm test:ears:audit`: the structure of the `Rule:` blocks in `tests/bdd/features` (one shall, system name, EARS tag, unique id, a scenario per Rule). Only violations outside `tests/bdd/ears-audit-baseline.txt` fail. It also binds each `@ui` and `@journey` scenario to the Playwright test with its title |
+| `CI success` | Needs every job above; a skipped or cancelled job counts as a failure. The one required check |
 
 `codeql.yml` and `zizmor.yml` also run on every PR (CodeQL for JavaScript/TypeScript, zizmor over
 the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
@@ -522,7 +609,7 @@ the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
 | `mutation` | `pnpm test:mutation`, failing below Stryker's break threshold, then `pnpm check:mutation-floors`; uploads the HTML and JSON report |
 | `mutation-nightly` | `pnpm test:mutation:nightly` over every library module, then `pnpm check:mutation-floors` against the nightly floors with a step summary, then `git diff --exit-code --stat`; uploads the report |
 | `suite-health` | `vitest run --retry=0` with a JSON report, then `pnpm check:test-time` on it |
-| `e2e-stack-nightly` | The tier G journeys on firefox and mobile, then the baseline stale-line check |
+| `e2e-stack-nightly` | Build reader, catalogue, live and time images, build the fixture courses, bring the stack up, run the journeys on chromium, webkit, firefox and mobile, then the `signed-in` project (signed-in, resilience and authorisation journeys), then the baseline stale-line check; uploads the report and compose logs on failure. Not a PR check |
 | `timezone-matrix` | `pnpm test:tz` |
 | `lighthouse` | Build the reader image and the fixture course, serve the course, run Lighthouse against three pages and record the samples |
 | `load` | Prove the thresholds bite (`P95_MS=0 --expect-fail`), three 3-minute load runs recorded for baselining, then a 45-minute soak |
@@ -536,9 +623,8 @@ Gate 1 lint and type check, 2a unit and BDD with a coverage upload, 2b contract,
 audit, 4 cross-browser E2E for the reader, 6 artifact regression, then an `RC Readiness Report`
 that fails if any gate failed.
 
-This workflow has not kept pace with the runway and two of its gates cannot pass as written:
-Gate 1 runs the broken root `pnpm check`, and Gate 4 runs `pnpm --filter tutors-reader test:e2e`,
-a script the apps do not define. It also duplicates work `ci.yml` now does better. Reconciling it
+This workflow has not kept pace with the runway and one of its gates cannot pass as written:
+Gate 4 runs `pnpm --filter tutors-reader test:e2e`, a script the apps do not define. It also duplicates work `ci.yml` now does better. Reconciling it
 is open work; do not read it as the authority on what a release is checked against.
 
 ### `release-testing.yml` — push to `rc/**`, or `workflow_dispatch` with a baseline version
@@ -611,4 +697,6 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 - 48 specified scenarios are prose, many with no tier covering them: [specifications/](../specifications/README.md).
 - Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
-- Tiers F, H and I are not built.
+- The schema carries known gaps (`tests/data/schema/known-gaps.txt`): tables and functions no migration creates. The
+  authorisation matrix's known-gaps file is empty. Both files may only shrink.
+- No Playwright configuration retries (Rule 0620), so a flaky journey fails the night; that is the point.

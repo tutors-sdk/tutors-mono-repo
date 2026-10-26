@@ -27,6 +27,16 @@ patches:
       - op: replace
         path: /data/TUTORS_ORIGIN
         value: "https://reader.tutors.dev"
+      # Moodle sync. MOODLE_WS_TOKEN is a secret: see secrets.yaml.example.
+      - op: add
+        path: /data/MOODLE_WS_URL
+        value: ""
+      - op: add
+        path: /data/MOODLE_WS_REST_FORMAT
+        value: "json"
+      - op: add
+        path: /data/SYNC_INTERVAL_MINUTES
+        value: "60"
 
   # GitHub OAuth credentials for Better Auth. Create from secrets.yaml.example;
   # the secret is deliberately not managed by this kustomization.

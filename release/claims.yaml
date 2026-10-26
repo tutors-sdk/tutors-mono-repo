@@ -45,10 +45,16 @@ claims:
     scope: "POST /api/live/activity"
     rule: "0330"
     reason: "Rule 0330: the reader sends each learning event to its own server (POST /api/live/activity) instead of broadcasting it from the browser (#481)"
+  # Every signed-in journey that records learning events reaches it, the harness's Rule journeys (0582, 0583, 0589)
+  # as well as student-signs-in, so the claim covers every journey.
   - artefact: persistence
-    scope: "student-signs-in/realtime_claim_live_publish"
+    scope: "*/realtime_claim_live_publish"
     rule: "0331"
     reason: "Rule 0331: the reader's server claims the topics to publish to, and charges the day's Live budget, through realtime_claim_live_publish (#481)"
+  - artefact: persistence
+    scope: "*/realtime_watch"
+    rule: "0334"
+    reason: "Rule 0334: while it shows a course or the platform feed, Tutors Live reports itself as a watcher of that feed through realtime_watch every 60 seconds (#481)"
   # One more immutable chunk on the reference course and note pages (JS 99 to 101 across the journey), first seen
   # the night #478 and #481 merged; the code split that moved learning events off browser Realtime.
   - artefact: network

@@ -51,7 +51,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Packages
 
-**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; three of them also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
+**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; six of them (create, identity, model, realtime, time, types) also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
 
 | Directory | Package | What it is |
 |---|---|---|
@@ -71,6 +71,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/svelte/utils/runtime` | `@tutors/runtime` | Server runtime seams: the clock (`HARNESS_NOW`) and the `/version` endpoint |
 | `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 
 **Core services.**
@@ -113,7 +114,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so the `$env` modules resolve from the same file. There is nothing further to copy.
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so `$app/env/public` and `$app/env/private` resolve from the same file. There is nothing further to copy.
 
 Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 
@@ -173,7 +174,7 @@ Docs live in five places. This is the index.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Look something up: every package, service and data flow, in depth |
 | [guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/testing/TESTING.md](guides/testing/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
-| [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite |
+| [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite; start with `pnpm ears:dashboard` to browse every requirement |
 | [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
 | [guides/Release-Strategy.md](guides/Release-Strategy.md), [tests/release/RELEASE-TESTING.md](tests/release/RELEASE-TESTING.md) | Cut or validate a release |
 | [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md), [deploy/README.md](deploy/README.md) | Run in containers or deploy to a cluster |
@@ -182,7 +183,7 @@ Docs live in five places. This is the index.
 
 ## Technology Stack
 
-- **Framework:** SvelteKit 2.x with Svelte 5
+- **Framework:** SvelteKit 3 with Svelte 5
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4.x + Skeleton UI
 - **Package Manager:** pnpm workspaces (Deno for the JSR packages)
@@ -201,7 +202,7 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
 
-Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts.
+Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts. The one exception is the whiteboard editor (`apps/reader/static/excalidraw-editor.html`): a static page cannot import workspace packages, so it opens its own `wb:{roomId}` channel and carries the same event cap and jittered rejoin inline, outside the gateway's per-tab count, until phase 4 (#477) routes it through the parent ([WHITEBOARD.md](guides/WHITEBOARD.md)). `tests/architecture/realtime-boundary.test.ts` fails on any other file that opens a channel.
 
 Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 

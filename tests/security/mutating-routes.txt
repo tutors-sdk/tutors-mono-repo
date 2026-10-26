@@ -7,11 +7,12 @@
 # Format: `<app> <METHOD> <route id> | who: <callers>`
 # Add `| hook` for routes a hook mounts (discovery cannot see them).
 
-time POST /api/sync | who: anyone who can reach the time app today; the handler has no authentication or role check (tier F must add one)
 reader POST /api/auth/sign-in/social | hook | who: anyone; GitHub only, Better Auth verifies origin and return URL
 reader POST /api/auth/callback/github | hook | who: OAuth callback holder; Better Auth verifies signed state (GitHub normally uses GET)
 reader POST /api/auth/sign-out | hook | who: session holder; Better Auth verifies origin and deletes browser cookies
 reader POST /api/auth/get-session | hook | who: session holder; Better Auth verifies cookies and renews the session
 reader POST /api/auth/update-user | hook | who: session holder; Better Auth verifies origin, adapter rejects githubId/login changes including null
+reader PUT /api/courses/[courseid]/locks | who: signed-in educators of the published course (requireEducator; Rules 0630-0632); locked_by comes from the session
 reader POST /api/live/activity | who: anyone, as the anon key it replaces allowed; the body is validated (4 KB, LoRecord shape) and published only to watched topics within the day's Live budget
 reader POST /api/assistance | who: a signed-in student asks, asks again, withdraws or resolves their own help request; an educator of the course (its published enrollment) acknowledges, answers a hint or resolves; other origins get 403, nobody signed in 401
+reader POST /api/courses/[courseid]/moodle-sync | who: signed-in educators of the published course (requireEducator, checked before Moodle is contacted)
