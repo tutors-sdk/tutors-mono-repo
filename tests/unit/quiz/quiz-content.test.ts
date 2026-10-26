@@ -96,4 +96,23 @@ describe("extractQuizBlock", () => {
     const { quizSource } = extractQuizBlock("```quizzical\nnot a quiz\n```");
     expect(quizSource).toBeNull();
   });
+  it("opens a quiz only on a line that starts with the fence, with spaces allowed before quiz", () => {
+    expect(extractQuizBlock("see ```quiz\nx\n```").quizSource).toBeNull();
+    expect(extractQuizBlock("x```quiz\nx\n```").quizSource).toBeNull();
+    expect(extractQuizBlock("```  quiz\nquestion: Why?\n```").quizSource).toBe("question: Why?");
+  });
+
+  it("nests only a line that starts with a fence of three or more", () => {
+    for (const line of ["see ```js here", "`x` is inline", "~ roughly"]) {
+      const { prose, quizSource } = extractQuizBlock(`\`\`\`quiz\n${line}\n\`\`\`\nafter`);
+      expect(quizSource).toBe(line);
+      expect(prose).toBe("after");
+    }
+  });
+
+  it("nests a fence opened after a dash and several spaces", () => {
+    const { prose, quizSource } = extractQuizBlock("```quiz\n-   ```js\n    a()\n    ```\n```\nafter");
+    expect(quizSource).toBe("-   ```js\n    a()\n    ```");
+    expect(prose).toBe("after");
+  });
 });
