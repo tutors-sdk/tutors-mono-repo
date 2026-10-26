@@ -1,13 +1,11 @@
 <script lang="ts">
   import { t } from "@tutors/i18n";
-  type Selection = { courseId: string; startDate: string | null; endDate: string | null; moodleCourseId: string | null; moodleSectionId: string | null };
+  type Selection = { courseId: string; startDate: string | null; endDate: string | null };
   let { loading, error, onsubmit }: { loading: boolean; error: string | null; onsubmit: (selection: Selection) => void } = $props();
 
   let courseIdsInput = $state("");
   let startDateInput = $state('');
   let endDateInput = $state('');
-  let moodleCourseIdInput = $state('');
-  let moodleSectionIdInput = $state('');
   let dateRangeError = $state<string | null>(null);
 
 
@@ -70,15 +68,10 @@
 
     dateRangeError = null;
 
-    const moodleCourseId = moodleCourseIdInput.trim() || null;
-    const moodleSectionId = moodleSectionIdInput.trim() || null;
-
     onsubmit({
       courseId,
       startDate,
-      endDate,
-      moodleCourseId,
-      moodleSectionId
+      endDate
     });
   }
 
@@ -128,39 +121,13 @@
       {#if dateRangeError}
         <p role="alert" class="text-sm text-[var(--ui-danger)]">{dateRangeError}</p>
       {/if}
-      <details class="ui-disclosure border-t border-[var(--ui-border)] pt-3">
-        <summary class="font-medium">{t("classTime.moodleSync")}</summary>
-        <p class="ui-muted my-3 text-sm">{t("classTime.moodleSyncDescription")}</p>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label for="moodle-course-id-input" class="ui-label">{t("classTime.moodleCourseId")}</label>
-          <input
-            id="moodle-course-id-input"
-            type="text"
-            bind:value={moodleCourseIdInput}
-            placeholder={`${t("classTime.example")} 1234`}
-            class="input w-full"
-          />
-        </div>
-        <div>
-          <label for="moodle-section-id-input" class="ui-label">{t("classTime.moodleSectionId")}</label>
-          <input
-            id="moodle-section-id-input"
-            type="text"
-            bind:value={moodleSectionIdInput}
-            placeholder={`${t("classTime.example")} 5678`}
-            class="input w-full"
-          />
-        </div>
-      </div>
-      </details>
       <div class="flex justify-end gap-2">
         <button
           type="submit"
           class="ui-button ui-button-primary"
           disabled={loading}
         >
-          {loading ? t("shell.loading") : moodleCourseIdInput.trim() ? t("classTime.loadAndSync") : t("classTime.loadCourse")}
+          {loading ? t("shell.loading") : t("classTime.loadCourse")}
         </button>
       </div>
     </form>

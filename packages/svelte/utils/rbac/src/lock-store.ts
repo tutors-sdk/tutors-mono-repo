@@ -1,10 +1,10 @@
 /**
- * Reads and writes the tutors_content_locks table (content locks set by educators), called by
- * rbac-service.svelte.ts. Uses the public Supabase client and checks no role itself; the policies in
- * sql/002_content_locks.sql allow any caller to insert, update or delete. Without Supabase it returns
- * no locks; query errors are logged and reported as an empty list or false.
+ * The tutors_content_locks table (content locks set by educators), for rbac-service.svelte.ts. Reads go
+ * through the public Supabase client; without Supabase, or on a query error (logged), it returns no locks.
+ * Writes never touch the table from the browser: upsertLock asks the reader's server (Rule 0630), which
+ * checks the educator and reports the change as saved, refused or unavailable.
  */
-import { supabase } from "@tutors/community";
+import { supabase } from "@tutors/community/utils/supabase-client";
 import log from "@tutors/logger";
 import type { ContentLock } from "./types.ts";
 
@@ -25,48 +25,29 @@ export async function getLocksForCourse(courseId: string): Promise<ContentLock[]
   return (data ?? []) as ContentLock[];
 }
 
-export async function upsertLock(
-  courseId: string,
-  loRoute: string,
-  locked: boolean,
-  lockedBy: string
-): Promise<boolean> {
-  if (typeof supabase === "undefined") return false;
-  if (!courseId || !loRoute || !lockedBy) return false;
+/** What happened to a lock change: saved by the server, refused by it, or no server store to save it in. */
+type LockWriteResult = "saved" | "refused" | "unavailable";
 
-  const { error } = await supabase.from("tutors_content_locks").upsert(
-    {
-      course_id: courseId,
-      lo_route: loRoute,
-      locked,
-      locked_by: lockedBy,
-      locked_at: new Date().toISOString()
-    },
-    { onConflict: "course_id,lo_route" }
-  );
-
-  if (error) {
+/**
+ * Ask the reader's server to lock or unlock one learning object (PUT /api/courses/:id/locks, Rule 0630).
+ * The server checks the signed-in educator and records who made the change; the browser never writes
+ * the table itself. "refused" when the server rejects the change or cannot save it (4xx, 502);
+ * "unavailable" when it has no database to save to (503) or cannot be reached, so the browser's
+ * localStorage copy stays the record, as it does in a reader without Supabase.
+ */
+export async function upsertLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWriteResult> {
+  if (!courseId || !loRoute) return "refused";
+  try {
+    const response = await fetch(`/api/courses/${encodeURIComponent(courseId)}/locks`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ loRoute, locked })
+    });
+    if (response.ok) return "saved";
+    log.warn("upsertLock not saved", { courseId, loRoute, status: response.status });
+    return response.status === 503 ? "unavailable" : "refused";
+  } catch (error) {
     log.error("upsertLock failed:", error);
-    return false;
+    return "unavailable";
   }
-
-  return true;
-}
-
-export async function removeLock(courseId: string, loRoute: string): Promise<boolean> {
-  if (typeof supabase === "undefined") return false;
-  if (!courseId || !loRoute) return false;
-
-  const { error } = await supabase
-    .from("tutors_content_locks")
-    .delete()
-    .eq("course_id", courseId)
-    .eq("lo_route", loRoute);
-
-  if (error) {
-    log.error("removeLock failed:", error);
-    return false;
-  }
-
-  return true;
 }

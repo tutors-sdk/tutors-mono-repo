@@ -5,7 +5,8 @@
 // The reader fetches `http://<courseid>/tutors.json` from the browser, so every
 // response allows any origin, as Netlify does for published courses.
 // FIXTURE_FAULT=500 answers 500 for tutors.json: the negative fixture the
-// journeys must fail against.
+// journeys must fail against. FIXTURE_FAULT=hang accepts the request for
+// tutors.json and never answers: a course host that has stalled (Rule 0614).
 import { createReadStream, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize, resolve } from "node:path";
@@ -34,6 +35,7 @@ createServer((req, res) => {
 
   if (pathname === "/healthz") return res.writeHead(200, headers).end("ok");
   if (fault === "500" && pathname === "/tutors.json") return res.writeHead(500, headers).end("fixture fault");
+  if (fault === "hang" && pathname === "/tutors.json") return;
 
   const file = normalize(join(root, pathname));
   if (!file.startsWith(root)) return res.writeHead(403, headers).end();

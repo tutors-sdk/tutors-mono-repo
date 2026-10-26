@@ -4,7 +4,6 @@ import type { Composite, Course, Lo } from "@tutors/tutors-model-lib";
 vi.mock("../../../packages/svelte/utils/rbac/src/lock-store.ts", () => ({
   getLocksForCourse: vi.fn(),
   upsertLock: vi.fn(),
-  removeLock: vi.fn(),
 }));
 
 vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
