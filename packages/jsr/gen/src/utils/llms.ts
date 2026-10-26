@@ -20,7 +20,7 @@ function printLo(lo: Lo, level: number) {
 function generateLo(lo: Lo, llmsTxt: string[], level: number) {
   if (lo.hide) return;
   llmsTxt.push(printLo(lo, level));
-  if (lo.hasOwnProperty("los")) {
+  if (Object.hasOwn(lo, "los")) {
     const compositeLo = lo as Composite;
     compositeLo.los?.forEach((childLo: Lo) => {
       generateLo(childLo, llmsTxt, level + 1);

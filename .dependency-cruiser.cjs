@@ -115,6 +115,14 @@ module.exports = {
       to: { pathNot: "^packages/jsr/types/" }
     },
     {
+      name: "logger-core-self-contained",
+      comment:
+        "@tutors/logger-core runs in Node, Deno and the browser and every Deno package imports it, so it imports nothing outside its own files (Rule 0290).",
+      severity: "error",
+      from: { path: "^packages/jsr/logger-core/" },
+      to: { pathNot: "^packages/jsr/logger-core/" }
+    },
+    {
       name: "no-cross-package-cycle",
       comment:
         "A cycle that leaves a workspace and comes back makes the layering meaningless; invert one edge through a seam. Cycles inside one package (a recursive component, for instance) are allowed.",

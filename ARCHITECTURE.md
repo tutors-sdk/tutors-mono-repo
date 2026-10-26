@@ -678,7 +678,7 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 
 **Foundation (Layer 1)**:
 - `runes` - Reactive state management
-- `utils/logger` - Logging
+- `utils/logger` - Logging for the apps: re-exports `@tutors/logger-core` (packages/jsr/logger-core, also used by the Deno packages) and adds the server request logger
 - `utils/runtime` - Server runtime seams: the clock (`now()`, frozen by `HARNESS_NOW` for the release harness) and the `/version` endpoint. No dependencies
 
 **Core (Layer 2)**:

@@ -7,11 +7,14 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import process from "node:process";
+import log, { useCliOutput } from "@tutors/logger-core";
 
 const versionStr = `tutors-lite: 5.0.9`;
 
+useCliOutput("tutors-lite");
+
 if (!fs.existsSync("course.md")) {
-  process.stdout.write("Cannot locate course.md. Please change to course folder and try again.\n");
+  log.error("Cannot locate course.md. Please change to course folder and try again.");
 } else {
   const srcFolder = process.cwd();
   const destFolder = `${srcFolder}/html`;

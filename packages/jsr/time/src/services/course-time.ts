@@ -9,6 +9,7 @@ import type {
 import { BaseCalendarModel } from "./base-calendar-model.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
 import { getSupabase } from "./supabase.ts";
+import log from "@tutors/logger-core";
 
 export class CourseTime implements TutorsTimeCourse {
   id = "";
@@ -86,7 +87,7 @@ export class CourseTime implements TutorsTimeCourse {
     const { data, error } = await query;
 
     if (error) {
-      process.stderr.write(`Failed to fetch learning records: ${error.message}\n`);
+      log.error("Failed to fetch learning records", error);
       return [];
     }
 

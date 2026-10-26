@@ -15,6 +15,7 @@
  *   - @tutors/tutors-time-lib  (packages/jsr/time)
  *   - @tutors/tutors-types     (packages/jsr/types)
  *   - @tutors/identity         (packages/jsr/identity)
+ *   - @tutors/logger-core      (packages/jsr/logger-core)
  *   - @tutors/realtime         (packages/jsr/realtime)
  */
 
@@ -43,6 +44,12 @@ const TRACKED_PACKAGES: PackageConfig[] = [
     dir: "packages/jsr/identity",
     entry: "src/index.ts",
     reportFile: "identity.api.md",
+  },
+  {
+    name: "@tutors/logger-core",
+    dir: "packages/jsr/logger-core",
+    entry: "src/index.ts",
+    reportFile: "logger-core.api.md",
   },
   {
     name: "@tutors/realtime",

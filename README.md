@@ -63,13 +63,14 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
 | `packages/jsr/types` | `@tutors/tutors-types` | The shared types every layer uses; imports nothing outside itself (see `guides/SHARED-TYPES.md`) |
 | `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
+| `packages/jsr/logger-core` | `@tutors/logger-core` | Structured logger (levels, child loggers, transports, formats) for Node, Deno and the browser |
 | `packages/jsr/realtime` | `@tutors/realtime` | Realtime port: topics, the adapter contract and a budgeted gateway, with no broker imports |
 
 **Foundation layer, Svelte.**
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
+| `packages/svelte/utils/logger` | `@tutors/logger` | `@tutors/logger-core` plus the server request logger, process logging and the log contract |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
 | `packages/svelte/utils/runtime` | `@tutors/runtime` | Server runtime seams: the clock (`HARNESS_NOW`) and the `/version` endpoint |
 | `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |

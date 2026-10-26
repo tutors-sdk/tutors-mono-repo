@@ -526,15 +526,24 @@ importers:
         specifier: '>=8.3.3 <9'
         version: 8.3.5(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
 
-  packages/jsr/create: {}
+  packages/jsr/create:
+    dependencies:
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../logger-core
 
   packages/jsr/identity: {}
+
+  packages/jsr/logger-core: {}
 
   packages/jsr/model:
     dependencies:
       '@mdit/plugin-katex':
         specifier: ^1.1.0
         version: 1.1.0(markdown-it@15.0.3)
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../logger-core
       archiver:
         specifier: ^8.0.0
         version: 8.0.0
@@ -582,6 +591,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.117.1
         version: 2.117.2(@opentelemetry/api@1.9.1)
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../logger-core
 
   packages/jsr/types: {}
 
@@ -988,7 +1000,11 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
-  packages/svelte/utils/logger: {}
+  packages/svelte/utils/logger:
+    dependencies:
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../../../jsr/logger-core
 
   packages/svelte/utils/metrics:
     dependencies:

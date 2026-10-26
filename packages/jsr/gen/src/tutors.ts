@@ -1,6 +1,7 @@
 import { buildCourse } from "./services/course-builder.ts";
 import { decorateCourseTree, loadMath } from "@tutors/tutors-model-lib";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
+import log from "@tutors/logger-core";
 
 import { writeFile } from "./utils/file-utils.ts";
 import { generateNetlifyToml } from "./utils/netlify.ts";
@@ -44,8 +45,7 @@ export async function generateStaticCourse(course: Course, destFolder: string, s
     await emitStaticCourse(destFolder, course);
     return true;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error generating static course: ${message}\n`);
+    log.error("Error generating static course", error);
     return false;
   }
 }

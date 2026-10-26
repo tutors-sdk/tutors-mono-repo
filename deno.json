@@ -9,6 +9,7 @@
     "./packages/jsr/create",
     "./packages/jsr/types",
     "./packages/jsr/identity",
+    "./packages/jsr/logger-core",
     "./packages/jsr/realtime"
   ],
   "fmt": {
@@ -19,6 +20,7 @@
       "./packages/jsr/tutors-lite/",
       "./packages/jsr/types/",
       "./packages/jsr/identity/",
+      "./packages/jsr/logger-core/",
       "./packages/jsr/realtime/"
     ],
     "useTabs": false,

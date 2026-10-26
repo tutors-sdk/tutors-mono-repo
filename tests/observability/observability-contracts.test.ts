@@ -294,10 +294,10 @@ describe("observability contracts (runway tier K)", () => {
   });
 
   describe("log message stability", () => {
-    /** Product source that runs on the server: apps and workspace packages, minus the logger itself and tests. */
-    const SOURCES = [join(REPO_ROOT, "apps"), join(REPO_ROOT, "packages/svelte")]
+    /** Product source that runs on the server or in a CLI: apps and workspace packages, minus the logger itself and tests. */
+    const SOURCES = [join(REPO_ROOT, "apps"), join(REPO_ROOT, "packages/svelte"), join(REPO_ROOT, "packages/jsr")]
       .flatMap((root) => walk(root, (name) => name.endsWith(".ts") && !name.endsWith(".d.ts") && !name.endsWith(".test.ts")))
-      .filter((file) => !toPosix(file).startsWith("packages/svelte/utils/logger/"));
+      .filter((file) => !/^packages\/(svelte\/utils\/logger|jsr\/logger-core)\//.test(toPosix(file)));
 
     /** Known variable messages, each with the reason it is not a finding. Keep this empty if you can. */
     const ALLOWED: Record<string, string> = {
