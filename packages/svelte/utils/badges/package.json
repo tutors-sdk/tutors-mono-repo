@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/badges",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Builds Open Badges 3.0 credentials for Tutors achievements and has them signed by an institution's signing service",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

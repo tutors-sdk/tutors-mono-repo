@@ -773,6 +773,9 @@ importers:
       '@tutors/a11y':
         specifier: workspace:*
         version: link:../utils/a11y
+      '@tutors/badges':
+        specifier: workspace:*
+        version: link:../utils/badges
       '@tutors/community':
         specifier: workspace:*
         version: link:../community
@@ -975,6 +978,8 @@ importers:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.71.0)
 
+  packages/svelte/utils/badges: {}
+
   packages/svelte/utils/i18n:
     dependencies:
       '@tutors/runes':
@@ -1033,6 +1038,8 @@ importers:
       svelte:
         specifier: ^5.0.0
         version: 5.56.8(@typescript-eslint/types@8.71.0)
+
+  packages/svelte/utils/xapi: {}
 
 packages:
 
