@@ -452,7 +452,33 @@ Tutors is an open source application - the data collection component [is here](h
   "classTime.calendarEntries": "Calendar entries",
   "classTime.notAvailable": "N/A",
   "classTime.online": "Online",
-  "classTime.offline": "Offline"
+  "classTime.offline": "Offline",
+
+  // Lecturer feedback on lab steps
+  "feedback.banner": "Explanation for everyone on this step",
+  "feedback.dismiss": "Hide",
+  "feedback.from": "From",
+  "feedback.forYou": "Feedback for you",
+  "feedback.educatorPanel": "Feedback on this step",
+  "feedback.audience": "For",
+  "feedback.everyone": "Everyone on this step",
+  "feedback.oneStudent": "One student",
+  "feedback.studentLogin": "Student's GitHub login",
+  "feedback.body": "Feedback (markdown)",
+  "feedback.post": "Post",
+  "feedback.notSent": "The feedback was not sent. Try again.",
+  "feedback.forbidden": "Only an educator of this course can do that.",
+  "feedback.notKept": "Feedback is not kept on this server.",
+  "feedback.history": "Posted on this step",
+  "feedback.historyEmpty": "Nothing posted on this step yet.",
+  "feedback.toEveryone": "To everyone",
+  "feedback.to": "To",
+  "feedback.revoke": "Revoke",
+  "feedback.revoked": "Revoked",
+  "feedback.received": "Feedback received",
+  "feedback.receivedEmpty": "No feedback in this course yet.",
+  "feedback.toast": "Your lecturer posted an explanation for everyone on this step",
+  "feedback.open": "Open step"
 } as const;
 
 export default en;

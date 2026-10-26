@@ -144,6 +144,56 @@
       "why": "only the course's educators sync Moodle (Rules 0633-0634); the stack's Moodle is the persistence stub"
     },
     {
+      "key": "reader GET /api/feedback",
+      "request": {
+        "path": "/api/feedback?courseId=harness-rules&labRoute=/lab/harness-rules/topic-01/lab-01&stepId=step-01"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "only someone the private course admits reads a step's feedback (Rule 0403); the educator also sees its history"
+    },
+    {
+      "key": "reader GET /api/feedback/mine",
+      "request": {
+        "path": "/api/feedback/mine?courseId=harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "only someone the private course admits reads the feedback sent to them in it (Rule 0409)"
+    },
+    {
+      "key": "reader POST /api/feedback",
+      "request": {
+        "path": "/api/feedback",
+        "body": {
+          "action": "annotate",
+          "courseId": "harness-rules",
+          "labRoute": "/lab/harness-rules/topic-01/lab-01",
+          "stepId": "step-01",
+          "body": "Check the loop bound",
+          "everyone": true
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 201
+      },
+      "why": "only the course's educators post feedback (Rules 0400-0402); an enrolled student is not an educator"
+    },
+    {
       "key": "reader GET /healthz",
       "request": {
         "path": "/healthz"

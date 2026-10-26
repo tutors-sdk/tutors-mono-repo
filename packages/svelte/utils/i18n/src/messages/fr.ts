@@ -452,7 +452,33 @@ Tutors est une application open source - le composant de collecte des données [
   "classTime.calendarEntries": "Entrées du calendrier",
   "classTime.notAvailable": "n.d.",
   "classTime.online": "En ligne",
-  "classTime.offline": "Hors ligne"
+  "classTime.offline": "Hors ligne",
+
+  // Lecturer feedback on lab steps
+  "feedback.banner": "Explication pour tous sur cette étape",
+  "feedback.dismiss": "Masquer",
+  "feedback.from": "De",
+  "feedback.forYou": "Retour pour vous",
+  "feedback.educatorPanel": "Retours sur cette étape",
+  "feedback.audience": "Pour",
+  "feedback.everyone": "Tous sur cette étape",
+  "feedback.oneStudent": "Un étudiant",
+  "feedback.studentLogin": "Identifiant GitHub de l'étudiant",
+  "feedback.body": "Retour (markdown)",
+  "feedback.post": "Publier",
+  "feedback.notSent": "Le retour n'a pas été envoyé. Réessayez.",
+  "feedback.forbidden": "Seul un enseignant de ce cours peut le faire.",
+  "feedback.notKept": "Ce serveur ne conserve pas les retours.",
+  "feedback.history": "Publié sur cette étape",
+  "feedback.historyEmpty": "Rien n'a encore été publié sur cette étape.",
+  "feedback.toEveryone": "À tous",
+  "feedback.to": "À",
+  "feedback.revoke": "Retirer",
+  "feedback.revoked": "Retiré",
+  "feedback.received": "Retours reçus",
+  "feedback.receivedEmpty": "Pas encore de retour dans ce cours.",
+  "feedback.toast": "Votre enseignant a publié une explication pour tous sur cette étape",
+  "feedback.open": "Ouvrir l'étape"
 };
 
 export default fr;
