@@ -35,8 +35,12 @@ export async function seedOneOnline(page: Page, { online = 1 } = {}): Promise<vo
   // runner), so seed, wait a moment, and seed again until the identity holds.
   await expect(async () => {
     const held = await page.evaluate(async ({ urls, online }) => {
-      const { tutorsId, isEducator } = await import(urls.find(url => url.includes("/runes/src/index.svelte.ts"))!);
+      const runes = urls.find(url => url.includes("/runes/src/index.svelte.ts"))!;
+      const { tutorsId, isEducator } = await import(runes);
       const { presenceService } = await import(urls.find(url => url.includes("/community/src/services/presence.svelte.ts"))!);
+      // A preview identity with no privacy choice would open the privacy dialog over the page.
+      const { consent } = await import(runes.replace("/runes/src/index.svelte.ts", "/utils/privacy/src/consent.ts"));
+      consent.value = { analytics: false, presence: true, decidedAt: new Date().toISOString() };
       tutorsId.value = { login: "ui-preview", name: "UI Preview", share: "true", sentiment: "neutral" };
       isEducator.value = false;
       presenceService.studentsOnline.value = Array.from({ length: online }, () => ({ title: "Objectives", type: "lab", loRoute: "/lab/reference-course/topic-01-typical/unit-1/book-a", courseTitle: "Reference Course", user: { id: "ui-preview", fullName: "UI Preview", sentiment: "neutral" } }));
@@ -47,8 +51,14 @@ export async function seedOneOnline(page: Page, { online = 1 } = {}): Promise<vo
   }).toPass({ timeout: 20_000 });
 }
 
-/** Obtains signed cookies through the reader's real OAuth routes, then hydrates its normal layout. */
-export async function signInAs(page: Page, role: "student" | "lecturer"): Promise<void> {
+/** What a test's person chose in the privacy dialog; null leaves them undecided, so the dialog asks. */
+type PrivacyChoice = { analytics: boolean; presence: boolean } | null;
+
+/**
+ * Obtains signed cookies through the reader's real OAuth routes, then hydrates its normal layout. The
+ * person's privacy choice is kept in this browser first (Rule 0070), as if they had answered the dialog.
+ */
+export async function signInAs(page: Page, role: "student" | "lecturer", choice: PrivacyChoice = { analytics: false, presence: false }): Promise<void> {
   // Enrollment is course content, not a browser identity/role override.
   await page.route("https://reference-course.netlify.app/tutors.json", async route => {
     const response = await route.fetch();
@@ -74,8 +84,15 @@ export async function signInAs(page: Page, role: "student" | "lecturer"): Promis
   } finally {
     await http.dispose();
   }
+  // The identity stub signs in the GitHub login named after the role.
+  await page.evaluate(({ login, choice }) => {
+    const key = `tutors-consent:${login}`;
+    if (choice) localStorage.setItem(key, JSON.stringify({ ...choice, decidedAt: new Date().toISOString() }));
+    else localStorage.removeItem(key);
+  }, { login: role, choice });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Profile menu", exact: true })).toBeVisible();
+  if (choice) await expect(page.getByRole("button", { name: "Profile menu", exact: true })).toBeVisible();
+  else await expect(page.getByRole("dialog", { name: "Choose what Tutors records", exact: true })).toBeVisible();
 }
 
 /**

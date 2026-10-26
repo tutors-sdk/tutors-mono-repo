@@ -13,6 +13,7 @@ import * as env from "$app/env/public";
 
 import { currentCourse, currentLo, tutorsId, isEducator } from "@tutors/runes";
 import { rbacService } from "@tutors/rbac";
+import { consent, readConsent, saveConsent } from "@tutors/privacy";
 import { localStorageProfile } from "./localStorageProfile.ts";
 
 import { updateCourseList } from "../utils/allCourseAccess.ts";
@@ -20,7 +21,6 @@ import { type ConnectUser, type CourseVisit, type TutorsConnectService } from ".
 import { supabaseProfile } from "./supabaseProfile.svelte.ts";
 import {
   addOrUpdateStudent,
-  getTutorsConnectUserOnlineStatus,
   getTutorsConnectUserSentiment,
   updateTutorsConnectUserOnlineStatus,
   updateTutorsConnectUserSentiment
@@ -66,15 +66,14 @@ export const tutorsConnectService: TutorsConnectService = {
     if (anonMode) return;
     if (user) {
       this.profile = supabaseProfile;
-      tutorsId.value = { ...user, share: "true", sentiment: "neutral" };
+      // Presence is shared only once the person has chosen to share it (the privacy choices dialog); until
+      // then, and in a browser that kept no choice, they are offline.
+      const choice = browser ? readConsent(user.login) : null;
+      consent.value = choice;
+      tutorsId.value = { ...user, share: choice?.presence ? "true" : "false", sentiment: "neutral" };
       tutorsId.value.sentiment! = (await getTutorsConnectUserSentiment(user.login)) ?? "neutral";
-      tutorsId.value.share = (await getTutorsConnectUserOnlineStatus(user.login)) ?? "online";
       addOrUpdateStudent(tutorsId.value).catch((err) => log.error("Failed to update student record:", err));
       if (browser) {
-        if (!localStorage.share) {
-          localStorage.share = true;
-        }
-        tutorsId.value.share = localStorage.share;
         if (localStorage.loginCourse) {
           const courseId = localStorage.loginCourse;
           localStorage.removeItem("loginCourse");
@@ -96,27 +95,27 @@ export const tutorsConnectService: TutorsConnectService = {
     return this.identityClient.signOut(redirectStr);
   },
 
-  /**
-   * Toggles user's content sharing preference
-   * Updates both local storage and current session
-   */
+  /** Flips presence sharing, keeping the analytics choice as it is. */
   toggleShare() {
-    if (tutorsId.value && browser) {
-      if (tutorsId.value.share === "true") {
-        localStorage.share = tutorsId.value.share = "false";
-      } else {
-        localStorage.share = tutorsId.value.share = "true";
-      }
-      const login = tutorsId.value.login;
-      if (tutorsId.value.share === "true" && login && currentCourse.value) {
-        void presenceService.startCourseRoster(currentCourse.value.courseId);
-      } else {
-        presenceService.stopPresenceListener();
-      }
-      if (login && !anonMode) {
-        const onlineStatus = tutorsId.value.share === "true" ? "online" : "offline";
-        void updateTutorsConnectUserOnlineStatus(login, onlineStatus).catch((err) => log.error("Failed to update online status:", err));
-      }
+    this.setConsent({ analytics: consent.value?.analytics ?? false, presence: tutorsId.value?.share !== "true" });
+  },
+
+  /**
+   * Records the signed-in person's privacy choices in this browser and acts on them at once: presence
+   * joins or leaves the open course's roster, and analytics stops or starts with the next event.
+   */
+  setConsent(choice: { analytics: boolean; presence: boolean }) {
+    const login = tutorsId.value?.login;
+    if (!login || !browser) return;
+    consent.value = saveConsent(login, choice);
+    tutorsId.value!.share = choice.presence ? "true" : "false";
+    if (choice.presence && currentCourse.value) {
+      void presenceService.startCourseRoster(currentCourse.value.courseId);
+    } else {
+      presenceService.stopPresenceListener();
+    }
+    if (!anonMode) {
+      void updateTutorsConnectUserOnlineStatus(login, choice.presence ? "online" : "offline").catch((err) => log.error("Failed to update online status:", err));
     }
   },
 
@@ -260,7 +259,7 @@ export const tutorsConnectService: TutorsConnectService = {
       this.pendingNavigation = false;
       this.lastLearningEvent = identity;
 
-      if (analyticsEnabled) analyticsService.learningEvent(currentCourse.value, params, currentLo.value, tutorsId.value);
+      if (analyticsEnabled && consent.value?.analytics) analyticsService.learningEvent(currentCourse.value, params, currentLo.value, tutorsId.value);
       if (tutorsId.value.share === "true" && !currentCourse.value.isPrivate) {
         presenceService.sendLoEvent(currentCourse.value, currentLo.value, tutorsId.value);
       }
@@ -275,7 +274,7 @@ export const tutorsConnectService: TutorsConnectService = {
     if (anonMode) return;
     this.intervalId = setInterval(() => {
       if (!document.hidden && currentCourse.value && currentLo.value && tutorsId.value) {
-        if (analyticsEnabled) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
+        if (analyticsEnabled && consent.value?.analytics) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
       }
     }, 30 * 1000);
   },

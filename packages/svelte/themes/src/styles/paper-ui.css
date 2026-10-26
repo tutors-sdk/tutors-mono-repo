@@ -86,7 +86,7 @@ body { background: var(--ui-canvas); color: var(--ui-ink); font-family: var(--ui
 /* A select draws no arrow of its own (appearance: none), so it gets one: a chevron in the muted ink, drawn
    from two gradients so it follows light and dark. The Preferences menu draws its own. */
 select.select { padding-right: var(--space-10); background-image: linear-gradient(45deg, transparent 50%, var(--ui-muted) 50%), linear-gradient(135deg, var(--ui-muted) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 15px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
-:where(input[type="checkbox"], input[type="radio"]) { accent-color: var(--ui-brand); }
+:where(input[type="checkbox"], input[type="radio"]) { appearance: auto; accent-color: var(--ui-brand); box-shadow: none; }
 [data-scope="tabs"][data-part="list"] { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-bottom: var(--space-3); border-bottom: 1px solid var(--ui-border); }
 [data-scope="tabs"][data-part="trigger"] { min-height: 44px; padding: var(--space-2) var(--space-4); border-radius: var(--radius-control); color: var(--ui-muted); }
 [data-scope="tabs"][data-part="trigger"][data-selected], [data-scope="tabs"][data-part="trigger"]:hover { background: var(--ui-selected); color: var(--ui-ink); }

@@ -207,9 +207,12 @@ test("Online list opens as a dialog", { tag: "@rule-0046" }, async ({ page }) =>
   await expect(online).toHaveCSS("height", "844px");
 });
 
+// Tutors Time's links read the activity that presence sharing produces, so they show only once it is allowed (Rule 0066).
+const sharing = { analytics: true, presence: true };
+
 test("Course tools withholds class activity from a student", { tag: "@rule-0063" }, async ({ page }) => {
   await page.goto(course);
-  await signInAs(page, "student");
+  await signInAs(page, "student", sharing);
   const navigation = page.locator(".shell-navigation");
   await expect(navigation.getByRole("link", { name: "My time", exact: true })).toHaveAttribute("href", "/time/reference-course");
   await expect(navigation.getByRole("link", { name: "Live now" })).toHaveAttribute("href", "https://live.tutors.dev/reference-course");
@@ -218,7 +221,7 @@ test("Course tools withholds class activity from a student", { tag: "@rule-0063"
 
 test("Course tools offers class activity to an educator", { tag: "@rule-0063" }, async ({ page }) => {
   await page.goto(course);
-  await signInAs(page, "lecturer");
+  await signInAs(page, "lecturer", sharing);
   const classActivity = page.locator(".shell-navigation").getByRole("link", { name: "Class activity" });
   await expect(classActivity).toHaveAttribute("href", "https://time.tutors.dev/reference-course");
   await expect(classActivity).toHaveAttribute("target", "_blank");

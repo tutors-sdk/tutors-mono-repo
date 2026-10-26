@@ -4,6 +4,17 @@ This document catalogues the data — including personally identifiable informat
 
 > **Source of truth & caveat.** Except for `app_errors`, none of these tables has a schema-defining migration in this repository. The columns below are therefore derived from how the application code actually reads and writes each table (via the Supabase client). Column sets are accurate for the fields the code touches but may not be exhaustive — a deployment's live database could contain additional columns (e.g. an internal `id`/`created_at`) not visible from the code. Verify against your Supabase instance. Note also the inconsistent naming conventions in the live schema: some tables are hyphenated (and must be double-quoted in SQL), `learning_records` uses `snake_case`, and `calendar`/`assignments` use `nounderscore`.
 
+## Consent
+
+Two kinds of processing are optional, and both start off. The reader asks each student the first time they sign in on a browser, and the profile menu turns either on or off at any time. The choice is kept in the browser's `localStorage` under `tutors-consent:<login>`, per login.
+
+| Choice | Tables and channels it covers |
+|---|---|
+| Learning analytics | `learning_records`, `calendar` |
+| Share presence | Supabase Realtime broadcasts, `"tutors-connect-latest"`, `online_status` in `"tutors-connect-users"` |
+
+A signed-in student can download their rows in `"tutors-connect-users"`, `"tutors-connect-profiles"`, `"tutors-connect-latest"`, `learning_records` and `calendar` from the profile menu (`GET /api/privacy`). The other tables below are answered by the Data Controller; see [PRIVACY-ADMIN-GUIDE.md](PRIVACY-ADMIN-GUIDE.md).
+
 ## Supabase Tables
 
 ### `"tutors-connect-users"`
@@ -31,8 +42,8 @@ Extended per-user profile, keyed on the user's GitHub login.
 | tutorId | string | Yes | GitHub login (camelCase key) |
 | profile | jsonb | Yes | Course-visit history authored per user (titles, timestamps, visit counts) |
 
-**Legal basis:** Consent (analytics/profile data)
-**Consent required:** Yes
+**Legal basis:** Legitimate interest (the student's own recent and favourite courses, shown only to them)
+**Consent required:** No — it is not learning analytics, and refusing analytics must not cost a student their own course list
 **Deletion impact:** Removes the user's stored course-visit history
 
 ### `"tutors-connect-courses"`
@@ -59,8 +70,8 @@ Most-recent learning object per (course, student). Composite key `course_id, stu
 | payload | jsonb | Yes | Learning-object snapshot; embeds `courseId` and `user.id` |
 | received_at | timestamp | No | When the snapshot was stored (ordering) |
 
-**Legal basis:** Consent (analytics tracking)
-**Consent required:** Yes
+**Legal basis:** Consent (share presence)
+**Consent required:** Yes — written only while the student shares presence, alongside the realtime broadcast
 **Deletion impact:** Removes "last visited" records
 
 ### `learning_records`
@@ -76,7 +87,7 @@ Per-learning-object activity. Composite key `student_id, course_id, lo_id`.
 | count | number | No | Interaction/visit counter |
 | date_last_accessed | timestamp | No | Timestamp of last access |
 
-**Legal basis:** Consent (analytics tracking)
+**Legal basis:** Consent (learning analytics)
 **Consent required:** Yes
 **Deletion impact:** Removes all learning activity history
 
@@ -93,7 +104,7 @@ Daily activity aggregates (nounderscore column names). Composite key `id, studen
 | timeactive | number | No | Active time that day (in ~30-second blocks) |
 | pageloads | number | No | Page loads that day |
 
-**Legal basis:** Consent (analytics tracking)
+**Legal basis:** Consent (learning analytics)
 **Consent required:** Yes
 **Deletion impact:** Removes daily activity aggregates
 
@@ -194,7 +205,7 @@ Client/server error aggregation for observability. Authoritative columns from `s
 Real-time presence data (which users are online and what they are viewing) is transmitted via WebSocket through Supabase Realtime. This data is ephemeral and is not written to any database. It exists only for the duration of a user's active session.
 
 **PII involved:** User identity (name, avatar) and current page location
-**Consent required:** Yes (live collaboration features)
+**Consent required:** Yes (share presence)
 
 ## Data Flow Summary
 

@@ -9,6 +9,7 @@ import { tutorsConnectService } from "../../../packages/svelte/connect/src/servi
 import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
 import { recordingFunctions } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
+import { consent, saveConsent, type ConsentChoice } from "../../../packages/svelte/utils/privacy/src/index.ts";
 import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
@@ -71,8 +72,12 @@ export function freshBrowser(): void {
   vi.stubGlobal("document", { hidden: false });
   vi.stubGlobal("fetch", readerFetch);
   readerServer.posts = [];
+  reloadPage();
+}
 
+export function reloadPage(): void {
   tutorsId.value = null;
+  consent.value = null;
   currentCourse.value = null;
   currentLo.value = null;
   tutorsConnectService.profile = localStorageProfile;
@@ -118,8 +123,9 @@ export function labsOf(course: Course): Lo[] {
   return [...new Set(course.loIndex.values())].filter((lo) => lo.type === "lab");
 }
 
-/** What the reader's root layout does once the identity adapter reports a session. */
-export async function signIn(user: TutorsId): Promise<void> {
+/** What the reader's root layout does once the identity adapter reports a session, after the person chose what to share. */
+export async function signIn(user: TutorsId, choice: Pick<ConsentChoice, "analytics" | "presence"> | null = { analytics: true, presence: true }): Promise<void> {
+  if (choice) saveConsent(user.login, choice);
   await tutorsConnectService.reconnect(user);
   await settle();
 }
