@@ -148,14 +148,16 @@ function actionNames(source: ts.SourceFile): string[] {
   return [];
 }
 
-/** Mutating endpoints and form actions declared in one route file. */
-export function mutatingRoutesIn(app: string, fileRelativeToRoutes: string, text: string): MutatingRoute[] {
+const HTTP_METHODS = new Set(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "fallback"]);
+
+/** Every endpoint (any method, `fallback` included) and form action declared in one route file. */
+export function endpointsIn(app: string, fileRelativeToRoutes: string, text: string): MutatingRoute[] {
   const source = ts.createSourceFile(fileRelativeToRoutes, text, ts.ScriptTarget.Latest, true);
   const route = routeIdFromFile(fileRelativeToRoutes);
   const file = `apps/${app}/src/routes/${fileRelativeToRoutes}`;
   if (fileRelativeToRoutes.endsWith("+server.ts") || fileRelativeToRoutes.endsWith("+server.js")) {
     return exportedNames(source)
-      .filter((name) => MUTATING.has(name))
+      .filter((name) => HTTP_METHODS.has(name))
       .map((method) => ({ app, method, route, file }));
   }
   if (/\+page\.server\.[jt]s$/.test(fileRelativeToRoutes)) {
@@ -169,14 +171,28 @@ export function mutatingRoutesIn(app: string, fileRelativeToRoutes: string, text
   return [];
 }
 
+/** Mutating endpoints and form actions declared in one route file. */
+export function mutatingRoutesIn(app: string, fileRelativeToRoutes: string, text: string): MutatingRoute[] {
+  return endpointsIn(app, fileRelativeToRoutes, text).filter((r) => MUTATING.has(r.method));
+}
+
+/** Every endpoint and form action in every app, sorted by `routeKey`. */
+export function discoverEndpoints(root: string = REPO_ROOT): MutatingRoute[] {
+  return discoverRoutes(root, endpointsIn);
+}
+
 export function discoverMutatingRoutes(root: string = REPO_ROOT): MutatingRoute[] {
+  return discoverRoutes(root, mutatingRoutesIn);
+}
+
+function discoverRoutes(root: string, routesIn: typeof endpointsIn): MutatingRoute[] {
   const appsDir = join(root, "apps");
   return readdirSync(appsDir)
     .filter((app) => existsSync(join(appsDir, app, "src/routes")))
     .flatMap((app) => {
       const routesDir = join(appsDir, app, "src/routes");
       return walk(routesDir, (name) => /^\+(server|page\.server)\.[jt]s$/.test(name)).flatMap((path) =>
-        mutatingRoutesIn(app, toPosix(path, routesDir), readText(path))
+        routesIn(app, toPosix(path, routesDir), readText(path))
       );
     })
     .sort((a, b) => routeKey(a).localeCompare(routeKey(b)));

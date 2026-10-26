@@ -302,8 +302,9 @@ test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, asy
       await expect(heading).toBeVisible();
       await expect(card).toBeHidden();
       const artwork = (await heading.locator(".lo-artwork").boundingBox())!;
-      expect(artwork.width).toBe(48);
-      expect(artwork.height).toBe(48);
+      // A scaled layout can land a 48px box a few millionths short (47.99999809 in CI), so compare to the pixel.
+      expect(artwork.width).toBeCloseTo(48, 1);
+      expect(artwork.height).toBeCloseTo(48, 1);
       const headingBox = (await heading.boundingBox())!;
       expect(headingBox.height).toBeGreaterThanOrEqual(44);
       expect(headingBox.height).toBeLessThan(160);
