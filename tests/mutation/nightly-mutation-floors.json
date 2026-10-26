@@ -35,6 +35,7 @@
     "packages/jsr/time/src/services/tutors-time.ts": 69,
     "packages/jsr/time/src/utils/calendar-utils.ts": 98,
     "packages/jsr/time/src/utils/lab-utils.ts": 98,
+    "packages/jsr/tutors-lite/src/run.ts": 100,
     "packages/jsr/types/src/learner.ts": 96,
     "packages/jsr/types/src/learning-objects.ts": 83,
     "packages/jsr/types/src/tutors-json.ts": 0,
