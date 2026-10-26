@@ -176,3 +176,45 @@ Feature: Test quality ratchets
     Scenario: The nightly job warns on stale floors and writes the step summary
       Given the nightly workflow
       Then the job that runs "pnpm test:mutation:nightly" shall check floors with "--stale warn" and "--summary"
+
+  @rule-0618 @ears-unwanted
+  Rule: If a pull request changes a library module whose mutation score on that pull request is below its nightly floor, or that has no nightly floor, then tutors shall fail the pull request and name the module.
+
+    Scenario: A changed module below its nightly floor fails the pull request
+      Given a recorded nightly mutation floor of 70 percent for "packages/svelte/course/src/course/services/course.svelte.ts"
+      And a pull request that changes "packages/svelte/course/src/course/services/course.svelte.ts"
+      When the pull request's mutation run kills 69 and misses 31 of the mutants in "packages/svelte/course/src/course/services/course.svelte.ts"
+      Then the pull request's mutation check shall fail with "below-floor: packages/svelte/course/src/course/services/course.svelte.ts 69% < floor 70%"
+
+    Scenario: A new library module without a nightly floor fails the pull request
+      Given a recorded nightly mutation floor of 70 percent for "packages/svelte/course/src/course/services/course.svelte.ts"
+      And a pull request that changes "packages/jsr/model/src/new-module.ts"
+      When the pull request's mutation run kills 3 and misses 1 of the mutants in "packages/jsr/model/src/new-module.ts"
+      Then the pull request's mutation check shall fail with "unfloored: packages/jsr/model/src/new-module.ts scored 75% and has no floor"
+
+    Scenario: A module that rose past its floor on a pull request passes and is reported
+      Given a recorded nightly mutation floor of 70 percent for "packages/svelte/course/src/course/services/course.svelte.ts"
+      And a pull request that changes "packages/svelte/course/src/course/services/course.svelte.ts"
+      When the pull request's mutation run kills 80 and misses 20 of the mutants in "packages/svelte/course/src/course/services/course.svelte.ts"
+      Then the pull request's mutation check shall pass
+      And it shall report "stale-floor: packages/svelte/course/src/course/services/course.svelte.ts 80% >= floor 70% + 2; raise it to 80"
+
+  @rule-0619 @ears-event-driven
+  Rule: When a pull request changes a library module, tutors shall mutate the library modules it changes, and only those, with the nightly mutation configuration.
+
+    Scenario: Only the changed library modules are mutated
+      Given the nightly Stryker configuration
+      When a pull request changes "packages/jsr/model/src/utils/lo-utils.ts", "tests/unit/model/lo-utils.test.ts", "apps/reader/src/hooks.client.ts" and "packages/jsr/model/src/types/ambient.d.ts"
+      Then the pull request's mutation run shall mutate only "packages/jsr/model/src/utils/lo-utils.ts"
+
+    Scenario: The pull request workflow runs the changed-module mutation gate
+      Given the pull request workflow
+      Then a job shall run "pnpm test:mutation:pr" and write the step summary
+      And that job shall run "git diff --exit-code --stat" after it, even when it fails
+
+  @rule-0620 @ears-ubiquitous
+  Rule: Tutors shall run every Playwright suite with no retries, so that a test which passes only on a second attempt fails.
+
+    Scenario: No Playwright configuration retries a failed test
+      Given the repository's Playwright configurations
+      Then each of "apps/reader/playwright.config.ts", "apps/catalogue/playwright.config.ts", "apps/live/playwright.config.ts" and "playwright.e2e-stack.config.ts" shall set retries to 0

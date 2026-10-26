@@ -1,5 +1,5 @@
 import type { LearningRecord, LabModel, LabTable, LabMedianTable, LabRow, LabMedianRow } from "../types/index.ts";
-import { extractLabIdentifier } from "../utils/index.ts";
+import { extractLabPath } from "../utils/index.ts";
 
 export type { LabTable, LabMedianTable } from "../types/index.ts";
 
@@ -155,7 +155,7 @@ export class BaseLabModel implements LabModel {
         records
           .map((r) => r.lo_id)
           .filter((lo_id): lo_id is string => lo_id !== null && lo_id !== undefined)
-          .map(extractLabIdentifier)
+          .map(extractLabPath)
       )
     );
     return labIdentifiers;
@@ -183,7 +183,7 @@ export class BaseLabModel implements LabModel {
     const nameMap = new Map<string, string>();
 
     for (const record of sortedRecords) {
-      const columnKey = viewMode === "lab" ? extractLabIdentifier(record.lo_id!) : record.lo_id!;
+      const columnKey = viewMode === "lab" ? extractLabPath(record.lo_id!) : record.lo_id!;
       const key = `${record.student_id}\t${columnKey}`;
       const duration = record.duration ?? 0;
       map.set(key, (map.get(key) ?? 0) + duration);

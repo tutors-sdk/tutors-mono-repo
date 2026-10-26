@@ -10,7 +10,7 @@ import { createSupabaseErrorTransport } from "@tutors/community/utils/error-tran
 };
 
 import { initSupabase } from "@tutors/tutors-time-lib";
-import { setCourseNotFoundHandler, setCourseUnreachableHandler } from "@tutors/course/course";
+import { setCourseNotFoundHandler, setCourseTimedOutHandler, setCourseUnreachableHandler } from "@tutors/course/course";
 
 initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 
@@ -18,6 +18,7 @@ initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 // an unknown course site from being offline, so an unreachable host is a 404 page as well.
 setCourseNotFoundHandler((notFound) => error(404, `Course ${notFound.courseId} not found at https://${notFound.courseUrl}/tutors.json`));
 setCourseUnreachableHandler(() => error(404, "Course not found"));
+setCourseTimedOutHandler(() => error(504, "The course host did not answer in time"));
 
 setAppName("tutors-reader");
 addTransport(createSupabaseErrorTransport("tutors-reader"));

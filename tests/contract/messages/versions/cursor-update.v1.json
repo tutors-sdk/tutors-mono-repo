@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string"
+    },
+    "userName": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "pointer": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "button": {
+      "type": "string",
+      "enum": [
+        "up",
+        "down"
+      ]
+    }
+  },
+  "required": [
+    "userId",
+    "userName",
+    "color",
+    "pointer",
+    "button"
+  ],
+  "additionalProperties": false
+}

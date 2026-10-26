@@ -15,7 +15,6 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
-    "@supabase/supabase-js": "^2.117.1",
     "isomorphic-dompurify": "^4.5.0"
   },
   "devDependencies": {

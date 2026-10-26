@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { minutesOf } from "@tutors/tutors-time-lib";
+  import { whenLayoutSettled } from "./heatmap-layout";
 
   /** Minutes per day keyed by date (YYYY-MM-DD); Heat.js fills in the days between, so quiet days show as empty. */
   let { title, values, dates, id }: { title: string; values: Record<string, unknown>; dates: string[]; id: string } = $props();
@@ -18,6 +19,8 @@
     (async () => {
       await import("jheat.js");
       await import("jheat.js/dist/heat.js.css");
+      // Lay the grid out on the final fonts and widths, so it is the same on every load (Rule 0604).
+      await whenLayoutSettled(document);
       heat = (window as unknown as { $heat?: Heat }).$heat;
       if (!heat || !container.isConnected) return;
       // Only the months the course runs in, so the map isn't mostly empty year.

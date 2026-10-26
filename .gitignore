@@ -54,6 +54,8 @@ tests/e2e-stack/work/
 .stryker-tmp-nightly/
 reports/mutation/
 reports/mutation-nightly/
+reports/mutation-pr/
+reports/ears-dashboard/
 
 # Misc
 *.tsbuildinfo

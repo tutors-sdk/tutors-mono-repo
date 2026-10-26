@@ -1,0 +1,296 @@
+{
+  "$comment": "The authorisation matrix (Rules 0621, 0622; scripts/checks/authorisation.ts). One entry per server endpoint: the request the E2E stack sends and the status each role gets. '*' covers every role not named. A new +server.ts endpoint fails pnpm test:bdd until it has a row here.",
+  "entries": [
+    {
+      "key": "catalogue GET /healthz",
+      "request": {
+        "path": "/healthz"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "catalogue GET /healthz/live",
+      "request": {
+        "path": "/healthz/live"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "catalogue GET /metrics",
+      "request": {
+        "path": "/metrics"
+      },
+      "expect": {
+        "*": 401,
+        "operator": 200
+      },
+      "why": "only the scraper's bearer token (METRICS_TOKEN) reads metrics; a reader session is not enough"
+    },
+    {
+      "key": "catalogue GET /version",
+      "request": {
+        "path": "/version"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "live GET /healthz",
+      "request": {
+        "path": "/healthz"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "live GET /healthz/live",
+      "request": {
+        "path": "/healthz/live"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "live GET /metrics",
+      "request": {
+        "path": "/metrics"
+      },
+      "expect": {
+        "*": 401,
+        "operator": 200
+      },
+      "why": "only the scraper's bearer token (METRICS_TOKEN) reads metrics; a reader session is not enough"
+    },
+    {
+      "key": "live GET /version",
+      "request": {
+        "path": "/version"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "reader GET /api/assistance",
+      "request": {
+        "path": "/api/assistance?courseId=harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators read its help queue (Rule 0392); an enrolled student is not an educator"
+    },
+    {
+      "key": "reader GET /api/assistance/mine",
+      "request": {
+        "path": "/api/assistance/mine?courseId=harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "anyone signed in reads only their own live help request (Rule 0392); the persistence stub has none, so it answers null"
+    },
+    {
+      "key": "reader POST /api/assistance",
+      "request": {
+        "path": "/api/assistance",
+        "body": {
+          "action": "request",
+          "courseId": "harness-rules",
+          "labRoute": "/lab/harness-rules/topic-01/lab-01",
+          "stepId": "step-01",
+          "kind": "stuck"
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 201,
+        "lecturer": 201
+      },
+      "why": "only someone the private course admits (its whitelist and educators) asks for help in it (tests/security/mutating-routes.txt)"
+    },
+    {
+      "key": "reader GET /api/auth/get-session",
+      "hook": true,
+      "request": {
+        "path": "/api/auth/get-session"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "Better Auth answers everyone: a session for a signed-in browser, null otherwise"
+    },
+    {
+      "key": "reader GET /api/courses/[courseid]/enrollment",
+      "request": {
+        "path": "/api/courses/harness-rules/enrollment"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators export its enrollment; an enrolled student is not an educator"
+    },
+    {
+      "key": "reader PUT /api/courses/[courseid]/locks",
+      "request": {
+        "path": "/api/courses/harness-rules/locks",
+        "body": {
+          "loRoute": "/topic/harness-rules/topic-02",
+          "locked": false
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators change a content lock (Rules 0630-0632); the write goes through the server's service key"
+    },
+    {
+      "key": "reader POST /api/courses/[courseid]/moodle-sync",
+      "request": {
+        "path": "/api/courses/harness-rules/moodle-sync",
+        "body": {
+          "moodleCourseId": 1234
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 200
+      },
+      "why": "only the course's educators sync Moodle (Rules 0633-0634); the stack's Moodle is the persistence stub"
+    },
+    {
+      "key": "reader GET /healthz",
+      "request": {
+        "path": "/healthz"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "reader GET /healthz/live",
+      "request": {
+        "path": "/healthz/live"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "reader GET /metrics",
+      "request": {
+        "path": "/metrics"
+      },
+      "expect": {
+        "*": 401,
+        "operator": 200
+      },
+      "why": "only the scraper's bearer token (METRICS_TOKEN) reads metrics; a reader session is not enough"
+    },
+    {
+      "key": "reader GET /version",
+      "request": {
+        "path": "/version"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "reader POST /api/live/activity",
+      "request": {
+        "path": "/api/live/activity",
+        "body": {
+          "courseId": "localhost:8080",
+          "user": {
+            "id": "harness-student"
+          },
+          "title": "Lab 1",
+          "type": "lab"
+        }
+      },
+      "expect": {
+        "*": 202
+      },
+      "why": "anyone may report a learning event, as the anon key it replaced allowed; the body is validated and the day's Live budget applies (tests/security/mutating-routes.txt)"
+    },
+    {
+      "key": "time GET /healthz",
+      "request": {
+        "path": "/healthz"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "time GET /healthz/live",
+      "request": {
+        "path": "/healthz/live"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "time GET /metrics",
+      "request": {
+        "path": "/metrics"
+      },
+      "expect": {
+        "*": 401,
+        "operator": 200
+      },
+      "why": "only the scraper's bearer token (METRICS_TOKEN) reads metrics; a reader session is not enough"
+    },
+    {
+      "key": "time GET /version",
+      "request": {
+        "path": "/version"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    }
+  ]
+}
