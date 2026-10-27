@@ -43,7 +43,7 @@ export interface PresenceReport {
   payload: object;
 }
 
-/** PUT /api/locks (educators only). */
+/** PUT /api/courses/:courseId/locks (educators only). */
 export interface LockChange {
   courseId: string;
   loRoute: string;

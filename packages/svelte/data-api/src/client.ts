@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import log from "@tutors/logger";
 import type {
   AnalyticsEvent,
@@ -56,7 +56,7 @@ export const dataApi = {
   saveProfile: <Visit>(profile: Profile<Visit>) => send("PUT", "/api/profile", profile),
   reportCourseVisit: (visit: CourseVisitReport) => send("POST", "/api/courses/visit", visit),
   reportPresence: (report: PresenceReport) => send("POST", "/api/presence", report),
-  setLock: (change: LockChange) => send("PUT", "/api/locks", change),
+  setLock: ({ courseId, loRoute, locked }: LockChange) => send("PUT", `/api/courses/${encodeURIComponent(courseId)}/locks`, { loRoute, locked }),
   removeLock: (removal: LockRemoval) => send("DELETE", "/api/locks", removal),
   getWhiteboard: (room: WhiteboardRoom) =>
     getJson<{ scene: WhiteboardScene | null }>(`/api/whiteboard?${new URLSearchParams({ courseId: room.courseId, route: room.route, shared: String(room.shared) })}`),
