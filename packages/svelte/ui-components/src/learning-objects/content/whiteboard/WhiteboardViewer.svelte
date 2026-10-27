@@ -7,6 +7,7 @@
   import log from "@tutors/logger";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { themeService } from "@tutors/themes";
+  import { loadWhiteboardScene, saveWhiteboardScene } from "./whiteboard-scene";
 
   interface Props {
     lo: Whiteboard;
@@ -39,41 +40,20 @@
     return `wb-${courseId}-${route}-${getUserId()}`;
   }
 
+  // The files of the scene the editor was opened with, kept for every save of that room.
+  let openedFiles: unknown = {};
+
   async function loadSceneFromDb(roomId: string): Promise<any | null> {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) return null;
-    try {
-      const { data } = await supabase
-        .from("whiteboard_scenes")
-        .select("elements, app_state, files")
-        .eq("room_id", roomId)
-        .single();
-      if (data) {
-        return { elements: data.elements, appState: data.app_state, files: data.files };
-      }
-    } catch {
-      // fall through to static file
-    }
-    return null;
+    return loadWhiteboardScene(supabase, roomId);
   }
 
-  function saveSceneToDb(roomId: string, elements: any[]) {
+  function saveSceneToDb(roomId: string, scene: { elements: unknown; files?: unknown }) {
     if (env.PUBLIC_ANON_MODE === "TRUE" || !supabase) { saveStatus = "Edits are not saved in this session."; return; }
     if (saveTimer) clearTimeout(saveTimer);
     saveStatus = "Saving…";
     saveTimer = setTimeout(async () => {
-      try {
-        const { error: saveError } = await supabase.from("whiteboard_scenes").upsert({
-          room_id: roomId,
-          elements,
-          app_state: { viewBackgroundColor: "#ffffff" },
-          files: {},
-          updated_at: new Date().toISOString(),
-        });
-        if (saveError) throw saveError;
-        saveStatus = "Drawing changes saved";
-      } catch {
-        saveStatus = "Changes could not be saved. Keep this whiteboard open and export your work.";
-      }
+      saveStatus = await saveWhiteboardScene(supabase, roomId, scene, openedFiles);
     }, 2000);
   }
 
@@ -126,6 +106,7 @@
     } else if (type === "editor-ready" && isEditing) {
       const roomId = getWhiteboardRoomId();
       const savedScene = await loadSceneFromDb(roomId);
+      openedFiles = (savedScene || cachedScene)?.files || {};
       iframe?.contentWindow?.postMessage({
         type: "init-editor",
         supabaseUrl: env.PUBLIC_SUPABASE_URL,
@@ -141,7 +122,7 @@
       }, window.location.origin);
       loading = false;
     } else if (type === "scene-changed" && isEditing) {
-      saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
+      saveSceneToDb(getWhiteboardRoomId(), { elements: event.data.elements, files: event.data.files });
     }
   }
 

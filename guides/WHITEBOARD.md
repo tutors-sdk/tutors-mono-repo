@@ -10,11 +10,11 @@ Course authors can add whiteboard LOs to any topic by including an `.excalidraw`
 
 A toolbar sits above the whiteboard with three controls:
 
-| Button | Description |
-|--------|-------------|
-| **Edit** | Switches from read-only SVG view to the full Excalidraw editor with real-time collaboration via Supabase Realtime. Click again to return to view mode. |
+| Button                | Description                                                                                                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Edit**              | Switches from read-only SVG view to the full Excalidraw editor with real-time collaboration via Supabase Realtime. Click again to return to view mode.                                                                                       |
 | **Personal / Shared** | Visible in edit mode only. Toggles between a personal whiteboard (unique to the current user) and a shared whiteboard (all users collaborate on the same canvas). Uses a lock/unlock icon. Switching reloads the editor into the other room. |
-| **Fullscreen** | Expands the whiteboard to fill the browser viewport. |
+| **Fullscreen**        | Expands the whiteboard to fill the browser viewport.                                                                                                                                                                                         |
 
 ### View Mode vs Edit Mode
 
@@ -28,6 +28,7 @@ A toolbar sits above the whiteboard with three controls:
 - **Shared** (unlock icon, green): All users connect to the same channel. Edits are visible to everyone in real time, with remote cursors showing collaborator positions.
 
 Room IDs follow the pattern:
+
 - Personal: `wb-{courseId}-{route}-{userId}`
 - Shared: `wb-{courseId}-{route}`
 
@@ -55,13 +56,13 @@ The value must be the number `1`. Any other value, including `true` or `"1"`, le
 
 ### Components
 
-| Component | Location | Role |
-|-----------|----------|------|
+| Component                 | Location                        | Role                                                                              |
+| ------------------------- | ------------------------------- | --------------------------------------------------------------------------------- |
 | `WhiteboardViewer.svelte` | `packages/svelte/ui-components` | Renders whiteboard LOs with view/edit/fullscreen controls, handles DB persistence |
-| `WhiteboardButton.svelte` | `packages/svelte/ui-navigators` | Toolbar button that opens the course-level whiteboard overlay |
-| `excalidraw-viewer.html` | `apps/reader/static` | Standalone HTML that renders Excalidraw scenes as static SVG |
-| `excalidraw-editor.html` | `apps/reader/static` | Standalone HTML with full interactive Excalidraw + Supabase Realtime sync |
-| `whiteboard_scenes` | Supabase table | Persists scene elements, app state, and files per room |
+| `WhiteboardButton.svelte` | `packages/svelte/ui-navigators` | Toolbar button that opens the course-level whiteboard overlay                     |
+| `excalidraw-viewer.html`  | `apps/reader/static`            | Standalone HTML that renders Excalidraw scenes as static SVG                      |
+| `excalidraw-editor.html`  | `apps/reader/static`            | Standalone HTML with full interactive Excalidraw + Supabase Realtime sync         |
+| `whiteboard_scenes`       | Supabase table                  | Persists scene elements, app state, and files per room                            |
 
 ### Communication Flow
 
@@ -93,7 +94,7 @@ The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collabor
 - **Cursor sync**: Coalesces pointer positions into one `cursor-update` broadcast per interval, preserving the final position. Each broadcast is delivered to every other editor, so the interval grows with the room: 100 ms up to 3 participants, 250 ms up to 6, 500 ms up to 8, and no cursor broadcasts above 8 (Presence still shows who is there). A pointer that has moved less than 4 px with the same button since the last broadcast is not sent. Cursor colors are deterministically assigned from the user's ID. Pending scene and cursor timers are cleared and the channel is removed when the editor unmounts.
 - **User tracking**: Uses Supabase Presence to track active collaborators. When a user disconnects, they are automatically removed from the presence state.
 - **Solo rooms**: Scene and cursor broadcasts stop when no other editor is present; local scene saving continues. Skipped scene deltas retain the latest version of each element, including deletions, and are sent once when a peer appears in Presence. Each editor uses a distinct presence key, so two tabs belonging to the same user still collaborate.
-- **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table. `WhiteboardViewer.svelte` keeps a single `message` listener for its lifetime (it must keep receiving `scene-changed` after `editor-ready`) and ignores messages that do not come from its own iframe. The iframe is recreated when the mode or the personal/shared room changes, so each room starts with a fresh `editor-ready` handshake.
+- **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table. Each `scene-changed` carries the scene's `elements` and Excalidraw's `files` map (an image's bytes, keyed by the `fileId` of the image element that shows it), taken from the same change; the editor also posts when only the file map gains an entry, since an image's file can load after its element. `whiteboard-scene.ts` beside the component writes every file the elements reference, taken from the message, then from the scene the editor was opened with, then from the files already stored, so an editor that never received an image's bytes (a peer in a shared room, whose broadcasts carry elements only) does not erase them. The merge with the stored files is done by the database function `save_whiteboard_scene` (`supabase/migrations/20261019100000_save_whiteboard_scene.sql`) in the same statement as the upsert, so two saves that overlap cannot overwrite each other's images. A save whose elements or files are malformed, or whose row is over 4 MiB of JSON (Excalidraw caps one image at 2 MiB; the reader checks what it sends and the function checks the stored total), is not written: the last saved scene stays, and the status line says the changes could not be saved. `WhiteboardViewer.svelte` keeps a single `message` listener for its lifetime (it must keep receiving `scene-changed` after `editor-ready`) and ignores messages that do not come from its own iframe. The iframe is recreated when the mode or the personal/shared room changes, so each room starts with a fresh `editor-ready` handshake.
 - **Same origin only**: the parent and both iframe pages accept messages only from the reader's own origin and post only to it (never `"*"`).
 - **Appearance**: `load-scene` and `init-editor` carry `theme` (`"light"` or `"dark"`, the reader's appearance). The viewer renders its SVG with Excalidraw's dark export and the editor opens in Excalidraw's dark theme. When the reader's appearance changes, the parent posts `set-theme` and the open iframe follows without reloading.
 
@@ -109,7 +110,7 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap â€
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/svelte/utils/rbac/sql/003_whiteboard_scenes.sql`) and the `save_whiteboard_scene` function from `supabase/migrations/20261019100000_save_whiteboard_scene.sql` applied. Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
 
 To try a whiteboard against a course on your machine, generate one that contains a `whiteboard-*` folder, serve its `json/` output over HTTP with CORS enabled, and open `/whiteboard/localhost:<port>/<topic>/<whiteboard-folder>` on the reader (add `whiteboard: 1` to the course's `properties.yaml` to see the toolbar button). The reader treats a `localhost` course id as plain HTTP, but the generator writes the `.excalidraw` URL into `tutors.json` as `https://{{COURSEURL}}/...`, so when serving over plain HTTP change that prefix to `http://` in the generated `tutors.json`.
 
@@ -117,9 +118,9 @@ To try a whiteboard against a course on your machine, generate one that contains
 
 Whiteboard collaboration uses the same Supabase env vars as the rest of the platform:
 
-| Variable | Purpose |
-|----------|---------|
-| `PUBLIC_SUPABASE_URL` | Supabase project URL |
+| Variable                   | Purpose                    |
+| -------------------------- | -------------------------- |
+| `PUBLIC_SUPABASE_URL`      | Supabase project URL       |
 | `PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous API key |
 
 ### Contract Tests

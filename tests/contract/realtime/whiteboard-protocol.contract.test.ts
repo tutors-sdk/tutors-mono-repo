@@ -1,12 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   WhiteboardSceneUpdateSchema,
   WhiteboardCursorUpdateSchema,
   WhiteboardPresenceSchema,
   WhiteboardInitEditorSchema,
   WhiteboardSetThemeSchema,
+  WhiteboardSceneChangedSchema,
 } from "../support/schemas";
 import { validateAgainstSchema, assertSchemaMatch } from "../support/validators";
+import { mountWhiteboardEditor } from "../../bdd/support/whiteboard-editor";
 
 const validAppState = { viewBackgroundColor: "#ffffff" };
 
@@ -153,5 +155,53 @@ describe("Whiteboard set-theme postMessage", () => {
     const init = { type: "init-editor", supabaseUrl: "https://x.supabase.co", supabaseAnonKey: "k", roomId: "wb-1", user: { name: "A", id: "a", avatar: "" }, initialScene: null };
     expect(validateAgainstSchema({ ...init, theme: "dark" }, WhiteboardInitEditorSchema).valid).toBe(true);
     expect(validateAgainstSchema({ ...init, theme: "sepia" }, WhiteboardInitEditorSchema).valid).toBe(false);
+  });
+});
+
+describe("Whiteboard scene-changed postMessage", () => {
+  const image = { id: "img-1", version: 1, type: "image", fileId: "img-1" };
+  const file = { id: "img-1", mimeType: "image/png", dataURL: "data:image/png;base64,AAAA", created: 1 };
+
+  it("the editor posts its elements with the file map their images reference", () => {
+    vi.useFakeTimers();
+    const wb = mountWhiteboardEditor();
+    try {
+      wb.status("SUBSCRIBED");
+      wb.editor.onChange([image], {}, { "img-1": file });
+      vi.advanceTimersByTime(250);
+      const [message] = wb.postMessage.mock.lastCall!;
+      expect(assertSchemaMatch(message, WhiteboardSceneChangedSchema).files["img-1"]).toEqual(file);
+    } finally {
+      wb.unmount();
+      vi.useRealTimers();
+    }
+  });
+
+  it("the editor posts again when only its file map changes", () => {
+    vi.useFakeTimers();
+    const wb = mountWhiteboardEditor();
+    try {
+      wb.status("SUBSCRIBED");
+      wb.editor.onChange([image], {}, {});
+      vi.advanceTimersByTime(250);
+      wb.editor.onChange([image], {}, { "img-1": file });
+      vi.advanceTimersByTime(250);
+      wb.editor.onChange([image], {}, { "img-1": file });
+      vi.advanceTimersByTime(250);
+      const posted = wb.postMessage.mock.calls.map(([message]) => message);
+      expect(posted.map((message) => Object.keys(message.files))).toEqual([[], ["img-1"]]);
+    } finally {
+      wb.unmount();
+      vi.useRealTimers();
+    }
+  });
+
+  it("an elements-only message fails", () => {
+    expect(validateAgainstSchema({ type: "scene-changed", elements: [image] }, WhiteboardSceneChangedSchema).valid).toBe(false);
+  });
+
+  it("a file without its data URL fails", () => {
+    const record = { type: "scene-changed", elements: [image], files: { "img-1": { id: "img-1", mimeType: "image/png" } } };
+    expect(validateAgainstSchema(record, WhiteboardSceneChangedSchema).valid).toBe(false);
   });
 });

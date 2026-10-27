@@ -3,7 +3,7 @@ import { runInNewContext } from "node:vm";
 import { vi } from "vitest";
 
 // Execute the iframe's actual script with React hooks and Supabase as the seams; no CDN or network.
-export function mountWhiteboardEditor() {
+export function mountWhiteboardEditor({ roomId = "shared-board", initialScene }: { roomId?: string; initialScene?: unknown } = {}) {
   const html = readFileSync("apps/reader/static/excalidraw-editor.html", "utf8");
   const script = html.match(/<script type="module">([\s\S]*?)<\/script>/)![1].replace(/^\s*import .*;$/gm, "");
   const effects: (() => void | (() => void))[] = [];
@@ -61,8 +61,9 @@ export function mountWhiteboardEditor() {
     config: {
       supabaseUrl: "https://supabase.invalid",
       supabaseAnonKey: "anon-key",
-      roomId: "shared-board",
-      user: { id: "alice", name: "Alice", avatar: "alice.png" }
+      roomId,
+      user: { id: "alice", name: "Alice", avatar: "alice.png" },
+      initialScene
     }
   });
   const cleanups = effects.map((effect) => effect());
