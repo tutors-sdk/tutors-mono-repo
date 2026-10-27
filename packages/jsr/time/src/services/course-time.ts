@@ -85,7 +85,7 @@ export class CourseTime implements TutorsTimeCourse {
       const rows = await getTutorsTimeSource().courseRows(courseId);
       return (rows.learningRecords as unknown as LearningRecord[]).filter((r) => r.student_id === studentId && r.type === type);
     } catch (e) {
-      process.stderr.write(`Failed to fetch learning records: ${e instanceof Error ? e.message : String(e)}\n`);
+      console.warn("Failed to fetch learning records", { error: e instanceof Error ? e.message : String(e), courseId, type });
       return [];
     }
   }
