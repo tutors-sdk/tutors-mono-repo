@@ -37,7 +37,7 @@ The standard work for every Tutors release: three roles, twelve steps, one owner
 
 Active time is about three hours; wall time is a day and a half because of the watch window.
 
-Steps 3 and 4 are Contributors' work, done before the candidate is cut: the changelog and the claims must be on the release branch first. The rest of steps 1 to 7 is one command, which reads them. From this repository:
+Steps 3 and 4 are Contributors' work, done on `main` in each feature PR, before the candidate is cut: the changelog and the claims must be on `main` first, and are never pushed to the release-please pull request, which the bot rewrites ([Release-Capability.md](../guides/Release-Capability.md)). The rest of steps 1 to 7 is one command, which reads them. From this repository:
 
 ```bash
 pnpm release:candidate 16.3.0 --dry-run   # print every command, run none
