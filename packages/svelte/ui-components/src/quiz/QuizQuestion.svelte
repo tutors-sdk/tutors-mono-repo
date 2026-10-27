@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { markdownIt } from "@tutors/tutors-model-lib";
   import type { QuestionType } from "@tutors/quiz";
-  import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
+  import { copyCode, currentCodeTheme } from "@tutors/course/markdown";
+  import { isBlockQuizText, quizTextToHtml } from "./quiz-text.ts";
 
   interface Props {
     questionIndex: number; text: string; options: string[]; questionType: QuestionType;
@@ -10,23 +10,32 @@
   }
   let { questionIndex, text, options, questionType, selectedIndex, disabled, showCorrect, correctIndex, onselect }: Props = $props();
   const id = $props.id();
-  function inline(md: string) { return sanitizeHtml(markdownIt.renderInline(md)); }
+  // Only the radios are disabled: a disabled fieldset would also disable the code-copy buttons in submitted results.
+  // A question with a code block cannot sit in a <legend>, which holds phrasing content only, so it names the fieldset instead.
+  let blockStem = $derived(isBlockQuizText(text));
+  function render(md: string) { return quizTextToHtml(md, currentCodeTheme.value); }
 </script>
 
-<fieldset class="space-y-4" {disabled}>
-  <legend class="quiz-legend"><span class="ui-muted">{questionIndex + 1}.</span> {@html inline(text)}</legend>
+{#key currentCodeTheme.value}
+<fieldset class="space-y-4" use:copyCode aria-labelledby={blockStem ? `${id}-stem` : undefined}>
+  {#if blockStem}
+    <div id="{id}-stem" class="quiz-legend quiz-block"><span class="ui-muted">{questionIndex + 1}.</span> {@html render(text)}</div>
+  {:else}
+    <legend class="quiz-legend"><span class="ui-muted">{questionIndex + 1}.</span> {@html render(text)}</legend>
+  {/if}
   {#if questionType === 'true-false'}<p class="ui-muted quiz-kind">True / False</p>{/if}
   <div class="grid gap-3">
     {#each options as option, i}
-      <label class="quiz-option" class:selected={i === selectedIndex} class:correct={showCorrect && i === correctIndex}>
-        <input type="radio" name={id} value={i} checked={i === selectedIndex} onchange={() => onselect?.(i)} />
-        <span>{@html inline(option)}</span>
+      <label class="quiz-option" class:disabled class:selected={i === selectedIndex} class:correct={showCorrect && i === correctIndex}>
+        <input type="radio" name={id} value={i} {disabled} checked={i === selectedIndex} onchange={() => onselect?.(i)} />
+        <span class:quiz-block={isBlockQuizText(option)}>{@html render(option)}</span>
         {#if showCorrect && i === correctIndex}<strong>Correct</strong>
         {:else if showCorrect && i === selectedIndex}<strong>Your answer</strong>{/if}
       </label>
     {/each}
   </div>
 </fieldset>
+{/key}
 
 <style>
   .quiz-legend { font-size: var(--font-reading); font-weight: var(--weight-medium); }
@@ -37,5 +46,9 @@
   .quiz-option.correct { border-color: var(--ui-brand); }
   .quiz-option strong { font-size: var(--font-small); }
   input { accent-color: var(--ui-brand); width: 18px; height: 18px; }
-  fieldset:disabled label { cursor: default; }
+  .quiz-option.disabled { cursor: default; }
+  /* Block text renders outside the prose styles, so code blocks get their spacing and scrolling here. */
+  .quiz-block :global(p) { margin-block: var(--space-2); }
+  .quiz-block > span:first-child + :global(p) { display: inline; }
+  .quiz-block :global(pre) { margin-block: var(--space-2); padding: var(--space-3); border-radius: var(--radius-control); overflow-x: auto; font-size: var(--font-small); }
 </style>
