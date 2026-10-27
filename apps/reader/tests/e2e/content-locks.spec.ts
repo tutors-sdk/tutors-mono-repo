@@ -69,14 +69,18 @@ test("Locking greys the card out and Unlock restores it", { tag: "@rule-0053" },
   await page.locator(".shell-navigation").getByRole("button", { name: "Open Educator Control" }).click();
   const panel = page.getByRole("dialog", { name: "Educator Control" });
   await panel.getByRole("tab", { name: "Content Locks" }).click();
+  const savedLock = page.waitForResponse(response => response.url().endsWith("/api/courses/reference-course/locks") && response.request().method() === "PUT");
   await panel.locator(".info-row").filter({ has: page.getByText("Simple", { exact: true }) }).locator('[data-part="control"]').click();
+  expect((await savedLock).status()).toBe(200);
   await page.keyboard.press("Escape");
   const card = cardFor(page, "Simple");
   await expect(card).toHaveAttribute("data-locked", "true");
   expect(await filterOf(card)).toContain("grayscale(1)");
   const unlock = card.getByRole("button", { name: "Unlock Simple" });
   await expect(unlock).toBeVisible();
+  const savedUnlock = page.waitForResponse(response => response.url().endsWith("/api/courses/reference-course/locks") && response.request().method() === "PUT");
   await unlock.click();
+  expect((await savedUnlock).status()).toBe(200);
   await expect(card).not.toHaveAttribute("data-locked", "true");
   expect(await filterOf(card)).toBe("none");
 });
@@ -91,10 +95,15 @@ test("Locked card is greyed out for a student", { tag: "@rule-0054" }, async ({ 
   await page.locator(".shell-navigation").getByRole("button", { name: "Open Educator Control" }).click();
   const panel = page.getByRole("dialog", { name: "Educator Control" });
   await panel.getByRole("tab", { name: "Content Locks" }).click();
+  const savedSetting = page.waitForResponse(response => response.url().endsWith("/api/courses/reference-course/locks") && response.request().method() === "PUT");
   await panel.locator(".lock-setting [data-part=\"control\"]").click();
+  expect((await savedSetting).status()).toBe(200);
   await page.keyboard.press("Escape");
   // ... and a student then sees it greyed out rather than hidden.
   await signInAs(page, "student");
+  expect((await page.request.put("/api/courses/reference-course/locks", {
+    data: { loRoute: "@settings/show-locked", locked: false }
+  })).status()).toBe(403);
   const card = cardFor(page, "Simple");
   await expect(card).toHaveAttribute("data-locked", "true");
   await expect(card).toContainText("Locked");
