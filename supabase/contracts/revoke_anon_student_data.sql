@@ -1,6 +1,6 @@
 -- CONTRACT STEP FOR THE RELEASE AFTER PR #320. NOT A MIGRATION YET.
 --
--- Removes the anon access that browsers of releases up to v16.2.2 still use to write student data.
+-- Removes the anon access that browsers of releases before PR #320 still use to write student data.
 -- The release that ships PR #320 moves those writes to the reader's /api routes; this file may only
 -- run once no pod or open tab of an earlier release is left. So it lives outside supabase/migrations
 -- (which `supabase db push` and the release harness apply), and it refuses to run by accident.
@@ -62,7 +62,7 @@ BEGIN
   FOR fn IN
     SELECT p.oid::regprocedure AS signature
     FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public' AND p.proname IN ('get_count_learning_records', 'increment_calendar')
+    WHERE n.nspname = 'public' AND p.proname IN ('get_count_learning_records', 'increment_calendar', 'record_page_view', 'record_heartbeat')
   LOOP
     EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM anon, PUBLIC', fn.signature);
     EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role', fn.signature);

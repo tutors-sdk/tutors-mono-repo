@@ -70,10 +70,15 @@ async function readAssignments(db: SupabaseClient, courseId: string): Promise<As
   return assignments.map((a) => ({ ...a, submissionCount: counts.get(a.id) ?? 0 }));
 }
 
-export async function readTimeRows(db: SupabaseClient, courseId: string): Promise<TimeRows> {
+export async function readTimeRows(db: SupabaseClient, courseId: string, startDate?: string | null, endDate?: string | null): Promise<TimeRows> {
   const [courseResult, calendar, learningRecords, assignments] = await Promise.all([
     db.from("tutors-connect-courses").select("course_id, course_record").eq("course_id", courseId).maybeSingle(),
-    selectAll<Record<string, unknown>>("calendar read", (from, to) => db.from("calendar").select("*").eq("courseid", courseId).order("id", { ascending: true }).range(from, to)),
+    selectAll<Record<string, unknown>>("calendar read", (from, to) => {
+      let query = db.from("calendar").select("*").eq("courseid", courseId).order("id", { ascending: true });
+      if (startDate) query = query.gte("id", startDate);
+      if (endDate) query = query.lte("id", endDate);
+      return query.range(from, to);
+    }),
     selectAll<Record<string, unknown>>("learning_records read", (from, to) =>
       db.from("learning_records").select("*").eq("course_id", courseId).order("date_last_accessed", { ascending: false }).range(from, to)
     ),

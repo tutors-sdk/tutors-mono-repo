@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
-import log, { withRequestId } from "@tutors/logger";
+import * as env from "$app/env/private";
+import * as publicEnv from "$app/env/public";
+import log, { withRequestId, withTimeout } from "@tutors/logger";
 
 let client: SupabaseClient | null | undefined;
 
@@ -21,7 +21,7 @@ export function serviceClient(): SupabaseClient | null {
   }
   client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    global: { fetch: withRequestId() }
+    global: { fetch: withTimeout(withRequestId()) }
   });
   return client;
 }

@@ -1,10 +1,10 @@
 # Student data through the reader's server
 
-Tutors signs people in with Auth.js, so Supabase never sees who is calling: every browser request
+Tutors signs people in with Better Auth, so Supabase never sees who is calling: every browser request
 arrives as `anon`, with the key every page ships. Row-Level Security cannot tell one student from
 another, and the policies `20260924_enable_rls_public_tables.sql` added let any row through. This
 guide describes how that is being closed: writes, and reads of personal data, move to SvelteKit
-server routes that check the Auth.js session and use a private `service_role` key. The contract
+server routes that check the verified identity (locals.actor) and use a private `service_role` key. The contract
 step that removes the old anon access ships in the next release, once no older pod or tab uses it
 (see [Release order](#release-order)).
 
@@ -15,7 +15,7 @@ the real browser services, with only the session, the database and the course ho
 
 ## The reader hosts these routes for now
 
-**That is temporary.** The routes live in the reader because it is the app with Auth.js. The time
+**That is temporary.** The routes live in the reader because it is the app with Better Auth. The time
 dashboard calling the reader for its data is the smell that says so: on OpenShift the data API
 wants to be its own pod, with the reader, time and live apps as clients (#325).
 
@@ -33,9 +33,9 @@ All in the reader for now, under `apps/reader/src/routes/api/`. The helpers they
 | `POST /api/presence` | a signed-in student who shares presence | the latest learning object in `tutors-connect-latest`; the user in the payload is replaced with the session's |
 | `PUT`, `DELETE /api/locks` | an educator of the course | lock, unlock or remove a lock in `tutors_content_locks` |
 | `GET`, `PUT /api/whiteboard` | reading a shared board: anyone; a personal board or saving: a signed-in user | a whiteboard learning object's saved scene; the owner of a personal room is appended by the server |
-| `GET /api/time/[courseId]` | a signed-in user; the time dashboard's origin with the reader's cookie | a course's time rows: all of them for an educator, otherwise the viewer's own and classmates pseudonymised |
+| `GET /api/time/[courseId]` | a signed-in user; the time dashboard's origin with the reader's cookie | a course's time rows (`start` / `end` optionally bound calendar reads): all of them for an educator, otherwise the viewer's own and classmates pseudonymised |
 
-Common to every route:
+Common to the data routes added by this change:
 
 - **Identity comes from the session**, never from the body. A request that names another student is
   stored under the caller's own login (Rule 0072). No session: 401 before any row is read (Rule 0071).
@@ -49,14 +49,16 @@ Common to every route:
 
 ## Who may do what: one authorization module
 
-Every decision goes through one question, `can(actor, action, resource)`, in
+The data routes above use one question, `can(actor, action, resource)`, in
 `apps/reader/src/lib/server/api/authorization.ts`. Actions are the RBAC permissions
 (`content:lock`, `analytics:view`, ...) and a role's permissions come from the RBAC package's table
 (`packages/svelte/utils/rbac/src/permissions.ts`), the same one the browser uses. A login's role in a
 course is `educator` when the course's `enrollment.yaml` lists it under `educators` (read from the
 course's published `tutors.json`) or when it is in `PRIVATE_TUTORS_ADMINS`; otherwise `student`.
-Anything new that needs an authorization decision, the message bus included, asks `can()`; no
-route decides for itself.
+The course-scoped enrollment, lock and Moodle routes already on main retain their shared
+`requireEducator()` check against the published enrollment (Rules 0372, 0631 and 0634).
+Content-lock controls use `PUT /api/courses/:courseid/locks`; the legacy `/api/locks` routes remain
+protected by `can()` for compatibility.
 
 The course read is cached for five minutes. **If the course's host cannot be read** (network error,
 timeout, 5xx, a broken tutors.json), the module does not guess:
@@ -111,30 +113,41 @@ of:
 
 - a least-privilege Postgres role for the data API, granted exactly the tables and columns the
   routes use, instead of service_role; or
-- minting a short-lived Supabase JWT per request from the Auth.js session (`sub` = the GitHub
+- minting a short-lived Supabase JWT per request from the verified identity (locals.actor) (`sub` = the GitHub
   login, plus a course role claim), so per-user RLS policies apply underneath and a missed filter
   returns nothing instead of everything.
 
-- It is read only from `$env/dynamic/private`, in `apps/reader/src/lib/server/api/service-client.ts`
-  and the time app's `$lib/server/db/submissionsRepository.ts`. SvelteKit refuses to bundle
+- It is read only from `$app/env/private`, in `apps/reader/src/lib/server/api/service-client.ts`
+  and `apps/reader/src/lib/server/supabase-service.ts`. SvelteKit refuses to bundle
   `$lib/server` modules for the browser.
 - It is never a `PUBLIC_` variable, never in a ConfigMap. In Kubernetes it goes in the reader's
-  `reader-tutors-app-oauth` Secret and the time app's `time-tutors-app-secrets` Secret (see the
-  `secrets.yaml.example` files).
+  `reader-tutors-app-oauth` Secret (see its `secrets.yaml.example`).
 - If it equals the anon key, the reader logs an error and does not use it (the routes answer 503).
+
+## Alignment with main
+
+Moodle sync lives in the reader at `POST /api/courses/:courseid/moodle-sync`, behind its
+educator check. The Time app has no sync endpoint or Moodle/service-role secrets; the operator
+token proposed in #329 is superseded by this authenticated flow.
+
+The routes use `locals.actor` from the Better Auth identity adapter and Kit 3's declared
+`$app/env` variables. Analytics use `record_page_view` and `record_heartbeat` with the service
+key, preserving main's atomic counters and its fallback when the functions are missing. The
+Live publisher claims its budget with that same private key; watcher reports remain public.
+Calendar date ranges reach the database query through the time API.
 
 ## Release order
 
 **Release N (the one that ships this change): expand.**
 
-1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader and time, `PRIVATE_API_ALLOWED_ORIGINS` on
+1. Set `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` on reader, `PRIVATE_API_ALLOWED_ORIGINS` on
    reader, and `PUBLIC_READER_URL` on time.
 2. Apply the pending migrations (`20261017000000` to `20261017000200`) as usual, then deploy the new
    reader and time pods. Everything in `supabase/migrations` is safe to run before the new pods are
-   up: nothing there removes what a v16.2.2 pod or tab uses.
+   up: nothing added by this PR removes what an older pod or tab uses.
 
 **Release N+1: contract.** `supabase/contracts/revoke_anon_student_data.sql` removes the anon
-policies and table grants for personal data and writes, and revokes anon access to the two
+policies and table grants for personal data and writes, and revokes anon access to the legacy and atomic
 student-counter RPCs (public catalogue, shared presence and lock reads remain). It is not a
 migration yet, so no release run or `supabase db push` can apply it early, and it refuses to run
 unless `tutors.contract_ok` is set. In the release after N:
@@ -168,7 +181,5 @@ bus and of `can()`.
   only by `/api/presence`.
 - **`app_errors`** still accepts inserts from anyone holding the anon key, so the table can be filled
   with junk, but it can no longer be read.
-- **The time app's `POST /api/sync`** still has no authentication. It writes only what it fetches
-  from Moodle, now with the service key.
 - **Assignments and submissions** reach browsers only as counts, and only for educators, through
   `/api/time`.

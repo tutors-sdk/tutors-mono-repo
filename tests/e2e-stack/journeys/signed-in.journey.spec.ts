@@ -141,6 +141,7 @@ test("A student who shares presence appears in Tutors Live (exercises Rules 0330
 test("A lecturer opens the time dashboard's medians with the course PIN (exercises Rule 0319)", { tag: "@rule-0613" }, async ({ browser }) => {
   await persistence.seed("time-course");
   const page = await (await contextFor(browser, "lecturer")).newPage();
+  await signInToCourse(page, signedIn.courseId, signedInCourse.title);
   await page.goto(`${signedIn.time}/${signedInCourse.timeId}/medians`);
   await page.getByRole("textbox", { name: "PIN code", exact: true }).fill(signedInCourse.pin);
   await page.getByRole("button", { name: "Verify", exact: true }).click();
@@ -203,6 +204,7 @@ test("A student filters the calendar to assessments and finds the course for LLM
 test("A lecturer opens the time dashboard's lab views and a student's page (exercises Rule 0319)", { tag: "@rule-0638" }, async ({ browser }) => {
   await persistence.seed("time-course");
   const page = await (await contextFor(browser, "lecturer")).newPage();
+  await signInToCourse(page, signedIn.courseId, signedInCourse.title);
   await page.goto(`${signedIn.time}/${signedInCourse.timeId}/lab/bylab`);
   await page.getByRole("textbox", { name: "PIN code", exact: true }).fill(signedInCourse.pin);
   await page.getByRole("button", { name: "Verify", exact: true }).click();

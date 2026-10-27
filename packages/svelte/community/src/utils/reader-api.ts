@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import log from "@tutors/logger";
 
 export async function readerApi(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<Response | null> {

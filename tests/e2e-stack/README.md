@@ -54,10 +54,11 @@ Locally, the browser must reach `persistence.e2e.test` without the machine's pro
 `NO_PROXY=$NO_PROXY,.e2e.test`. The whiteboard journey (Rule 0639) loads Excalidraw from esm.sh, so it needs a
 network that reaches it.
 
-The lock and Moodle journeys open the signed-in course by its Netlify name, `harness-rules`, because the reader's
-educator check reads the enrollment from `https://<name>.netlify.app` (the identity stub answers it inside the stack,
+Signed-in journeys use the Netlify names `harness-public` and `harness-rules`: authenticated data routes
+validate course IDs and the reader fetches published facts from `https://<name>.netlify.app` (the identity stub answers it inside the stack,
 `contextFor` routes it in the browser). The reader writes locks and Moodle rows with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`,
-which the stack sets; the persistence stub takes any key.
+which the stack sets; the persistence stub takes any key. Time journeys first sign in to the reader;
+`PUBLIC_READER_URL` and `PRIVATE_API_ALLOWED_ORIGINS` connect the two local origins.
 
 ### Journey sizes
 

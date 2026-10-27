@@ -1,7 +1,7 @@
-import { env } from "$env/dynamic/public";
+import * as env from "$app/env/public";
 import { readerTimeSource, setTutorsTimeSource, TutorsTimeSourceError, withoutTrailingSlashes } from "@tutors/tutors-time-lib";
 
-export function readerUrl(): string {
+function readerUrl(): string {
   return withoutTrailingSlashes(env.PUBLIC_READER_URL?.trim() || "https://tutors.dev");
 }
 

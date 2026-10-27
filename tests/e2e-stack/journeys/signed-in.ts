@@ -17,8 +17,8 @@ export const signedIn = {
   /** The persistence stub as the test runner reaches it; the apps and the browser call it persistence.e2e.test:8090. */
   persistence: process.env.PERSISTENCE_URL ?? "http://localhost:8090",
   /** The public fixture course (stack.ts `fixture`) and the signed-in course (fixture-course/build-signed-in.ts). */
-  publicCourseId: process.env.COURSE_ID ?? "localhost:8080",
-  courseId: process.env.SIGNED_IN_COURSE_ID ?? "localhost:8082",
+  publicCourseId: "harness-public",
+  courseId: "harness-rules",
   /** A course whose host accepts the request for tutors.json and never answers (course-stalled). */
   stalledCourseId: process.env.STALLED_COURSE_ID ?? "localhost:8083"
 };
@@ -53,10 +53,15 @@ export async function contextFor(browser: Browser, role: Role): Promise<BrowserC
     if (original.pathname === "/login/oauth/authorize") original.searchParams.set("login_hint", role);
     await route.fulfill({ response: await route.fetch({ url: `${signedIn.identity}${original.pathname}${original.search}`, maxRedirects: 0 }) });
   });
-  await context.route(`https://${signedInCourse.timeId}.netlify.app/**`, async (route) => {
-    const original = new URL(route.request().url());
-    await route.fulfill({ response: await route.fetch({ url: `http://${signedIn.courseId}${original.pathname}${original.search}` }) });
-  });
+  for (const [id, origin] of [
+    [signedIn.publicCourseId, process.env.COURSE_ID ?? "localhost:8080"],
+    [signedIn.courseId, process.env.SIGNED_IN_COURSE_ID ?? "localhost:8082"]
+  ]) {
+    await context.route(`https://${id}.netlify.app/**`, async (route) => {
+      const original = new URL(route.request().url());
+      await route.fulfill({ response: await route.fetch({ url: `http://${origin}${original.pathname}${original.search}` }) });
+    });
+  }
   return context;
 }
 

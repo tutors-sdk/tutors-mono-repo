@@ -25,7 +25,9 @@ async function ask(request: APIRequestContext, role: Role): Promise<Observation[
     const response = await request.fetch(`${base[app]}${entry.request.path}`, {
       method,
       headers: role === "operator" ? OPERATOR : undefined,
-      data: entry.request.body,
+      data: entry.key === "reader POST /api/analytics"
+        ? { ...entry.request.body as object, day: new Date().toISOString().slice(0, 10) }
+        : entry.request.body,
       maxRedirects: 0,
       timeout: 15_000
     });
