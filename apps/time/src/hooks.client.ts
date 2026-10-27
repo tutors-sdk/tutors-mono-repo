@@ -1,22 +1,16 @@
 /**
  * Browser hooks for the time app, loaded by SvelteKit once per page load.
- * Hands PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY to @tutors/tutors-time-lib. Warn and error log
+ * Uses the authenticated reader API for @tutors/tutors-time-lib. Warn and error log
  * lines are batched to the Supabase app_errors table (skipped when Supabase is not configured), unhandled
  * promise rejections are logged, and unexpected errors show a generic 500 message.
  */
 import type { HandleClientError } from "@sveltejs/kit/hooks";
-import * as env from "$app/env/public";
 import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
 
-(globalThis as any).__TUTORS_TIME_SUPABASE_INIT__ = {
-  url: env.PUBLIC_SUPABASE_URL,
-  key: env.PUBLIC_SUPABASE_ANON_KEY
-};
+import { useReaderTimeSource } from "#lib/time-source.ts";
 
-import { initSupabase } from "@tutors/tutors-time-lib";
-
-initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+useReaderTimeSource();
 
 setAppName("tutors-time");
 addTransport(createSupabaseErrorTransport("tutors-time"));

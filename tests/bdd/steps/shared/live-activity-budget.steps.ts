@@ -1,5 +1,6 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env
 // and SvelteKit. Everything between them is product code, the reader's server route included.

@@ -242,6 +242,233 @@
         "*": 200
       },
       "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "reader POST /api/analytics",
+      "request": {
+        "path": "/api/analytics",
+        "body": {
+          "kind": "tick",
+          "courseId": "harness-rules"
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 204,
+        "enrolled": 204,
+        "lecturer": 204
+      },
+      "why": "Only a verified session records its own activity; the journey supplies today's calendar day (Rules 0071-0072)."
+    },
+    {
+      "key": "reader GET /api/me",
+      "request": {
+        "path": "/api/me"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "Signed-in callers read only their own status."
+    },
+    {
+      "key": "reader PUT /api/me",
+      "request": {
+        "path": "/api/me",
+        "body": {
+          "onlineStatus": "online"
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 204,
+        "enrolled": 204,
+        "lecturer": 204
+      },
+      "why": "Identity fields come from the verified session, not the body."
+    },
+    {
+      "key": "reader PATCH /api/me",
+      "request": {
+        "path": "/api/me",
+        "body": {
+          "onlineStatus": "offline"
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 204,
+        "enrolled": 204,
+        "lecturer": 204
+      },
+      "why": "Only the session owner changes their status."
+    },
+    {
+      "key": "reader GET /api/profile",
+      "request": {
+        "path": "/api/profile"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "Signed-in callers read their own course history."
+    },
+    {
+      "key": "reader PUT /api/profile",
+      "request": {
+        "path": "/api/profile",
+        "body": {
+          "courseVisits": []
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 204,
+        "enrolled": 204,
+        "lecturer": 204
+      },
+      "why": "Signed-in callers save only their own course history."
+    },
+    {
+      "key": "reader POST /api/courses/visit",
+      "request": {
+        "path": "/api/courses/visit",
+        "body": {
+          "courseId": "harness-rules"
+        }
+      },
+      "expect": {
+        "*": 204
+      },
+      "why": "Anyone can record a visit; course facts are fetched by the server."
+    },
+    {
+      "key": "reader POST /api/presence",
+      "request": {
+        "path": "/api/presence",
+        "body": {
+          "courseId": "harness-rules",
+          "payload": {
+            "courseId": "harness-rules",
+            "title": "Lab 1",
+            "type": "lab"
+          }
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 204,
+        "enrolled": 204,
+        "lecturer": 204
+      },
+      "why": "A shared presence update is stamped with the session identity."
+    },
+    {
+      "key": "reader PUT /api/locks",
+      "request": {
+        "path": "/api/locks",
+        "body": {
+          "courseId": "harness-rules",
+          "loRoute": "/topic/harness-rules/topic-02",
+          "locked": false
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 204
+      },
+      "why": "The compatibility lock route requires a verified course educator."
+    },
+    {
+      "key": "reader DELETE /api/locks",
+      "request": {
+        "path": "/api/locks",
+        "body": {
+          "courseId": "harness-rules",
+          "loRoute": "/topic/harness-rules/topic-02"
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 403,
+        "enrolled": 403,
+        "lecturer": 204
+      },
+      "why": "Only a verified course educator can remove a lock."
+    },
+    {
+      "key": "reader GET /api/whiteboard",
+      "request": {
+        "path": "/api/whiteboard?courseId=harness-rules&route=board&shared=false"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "Personal scenes are addressed using the verified session owner."
+    },
+    {
+      "key": "reader PUT /api/whiteboard",
+      "request": {
+        "path": "/api/whiteboard",
+        "body": {
+          "courseId": "harness-rules",
+          "route": "board",
+          "shared": false,
+          "elements": []
+        }
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 204,
+        "enrolled": 204,
+        "lecturer": 204
+      },
+      "why": "Every signed-in role can save its own personal scene."
+    },
+    {
+      "key": "reader GET /api/time/[courseId]",
+      "request": {
+        "path": "/api/time/harness-rules"
+      },
+      "expect": {
+        "anonymous": 401,
+        "operator": 401,
+        "student": 200,
+        "enrolled": 200,
+        "lecturer": 200
+      },
+      "why": "Educators see the course data; other signed-in users see their own data and pseudonymized classmates."
+    },
+    {
+      "key": "reader OPTIONS /api/time/[courseId]",
+      "request": {
+        "path": "/api/time/harness-rules"
+      },
+      "expect": {
+        "*": 204
+      },
+      "why": "The same-origin preflight contains no personal data."
     }
   ]
 }

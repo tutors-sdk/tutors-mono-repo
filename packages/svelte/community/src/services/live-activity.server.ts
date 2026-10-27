@@ -1,9 +1,10 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import * as env from "$app/env/public";
 import { topics, type RealtimeAdapter, type Topic } from "@tutors/realtime";
 import { supabaseRealtimeAdapter } from "@tutors/realtime-supabase";
 import log from "@tutors/logger";
 import type { LoRecord } from "../types.svelte.ts";
-import { claimLivePublish, supabase, type LiveBudgetTier } from "../utils/supabase-client.ts";
+import { type LiveBudgetTier } from "../utils/supabase-client.ts";
 
 /**
  * The reader's server side of Tutors Live (POST /api/live/activity). The browser sends each learning
@@ -85,12 +86,12 @@ export function parseLiveActivity(raw: string): LoRecord | string {
  * 400 for a malformed body; 204 in anonymous mode; otherwise 202 with the tier and the topics published
  * to. A claim that fails (the migration not applied, the database unreachable) publishes nothing.
  */
-export async function receiveLiveActivity(raw: string): Promise<LiveActivityResponse> {
+export async function receiveLiveActivity(raw: string, db: SupabaseClient | null): Promise<LiveActivityResponse> {
   const record = parseLiveActivity(raw);
   if (typeof record === "string") return { status: 400, body: { message: record } };
-  if (env.PUBLIC_ANON_MODE === "TRUE" || typeof supabase === "undefined") return { status: 204 };
+  if (env.PUBLIC_ANON_MODE === "TRUE" || !db) return { status: 204 };
 
-  const claim = await claimLivePublish(record.courseId);
+  const claim = await claimLivePublish(record.courseId, db);
   if (!claim) return { status: 202, body: { tier: null, topics: [] } };
 
   const allowed = new Map<string, Topic>([
@@ -98,10 +99,28 @@ export async function receiveLiveActivity(raw: string): Promise<LiveActivityResp
     [topics.platformActivity(), topics.platformActivity()]
   ]);
   const targets = claim.topics.map((topic) => allowed.get(topic)).filter((topic): topic is Topic => topic !== undefined);
-  adapter ??= supabaseRealtimeAdapter(supabase);
+  adapter ??= supabaseRealtimeAdapter(db);
   const results = await Promise.allSettled(targets.map((topic) => adapter!.publish(topic, "lo-event", record)));
   results.forEach((result, i) => {
     if (result.status === "rejected") log.error("Live activity broadcast failed:", targets[i], result.reason);
   });
   return { status: 202, body: { tier: claim.tier, topics: targets } };
+}
+
+/**
+ * Asks the database which Realtime topics a course's learning event may be published to, and charges
+ * them to the day's Live budget. Called by the reader's server only.
+ * @returns the tier and topics, or null when the claim failed (the caller publishes nothing)
+ */
+async function claimLivePublish(courseId: string, db: SupabaseClient): Promise<{ tier: LiveBudgetTier; topics: string[] } | null> {
+  if (env.PUBLIC_ANON_MODE === "TRUE") return null;
+
+  const { data, error } = await db.rpc("realtime_claim_live_publish", { p_course_id: courseId });
+  if (error) {
+    log.warn("realtime_claim_live_publish failed:", error);
+    return null;
+  }
+  const claim = data as { tier?: LiveBudgetTier; topics?: unknown } | null;
+  if (!claim?.tier || !Array.isArray(claim.topics)) return null;
+  return { tier: claim.tier, topics: claim.topics.filter((topic): topic is string => typeof topic === "string") };
 }

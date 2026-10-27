@@ -30,6 +30,10 @@ const accounts = [student, githubAccount("Lecturer", 1002)];
 const fetchProvider = globalThis.fetch;
 globalThis.fetch = async (input, init) => {
   const url = new URL(input instanceof Request ? input.url : String(input));
+  // Match signInAs's browser enrollment so real server educator checks see the same fixture course.
+  if (url.href === "https://reference-course.netlify.app/tutors.json") {
+    return Response.json({ enrollment: { educators: ["lecturer"] } });
+  }
   if (url.origin !== "https://github.com" && url.origin !== "https://api.github.com") return fetchProvider(input, init);
   const request = new Request(input, init);
   let account;
