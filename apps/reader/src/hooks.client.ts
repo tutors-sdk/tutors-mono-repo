@@ -1,3 +1,10 @@
+/**
+ * Browser hooks for the reader app, loaded by SvelteKit once per page load.
+ * Hands PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY to @tutors/tutors-time-lib, makes a missing or
+ * unreachable course a 404 page and a course host that does not answer in time a 504. Warn and error log lines are batched to the Supabase app_errors table
+ * (skipped when Supabase is not configured), unhandled promise rejections are logged, and unexpected
+ * errors show a generic 500 message.
+ */
 import { error } from "@sveltejs/kit";
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import * as env from "$app/env/public";
@@ -10,7 +17,7 @@ import { createSupabaseErrorTransport } from "@tutors/community/utils/error-tran
 };
 
 import { initSupabase } from "@tutors/tutors-time-lib";
-import { setCourseNotFoundHandler, setCourseUnreachableHandler } from "@tutors/course/course";
+import { setCourseNotFoundHandler, setCourseTimedOutHandler, setCourseUnreachableHandler } from "@tutors/course/course";
 
 initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 
@@ -18,6 +25,7 @@ initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
 // an unknown course site from being offline, so an unreachable host is a 404 page as well.
 setCourseNotFoundHandler((notFound) => error(404, `Course ${notFound.courseId} not found at https://${notFound.courseUrl}/tutors.json`));
 setCourseUnreachableHandler(() => error(404, "Course not found"));
+setCourseTimedOutHandler(() => error(504, "The course host did not answer in time"));
 
 setAppName("tutors-reader");
 addTransport(createSupabaseErrorTransport("tutors-reader"));

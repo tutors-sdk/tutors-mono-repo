@@ -1,3 +1,9 @@
+/**
+ * The tutors_content_locks table (content locks set by educators), for rbac-service.svelte.ts. Reads go
+ * through the public Supabase client; without Supabase, or on a query error (logged), it returns no locks.
+ * Writes never touch the table from the browser: upsertLock asks the reader's server (Rule 0630), which
+ * checks the educator and reports the change as saved, refused or unavailable.
+ */
 import { supabase } from "@tutors/community/utils/supabase-client";
 import log from "@tutors/logger";
 import type { ContentLock } from "./types.ts";

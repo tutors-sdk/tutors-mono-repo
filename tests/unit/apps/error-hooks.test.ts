@@ -11,7 +11,7 @@ vi.mock("@tutors/logger", () => ({
 }));
 vi.mock("../../../packages/svelte/community/src/utils/error-transport.ts", () => ({ createSupabaseErrorTransport: vi.fn() }));
 vi.mock("@tutors/tutors-time-lib", () => ({ initSupabase: vi.fn() }));
-vi.mock("../../../packages/svelte/course/src/course/index.ts", () => ({ setCourseNotFoundHandler: vi.fn(), setCourseUnreachableHandler: vi.fn() }));
+vi.mock("../../../packages/svelte/course/src/course/index.ts", () => ({ setCourseNotFoundHandler: vi.fn(), setCourseUnreachableHandler: vi.fn(), setCourseTimedOutHandler: vi.fn() }));
 vi.mock("../../../packages/svelte/utils/i18n/src/index.ts", () => ({ initLocaleFromCookie: vi.fn() }));
 vi.mock("../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index.js", () => ({ sequence: vi.fn() }));
 

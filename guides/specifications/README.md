@@ -26,7 +26,6 @@ file can call.
 | [offline-resilience.md](./offline-resilience.md) | 4 | No reconnection, stale-data indicator or service worker exists | Nothing |
 | [presence-tracking.md](./presence-tracking.md) | 2 | Grouping is a `$derived` inside a component; nothing removes a student | Nothing |
 | [responsive-layout.md](./responsive-layout.md) | 4 | CSS at a real viewport | Rules 0019 (no sideways scroll), 0024 (phone header) and 0031 (one card column), in part; nothing measures touch targets |
-| [search-content.md](./search-content.md) | 2 | Expected behaviour for two `searchHits` bugs | PRs #270 and #271 |
 | [student-engagement.md](./student-engagement.md) | 2 | Nothing sums page loads; a student with no activity is absent, not zero | `tests/unit/time`, for empty rows |
 | [theme-customisation.md](./theme-customisation.md) | 2 | No icon library picker and no per-course theme exist | Tier N, for icon completeness |
 | [whitelist-management.md](./whitelist-management.md) | 1 | There is no whitelist table, and an empty whitelist admits any signed-in user | Nothing |
