@@ -89,7 +89,7 @@ export async function startSignIn(page: Page, courseId: string): Promise<void> {
 export async function signInToCourse(page: Page, courseId: string, title: string): Promise<void> {
   // The reader reconnects the student in the background once the course renders, ending with their online status:
   // waiting for that read keeps the next step from racing the reconnect's own navigation.
-  const reconnected = page.waitForResponse((r) => /\/rest\/v1\/tutors-connect-users\?select=online_status\b/.test(r.url()), { timeout: 30_000 });
+  const reconnected = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/me" && r.request().method() === "GET", { timeout: 30_000 });
   reconnected.catch(() => undefined);
   await startSignIn(page, courseId);
   await page.waitForURL(new RegExp(`/course/${escapeRegExp(courseId)}`), { timeout: 30_000 });
