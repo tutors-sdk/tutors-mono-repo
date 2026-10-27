@@ -47,7 +47,9 @@ The root `check` script type-checks all four apps
 **Protects** the layering in [../ARCHITECTURE.md](../../ARCHITECTURE.md): nothing imports up a
 layer, apps do not import each other, no relative import crosses a workspace, no cycle spans
 packages, `deno.json` and `package.json` agree for every JSR package, and no file, export or
-dependency is dead.
+dependency is dead. Violations that predate a rule are baselined rather than fixed at once
+(`tests/architecture/known-violations.txt`, `known-knip.txt`, `known-manifest-drift.txt`); each
+baseline may only shrink, and the suite fails on any entry that no longer occurs.
 
 **Lives in** `.dependency-cruiser.cjs` (layers and rules), `knip.json`,
 `scripts/checks/architecture.ts`, `scripts/checks/manifest-parity.ts`, `scripts/checks/knip.ts`,
@@ -175,11 +177,11 @@ pnpm e2e:stack:down
 ```
 
 Journeys select by role and accessible name only, and never retry: a journey that needs a retry
-is a finding. PR runs chromium and webkit; the nightly runs firefox and mobile.
+is a finding. They run nightly (`e2e-stack-nightly` in `nightly.yml`) on chromium, webkit, firefox and mobile, not on pull requests.
 
 **Signed in, and when a dependency fails.** The `signed-in` project runs the reader, Live and time apps with
 authentication on, against the release harness's identity stub (GitHub) and persistence stub (Supabase), and holds
-the release harness's Rule journeys to `@journey` Rules on every pull request: sign-in, lab steps recorded, a private
+the release harness's Rule journeys to `@journey` Rules every night: sign-in, lab steps recorded, a private
 course turning a student away, preferences surviving a reload, a quiz, a lecturer's lock (saved through the
 reader's educator check), presence and sentiment, Tutors Live, a talk and a notebook, the calendar and the course for
 LLMs, the time dashboard's medians and lab views, a whiteboard stroke saved, and a lecturer syncing Moodle from
@@ -590,7 +592,6 @@ lands.
 | `container-smoke` | Matrix over reader, catalogue, live, time: build the image, `pnpm check:container --image … --app …`; the reader a second time with `--env PUBLIC_ANON_MODE=FALSE` so its sign-in pages are probed with authentication enabled |
 | `container-smoke-fixtures` | The faulty-image fixture: healthy passes; `readonly`, `uid` and a headerless app all fail as expected |
 | `dependency-audit` | `pnpm check:audit --base-dir base` on PRs (only new advisories), `pnpm check:audit` on `main` |
-| `e2e-stack` | Build reader, catalogue, live and time images, build the fixture courses, bring the stack up, run the journeys on chromium and webkit, then the `signed-in` project (signed-in, resilience and authorisation journeys), then the baseline stale-line check; uploads the report and compose logs on failure |
 | `mutation-pr` | `pnpm test:mutation:pr` against the PR's base: Stryker over the changed library modules, each held to its nightly floor; the table goes to the job summary |
 | `bundle-budgets` | Build all four apps with `SVELTEKIT_ADAPTER=node`, then `pnpm check:bundle` and `pnpm check:server` |
 | `generator-diff` | Only when the PR touches `packages/jsr/{gen,tutors,tutors-lite,model}`, `deno.json(.lock)`, `tests/generator/` or `scripts/checks/generator-*`: the planted-change self-test, then every difference must be claimed |
@@ -608,7 +609,7 @@ the workflows). `scorecard.yml` runs weekly and on pushes to `main`.
 | `mutation` | `pnpm test:mutation`, failing below Stryker's break threshold, then `pnpm check:mutation-floors`; uploads the HTML and JSON report |
 | `mutation-nightly` | `pnpm test:mutation:nightly` over every library module, then `pnpm check:mutation-floors` against the nightly floors with a step summary, then `git diff --exit-code --stat`; uploads the report |
 | `suite-health` | `vitest run --retry=0` with a JSON report, then `pnpm check:test-time` on it |
-| `e2e-stack-nightly` | The tier G journeys on firefox and mobile, then the baseline stale-line check |
+| `e2e-stack-nightly` | Build reader, catalogue, live and time images, build the fixture courses, bring the stack up, run the journeys on chromium, webkit, firefox and mobile, then the `signed-in` project (signed-in, resilience and authorisation journeys), then the baseline stale-line check; uploads the report and compose logs on failure. Not a PR check |
 | `timezone-matrix` | `pnpm test:tz` |
 | `lighthouse` | Build the reader image and the fixture course, serve the course, run Lighthouse against three pages and record the samples |
 | `load` | Prove the thresholds bite (`P95_MS=0 --expect-fail`), three 3-minute load runs recorded for baselining, then a 45-minute soak |
@@ -698,4 +699,4 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
 - The schema carries known gaps (`tests/data/schema/known-gaps.txt`): tables and functions no migration creates. The
   authorisation matrix's known-gaps file is empty. Both files may only shrink.
-- No Playwright configuration retries (Rule 0620), so a flaky journey fails the pull request; that is the point.
+- No Playwright configuration retries (Rule 0620), so a flaky journey fails the night; that is the point.

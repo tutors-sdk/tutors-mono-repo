@@ -21,8 +21,8 @@ first gate is the pull request.
 | **B** | Logic — unit behaviour of the JSR and Svelte packages, invariants over any course or calendar, timezone dependence | In repo | PR: `build-and-test` (`vitest run --coverage`, `pnpm check:coverage-floors`, `pnpm test:fuzz`). Nightly: `timezone-matrix` |
 | **C** | Generated output — an unintended change in the course JSON, zip or site a generator produces | In repo | PR: `generator-diff`, only when the PR touches a generator. Nightly: `generator-corpus` |
 | **D** | Requirements — Gherkin features with EARS tags, bound to product code | In repo | PR: `build-and-test` (part of `vitest run`). `Rule:` blocks and the audit: [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) |
-| **F** | Authorisation — who may call what | In repo | PR: `e2e-stack` (`--project=signed-in`, every route as every role) and `build-and-test` (the matrix lists every route) |
-| **G** | User journeys — the whole system through a real browser, against built images, anonymous and signed in, with injected faults | In repo | PR: `e2e-stack` (chromium, webkit, and the `signed-in` project). Nightly: `e2e-stack-nightly` (firefox, mobile) |
+| **F** | Authorisation — who may call what | In repo | PR: `build-and-test` (the matrix lists every route). Nightly: `e2e-stack-nightly` (`--project=signed-in`, every route as every role) |
+| **G** | User journeys — the whole system through a real browser, against built images, anonymous and signed in, with injected faults | In repo | Nightly: `e2e-stack-nightly` (chromium, webkit, firefox, mobile, and the `signed-in` project). Not a PR check |
 | **H** | Message contracts — the realtime and broadcast protocols as a versioned contract | In repo | PR: `build-and-test` (`vitest`) |
 | **I** | Data — migrations applied to a real Postgres, rows kept, the code's tables and functions present | In repo | PR: `build-and-test` (`vitest`, PGlite) |
 | **J** | Platform — kustomize overlays, restricted-SCC policy, arbitrary UID, read-only root, env-var completeness | In repo | PR: `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, and `vitest` |
@@ -132,7 +132,7 @@ it.skip("flaky in webkit", () => { ... });
 
 `ci.yml` ends in one job, **`CI success`**, which needs `build-and-test`,
 `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, `dependency-audit`,
-`e2e-stack`, `bundle-budgets` and `generator-diff`. It treats a skipped or cancelled job
+`bundle-budgets` and `generator-diff`. It treats a skipped or cancelled job
 as a failure. It is the one check to mark as required in branch protection, so adding a job
 to its `needs` extends the gate without touching repository settings. Whether it is currently
 marked required is a setting, not something this repository can show you.
@@ -143,7 +143,7 @@ Only what CI enforces today.
 
 | Stage | Blocks on |
 |---|---|
-| PR to `main` | `CI success`. That includes coverage below a floor in `tests/suite-health/coverage-floors.json` or 2+ points above one (`pnpm check:coverage-floors`, Rules 0111 and 0112), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, a new dependency advisory the PR introduces, and a failed journey |
+| PR to `main` | `CI success`. That includes coverage below a floor in `tests/suite-health/coverage-floors.json` or 2+ points above one (`pnpm check:coverage-floors`, Rules 0111 and 0112), a new baseline entry, a stale baseline line, an unclaimed generator difference, a bundle over its ceiling, and a new dependency advisory the PR introduces. The tier G journeys run nightly, not on the PR |
 | Push to `rc/**` | `rc-validation.yml` — its `RC Readiness Report` fails if any gate failed — and `release-testing.yml`, whose report blocks on artifact regression and smoke tests and only warns on the performance benchmark |
 | Nightly | Nothing. A red nightly is a bug to chase, not a merge block |
 
