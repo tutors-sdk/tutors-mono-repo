@@ -48,6 +48,5 @@
   .catalogue-controls { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-4); }
   .catalogue-control { display: flex; flex: 1 1 14rem; flex-direction: column; gap: var(--space-2); color: var(--ui-muted); font-size: var(--font-label); }
   .catalogue-control input, .catalogue-control select { min-height: 44px; padding: var(--space-2) var(--space-3); border: 1px solid var(--ui-control-border); border-radius: var(--radius-control); color: var(--ui-ink); background-color: var(--ui-surface); font-size: var(--font-control); }
-  .catalogue-control select { appearance: auto; }
   .catalogue-matches { margin-bottom: var(--space-4); }
 </style>
