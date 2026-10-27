@@ -102,11 +102,11 @@ docker compose up --no-build reader proxy
 
 SvelteKit 3 defaults to HTTPS when no protocol header is supplied. For plain HTTP, use the proxy above; for production HTTPS, use a trusted edge that overwrites `X-Forwarded-Proto` and `X-Forwarded-Host`, and keep the app port private. Runtime `ORIGIN` is no longer supported.
 
-Useful extra arguments: `NODE_VERSION` (default `22`), and `GIT_SHA` / `BUILD_DATE` for the OCI labels.
+Useful extra arguments: `GIT_SHA` / `BUILD_DATE` for the OCI labels, and `NODE_IMAGE` to build on a mirror of the base image.
 
 ## How the build works
 
-1. **base**: `node:22-bookworm-slim` with the pnpm version pinned in `package.json`, installed via corepack.
+1. **base**: `node:22-bookworm-slim`, pinned by digest (Dependabot moves it), with the pnpm version pinned in `package.json`, installed via corepack.
 2. **deps**: `pnpm fetch` downloads every package in the lockfile into a BuildKit cache mount. This layer only changes when the lockfile changes.
 3. **build**: the workspace is linked offline, the app and its workspace dependencies are built with `SVELTEKIT_ADAPTER=node`, and `pnpm deploy --prod` produces a pruned tree containing only the packages the server needs at runtime.
 4. **runtime**: a fresh slim image receives just `build/`, `package.json` and that pruned `node_modules`. It runs as UID 1001 with GID 0, writes nothing to its filesystem, and listens on 3000.
