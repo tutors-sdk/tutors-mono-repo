@@ -1,0 +1,4 @@
+# Cells of the authorisation matrix (matrix.json) that answer something else today (Rule 0621).
+# Format: `<app> <METHOD> <route id> | <role> | got <status> | why: <reason>`
+# This file may only shrink: the authorisation journey fails on a new mismatch and on a line that no longer occurs.
+# Empty since the Moodle sync moved to the reader behind the educator check (Rules 0633-0634).

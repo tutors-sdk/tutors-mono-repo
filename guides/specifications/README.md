@@ -15,4 +15,3 @@ Each file says why its scenarios are here and which tier covers the behaviour in
 | [accessibility.md](./accessibility.md) | 4 | Focus order, landmarks and alt text need a rendered page | Rule 0051 (WCAG 2.1 AA axe audits) and 0038 (contrast), in part |
 | [course-authoring.md](./course-authoring.md) | 1 | Rendering one component per learning object type | Tier G; loading each type is bound in `course/course-loading` |
 | [responsive-layout.md](./responsive-layout.md) | 4 | CSS at a real viewport | Rules 0019 (no sideways scroll), 0024 (phone header) and 0031 (one card column), in part; nothing measures touch targets |
-| [search-content.md](./search-content.md) | 2 | Expected behaviour for two `searchHits` bugs | PRs #270 and #271 |

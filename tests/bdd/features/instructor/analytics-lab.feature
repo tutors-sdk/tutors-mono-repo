@@ -53,3 +53,29 @@ Feature: Lab Analytics
       Then the student "carol" who has not started the lab shall be listed with a total of 0 minutes
       And a total of 0 minutes shall have no heat colour
       And the median for "book-a" shall be 40, ignoring students who have not started
+
+  @rule-0602 @ears-event-driven
+  Rule: When an instructor opens the lab analytics view, the time dashboard shall show one lab column for each lab's path in the course, labelled with its topic when two labs share an id.
+
+    Scenario: Labs with the same id in two topics stay apart
+      Given a course has lab learning objects in topics with these student records:
+        | student | topic    | lab         | step | minutes |
+        | alice   | topic-01 | book-lab-01 | 01   | 25      |
+        | alice   | topic-02 | book-lab-01 | 01   | 5       |
+      When an instructor opens the lab analytics view
+      Then the lab columns shall be labelled "topic-01/book-lab-01, topic-02/book-lab-01"
+      And the lab grid shall display each student's duration per labelled lab:
+        | student | topic-01/book-lab-01 | topic-02/book-lab-01 | total |
+        | alice   | 25                   | 5                    | 30    |
+      And the median for the lab labelled "topic-01/book-lab-01" shall be 25
+
+    Scenario: Labs with distinct ids keep their short labels
+      Given a course has lab learning objects in topics with these student records:
+        | student | topic    | lab    | step | minutes |
+        | alice   | topic-01 | book-a | 01   | 10      |
+        | alice   | topic-02 | book-b | 01   | 20      |
+      When an instructor opens the lab analytics view
+      Then the lab columns shall be labelled "book-a, book-b"
+      And the lab grid shall display each student's duration per labelled lab:
+        | student | book-a | book-b | total |
+        | alice   | 10     | 20     | 30    |

@@ -3,6 +3,7 @@ import { expect } from "vitest";
 import { BaseLabModel } from "../../../../packages/jsr/time/src/services/base-lab-model.ts";
 import type { LabRow, LearningRecord } from "../../../../packages/jsr/time/src/types/lab-types.ts";
 import { heatColor } from "../../../../packages/jsr/time/src/utils/calendar-utils.ts";
+import { labColumnLabels } from "../../../../packages/jsr/time/src/utils/lab-utils.ts";
 import { cells, labRecords, stepColumn, type TableRow } from "../../support/time.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/analytics-lab.feature");
@@ -21,6 +22,14 @@ describeFeature(feature, ({ Rule }) => {
     model = new BaseLabModel(records, null);
   };
 
+  /** The lab column the time dashboard heads with this label. */
+  const labelled = (label: string) => {
+    const labels = labColumnLabels(model.labs);
+    const index = labels.indexOf(label);
+    expect(index, `no lab column labelled "${label}" in ${labels.join(", ")}`).toBeGreaterThanOrEqual(0);
+    return model.labs[index];
+  };
+
   /** Compare every row of a pivoted grid with the scenario's table; `key` turns a table header into a grid column. */
   const expectGrid = (rows: LabRow[], table: TableRow[], key: (label: string) => string) => {
     const labels = Object.keys(table[0]).filter((label) => label !== "student" && label !== "total");
@@ -37,10 +46,10 @@ describeFeature(feature, ({ Rule }) => {
         expect(model.lab.rows.map((row) => row.studentid)).toEqual(list(students));
       });
       And("the lab columns shall be {string}", (_ctx, labs: string) => {
-        expect(model.labs).toEqual(list(labs));
+        expect(labColumnLabels(model.labs)).toEqual(list(labs));
       });
       And("the lab grid shall display each student's duration per lab:", (_ctx, table: TableRow[]) => {
-        expectGrid(model.lab.rows, table, (lab) => lab);
+        expectGrid(model.lab.rows, table, labelled);
       });
     });
   });
@@ -75,8 +84,37 @@ describeFeature(feature, ({ Rule }) => {
         expect(heatColor(total)).toBe("");
       });
       And("the median for {string} shall be {number}, ignoring students who have not started", (_ctx, lab: string, median: number) => {
-        expect(model.medianByLab.row?.[lab]).toBe(median);
+        expect(model.medianByLab.row?.[labelled(lab)]).toBe(median);
       });
     });
   });
+
+  Rule(
+    "When an instructor opens the lab analytics view, the time dashboard shall show one lab column for each lab's path in the course, labelled with its topic when two labs share an id.",
+    ({ RuleScenario }) => {
+      const labelsAre = (_ctx: unknown, labels: string) => {
+        expect(labColumnLabels(model.labs)).toEqual(list(labels));
+      };
+      const gridByLabel = (_ctx: unknown, table: TableRow[]) => {
+        expectGrid(model.lab.rows, table, labelled);
+      };
+
+      RuleScenario("Labs with the same id in two topics stay apart", ({ Given, When, Then, And }) => {
+        Given("a course has lab learning objects in topics with these student records:", given);
+        When("an instructor opens the lab analytics view", build);
+        Then("the lab columns shall be labelled {string}", labelsAre);
+        And("the lab grid shall display each student's duration per labelled lab:", gridByLabel);
+        And("the median for the lab labelled {string} shall be {number}", (_ctx, label: string, median: number) => {
+          expect(model.medianByLab.row?.[labelled(label)]).toBe(median);
+        });
+      });
+
+      RuleScenario("Labs with distinct ids keep their short labels", ({ Given, When, Then, And }) => {
+        Given("a course has lab learning objects in topics with these student records:", given);
+        When("an instructor opens the lab analytics view", build);
+        Then("the lab columns shall be labelled {string}", labelsAre);
+        And("the lab grid shall display each student's duration per labelled lab:", gridByLabel);
+      });
+    }
+  );
 });

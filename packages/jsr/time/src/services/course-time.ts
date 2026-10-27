@@ -244,7 +244,7 @@ export class CourseTime implements TutorsTimeCourse {
   }
 
   /**
-   * Fetch tutors.json from the course's Netlify deployment and extract ignorePin.
+   * Fetch tutors.json from the host that serves the course and extract ignorePin.
    * Returns empty string if fetch fails, JSON is invalid, or ignorePin is missing.
    */
   static async getCoursePin(courseId: string): Promise<string> {
@@ -252,7 +252,7 @@ export class CourseTime implements TutorsTimeCourse {
     if (!id) return "";
 
     try {
-      const url = `https://${id}.netlify.app/tutors.json`;
+      const url = `${courseBaseUrl(id)}/tutors.json`;
       const res = await fetch(url);
       if (!res.ok) return "";
 
@@ -263,4 +263,20 @@ export class CourseTime implements TutorsTimeCourse {
       return "";
     }
   }
+}
+
+/**
+ * Resolve a course id to the base URL that serves it, as the reader does
+ * (determineCourseUrl in @tutors/course): a domain or full URL is used as given,
+ * localhost or a 192.* address is served over http, and a bare id is a Netlify site.
+ */
+function courseBaseUrl(id: string): string {
+  let host = id;
+  // A loop, not /\/+$/: that regex backtracks polynomially on input with many slashes (CodeQL js/polynomial-redos).
+  while (host.endsWith("/")) host = host.slice(0, -1);
+  if (/^(https?:\/\/)?[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]+)?(\/.*)?$/.test(host)) {
+    return /^https?:\/\//.test(host) ? host : `https://${host}`;
+  }
+  if (host.startsWith("localhost") || host.startsWith("192")) return `http://${host}`;
+  return `https://${host}.netlify.app`;
 }

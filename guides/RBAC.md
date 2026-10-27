@@ -41,6 +41,18 @@ students:
 
 When a user visits a course with an enrollment file and is authenticated, the system checks their GitHub login against the `educators` array. If matched, they receive the educator role; otherwise they are a student.
 
+### Exporting a starting list
+
+For a Netlify-hosted course, open **Educator Control → Enrollment → Export enrollment.yaml**. This also supports courses opened through a full Netlify URL, preserving the course ID used by their activity records. The download adds unique GitHub usernames from the course's recorded calendar activity to the existing whitelist and student list. It keeps educators, manually entered names and other enrollment fields, excludes educators from new student entries, and uses stored GitHub display names where available (otherwise the username).
+
+The server verifies the signed-in user against the published course's educators before reading student data. To start collecting a new class, publish an enrollment file listing the educators with an empty whitelist, and ask students to sign in and visit the course. Anonymous visits and activity recorded while analytics are disabled cannot supply GitHub usernames.
+
+### Moodle sync
+
+**Educator Control → Enrollment → Moodle sync** copies a course's Moodle assignments and submissions into the `assignments` and `assignments_submissions` tables that Tutors Time shows. The reader's `POST /api/courses/:courseid/moodle-sync` runs the same educator check as the export before it contacts Moodle, then writes with the server-only `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Rules 0633-0634). The Moodle settings (`MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES`) belong to the reader; Tutors Time only reads the tables.
+
+The exported file is a draft: visitors can include staff or former students, GitHub names are not verified class-list names, and students who have not visited are missing. Review it, add it to the course source and rebuild to apply it. The export does not update the repository or change access by itself. Custom-hosted courses are not supported by this export yet.
+
 ## Auth Levels
 
 Auth levels are set in `properties.yaml`:
@@ -73,7 +85,7 @@ Educators can lock and unlock top-level learning objects (topics, units) to hide
 
 1. When an educator visits a course, content locks are loaded from Supabase (`tutors_content_locks` table) with a localStorage fallback.
 2. The educator panel (integrated into the Info sidebar) shows a **Locks** tab with toggle switches for each top-level learning object.
-3. When a lock is toggled, the change is applied immediately to the reactive `contentLocks` map, persisted to localStorage, and upserted to Supabase.
+3. When a lock is toggled, the change is applied immediately to the reactive `contentLocks` map, persisted to localStorage, and sent to the reader's server as `PUT /api/courses/:courseid/locks`. The server checks that the signed-in user is an educator of the published course (the same check as the enrollment export), records their GitHub login as `locked_by`, and writes `tutors_content_locks` with the server-only `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (Rules 0630-0632). The browser never writes the table.
 4. Locked content is **completely hidden** from students — not blurred or greyed out.
 5. A `locksLoaded` rune prevents locked content from flashing briefly before the lock state is fetched.
 
@@ -123,7 +135,7 @@ Located at `packages/svelte/utils/rbac/`. Contains:
 |------|---------|
 | `src/types.ts` | `Role`, `Permission`, and `ContentLock` type definitions |
 | `src/permissions.ts` | Static role-to-permission mapping and query functions |
-| `src/lock-store.ts` | Supabase CRUD operations for `tutors_content_locks` table |
+| `src/lock-store.ts` | Reads `tutors_content_locks` with the anon key; sends lock changes to the reader's server |
 | `src/rbac-service.svelte.ts` | Main service: role resolution, lock management, educator status, `isLoRouteLocked` / `isLoLocked` |
 | `src/index.ts` | Public exports (`rbacService`, `isLoRouteLocked`) |
 

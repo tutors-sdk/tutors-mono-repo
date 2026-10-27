@@ -27,3 +27,26 @@ Feature: Lab Analytics
         | book-a/00 | book-a/01 | book-b/00 |
         | 28        | 28        | 23        |
       And the median row total should be 73 minutes, the median of the students' totals
+
+  @rule-0601 @ears-ubiquitous
+  Rule: The time dashboard shall reuse one database client for a course's reads in a browser, so that concurrent reads never contend for the stored session.
+
+    Scenario: Every read of a course gets the same client
+      Given the time dashboard is configured with the database "https://time.invalid" and the key "anon-key"
+      When a read of the course asks for a database client
+      And another read of the course asks for a database client
+      Then both reads shall have been given the same database client
+
+    Scenario: Loading the course layout again keeps the client
+      Given the time dashboard is configured with the database "https://time.invalid" and the key "anon-key"
+      And a read of the course asks for a database client
+      When the time dashboard is configured again with the database "https://time.invalid" and the key "anon-key"
+      And another read of the course asks for a database client
+      Then both reads shall have been given the same database client
+
+    Scenario: A different database gives a new client
+      Given the time dashboard is configured with the database "https://time.invalid" and the key "anon-key"
+      And a read of the course asks for a database client
+      When the time dashboard is configured again with the database "https://other.invalid" and the key "anon-key"
+      And another read of the course asks for a database client
+      Then the second read shall have been given a new database client
