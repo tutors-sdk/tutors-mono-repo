@@ -131,11 +131,18 @@ describeFeature(feature, ({ Background, Rule }) => {
     }
   );
 
-  Rule("Tutors shall leave out of tutors.json every folder at the top of a course whose name starts with no learning-object kind.", ({ RuleScenario }) => {
+  Rule("Tutors shall leave out of tutors.json every folder whose name starts with no learning-object kind.", ({ RuleScenario }) => {
+    const leftOut = (_ctx: unknown, id: string) => {
+      expect(all().map((lo) => lo.id)).not.toContain(id);
+    };
     RuleScenario("A drafts folder is left out", ({ Then }) => {
-      Then("no learning object in the tutors.json has the id {string}", (_ctx, id: string) => {
-        expect(all().map((lo) => lo.id)).not.toContain(id);
-      });
+      Then("no learning object in the tutors.json has the id {string}", leftOut);
+    });
+    RuleScenario("A folder of no kind inside a topic is left out", ({ Then }) => {
+      Then("no learning object in the tutors.json has the id {string}", leftOut);
+    });
+    RuleScenario("A folder of no kind inside a unit is left out", ({ Then }) => {
+      Then("no learning object in the tutors.json has the id {string}", leftOut);
     });
   });
 

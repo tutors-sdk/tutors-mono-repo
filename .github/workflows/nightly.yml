@@ -73,10 +73,14 @@ jobs:
         if: always()
         run: pnpm check:test-time reports/vitest-nightly.json
 
+  # Runway tier G: named journeys and axe/reduced-motion ratchets against the built images and a fixture
+  # course server, never vite dev. Nightly only, not a pull request check: building four images and
+  # installing three browsers took one run past its 30 minute limit, so the journeys report the
+  # morning after instead of blocking a merge.
   e2e-stack-nightly:
-    name: E2E journeys (firefox, mobile)
+    name: E2E journeys (built images)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -133,7 +137,19 @@ jobs:
           push: false
           cache-from: type=gha,scope=smoke-live
 
-      - name: Build fixture course
+      # The signed-in half of the stack runs the time app too (tests/e2e-stack/compose.yaml time-signed-in), so
+      # compose cannot start without its image; ci.yml builds the same four.
+      - name: Build time image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          build-args: APP_NAME=time
+          tags: tutors/time:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-time
+
+      - name: Build fixture courses
         run: pnpm e2e:stack:fixture
 
       - name: Start stack
@@ -141,11 +157,17 @@ jobs:
         env:
           TUTORS_TAG: ci
 
+      # The step that hung until the job's limit: bound it so a stalled download fails here, by name.
       - name: Install browsers
-        run: pnpm exec playwright install --with-deps firefox chromium
+        timeout-minutes: 10
+        run: pnpm exec playwright install --with-deps chromium webkit firefox
 
       - name: Journeys
-        run: pnpm test:e2e:stack --project=firefox --project=mobile
+        run: pnpm test:e2e:stack --project=chromium --project=webkit --project=firefox --project=mobile
+
+      # Rules 0606-0617 (tests/bdd/features/journeys): signed in, as a lecturer, and with a dependency failing.
+      - name: Signed-in and resilience journeys
+        run: pnpm test:e2e:stack --project=signed-in
 
       - name: Baselines have no stale lines
         run: pnpm test:e2e:stack:ratchet
@@ -493,7 +515,7 @@ jobs:
           echo "| Mutation | ${{ needs.mutation.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Mutation (every library module) | ${{ needs.mutation-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Suite Health | ${{ needs.suite-health.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| E2E Journeys (firefox, mobile) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Journeys (built images) | ${{ needs.e2e-stack-nightly.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Timezone Matrix | ${{ needs.timezone-matrix.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Lighthouse | ${{ needs.lighthouse.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Load and Soak | ${{ needs.load.result }} |" >> $GITHUB_STEP_SUMMARY

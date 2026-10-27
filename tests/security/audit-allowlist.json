@@ -1,11 +1,4 @@
 {
   "$comment": "Advisories accepted for a limited time (runway tier M). Each needs a reason and an expiry; an expired entry fails the nightly audit and warns on PRs. Check with: pnpm check:audit",
-  "allowances": [
-    {
-      "id": "GHSA-hp3w-g68c-fv3c",
-      "package": "sprintf-js",
-      "reason": "No patched release exists (<=1.1.3 all affected). Reached only through front-matter > js-yaml 3 > argparse 1, where argparse formats its own fixed help strings, never a format string from a course or a user, so the unbounded-precision DoS has no input path. Drop when front-matter moves to js-yaml 4 (argparse 2 has no sprintf-js) or sprintf-js ships a fix.",
-      "expires": "2027-01-15"
-    }
-  ]
+  "allowances": []
 }
