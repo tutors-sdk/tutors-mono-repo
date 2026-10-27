@@ -64,6 +64,14 @@ describe("matchesCatalogueSearch", () => {
     expect(matchesCatalogueSearch(agile, "agile mining")).toBe(false);
   });
 
+  it("folds letters that do not decompose, such as Ł, Ø and ß", () => {
+    const named = course("Łódź Ørsted Straße", { credits: "Æsir Œuvre Đorđe Ħamrun Kırıkkale Þór" });
+    for (const search of ["lodz", "orsted", "strasse", "aesir", "oeuvre", "dorde", "hamrun", "kirikkale", "thor", "ŁÓDŹ"]) {
+      expect(matchesCatalogueSearch(named, search)).toBe(true);
+    }
+    expect(matchesCatalogueSearch(named, "lods")).toBe(false);
+  });
+
   it("does not match a word split across the title and the credits", () => {
     expect(matchesCatalogueSearch(course("Web", { credits: "Design" }), "webdesign")).toBe(false);
     expect(matchesCatalogueSearch(course("Web", { credits: "Design" }), "web design")).toBe(true);

@@ -45,9 +45,20 @@ const ORDERS: Record<CatalogueSort, (a: CatalogueCourse, b: CatalogueCourse) => 
   credits: byText("credits")
 };
 
+/** Letters NFD leaves whole, spelled as a visitor without them on their keyboard would type them. */
+const UNDECOMPOSED: Record<string, string> = { ł: "l", ø: "o", đ: "d", ħ: "h", ı: "i", ß: "ss", æ: "ae", œ: "oe", þ: "th", ð: "d" };
+
+/** Lower case with accents and the letters above folded away, so "Łódź" reads as "lodz". */
+function fold(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[łøđħıßæœþð]/g, (letter) => UNDECOMPOSED[letter]);
+}
+
 /** Whether a course's title or credits contain every word of the search text, ignoring case and accents. */
 export function matchesCatalogueSearch(course: CatalogueCourse, search: string): boolean {
-  const fold = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   const haystack = fold(`${course.title ?? ""}\n${course.credits ?? ""}`);
   return fold(search)
     .split(/\s+/)
