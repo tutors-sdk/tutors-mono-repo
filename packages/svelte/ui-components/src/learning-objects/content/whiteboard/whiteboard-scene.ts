@@ -63,11 +63,12 @@ export async function saveWhiteboardScene(db: Db, roomId: string, scene: { eleme
   for (const element of elements) {
     if (element.fileId && available[element.fileId]) referenced[element.fileId] = available[element.fileId];
   }
-  const args = { p_room_id: roomId, p_elements: elements, p_files: referenced };
   // The database checks the stored total too, since stored files it adds can push a scene over the limit.
-  if (new TextEncoder().encode(JSON.stringify(args)).length > MAX_WHITEBOARD_SCENE_BYTES) return TOO_LARGE_STATUS;
+  const sentJson = JSON.stringify({ p_room_id: roomId, p_elements: elements, p_files: referenced });
+  if (new TextEncoder().encode(sentJson).length > MAX_WHITEBOARD_SCENE_BYTES) return TOO_LARGE_STATUS;
   try {
-    const { error } = await db.rpc("save_whiteboard_scene", args);
+    // The arguments stay inline so the schema check (scripts/checks/data-schema.ts) can read their names.
+    const { error } = await db.rpc("save_whiteboard_scene", { p_room_id: roomId, p_elements: elements, p_files: referenced });
     if (error?.code === SCENE_TOO_LARGE) return TOO_LARGE_STATUS;
     if (error) throw error;
     return SAVED_STATUS;
