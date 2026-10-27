@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "180700e171ab642aa5eeefbf34b4c35e2be958d9",
+  "commit": "eef3a27815e743c059e0fd74ed5a1efb149c7ff5",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-26T09:41:18Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40294491866",
+  "generatedAt": "2026-10-27T02:26:24Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40432806286",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -38,7 +38,7 @@
     {
       "name": "@tutors/identity-sveltekit",
       "mutationScore": 98.44,
-      "changed": false,
+      "changed": true,
       "path": "packages/svelte/identity-sveltekit"
     },
     {
@@ -61,8 +61,8 @@
     },
     {
       "name": "@tutors/quiz",
-      "mutationScore": 83.33,
-      "changed": false,
+      "mutationScore": 95.9,
+      "changed": true,
       "path": "packages/svelte/quiz"
     },
     {
@@ -92,7 +92,7 @@
     {
       "name": "@tutors/runtime",
       "mutationScore": 85.92,
-      "changed": false,
+      "changed": true,
       "path": "packages/svelte/utils/runtime"
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "name": "@tutors/ui-components",
-      "mutationScore": 50,
+      "mutationScore": 75,
       "changed": true,
       "path": "packages/svelte/ui-components"
     },
@@ -145,13 +145,13 @@
     },
     {
       "name": "@tutors/ui-primitives",
-      "mutationScore": 0,
+      "mutationScore": 1.43,
       "changed": true,
       "path": "packages/svelte/ui-primitives"
     },
     {
       "name": "packages/jsr/gen/src/services/course-builder.ts",
-      "mutationScore": 94.51,
+      "mutationScore": 94.54,
       "changed": false,
       "path": "packages/jsr/gen/src/services/course-builder.ts"
     },
@@ -169,7 +169,7 @@
     },
     {
       "name": "packages/jsr/gen/src/services/resource-builder.ts",
-      "mutationScore": 72.73,
+      "mutationScore": 74.58,
       "changed": false,
       "path": "packages/jsr/gen/src/services/resource-builder.ts"
     },
@@ -205,7 +205,7 @@
     },
     {
       "name": "packages/jsr/gen/src/utils/file-utils.ts",
-      "mutationScore": 55.12,
+      "mutationScore": 55.91,
       "changed": false,
       "path": "packages/jsr/gen/src/utils/file-utils.ts"
     },
@@ -235,7 +235,7 @@
       "mutation": "failure",
       "mutation-nightly": "failure",
       "suite-health": "success",
-      "e2e-stack-nightly": "failure",
+      "e2e-stack-nightly": "success",
       "timezone-matrix": "success",
       "lighthouse": "success",
       "load": "success",
