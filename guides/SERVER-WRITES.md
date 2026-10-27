@@ -84,7 +84,7 @@ reader are the same site (`*.tutors.dev`). Two settings make that work:
   that gets CORS headers. A request from any other origin is refused before the database is touched.
 
 A viewer who is not signed in to the reader gets a link to its sign-in page instead of data (the
-calendar and lab layout; no Rule covers this yet, since the time app has no browser tests).
+calendar and lab layouts).
 
 The reader's own "My time" page uses the same route. A student there sees their own rows, and their
 classmates under pseudonyms with no name, avatar, sentiment or status, so the course medians still

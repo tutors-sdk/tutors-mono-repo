@@ -87,10 +87,10 @@ most of it sign-in, which is paced under Better Auth's limit.
 | A signed-in student reads a lab while the data API never answers | 0615 | 4 | 3 | 1 | 4.7 |
 | The readiness check answers in time while the data API never answers | 0616 | 3 | 1 | 3 | 2.1 |
 | GitHub failing the sign-in leaves the student on the sign-in page with a message | 0617 | 3 | 1 | 2 | 8.1 |
-| Every server route answers each role with the status the matrix commits to | 0621 | 4 | 100 requests | 100 cells | 19.2 |
+| Every server route answers each role with the status the matrix commits to | 0621 | 4 | 175 requests | 175 cells | 19.2 |
 
 The whiteboard journey loads Excalidraw from esm.sh, which the machine these were measured on cannot reach, so its
-time comes from CI. The authorisation journey is one test: 20 endpoints asked as 5 roles, 100 cells held to the
+time comes from CI. The authorisation journey is one test: 35 endpoints asked as 5 roles, 175 cells held to the
 matrix. The 8 anonymous journeys (`student.journey.spec.ts`) run nightly on chromium, webkit,
 firefox and mobile.
 
