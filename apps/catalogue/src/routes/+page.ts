@@ -5,7 +5,8 @@ export const load = async () => {
   catalogueEntries = catalogueEntries.filter((entry) => entry.visit_count >= 20).sort((a, b) => b.visit_count - a.visit_count);
   const courseRecords = catalogueEntries.map((entry) => ({
     ...entry.course_record,
-    visits: entry.visit_count
+    visits: entry.visit_count,
+    lastVisit: entry.visited_at
   }));
   return {
     courseRecords

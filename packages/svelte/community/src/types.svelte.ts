@@ -158,7 +158,7 @@ export interface AnalyticsService {
 
 export interface CatalogueEntry {
   course_id: string;
-  visited_at: Date;
+  visited_at: string;
   visit_count: number;
   course_record: any;
 }
