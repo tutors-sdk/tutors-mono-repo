@@ -17,8 +17,6 @@ devDependencies: apps/reader/package.json: @codemirror/state
 devDependencies: apps/reader/package.json: @codemirror/theme-one-dark
 devDependencies: apps/reader/package.json: @codemirror/view
 devDependencies: apps/reader/package.json: codemirror
-devDependencies: apps/reader/package.json: file-saver
-devDependencies: apps/reader/package.json: pdfjs-dist
 devDependencies: package.json: @testing-library/svelte
 devDependencies: package.json: clsx
 devDependencies: package.json: esm-env

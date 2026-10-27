@@ -14,13 +14,15 @@ docker build --build-arg APP_NAME=live -t tutors/live .
 docker build --build-arg APP_NAME=time -t tutors/time .
 ```
 
-Optional build args: `NODE_VERSION` (default `22`), `VERSION`, `GIT_SHA` and
+Optional build args: `VERSION`, `GIT_SHA` and
 `BUILD_DATE` for the OCI labels and `GET /version`, and `SOURCE_DATE_EPOCH` for
 reproducible static-file headers (see [Deterministic responses](#deterministic-responses)).
 The build needs BuildKit (default in Docker 23+). Base images are fully
 qualified (`docker.io/library/node`), so the same file builds under
 Podman/Buildah and Quay's builders; `NODE_IMAGE` overrides the base for a
-mirror.
+mirror. The default base, `node:22-bookworm-slim`, is pinned by digest, so the
+same commit always builds on the same Node and Debian; Dependabot moves the
+digest in its own pull request.
 
 ```bash
 docker build --build-arg APP_NAME=reader \
@@ -253,8 +255,11 @@ Runtime configuration and overlay metadata:
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` | Supabase project; omit both to run without it |
 | `PUBLIC_ANON_MODE` | `TRUE` disables authentication and analytics |
 | `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`, `PRIVATE_AUTH_SECRET` | GitHub OAuth for the reader app |
-| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader only, server only: writes content locks after the educator check; unset makes lock changes answer 503 |
-| `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Reader only, server only: the educator-only Moodle sync in Educator Control; unset makes the sync answer 503 |
+| `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` | Reader only: the Supabase service_role key the reader's `/api` routes and educator-only Moodle sync use. It bypasses Row-Level Security; a Secret only ([guides/SERVER-WRITES.md](../guides/SERVER-WRITES.md)) |
+| `PRIVATE_API_ALLOWED_ORIGINS` | Reader: origins (the time app) allowed to read `/api/time` with the reader's session cookie |
+| `PRIVATE_TUTORS_ADMINS`, `PRIVATE_COURSE_HOSTS` | Reader: logins that are educators of every course; hosts besides `*.netlify.app` that serve courses |
+| `PUBLIC_READER_URL` | Time: the reader it reads course time data from |
+| `MOODLE_WS_URL`, `MOODLE_WS_TOKEN`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` | Reader only: the educator-only Moodle sync in Educator Control |
 | `LOG_LEVEL` | `debug`, `info`, `warn` or `error` |
 | `METRICS_TOKEN` | When set, `GET /metrics` requires `Authorization: Bearer <token>`; unset leaves it open |
 | `HARNESS_NOW` | **Release harness only.** An ISO 8601 instant that freezes the clock the server stamps into responses and records. Never set it in a deployment |

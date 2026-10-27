@@ -13,6 +13,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
     "@supabase/supabase-js": "^2.117.1",
@@ -36,6 +37,7 @@
     "@tutors/community": "workspace:*",
     "@tutors/connect": "workspace:*",
     "@tutors/course": "workspace:*",
+    "@tutors/data-api": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/identity": "workspace:*",
     "@tutors/identity-sveltekit": "workspace:*",

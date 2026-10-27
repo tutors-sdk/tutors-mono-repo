@@ -8,6 +8,7 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 
 import { freshBrowser, labsOf, loEventArrives, publishedCourse, studentOpensLab } from "../../support/connect.ts";
 import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";

@@ -39,16 +39,4 @@ describe("catalogueService without Supabase", () => {
     expect(log.error).not.toHaveBeenCalled();
   });
 
-  it("deletes nothing and does not throw", async () => {
-    await expect(catalogueService.deleteCourses(["c1"])).resolves.toBeUndefined();
-    expect(log.debug).toHaveBeenCalledWith("Supabase is not configured; skipping", { operation: "deleteCourses" });
-    expect(log.error).not.toHaveBeenCalled();
-  });
-
-  it("prunes an empty catalogue without fetching or deleting", async () => {
-    const fetchFunction = vi.fn();
-    await catalogueService.pruneCatalogue(fetchFunction as unknown as typeof fetch);
-    expect(fetchFunction).not.toHaveBeenCalled();
-    expect(log.error).not.toHaveBeenCalled();
-  });
 });

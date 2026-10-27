@@ -10,6 +10,7 @@ vi.mock("../../../../packages/jsr/time/src/services/supabase.ts", async () => ({
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 
 import { freshBrowser, liveActivityStored, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { recorder, settle } from "../../support/supabase-recorder.ts";

@@ -17,6 +17,7 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -29,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -100,7 +101,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -150,7 +151,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -200,7 +201,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -243,7 +244,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -282,7 +283,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -350,7 +351,7 @@ jobs:
         if: steps.gen.outputs.run == 'true'
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
-          deno-version: v2.x
+          deno-version-file: .dvmrc
 
       - name: Setup pnpm
         if: steps.gen.outputs.run == 'true'
@@ -360,7 +361,7 @@ jobs:
         if: steps.gen.outputs.run == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -413,7 +414,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -457,7 +458,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -504,7 +505,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install dependencies
@@ -553,7 +554,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
-          deno-version: v2.x
+          deno-version-file: .dvmrc
 
       - name: Run create scaffolder tests
         run: cd packages/jsr/create && deno test test/ --allow-all
@@ -565,6 +566,7 @@ jobs:
     if: always()
     needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, bundle-budgets, generator-diff, cli-tests, ears-audit, ui-contract, mutation-pr]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Every job succeeded
         env:

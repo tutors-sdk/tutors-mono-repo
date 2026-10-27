@@ -54,10 +54,11 @@ Locally, the browser must reach `persistence.e2e.test` without the machine's pro
 `NO_PROXY=$NO_PROXY,.e2e.test`. The whiteboard journey (Rule 0639) loads Excalidraw from esm.sh, so it needs a
 network that reaches it.
 
-The lock and Moodle journeys open the signed-in course by its Netlify name, `harness-rules`, because the reader's
-educator check reads the enrollment from `https://<name>.netlify.app` (the identity stub answers it inside the stack,
+Signed-in journeys use the Netlify names `harness-public` and `harness-rules`: authenticated data routes
+validate course IDs and the reader fetches published facts from `https://<name>.netlify.app` (the identity stub answers it inside the stack,
 `contextFor` routes it in the browser). The reader writes locks and Moodle rows with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`,
-which the stack sets; the persistence stub takes any key.
+which the stack sets; the persistence stub takes any key. Time journeys first sign in to the reader;
+`PUBLIC_READER_URL` and `PRIVATE_API_ALLOWED_ORIGINS` connect the two local origins.
 
 ### Journey sizes
 
@@ -87,10 +88,10 @@ most of it sign-in, which is paced under Better Auth's limit.
 | A signed-in student reads a lab while the data API never answers | 0615 | 4 | 3 | 1 | 4.7 |
 | The readiness check answers in time while the data API never answers | 0616 | 3 | 1 | 3 | 2.1 |
 | GitHub failing the sign-in leaves the student on the sign-in page with a message | 0617 | 3 | 1 | 2 | 8.1 |
-| Every server route answers each role with the status the matrix commits to | 0621 | 4 | 100 requests | 100 cells | 19.2 |
+| Every server route answers each role with the status the matrix commits to | 0621 | 4 | 175 requests | 175 cells | 19.2 |
 
 The whiteboard journey loads Excalidraw from esm.sh, which the machine these were measured on cannot reach, so its
-time comes from CI. The authorisation journey is one test: 20 endpoints asked as 5 roles, 100 cells held to the
+time comes from CI. The authorisation journey is one test: 35 endpoints asked as 5 roles, 175 cells held to the
 matrix. The 8 anonymous journeys (`student.journey.spec.ts`) run nightly on chromium, webkit,
 firefox and mobile.
 
