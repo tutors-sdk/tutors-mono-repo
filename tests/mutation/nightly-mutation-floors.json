@@ -39,6 +39,7 @@
     "packages/jsr/types/src/learning-objects.ts": 83,
     "packages/jsr/types/src/tutors-json.ts": 0,
     "packages/svelte/community/src/services/analytics.svelte.ts": 100,
+    "packages/svelte/community/src/services/catalogue-order.ts": 100,
     "packages/svelte/community/src/services/catalogue.ts": 100,
     "packages/svelte/community/src/services/live-feed.ts": 96,
     "packages/svelte/community/src/services/live.svelte.ts": 94,
