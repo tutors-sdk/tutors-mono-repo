@@ -1,4 +1,12 @@
 /* global APP_VERSION */
+/**
+ * Server hooks for the reader app, loaded by SvelteKit in each server process.
+ * Every request runs through the request logger (x-request-id and one JSON completion line), the
+ * Prometheus metrics hook, the locale cookie, the security headers and then GitHub sign-in, which sets
+ * locals.actor. Reads PUBLIC_ANON_MODE, PRIVATE_AUTH_SECRET, PRIVATE_AUTH_GITHUB_ID and PRIVATE_AUTH_GITHUB_SECRET.
+ * Without PRIVATE_AUTH_SECRET the reader serves anonymously and logs one error at startup.
+ * Unexpected errors are logged with their request and answered with a generic 500 message.
+ */
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
 import { building } from "$app/env";

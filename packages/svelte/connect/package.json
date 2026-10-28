@@ -16,7 +16,8 @@
     "@tutors/community": "workspace:*",
     "@tutors/rbac": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
-    "@tutors/identity": "workspace:*"
+    "@tutors/identity": "workspace:*",
+    "@tutors/data-api": "workspace:*"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

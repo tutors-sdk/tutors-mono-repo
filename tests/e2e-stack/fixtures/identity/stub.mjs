@@ -33,6 +33,7 @@ const certs = process.env.CERTS_DIR ?? join(here, "certs");
 const port = Number(process.env.PORT ?? 443);
 const defaultRole = process.env.HARNESS_ROLE ?? "student";
 const courseOrigin = process.env.COURSE_ORIGIN;
+const publicCourseOrigin = process.env.PUBLIC_COURSE_ORIGIN;
 let fault = "off";
 
 /** Fixed users per role. Ids are stable so anything keyed by them is comparable across sides. */
@@ -67,8 +68,10 @@ export function handler(req, res) {
   };
 
   if (url.pathname === "/healthz") return json(200, { status: "ok" });
-  if (courseOrigin && /^harness-rules\.netlify\.app(?::\d+)?$/.test(req.headers.host ?? "") && url.pathname === "/tutors.json") {
-    fetch(`${courseOrigin}/tutors.json`)
+  const courseName = /^(harness-rules|harness-public)\.netlify\.app(?::\d+)?$/.exec(req.headers.host ?? "")?.[1];
+  const origin = courseName === "harness-rules" ? courseOrigin : courseName === "harness-public" ? publicCourseOrigin : undefined;
+  if (origin && url.pathname === "/tutors.json") {
+    fetch(`${origin}/tutors.json`)
       .then(async (r) => {
         res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" });
         res.end(await r.text());

@@ -47,7 +47,8 @@
     "@tutors/ui-primitives": "workspace:*",
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
-    "pdfjs-dist": "^6.4.299"
+    "pdfjs-dist": "^6.4.299",
+    "@tutors/data-api": "workspace:*"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.0",

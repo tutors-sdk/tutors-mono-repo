@@ -1,4 +1,10 @@
 /* global APP_VERSION */
+/**
+ * Server hooks for the live app, loaded by SvelteKit in each server process.
+ * Every request runs through the request logger (x-request-id and one JSON completion line), the
+ * Prometheus metrics hook and the security headers below. No authentication runs in this app's hooks.
+ * Unexpected errors are logged with their request and answered with a generic 500 message.
+ */
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
 import { building } from "$app/env";
