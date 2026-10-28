@@ -28,7 +28,7 @@ const feature = await loadFeature("tests/bdd/features/student/learning-progress.
 
 type TableRow = Record<string, string>;
 
-describeFeature(feature, ({ Background, Scenario, Rule }) => {
+describeFeature(feature, ({ Background, Rule }) => {
   const courses = new Map<string, Course>();
   let course: Course;
   let login: string;
@@ -61,25 +61,27 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     });
   });
 
-  Scenario("View time spent on a course", ({ Given, When, Then, And }) => {
-    let model: BaseCalendarModel;
-    Given(
-      "the calendar holds {number} thirty-second blocks of time active for {string} on {string} and {number} on {string}",
-      (_ctx, blocks1: number, student: string, day1: string, blocks2: number, day2: string) => {
-        recorder.seed("calendar", [
-          { id: day1, studentid: student, courseid: course.courseId, timeactive: blocks1, pageloads: 1 },
-          { id: day2, studentid: student, courseid: course.courseId, timeactive: blocks2, pageloads: 1 }
-        ]);
-      }
-    );
-    When("the time report for the course is loaded", async () => {
-      model = new BaseCalendarModel(await CourseTime.getCalendarData(course.courseId), null);
-    });
-    Then("the system shall display {number} minutes of total time active for {string}", (_ctx, minutes: number, student: string) => {
-      expect(model.day.rows.map((row) => [row.studentid, row.totalSeconds])).toEqual([[student, minutes]]);
-    });
-    And("time shall be displayed in hours and minutes as {string}", (_ctx, display: string) => {
-      expect(formatTimeNearestMinute(model.day.rows[0].totalSeconds)).toBe(display);
+  Rule("When a lecturer loads the time report of a course, the time dashboard shall show each student's total time active in hours and minutes.", ({ RuleScenario }) => {
+    RuleScenario("View time spent on a course", ({ Given, When, Then, And }) => {
+      let model: BaseCalendarModel;
+      Given(
+        "the calendar holds {number} thirty-second blocks of time active for {string} on {string} and {number} on {string}",
+        (_ctx, blocks1: number, student: string, day1: string, blocks2: number, day2: string) => {
+          recorder.seed("calendar", [
+            { id: day1, studentid: student, courseid: course.courseId, timeactive: blocks1, pageloads: 1 },
+            { id: day2, studentid: student, courseid: course.courseId, timeactive: blocks2, pageloads: 1 }
+          ]);
+        }
+      );
+      When("the time report for the course is loaded", async () => {
+        model = new BaseCalendarModel(await CourseTime.getCalendarData(course.courseId), null);
+      });
+      Then("the system shall display {number} minutes of total time active for {string}", (_ctx, minutes: number, student: string) => {
+        expect(model.day.rows.map((row) => [row.studentid, row.totalSeconds])).toEqual([[student, minutes]]);
+      });
+      And("time shall be displayed in hours and minutes as {string}", (_ctx, display: string) => {
+        expect(formatTimeNearestMinute(model.day.rows[0].totalSeconds)).toBe(display);
+      });
     });
   });
 
@@ -112,62 +114,70 @@ describeFeature(feature, ({ Background, Scenario, Rule }) => {
     expect(recorder.tableCalls.filter((call) => call.table === "learning_records" || call.table === "calendar")).toEqual([]);
   };
 
-  Scenario("Record learning activity", ({ When, Then, And }) => {
-    When("the student views lab {number} of the course {number} times", viewLab);
-    And("the student stays on that page for {number} seconds", staysOnPage);
-    Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
-    And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
-  });
-
-  Scenario("Resume from last accessed position", ({ Given, When, Then, And }) => {
-    let visits: CourseVisit[];
-    Given("the student has previously accessed the course", visitCourse);
-    When("the dashboard loads the recently accessed courses of the student", async () => {
-      visits = await storedVisits();
-    });
-    Then("the system shall list {string} among the recently accessed courses", (_ctx, courseId: string) => {
-      expect(visits.map((visit) => [visit.id, visit.title, visit.visits])).toEqual([[courseId, course.title, 1]]);
-    });
-    And("the entry shall show today as the last accessed date", () => {
-      expect(formatDate(new Date(visits[0].lastVisit))).toBe(formatDate(new Date()));
+  Rule("When a signed-in student views a learning object, the reader shall count the page load and record each 30 seconds of activity against the learning object and the day's calendar.", ({ RuleScenario }) => {
+    RuleScenario("Record learning activity", ({ When, Then, And }) => {
+      When("the student views lab {number} of the course {number} times", viewLab);
+      And("the student stays on that page for {number} seconds", staysOnPage);
+      Then("the system shall record {number} more blocks of time active against the lab and against the calendar for today", recordedBlocks);
+      And("the system shall increment the page load count for the lab to {number}", countedPageLoads);
     });
   });
 
-  Scenario("Star a favourite course", ({ Given, When, Then, And }) => {
-    Given("the student has previously accessed the course", visitCourse);
-    When("the student stars the course {string}", async (_ctx, courseId: string) => {
-      await tutorsConnectService.favouriteCourse(courseId);
-    });
-    Then("the system shall store {string} as a favourite in the profile of the student", (_ctx, courseId: string) => {
-      const stored = recorder.upserts("tutors-connect-profiles").at(-1)!;
-      expect(stored.tutorId).toBe(login);
-      expect((stored.profile as CourseVisit[]).filter((visit) => visit.favourite).map((visit) => visit.id)).toEqual([courseId]);
-    });
-    And("the home page shall load {string} among the favourites of the student", async (_ctx, courseId: string) => {
-      const visits = await storedVisits();
-      expect(visits.filter((visit) => visit.favourite).map((visit) => visit.id)).toEqual([courseId]);
+  Rule("When the dashboard of a signed-in student loads, the reader shall list the courses the student accessed recently with the date of each last visit.", ({ RuleScenario }) => {
+    RuleScenario("Resume from last accessed position", ({ Given, When, Then, And }) => {
+      let visits: CourseVisit[];
+      Given("the student has previously accessed the course", visitCourse);
+      When("the dashboard loads the recently accessed courses of the student", async () => {
+        visits = await storedVisits();
+      });
+      Then("the system shall list {string} among the recently accessed courses", (_ctx, courseId: string) => {
+        expect(visits.map((visit) => [visit.id, visit.title, visit.visits])).toEqual([[courseId, course.title, 1]]);
+      });
+      And("the entry shall show today as the last accessed date", () => {
+        expect(formatDate(new Date(visits[0].lastVisit))).toBe(formatDate(new Date()));
+      });
     });
   });
 
-  Scenario("View learning records per learning object", ({ Given, When, Then, And }) => {
-    Given("the course {string} is also published", (_ctx, courseId: string) => {
-      courses.set(courseId, publishedCourse(courseId, 1));
+  Rule("When a student stars a course, the reader shall store the course among the favourites in the student's profile.", ({ RuleScenario }) => {
+    RuleScenario("Star a favourite course", ({ Given, When, Then, And }) => {
+      Given("the student has previously accessed the course", visitCourse);
+      When("the student stars the course {string}", async (_ctx, courseId: string) => {
+        await tutorsConnectService.favouriteCourse(courseId);
+      });
+      Then("the system shall store {string} as a favourite in the profile of the student", (_ctx, courseId: string) => {
+        const stored = recorder.upserts("tutors-connect-profiles").at(-1)!;
+        expect(stored.tutorId).toBe(login);
+        expect((stored.profile as CourseVisit[]).filter((visit) => visit.favourite).map((visit) => visit.id)).toEqual([courseId]);
+      });
+      And("the home page shall load {string} among the favourites of the student", async (_ctx, courseId: string) => {
+        const visits = await storedVisits();
+        expect(visits.filter((visit) => visit.favourite).map((visit) => visit.id)).toEqual([courseId]);
+      });
     });
-    When(
-      "the student views lab {number} of {string} {number} times, lab {number} of {string} {number} time and lab {number} of {string} {number} times",
-      async (_ctx, ...views: (number | string)[]) => {
-        for (let i = 0; i < views.length; i += 3) await view(views[i + 1] as string, views[i] as number, views[i + 2] as number);
-      }
-    );
-    Then("the system shall track page loads per learning object:", (_ctx, table: TableRow[]) => {
-      for (const row of table) {
-        expect(learningRecord(row.course, Number(row.lab)), `${row.course} lab ${row.lab}`).toMatchObject({ count: Number(row["page loads"]) });
-      }
-      expect(recorder.rows("learning_records")).toHaveLength(table.length);
-    });
-    And("the records shall be grouped by course, {number} for {string} and {number} for {string}", (_ctx, n1: number, c1: string, n2: number, c2: string) => {
-      const perCourse = (courseId: string) => recorder.rows("learning_records").filter((r) => r.course_id === courseId).length;
-      expect([perCourse(c1), perCourse(c2)]).toEqual([n1, n2]);
+  });
+
+  Rule("When a signed-in student views learning objects in more than one course, the reader shall count page loads per learning object, grouped by course.", ({ RuleScenario }) => {
+    RuleScenario("View learning records per learning object", ({ Given, When, Then, And }) => {
+      Given("the course {string} is also published", (_ctx, courseId: string) => {
+        courses.set(courseId, publishedCourse(courseId, 1));
+      });
+      When(
+        "the student views lab {number} of {string} {number} times, lab {number} of {string} {number} time and lab {number} of {string} {number} times",
+        async (_ctx, ...views: (number | string)[]) => {
+          for (let i = 0; i < views.length; i += 3) await view(views[i + 1] as string, views[i] as number, views[i + 2] as number);
+        }
+      );
+      Then("the system shall track page loads per learning object:", (_ctx, table: TableRow[]) => {
+        for (const row of table) {
+          expect(learningRecord(row.course, Number(row.lab)), `${row.course} lab ${row.lab}`).toMatchObject({ count: Number(row["page loads"]) });
+        }
+        expect(recorder.rows("learning_records")).toHaveLength(table.length);
+      });
+      And("the records shall be grouped by course, {number} for {string} and {number} for {string}", (_ctx, n1: number, c1: string, n2: number, c2: string) => {
+        const perCourse = (courseId: string) => recorder.rows("learning_records").filter((r) => r.course_id === courseId).length;
+        expect([perCourse(c1), perCourse(c2)]).toEqual([n1, n2]);
+      });
     });
   });
 

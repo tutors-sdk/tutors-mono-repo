@@ -19,7 +19,7 @@ import { tutorsConnectService } from "../../../../packages/svelte/connect/src/se
 
 const feature = await loadFeature("tests/bdd/features/student/live-presence.feature");
 
-describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => {
+describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
   let course: Course;
 
   const lab = (n: number) => labsOf(course)[n - 1];
@@ -55,70 +55,78 @@ describeFeature(feature, ({ Background, Scenario, Rule, AfterEachScenario }) => 
     });
   });
 
-  Scenario("See online students count", ({ Given, When, Then }) => {
-    Given("{string} has opened lab {number} of the course", opens);
-    When("{string} and {string} view lab {number} of the course", async (_ctx, first: string, second: string, n: number) => {
-      storedActivity(first, course, lab(n), 0);
-      await arrives(second, n);
-    });
-    Then("the system shall display {number} students currently online", (_ctx, count: number) => {
-      expect(online()).toHaveLength(count);
-      expect(presenceService.listeningTo).toBe(course.courseId);
-    });
-  });
-
-  Scenario("Receive presence updates", ({ Given, When, Then, And }) => {
-    Given("{string} has opened lab {number} of the course", opens);
-    When("another student {string} joins the course at lab {number}", (_ctx, name: string, n: number) => arrives(name, n));
-    Then("the system shall update the online count to {number}", (_ctx, count: number) => {
-      expect(online()).toHaveLength(count);
-    });
-    And("the online list shall be {string}", (_ctx, list: string) => {
-      expect(names()).toEqual(list.split(", "));
-    });
-    And("when {string} moves on to lab {number} the online count shall stay at {number} and show {string} at {string}", async (_ctx, name: string, n: number, count: number, who: string, title: string) => {
-      await arrives(name, n);
-      expect(online()).toHaveLength(count);
-      expect(card(who)).toMatchObject({ title, loRoute: lab(n).route });
+  Rule("When students open a course, the reader shall show the number of students online on it.", ({ RuleScenario }) => {
+    RuleScenario("See online students count", ({ Given, When, Then }) => {
+      Given("{string} has opened lab {number} of the course", opens);
+      When("{string} and {string} view lab {number} of the course", async (_ctx, first: string, second: string, n: number) => {
+        storedActivity(first, course, lab(n), 0);
+        await arrives(second, n);
+      });
+      Then("the system shall display {number} students currently online", (_ctx, count: number) => {
+        expect(online()).toHaveLength(count);
+        expect(presenceService.listeningTo).toBe(course.courseId);
+      });
     });
   });
 
-  Scenario("Express sentiment", ({ Given, When, Then, And }) => {
-    Given("{string} has opened lab {number} of the course", opens);
-    When("the student sets their sentiment to {string}", (_ctx, sentiment: string) => tutorsConnectService.updateSentiment(sentiment));
-    And("the student moves on to lab {number}", (_ctx, n: number) => openLo(course, lab(n)));
-    Then("the system shall store the sentiment {string} for {string}", (_ctx, sentiment: string, login: string) => {
-      expect(recorder.rows("tutors-connect-users")).toMatchObject([{ github_id: login, sentiment }]);
-    });
-    And("the system shall broadcast the sentiment {string} to other course participants", (_ctx, sentiment: string) => {
-      const afterChange = broadcasts().filter((payload) => payload.loRoute === lab(2).route);
-      // Once on the course channel, once on the all-courses channel the live app listens to.
-      expect(afterChange.map((payload) => payload.user?.sentiment)).toEqual([sentiment, sentiment]);
-    });
-    And("the sentiment {string} shall be on the presence card of {string}", (_ctx, sentiment: string, name: string) => {
-      expect(card(name)?.user?.sentiment).toBe(sentiment);
+  Rule("When another student joins a course or moves within it, the reader shall update the online list, the count and the learning object shown for that student.", ({ RuleScenario }) => {
+    RuleScenario("Receive presence updates", ({ Given, When, Then, And }) => {
+      Given("{string} has opened lab {number} of the course", opens);
+      When("another student {string} joins the course at lab {number}", (_ctx, name: string, n: number) => arrives(name, n));
+      Then("the system shall update the online count to {number}", (_ctx, count: number) => {
+        expect(online()).toHaveLength(count);
+      });
+      And("the online list shall be {string}", (_ctx, list: string) => {
+        expect(names()).toEqual(list.split(", "));
+      });
+      And("when {string} moves on to lab {number} the online count shall stay at {number} and show {string} at {string}", async (_ctx, name: string, n: number, count: number, who: string, title: string) => {
+        await arrives(name, n);
+        expect(online()).toHaveLength(count);
+        expect(card(who)).toMatchObject({ title, loRoute: lab(n).route });
+      });
     });
   });
 
-  Scenario("Private mode hides presence", ({ Given, When, Then, And }) => {
-    Given("the student has disabled share presence", async () => {
-      tutorsConnectService.toggleShare();
-      await settle();
+  Rule("When a student sets their sentiment, the reader shall store it and broadcast it to the other participants of the course.", ({ RuleScenario }) => {
+    RuleScenario("Express sentiment", ({ Given, When, Then, And }) => {
+      Given("{string} has opened lab {number} of the course", opens);
+      When("the student sets their sentiment to {string}", (_ctx, sentiment: string) => tutorsConnectService.updateSentiment(sentiment));
+      And("the student moves on to lab {number}", (_ctx, n: number) => openLo(course, lab(n)));
+      Then("the system shall store the sentiment {string} for {string}", (_ctx, sentiment: string, login: string) => {
+        expect(recorder.rows("tutors-connect-users")).toMatchObject([{ github_id: login, sentiment }]);
+      });
+      And("the system shall broadcast the sentiment {string} to other course participants", (_ctx, sentiment: string) => {
+        const afterChange = broadcasts().filter((payload) => payload.loRoute === lab(2).route);
+        // Once on the course channel, once on the all-courses channel the live app listens to.
+        expect(afterChange.map((payload) => payload.user?.sentiment)).toEqual([sentiment, sentiment]);
+      });
+      And("the sentiment {string} shall be on the presence card of {string}", (_ctx, sentiment: string, name: string) => {
+        expect(card(name)?.user?.sentiment).toBe(sentiment);
+      });
     });
-    When("{string} opens lab {number} of the course", opens);
-    Then("the system shall mark {string} as {string}", (_ctx, login: string, status: string) => {
-      expect(recorder.rows("tutors-connect-users")).toMatchObject([{ github_id: login, online_status: status }]);
-    });
-    And("the system shall not broadcast their activity to others", () => {
-      expect(broadcasts()).toEqual([]);
-      expect(readerServer.posts).toEqual([]);
-      expect(recorder.rows("tutors-connect-latest")).toEqual([]);
-    });
-    And("their name shall not appear in the online list", () => {
-      // Activity controls are hidden while sharing is disabled, so there is no reader to deliver to.
-      expect(presenceService.listeningTo).toBe("");
-      expect(recorder.joined(course.courseId)).toHaveLength(0);
-      expect(names()).toEqual([]);
+  });
+
+  Rule("If a student has turned off sharing their presence, then the reader shall mark the student offline and broadcast none of their activity.", ({ RuleScenario }) => {
+    RuleScenario("Private mode hides presence", ({ Given, When, Then, And }) => {
+      Given("the student has disabled share presence", async () => {
+        tutorsConnectService.toggleShare();
+        await settle();
+      });
+      When("{string} opens lab {number} of the course", opens);
+      Then("the system shall mark {string} as {string}", (_ctx, login: string, status: string) => {
+        expect(recorder.rows("tutors-connect-users")).toMatchObject([{ github_id: login, online_status: status }]);
+      });
+      And("the system shall not broadcast their activity to others", () => {
+        expect(broadcasts()).toEqual([]);
+        expect(readerServer.posts).toEqual([]);
+        expect(recorder.rows("tutors-connect-latest")).toEqual([]);
+      });
+      And("their name shall not appear in the online list", () => {
+        // Activity controls are hidden while sharing is disabled, so there is no reader to deliver to.
+        expect(presenceService.listeningTo).toBe("");
+        expect(recorder.joined(course.courseId)).toHaveLength(0);
+        expect(names()).toEqual([]);
+      });
     });
   });
 

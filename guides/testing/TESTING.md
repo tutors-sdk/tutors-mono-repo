@@ -510,10 +510,9 @@ stand-ins.
 bound feature was checked that way when it was bound. Tier O fails a feature that nothing
 binds, an EARS keyword Gherkin would silently drop, and an `@ignore` tag.
 
-**What it does not cover.** 48 scenarios need a browser or describe behaviour the product does
-not have. They are prose in [specifications/](../specifications/README.md), which names the
-covering tier for each or says that none does. [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214)
-still owns `Rule:` blocks and the structural audit. Writing and binding a scenario:
+**What it does not cover.** Existing behaviour that only a browser can check, and that no test
+checks yet, is prose in [specifications/](../specifications/README.md), which names the tier
+that covers each scenario in part. Every executable scenario sits under a `Rule:` block. Writing and binding a scenario:
 [EARS-METHODOLOGY.md](./EARS-METHODOLOGY.md).
 
 ## The reader's UI contract, and dev-server smoke tests
@@ -694,7 +693,7 @@ G, and in `apps/<app>/playwright-report/` for the smoke configs. CI uploads both
 - Coverage over every source file is about 58% lines (floors in `tests/suite-health/coverage-floors.json`, Rules 0110 to 0112); `apps/time`, `packages/jsr/create` and the UI component packages are near zero.
 - `@testing-library/svelte` is an unused dependency; component rendering is covered by the UI
   contract in a real browser instead.
-- 48 specified scenarios are prose, many with no tier covering them: [specifications/](../specifications/README.md).
+- Specified scenarios that only a browser can check are prose: [specifications/](../specifications/README.md).
 - Only the twelve targeted modules are held to 90% mutation; the comprehensive nightly run holds every other module at its measured floor, 58.5% overall.
 - `rc-validation.yml` and the root `pnpm check` script need the fixes described above.
 - The schema carries known gaps (`tests/data/schema/known-gaps.txt`): tables and functions no migration creates. The
