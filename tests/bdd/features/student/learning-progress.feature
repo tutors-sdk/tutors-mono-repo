@@ -119,6 +119,46 @@ Feature: Learning Progress Tracking
       Then the reader shall have made 0 activity requests and no other learning record or calendar requests
       And the system shall record 0 more blocks of time active against the lab and against the calendar for today
 
+  @rule-0649 @ears-event-driven
+  Rule: When a student opens the course pages again in the same tab, the reader shall record each 30 seconds of activity in one database request.
+
+    Scenario: Opening the course pages twice records one heartbeat per 30 seconds
+      When the student views lab 1 of the course 1 times
+      And the course pages open
+      And the course pages open again
+      And the student spends 60 seconds on the course pages
+      Then the reader shall have made 2 activity requests and no other learning record or calendar requests
+
+    Scenario: Returning to the course pages twice records one heartbeat per 30 seconds
+      When the student views lab 1 of the course 1 times
+      And the course pages open
+      And the course pages close
+      And the course pages open again
+      And the course pages open once more
+      And the student spends 60 seconds on the course pages
+      Then the reader shall have made 2 activity requests and no other learning record or calendar requests
+
+  @rule-0650 @ears-event-driven
+  Rule: When a student leaves the course pages, the reader shall stop recording activity for that tab.
+
+    Scenario: No heartbeat follows leaving the course pages
+      When the student views lab 1 of the course 1 times
+      And the course pages open
+      And the course pages open again
+      And the course pages close
+      And the student spends 60 seconds on the course pages
+      Then the reader shall have made 0 activity requests and no other learning record or calendar requests
+
+    Scenario: Leaving twice is harmless and the next visit records again
+      When the student views lab 1 of the course 1 times
+      And the course pages open
+      And the course pages open again
+      And the course pages close
+      And the course pages close again
+      And the course pages open once more
+      And the student spends 30 seconds on the course pages
+      Then the reader shall have made 1 activity requests and no other learning record or calendar requests
+
   @rule-0305 @ears-unwanted
   Rule: If the database lacks the single-request recording functions, then the reader shall record page views and activity with the per-table requests.
 
