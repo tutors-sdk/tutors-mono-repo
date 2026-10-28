@@ -78,7 +78,7 @@ A **404 Page Not Found** on the reference course usually means the browser could
 npx http-server tests/fixtures/tutors-json-history/5.3.0 -p 8080 --cors
 ```
 
-Then open **http://localhost:5173/course/localhost:8080**. `--cors` matters: the reader fetches `tutors.json` from the browser.
+Then open **http://localhost:5173/course/localhost:8080**. `--cors` matters: the reader fetches `tutors.json` from the browser. `http-server` is not a workspace dependency, so `npx` downloads it the first time; run it once while you are online and later runs use the cached copy (or install it with `npm install -g http-server`).
 
 To see your own course, run the generator in a folder that has a `course.md` (it needs Deno) and serve the `json` folder it writes the same way:
 
@@ -165,7 +165,7 @@ A pull request merges with one approving review and a green **CI success** check
 | --- | --- | --- |
 | Build & Test | build, API reports, type check, lint errors, knip, a failing test, coverage floors, fuzz | `pnpm build`, `pnpm api-report:check`, `pnpm check`, `pnpm lint`, `pnpm check:knip`, `pnpm exec vitest run --coverage && pnpm check:coverage-floors coverage/coverage-summary.json`, `pnpm test:fuzz` |
 | Platform conformance | a Kubernetes overlay that does not render or breaks policy | `pnpm check:k8s` (needs `kubectl` or `kustomize`) |
-| Container smoke, negative fixtures | an image that does not build or start as a non-root, read-only container | `pnpm check:container` (needs Docker or Podman; see [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md)) |
+| Container smoke, negative fixtures | an image that does not build or start as a non-root, read-only container | `docker build --build-arg APP_NAME=reader -t tutors/reader:ci . && pnpm check:container --image tutors/reader:ci --app reader` (any of the four apps; needs Docker, see [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md)) |
 | Dependency audit | a new advisory your dependency change introduces | `pnpm check:audit` |
 | Bundle budgets | an app bundle over its ceiling | `pnpm check:bundle` after a build |
 | Generator differential | a change in generated `tutors.json` that `tests/generator/claims.yaml` does not claim | `pnpm check:generator-diff` (needs Deno) |
