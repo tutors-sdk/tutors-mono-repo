@@ -46,8 +46,11 @@ claims:
   # and live-auth:. Main to RC forecast of 28 Oct 2026 (sha-d350404 beside 17.0.0, harness 1.59.0): the old
   # "reader:*" and "time:*" scopes matched none of #327's differences.
   - artefact: network
-    scope: "* /api/{me,profile,presence,analytics,courses/visit,whiteboard*}"
+    scope: "* /api/{me,profile,presence,analytics,courses/visit}"
     reason: "Rule 0072: the reader stores a signed-in student's data through its /api routes, under the session's login"
+  - artefact: network
+    scope: "* /api/whiteboard*"
+    reason: "Rule 0068: a signed-in student's whiteboard edits are saved through the server, in a room only its owner can read or overwrite"
   - artefact: persistence
     scope: "*/tutors-connect-{courses,profiles}"
     reason: "Rule 0072: student rows are written by the reader's server under the session's login, not by the browser"
