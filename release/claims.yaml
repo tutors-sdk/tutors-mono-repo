@@ -41,27 +41,19 @@ claims:
   - artefact: migration
     scope: "app_errors:anon_select_app_errors"
     reason: "CHANGELOG Unreleased: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it (migration)"
+  # Scopes follow the harness's shapes (tutors-release-harness claims/README.md): a network difference is keyed by
+  # "<METHOD> <route>", a persistence one by "<journey>/<table>", and signed-in pages are reader-auth:, time-auth:
+  # and live-auth:. Main to RC forecast of 28 Oct 2026 (sha-d350404 beside 17.0.0, harness 1.59.0): the old
+  # "reader:*" and "time:*" scopes matched none of #327's differences.
   - artefact: network
-    scope: "reader:*"
+    scope: "* /api/{me,profile,presence,analytics,courses/visit,whiteboard*}"
     reason: "Rule 0072: the reader stores a signed-in student's data through its /api routes, under the session's login"
   - artefact: persistence
-    scope: "reader:*"
+    scope: "*/tutors-connect-{courses,profiles}"
     reason: "Rule 0072: student rows are written by the reader's server under the session's login, not by the browser"
-  - artefact: dom
-    scope: "reader:whiteboard*"
-    reason: "Rule 0068: an anonymous visitor's whiteboard edits are not saved, and the status line says so"
   - artefact: network
-    scope: "time:*"
+    scope: "GET /api/time/*"
     reason: "CHANGELOG Unreleased (Time): the dashboard loads time data from the reader"
-  - artefact: dom
-    scope: "time:*"
-    reason: "CHANGELOG Unreleased (Time): signed-out viewers see a sign-in link"
-  - artefact: screenshot
-    scope: "time:*"
-    reason: "CHANGELOG Unreleased (Time): signed-out viewers see a sign-in link"
-  - artefact: network
-    scope: "catalogue:*"
-    reason: "Rule 0070: the catalogue shows the number of students without reading any student's profile"
   # Since 17.0.0 (Main to RC forecast of 15 Oct 2026, sha-d3d7227 beside 17.0.0): Tutors Live within a daily
   # Realtime budget (#476, #478, #481). The reader posts each learning event to its own server, which asks the
   # database which feeds to publish to and charges the day's budget.
