@@ -24,11 +24,15 @@
         "vitest.aliases.ts",
         ".dependency-cruiser.cjs",
         "tests/release/scripts/*.ts",
-        "tests/e2e-stack/fixture-course/build.ts"
+        "tests/e2e-stack/fixture-course/build.ts",
+        "tests/e2e-stack/fixture-course/build-signed-in.ts"
       ],
       "project": [
         "scripts/**/*.ts",
         "tests/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "archiver"
       ]
     },
     "apps/*": {

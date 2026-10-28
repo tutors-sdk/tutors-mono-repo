@@ -6,6 +6,8 @@ const sessionEnv = {
   PUBLIC_ANON_MODE: "FALSE",
   PUBLIC_SUPABASE_URL: "http://localhost:5178",
   PUBLIC_SUPABASE_ANON_KEY: "fixture-anon-key",
+  PRIVATE_SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role-key",
+  PRIVATE_TUTORS_ADMINS: "lecturer",
   PRIVATE_AUTH_SECRET: AUTH_SECRET,
   PRIVATE_AUTH_GITHUB_ID: GITHUB_CLIENT_ID,
   PRIVATE_AUTH_GITHUB_SECRET: GITHUB_CLIENT_SECRET
@@ -22,12 +24,13 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // No retries (Rule 0620): a test that passes only on a second try is flaky, and that is a finding.
+  retries: 0,
   workers: process.env.CI ? 2 : undefined,
   reporter: [["html"], ["json", { outputFile: "playwright-report/results.json" }], ["list"]],
   use: {
     baseURL: "http://localhost:5173",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure"
   },

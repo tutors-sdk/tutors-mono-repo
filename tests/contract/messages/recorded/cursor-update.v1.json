@@ -1,0 +1,10 @@
+{
+  "userId": "alice",
+  "userName": "Alice",
+  "color": "#FF6B6B",
+  "pointer": {
+    "x": 40,
+    "y": 50
+  },
+  "button": "down"
+}

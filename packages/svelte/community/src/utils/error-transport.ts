@@ -1,3 +1,9 @@
+/**
+ * Logger transport that copies browser warn and error lines into the Supabase app_errors table.
+ * Registered by each app's hooks.client.ts. Lines are batched (sent after 5 seconds or at 20 lines) and
+ * flushed on page unload with sendBeacon (or a keepalive fetch). Does nothing when Supabase is not
+ * configured, and insert failures are ignored.
+ */
 import type { LogEntry } from "@tutors/logger";
 import { supabase } from "./supabase-client.ts";
 import * as env from "$app/env/public";

@@ -1,17 +1,17 @@
 import { CourseTime } from "./course-time.ts";
-import { getSupabase } from "./supabase.ts";
+import { getTutorsTimeSource, onTutorsTimeSourceChange } from "./source.ts";
 import type {
   TutorsTimeStudent,
   TutorsTimeCourse,
   StudentDisplayInfo,
   CourseDisplayInfo,
-  TutorsConnectCourse,
   TutorsConnectUser,
   TutorsTimeService
 } from "../types/index.ts";
 import { BaseLabModel } from "./base-lab-model.ts";
 
 const courseMap = new Map<string, CourseTime>();
+onTutorsTimeSourceChange(() => courseMap.clear());
 
 function emptyConnectUser(githubId: string): TutorsConnectUser {
   return {
@@ -32,22 +32,15 @@ function studentDisplayName(info: StudentDisplayInfo): string {
 }
 
 export const TutorsTime: TutorsTimeService = {
-  /** Fetch full `tutors-connect-users` row for app bar and student views. */
-  async getStudentDisplayInfo(studentId: string): Promise<StudentDisplayInfo> {
+  async getStudentDisplayInfo(studentId: string, courseId?: string, startDate?: string | null, endDate?: string | null): Promise<StudentDisplayInfo> {
     const id = studentId.trim();
-    const supabase = getSupabase();
-    const { data } = await supabase
-      .from("tutors-connect-users")
-      .select("email, full_name, avatar_url, github_id, online_status, date_last_accessed, sentiment")
-      .eq("github_id", id)
-      .maybeSingle();
-    if (!data) {
+    const row = await getTutorsTimeSource().user(id, courseId, startDate, endDate);
+    if (!row) {
       return emptyConnectUser(id);
     }
-    const row = data as TutorsConnectUser;
     return {
       github_id: row.github_id?.trim() || id,
-      email: row.email ?? null,
+      email: null,
       full_name: row.full_name ?? null,
       avatar_url: row.avatar_url ?? null,
       online_status: row.online_status ?? null,
@@ -57,19 +50,12 @@ export const TutorsTime: TutorsTimeService = {
   },
 
   /** Return display title, image or icon for a course (for AppBar). */
-  async getCourseDisplayInfo(courseId: string): Promise<CourseDisplayInfo> {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from("tutors-connect-courses")
-      .select("course_id, course_record")
-      .eq("course_id", courseId)
-      .maybeSingle();
-
-    if (error || !data) {
+  async getCourseDisplayInfo(courseId: string, startDate?: string | null, endDate?: string | null): Promise<CourseDisplayInfo> {
+    const row = await getTutorsTimeSource().courseRecord(courseId, startDate, endDate);
+    if (!row) {
       return { title: courseId, img: null, icon: null };
     }
 
-    const row = data as TutorsConnectCourse;
     const id = row.course_id?.trim() || courseId;
     const record = row.course_record;
     const title =
@@ -121,7 +107,7 @@ export const TutorsTime: TutorsTimeService = {
       }
     }
 
-    const { title } = await this.getCourseDisplayInfo(id);
+    const { title } = await this.getCourseDisplayInfo(id, normalizedStart, normalizedEnd);
     const courseTime = new CourseTime();
     await courseTime.loadTime(id, normalizedStart, normalizedEnd, title);
 
@@ -145,7 +131,7 @@ export const TutorsTime: TutorsTimeService = {
     if (!courseId) throw new Error("Course ID is required");
     if (!studentId) throw new Error("Student ID is required");
 
-    const displayInfo = await this.getStudentDisplayInfo(studentId);
+    const displayInfo = await this.getStudentDisplayInfo(studentId, courseId, startDate, endDate);
     const courseTime = await this.loadCourseTime(courseId, startDate ?? null, endDate ?? null);
     const course = courseTime;
 

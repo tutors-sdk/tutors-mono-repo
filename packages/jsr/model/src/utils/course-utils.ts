@@ -251,6 +251,7 @@ export function initCalendar(course: Course, today: number = Date.now()) {
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`Error loading calendar: ${message}\n`);
+    // console, not process.stderr: this also runs in the browser, and on the server the apps turn console output into JSON log lines.
+    console.warn("Error loading calendar", { error: message });
   }
 }

@@ -14,4 +14,29 @@
 # A claim covering every file (path "**" and no narrower pointer) is ignored
 # unless `approved: true` is set in a PR carrying the approve-broad-claim label:
 # it should be easy to claim precisely and awkward to claim everything.
-claims: []
+claims:
+  # The synthetic course gained topic-01-typical/old-ideas and unit-2/scratch to pin it; the base publishes both.
+  - corpus: synthetic
+    generator: tutors
+    path: "tutors.json"
+    pointer: "/los/[topic-01-typical]/los/[old-ideas]"
+    reason: "#424 Rule 0268: a folder of no kind inside a topic is left out of tutors.json"
+  - corpus: synthetic
+    generator: tutors
+    path: "tutors.json"
+    pointer: "/los/[topic-01-typical]/los/[unit-2]/los/[scratch]"
+    reason: "#424 Rule 0268: a folder of no kind inside a unit is left out of tutors.json"
+  # On the base, old-ideas publishes as a phantom topic: it gets a topic llms file (renumbering the
+  # rest), a section in the complete llms file, and a page and nav cards on every tutors-lite page.
+  - corpus: synthetic
+    generator: tutors
+    path: "llms/*-complete-llms.txt"
+    reason: "#424 Rule 0268: the phantom old-ideas topic leaves the complete llms file"
+  - corpus: synthetic
+    generator: tutors
+    path: "llms/topics/*"
+    reason: "#424 Rule 0268: the phantom old-ideas topic loses its llms files, so later topics renumber"
+  - corpus: synthetic
+    generator: tutors-lite
+    path: "**/*.html"
+    reason: "#424 Rule 0268: the phantom old-ideas topic loses its page and its cards on every page"

@@ -1,12 +1,6 @@
-/**
- * Analytics service for tracking user interactions and learning progress.
- * Integrates with Supabase for data persistence and provides real-time analytics tracking.
- * Handles learning events, page loads, and duration tracking.
- */
-
 import type { TutorsId } from "@tutors/tutors-model-lib";
 import type { Course, Lo } from "@tutors/tutors-model-lib";
-import { storeStudentCourseLearningObjectInSupabase, recordHeartbeat, addOrUpdateStudent } from "../utils/supabase-client.ts";
+import { recordLearningPageLoad, recordLearningTick, addOrUpdateStudent } from "../utils/supabase-client.ts";
 import type { AnalyticsService } from "../types.svelte.ts";
 import log from "@tutors/logger";
 
@@ -37,16 +31,9 @@ export const analyticsService: AnalyticsService = {
     }
   },
 
-  /**
-   * Records a page load event in Supabase
-   * Creates or updates learning object interaction record
-   * @param course - Current course
-   * @param lo - Learning object being viewed
-   * @param student - Student viewing the content
-   */
-  reportPageLoad(course: Course, lo: Lo, student: TutorsId) {
+  reportPageLoad(course: Course, lo: Lo) {
     try {
-      storeStudentCourseLearningObjectInSupabase(course, this.loRoute, lo, student);
+      void recordLearningPageLoad(course, this.loRoute, lo);
     } catch (error: unknown) {
       log.error("TutorStore Error:", error);
     }
@@ -62,7 +49,7 @@ export const analyticsService: AnalyticsService = {
   updatePageCount(course: Course, lo: Lo, student: TutorsId) {
     try {
       if (student) {
-        void recordHeartbeat(course.courseId, student.login, lo.route ? this.loRoute : null);
+        void recordLearningTick(course.courseId, lo.route ? this.loRoute : null);
       }
     } catch (error: unknown) {
       log.error("TutorStore Error:", error);
