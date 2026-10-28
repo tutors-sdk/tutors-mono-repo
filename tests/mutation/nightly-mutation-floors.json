@@ -1,9 +1,9 @@
 {
   "staleMargin": 2,
   "files": {
-    "packages/jsr/create/src/cli.ts": 0,
+    "packages/jsr/create/src/cli.ts": 20,
     "packages/jsr/create/src/generate.ts": 0,
-    "packages/jsr/create/src/scaffolder.ts": 0,
+    "packages/jsr/create/src/scaffolder.ts": 100,
     "packages/jsr/create/src/templates.ts": 0,
     "packages/jsr/create/src/types.ts": 0,
     "packages/jsr/gen/src/services/course-builder.ts": 94,

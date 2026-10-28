@@ -527,6 +527,7 @@ Rules can be traced to the work that introduced them.
 - `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
 - `tutors-lite`: note pages no longer render a stray `s` after the note card
 - `gen-lib` (`tutors`, `tutors-lite`): a folder whose name starts with no learning-object kind inside a topic or unit (`topic-1/drafts`) is no longer published as a learning object of its parent's kind; its files are still copied as assets (#424, Rule 0268)
+- `tutors-create`: the course creator refuses to scaffold over a destination that already exists — a folder, a regular file, or a symlink, even a dangling one. It writes nothing, names the conflicting path on stderr, prints no publishing steps and exits unsuccessfully; previously it overwrote an author's edited course with template text and reported success (#522, Rules 0647, 0648) (PR #531)
 
 ### v5.3.0 (2026-09)
 
