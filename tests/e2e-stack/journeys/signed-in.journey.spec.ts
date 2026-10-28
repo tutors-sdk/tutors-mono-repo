@@ -40,12 +40,14 @@ test("A signed-in student moves through a lab and each step is recorded (exercis
   const context = await contextFor(browser, "student");
   const page = await context.newPage();
   await signInToCourse(page, signedIn.publicCourseId, fixture.title);
+  const pageViews = async () => written(await persistence.writes()).filter((w) => w === "rpc record_page_view").length;
+  // The course page's own view is sent beside the reconnect, not before it: let it land before the count starts.
+  await expect.poll(pageViews, VISIBLE).toBeGreaterThanOrEqual(1);
   await persistence.reset();
   await page.goto(`${signedIn.reader}/lab/${signedIn.publicCourseId}/${fixture.labPath}`);
   await expect(labStepHeading(page, fixture.firstStep.heading)).toBeVisible(VISIBLE);
   await labSteps(page).getByRole("link", { name: new RegExp(`^(?:\\d+\\s+)?${fixture.secondStep.heading}$`) }).click();
   await expect(labStepHeading(page, fixture.secondStep.heading)).toBeVisible(VISIBLE);
-  const pageViews = async () => written(await persistence.writes()).filter((w) => w === "rpc record_page_view").length;
   await expect.poll(pageViews, VISIBLE).toBe(2);
   await context.close();
 });
