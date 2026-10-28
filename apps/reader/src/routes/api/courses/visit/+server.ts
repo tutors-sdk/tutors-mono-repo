@@ -1,4 +1,5 @@
 import { error, type RequestHandler } from "@sveltejs/kit";
+import { now } from "@tutors/runtime";
 import { noContent, readJson, requireDb, valid } from "../../../../lib/server/api/http.ts";
 import { authorization } from "../../../../lib/server/api/access.ts";
 import { AuthorizationUnavailableError } from "../../../../lib/server/api/authorization.ts";
@@ -22,7 +23,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const record: Record<string, unknown> = {
     id: courseId,
     title: facts.title ?? courseId,
-    lastVisit: new Date().toISOString(),
+    lastVisit: now().toISOString(),
     credits: facts.credits ?? "",
     private: facts.isPrivate
   };
