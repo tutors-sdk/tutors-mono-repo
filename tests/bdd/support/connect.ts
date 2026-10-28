@@ -8,10 +8,11 @@ import { realtime } from "../../../packages/svelte/community/src/services/realti
 import { tutorsConnectService } from "../../../packages/svelte/connect/src/services/connect.svelte.ts";
 import { localStorageProfile } from "../../../packages/svelte/connect/src/services/localStorageProfile.ts";
 import { supabaseProfile } from "../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts";
-import { recordingFunctions } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
+import { recordingFunctions } from "../../../apps/reader/src/lib/server/api/store.ts";
 import { currentCourse, currentLo, tutorsId } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
+import { installReaderFetch, resetReaderApi, serveCourseJson, setReaderSession } from "./reader-api.ts";
 import { browserStorage, recorder, settle } from "./supabase-recorder.ts";
 import { POST as postLiveActivity } from "../../../apps/reader/src/routes/api/live/activity/+server.ts";
 
@@ -64,12 +65,14 @@ export function freshBrowser(): void {
   presenceService.stopPresenceListener();
   void realtime.reset();
   recorder.reset();
+  resetReaderApi();
   recordingFunctions.missing = false;
   const storage = browserStorage();
   vi.stubGlobal("localStorage", storage);
   vi.stubGlobal("window", { localStorage: storage });
   vi.stubGlobal("document", { hidden: false });
   vi.stubGlobal("fetch", readerFetch);
+  installReaderFetch();
   readerServer.posts = [];
 
   tutorsId.value = null;
@@ -110,6 +113,7 @@ export function publishedCourse(courseId: string, labCount = 2, properties: Reco
   Object.assign(raw.properties, properties);
   const course = structuredClone(raw) as unknown as Course;
   if (enrollment) course.enrollment = enrollment;
+  serveCourseJson(courseId, enrollment ? { ...raw, enrollment } : raw);
   decorateCourseTree(course, courseId, `${courseId}.netlify.app`);
   return course;
 }
@@ -120,6 +124,7 @@ export function labsOf(course: Course): Lo[] {
 
 /** What the reader's root layout does once the identity adapter reports a session. */
 export async function signIn(user: TutorsId): Promise<void> {
+  setReaderSession(user);
   await tutorsConnectService.reconnect(user);
   await settle();
 }
@@ -143,6 +148,7 @@ export async function openLo(course: Course, lo: Lo): Promise<void> {
 /** A different student, in their own browser, signs in and opens a lab of `course`. */
 export async function studentOpensLab(name: string, course: Course, lab = 0): Promise<void> {
   tutorsId.value = null;
+  setReaderSession(null);
   currentCourse.value = null;
   await signIn(githubUser(name));
   await openLo(course, labsOf(course)[lab]);

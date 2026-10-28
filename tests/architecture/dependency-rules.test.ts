@@ -17,7 +17,7 @@ const FIXTURE_ALIASES = {
   "@tutors/connect": fixture("packages/svelte/connect/src/index.ts"),
   "better-auth": fixture("external/better-auth/index.ts"),
   "@sveltejs/kit": fixture("external/sveltekit.ts"),
-  "@supabase/supabase-js": fixture("external/supabase.ts"),
+  "@supabase/supabase-js": fixture("external/@supabase/supabase-js/index.ts"),
   "$app/env/private": fixture("external/$app/env/private.ts"),
   "$env/dynamic/private": fixture("external/$env/dynamic/private.ts"),
   "@tutors/identity-sveltekit/server": fixture("packages/svelte/identity-sveltekit/src/index.server.ts"),
@@ -43,8 +43,8 @@ describe("architecture rules (runway tier A)", () => {
       ["identity-provider-only-in-adapter", "apps/reader/src/lib/provider.ts", "external/better-auth/index.ts"],
       ["identity-provider-only-in-adapter", "packages/svelte/connect/src/provider.ts", "external/better-auth/index.ts"],
       ["identity-contracts-self-contained", "packages/jsr/identity/src/framework.ts", "external/sveltekit.ts"],
-      ["identity-contracts-self-contained", "packages/jsr/identity/src/database.ts", "external/supabase.ts"],
-      ["realtime-contracts-self-contained", "packages/jsr/realtime/src/broker.ts", "external/supabase.ts"],
+      ["identity-contracts-self-contained", "packages/jsr/identity/src/database.ts", "external/@supabase/supabase-js/index.ts"],
+      ["realtime-contracts-self-contained", "packages/jsr/realtime/src/broker.ts", "external/@supabase/supabase-js/index.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/leak.client.ts", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/Leak.svelte", "packages/svelte/identity-sveltekit/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/secret.client.ts", "external/$env/dynamic/private.ts"],
@@ -61,7 +61,8 @@ describe("architecture rules (runway tier A)", () => {
       ["no-app-to-app", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "packages/svelte/community/src/relative.ts", "packages/svelte/runes/src/index.ts"],
-      ["no-cross-package-cycle", "packages/svelte/connect/src/index.ts", "packages/svelte/utils/rbac/src/index.ts"]
+      ["no-cross-package-cycle", "packages/svelte/connect/src/index.ts", "packages/svelte/utils/rbac/src/index.ts"],
+      ["no-database-client-in-browser-code", "packages/svelte/connect/src/direct-db.ts", "external/@supabase/supabase-js/index.ts"]
     ])("%s catches %s -> %s", (rule, from, to) => {
       expect(violations).toContain(`${rule}: ${from} -> ${to}`);
     });
@@ -76,6 +77,7 @@ describe("architecture rules (runway tier A)", () => {
         "packages/svelte/ui-components/src/tree/Node.ts",
         "packages/svelte/ui-components/src/tree/Children.ts",
         "apps/catalogue/src/lib/page.ts",
+        "packages/svelte/community/src/utils/supabase-client.ts",
         "packages/svelte/identity-sveltekit/src/index.server.ts"
       ];
       const falsePositives = violations.filter((line) => cleanSources.some((source) => line.includes(`: ${source} -> `)));

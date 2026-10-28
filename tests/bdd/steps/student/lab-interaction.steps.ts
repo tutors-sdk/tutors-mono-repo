@@ -9,7 +9,7 @@ const feature = await loadFeature("tests/bdd/features/student/lab-interaction.fe
 
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-describeFeature(feature, ({ Background, Scenario }) => {
+describeFeature(feature, ({ Background, Rule }) => {
   let courseId: string;
   let courseTitle: string;
   let topicTitle: string;
@@ -62,78 +62,88 @@ describeFeature(feature, ({ Background, Scenario }) => {
     });
   });
 
-  Scenario("Navigate through lab steps", ({ Given, When, Then, And }) => {
-    Given("the lab has {number} steps", giveLabSteps);
-    When("a student opens the lab", open);
-    Then("the system shall display the content for the step {string}", expectStepDisplayed);
-    And("the system shall show a navigation panel with the step titles {string}", (_ctx, expected: string) => {
-      expect(navItems().map((item) => item[3])).toEqual(list(expected));
-      expect(navItems().map((item) => item[1])).toEqual(lab.los.map((step) => `${lab.route}/${step.shortTitle}`));
+  Rule("When a student opens a lab, the reader shall show its first step with a navigation panel listing every step title.", ({ RuleScenario }) => {
+    RuleScenario("Navigate through lab steps", ({ Given, When, Then, And }) => {
+      Given("the lab has {number} steps", giveLabSteps);
+      When("a student opens the lab", open);
+      Then("the system shall display the content for the step {string}", expectStepDisplayed);
+      And("the system shall show a navigation panel with the step titles {string}", (_ctx, expected: string) => {
+        expect(navItems().map((item) => item[3])).toEqual(list(expected));
+        expect(navItems().map((item) => item[1])).toEqual(lab.los.map((step) => `${lab.route}/${step.shortTitle}`));
+      });
     });
   });
 
-  Scenario("Move between lab steps", ({ Given, And, When, Then }) => {
-    Given("the lab has {number} steps", giveLabSteps);
-    And("a student is on the step {string}", (_ctx, stepTitle: string) => {
-      open();
-      live.setActivePage(stepKey(stepTitle));
-      expect(live.currentChapterTitle).toBe(stepTitle);
-    });
-    When("the student moves to the step {string}", (_ctx, stepTitle: string) => {
-      live.setActivePage(stepKey(stepTitle));
-    });
-    Then("the system shall display the content for the step {string}", expectStepDisplayed);
-    And("the step navigation shall mark only {string} as the current step", (_ctx, stepTitle: string) => {
-      const current = navItems().filter((item) => item[2] !== undefined);
-      expect(current.map((item) => item[3])).toEqual([stepTitle]);
-    });
-    And("the step navigation shall offer {string} as previous and {string} as next", (_ctx, previous: string, next: string) => {
-      expect(live.prevStep()).toBe(stepKey(previous));
-      expect(live.nextStep()).toBe(stepKey(next));
-      const links = [...live.horizontalNavbarHtml.matchAll(/href="([^"]*)"/g)].map((match) => match[1]);
-      expect(links).toEqual([`${lab.route}/${stepKey(previous)}`, `${lab.route}/${stepKey(next)}`]);
-    });
-  });
-
-  Scenario("View lab with mixed content types", ({ Given, When, Then, And }) => {
-    Given("a lab step contains markdown with a fenced {string} code block", (_ctx, language: string) => {
-      steps = [{ title: "Variables", contentMd: ["# Variables", "", "Declare a **constant**.", "", "```" + language, "const x = 42;", "```"].join("\n") }];
-    });
-    When("a student opens the lab", open);
-    Then("the system shall render the markdown heading and paragraph as HTML", () => {
-      expect(live.content).toContain(`<h1 id="variables" tabindex="-1"><a class="header-anchor" href="#variables">Variables</a></h1>`);
-      expect(live.content).toContain("<p>Declare a <strong>constant</strong>.</p>");
-      expect(live.content).not.toContain("```");
-    });
-    And("the system shall mark the code block with the language {string} for highlighting", (_ctx, language: string) => {
-      expect(live.content).toContain(`<pre><code class="language-${language}">const x = 42;\n</code></pre>`);
+  Rule("When a student moves to a lab step, the reader shall show that step, mark it as the current step and offer the steps before and after it.", ({ RuleScenario }) => {
+    RuleScenario("Move between lab steps", ({ Given, And, When, Then }) => {
+      Given("the lab has {number} steps", giveLabSteps);
+      And("a student is on the step {string}", (_ctx, stepTitle: string) => {
+        open();
+        live.setActivePage(stepKey(stepTitle));
+        expect(live.currentChapterTitle).toBe(stepTitle);
+      });
+      When("the student moves to the step {string}", (_ctx, stepTitle: string) => {
+        live.setActivePage(stepKey(stepTitle));
+      });
+      Then("the system shall display the content for the step {string}", expectStepDisplayed);
+      And("the step navigation shall mark only {string} as the current step", (_ctx, stepTitle: string) => {
+        const current = navItems().filter((item) => item[2] !== undefined);
+        expect(current.map((item) => item[3])).toEqual([stepTitle]);
+      });
+      And("the step navigation shall offer {string} as previous and {string} as next", (_ctx, previous: string, next: string) => {
+        expect(live.prevStep()).toBe(stepKey(previous));
+        expect(live.nextStep()).toBe(stepKey(next));
+        const links = [...live.horizontalNavbarHtml.matchAll(/href="([^"]*)"/g)].map((match) => match[1]);
+        expect(links).toEqual([`${lab.route}/${stepKey(previous)}`, `${lab.route}/${stepKey(next)}`]);
+      });
     });
   });
 
-  Scenario("Navigate via breadcrumbs", ({ Given, And, When, Then }) => {
-    let arrived: Lo | undefined;
-    Given("the lab has {number} steps", giveLabSteps);
-    And("a student is viewing the lab", open);
-    When("the student follows the breadcrumb {string}", (_ctx, crumbTitle: string) => {
-      arrived = followCrumb(course, lab, crumbTitle);
-    });
-    Then("the system shall navigate back to the topic {string} at {string}", (_ctx, expectedTitle: string, route: string) => {
-      expect(arrived?.type).toBe("topic");
-      expect(arrived?.title).toBe(expectedTitle);
-      expect(arrived?.route).toBe(route);
-      expect(arrived).toBe(lab.parentLo);
+  Rule("When a student opens a lab step, the reader shall render its Markdown as HTML and mark each fenced code block with its language.", ({ RuleScenario }) => {
+    RuleScenario("View lab with mixed content types", ({ Given, When, Then, And }) => {
+      Given("a lab step contains markdown with a fenced {string} code block", (_ctx, language: string) => {
+        steps = [{ title: "Variables", contentMd: ["# Variables", "", "Declare a **constant**.", "", "```" + language, "const x = 42;", "```"].join("\n") }];
+      });
+      When("a student opens the lab", open);
+      Then("the system shall render the markdown heading and paragraph as HTML", () => {
+        expect(live.content).toContain(`<h1 id="variables" tabindex="-1"><a class="header-anchor" href="#variables">Variables</a></h1>`);
+        expect(live.content).toContain("<p>Declare a <strong>constant</strong>.</p>");
+        expect(live.content).not.toContain("```");
+      });
+      And("the system shall mark the code block with the language {string} for highlighting", (_ctx, language: string) => {
+        expect(live.content).toContain(`<pre><code class="language-${language}">const x = 42;\n</code></pre>`);
+      });
     });
   });
 
-  Scenario("View lab PDF companion", ({ Given, And, When, Then }) => {
-    Given("the lab has {number} steps", giveLabSteps);
-    And("the lab was published with the PDF file {string}", (_ctx, file: string) => {
-      pdfFile = file;
+  Rule("When a student follows a topic breadcrumb from a lab, the reader shall return to that topic.", ({ RuleScenario }) => {
+    RuleScenario("Navigate via breadcrumbs", ({ Given, And, When, Then }) => {
+      let arrived: Lo | undefined;
+      Given("the lab has {number} steps", giveLabSteps);
+      And("a student is viewing the lab", open);
+      When("the student follows the breadcrumb {string}", (_ctx, crumbTitle: string) => {
+        arrived = followCrumb(course, lab, crumbTitle);
+      });
+      Then("the system shall navigate back to the topic {string} at {string}", (_ctx, expectedTitle: string, route: string) => {
+        expect(arrived?.type).toBe("topic");
+        expect(arrived?.title).toBe(expectedTitle);
+        expect(arrived?.route).toBe(route);
+        expect(arrived).toBe(lab.parentLo);
+      });
     });
-    When("a student opens the lab", open);
-    Then("the system shall link to the PDF at {string}", (_ctx, url: string) => {
-      // The lab page shows its PDF link exactly when `lab.pdf` is set.
-      expect(live.lab.pdf).toBe(url);
+  });
+
+  Rule("When a student opens a lab that was published with a PDF, the reader shall link to the PDF on the course host.", ({ RuleScenario }) => {
+    RuleScenario("View lab PDF companion", ({ Given, And, When, Then }) => {
+      Given("the lab has {number} steps", giveLabSteps);
+      And("the lab was published with the PDF file {string}", (_ctx, file: string) => {
+        pdfFile = file;
+      });
+      When("a student opens the lab", open);
+      Then("the system shall link to the PDF at {string}", (_ctx, url: string) => {
+        // The lab page shows its PDF link exactly when `lab.pdf` is set.
+        expect(live.lab.pdf).toBe(url);
+      });
     });
   });
 });

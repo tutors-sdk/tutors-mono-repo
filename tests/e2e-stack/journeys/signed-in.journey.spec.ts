@@ -40,12 +40,14 @@ test("A signed-in student moves through a lab and each step is recorded (exercis
   const context = await contextFor(browser, "student");
   const page = await context.newPage();
   await signInToCourse(page, signedIn.publicCourseId, fixture.title);
+  const pageViews = async () => written(await persistence.writes()).filter((w) => w === "rpc record_page_view").length;
+  // The course page's own view is sent beside the reconnect, not before it: let it land before the count starts.
+  await expect.poll(pageViews, VISIBLE).toBeGreaterThanOrEqual(1);
   await persistence.reset();
   await page.goto(`${signedIn.reader}/lab/${signedIn.publicCourseId}/${fixture.labPath}`);
   await expect(labStepHeading(page, fixture.firstStep.heading)).toBeVisible(VISIBLE);
   await labSteps(page).getByRole("link", { name: new RegExp(`^(?:\\d+\\s+)?${fixture.secondStep.heading}$`) }).click();
   await expect(labStepHeading(page, fixture.secondStep.heading)).toBeVisible(VISIBLE);
-  const pageViews = async () => written(await persistence.writes()).filter((w) => w === "rpc record_page_view").length;
   await expect.poll(pageViews, VISIBLE).toBe(2);
   await context.close();
 });
@@ -141,6 +143,7 @@ test("A student who shares presence appears in Tutors Live (exercises Rules 0330
 test("A lecturer opens the time dashboard's medians with the course PIN (exercises Rule 0319)", { tag: "@rule-0613" }, async ({ browser }) => {
   await persistence.seed("time-course");
   const page = await (await contextFor(browser, "lecturer")).newPage();
+  await signInToCourse(page, signedIn.courseId, signedInCourse.title);
   await page.goto(`${signedIn.time}/${signedInCourse.timeId}/medians`);
   await page.getByRole("textbox", { name: "PIN code", exact: true }).fill(signedInCourse.pin);
   await page.getByRole("button", { name: "Verify", exact: true }).click();
@@ -203,6 +206,7 @@ test("A student filters the calendar to assessments and finds the course for LLM
 test("A lecturer opens the time dashboard's lab views and a student's page (exercises Rule 0319)", { tag: "@rule-0638" }, async ({ browser }) => {
   await persistence.seed("time-course");
   const page = await (await contextFor(browser, "lecturer")).newPage();
+  await signInToCourse(page, signedIn.courseId, signedInCourse.title);
   await page.goto(`${signedIn.time}/${signedInCourse.timeId}/lab/bylab`);
   await page.getByRole("textbox", { name: "PIN code", exact: true }).fill(signedInCourse.pin);
   await page.getByRole("button", { name: "Verify", exact: true }).click();

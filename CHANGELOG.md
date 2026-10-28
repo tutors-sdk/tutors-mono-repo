@@ -19,6 +19,28 @@
 
 ## Reader (`tutors-reader`)
 
+### Unreleased
+
+#### Fixes
+
+- Database: `whiteboard_scenes` is created by a migration (`20261017000000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)
+- Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #320)
+- Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #320)
+- Database: the contract step that revokes anonymous access to personal student rows, assignment rows, content-lock writes and student-counter RPCs is written (`supabase/contracts/revoke_anon_student_data.sql`) but ships in the next release, once no pod of this one's predecessors is left. `pnpm check:migrations` now refuses a contract step in the same release as its expand (`-- contract-for:` header) (PR #320)
+- Course reader: a tab keeps one activity heartbeat however often the course pages open, and leaving the course pages stops it. Each entry to the course pages used to start another 30-second heartbeat that leaving never stopped, so activity time was over-counted and every extra heartbeat made its own database write (Rules 0649, 0650) (network, persistence) (PR #530)
+
+#### Security
+
+- Browser packages reach personal data only through the new `@tutors/data-api` package; CI refuses a database-client import in browser code and any browser write outside the data API (PR #327)
+
+- Background data responses do not refresh session cookies, so a delayed response cannot undo logout or restore the previous account after a switch (network) (PR #320)
+- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the verified Better Auth identity and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0071, 0072) (network, persistence) (PR #320)
+- Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
+- My time: a student sees their own time and their classmates under pseudonyms, with no classmate's name or avatar (Rule 0066). The pseudonyms are random and new on every answer, so they cannot be linked from one request to the next (Rule 0075) (network) (PR #320)
+- Content locks and time data: when a course's host cannot be read, the reader decides from the educators it read within the last hour (Rule 0074), and without such a copy answers 503 instead of treating an educator as a student (Rule 0073) (network) (PR #320)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; personal rooms have their own namespace, so no shared room id can name one, and no longer use public Realtime channels; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320, PR #328)
+
+  Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. Apply the anon-access revocation after the new pods are serving traffic.
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes
@@ -285,6 +307,10 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### Unreleased
+
+- The student count comes from `get_student_count()`, which returns the number without reading any student's profile (Rule 0070) (network) (PR #320)
+- The catalogue no longer deletes courses from the browser; the unused `pruneCatalogue` and `deleteCourses` are removed (PR #320)
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes
@@ -321,6 +347,11 @@
 
 ## Time (`tutors-time`)
 
+### Unreleased
+
+- Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067) (network, dom, screenshot) (PR #320)
+
+  Deploy Time with `PUBLIC_READER_URL` set to the reader people sign in at; the reader holds `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`.
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes
@@ -491,10 +522,12 @@ Rules can be traced to the work that introduced them.
 
 ### Unreleased
 
+- `time`: a pluggable data source. `readerTimeSource(readerUrl)` reads a course's rows from the Tutors reader with the viewer's session; `supabaseTimeSource()` (the default) keeps reading the tables. New exports `setTutorsTimeSource`, `getTutorsTimeSource`, `TutorsTimeSourceError`; `getStudentDisplayInfo` takes the course id and no longer returns an email address
 - `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
 - `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
 - `tutors-lite`: note pages no longer render a stray `s` after the note card
 - `gen-lib` (`tutors`, `tutors-lite`): a folder whose name starts with no learning-object kind inside a topic or unit (`topic-1/drafts`) is no longer published as a learning object of its parent's kind; its files are still copied as assets (#424, Rule 0268)
+- `tutors-create`: the course creator refuses to scaffold over a destination that already exists — a folder, a regular file, or a symlink, even a dangling one. It writes nothing, names the conflicting path on stderr, prints no publishing steps and exits unsuccessfully; previously it overwrote an author's edited course with template text and reported success (#522, Rules 0647, 0648) (PR #531)
 
 ### v5.3.0 (2026-09)
 

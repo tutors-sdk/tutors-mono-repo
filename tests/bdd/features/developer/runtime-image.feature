@@ -13,6 +13,12 @@ Feature: Runtime image
   use, so Docker, Podman and the release harness's image-hardening check see the image's own health. The image has
   no curl or wget, so node's fetch asks.
 
+  The Node base image is pinned by digest (Rule 0667). The tag `node:22-bookworm-slim` floats: on 2026-10-22 Docker
+  Hub moved it from node 22.23.3 to 22.23.4, and the next build of main carried the new Node and a new lowest layer
+  into all four images with no pull request behind it, so the release harness could only pin the difference on the
+  one PR merged that day (#516, docs only). With the digest pinned, Dependabot's docker ecosystem moves it in a pull
+  request of its own that declares `(sbom, image-manifest)`.
+
   @rule-0220 @ears-ubiquitous
   Rule: Tutors shall ship its runtime images with no package manager, removing npm, npx, corepack and yarn in the runtime stage.
 
@@ -49,3 +55,16 @@ Feature: Runtime image
       And no app listening on the port named by PORT
       When the image's healthcheck command runs
       Then the healthcheck shall fail
+
+  @rule-0667 @ears-ubiquitous
+  Rule: Tutors shall build its images on a Node base image pinned by digest, moved only by a Dependabot pull request.
+
+    Scenario: The Dockerfile's base image is pinned by digest
+      Given the repository's Dockerfile
+      Then every stage that names a registry image names it with a sha256 digest
+      And the base and runtime stages build on the pinned stage unless NODE_IMAGE says otherwise
+
+    Scenario: Dependabot watches the Dockerfile's base image
+      Given the repository's Dependabot configuration
+      Then it updates the "docker" ecosystem in "/"
+      And it ignores no update to it

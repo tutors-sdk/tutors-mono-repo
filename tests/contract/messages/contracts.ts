@@ -36,7 +36,7 @@ export const MESSAGE_CONTRACTS: MessageContract[] = [
   {
     name: "lo-event",
     channel: "Realtime broadcast on a course id topic and on tutors-all-course-access, published by the reader's server",
-    producer: "the reader's presence service, through POST /api/live/activity (packages/svelte/community/src/services/live-activity.ts)",
+    producer: "the reader's presence service, through POST /api/live/activity (packages/svelte/community/src/services/live-activity.server.ts)",
     consumers: ["the reader's server (parseLiveActivity)", "Tutors Live's course and platform pages (live.svelte.ts)", "the reader's online list (presence.svelte.ts)"],
     version: 1,
     accepts: [1],

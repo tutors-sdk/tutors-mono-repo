@@ -51,3 +51,17 @@ updates:
         applies-to: "security-updates"
         patterns:
           - "*"
+
+  # The Node base image is pinned by digest in the Dockerfile (Rule 0667), so a
+  # new Node or Debian build reaches the images only through this pull request,
+  # on its own, where its CHANGELOG hint (sbom, image-manifest) declares it.
+  # No patch ignore: Node patch releases and Debian fixes are what it carries.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+      - "docker"
