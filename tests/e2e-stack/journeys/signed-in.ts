@@ -93,8 +93,10 @@ export async function startSignIn(page: Page, courseId: string): Promise<void> {
 /** Sign in from a course and wait until the reader has brought the student back to it, signed in. */
 export async function signInToCourse(page: Page, courseId: string, title: string): Promise<void> {
   // The reader reconnects the student in the background once the course renders, ending with their online status:
-  // waiting for that read keeps the next step from racing the reconnect's own navigation.
-  const reconnected = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/me" && r.request().method() === "GET", { timeout: 30_000 });
+  // waiting for that read keeps the next step from racing the reconnect's own navigation. The reconnect reads GET
+  // /api/me twice, the sentiment and then the online status (connect.svelte.ts), so the second read is the one.
+  let meReads = 0;
+  const reconnected = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/me" && r.request().method() === "GET" && ++meReads === 2, { timeout: 30_000 });
   reconnected.catch(() => undefined);
   await startSignIn(page, courseId);
   await page.waitForURL(new RegExp(`/course/${escapeRegExp(courseId)}`), { timeout: 30_000 });
