@@ -19,7 +19,7 @@ Feature: Test quality ratchets
 
     Scenario: Test files and generated files stay out of the measure
       Given the repository's coverage configuration
-      Then the test file "packages/svelte/course/src/course/services/__tests__/lo-tree.test.ts" shall not be measured
+      Then the test file "packages/jsr/create/test/scaffolder.test.ts" shall not be measured
       And the generated file "apps/reader/.svelte-kit/types/src/routes/proxy+layout.ts" shall not be measured
       And the declaration file "packages/jsr/model/src/types/ambient.d.ts" shall not be measured
 
