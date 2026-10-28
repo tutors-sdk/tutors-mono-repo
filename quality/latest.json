@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "eef3a27815e743c059e0fd74ed5a1efb149c7ff5",
+  "commit": "d3504043ef2d56a06dd96e376394758415987fec",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-27T09:53:32Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40476424430",
+  "generatedAt": "2026-10-28T02:25:35Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40615343922",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -13,13 +13,13 @@
     },
     {
       "name": "@tutors/community",
-      "mutationScore": 81.95,
+      "mutationScore": 85.76,
       "changed": true,
       "path": "packages/svelte/community"
     },
     {
       "name": "@tutors/connect",
-      "mutationScore": 87.5,
+      "mutationScore": 87.63,
       "changed": true,
       "path": "packages/svelte/connect"
     },
@@ -30,6 +30,12 @@
       "path": "packages/svelte/course"
     },
     {
+      "name": "@tutors/data-api",
+      "mutationScore": 90.48,
+      "changed": true,
+      "path": "packages/svelte/data-api"
+    },
+    {
       "name": "@tutors/i18n",
       "mutationScore": 72.73,
       "changed": true,
@@ -37,13 +43,13 @@
     },
     {
       "name": "@tutors/identity-sveltekit",
-      "mutationScore": 98.44,
+      "mutationScore": 98.48,
       "changed": true,
       "path": "packages/svelte/identity-sveltekit"
     },
     {
       "name": "@tutors/logger",
-      "mutationScore": 80.95,
+      "mutationScore": 79.4,
       "changed": true,
       "path": "packages/svelte/utils/logger"
     },
@@ -67,7 +73,7 @@
     },
     {
       "name": "@tutors/rbac",
-      "mutationScore": 65.4,
+      "mutationScore": 70.08,
       "changed": true,
       "path": "packages/svelte/utils/rbac"
     },
@@ -116,12 +122,12 @@
     {
       "name": "@tutors/tutors-model-lib",
       "mutationScore": 90.95,
-      "changed": false,
+      "changed": true,
       "path": "packages/jsr/model"
     },
     {
       "name": "@tutors/tutors-time-lib",
-      "mutationScore": 84.22,
+      "mutationScore": 89.75,
       "changed": true,
       "path": "packages/jsr/time"
     },
@@ -232,10 +238,10 @@
     "result": "failure",
     "jobs": {
       "contract-snapshots": "success",
-      "mutation": "failure",
+      "mutation": "success",
       "mutation-nightly": "failure",
       "suite-health": "success",
-      "e2e-stack-nightly": "success",
+      "e2e-stack-nightly": "failure",
       "timezone-matrix": "success",
       "lighthouse": "success",
       "load": "success",
