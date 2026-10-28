@@ -132,10 +132,11 @@ it.skip("flaky in webkit", () => { ... });
 
 `ci.yml` ends in one job, **`CI success`**, which needs `build-and-test`,
 `platform-conformance`, `container-smoke`, `container-smoke-fixtures`, `dependency-audit`,
-`bundle-budgets` and `generator-diff`. It treats a skipped or cancelled job
-as a failure. It is the one check to mark as required in branch protection, so adding a job
-to its `needs` extends the gate without touching repository settings. Whether it is currently
-marked required is a setting, not something this repository can show you.
+`bundle-budgets`, `generator-diff`, `cli-tests`, `ears-audit`, `ui-contract` and `mutation-pr`.
+It treats a skipped or cancelled job as a failure. It is the one required status check in the
+ruleset on `main` (with one approving review), so adding a job to its `needs` extends the gate
+without touching repository settings. [CONTRIBUTING.md](../../CONTRIBUTING.md#what-ci-checks-on-your-pull-request)
+lists each job with the command that runs it locally.
 
 ## What blocks a release
 

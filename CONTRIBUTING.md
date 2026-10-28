@@ -42,15 +42,18 @@ Before starting work on a significant change, please open an issue or comment on
 
 ### Prerequisites
 
-- Node.js >= 22.17.0 (the `engines` field in `package.json` is the source of truth)
-- pnpm >= 8.0.0
+- Node.js >= 22.17.0 (the `engines` field in `package.json` is the source of truth; `.nvmrc` pins the version CI uses)
+- pnpm 11.24.0, the version `packageManager` in `package.json` pins. `corepack enable` (bundled with Node 22) installs it; an older global pnpm may refuse to install the workspace
 - Git
+- `kubectl` or `kustomize` on your `PATH`. Three platform conformance tests in `pnpm test` render the overlays in `deploy/k8s` and fail without one ("Install kustomize or kubectl")
+- [Deno](https://deno.com/) at the version in `.dvmrc`, only if you work in `packages/jsr/` or want to generate a course
 
 ### Quick start
 
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
+corepack enable
 pnpm install
 cp .env.example .env
 pnpm dev
@@ -60,11 +63,30 @@ Open **http://localhost:5173/course/reference-course**. You should see a rendere
 
 What just happened:
 
-- `pnpm install` resolves the whole workspace. It is large (over a gigabyte of `node_modules`); the devcontainer in `.devcontainer/` avoids the local install.
+- `pnpm install` resolves the whole workspace. It is large (over 800 MB of `node_modules`); the devcontainer in `.devcontainer/` avoids the local install. A warning that it cannot create the `vitest-cucumber` bin is harmless: nothing calls that bin.
 - The copied `.env` sits at the repository root and every app reads it: each app's Vite config calls `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` there and the SvelteKit plugin's `env.dir` to match, so `$app/env/public` and `$app/env/private` resolve from the same file. It has `PUBLIC_ANON_MODE=TRUE`, which turns off authentication, presence and analytics. No Supabase project or GitHub OAuth app is needed. The other values in the file are placeholders and are ignored in anon mode.
 - If you set up Tutors before the root `.env` change, delete any leftover per-app files such as `apps/reader/.env`. No app reads them, so editing one has no effect.
-- `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order matters because `ui-components` compiles the stylesheet the apps import.
+- `pnpm dev` builds `ui-primitives`, `ui-navigators` and `ui-components` in that order and then starts the reader. The order follows their dependencies: the apps import `ui-primitives` and `ui-components` from their built `dist/`. Styles come from source (`@tutors/ui-components/styles.css`), so the `Unknown at rule: @source` warnings the `ui-components` build prints do not affect what you see.
 - `reference-course` is a published Tutors course. The reader fetches `https://reference-course.netlify.app/tutors.json` and renders it. Any published course id works in the same URL.
+
+### If the course does not load
+
+A **404 Page Not Found** on the reference course usually means the browser could not reach `reference-course.netlify.app`. Offline, a firewall and a mistyped id look the same to the reader (`packages/svelte/course/src/course/services/course.svelte.ts` maps all three to "not found"). Serve a course from your own machine instead; the reader treats `localhost:<port>` as a course host:
+
+```bash
+# a generated course that ships with the tests
+npx http-server tests/fixtures/tutors-json-history/5.3.0 -p 8080 --cors
+```
+
+Then open **http://localhost:5173/course/localhost:8080**. `--cors` matters: the reader fetches `tutors.json` from the browser.
+
+To see your own course, run the generator in a folder that has a `course.md` (it needs Deno) and serve the `json` folder it writes the same way:
+
+```bash
+cd path/to/my-course
+deno run -A /path/to/tutors-mono-repo/packages/jsr/tutors/main.ts
+npx http-server json -p 8080 --cors
+```
 
 If any step of this did not work as written, that is a bug in this document. Please open an issue or a PR; see [#245](https://github.com/tutors-sdk/tutors-mono-repo/issues/245).
 
@@ -79,6 +101,8 @@ pnpm --filter tutors-time dev        # http://localhost:5176
 ```
 
 Package names differ from directory names. The tables in [README.md](README.md#structure) list both.
+
+In anonymous mode the catalogue, live and time apps start but show no courses or students: their data comes from a backend that anon mode turns off. An empty page is expected, not a broken setup.
 
 ### Rebuilding after a UI package change
 
@@ -127,11 +151,45 @@ pnpm test                        # vitest: unit, BDD steps, component, contract 
 pnpm check                       # svelte-check on the reader, catalogue, live and time apps
 ```
 
-The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced.
+The type check is clean on `main` and CI blocks on it, so any error it reports is one your change introduced. The same holds for lint errors. `pnpm lint` also prints several hundred warnings that predate you; CI does not fail on warnings, but please do not add new ones.
 
 Formatting follows the root `.editorconfig` and `.prettierrc` (2 spaces, double quotes, 180 columns, the same settings `deno fmt` applies to the jsr packages listed in `deno.json`). Your editor picks them up; `pnpm format:check` lists files that drift and `pnpm format` rewrites them. Existing files have not been reformatted in bulk, so format only the files you touch.
 
-Everything else is owned by CI and the maintainers, and you do not need to run it locally: fuzz (`pnpm test:fuzz`), mutation (`pnpm test:mutation` and `pnpm test:mutation:nightly`, both nightly), the browser journeys against built images (`pnpm test:e2e:stack`), the reader's UI contract (`pnpm test:e2e:reader`) and the release suites. If one of them fails on your PR, a maintainer will help you read the result.
+Those three catch most problems, but CI runs more on every pull request; the next section lists it. The full nightly mutation run (`pnpm test:mutation:nightly`), the browser journeys against built images (`pnpm test:e2e:stack`) and the release suites run outside pull requests, and you never need them locally. If any check fails on your PR, a maintainer will help you read the result.
+
+### What CI checks on your pull request
+
+A pull request merges with one approving review and a green **CI success** check. CI success needs every job in `.github/workflows/ci.yml` to pass:
+
+| Job | What fails it | Run it locally |
+| --- | --- | --- |
+| Build & Test | build, API reports, type check, lint errors, knip, a failing test, coverage floors, fuzz | `pnpm build`, `pnpm api-report:check`, `pnpm check`, `pnpm lint`, `pnpm check:knip`, `pnpm exec vitest run --coverage && pnpm check:coverage-floors coverage/coverage-summary.json`, `pnpm test:fuzz` |
+| Platform conformance | a Kubernetes overlay that does not render or breaks policy | `pnpm check:k8s` (needs `kubectl` or `kustomize`) |
+| Container smoke, negative fixtures | an image that does not build or start as a non-root, read-only container | `pnpm check:container` (needs Docker or Podman; see [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md)) |
+| Dependency audit | a new advisory your dependency change introduces | `pnpm check:audit` |
+| Bundle budgets | an app bundle over its ceiling | `pnpm check:bundle` after a build |
+| Generator differential | a change in generated `tutors.json` that `tests/generator/claims.yaml` does not claim | `pnpm check:generator-diff` (needs Deno) |
+| CLI tests (Deno) | the course scaffolder's tests | `cd packages/jsr/create && deno test test/ --allow-all` |
+| EARS audit | a malformed Rule in `tests/bdd/features` | `pnpm test:ears:audit` |
+| UI contract | the reader's Playwright suite | `pnpm exec playwright install chromium && pnpm test:e2e:reader --project=chromium` |
+| Mutation of changed modules | a library module you changed scoring under its nightly mutation floor, or a new module with no floor | `pnpm test:mutation:pr` (a few minutes per module) |
+
+Three of these surprise people:
+
+- **Coverage floors work both ways.** `tests/suite-health/coverage-floors.json` holds a floor per scope. CI fails when coverage drops below a floor, and also when it sits 2 or more points above one (Rules 0111 and 0112). If your new tests raise coverage, raise the floor in the same PR.
+- **Baselines only shrink.** Files such as `tests/completeness/known-gaps.txt` list problems that predate a check. Fixing one (for example, adding missing Irish translations) fails CI until you delete its line. [TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md#ratchets-baselines-and-quarantine) lists every baseline.
+- **A new library module needs a mutation floor.** The mutation job fails a new module with no floor in `tests/mutation/nightly-mutation-floors.json`. [MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md#when-to-run) says how to measure one and add it with `--update` in the same PR.
+
+### New behaviour needs an EARS Rule
+
+Every requirement in Tutors is a `Rule:` in a feature file under `tests/bdd/features`, written in [EARS](guides/testing/EARS-METHODOLOGY.md) form with exactly one "shall", a `@rule-NNNN` id and an `@ears-*` tag, and bound to steps that exercise product code. A PR that adds or changes behaviour a student, lecturer or operator can observe adds or updates its Rule. Bug fixes, refactors and docs need none.
+
+Take an id with `pnpm test:ears:audit --next-id`. It only sees `main`, so before using it search the open pull requests for `@rule-` and take the next id none of them uses; otherwise two PRs collide. [EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md#adding-new-ears-tagged-tests) walks through writing one, and `pnpm ears:dashboard` lets you browse the existing Rules.
+
+### Pull requests from a fork
+
+- On your first PR, GitHub may hold the workflow runs until a maintainer approves them. Nothing is wrong if CI has not started.
+- The CHANGELOG hint job (below) can fix the PR title itself on a branch of this repository, but not on a fork. On a fork it fails and its log gives the exact title to use; edit the title and it re-runs.
 
 Useful while developing:
 
@@ -239,6 +297,8 @@ A [pull request template](.github/PULL_REQUEST_TEMPLATE.md) is filled in for you
 
 ## Project Structure
 
+The tables in [README.md](README.md#structure) list every package with its directory and package name. In outline:
+
 ```
 tutors-mono-repo/
 ├── apps/                    # Deployable applications (pnpm)
@@ -253,17 +313,25 @@ tutors-mono-repo/
 │   │   ├── gen/             # Course generation         → @tutors/tutors-gen-lib
 │   │   ├── tutors/          # JSON course generator     → @tutors/tutors
 │   │   ├── tutors-lite/     # Static HTML generator     → @tutors/tutors-lite
-│   │   └── create/          # Course scaffolder         → @tutors/tutors-create
+│   │   ├── create/          # Course scaffolder         → @tutors/tutors-create
+│   │   ├── types/           # Shared types              → @tutors/tutors-types
+│   │   ├── identity/        # Actor and session contracts → @tutors/identity
+│   │   └── realtime/        # Realtime port             → @tutors/realtime
 │   └── svelte/              # Svelte packages (pnpm)    → @tutors/<name>
+│       ├── app-config/      # Shared Vite and SvelteKit config
 │       ├── runes/           # Reactive state management
 │       ├── course/          # Course loading and Markdown
+│       ├── data-api/        # Typed data API for personal data
 │       ├── themes/          # Theme management
+│       ├── quiz/            # Quiz parsing and scoring
 │       ├── community/       # Community features
-│       ├── connect/         # Authentication
+│       ├── connect/         # Profiles, activity, sign-in/sign-out
+│       ├── identity-sveltekit/ # Better Auth adapter
+│       ├── realtime-supabase/  # Supabase Realtime adapter
 │       ├── ui-primitives/   # Base UI components
 │       ├── ui-navigators/   # Navigation components
 │       ├── ui-components/   # Domain UI components
-│       └── utils/           # logger, metrics, a11y, i18n, rbac, privacy, tour
+│       └── utils/           # logger, metrics, runtime, a11y, i18n, rbac, privacy, tour
 ├── docs/                    # Walkthrough, containers, privacy, data inventory
 ├── guides/                  # Testing, EARS, RBAC, release strategy
 └── tests/                   # Test suites
@@ -290,8 +358,7 @@ We recognise contributions at every level:
 
 ## Getting Help
 
-- **GitHub Issues** — For bug reports and feature requests
-- **GitHub Discussions** — For questions, ideas, and general conversation
+- **GitHub Issues** — For bug reports, feature requests and questions. A question is welcome as an issue; say it is a question in the title
 - **Documentation** — [tutors.dev](https://tutors.dev)
 
 We're a welcoming community and happy to help new contributors get started. Don't hesitate to ask questions!
