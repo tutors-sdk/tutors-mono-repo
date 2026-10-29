@@ -61,8 +61,7 @@ claims:
   # read with the course and the viewer's role, two log fields 17.0.0 never wrote.
   - artefact: logs
     scope: "reader-auth/{courseId,role}"
-    rule: "0067"
-    reason: "Rule 0067: the reader serves the time dashboard's data and logs each read (\"Time data read\", courseId, role) (PR #320)"
+    reason: "CHANGELOG Unreleased (Time): the reader logs each time data read with the course and the viewer's role (logs) (PR #320)"
   # The Node base image is pinned by digest (#541). 17.0.0 was built from the floating node:22-bookworm-slim tag
   # before Docker Hub moved it; the pin is node 22.23.4, so every image has another lowest layer and another node.
   - artefact: image-manifest
