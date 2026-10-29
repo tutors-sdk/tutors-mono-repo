@@ -196,7 +196,7 @@ release candidates in Chromium, Firefox and WebKit. Run one Rule's tests with
 Issue [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) moves EARS from a tag on
 a scenario to a `Rule:` block. A `Rule:` title is one EARS requirement, with exactly one
 "shall". The scenarios beneath it are the executable proof. The runner does not change:
-[`vitest-cucumber`](https://vitest-cucumber.miceli.click/) 7.0.0 binds `Rule:` blocks itself
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/) (8.0.0 in the lockfile) binds `Rule:` blocks itself
 (`Rule("<title>", ({ RuleScenario, RuleScenarioOutline }) => ...)`), applies the feature
 `Background` to each Rule's scenarios, and fails the run when a Rule or a step is unbound or a
 Rule has no scenario. `pnpm test:bdd` stays the way features run.
@@ -248,7 +248,7 @@ finds it.
 
 Rules for ids:
 
-1. Allocate the next id with `pnpm test:ears:audit --next-id`. It prints one more than the highest id in the features and the retired list.
+1. Allocate the next id with `pnpm test:ears:audit --next-id`. It prints one more than the highest id in the features and the retired list. It cannot see ids in open pull requests, so search them for `@rule-` before you use it and skip any id they already take.
 2. Changing a Rule's wording keeps its id. A different requirement gets a new id, and the old id is retired.
 3. Deleting a Rule adds its id to the retired list in the same commit.
 4. The audit fails on a Rule with no id, a malformed id, a duplicate, or a retired id in use.
