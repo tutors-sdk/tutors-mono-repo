@@ -1,5 +1,5 @@
 import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
-import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";
+import { materialiseCourse, type LoShape } from "../../support/arbitraries/course-tree.ts";
 import { labShape, shape } from "./course.ts";
 
 /**
@@ -16,12 +16,15 @@ export interface CourseHost {
   requested: string[];
   /** Serve `response` for `https://<courseId>.netlify.app/tutors.json`. */
   answer(courseId: string, response: Response): void;
+  /** Serve `response` for any URL that has no answer of its own, as a host serving the course everywhere would. */
+  answerEverywhere(response: Response): void;
   goOffline(): void;
   goOnline(): void;
 }
 
 export function courseHost(): CourseHost {
   const answers = new Map<string, Response>();
+  let fallback: Response | undefined;
   let offline = false;
   const requested: string[] = [];
   return {
@@ -31,10 +34,13 @@ export function courseHost(): CourseHost {
       requested.push(url);
       // What browsers and Node both throw when a request cannot leave the machine.
       if (offline) throw new TypeError("Failed to fetch");
-      return answers.get(url)?.clone() ?? new Response("Not Found", { status: 404 });
+      return (answers.get(url) ?? fallback)?.clone() ?? new Response("Not Found", { status: 404 });
     }) as typeof fetch,
     answer(courseId, response) {
       answers.set(`https://${courseId}.netlify.app/tutors.json`, response);
+    },
+    answerEverywhere(response) {
+      fallback = response;
     },
     goOffline() {
       offline = true;
@@ -45,9 +51,11 @@ export function courseHost(): CourseHost {
   };
 }
 
-/** The `tutors.json` text the generator would publish for a small course. */
-export function publishedCourseJson(title: string): string {
-  const children = [shape("topic", "Topic 1", [labShape("Lab 1.1", [{ title: "Setup", contentMd: "# Setup" }]), shape("note", "Note 1.1")])];
+/** The `tutors.json` text the generator would publish for a course: by default a small one. */
+export function publishedCourseJson(
+  title: string,
+  children: LoShape[] = [shape("topic", "Topic 1", [labShape("Lab 1.1", [{ title: "Setup", contentMd: "# Setup" }]), shape("note", "Note 1.1")])]
+): string {
   return JSON.stringify(materialiseCourse({ title, summary: `${title} summary`, contentMd: `# ${title}`, children }));
 }
 

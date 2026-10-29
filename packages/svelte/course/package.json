@@ -20,6 +20,7 @@
     "shiki": "^4.5.0"
   },
   "peerDependencies": {
+    "@sveltejs/kit": "^3.0.1",
     "svelte": "^5.0.0"
   }
 }

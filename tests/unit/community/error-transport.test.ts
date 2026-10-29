@@ -45,18 +45,16 @@ describe("error transport: flush on unload", () => {
     return fetch;
   }
 
-  it("beacons to the table with only the key in the query string", () => {
+  // sendBeacon always sends credentials, and the gateway's `Access-Control-Allow-Origin: *` is refused for a
+  // credentialed request, so every beacon was blocked on CORS (release harness forecast, 28 Oct 2026).
+  it("never beacons, even where the browser offers sendBeacon", () => {
     const sendBeacon = vi.fn(() => true);
-    unloadWith({ sendBeacon });
-    expect(sendBeacon).toHaveBeenCalledOnce();
-    const [url] = sendBeacon.mock.calls[0] as unknown as [string];
-    expect(url).toBe(
-      "https://project.supabase.co/rest/v1/app_errors?apikey=anon-key",
-    );
-    expect(new URL(url).searchParams.has("Prefer")).toBe(false);
+    const fetch = unloadWith({ sendBeacon });
+    expect(sendBeacon).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
-  it("falls back to a keepalive fetch that asks for no body in the header PostgREST reads", () => {
+  it("sends a keepalive fetch without credentials, with only the key in the query string and no body asked for", () => {
     const fetch = unloadWith({});
     expect(fetch).toHaveBeenCalledOnce();
     const [url, init] = fetch.mock.calls[0] as unknown as [
@@ -65,9 +63,18 @@ describe("error transport: flush on unload", () => {
         headers: Record<string, string>;
       },
     ];
+    expect(url).toBe(
+      "https://project.supabase.co/rest/v1/app_errors?apikey=anon-key",
+    );
     expect(new URL(url).searchParams.has("Prefer")).toBe(false);
+    expect(init.method).toBe("POST");
     expect(init.headers.Prefer).toBe("return=minimal");
+    expect(init.headers["Content-Type"]).toBe("application/json");
     expect(init.keepalive).toBe(true);
+    expect(init.credentials).toBe("omit");
+    expect(JSON.parse(String(init.body))).toEqual([
+      expect.objectContaining({ app: "reader", level: "error", message: "boom" }),
+    ]);
   });
 });
 

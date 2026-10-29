@@ -1,3 +1,9 @@
+/**
+ * Logger transport that copies browser warn and error lines into the Supabase app_errors table.
+ * Registered by each app's hooks.client.ts. Lines are batched (sent after 5 seconds or at 20 lines) and
+ * flushed on page unload with a keepalive fetch, sent without credentials. Does nothing when Supabase is not
+ * configured, and insert failures are ignored.
+ */
 import type { LogEntry } from "@tutors/logger";
 import { supabase } from "./supabase-client.ts";
 import * as env from "$app/env/public";
@@ -52,20 +58,11 @@ function flushOnUnload(appName: string) {
   const payload = JSON.stringify(rows);
   // Only the key goes in the query string: the gateway takes it from there, but PostgREST reads any other
   // parameter as a column filter, so `?Prefer=...` is rejected with 400 (PGRST100) and the rows are lost.
-  // sendBeacon cannot send a Prefer header, and an insert returns no body without one.
   const url = `${env.PUBLIC_SUPABASE_URL}/rest/v1/app_errors?apikey=${env.PUBLIC_SUPABASE_ANON_KEY}`;
 
-  // sendBeacon survives page unload where async fetch does not
-  const nav = navigator as Navigator & { sendBeacon?: (url: string, data: Blob) => boolean };
-  if (nav.sendBeacon) {
-    nav.sendBeacon(
-      url,
-      new Blob([payload], { type: "application/json" })
-    );
-    return;
-  }
-
-  // Fallback: keepalive fetch
+  // A keepalive fetch outlives the page like sendBeacon does, but sendBeacon always sends credentials, and the
+  // gateway answers `Access-Control-Allow-Origin: *`, which a browser refuses for a credentialed request: every
+  // beacon was blocked on CORS. Without credentials the wildcard is accepted.
   fetch(url, {
     method: "POST",
     headers: {
@@ -73,7 +70,8 @@ function flushOnUnload(appName: string) {
       Prefer: "return=minimal"
     },
     body: payload,
-    keepalive: true
+    keepalive: true,
+    credentials: "omit"
   }).catch(() => {
     // best-effort flush on unload; nothing more we can do
   });

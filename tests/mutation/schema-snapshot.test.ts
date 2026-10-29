@@ -16,11 +16,9 @@ import {
   RealtimeChannelSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
-  WhiteboardSceneInitSchema,
   WhiteboardSceneUpdateSchema,
-  WhiteboardSceneSnapshotSchema,
   WhiteboardCursorUpdateSchema,
-  WhiteboardRoomSchema,
+  WhiteboardPresenceSchema,
   WhiteboardInitEditorSchema,
 } from "../contract/support/schemas";
 
@@ -36,11 +34,9 @@ describe("Schema Snapshot Regression", () => {
     { name: "RealtimeChannel", schema: RealtimeChannelSchema },
     { name: "IncrementCalendarParams", schema: IncrementCalendarParamsSchema },
     { name: "GetCountLearningRecordsParams", schema: GetCountLearningRecordsParamsSchema },
-    { name: "WhiteboardSceneInit", schema: WhiteboardSceneInitSchema },
     { name: "WhiteboardSceneUpdate", schema: WhiteboardSceneUpdateSchema },
-    { name: "WhiteboardSceneSnapshot", schema: WhiteboardSceneSnapshotSchema },
     { name: "WhiteboardCursorUpdate", schema: WhiteboardCursorUpdateSchema },
-    { name: "WhiteboardRoom", schema: WhiteboardRoomSchema },
+    { name: "WhiteboardPresence", schema: WhiteboardPresenceSchema },
     { name: "WhiteboardInitEditor", schema: WhiteboardInitEditorSchema },
   ];
 

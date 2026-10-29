@@ -74,8 +74,6 @@ function getDateFromLearningRecord(record: LearningRecord): string {
 /** Return distinct sorted dates from learning records (date_last_accessed). Records without date use NO_DATE_KEY. */
 export function getDistinctSortedDatesFromRecords(records: LearningRecord[]): string[] {
   const validRecords = records.filter((r) => r.lo_id != null);
-  if (!validRecords.length) return [];
-
   const dates = Array.from(new Set(validRecords.map(getDateFromLearningRecord)));
   return dates.sort((a, b) => (a === LAB_NO_DATE_KEY ? 1 : b === LAB_NO_DATE_KEY ? -1 : a.localeCompare(b)));
 }
