@@ -353,6 +353,7 @@
 - Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067) (network, dom, screenshot) (PR #320)
 
   Deploy Time with `PUBLIC_READER_URL` set to the reader people sign in at; the reader holds `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`.
+- The reporting period an instructor picks is part of the address (`?start=YYYY-MM-DD&end=YYYY-MM-DD`, both inclusive, either optional), so every total covers those days and no others. Sidebar links, student drill-downs, the breadcrumb, the raw tables and the `/<course>`, `/calendar` and `/lab` redirects all keep it, and so do reload and back/forward. The header names the period. A date that is not a calendar date, or a start after the end, is a 400 page saying so rather than a silently wider report. (#526, Rules 0655, 0656) (dom, network) (PR #534)
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes

@@ -1,7 +1,7 @@
 {
   "$comment": "Coverage floors (Rules 0111, 0112). Each is the measured percentage rounded down. vitest.config.ts enforces them; pnpm check:coverage-floors also fails once coverage rises staleMargin points above one, so raise the floor in that commit (pnpm check:coverage-floors --update). Keys under packages are '<dir>/**' globs.",
   "staleMargin": 2,
-  "global": { "statements": 80, "branches": 73, "functions": 81, "lines": 82 },
+  "global": { "statements": 80, "branches": 75, "functions": 81, "lines": 82 },
   "packages": {
     "packages/jsr/model/src/**": { "statements": 98, "branches": 91, "functions": 100, "lines": 99 },
     "packages/jsr/time/src/**": { "statements": 97, "branches": 87, "functions": 98, "lines": 98 },
