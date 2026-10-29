@@ -104,6 +104,13 @@ jobs:
       matrix:
         app: [reader, catalogue, live, time]
     steps:
+      # Production hardening 1.3: record every outbound call the image build
+      # makes (audit only). Once a few runs have shown the allowlist, this
+      # moves to egress-policy: block.
+      - name: Harden runner (audit)
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -161,6 +168,13 @@ jobs:
       matrix:
         app: [reader, catalogue, live, time]
     steps:
+      # Production hardening 1.3: record every outbound call the image build
+      # makes (audit only). Once a few runs have shown the allowlist, this
+      # moves to egress-policy: block.
+      - name: Harden runner (audit)
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
       # The git ref being built: the event's own ref, or on a backfill the
       # release tag named in the input, which must already exist.
       - name: Resolve the ref to build
@@ -216,7 +230,7 @@ jobs:
         if: steps.what.outputs.final == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           package-manager-cache: false
 
       - name: Install cosign (promotion checks)

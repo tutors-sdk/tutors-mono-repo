@@ -5,6 +5,7 @@
 
 // Service exports
 export { catalogueService } from "./services/catalogue.ts";
+export { arrangeCatalogue, isCatalogueSort, matchesCatalogueSearch, CATALOGUE_SORTS, type CatalogueSort, type CatalogueCourse } from "./services/catalogue-order.ts";
 export { liveService } from "./services/live.svelte.ts";
 export { presenceService } from "./services/presence.svelte.ts";
 export { analyticsService } from "./services/analytics.svelte.ts";

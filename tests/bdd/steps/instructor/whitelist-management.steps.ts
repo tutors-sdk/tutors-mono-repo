@@ -8,6 +8,7 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 
 import { goto } from "$app/navigation";
 import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
@@ -19,7 +20,7 @@ const feature = await loadFeature("tests/bdd/features/instructor/whitelist-manag
 
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
-describeFeature(feature, ({ Scenario, Rule }) => {
+describeFeature(feature, ({ Rule }) => {
   let course: Course;
 
   // `auth: 1` in properties.yaml is what makes the reader demand a sign-in; the whitelist comes from enrollment.yaml.
@@ -41,42 +42,50 @@ describeFeature(feature, ({ Scenario, Rule }) => {
     course = publishedCourse(courseId, 1, { auth: 1, private: 1 }, { whitelist: list(whitelist), educators: list(educators), students: [] });
   };
 
-  Scenario("Private course requires authentication", ({ Given, And, When, Then }) => {
-    Given("the course {string} requires authentication", (_ctx, courseId: string) => {
-      freshBrowser();
-      course = publishedCourse(courseId, 1, { auth: 1 });
-    });
-    And("nobody is signed in", () => {});
-    When("the course is opened", openCourse);
-    Then("the system shall require authentication before displaying content, remembering {string} for after sign-in", (_ctx, courseId: string) => {
-      expect(localStorage.loginCourse).toBe(courseId);
-    });
-    And("unauthenticated users shall be redirected to the sign-in page {string}", (_ctx, path: string) => {
-      expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
-    });
-  });
-
-  Scenario("Whitelisted student can access private course", ({ Given, And, When, Then }) => {
-    Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
-    And("{string} is signed in", signedIn);
-    When("the course is opened", openCourse);
-    Then("the system shall grant access to the course content", granted);
-  });
-
-  Scenario("Non-whitelisted student denied access", ({ Given, And, When, Then }) => {
-    Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
-    And("{string} is signed in", signedIn);
-    When("the course is opened", openCourse);
-    Then("the system shall deny access to the course content by sending the student to {string}", (_ctx, path: string) => {
-      expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
+  Rule("If nobody is signed in when a course that requires authentication is opened, then the reader shall send the visitor to sign in and remember the course for afterwards.", ({ RuleScenario }) => {
+    RuleScenario("Private course requires authentication", ({ Given, And, When, Then }) => {
+      Given("the course {string} requires authentication", (_ctx, courseId: string) => {
+        freshBrowser();
+        course = publishedCourse(courseId, 1, { auth: 1 });
+      });
+      And("nobody is signed in", () => {});
+      When("the course is opened", openCourse);
+      Then("the system shall require authentication before displaying content, remembering {string} for after sign-in", (_ctx, courseId: string) => {
+        expect(localStorage.loginCourse).toBe(courseId);
+      });
+      And("unauthenticated users shall be redirected to the sign-in page {string}", (_ctx, path: string) => {
+        expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
+      });
     });
   });
 
-  Scenario("Instructor always has access to their courses", ({ Given, And, When, Then }) => {
-    Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
-    And("{string} is signed in", signedIn);
-    When("the course is opened", openCourse);
-    Then("the system shall grant access regardless of whitelist status", granted);
+  Rule("When a signed-in student on a course's whitelist opens the course, the reader shall show its content.", ({ RuleScenario }) => {
+    RuleScenario("Whitelisted student can access private course", ({ Given, And, When, Then }) => {
+      Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+      And("{string} is signed in", signedIn);
+      When("the course is opened", openCourse);
+      Then("the system shall grant access to the course content", granted);
+    });
+  });
+
+  Rule("If a signed-in student who is not on a course's whitelist opens the course, then the reader shall send them to the home page.", ({ RuleScenario }) => {
+    RuleScenario("Non-whitelisted student denied access", ({ Given, And, When, Then }) => {
+      Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+      And("{string} is signed in", signedIn);
+      When("the course is opened", openCourse);
+      Then("the system shall deny access to the course content by sending the student to {string}", (_ctx, path: string) => {
+        expect(vi.mocked(goto).mock.calls).toEqual([[path]]);
+      });
+    });
+  });
+
+  Rule("When an educator of a course opens it, the reader shall show its content whether or not the educator is on the whitelist.", ({ RuleScenario }) => {
+    RuleScenario("Instructor always has access to their courses", ({ Given, And, When, Then }) => {
+      Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+      And("{string} is signed in", signedIn);
+      When("the course is opened", openCourse);
+      Then("the system shall grant access regardless of whitelist status", granted);
+    });
   });
 
   Rule(

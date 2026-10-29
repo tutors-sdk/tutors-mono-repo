@@ -4,6 +4,7 @@
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import SecondaryNavigator from "@tutors/ui-navigators/SecondaryNavigator.svelte";
   import StudentAvatar from "#lib/components/StudentAvatar.svelte";
+  import { describeDateRange, withDateRange } from "#lib/dateRange.ts";
 
   let { children } = $props();
 
@@ -23,10 +24,11 @@
   const sentiment = $derived((page.data.sentiment as string | null) || "neutral");
   const viewType = $derived(page.data.viewType as MessageKey | null);
   const summary = $derived(viewType ? summaries[viewType] : undefined);
+  const period = $derived(describeDateRange(page.url.search));
 </script>
 
 {#if student}
-  <SecondaryNavigator home={{ title: t("shell.classActivity"), route: `/${courseId}/medians` }} lo={{ breadCrumbs: [{ title: student, route: page.url.pathname }] }} />
+  <SecondaryNavigator home={{ title: t("shell.classActivity"), route: withDateRange(`/${courseId}/medians`, page.url.search) }} lo={{ breadCrumbs: [{ title: student, route: page.url.pathname }] }} />
 {/if}
 <div class="ui-page">
   {#if student}
@@ -35,6 +37,7 @@
         <p class="ui-eyebrow">{t("classTime.student")}</p>
         <h1 class="ui-title">{student}</h1>
         <p class="ui-muted">{t("classTime.studentSummary")}</p>
+        {#if period}<p class="ui-muted">{t("classTime.period")}: {period}</p>{/if}
       </div>
       <div class="time-header-art">
         <Icon type={sentiment} tip={`${t("content.sentimentLabel")}: ${sentiment}`} height="40" />
@@ -47,6 +50,7 @@
         <p class="ui-eyebrow">{t("shell.classActivity")}</p>
         <h1 class="ui-title">{t(viewType)}</h1>
         {#if summary}<p class="ui-muted">{t(summary)}</p>{/if}
+        {#if period}<p class="ui-muted">{t("classTime.period")}: {period}</p>{/if}
       </div>
     </header>
   {/if}

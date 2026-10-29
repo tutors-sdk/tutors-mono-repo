@@ -40,6 +40,8 @@ x-signed-in-env: &signed-in-env
   PUBLIC_SUPABASE_ANON_KEY: e2e-anon-key
   # The reader writes content locks and Moodle rows with the service key (Rules 0630, 0633); the stub takes any key.
   PRIVATE_SUPABASE_SERVICE_ROLE_KEY: e2e-service-key
+  PUBLIC_READER_URL: http://localhost:3100
+  PRIVATE_API_ALLOWED_ORIGINS: http://localhost:3104
   # Moodle is the persistence stub's web service (Rule 0640); the token is not checked.
   MOODLE_WS_URL: http://persistence.e2e.test:8090/moodle/webservice/rest/server.php
   MOODLE_WS_TOKEN: e2e-moodle-token
@@ -57,9 +59,10 @@ x-signed-in-hosts: &signed-in-hosts
   - "persistence.e2e.test:172.30.0.11"
   # The enrollment export reads the course from Netlify by name; the identity stub answers it (Rule 0621).
   - "harness-rules.netlify.app:172.30.0.10"
+  - "harness-public.netlify.app:172.30.0.10"
 
 x-stub: &stub
-  image: node:22-bookworm-slim
+  image: docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
   init: true
   read_only: true
   user: "1001:0"
@@ -107,7 +110,7 @@ services:
       - "${READER_UNCONFIGURED_PORT:-3005}:3005"
 
   course: &course
-    image: node:22-bookworm-slim
+    image: docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
     init: true
     read_only: true
     user: "1001:0"
@@ -219,6 +222,7 @@ services:
     environment:
       PORT: "443"
       COURSE_ORIGIN: http://course-signed-in:8080
+      PUBLIC_COURSE_ORIGIN: http://course:8080
     sysctls:
       net.ipv4.ip_unprivileged_port_start: 0
     volumes:

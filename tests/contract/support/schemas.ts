@@ -70,7 +70,7 @@ export const ConnectLatestSchema = z.object({
   timestamp: z.string(),
 });
 
-export const LoRecordUserSchema = z.object({
+const LoRecordUserSchema = z.object({
   fullName: z.string(),
   avatar: z.string(),
   id: z.string(),
@@ -107,12 +107,12 @@ export const RealtimeChannelSchema = z.object({
 // payloads (the broker carries the event name). Their versions are in tests/contract/messages/contracts.ts (Rules
 // 0623-0625), which drives the editor's own script to prove it sends and accepts these shapes.
 
-export const WhiteboardPointerSchema = z.object({
+const WhiteboardPointerSchema = z.object({
   x: z.number(),
   y: z.number(),
 });
 
-export const WhiteboardElementSchema = z.object({
+const WhiteboardElementSchema = z.object({
   id: z.string(),
   version: z.number(),
   type: z.string(),
@@ -160,17 +160,3 @@ export const WhiteboardSetThemeSchema = z.object({
   type: z.literal("set-theme"),
   theme: z.enum(["light", "dark"]),
 });
-
-// ---------------------------------------------------------------------------
-// Type exports
-// ---------------------------------------------------------------------------
-
-export type LearningRecord = z.infer<typeof LearningRecordSchema>;
-export type CalendarEntry = z.infer<typeof CalendarEntrySchema>;
-export type ConnectUser = z.infer<typeof ConnectUserSchema>;
-export type ConnectProfile = z.infer<typeof ConnectProfileSchema>;
-export type ConnectCourse = z.infer<typeof ConnectCourseSchema>;
-export type ConnectLatest = z.infer<typeof ConnectLatestSchema>;
-export type LoRecord = z.infer<typeof LoRecordSchema>;
-export type WhiteboardSceneUpdate = z.infer<typeof WhiteboardSceneUpdateSchema>;
-export type WhiteboardCursorUpdate = z.infer<typeof WhiteboardCursorUpdateSchema>;
