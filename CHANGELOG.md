@@ -28,6 +28,7 @@
 - Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #320)
 - Database: the contract step that revokes anonymous access to personal student rows, assignment rows, content-lock writes and student-counter RPCs is written (`supabase/contracts/revoke_anon_student_data.sql`) but ships in the next release, once no pod of this one's predecessors is left. `pnpm check:migrations` now refuses a contract step in the same release as its expand (`-- contract-for:` header) (PR #320)
 - Course reader: a tab keeps one activity heartbeat however often the course pages open, and leaving the course pages stops it. Each entry to the course pages used to start another 30-second heartbeat that leaving never stopped, so activity time was over-counted and every extra heartbeat made its own database write (Rules 0649, 0650) (network, persistence) (PR #530)
+- Course addresses are normalized once: a bare id, a Netlify host name and a full `https://` URL all fetch the same `tutors.json` exactly once and share one cache entry. A full URL used to be requested as `https://https://…` and fail. Each course is also fetched and linked over the protocol of its own address, so opening a localhost course no longer leaves later hosted courses loading over http (#528, Rules 0659, 0660) (network, dom) (PR #533)
 
 #### Security
 
