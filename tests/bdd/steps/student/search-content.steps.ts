@@ -51,6 +51,35 @@ describeFeature(feature, ({ Background, Rule }) => {
         expect(matchingLines()).toEqual(list(expected));
       });
     });
+
+    RuleScenario("Search shows the matching line of single-line content", ({ Given, When, Then, And }) => {
+      Given("the course has a note whose whole content is the single line {string}", (_ctx, line: string) => {
+        los.push(shape("note", "Reference", [], { contentMd: line }));
+      });
+      When("a student searches for {string}", search);
+      Then("the reader shall return {number} result", (_ctx, count: number) => {
+        expect(results).toHaveLength(count);
+      });
+      And("the result shall show the matching line {string}", (_ctx, line: string) => {
+        expect(matchingLines()).toEqual([line]);
+      });
+    });
+
+    RuleScenario("Search shows the matching line for every occurrence in one learning object", ({ Given, When, Then, And }) => {
+      let lines: string[];
+      Given("a lab step whose content mentions {string} on {number} separate lines", (_ctx, term: string, count: number) => {
+        lines = Array.from({ length: count }, (_, i) => `Line ${i + 1} declares a ${term} here.`);
+        los.push(labShape("Lab 1", [{ title: "Functions", contentMd: ["# Functions", "", ...lines.flatMap((line) => [line, ""]), "Done."].join("\n") }]));
+      });
+      When("a student searches for {string}", search);
+      Then("the reader shall return {number} results", (_ctx, count: number) => {
+        expect(results).toHaveLength(count);
+      });
+      And("each result shall show only the line on which its match occurs", () => {
+        expect(matchingLines()).toEqual(lines);
+        for (const result of results) expect(result.fenced).toBe(false);
+      });
+    });
   });
 
   Rule("When a student searches for text in a fenced code block, the reader shall mark the result as fenced code and give its language.", ({ RuleScenario }) => {

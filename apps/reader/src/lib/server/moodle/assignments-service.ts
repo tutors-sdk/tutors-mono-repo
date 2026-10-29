@@ -2,13 +2,12 @@
 import {
   getCourseContents,
   getAssignmentSubmissions,
-  type MoodleAssignSubmission,
   type MoodleAssignSubmissionsResponse,
   type MoodleModule,
   type CourseContentsOptions
 } from "#lib/server/moodle/moodle-client.ts";
 
-export type { MoodleAssignSubmission, MoodleAssignSubmissionsResponse, MoodleModule };
+export type { MoodleAssignSubmissionsResponse, MoodleModule };
 
 export class AssignmentsService {
   async fetchAssignments(moodleCourseId: number, moodleSectionId?: number): Promise<MoodleModule[]> {

@@ -169,6 +169,7 @@ const ga = {
   // Auth
   "auth.signIn": "Sínigh Isteach le Tutors",
   "auth.signInWithGithub": "Sínigh isteach le GitHub",
+  "auth.signInFailed": "Níor críochnaíodh síniú isteach le GitHub. Bain triail eile as i gceann cúpla nóiméad.",
   "auth.terms": `Tá tú ar tí bheith fíordheimhnithe trí do chuid dintiúirí Github chuig Tutors. **Ní gá duit logáil isteach le haghaidh an chuid is mó de na cúrsaí, mar sin más fearr leat, is féidir leat dul ar ais chuig leathanach an chúrsa agus dul ar aghaidh tríd an gcúrsa mar aon láithreán gréasáin poiblí.**
 
 Má shíníonn tú isteach, beidh cuntas Github uait ar dtús. Trí logáil isteach, beidh deais áisiúil simplí ar fáil ina mbeidh naisc thapa chuig na cúrsaí Tutors uile a bhfuil rochtain agat orthu le déanaí.
@@ -336,10 +337,21 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "tour.card.whiteboard.description": "Oscail clár líníochta don chuid seo den chúrsa chun léaráidí a fheiceáil agus smaointe a sceitseáil.",
   "lecturer.locks.showToStudents": "Taispeáin ábhar faoi ghlas do mhic léinn",
   "lecturer.locks.showToStudentsHelp": "Feiceann mic léinn míreanna faoi ghlas liathaithe agus ní féidir leo iad a oscailt. Nuair atá sé múchta, bíonn siad i bhfolach ó mhic léinn, ón gcrann cúrsa agus ón leagan LLM.",
-  "catalogue.summary": "Cúrsaí a foilsíodh le Tutors, na cinn is mó cuairteanna ar dtús.",
+  "catalogue.summary": "Cúrsaí a foilsíodh le Tutors.",
   "catalogue.modules": "modúil",
   "catalogue.students": "mic léinn",
-  "catalogue.mostVisited": "Na cúrsaí is mó cuairteanna",
+  "catalogue.sort.label": "Sórtáil de réir",
+  "catalogue.sort.visits": "Is mó cuairteanna",
+  "catalogue.sort.visits.heading": "Na cúrsaí is mó cuairteanna",
+  "catalogue.sort.recent": "Cuairt is déanaí",
+  "catalogue.sort.recent.heading": "Cúrsaí ar tugadh cuairt orthu le déanaí",
+  "catalogue.sort.title": "Teideal (A–Z)",
+  "catalogue.sort.title.heading": "Cúrsaí de réir teidil",
+  "catalogue.sort.credits": "Creidiúintí (A–Z)",
+  "catalogue.sort.credits.heading": "Cúrsaí de réir creidiúintí",
+  "catalogue.search.label": "Cuardaigh cúrsaí",
+  "catalogue.search.placeholder": "Teideal nó creidiúintí",
+  "catalogue.search.none": "Níl aon chúrsa ag teacht le do chuardach.",
   "catalogue.empty": "Níl aon chúrsaí le taispeáint.",
   "catalogue.visits": "cuairteanna",
   "live.summary": "Gníomhaíocht chúrsa arna roinnt ag foghlaimeoirí ceangailte.",

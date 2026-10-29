@@ -3,7 +3,7 @@ import { Window } from "happy-dom";
 import type { Course, Notebook } from "@tutors/tutors-model-lib";
 import { currentLo } from "../../../packages/svelte/runes/src/index.svelte.ts";
 import { addTransport, removeTransport, type LogEntry } from "../../../packages/svelte/utils/logger/src/index.ts";
-import { CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseUnreachableHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { COURSE_FETCH_TIMEOUT_MS, CourseNotFoundError, courseService, setCourseNotFoundHandler, setCourseTimedOutHandler, setCourseUnreachableHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
 vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
@@ -117,6 +117,64 @@ describe("courseService: a course that does not exist", () => {
     const failure = await failureOf(courseService.readCourse("broken-course", answering(500)));
     expect(failure).not.toBeInstanceOf(CourseNotFoundError);
     expect((failure as Error).message).toBe("Fetch failed with status 500");
+  });
+});
+
+/** What withTimeout's AbortSignal.timeout gives a fetch, or a body read, that ran out of time. */
+const timedOut = () => new DOMException("The operation timed out.", "TimeoutError");
+const neverAnswers = (async () => {
+  throw timedOut();
+}) as unknown as typeof fetch;
+const stallsOnBody = (async () => ({ ok: true, status: 200, text: async () => Promise.reject(timedOut()) })) as unknown as typeof fetch;
+
+describe("courseService: a course host that never answers (Rule 0614)", () => {
+  afterEach(() => {
+    setCourseTimedOutHandler((cause) => {
+      throw cause;
+    });
+  });
+
+  it("gives the course host fifteen seconds", () => {
+    expect(COURSE_FETCH_TIMEOUT_MS).toBe(15_000);
+  });
+
+  it("lets the TimeoutError through when no app handler is set", async () => {
+    const failure = await failureOf(courseService.readCourse("stalled-course", neverAnswers));
+    expect(failure).toBeInstanceOf(DOMException);
+    expect((failure as DOMException).name).toBe("TimeoutError");
+    expect(courseService.courses.has("stalled-course")).toBe(false);
+  });
+
+  it("hands a timed-out request to the app's handler", async () => {
+    const appError = { status: 504, body: { message: "from the app" } };
+    const handler = vi.fn((): never => {
+      throw appError;
+    });
+    setCourseTimedOutHandler(handler);
+
+    expect(await failureOf(courseService.readCourse("stalled-course", neverAnswers))).toBe(appError);
+    expect(handler).toHaveBeenCalledWith(expect.objectContaining({ name: "TimeoutError" }));
+  });
+
+  it("hands a body that stalls after the headers to the same handler", async () => {
+    const appError = { status: 504, body: { message: "from the app" } };
+    const handler = vi.fn((): never => {
+      throw appError;
+    });
+    setCourseTimedOutHandler(handler);
+
+    expect(await failureOf(courseService.readCourse("slow-body-course", stallsOnBody))).toBe(appError);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat an unreachable host as a timeout", async () => {
+    const handler = vi.fn((): never => {
+      throw new Error("not a timeout");
+    });
+    setCourseTimedOutHandler(handler);
+
+    expect(await failureOf(courseService.readCourse("offline-course", unreachable))).toBeInstanceOf(TypeError);
+    expect(handler).not.toHaveBeenCalled();
   });
 });
 

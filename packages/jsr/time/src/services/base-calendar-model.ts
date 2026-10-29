@@ -16,7 +16,7 @@ import {
 export type { CalendarTable, CalendarMedianTable } from "../types/index.ts";
 
 /**
- * Calendar data prepared for CalendarGrid and CalendarMedianGrid.
+ * Calendar data prepared for CalendarGrid.
  * Create an instance from raw entries and pass it to GridCalendarModel for grid display.
  */
 export class BaseCalendarModel implements CalendarModel {

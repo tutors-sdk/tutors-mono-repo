@@ -102,7 +102,9 @@
       }, []);
 
       useEffect(() => {
-        if (!config.supabaseUrl || !config.supabaseAnonKey) return;
+        if (!config.supabaseUrl || !config.supabaseAnonKey) {
+          return () => clearTimeout(debounceTimerRef.current);
+        }
         const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, { realtime: REALTIME_OPTIONS });
         const myColor = CURSOR_COLORS[hashCode(config.user.id) % CURSOR_COLORS.length];
         const channelName = `wb:${config.roomId}`;
@@ -234,7 +236,7 @@
           const elements = latestElementsRef.current;
           latestElementsRef.current = null;
           const channel = channelRef.current;
-          if (!channel || !elements) return;
+          if (!elements) return;
 
           const versionMap = lastVersionsRef.current;
           const changed = elements.filter(el => {
@@ -248,13 +250,13 @@
             versionMap.set(el.id, el.version);
           }
 
-          if (hasPeersRef.current) {
+          if (channel && hasPeersRef.current) {
             channel.send({
               type: "broadcast",
               event: "scene-update",
               payload: { elements: changed },
             });
-          } else {
+          } else if (channel) {
             for (const el of changed) pendingSceneRef.current.set(el.id, el);
           }
 

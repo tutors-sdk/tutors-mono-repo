@@ -1,3 +1,7 @@
+# Non-secret environment for every Tutors app, loaded into the container with envFrom by
+# deployment.yaml. Each overlay patches TUTORS_ORIGIN; the Supabase and anonymous-mode values are empty
+# here and must be set per environment. Secrets come from tutors-app-secrets instead.
+
 apiVersion: v1
 kind: ConfigMap
 metadata:

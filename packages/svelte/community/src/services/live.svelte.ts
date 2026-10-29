@@ -1,3 +1,8 @@
+/**
+ * Live presence state for Tutors Live: which courses and students are active now, from the Realtime
+ * lo-event broadcasts plus the stored-activity fallback in live-feed.ts. Used by the live app's page and the
+ * ui-components time views. Does nothing in anonymous mode (PUBLIC_ANON_MODE=TRUE) or without Supabase.
+ */
 import * as env from "$app/env/public";
 import { topics, type Subscription } from "@tutors/realtime";
 import { refreshLoRecord } from "./presence.svelte.ts";

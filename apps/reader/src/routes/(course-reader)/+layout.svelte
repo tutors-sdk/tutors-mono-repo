@@ -12,9 +12,11 @@
   type Props = { children: Snippet };
   let { children }: Props = $props();
 
-
   tutorsConnectService.startTimer();
-  onDestroy(() => presenceService.stopPresenceListener());
+  onDestroy(() => {
+    presenceService.stopPresenceListener();
+    tutorsConnectService.stopTimer();
+  });
 
   let lastCourseId = "";
   let roleLoadedForCourse = "";
@@ -58,20 +60,13 @@
     // time while the navigation was in flight, so the arrival is reported here.
     tutorsConnectService.navigated(from?.url?.pathname, to?.url?.pathname);
     tutorsConnectService.learningEvent(page.params);
-    if (
-      currentCourse.value?.hasEnrollment &&
-      !isEducator.value &&
-      locksLoaded.value &&
-      to?.url?.pathname
-    ) {
+    if (currentCourse.value?.hasEnrollment && !isEducator.value && locksLoaded.value && to?.url?.pathname) {
       const pathname = to.url.pathname;
       const courseHome = `/course/${currentCourse.value.courseId}`;
       if (pathname === courseHome) return;
 
       const lo = currentCourse.value.loIndex?.get(pathname);
-      const blocked = lo
-        ? rbacService.isLoLocked(lo)
-        : isLoRouteLocked(pathname, contentLocks.value);
+      const blocked = lo ? rbacService.isLoLocked(lo) : isLoRouteLocked(pathname, contentLocks.value);
       if (blocked) {
         void goto(courseHome, { replace: true });
         return;

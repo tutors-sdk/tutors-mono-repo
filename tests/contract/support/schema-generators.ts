@@ -14,16 +14,8 @@ import {
   ConnectCourseSchema,
   ConnectLatestSchema,
   LoRecordSchema,
-  LoRecordUserSchema,
   RealtimeChannelSchema,
   IncrementCalendarParamsSchema,
-  GetCountLearningRecordsParamsSchema,
-  WhiteboardSceneInitSchema,
-  WhiteboardSceneUpdateSchema,
-  WhiteboardSceneSnapshotSchema,
-  WhiteboardCursorUpdateSchema,
-  WhiteboardRoomSchema,
-  WhiteboardInitEditorSchema,
 } from "./schemas";
 
 // ---------------------------------------------------------------------------
@@ -154,7 +146,7 @@ function zodNumberArb(schema: z.ZodNumber): fc.Arbitrary<number> {
     : fc.double({ min, max, noNaN: true, noDefaultInfinity: true });
 }
 
-export function zodToArbitrary<T>(schema: z.ZodType<T>): fc.Arbitrary<T> {
+function zodToArbitrary<T>(schema: z.ZodType<T>): fc.Arbitrary<T> {
   if (schema instanceof z.ZodString) {
     return zodStringArb(schema) as fc.Arbitrary<T>;
   }
@@ -212,39 +204,13 @@ function lazyArb<T>(fn: () => fc.Arbitrary<T>): fc.Arbitrary<T> {
 }
 
 export const learningRecordArb = lazyArb(() => zodToArbitrary(LearningRecordSchema));
-export const calendarEntryArb = lazyArb(() => zodToArbitrary(CalendarEntrySchema));
 export const connectUserArb = lazyArb(() => zodToArbitrary(ConnectUserSchema));
 export const connectProfileArb = lazyArb(() => zodToArbitrary(ConnectProfileSchema));
 export const connectCourseArb = lazyArb(() => zodToArbitrary(ConnectCourseSchema));
 export const connectLatestArb = lazyArb(() => zodToArbitrary(ConnectLatestSchema));
-export const loRecordUserArb = lazyArb(() => zodToArbitrary(LoRecordUserSchema));
 export const loRecordArb = lazyArb(() => zodToArbitrary(LoRecordSchema));
 export const realtimeChannelArb = lazyArb(() => zodToArbitrary(RealtimeChannelSchema));
 export const incrementCalendarParamsArb = lazyArb(() => zodToArbitrary(IncrementCalendarParamsSchema));
-export const getCountLearningRecordsParamsArb = lazyArb(() =>
-  zodToArbitrary(GetCountLearningRecordsParamsSchema)
-);
-export const whiteboardSceneInitArb = lazyArb(() => zodToArbitrary(WhiteboardSceneInitSchema));
-export const whiteboardSceneUpdateArb = lazyArb(() => zodToArbitrary(WhiteboardSceneUpdateSchema));
-export const whiteboardSceneSnapshotArb = lazyArb(() => zodToArbitrary(WhiteboardSceneSnapshotSchema));
-export const whiteboardCursorUpdateArb = lazyArb(() => zodToArbitrary(WhiteboardCursorUpdateSchema));
-export const whiteboardRoomArb = lazyArb(() => zodToArbitrary(WhiteboardRoomSchema));
-export const whiteboardInitEditorArb = lazyArb(() => zodToArbitrary(WhiteboardInitEditorSchema));
-
-// ---------------------------------------------------------------------------
-// Deterministic mock generators (seeded, reproducible)
-// ---------------------------------------------------------------------------
-
-export function generateMock<T>(schema: z.ZodType<T>, seed: number = 42): T {
-  const arb = zodToArbitrary(schema);
-  const sample = fc.sample(arb, { seed, numValues: 1 });
-  return sample[0];
-}
-
-export function generateMocks<T>(schema: z.ZodType<T>, count: number, seed: number = 42): T[] {
-  const arb = zodToArbitrary(schema);
-  return fc.sample(arb, { seed, numValues: count });
-}
 
 // ---------------------------------------------------------------------------
 // Semantic generators (domain-aware data that passes Zod validation)
