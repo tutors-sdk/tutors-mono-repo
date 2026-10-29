@@ -593,7 +593,9 @@ deno run -A packages/jsr/tutors-lite/main.ts
 ```
 packages/jsr/tutors-lite/
 ├── deno.json              # JSR package configuration
-└── main.ts                # CLI entry point
+├── main.ts                # CLI entry point; sets the exit status runTutorsLite returns
+├── src/run.ts             # runTutorsLite: build html/, exit 1 on missing course.md or failed generation
+└── test/                  # Deno tests of the CLI exit status (CI job cli-tests)
 ```
 
 ### JSR Publishing Workflow
