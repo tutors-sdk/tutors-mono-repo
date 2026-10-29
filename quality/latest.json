@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "0aeb178cec131fffbdb864217b19af3945d5a18d",
+  "commit": "011b8c6b5d3f86a68da99b0fca399336ab9f2c75",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-29T02:27:32Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40800657635",
+  "generatedAt": "2026-10-29T10:49:44Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40852085706",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -13,7 +13,7 @@
     },
     {
       "name": "@tutors/community",
-      "mutationScore": 89.85,
+      "mutationScore": 90.02,
       "changed": true,
       "path": "packages/svelte/community"
     },
@@ -97,7 +97,7 @@
     },
     {
       "name": "@tutors/runtime",
-      "mutationScore": 85.92,
+      "mutationScore": 80.28,
       "changed": true,
       "path": "packages/svelte/utils/runtime"
     },
@@ -235,13 +235,13 @@
     }
   ],
   "nightly": {
-    "result": "success",
+    "result": "failure",
     "jobs": {
       "contract-snapshots": "success",
       "mutation": "success",
-      "mutation-nightly": "success",
+      "mutation-nightly": "failure",
       "suite-health": "success",
-      "e2e-stack-nightly": "success",
+      "e2e-stack-nightly": "failure",
       "timezone-matrix": "success",
       "lighthouse": "success",
       "load": "success",
