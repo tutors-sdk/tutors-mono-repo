@@ -171,6 +171,7 @@ const fr: Record<string, string> = {
   // Auth
   "auth.signIn": "Connexion Tutors",
   "auth.signInWithGithub": "Se connecter avec GitHub",
+  "auth.signInFailed": "La connexion avec GitHub n'a pas abouti. Réessayez dans quelques minutes.",
   "auth.terms": `Vous êtes sur le point d'être authentifié via vos identifiants Github pour accéder à Tutors. **Pour la plupart des cours, vous n'avez pas besoin de vous connecter du tout. Si vous préférez, vous pouvez donc revenir à la page du cours et le suivre comme n'importe quel site web public.**
 
 Si vous vous inscrivez ou vous connectez, vous aurez d'abord besoin d'un compte Github. La connexion mettra ensuite à votre disposition un tableau de bord simple et pratique avec des liens rapides vers tous les cours Tutors auxquels vous avez accédé récemment.
@@ -361,10 +362,21 @@ Tutors est une application open source - le composant de collecte des données [
   "tour.card.tutorial.description": "Un parcours guidé autour d'une idée, à mi-chemin entre une note à lire et un laboratoire à faire.",
   "tour.card.whiteboard.title": "Carte de tableau blanc",
   "tour.card.whiteboard.description": "Ouvrez un tableau de dessin pour cette partie du cours afin de consulter des schémas et de dessiner vos idées.",
-  "catalogue.summary": "Cours publiés avec Tutors, les plus consultés en premier.",
+  "catalogue.summary": "Cours publiés avec Tutors.",
   "catalogue.modules": "modules",
   "catalogue.students": "étudiants",
-  "catalogue.mostVisited": "Cours les plus consultés",
+  "catalogue.sort.label": "Trier par",
+  "catalogue.sort.visits": "Les plus consultés",
+  "catalogue.sort.visits.heading": "Cours les plus consultés",
+  "catalogue.sort.recent": "Consultés le plus récemment",
+  "catalogue.sort.recent.heading": "Cours consultés récemment",
+  "catalogue.sort.title": "Titre (A–Z)",
+  "catalogue.sort.title.heading": "Cours par titre",
+  "catalogue.sort.credits": "Crédits (A–Z)",
+  "catalogue.sort.credits.heading": "Cours par crédits",
+  "catalogue.search.label": "Rechercher des cours",
+  "catalogue.search.placeholder": "Titre ou crédits",
+  "catalogue.search.none": "Aucun cours ne correspond à votre recherche.",
   "catalogue.empty": "Aucun cours à afficher.",
   "catalogue.visits": "visites",
   "live.summary": "Activité des cours partagée par les apprenants connectés.",

@@ -10,7 +10,7 @@ import { markdownService } from "../../markdown/index.ts";
 import { courseProtocol, currentCourse, currentLo, rune, isEducator } from "@tutors/runes";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
 import { courseProtocolOf, decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
-import log, { serializeError } from "@tutors/logger";
+import log, { serializeError, withTimeout } from "@tutors/logger";
 
 /** A course whose tutors.json is not there: the host answered 404. */
 export class CourseNotFoundError extends Error {
@@ -51,6 +51,24 @@ export function setCourseUnreachableHandler(handler: (cause: TypeError) => never
   courseUnreachable = handler;
 }
 
+/** How long the course host has to answer for tutors.json before the reader gives up on it (Rule 0614). */
+export const COURSE_FETCH_TIMEOUT_MS = 15_000;
+
+let courseTimedOut: (cause: DOMException) => never = (cause) => {
+  throw cause;
+};
+
+/**
+ * A course host that accepts the connection and never answers would otherwise leave the page loading for as long as
+ * the browser keeps the request open. The service aborts the fetch after COURSE_FETCH_TIMEOUT_MS, logs it, and calls
+ * this with the `TimeoutError`; an app sets it to render an error page that says so, as it does setCourseNotFoundHandler.
+ */
+export function setCourseTimedOutHandler(handler: (cause: DOMException) => never): void {
+  courseTimedOut = handler;
+}
+
+const isTimeout = (cause: unknown): cause is DOMException => cause instanceof DOMException && cause.name === "TimeoutError";
+
 /**
  * One fixed message per failure, with what varies in fields: log collectors (and the release
  * harness) group and diff lines by message, so the course and URL must not be baked into it.
@@ -90,8 +108,9 @@ export const courseService: CourseService = {
 
     if (!course) {
       const url = `${protocol}${courseUrl}/tutors.json`;
-      const response = await fetchFunction(url).catch((cause: unknown) => {
+      const response = await withTimeout(fetchFunction, COURSE_FETCH_TIMEOUT_MS)(url).catch((cause: unknown) => {
         logCourseFetchFailure(courseId, url, cause);
+        if (isTimeout(cause)) courseTimedOut(cause);
         if (cause instanceof TypeError) courseUnreachable(cause);
         throw cause;
       });
@@ -104,7 +123,11 @@ export const courseService: CourseService = {
         if (!response.ok) {
           throw new Error(`Fetch failed with status ${response.status}`);
         }
-        const text = await response.text();
+        const text = await response.text().catch((cause: unknown) => {
+          // The host answered the headers and then stalled on the body: the same timeout, met later.
+          if (isTimeout(cause)) courseTimedOut(cause);
+          throw cause;
+        });
         // KaTeX is loaded on demand; every later conversion of this course is synchronous, so load it before any.
         if (mayContainMath(text)) await loadMath();
         course = JSON.parse(text) as Course;

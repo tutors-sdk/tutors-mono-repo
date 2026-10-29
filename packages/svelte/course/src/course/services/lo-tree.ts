@@ -93,7 +93,7 @@ function registerCompanionIcons(course: Course) {
   }
 }
 
-export function decorateLoTree(course: Course, lo: Lo) {
+function decorateLoTree(course: Course, lo: Lo) {
   // every Lo knows its parent
   lo.parentCourse = course;
   // recover icon from frontmatter if present

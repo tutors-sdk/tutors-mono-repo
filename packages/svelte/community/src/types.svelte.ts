@@ -158,7 +158,7 @@ export interface AnalyticsService {
 
 export interface CatalogueEntry {
   course_id: string;
-  visited_at: Date;
+  visited_at: string;
   visit_count: number;
   course_record: any;
 }
@@ -170,6 +170,4 @@ export interface CatalogueService {
   getCatalogue(): Promise<CatalogueEntry[]>;
   getCatalogueCount(): Promise<number>;
   getStudentCount(): Promise<number>;
-  pruneCatalogue(fetchFunction: typeof fetch): Promise<void>;
-  deleteCourses(courseIds: string[]): Promise<void>;
 }

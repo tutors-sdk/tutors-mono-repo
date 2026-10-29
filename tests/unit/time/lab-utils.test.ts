@@ -204,6 +204,10 @@ describe("extractLabPath", () => {
   it("returns the lo_id when no segment starts with book", () => {
     expect(extractLabPath("topic/talk-1/unit-01")).toBe("topic/talk-1/unit-01");
   });
+
+  it("keeps a lab whose first segment is the book", () => {
+    expect(extractLabPath("book-lab-01/01")).toBe("book-lab-01");
+  });
 });
 
 describe("labColumnLabels", () => {
@@ -217,6 +221,10 @@ describe("labColumnLabels", () => {
 
   it("falls back to the whole path when the topic does not tell them apart", () => {
     expect(labColumnLabels(["/lab/c1/topic/book-a", "/lab/c2/topic/book-a"])).toEqual(["/lab/c1/topic/book-a", "/lab/c2/topic/book-a"]);
+  });
+
+  it("names the topic without the spaces around it", () => {
+    expect(labColumnLabels(["/lab/c/ topic-01 /book-a", "/lab/c/topic-02/book-a"])).toEqual(["topic-01/book-a", "topic-02/book-a"]);
   });
 
   it("labels a top-level lab by its id alone", () => {

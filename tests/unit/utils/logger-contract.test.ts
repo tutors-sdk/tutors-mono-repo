@@ -17,6 +17,7 @@ import {
   type LogEntry
 } from "../../../packages/svelte/utils/logger/src/index.ts";
 import { formatJson } from "../../../packages/svelte/utils/logger/src/formatter.ts";
+import { setRawConsole } from "../../../packages/svelte/utils/logger/src/logger.ts";
 
 /** A structured logger (the server production shape) that captures entries. */
 function capture() {
@@ -187,6 +188,76 @@ describe("request context", () => {
     });
     expect(seen).toEqual([null, "out-1", "callers-own"]);
     expect(new Headers(fetchImpl.mock.calls[1][1]?.headers).get("apikey")).toBe("k");
+  });
+});
+
+// These lines were held only by tests #327 removed with the browser's Supabase writes (catalogue-without-supabase,
+// learning-record-increments), so the nightly mutation run saw context.ts and logger.ts fall under their floors.
+describe("entries the browser logs, and where the default output writes", () => {
+  it("a lone string is the whole message, with nothing added", () => {
+    const { entries, logger } = capture();
+    logger.info('said "only" this');
+    expect(entries[0]!.message).toBe('said "only" this');
+    expect(keysAfterCore(entries[0]!)).toEqual([]);
+  });
+
+  it("a second argument that is neither an object nor an error is kept as details, more than one as a list", () => {
+    const { entries, logger } = capture();
+    logger.info("count", 5);
+    logger.info("counts", 1, 2);
+    logger.error(new Error("boom"));
+    logger.info("tagged", { event: "", kept: undefined });
+    expect(entries[0]).toMatchObject({ message: "count", details: 5 });
+    expect(entries[0]).not.toHaveProperty("name");
+    expect(entries[1]).toMatchObject({ message: "counts", details: [1, 2] });
+    expect(entries[2]!.message).toBe("boom");
+    expect(entries[3]).toMatchObject({ event: "log", kept: null });
+  });
+
+  it("a browser-shaped entry takes the request's id from the context, keeps one it was given, and has none outside a request", () => {
+    const entries: LogEntry[] = [];
+    const logger = createLogger({ level: "debug", structured: false, output: (entry) => entries.push(entry) });
+    logger.info("outside");
+    runWithRequestContext({ requestId: "ctx-9" }, () => {
+      logger.info("inside");
+      logger.info("its own", { requestId: "given-1" });
+    });
+    expect(entries.map((e) => e.requestId)).toEqual([undefined, "ctx-9", "given-1"]);
+    expect("requestId" in entries[0]!).toBe(false);
+  });
+
+  it("writes through the console as it was before process logging wrapped it, else through the console", () => {
+    const raw = vi.fn();
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      setRawConsole({ info: raw });
+      createLogger({ level: "debug", structured: true }).info("through raw");
+      expect(raw).toHaveBeenCalledTimes(1);
+      expect(raw.mock.calls[0]![0]).toContain("through raw");
+      expect(info).not.toHaveBeenCalled();
+
+      setRawConsole(null);
+      createLogger({ level: "debug", structured: true }).info("through console");
+      expect(info).toHaveBeenCalledTimes(1);
+      expect(info.mock.calls[0]![0]).toContain("through console");
+    } finally {
+      setRawConsole(null);
+      info.mockRestore();
+    }
+  });
+
+  it("has no ambient request id where node:async_hooks cannot be looked up, and still runs the work", async () => {
+    const lookup = (process as { getBuiltinModule?: unknown }).getBuiltinModule;
+    (process as { getBuiltinModule?: unknown }).getBuiltinModule = undefined;
+    vi.resetModules();
+    try {
+      const context = await import("../../../packages/svelte/utils/logger/src/context.ts");
+      expect(context.runWithRequestContext({ requestId: "lost" }, () => context.currentRequestId() ?? "none")).toBe("none");
+      expect(context.currentRequestId()).toBeUndefined();
+    } finally {
+      (process as { getBuiltinModule?: unknown }).getBuiltinModule = lookup;
+      vi.resetModules();
+    }
   });
 });
 

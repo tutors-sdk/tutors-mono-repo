@@ -188,6 +188,13 @@ try {
     assert.equal((await browser.page()).user.login, "student");
     for (const path of ["/auth", "/auth/reference-course"]) assert.equal((await browser.send(path)).status, 200);
   });
+  await check("verified Better Auth session reaches protected data routes", async () => {
+    for (const path of ["/api/me", "/api/profile", "/api/time/reference-course"]) {
+      assert.equal((await new Browser().send(path)).status, 401, path);
+      // This fixture has no database key: 503 proves the verified actor passed the 401 gate.
+      assert.equal((await browser.send(path)).status, 503, path);
+    }
+  });
   const initialJar = new Map(browser.jar);
   await check("0253 inactive expiry and rolling renewal survive restart without revival", async () => {
     await writeFile(clockFile, String(initialTime + 29 * DAY));

@@ -10,11 +10,12 @@ Before cutting a release, read the [daily A3](https://tutors-sdk.github.io/tutor
 
 ## Quick start
 
-Ten minutes from clone to a rendered course. Requires Node.js >= 22.17.0 and pnpm >= 8.
+Ten minutes from clone to a rendered course. Requires Node.js >= 22.17.0 (`.nvmrc` pins the version CI uses) and pnpm 11.24.0, the version `packageManager` in `package.json` pins; `corepack enable` installs it for you.
 
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
+corepack enable
 pnpm install
 cp .env.example .env
 pnpm dev
@@ -23,6 +24,8 @@ pnpm dev
 Then open **http://localhost:5173/course/reference-course**.
 
 That is it. `pnpm dev` builds the three UI packages in the right order and starts the reader. The copied `.env` sits at the repository root and all four apps read it. It has `PUBLIC_ANON_MODE=TRUE`, so no Supabase project, GitHub OAuth app or other backend is needed; the reader fetches the course straight from `https://reference-course.netlify.app/tutors.json`. Any published Tutors course works the same way: `http://localhost:5173/course/<course-id>`.
+
+If the page says **404 Page Not Found**, the reader could not reach `reference-course.netlify.app`: offline, behind a firewall, or a typo all look the same to the browser. [CONTRIBUTING.md](CONTRIBUTING.md#if-the-course-does-not-load) shows how to serve a course from your own machine instead.
 
 New here? Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) next. It follows that URL through the code to the rendered cards, naming every file on the way. Then pick something from the [`good first issue`](https://github.com/tutors-sdk/tutors-mono-repo/labels/good%20first%20issue) list.
 
@@ -51,7 +54,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Packages
 
-**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; three of them also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
+**Foundation layer, published to JSR.** These carry a `deno.json` and are run and published with Deno; six of them (create, identity, model, realtime, time, types) also carry a `package.json` so the pnpm apps can import them. If you are inside `packages/jsr/`, you are in Deno-land; everywhere else is pnpm.
 
 | Directory | Package | What it is |
 |---|---|---|
@@ -71,6 +74,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/utils/logger` | `@tutors/logger` | Logging utility and server request logger |
 | `packages/svelte/utils/metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
+| `packages/svelte/utils/runtime` | `@tutors/runtime` | Server runtime seams: the clock (`HARNESS_NOW`) and the `/version` endpoint |
 | `packages/svelte/app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 
 **Core services.**
@@ -79,6 +83,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/runes` | `@tutors/runes` | Svelte 5 reactive state shared across packages |
 | `packages/svelte/course` | `@tutors/course` | Loads `tutors.json`, builds the course tree, converts Markdown |
+| `packages/svelte/data-api` | `@tutors/data-api` | The typed data API browser packages use to reach personal data |
 | `packages/svelte/utils/a11y` | `@tutors/a11y` | Accessibility utilities |
 | `packages/svelte/utils/i18n` | `@tutors/i18n` | Internationalization (six locales) |
 
@@ -102,18 +107,20 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 |---|---|---|
 | `packages/svelte/ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
 | `packages/svelte/ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
-| `packages/svelte/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the pre-compiled `dist/style.css` |
+| `packages/svelte/ui-components` | `@tutors/ui-components` | Learning-object components, cards, time views, and the shared `styles.css` every app imports |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 22.17.0
-- pnpm >= 8.0.0
+- Node.js >= 22.17.0 (`.nvmrc` pins the version CI uses)
+- pnpm 11.24.0 (`corepack enable` installs the version `package.json` pins)
+- `kubectl` or `kustomize` on your `PATH`, for the platform conformance tests in `pnpm test`
+- [Deno](https://deno.com/) at the version in `.dvmrc`, only if you work in `packages/jsr/`
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so the `$env` modules resolve from the same file. There is nothing further to copy.
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so `$app/env/public` and `$app/env/private` resolve from the same file. There is nothing further to copy.
 
 Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 
@@ -134,6 +141,8 @@ pnpm test
 pnpm check
 ```
 
+CI gates a pull request on more than these three; [CONTRIBUTING.md](CONTRIBUTING.md#what-ci-checks-on-your-pull-request) lists every check and how to run it.
+
 `pnpm dev` is a shortcut for the four commands below. You only need them individually if you have changed a UI package and want to rebuild it without restarting:
 
 ```bash
@@ -143,7 +152,7 @@ pnpm --filter @tutors/ui-components build
 pnpm --filter tutors-reader dev
 ```
 
-The order matters. `ui-components` is built last because its build produces `dist/style.css`, the pre-compiled Tailwind and Skeleton stylesheet the apps import.
+The order follows the dependency direction, `ui-components → ui-navigators → ui-primitives`: `ui-primitives` and `ui-components` are imported from their built `dist/`, so each is built after the packages it depends on. Styles are not part of that build; every app's `src/app.css` imports `@tutors/ui-components/styles.css` straight from source.
 
 ### Building
 
@@ -182,7 +191,7 @@ Docs live in five places. This is the index.
 
 ## Technology Stack
 
-- **Framework:** SvelteKit 2.x with Svelte 5
+- **Framework:** SvelteKit 3 with Svelte 5
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4.x + Skeleton UI
 - **Package Manager:** pnpm workspaces (Deno for the JSR packages)
@@ -201,13 +210,15 @@ The monorepo follows a layered architecture with clear dependency boundaries:
 6. **UI Components** → Domain components (learning objects, time views) + pre-compiled CSS
 7. **Applications** → Consume packages as needed
 
-Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts.
+Only `@tutors/realtime-supabase` drives Supabase Realtime channels; everything else publishes and subscribes through the `@tutors/realtime` gateway, which owns the per-tab budget, jittered rejoin and counts. The one exception is the whiteboard editor (`apps/reader/static/excalidraw-editor.html`): a static page cannot import workspace packages, so it opens its own `wb:{roomId}` channel and carries the same event cap and jittered rejoin inline, outside the gateway's per-tab count, until phase 4 (#477) routes it through the parent ([WHITEBOARD.md](guides/WHITEBOARD.md)). `tests/architecture/realtime-boundary.test.ts` fails on any other file that opens a channel.
 
 Only `@tutors/identity-sveltekit` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 
 The reader uses the GitHub-only Better Auth stateless adapter. See [identity rollout](guides/identity-rollout.md) for configuration, session continuity and the required preceding rollout/rollback checkpoints before releasing the adapter cleanup.
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
+
+Browser packages reach personal data only through the typed data API, `@tutors/data-api` (a core package): never through the database client, which only the Realtime/public-read factory and server code may import. See [guides/SERVER-WRITES.md](guides/SERVER-WRITES.md#the-data-api-the-seam).
 
 That is the vertical view, which answers "what may depend on what". [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) is the horizontal view, which answers "where does this pixel come from". Most changes need the second one.
 
@@ -223,4 +234,3 @@ See LICENSE file for details.
 
 - **Documentation:** [tutors.dev](https://tutors.dev)
 - **Issues:** [GitHub Issues](https://github.com/tutors-sdk/tutors-mono-repo/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/tutors-sdk/tutors-mono-repo/discussions)

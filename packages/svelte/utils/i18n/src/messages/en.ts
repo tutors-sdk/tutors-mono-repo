@@ -171,6 +171,7 @@ const en = {
   // Auth
   "auth.signIn": "Tutors Sign In",
   "auth.signInWithGithub": "Sign in with GitHub",
+  "auth.signInFailed": "Signing in with GitHub did not finish. Try again in a few minutes.",
   "auth.terms": `You are about to be authenticated via your Github credentials to Tutors. **For most courses, you do not need to log in at all, so if you prefer you can go back to the course page and proceed through the course as for any public web site.**
 
 If you do sign up/log in, then you will need a github account first. Logging in will then make a simple convenient dashboard available of quick links to all recent Tutors courses you have accessed.
@@ -361,10 +362,21 @@ Tutors is an open source application - the data collection component [is here](h
   "tour.card.tutorial.description": "A guided walk through one idea, somewhere between a note to read and a lab to do.",
   "tour.card.whiteboard.title": "Whiteboard Card",
   "tour.card.whiteboard.description": "Open a drawing board for this part of the course, to view diagrams and sketch ideas.",
-  "catalogue.summary": "Courses published with Tutors, most visited first.",
+  "catalogue.summary": "Courses published with Tutors.",
   "catalogue.modules": "modules",
   "catalogue.students": "students",
-  "catalogue.mostVisited": "Most visited courses",
+  "catalogue.sort.label": "Sort by",
+  "catalogue.sort.visits": "Most visited",
+  "catalogue.sort.visits.heading": "Most visited courses",
+  "catalogue.sort.recent": "Most recently visited",
+  "catalogue.sort.recent.heading": "Recently visited courses",
+  "catalogue.sort.title": "Title (A–Z)",
+  "catalogue.sort.title.heading": "Courses by title",
+  "catalogue.sort.credits": "Credits (A–Z)",
+  "catalogue.sort.credits.heading": "Courses by credits",
+  "catalogue.search.label": "Search courses",
+  "catalogue.search.placeholder": "Title or credits",
+  "catalogue.search.none": "No courses match your search.",
   "catalogue.empty": "No courses are available to display.",
   "catalogue.visits": "visits",
   "live.summary": "Course activity shared by connected learners.",
