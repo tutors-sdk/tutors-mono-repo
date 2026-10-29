@@ -393,6 +393,8 @@ Is feidhmchlár foinse oscailte é Tutors - tá an comhpháirt bailiúcháin son
   "classTime.startDate": "Dáta tosaigh (roghnach)",
   "classTime.endDate": "Dáta deiridh (roghnach)",
   "classTime.dateRangeError": "Caithfidh an dáta tosaigh a bheith roimh an dáta deiridh nó cothrom leis",
+  "classTime.invalidDate": "Caithfidh na dátaí a bheith ina ndátaí féilire san fhormáid BBBB-MM-LL",
+  "classTime.period": "Tréimhse tuairiscithe",
   "classTime.loadCourse": "Lódáil cúrsa",
   "classTime.disclaimer": "Tomhaiseann gníomhaíocht thaifeadta am, ní torthaí foghlama.",
   "classTime.pinTitle": "Cuir isteach an PIN",

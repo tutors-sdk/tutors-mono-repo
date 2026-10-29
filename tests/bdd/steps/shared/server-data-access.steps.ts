@@ -10,6 +10,8 @@ vi.mock("$app/env/public", async () => {
 });
 vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 vi.mock("$app/env", () => ({ browser: true, building: false, goto: vi.fn() }));
+// The Time layout reads the reporting period, which reaches i18n and so the runes behind it.
+vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
 import type { Course, Lo } from "../../../../packages/jsr/model/src/tutors.ts";
 import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";
@@ -347,7 +349,9 @@ describeFeature(feature, ({ Background, Rule }) => {
         And("{string} is signed in to the reader", signedIn);
         When("{string} opens {string} in the time dashboard", async (_ctx, _name: string, courseId: string) => {
           anonCallsBefore = recorder.callsWith(ANON_KEY).length;
-          const data = (await loadTimeCourse({ params: { courseid: courseId } } as unknown as Parameters<typeof loadTimeCourse>[0])) as { course: typeof timeCourse };
+          // No reporting period in the address, so the dashboard asks for the whole course.
+          const url = new URL(`https://time.test/${courseId}/medians`);
+          const data = (await loadTimeCourse({ params: { courseid: courseId }, url } as unknown as Parameters<typeof loadTimeCourse>[0])) as { course: typeof timeCourse };
           timeCourse = data.course;
         });
         Then("the time dashboard asked the reader for {string} with the viewer's reader session", (_ctx, path: string) => {

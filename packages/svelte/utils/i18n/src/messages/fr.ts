@@ -418,6 +418,8 @@ Tutors est une application open source - le composant de collecte des données [
   "classTime.startDate": "Date de début (facultatif)",
   "classTime.endDate": "Date de fin (facultatif)",
   "classTime.dateRangeError": "La date de début doit précéder ou égaler la date de fin",
+  "classTime.invalidDate": "Les dates doivent être des dates du calendrier au format AAAA-MM-JJ",
+  "classTime.period": "Période du rapport",
   "classTime.loadCourse": "Charger le cours",
   "classTime.disclaimer": "L'activité enregistrée mesure le temps, pas les acquis d'apprentissage.",
   "classTime.pinTitle": "Saisir le code PIN",

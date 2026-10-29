@@ -32,7 +32,7 @@
     "packages/jsr/time/src/services/base-lab-model.ts": 99,
     "packages/jsr/time/src/services/course-time.ts": 75,
     "packages/jsr/time/src/services/supabase.ts": 100,
-    "packages/jsr/time/src/services/tutors-time.ts": 71,
+    "packages/jsr/time/src/services/tutors-time.ts": 85,
     "packages/jsr/time/src/utils/calendar-utils.ts": 98,
     "packages/jsr/time/src/utils/lab-utils.ts": 100,
     "packages/jsr/types/src/learner.ts": 96,

@@ -21,7 +21,12 @@ function applyUserFields(fieldsByGithub: Map<string, UserFields>, rows: ConnectU
   }
 }
 
-export async function enrichCourseUserFields(course: TutorsTimeCourse | null): Promise<void> {
+/**
+ * Fill in each student's presence fields from the course's user rows.
+ * The reporting period is the one the course was loaded for, so this reuses that bounded
+ * request instead of asking the reader a second time for every day the course ever ran.
+ */
+export async function enrichCourseUserFields(course: TutorsTimeCourse | null, startDate: string | null = null, endDate: string | null = null): Promise<void> {
   if (!course) return;
 
   const ids = new Set<string>();
@@ -45,7 +50,7 @@ export async function enrichCourseUserFields(course: TutorsTimeCourse | null): P
 
   let data: { github_id?: string; online_status?: string | null; sentiment?: string | null; avatar_url?: string | null }[];
   try {
-    data = (await getTutorsTimeSource().courseRows(course.id)).users.filter((u) => ids.has(u.github_id?.trim() ?? ""));
+    data = (await getTutorsTimeSource().courseRows(course.id, startDate, endDate)).users.filter((u) => ids.has(u.github_id?.trim() ?? ""));
   } catch (error) {
     log.warn("enrichCourseUserFields:", error instanceof Error ? error.message : String(error));
     return;
