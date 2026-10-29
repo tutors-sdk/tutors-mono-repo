@@ -29,7 +29,7 @@ ARG NODE_IMAGE=node-pinned
 # Fully qualified so the file builds the same under Docker, Podman/Buildah and
 # Quay's builders, which do not assume docker.io for short names.
 # ---------------------------------------------------------------------------
-FROM docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS node-pinned
+FROM docker.io/library/node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS node-pinned
 
 # ---------------------------------------------------------------------------
 # base: Node plus the exact pnpm version pinned in package.json (via corepack)
