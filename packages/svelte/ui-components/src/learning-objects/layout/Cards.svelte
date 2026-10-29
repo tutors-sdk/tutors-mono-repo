@@ -7,6 +7,7 @@
   import { currentCourse, isEducator, contentLocks, locksLoaded } from "@tutors/runes";
   import { setShowHide } from "@tutors/tutors-model-lib";
   import { rbacService } from "@tutors/rbac";
+  import { reportLockChange } from "@tutors/ui-navigators/buttons/lock-change.ts";
 
   interface Props {
     los?: Lo[];
@@ -67,7 +68,9 @@
                 }}
                 locked={rbacService.isLoLocked(lo)}
                 lecturer={isEducator.value}
-                onUnlock={isEducator.value && contentLocks.value.get(lo.route) ? () => rbacService.toggleContentLock(lo.route, false) : undefined}
+                onUnlock={isEducator.value && contentLocks.value.get(lo.route) && !rbacService.isLockPending(lo.route)
+                  ? () => reportLockChange(rbacService.toggleContentLock(lo.route, false))
+                  : undefined}
               />
             </div>
           {/if}
