@@ -12,6 +12,7 @@ import {
 import { OnlineCellRenderer } from "#lib/components/calendar/OnlineCellRenderer.ts";
 import { SentimentCellRenderer } from "#lib/components/calendar/SentimentCellRenderer.ts";
 import { StudentAvatarCellRenderer } from "#lib/components/calendar/StudentAvatarCellRenderer.ts";
+import { withDateRange } from "#lib/dateRange.ts";
 
 /** Header mode: "lab" = lab id (with its topic when two labs share an id), "step" = step name (last segment). */
 type LabColumnHeaderMode = "lab" | "step";
@@ -112,7 +113,8 @@ export class GridLabModel {
           const name = String(params.value ?? "");
           const studentId = String(params.data?.studentid ?? "");
           if (!studentId || !courseId) return name;
-          return `<a href="/${courseId}/${studentId}" class="underline text-[var(--ui-brand)]">${name}</a>`;
+          // The grid renders in the browser (ssr is off); the drill-down keeps the page's reporting period.
+          return `<a href="${withDateRange(`/${courseId}/${studentId}`, location.search)}" class="underline text-[var(--ui-brand)]">${name}</a>`;
         }
       },
       {

@@ -17,11 +17,19 @@
 # environment at runtime via SvelteKit's $env/dynamic modules, so one image
 # serves every environment and no secret is ever baked into a layer.
 
-ARG NODE_VERSION=22
-# Base images are fully qualified so the file builds the same under Docker,
-# Podman/Buildah and Quay's builders, which do not assume docker.io for short
-# names.
-ARG NODE_IMAGE=docker.io/library/node:${NODE_VERSION}-bookworm-slim
+# NODE_IMAGE overrides the base for a mirror (any image ref); by default it is
+# the pinned stage below.
+ARG NODE_IMAGE=node-pinned
+
+# ---------------------------------------------------------------------------
+# node-pinned: the Node base image, pinned by digest (Rule 0667). A floating tag
+# changes Node and Debian under the same commit whenever Docker Hub moves it:
+# on 2026-10-22 node 22.23.3 -> 22.23.4 reached all four images with no PR.
+# Dependabot's docker ecosystem bumps the digest in its own pull request.
+# Fully qualified so the file builds the same under Docker, Podman/Buildah and
+# Quay's builders, which do not assume docker.io for short names.
+# ---------------------------------------------------------------------------
+FROM docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS node-pinned
 
 # ---------------------------------------------------------------------------
 # base: Node plus the exact pnpm version pinned in package.json (via corepack)

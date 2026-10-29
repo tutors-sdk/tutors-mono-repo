@@ -1,3 +1,8 @@
+/**
+ * Browser hooks for the catalogue app, loaded by SvelteKit once per page load.
+ * Warn and error log lines are batched to the Supabase app_errors table (skipped when Supabase is not
+ * configured), unhandled promise rejections are logged, and unexpected errors show a generic 500 message.
+ */
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import log, { addTransport, setAppName } from "@tutors/logger";
 import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";

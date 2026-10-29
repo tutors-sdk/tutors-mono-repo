@@ -1,0 +1,12 @@
+# What the apps use in the database that no migration creates (Rule 0627). Tutors' Supabase schema predates
+# supabase/migrations: these exist in production, made by hand or by SQL kept elsewhere, so a fresh database built
+# from the repository lacks them. This file may only shrink: the check fails on a new gap, and on a line whose table
+# or function a migration now creates or the code no longer uses.
+# Format: `table: <name> | why: ...` or `function: <name> | why: ...`
+
+table: assignments | why: the reader's Moodle assignment sync; no migration or legacy fixture defines it
+table: assignments_submissions | why: the reader's Moodle submissions; no migration or legacy fixture defines it
+table: tutors-connect-profiles | why: a student's catalogue profile; predates supabase/migrations and has no row type in packages/jsr/types
+table: tutors_content_locks | why: packages/svelte/utils/rbac/sql/002_content_locks.sql creates it, outside supabase/migrations, so the release harness and a fresh database never apply it
+function: get_count_learning_records | why: predates supabase/migrations; the per-table fallback when record_page_view is missing still calls it
+function: increment_calendar | why: predates supabase/migrations; the per-table fallback when record_heartbeat is missing still calls it

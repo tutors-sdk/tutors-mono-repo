@@ -69,7 +69,7 @@ STRYKER_CONCURRENCY=2 ./tests/mutation/run-mutation-tests.sh
 
 ## When to Run
 
-Mutation testing is too slow for every PR: the targeted run takes about 3 minutes and the comprehensive run about 25. Both run in the nightly workflow (`mutation` and `mutation-nightly`), and the nightly summary names any module below its floor. Run one locally after adding tests to a module, to confirm the new tests kill mutants and to raise that module's floor with `--update` in the same change.
+The full runs are too slow for every PR: the targeted run takes about 3 minutes and the comprehensive run about 25. Both run in the nightly workflow (`mutation` and `mutation-nightly`), and the nightly summary names any module below its floor. A pull request runs a smaller job, **Mutation of changed modules** in `ci.yml` (`pnpm test:mutation:pr`, Rules 0618 and 0619): it mutates only the library modules the PR changes, with the nightly configuration, and fails one below its nightly floor or a new module with no floor. Run one locally after adding tests to a module, to confirm the new tests kill mutants and to raise that module's floor with `--update` in the same change.
 
 ## Reading the Report
 

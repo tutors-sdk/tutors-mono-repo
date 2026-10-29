@@ -9,8 +9,8 @@ import { LiveNotebook } from "./live-notebook.ts";
 import { markdownService } from "../../markdown/index.ts";
 import { courseProtocol, currentCourse, currentLo, rune, isEducator } from "@tutors/runes";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
-import { decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
-import log, { serializeError } from "@tutors/logger";
+import { courseProtocolOf, decorateCourseTree, determineCourseUrl } from "./lo-tree.ts";
+import log, { serializeError, withTimeout } from "@tutors/logger";
 
 /** A course whose tutors.json is not there: the host answered 404. */
 export class CourseNotFoundError extends Error {
@@ -51,15 +51,33 @@ export function setCourseUnreachableHandler(handler: (cause: TypeError) => never
   courseUnreachable = handler;
 }
 
+/** How long the course host has to answer for tutors.json before the reader gives up on it (Rule 0614). */
+export const COURSE_FETCH_TIMEOUT_MS = 15_000;
+
+let courseTimedOut: (cause: DOMException) => never = (cause) => {
+  throw cause;
+};
+
+/**
+ * A course host that accepts the connection and never answers would otherwise leave the page loading for as long as
+ * the browser keeps the request open. The service aborts the fetch after COURSE_FETCH_TIMEOUT_MS, logs it, and calls
+ * this with the `TimeoutError`; an app sets it to render an error page that says so, as it does setCourseNotFoundHandler.
+ */
+export function setCourseTimedOutHandler(handler: (cause: DOMException) => never): void {
+  courseTimedOut = handler;
+}
+
+const isTimeout = (cause: unknown): cause is DOMException => cause instanceof DOMException && cause.name === "TimeoutError";
+
 /**
  * One fixed message per failure, with what varies in fields: log collectors (and the release
  * harness) group and diff lines by message, so the course and URL must not be baked into it.
  * `error` and `stack` are always present so the line's key set does not depend on the cause.
  */
-function logCourseFetchFailure(courseId: string, courseUrl: string, cause?: unknown): void {
+function logCourseFetchFailure(courseId: string, url: string, cause?: unknown): void {
   log.error("Error fetching course", {
     courseId,
-    url: `https://${courseUrl}/tutors.json`,
+    url,
     ...(cause === undefined ? { error: null, stack: null } : serializeError(cause))
   });
 }
@@ -83,19 +101,21 @@ export const courseService: CourseService = {
    * @returns Promise resolving to the loaded Course
    */
   async getOrLoadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
+    // Normalize before the cache lookup, so every form of one course's address shares one entry.
+    const { courseId: normalizedCourseId, courseUrl, protocol } = determineCourseUrl(courseId);
+    courseId = normalizedCourseId;
     let course = this.courses.get(courseId);
 
     if (!course) {
-      const { courseId: normalizedCourseId, courseUrl } = determineCourseUrl(courseId);
-      courseId = normalizedCourseId;
-
-      const response = await fetchFunction(`${courseProtocol.value}${courseUrl}/tutors.json`).catch((cause: unknown) => {
-        logCourseFetchFailure(courseId, courseUrl, cause);
+      const url = `${protocol}${courseUrl}/tutors.json`;
+      const response = await withTimeout(fetchFunction, COURSE_FETCH_TIMEOUT_MS)(url).catch((cause: unknown) => {
+        logCourseFetchFailure(courseId, url, cause);
+        if (isTimeout(cause)) courseTimedOut(cause);
         if (cause instanceof TypeError) courseUnreachable(cause);
         throw cause;
       });
       if (response.status === 404) {
-        logCourseFetchFailure(courseId, courseUrl);
+        logCourseFetchFailure(courseId, url);
         return courseNotFound(new CourseNotFoundError(courseId, courseUrl));
       }
 
@@ -103,14 +123,18 @@ export const courseService: CourseService = {
         if (!response.ok) {
           throw new Error(`Fetch failed with status ${response.status}`);
         }
-        const text = await response.text();
+        const text = await response.text().catch((cause: unknown) => {
+          // The host answered the headers and then stalled on the body: the same timeout, met later.
+          if (isTimeout(cause)) courseTimedOut(cause);
+          throw cause;
+        });
         // KaTeX is loaded on demand; every later conversion of this course is synchronous, so load it before any.
         if (mayContainMath(text)) await loadMath();
         course = JSON.parse(text) as Course;
-        decorateCourseTree(course, courseId, courseUrl);
+        decorateCourseTree(course, courseId, courseUrl, protocol);
         this.courses.set(courseId, course);
       } catch (error) {
-        logCourseFetchFailure(courseId, courseUrl, error);
+        logCourseFetchFailure(courseId, url, error);
         throw error;
       }
     }
@@ -127,6 +151,8 @@ export const courseService: CourseService = {
   async readCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
     const course = await this.getOrLoadCourse(courseId, fetchFunction);
     this.courseUrl.value = course.courseUrl;
+    // Set on every selection, cache hits included, so a course viewed earlier cannot leave its protocol behind.
+    courseProtocol.value = courseProtocolOf(course);
     currentCourse.value = course;
     currentLo.value = course;
     return course;

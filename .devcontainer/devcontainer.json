@@ -1,6 +1,6 @@
 {
   "name": "Tutors",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "build": { "dockerfile": "Dockerfile" },
 
   "hostRequirements": {
     "cpus": 4,

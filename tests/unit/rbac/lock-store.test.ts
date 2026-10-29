@@ -15,6 +15,7 @@ describe("upsertLock", () => {
 
   it.each([
     [200, "saved"],
+    [401, "refused"],
     [403, "refused"],
     [502, "refused"],
     [500, "refused"],
@@ -24,11 +25,37 @@ describe("upsertLock", () => {
     expect(await upsertLock("cs101", "/topic/cs101/week-01", true)).toBe(result);
   });
 
+  it.each([
+    ["", "/topic/cs101/week-01"],
+    ["cs101", ""]
+  ])("refuses an incomplete lock target (%s, %s) without a request", async (courseId, loRoute) => {
+    const asked = vi.fn();
+    vi.stubGlobal("fetch", asked);
+    expect(await upsertLock(courseId, loRoute, true)).toBe("refused");
+    expect(asked).not.toHaveBeenCalled();
+  });
+
   it("reports a network failure as unreachable, not as a reader without a database", async () => {
     answer(async () => {
       throw new TypeError("Failed to fetch");
     });
     expect(await upsertLock("cs101", "/topic/cs101/week-01", true)).toBe("unreachable");
+  });
+
+  // The data API answers null in anonymous mode and when the network fails alike, so upsertLock
+  // tells them apart itself: an anonymous reader has no server to save to, and never asks one.
+  it("reports anonymous mode as unavailable without asking a server", async () => {
+    vi.resetModules();
+    vi.doMock("$app/env/public", () => ({ PUBLIC_ANON_MODE: "TRUE" }));
+    const asked = vi.fn();
+    vi.stubGlobal("fetch", asked);
+    const { upsertLock: anonUpsertLock } = await import("../../../packages/svelte/utils/rbac/src/lock-store.ts");
+
+    expect(await anonUpsertLock("cs101", "/topic/cs101/week-01", true)).toBe("unavailable");
+    expect(asked).not.toHaveBeenCalled();
+
+    vi.doUnmock("$app/env/public");
+    vi.resetModules();
   });
 });
 

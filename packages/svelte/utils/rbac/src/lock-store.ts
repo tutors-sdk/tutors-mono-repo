@@ -1,5 +1,13 @@
+/**
+ * The tutors_content_locks table (content locks set by educators), for rbac-service.svelte.ts. Reads go
+ * through the public Supabase client; without Supabase, or on a query error (logged), it returns no locks.
+ * Writes never touch the table from the browser: upsertLock asks the reader's server (Rule 0630), which
+ * checks the educator and reports the change as saved, refused or unavailable.
+ */
+import * as env from "$app/env/public";
 import { supabase } from "@tutors/community/utils/supabase-client";
 import log from "@tutors/logger";
+import { dataApi } from "@tutors/data-api";
 import type { ContentLock } from "./types.ts";
 
 export async function getLocksForCourse(courseId: string): Promise<ContentLock[]> {
@@ -34,17 +42,16 @@ type LockWriteResult = "saved" | "refused" | "unavailable" | "unreachable";
  */
 export async function upsertLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWriteResult> {
   if (!courseId || !loRoute) return "refused";
-  try {
-    const response = await fetch(`/api/courses/${encodeURIComponent(courseId)}/locks`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ loRoute, locked })
-    });
-    if (response.ok) return "saved";
-    log.warn("upsertLock not saved", { courseId, loRoute, status: response.status });
-    return response.status === 503 ? "unavailable" : "refused";
-  } catch (error) {
-    log.error("upsertLock failed:", error);
+  // Anonymous mode has no server to ask, so the browser's copy stays the record, as it does in a reader
+  // with no lock database. The data API answers null for that and for a request that never got through,
+  // so the two are told apart here: only the second leaves the educator's change unsaved for students.
+  if (env.PUBLIC_ANON_MODE === "TRUE") return "unavailable";
+  const response = await dataApi.setLock({ courseId, loRoute, locked });
+  if (!response) {
+    log.error("upsertLock unreachable", { courseId, loRoute });
     return "unreachable";
   }
+  if (response.ok) return "saved";
+  log.warn("upsertLock not saved", { courseId, loRoute, status: response.status });
+  return response.status === 503 ? "unavailable" : "refused";
 }
