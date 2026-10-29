@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { now } from "@tutors/runtime";
 import type { SessionUser } from "./http.ts";
 
 export class StoreError extends Error {}
@@ -57,7 +58,7 @@ export async function recordPageLoad(
       course_id: input.courseId,
       student_id: login,
       lo_id: input.loId,
-      date_last_accessed: new Date().toISOString(),
+      date_last_accessed: now().toISOString(),
       duration,
       count,
       type: input.loType
@@ -111,7 +112,7 @@ export async function upsertUser(db: SupabaseClient, user: SessionUser, status: 
     avatar_url: user.image,
     full_name: user.name?.trim() || user.login,
     email: user.email,
-    date_last_accessed: new Date().toISOString()
+    date_last_accessed: now().toISOString()
   };
   if (status.sentiment) row.sentiment = status.sentiment;
   if (status.online_status) row.online_status = status.online_status;
@@ -127,7 +128,7 @@ export async function getUserStatus(db: SupabaseClient, login: string): Promise<
 }
 
 export async function updateUserStatus(db: SupabaseClient, login: string, status: Partial<UserStatus>): Promise<void> {
-  const change: Record<string, string> = { date_last_accessed: new Date().toISOString() };
+  const change: Record<string, string> = { date_last_accessed: now().toISOString() };
   if (status.sentiment) change.sentiment = status.sentiment;
   if (status.online_status) change.online_status = status.online_status;
   const { error } = await db.from("tutors-connect-users").update(change).eq("github_id", login);
@@ -154,7 +155,7 @@ export async function recordCourseVisit(db: SupabaseClient, courseId: string, co
   const visits = ((data as { visit_count?: number } | null)?.visit_count ?? 0) + 1;
   const { error: upsertError } = await db
     .from("tutors-connect-courses")
-    .upsert({ course_id: courseId, visited_at: new Date().toISOString(), visit_count: visits, course_record: courseRecord }, { onConflict: "course_id" });
+    .upsert({ course_id: courseId, visited_at: now().toISOString(), visit_count: visits, course_record: courseRecord }, { onConflict: "course_id" });
   if (upsertError) fail("tutors-connect-courses upsert", upsertError);
 }
 
@@ -162,7 +163,7 @@ export async function recordCourseVisit(db: SupabaseClient, courseId: string, co
 export async function upsertLatest(db: SupabaseClient, login: string, courseId: string, payload: unknown): Promise<void> {
   const { error } = await db
     .from("tutors-connect-latest")
-    .upsert({ course_id: courseId, student_id: login, payload, received_at: new Date().toISOString() }, { onConflict: "course_id,student_id" });
+    .upsert({ course_id: courseId, student_id: login, payload, received_at: now().toISOString() }, { onConflict: "course_id,student_id" });
   if (error) fail("tutors-connect-latest upsert", error);
 }
 
@@ -170,7 +171,7 @@ export async function upsertLatest(db: SupabaseClient, login: string, courseId: 
 export async function setLock(db: SupabaseClient, login: string, courseId: string, loRoute: string, locked: boolean): Promise<void> {
   const { error } = await db
     .from("tutors_content_locks")
-    .upsert({ course_id: courseId, lo_route: loRoute, locked, locked_by: login, locked_at: new Date().toISOString() }, { onConflict: "course_id,lo_route" });
+    .upsert({ course_id: courseId, lo_route: loRoute, locked, locked_by: login, locked_at: now().toISOString() }, { onConflict: "course_id,lo_route" });
   if (error) fail("tutors_content_locks upsert", error);
 }
 
@@ -205,7 +206,7 @@ export async function saveWhiteboardScene(db: SupabaseClient, roomId: string, el
     elements,
     app_state: { viewBackgroundColor: "#ffffff" },
     files: {},
-    updated_at: new Date().toISOString()
+    updated_at: now().toISOString()
   });
   if (error) fail("whiteboard_scenes upsert", error);
 }

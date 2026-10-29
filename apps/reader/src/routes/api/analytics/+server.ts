@@ -1,4 +1,5 @@
 import { error, type RequestHandler } from "@sveltejs/kit";
+import { now } from "@tutors/runtime";
 import { noContent, readJson, requireDb, requireUser, valid } from "../../../lib/server/api/http.ts";
 import { recordPageLoad, recordTick } from "../../../lib/server/api/store.ts";
 import * as check from "../../../lib/server/api/validate.ts";
@@ -7,7 +8,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);
   const body = await readJson(request);
   const courseId = valid(check.courseId(body.courseId), "courseId is required");
-  const day = valid(check.calendarDay(body.day, new Date()), "day must be the browser's local date, yyyy-mm-dd");
+  const day = valid(check.calendarDay(body.day, now()), "day must be the browser's local date, yyyy-mm-dd");
   const db = requireDb();
   if (body.kind === "page-load") {
     const loId = valid(check.loRoute(body.loId), "loId is required");
