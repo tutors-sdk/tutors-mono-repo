@@ -57,6 +57,21 @@ claims:
   - artefact: network
     scope: "GET /api/time/*"
     reason: "CHANGELOG Unreleased (Time): the dashboard loads time data from the reader"
+  # Main to RC forecast of 29 Oct 2026 (sha-011b8c6 beside 17.0.0, harness 1.59.1): the reader logs each time data
+  # read with the course and the viewer's role, two log fields 17.0.0 never wrote.
+  - artefact: logs
+    scope: "reader-auth/{courseId,role}"
+    reason: "CHANGELOG Unreleased (Time): the reader logs each time data read with the course and the viewer's role (logs) (PR #320)"
+  # The Node base image is pinned by digest (#541). 17.0.0 was built from the floating node:22-bookworm-slim tag
+  # before Docker Hub moved it; the pin is node 22.23.4, so every image has another lowest layer and another node.
+  - artefact: image-manifest
+    scope: "*/base"
+    rule: "0667"
+    reason: "Rule 0667: the Node base image is pinned by digest, node 22.23.3 -> 22.23.4 in every image (PR #541)"
+  - artefact: sbom
+    scope: "*/node"
+    rule: "0667"
+    reason: "Rule 0667: the Node base image is pinned by digest, node 22.23.3 -> 22.23.4 in every image (PR #541)"
   # Since 17.0.0 (Main to RC forecast of 15 Oct 2026, sha-d3d7227 beside 17.0.0): Tutors Live within a daily
   # Realtime budget (#476, #478, #481). The reader posts each learning event to its own server, which asks the
   # database which feeds to publish to and charges the day's budget.
