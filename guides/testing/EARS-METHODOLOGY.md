@@ -151,10 +151,9 @@ it to tell an executable feature from a `documentation-only` one.
 
 A scenario that needs a browser, such as layout, focus order, colour or a dialog, cannot be
 driven from Node. It is a `@ui` Rule instead, proved by Playwright; see
-[Browser-proved Rules](#browser-proved-rules) below. Behaviour that no test can drive yet,
-such as a real OAuth sign-in or a service worker, lives as prose in
-[`guides/specifications/`](../specifications/README.md), which names the tier that does cover
-the behaviour, or says that none does.
+[Browser-proved Rules](#browser-proved-rules) below. Existing behaviour that no test drives yet
+lives as prose in [`guides/specifications/`](../specifications/README.md), which names the tier
+that covers it in part. Behaviour the product does not have is not written down until it is built.
 
 ### Browser-proved Rules
 
@@ -197,7 +196,7 @@ release candidates in Chromium, Firefox and WebKit. Run one Rule's tests with
 Issue [#214](https://github.com/tutors-sdk/tutors-mono-repo/issues/214) moves EARS from a tag on
 a scenario to a `Rule:` block. A `Rule:` title is one EARS requirement, with exactly one
 "shall". The scenarios beneath it are the executable proof. The runner does not change:
-[`vitest-cucumber`](https://vitest-cucumber.miceli.click/) 7.0.0 binds `Rule:` blocks itself
+[`vitest-cucumber`](https://vitest-cucumber.miceli.click/) (8.0.0 in the lockfile) binds `Rule:` blocks itself
 (`Rule("<title>", ({ RuleScenario, RuleScenarioOutline }) => ...)`), applies the feature
 `Background` to each Rule's scenarios, and fails the run when a Rule or a step is unbound or a
 Rule has no scenario. `pnpm test:bdd` stays the way features run.
@@ -249,7 +248,7 @@ finds it.
 
 Rules for ids:
 
-1. Allocate the next id with `pnpm test:ears:audit --next-id`. It prints one more than the highest id in the features and the retired list.
+1. Allocate the next id with `pnpm test:ears:audit --next-id`. It prints one more than the highest id in the features and the retired list. It cannot see ids in open pull requests, so search them for `@rule-` before you use it and skip any id they already take.
 2. Changing a Rule's wording keeps its id. A different requirement gets a new id, and the old id is retired.
 3. Deleting a Rule adds its id to the retired list in the same commit.
 4. The audit fails on a Rule with no id, a malformed id, a duplicate, or a retired id in use.
@@ -348,9 +347,8 @@ BDD features are organised by user persona to ensure coverage from all stakehold
 
 Reader layout, navigation, themes and accessibility need a browser and are `@ui` Rules in
 `features/ui/`, proved by Playwright. The OAuth flow is bound over HTTP in
-`shared/sign-in-session.feature` (Rules 0250–0259); only its browser-rendered parts are still prose in
-[specifications/](../specifications/README.md). `course/`, `live/` and `time/` hold features that
-predate the EARS tags.
+`shared/sign-in-session.feature` (Rules 0250–0259), and `apps/reader/tests/e2e/authentication.spec.ts`
+checks the session in a browser.
 
 ## EARS Tag Distribution
 

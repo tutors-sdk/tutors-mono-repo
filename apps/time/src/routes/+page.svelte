@@ -3,6 +3,7 @@
   import CourseIdDialog from "#lib/components/CourseIdDialog.svelte";
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import { goto } from "$app/navigation";
+  import { courseTimeHref } from "#lib/dateRange.ts";
   import log from "@tutors/logger";
 
 
@@ -18,8 +19,9 @@
     dialogError = null;
     dialogLoading = true;
     try {
+      // Loads the period here so the dialog can show a failure; the destination reuses this load.
       await TutorsTime.loadCourseTime(courseId, startDate, endDate);
-      goto(`/${courseId}/medians`);
+      goto(courseTimeHref(courseId, { startDate, endDate }));
     } catch (e) {
       dialogError = e instanceof Error ? e.message : t("shell.loadError");
     } finally {

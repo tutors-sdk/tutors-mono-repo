@@ -20,6 +20,7 @@
 # Release claims: what a release tells the release harness it meant to change.
 # A claim waives a difference the harness would otherwise fail on.
 /release/claims.yaml @tutors-sdk/maintainers
+/tests/conformance/shipped-contract-migrations.txt @tutors-sdk/maintainers
 
 # The release standard work. A change is a pull request citing the 5 Whys behind it.
 /release/SOP.md @tutors-sdk/maintainers

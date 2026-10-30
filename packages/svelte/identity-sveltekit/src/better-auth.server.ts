@@ -1,3 +1,9 @@
+/**
+ * Better Auth configuration for GitHub sign-in, built per request by index.server.ts.
+ * No database is configured: the session lives in a JWE cookie made with the secret
+ * (PRIVATE_AUTH_SECRET in the reader), valid for 30 days (cookieCache with refreshCache on).
+ * Account linking is off, and githubId and login cannot be changed through /update-user.
+ */
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware, formCsrfMiddleware } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";

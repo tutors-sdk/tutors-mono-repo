@@ -4,6 +4,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
+import { load } from "js-yaml";
 import { expect } from "vitest";
 import { REPO_ROOT } from "../../../../scripts/checks/lib/repo.ts";
 
@@ -54,6 +55,38 @@ function runHealthcheck(command: string[], port: number): Promise<number> {
   });
 }
 
+/** The Dockerfile's FROM lines, line continuations joined: the image (after build-arg defaults) and the stage name. */
+function fromLines(): { image: string; stage?: string }[] {
+  const text = readFileSync(join(REPO_ROOT, "Dockerfile"), "utf8").replace(/\\\n\s*/g, " ");
+  const args = new Map([...text.matchAll(/^ARG\s+(\w+)=(\S+)/gm)].map((m) => [m[1]!, m[2]!]));
+  return [...text.matchAll(/^FROM\s+(?:--platform=\S+\s+)?(\S+)(?:\s+AS\s+(\S+))?/gim)].map((m) => ({
+    image: m[1]!.replace(/\$\{(\w+)\}/g, (_all, name: string) => args.get(name) ?? ""),
+    ...(m[2] ? { stage: m[2] } : {})
+  }));
+}
+
+/** Compose files and the devcontainer that name images (Production hardening 1.3, Rule 0668). */
+const PINNED_IMAGE_FILES = [
+  "compose.yaml",
+  "observability/compose.yaml",
+  "observability/grafana/docker-compose.yml",
+  "tests/e2e-stack/compose.yaml",
+  "deploy/staging/compose.yaml",
+  ".devcontainer/Dockerfile"
+];
+
+/** Every image a compose file or the devcontainer names, with the file it is in. */
+function namedImages(): { file: string; image: string }[] {
+  return PINNED_IMAGE_FILES.flatMap((file) => {
+    const text = readFileSync(join(REPO_ROOT, file), "utf8");
+    const pattern = file.endsWith("Dockerfile") ? /^FROM\s+(\S+)/gm : /^\s*image:\s*(\S+)/gm;
+    return [...text.matchAll(pattern)].map((m) => ({ file, image: m[1]! }));
+  });
+}
+
+/** Images Tutors builds itself: tagged by the build, never by a registry digest. */
+const OWN_IMAGE = /^(?:\$\{TUTORS_IMAGE_PREFIX:-tutors\/\}|tutors\/|quay\.io\/tutors-sdk\/)/;
+
 describeFeature(feature, ({ Rule, AfterEachScenario }) => {
   let stage = "";
   const givenStage = () => {
@@ -79,6 +112,78 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
         const cmd = /^CMD\s+(\[.*\])/m.exec(stage);
         expect(cmd, "the runtime stage has an exec-form CMD").not.toBeNull();
         expect((JSON.parse(cmd![1]!) as string[]).join(" ")).toBe(command);
+      });
+    });
+  });
+
+  Rule("Tutors shall build its images on a Node base image pinned by digest, moved only by a Dependabot pull request.", ({ RuleScenario }) => {
+    let froms: { image: string; stage?: string }[] = [];
+    RuleScenario("The Dockerfile's base image is pinned by digest", ({ Given, Then, And }) => {
+      Given("the repository's Dockerfile", () => {
+        froms = fromLines();
+      });
+      Then("every stage that names a registry image names it with a sha256 digest", () => {
+        const stages = new Set(froms.flatMap((f) => (f.stage ? [f.stage] : [])));
+        const images = froms.filter((f) => !stages.has(f.image));
+        expect(images.length, "the Dockerfile names at least one registry image").toBeGreaterThan(0);
+        for (const f of images) expect(f.image, `FROM ${f.image}`).toMatch(/^[\w.-]+(?:\/[\w.-]+)+:[\w.-]+@sha256:[0-9a-f]{64}$/);
+      });
+      And("the base and runtime stages build on the pinned stage unless NODE_IMAGE says otherwise", () => {
+        const pinned = froms.find((f) => /@sha256:/.test(f.image))!.stage;
+        for (const name of ["base", "runtime"]) expect(froms.find((f) => f.stage === name)?.image, `the ${name} stage`).toBe(pinned);
+      });
+    });
+
+    let dependabot: { updates?: { "package-ecosystem": string; directory: string; ignore?: unknown[] }[] } = {};
+    RuleScenario("Dependabot watches the Dockerfile's base image", ({ Given, Then, And }) => {
+      Given("the repository's Dependabot configuration", () => {
+        dependabot = load(readFileSync(join(REPO_ROOT, ".github/dependabot.yml"), "utf8")) as typeof dependabot;
+      });
+      let docker: NonNullable<typeof dependabot.updates>[number] | undefined;
+      Then("it updates the {string} ecosystem in {string}", (_ctx: unknown, ecosystem: string, directory: string) => {
+        docker = dependabot.updates?.find((u) => u["package-ecosystem"] === ecosystem && u.directory === directory);
+        expect(docker, `a ${ecosystem} update in ${directory}`).toBeDefined();
+      });
+      And("it ignores no update to it", () => {
+        // Node patch releases and Debian fixes are what the base image carries: an ignore would let the pin go stale.
+        expect(docker!.ignore ?? []).toEqual([]);
+      });
+    });
+  });
+
+  Rule("Tutors shall pin every third-party image its compose files and devcontainer name by sha256 digest, moved only by a Dependabot pull request.", ({ RuleScenario }) => {
+    let images: { file: string; image: string }[] = [];
+    RuleScenario("The compose files and the devcontainer pin their images by digest", ({ Given, Then, And }) => {
+      Given("the repository's compose files and devcontainer", () => {
+        images = namedImages();
+      });
+      Then("every image they name from a registry carries a sha256 digest", () => {
+        const thirdParty = images.filter((i) => !OWN_IMAGE.test(i.image));
+        expect(thirdParty.length, "the files name at least one third-party image").toBeGreaterThan(0);
+        for (const i of thirdParty) expect(i.image, `${i.file}: ${i.image}`).toMatch(/^[\w.-]+(?:\/[\w.-]+)+:[\w.-]+@sha256:[0-9a-f]{64}$/);
+      });
+      And("only the images Tutors builds itself go unpinned", () => {
+        for (const i of images.filter((i) => !/@sha256:/.test(i.image))) expect(i.image, `${i.file}: ${i.image}`).toMatch(OWN_IMAGE);
+      });
+    });
+
+    type Update = { "package-ecosystem": string; directory?: string; directories?: string[] };
+    let updates: Update[] = [];
+    RuleScenario("Dependabot watches the compose files and the devcontainer", ({ Given, Then, And }) => {
+      Given("the repository's Dependabot configuration", () => {
+        updates = (load(readFileSync(join(REPO_ROOT, ".github/dependabot.yml"), "utf8")) as { updates: Update[] }).updates;
+      });
+      Then("its {string} ecosystem covers every directory that holds a pinned compose file", (_ctx: unknown, ecosystem: string) => {
+        const covered = new Set(updates.filter((u) => u["package-ecosystem"] === ecosystem).flatMap((u) => u.directories ?? (u.directory ? [u.directory] : [])));
+        const dirs = new Set(
+          namedImages()
+            .filter((i) => !i.file.endsWith("Dockerfile") && /@sha256:/.test(i.image))
+            .map((i) => "/" + i.file.split("/").slice(0, -1).join("/"))
+        );
+        for (const dir of dirs) expect(covered, `${ecosystem} covers ${dir}`).toContain(dir);
+      });
+      And("it updates the {string} ecosystem in {string}", (_ctx: unknown, ecosystem: string, directory: string) => {
+        expect(updates.some((u) => u["package-ecosystem"] === ecosystem && (u.directory === directory || u.directories?.includes(directory)))).toBe(true);
       });
     });
   });

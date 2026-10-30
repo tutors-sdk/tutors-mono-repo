@@ -14,7 +14,7 @@
 #   4. open http://localhost:3001  (admin / admin on first login)
 services:
   grafana:
-    image: grafana/grafana:11.3.0
+    image: docker.io/grafana/grafana:11.3.0@sha256:a0f881232a6fb71a0554a47d0fe2203b6888fe77f4cefb7ea62bed7eb54e13c3
     container_name: tutors-grafana
     ports:
       # 3001 on the host to avoid clashing with SvelteKit dev servers on 3000/5173

@@ -1,5 +1,9 @@
-import { assertEquals, assert } from "jsr:@std/assert";
-import { generateCourseFiles, type CourseSpec } from "../src/scaffolder.ts";
+import { assertEquals, assert, assertThrows } from "jsr:@std/assert";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { CourseDirectoryExistsError, generateCourseFiles, writeCourseToFilesystem, type CourseSpec } from "../src/scaffolder.ts";
+import { runCli } from "../src/cli.ts";
 import { LAB_STEP_COUNT, slugify } from "../src/types.ts";
 
 const minimalSpec: CourseSpec = {
@@ -15,7 +19,7 @@ const minimalSpec: CourseSpec = {
   includeEnrollment: false,
   includeGitignore: false,
   includeReadme: false,
-  readmeDescription: "",
+  readmeDescription: ""
 };
 
 Deno.test("generateCourseFiles - minimal spec produces course.md and properties.yaml", () => {
@@ -28,11 +32,7 @@ Deno.test("generateCourseFiles - minimal spec produces course.md and properties.
 Deno.test("generateCourseFiles - creates units on the home page", () => {
   const spec: CourseSpec = { ...minimalSpec, unitCount: 3 };
   const files = generateCourseFiles(spec);
-  const unitDirs = new Set(
-    files
-      .map((f) => f.relativePath.match(/^(unit-\d+)\//)?.[1])
-      .filter((u): u is string => Boolean(u)),
-  );
+  const unitDirs = new Set(files.map((f) => f.relativePath.match(/^(unit-\d+)\//)?.[1]).filter((u): u is string => Boolean(u)));
   assertEquals(unitDirs.size, 3);
 });
 
@@ -125,11 +125,8 @@ Deno.test("course title is preserved verbatim while the folder uses the web-safe
 Deno.test("generateCourseFiles - learning objects carry an icon in frontmatter", () => {
   const spec: CourseSpec = { ...minimalSpec, includeSide: true, includeNotes: true, includeLabs: true };
   const files = generateCourseFiles(spec);
-  const iconBearing = files.filter((f) =>
-    f.relativePath.endsWith("topic-01.md") ||
-    f.relativePath.endsWith("talk-01.md") ||
-    f.relativePath.endsWith("note-01.md") ||
-    f.relativePath.endsWith("00.Setup.md")
+  const iconBearing = files.filter(
+    (f) => f.relativePath.endsWith("topic-01.md") || f.relativePath.endsWith("talk-01.md") || f.relativePath.endsWith("note-01.md") || f.relativePath.endsWith("00.Setup.md")
   );
   assert(iconBearing.length > 0);
   for (const file of iconBearing) {
@@ -162,9 +159,7 @@ Deno.test("generateCourseFiles - enrollment.yaml only when enabled and fully com
   const enr = on.find((f) => f.relativePath === "enrollment.yaml")!;
   assert(enr);
   // Every non-blank line is a comment, so the file is inert until edited.
-  const nonComment = enr.content
-    .split("\n")
-    .filter((line) => line.trim().length > 0 && !line.trim().startsWith("#"));
+  const nonComment = enr.content.split("\n").filter((line) => line.trim().length > 0 && !line.trim().startsWith("#"));
   assertEquals(nonComment, []);
 });
 
@@ -202,7 +197,7 @@ Deno.test("generateCourseFiles - README only when enabled, carrying the typed de
     ...minimalSpec,
     courseName: "Web Fundamentals",
     includeReadme: true,
-    readmeDescription: "An introduction to the modern web stack.",
+    readmeDescription: "An introduction to the modern web stack."
   });
   const readme = on.find((f) => f.relativePath === "README.md")!;
   assert(readme);
@@ -215,7 +210,7 @@ Deno.test("generateCourseFiles - README falls back to placeholder text and names
     ...minimalSpec,
     lecturerName: "Dr. Smith",
     includeReadme: true,
-    readmeDescription: "   ",
+    readmeDescription: "   "
   });
   const readme = files.find((f) => f.relativePath === "README.md")!;
   assert(readme.content.includes("A short description of this course goes here."));
@@ -236,7 +231,7 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     includeEnrollment: true,
     includeGitignore: true,
     includeReadme: true,
-    readmeDescription: "A worked example course.",
+    readmeDescription: "A worked example course."
   };
   const files = generateCourseFiles(spec);
   const paths = files.map((f) => f.relativePath).sort();
@@ -246,7 +241,7 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     ...Array.from({ length: LAB_STEP_COUNT }, (_, i) => {
       const n = String(i + 1).padStart(2, "0");
       return `${topicDir}/book-lab-01/${n}.Step-${n}.md`;
-    }),
+    })
   ];
 
   const expected = [
@@ -271,7 +266,7 @@ Deno.test("generateCourseFiles - full spec generates expected structure", () => 
     "unit-1/topic-02/talk-02/talk-02.md",
     "unit-1/topic-02/talk-02/talk.marp",
     "unit-1/topic-02/note-02/note-02.md",
-    ...labSteps("unit-1/topic-02"),
+    ...labSteps("unit-1/topic-02")
   ].sort();
 
   assertEquals(paths, expected);
@@ -282,4 +277,118 @@ Deno.test("slugify - converts name to URL-safe slug", () => {
   assertEquals(slugify("  Spaces  Everywhere  "), "spaces-everywhere");
   assertEquals(slugify("Special! @Characters# Here"), "special-characters-here");
   assertEquals(slugify("Already-Slugged"), "already-slugged");
+});
+
+// --- writeCourseToFilesystem: never writes over an existing destination (#522) ---
+
+function withTempDir(fn: (dir: string) => void): void {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tutors-create-"));
+  try {
+    fn(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+// Every file under a folder, relative to it, with its bytes.
+function snapshot(dir: string): Record<string, string> {
+  const entries = fs.readdirSync(dir, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
+  return Object.fromEntries(
+    entries.map((e) => {
+      const full = path.join(e.parentPath, e.name);
+      return [path.relative(dir, full), fs.readFileSync(full, "utf-8")];
+    })
+  );
+}
+
+Deno.test("writeCourseToFilesystem - writes the generated course into a fresh destination", () => {
+  withTempDir((dir) => {
+    const out = path.join(dir, "nested", "out");
+    writeCourseToFilesystem(minimalSpec, out);
+    const written = Object.keys(snapshot(path.join(out, minimalSpec.courseId))).sort();
+    assertEquals(
+      written,
+      generateCourseFiles(minimalSpec)
+        .map((f) => f.relativePath)
+        .sort()
+    );
+  });
+});
+
+Deno.test("writeCourseToFilesystem - refuses an existing course and leaves it byte-for-byte unchanged", () => {
+  withTempDir((dir) => {
+    writeCourseToFilesystem(minimalSpec, dir);
+    const courseDir = path.join(dir, minimalSpec.courseId);
+    fs.writeFileSync(path.join(courseDir, "course.md"), "# Author text");
+    fs.writeFileSync(path.join(courseDir, "unit-1", "topic-01", "topic-01.md"), "Author topic");
+    const before = snapshot(courseDir);
+
+    const error = assertThrows(() => writeCourseToFilesystem({ ...minimalSpec, includeReadme: true }, dir), CourseDirectoryExistsError);
+    assertEquals(error.courseDir, courseDir);
+    assertEquals(snapshot(courseDir), before);
+  });
+});
+
+Deno.test("writeCourseToFilesystem - refuses a regular file at the destination", () => {
+  withTempDir((dir) => {
+    const dest = path.join(dir, minimalSpec.courseId);
+    fs.writeFileSync(dest, "notes");
+    assertThrows(() => writeCourseToFilesystem(minimalSpec, dir), CourseDirectoryExistsError);
+    assertEquals(fs.readFileSync(dest, "utf-8"), "notes");
+  });
+});
+
+Deno.test("writeCourseToFilesystem - refuses a symlink at the destination, live or dangling", () => {
+  withTempDir((dir) => {
+    const target = path.join(dir, "elsewhere");
+    fs.mkdirSync(target);
+    fs.writeFileSync(path.join(target, "course.md"), "linked work");
+    const dest = path.join(dir, minimalSpec.courseId);
+    fs.symlinkSync(target, dest, "dir");
+    assertThrows(() => writeCourseToFilesystem(minimalSpec, dir), CourseDirectoryExistsError);
+    assertEquals(snapshot(target), { "course.md": "linked work" });
+
+    fs.unlinkSync(dest);
+    fs.symlinkSync(path.join(dir, "missing"), dest, "dir");
+    assertThrows(() => writeCourseToFilesystem(minimalSpec, dir), CourseDirectoryExistsError);
+    assert(!fs.existsSync(path.join(dir, "missing")));
+  });
+});
+
+Deno.test("writeCourseToFilesystem - a destination claimed by a competing run is not written into", () => {
+  withTempDir((dir) => {
+    // The competing run has made the folder but not yet written its files.
+    const dest = path.join(dir, minimalSpec.courseId);
+    fs.mkdirSync(dest);
+    assertThrows(() => writeCourseToFilesystem(minimalSpec, dir), CourseDirectoryExistsError);
+    assertEquals(fs.readdirSync(dest), []);
+  });
+});
+
+Deno.test("runCli - reports an existing destination, skips the next steps and exits unsuccessfully", () => {
+  withTempDir((dir) => {
+    writeCourseToFilesystem(minimalSpec, dir);
+    const before = snapshot(path.join(dir, minimalSpec.courseId));
+    let stdout = "";
+    let stderr = "";
+    const originalPrompt = globalThis.prompt;
+    const originalOut = process.stdout.write;
+    const originalErr = process.stderr.write;
+    let asked = 0;
+    globalThis.prompt = () => (asked++ === 0 ? minimalSpec.courseName : null);
+    process.stdout.write = ((chunk: string) => ((stdout += chunk), true)) as typeof process.stdout.write;
+    process.stderr.write = ((chunk: string) => ((stderr += chunk), true)) as typeof process.stderr.write;
+    try {
+      runCli(dir);
+      assertEquals(process.exitCode, 1);
+    } finally {
+      globalThis.prompt = originalPrompt;
+      process.stdout.write = originalOut;
+      process.stderr.write = originalErr;
+      process.exitCode = 0;
+    }
+    assert(stderr.includes(`${path.join(dir, minimalSpec.courseId)} already exists`), stderr);
+    assert(!stdout.includes("Next steps:"), stdout);
+    assertEquals(snapshot(path.join(dir, minimalSpec.courseId)), before);
+  });
 });

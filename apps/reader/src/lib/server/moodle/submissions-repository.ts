@@ -7,7 +7,7 @@ import { now } from "@tutors/runtime";
 import type { MoodleAssignSubmission, MoodleModule } from "#lib/server/moodle/moodle-client.ts";
 import { serviceSupabase } from "#lib/server/supabase-service.ts";
 
-export interface AssignmentRow {
+interface AssignmentRow {
   courseid: string;
   id: number;
   name: string | null;
@@ -56,7 +56,7 @@ export async function upsertAssignments(
   }
 }
 
-export interface SubmissionRow {
+interface SubmissionRow {
   id: number;
   assignmentId: number;
   external_userid: number;

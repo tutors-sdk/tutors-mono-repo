@@ -3,14 +3,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 const logs = vi.hoisted(() => ({ error: vi.fn(), request: vi.fn() }));
 vi.mock("$app/env", () => ({ building: true }));
 vi.mock("$app/env/private", () => ({ PRIVATE_AUTH_SECRET: undefined, PRIVATE_AUTH_GITHUB_ID: undefined, PRIVATE_AUTH_GITHUB_SECRET: undefined }));
-vi.mock("$app/env/public", () => ({ PUBLIC_ANON_MODE: undefined, PUBLIC_SUPABASE_URL: undefined, PUBLIC_SUPABASE_ANON_KEY: undefined }));
+vi.mock("$app/env/public", () => ({ PUBLIC_READER_URL: undefined, PUBLIC_ANON_MODE: undefined, PUBLIC_SUPABASE_URL: undefined, PUBLIC_SUPABASE_ANON_KEY: undefined }));
 vi.mock("@tutors/logger", () => ({
   default: { error: logs.error }, logRequestError: logs.request,
   setAppName: vi.fn(), addTransport: vi.fn(), createRequestLogger: vi.fn(),
   installProcessLogging: vi.fn(), logServiceStart: vi.fn()
 }));
 vi.mock("../../../packages/svelte/community/src/utils/error-transport.ts", () => ({ createSupabaseErrorTransport: vi.fn() }));
-vi.mock("@tutors/tutors-time-lib", () => ({ initSupabase: vi.fn() }));
+vi.mock("@tutors/tutors-time-lib", () => ({ initSupabase: vi.fn(), readerTimeSource: vi.fn(), withoutTrailingSlashes: (url: string) => url, setTutorsTimeSource: vi.fn() }));
 vi.mock("../../../packages/svelte/course/src/course/index.ts", () => ({ setCourseNotFoundHandler: vi.fn(), setCourseUnreachableHandler: vi.fn(), setCourseTimedOutHandler: vi.fn() }));
 vi.mock("../../../packages/svelte/utils/i18n/src/index.ts", () => ({ initLocaleFromCookie: vi.fn() }));
 vi.mock("../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index.js", () => ({ sequence: vi.fn() }));

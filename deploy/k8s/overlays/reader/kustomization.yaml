@@ -27,6 +27,17 @@ patches:
       - op: replace
         path: /data/TUTORS_ORIGIN
         value: "https://reader.tutors.dev"
+      # The time dashboard reads /api/time with the reader's session cookie.
+      - op: add
+        path: /data/PRIVATE_API_ALLOWED_ORIGINS
+        value: "https://time.tutors.dev"
+      # Logins that are educators of every course, and extra course hosts; usually empty.
+      - op: add
+        path: /data/PRIVATE_TUTORS_ADMINS
+        value: ""
+      - op: add
+        path: /data/PRIVATE_COURSE_HOSTS
+        value: ""
       # Moodle sync. MOODLE_WS_TOKEN is a secret: see secrets.yaml.example.
       - op: add
         path: /data/MOODLE_WS_URL

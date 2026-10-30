@@ -6,6 +6,8 @@ export * from "./utils/index.ts";
 
 // Re-export services
 export { getSupabase, initSupabase } from "./services/supabase.ts";
+export { readerTimeSource, supabaseTimeSource, setTutorsTimeSource, getTutorsTimeSource, TutorsTimeSourceError, withoutTrailingSlashes } from "./services/source.ts";
+export type { TutorsTimeSource, TutorsTimeRows } from "./services/source.ts";
 export { BaseCalendarModel } from "./services/base-calendar-model.ts";
 export type { CalendarTable, CalendarMedianTable } from "./services/base-calendar-model.ts";
 export { BaseLabModel } from "./services/base-lab-model.ts";

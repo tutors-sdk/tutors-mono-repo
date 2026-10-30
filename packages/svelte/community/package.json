@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
+    "@tutors/data-api": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/realtime": "workspace:*",
     "@tutors/realtime-supabase": "workspace:*",

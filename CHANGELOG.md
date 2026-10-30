@@ -19,6 +19,31 @@
 
 ## Reader (`tutors-reader`)
 
+### Unreleased
+
+#### Fixes
+
+- Database: `whiteboard_scenes` is created by a migration (`20261017000000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)
+- Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #320)
+- Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #320)
+- Database: the contract step that revokes anonymous access to personal student rows, assignment rows, content-lock writes and student-counter RPCs is written (`supabase/contracts/revoke_anon_student_data.sql`) but ships in the next release, once no pod of this one's predecessors is left. `pnpm check:migrations` now refuses a contract step in the same release as its expand (`-- contract-for:` header) (PR #320)
+- Course reader: a tab keeps one activity heartbeat however often the course pages open, and leaving the course pages stops it. Each entry to the course pages used to start another 30-second heartbeat that leaving never stopped, so activity time was over-counted and every extra heartbeat made its own database write (Rules 0649, 0650) (network, persistence) (PR #530)
+- Course addresses are normalized once: a bare id, a Netlify host name and a full `https://` URL all fetch the same `tutors.json` exactly once and share one cache entry. A full URL used to be requested as `https://https://…` and fail. Each course is also fetched and linked over the protocol of its own address, so opening a localhost course no longer leaves later hosted courses loading over http (#528, Rules 0659, 0660) (network, dom) (PR #533)
+- Content locks: a lock change the server does not save is rolled back on the educator's screen and reported as not saved, instead of being shown as in force while students still see the previous setting. A reader with no lock database keeps the change in that browser and says so; a change still waiting for the server cannot be toggled again; and an answer that arrives after the educator has moved to another course no longer alters the course now on screen (#527, Rules 0630, 0631, 0632, 0657, 0658) (dom, persistence) (PR #535)
+
+#### Security
+
+- Browser packages reach personal data only through the new `@tutors/data-api` package; CI refuses a database-client import in browser code and any browser write outside the data API (PR #327)
+
+- Background data responses do not refresh session cookies, so a delayed response cannot undo logout or restore the previous account after a switch (network) (PR #320)
+- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the verified Better Auth identity and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0071, 0072) (network, persistence) (PR #320)
+- Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
+- My time: a student sees their own time and their classmates under pseudonyms, with no classmate's name or avatar (Rule 0066). The pseudonyms are random and new on every answer, so they cannot be linked from one request to the next (Rule 0075) (network) (PR #320)
+- Content locks and time data: when a course's host cannot be read, the reader decides from the educators it read within the last hour (Rule 0074), and without such a copy answers 503 instead of treating an educator as a student (Rule 0073) (network) (PR #320)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; personal rooms have their own namespace, so no shared room id can name one, and no longer use public Realtime channels; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320, PR #328)
+- Marp talks: a slide's HTML is sanitized before it is shown, so a course author's markdown can no longer run script in the reader's origin. Event handler attributes, scripts, `javascript:` URLs (in links, images and SVG), `object`, `embed`, `meta` refresh and iframe `srcdoc` are removed; headings, images, links, highlighted code, math, Mermaid diagrams and split backgrounds are unchanged. Sanitization was dropped from Marp rendering in v16.0.2 because DOMPurify empties a slide by discarding everything inside its SVG `foreignObject`; each `<section>` is now sanitized on its own and Marp's SVG stage rebuilt around it (#521, Rules 0645, 0646) (dom) (PR #537)
+
+  Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. Apply the anon-access revocation after the new pods are serving traffic.
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes
@@ -285,6 +310,10 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### Unreleased
+
+- The student count comes from `get_student_count()`, which returns the number without reading any student's profile (Rule 0070) (network) (PR #320)
+- The catalogue no longer deletes courses from the browser; the unused `pruneCatalogue` and `deleteCourses` are removed (PR #320)
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes
@@ -321,6 +350,12 @@
 
 ## Time (`tutors-time`)
 
+### Unreleased
+
+- Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067). The reader logs each read with the course and the viewer's role (network, dom, screenshot, logs) (PR #320)
+
+  Deploy Time with `PUBLIC_READER_URL` set to the reader people sign in at; the reader holds `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`.
+- The reporting period an instructor picks is part of the address (`?start=YYYY-MM-DD&end=YYYY-MM-DD`, both inclusive, either optional), so every total covers those days and no others. Sidebar links, student drill-downs, the breadcrumb, the raw tables and the `/<course>`, `/calendar` and `/lab` redirects all keep it, and so do reload and back/forward. The header names the period. A date that is not a calendar date, or a start after the end, is a 400 page saying so rather than a silently wider report. (#526, Rules 0655, 0656) (dom, network) (PR #534)
 ### v17.0.0 (2026-10)
 
 #### Breaking Changes
@@ -369,6 +404,10 @@
 
 Cross-cutting changes that land in every application at once, rather than in
 any single one. Versioned with the monorepo.
+
+### Unreleased
+
+- Every image is built from the Node base image pinned by digest instead of the floating `node:22-bookworm-slim` tag, which moved node 22.23.3 to 22.23.4 under an unchanged commit; Dependabot bumps the digest in its own pull request (Rule 0667) (image-manifest, sbom) (PR #541)
 
 ### v17.0.0 (2026-10)
 
@@ -491,9 +530,13 @@ Rules can be traced to the work that introduced them.
 
 ### Unreleased
 
+- `time`: a pluggable data source. `readerTimeSource(readerUrl)` reads a course's rows from the Tutors reader with the viewer's session; `supabaseTimeSource()` (the default) keeps reading the tables. New exports `setTutorsTimeSource`, `getTutorsTimeSource`, `TutorsTimeSourceError`; `getStudentDisplayInfo` takes the course id and no longer returns an email address
 - `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
 - `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
 - `tutors-lite`: note pages no longer render a stray `s` after the note card
+- `gen-lib` (`tutors`, `tutors-lite`): a folder whose name starts with no learning-object kind inside a topic or unit (`topic-1/drafts`) is no longer published as a learning object of its parent's kind; its files are still copied as assets (#424, Rule 0268)
+- `tutors-lite`: a build that does not produce a course ends unsuccessfully. A folder with no `course.md` reports it on stderr and exits nonzero, and a failed static generation exits nonzero without copying the course's assets, saying on stderr that `html/` is incomplete. Both used to print to stdout and exit 0, so a publishing script read a failed build as a success. The partial `html/` is left where it is (#529, Rules 0661, 0662) (none) (PR #536)
+- `tutors-create`: the course creator refuses to scaffold over a destination that already exists — a folder, a regular file, or a symlink, even a dangling one. It writes nothing, names the conflicting path on stderr, prints no publishing steps and exits unsuccessfully; previously it overwrote an author's edited course with template text and reported success (#522, Rules 0647, 0648) (PR #531)
 
 ### v5.3.0 (2026-09)
 

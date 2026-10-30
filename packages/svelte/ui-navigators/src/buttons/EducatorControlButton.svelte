@@ -1,11 +1,12 @@
 <script lang="ts">
   import { currentCourse, contentLocks } from "@tutors/runes";
-  import { rbacService } from "@tutors/rbac";
+  import { rbacService, SHOW_LOCKED_KEY } from "@tutors/rbac";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import { t } from "@tutors/i18n";
   import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
   import type { Lo, Composite } from "@tutors/tutors-model-lib";
+  import { reportLockChange } from "./lock-change";
 
   // Administration only: the course summary is its own Course Info row in the same menu, so this
   // panel no longer carries a copy of it and opens on Content Locks. Mount it for educators only -
@@ -112,7 +113,8 @@
             aria-label={t("lecturer.locks.showToStudents")}
             name="show-locked-to-students"
             checked={rbacService.showLockedToStudents()}
-            onCheckedChange={(details) => rbacService.setShowLockedToStudents(details.checked)}
+            disabled={rbacService.isLockPending(SHOW_LOCKED_KEY)}
+            onCheckedChange={(details) => reportLockChange(rbacService.setShowLockedToStudents(details.checked))}
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -120,6 +122,7 @@
             <Switch.HiddenInput />
           </Switch>
         </div>
+        {#if rbacService.locksSavedLocally}<p role="status" class="ui-muted info-text">{t("lecturer.locks.localOnly")}</p>{/if}
         {#if lockGroups.length === 0 || lockGroups.every((g) => g.los.length === 0)}
           <p class="ui-muted info-text">{t("lecturer.locks.empty")}</p>
         {:else}
@@ -137,7 +140,8 @@
                   aria-label={`Lock ${lo.title}`}
                   name="lock-{lo.route}"
                   checked={contentLocks.value.get(lo.route) ?? false}
-                  onCheckedChange={(details) => rbacService.toggleContentLock(lo.route, details.checked)}
+                  disabled={rbacService.isLockPending(lo.route)}
+                  onCheckedChange={(details) => reportLockChange(rbacService.toggleContentLock(lo.route, details.checked))}
                 >
                   <Switch.Control>
                     <Switch.Thumb />

@@ -111,7 +111,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 
 ### Key Principles
 
-1. **Bottom-Up Dependencies**: Lower layers never depend on higher layers
+1. **Bottom-Up Dependencies**: Lower layers never depend on higher layers. `pnpm test:runway` fails on any new upward import; the ones that predate the rule are listed in `tests/architecture/known-violations.txt`, which may only shrink
 2. **Package Isolation**: Each package has clear boundaries and responsibilities
 3. **Shared Types**: JSR packages provide TypeScript types used across the ecosystem
 4. **Runtime Compatibility**: JSR packages work in both Deno and Node.js
@@ -593,7 +593,9 @@ deno run -A packages/jsr/tutors-lite/main.ts
 ```
 packages/jsr/tutors-lite/
 ├── deno.json              # JSR package configuration
-└── main.ts                # CLI entry point
+├── main.ts                # CLI entry point; sets the exit status runTutorsLite returns
+├── src/run.ts             # runTutorsLite: build html/, exit 1 on missing course.md or failed generation
+└── test/                  # Deno tests of the CLI exit status (CI job cli-tests)
 ```
 
 ### JSR Publishing Workflow
@@ -692,7 +694,7 @@ The Svelte subsystem provides **reactive UI components**, **services**, and **st
 - `connect` - Authentication
 
 **UI (Layer 4)**:
-- `ui-primitives` - Primitive UI components and shared components (Icon, Menu, Sidebar, Image, LoContextTree, StudentCard)
+- `ui-primitives` - Primitive UI components and shared components (Icon, Menu, Sidebar, Image, LoContextTreeView, StudentCard)
 - `ui-navigators` - Navigation components (MainNavigator, SecondaryNavigator, Footer, TutorsShell, buttons, layout switchers)
 - `ui-components` - Domain UI components (learning objects, time views) + pre-compiled CSS
 
@@ -996,7 +998,7 @@ packages/svelte/connect/src/
 - **SetuIcon / TutorsIcon** - Branding icons
 
 **Shared Components**:
-- **LoContextTree** - Learning object context tree display
+- **LoContextTreeView** - Learning object context tree display; the caller passes `isVisible`, so the primitive never reads lock state
 - **LoReference** - Learning object reference display
 - **StudentCard** - Student information card
 
@@ -1019,7 +1021,7 @@ packages/svelte/ui-primitives/src/
 │   ├── Sidebar.svelte
 │   ├── SetuIcon.svelte
 │   ├── TutorsIcon.svelte
-│   ├── LoContextTree.svelte
+│   ├── LoContextTreeView.svelte
 │   ├── LoReference.svelte
 │   └── StudentCard.svelte
 └── utils/
@@ -1042,6 +1044,7 @@ This package sits between `ui-primitives` and `ui-components` in the dependency 
 - **LayoutMenu** - Layout switching menu
 - **Calendar** - Calendar view component
 - **CourseContext** - Course context display
+- **LoContextTree** - Loads content locks through `@tutors/rbac` and tells `LoContextTreeView` which learning objects to show
 
 #### Subdirectories
 
@@ -1062,6 +1065,7 @@ packages/svelte/ui-navigators/src/
 ├── LayoutMenu.svelte
 ├── Calendar.svelte
 ├── CourseContext.svelte
+├── LoContextTree.svelte
 ├── buttons/
 ├── footers/
 ├── layout/
@@ -1233,6 +1237,7 @@ PRIVATE_AUTH_SECRET=...
 - `/[courseid]/lab` — Lab views (by step, by lab, learning records)
 - `/[courseid]/[studentid]` — Individual student calendar view
 - `/[courseid]/assignments` — Moodle assignment data
+- Every course route takes an optional reporting period, `?start=YYYY-MM-DD&end=YYYY-MM-DD` (inclusive, either bound optional), read and validated by `src/lib/dateRange.ts`; navigation, drill-down links and redirects keep it, and a malformed or reversed period is a 400
 
 **Notes**:
 - Runs with `ssr = false` — all rendering is client-side (Supabase client is browser-only)
