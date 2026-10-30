@@ -1,4 +1,11 @@
 {
   "$comment": "Advisories accepted for a limited time (runway tier M). Each needs a reason and an expiry; an expired entry fails the nightly audit and warns on PRs. Check with: pnpm check:audit",
-  "allowances": []
+  "allowances": [
+    {
+      "id": "GHSA-gcqx-w48m-w2h4",
+      "package": "deepmerge",
+      "reason": "No fixed release exists (4.3.1 is the latest and is affected). Reached only through @sveltejs/vite-plugin-svelte, which merges the build's own Svelte config at build time; no request or user input reaches mergeObject(). Low severity. Drop this when deepmerge or vite-plugin-svelte ships a fix.",
+      "expires": "2027-01-31"
+    }
+  ]
 }
