@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "011b8c6b5d3f86a68da99b0fca399336ab9f2c75",
+  "commit": "f8156faaa81484536682c7bf8f03f0d0ebd757a1",
   "base": "432d46864626ce14e07eb7715e0408c643ca906a",
-  "generatedAt": "2026-10-29T10:49:44Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40852085706",
+  "generatedAt": "2026-10-30T02:25:05Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/40986122065",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -25,7 +25,7 @@
     },
     {
       "name": "@tutors/course",
-      "mutationScore": 67.12,
+      "mutationScore": 70.1,
       "changed": true,
       "path": "packages/svelte/course"
     },
@@ -73,7 +73,7 @@
     },
     {
       "name": "@tutors/rbac",
-      "mutationScore": 70.08,
+      "mutationScore": 80.59,
       "changed": true,
       "path": "packages/svelte/utils/rbac"
     },
@@ -127,7 +127,7 @@
     },
     {
       "name": "@tutors/tutors-time-lib",
-      "mutationScore": 89.75,
+      "mutationScore": 93.07,
       "changed": true,
       "path": "packages/jsr/time"
     },
@@ -139,19 +139,19 @@
     },
     {
       "name": "@tutors/ui-components",
-      "mutationScore": 75,
+      "mutationScore": 95.56,
       "changed": true,
       "path": "packages/svelte/ui-components"
     },
     {
       "name": "@tutors/ui-navigators",
-      "mutationScore": 55.11,
+      "mutationScore": 56.09,
       "changed": true,
       "path": "packages/svelte/ui-navigators"
     },
     {
       "name": "@tutors/ui-primitives",
-      "mutationScore": 1.43,
+      "mutationScore": 29.73,
       "changed": true,
       "path": "packages/svelte/ui-primitives"
     },
@@ -163,7 +163,7 @@
     },
     {
       "name": "packages/jsr/gen/src/services/course-emitter.ts",
-      "mutationScore": 0,
+      "mutationScore": 16.05,
       "changed": false,
       "path": "packages/jsr/gen/src/services/course-emitter.ts"
     },
@@ -187,13 +187,13 @@
     },
     {
       "name": "packages/jsr/gen/src/templates/template-downloader.ts",
-      "mutationScore": 0,
+      "mutationScore": 21.74,
       "changed": false,
       "path": "packages/jsr/gen/src/templates/template-downloader.ts"
     },
     {
       "name": "packages/jsr/gen/src/templates/template-engine.ts",
-      "mutationScore": 0,
+      "mutationScore": 100,
       "changed": false,
       "path": "packages/jsr/gen/src/templates/template-engine.ts"
     },
@@ -205,13 +205,13 @@
     },
     {
       "name": "packages/jsr/gen/src/tutors.ts",
-      "mutationScore": 25,
+      "mutationScore": 65,
       "changed": false,
       "path": "packages/jsr/gen/src/tutors.ts"
     },
     {
       "name": "packages/jsr/gen/src/utils/file-utils.ts",
-      "mutationScore": 55.91,
+      "mutationScore": 66.93,
       "changed": false,
       "path": "packages/jsr/gen/src/utils/file-utils.ts"
     },
@@ -232,6 +232,12 @@
       "mutationScore": 100,
       "changed": false,
       "path": "packages/jsr/gen/src/utils/netlify.ts"
+    },
+    {
+      "name": "packages/jsr/tutors-lite/src/run.ts",
+      "mutationScore": 100,
+      "changed": false,
+      "path": "packages/jsr/tutors-lite/src/run.ts"
     }
   ],
   "nightly": {
