@@ -16,7 +16,7 @@
     "./utils/health-check": "./src/utils/health-check.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.1",
+    "@supabase/supabase-js": "^2.118.0",
     "@tutors/data-api": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/realtime": "workspace:*",

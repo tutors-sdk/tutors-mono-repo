@@ -12,6 +12,6 @@
     "@tutors/realtime": "workspace:*"
   },
   "peerDependencies": {
-    "@supabase/supabase-js": "^2.117.1"
+    "@supabase/supabase-js": "^2.118.0"
   }
 }

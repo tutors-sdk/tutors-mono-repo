@@ -30,7 +30,7 @@ test("Course home leads to the first topic", { tag: "@rule-0021" }, async ({ pag
   await expect(page.locator(".shell-header h1")).toHaveText("Reference Course");
   await expect(page.locator(".shell-header .brand")).toHaveCount(0);
   await expect(page.locator(".composite-heading")).toHaveCount(0);
-  await expect(page.locator(".shell-header").getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
+  await expect(page.locator(".shell-header").getByRole("button", { name: "View Calendar for this course" })).toHaveCount(0);
   await expect(page.locator(".shell-navigation .calendar-week")).toContainText("This week");
   await expect(page.locator(".main-group .ui-section-heading")).toHaveText("Course topics");
   // The course page reaches its first topic through the topic card itself; there is no separate
@@ -94,7 +94,7 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
     for (const width of [320, 390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       await expect(header.locator('[data-tour="course-title"]')).toBeVisible();
-      await expect(header.getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
+      await expect(header.getByRole("button", { name: "View Calendar for this course" })).toHaveCount(0);
       expect(await header.evaluate(el => el.scrollWidth <= el.clientWidth), `${theme} ${width}px header fits`).toBe(true);
       const tree = header.getByRole("button", { name: "Open course tree", exact: true });
       await expect(tree).toHaveText("");
@@ -111,7 +111,7 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   await menu.click();
   const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
   await expect(navigation.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
-  await expect(navigation.getByRole("button", { name: "View Calendar for this course", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "View Calendar for this course" })).toBeVisible();
   await expect(navigation.locator(".calendar-week")).toContainText("This week");
   await expect.poll(() => navigation.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");
