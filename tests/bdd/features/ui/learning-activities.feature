@@ -95,9 +95,12 @@ Feature: Quizzes, notebooks and slides
       Then the deck still shows slide 2
 
   @rule-0285 @ears-event-driven
-  Rule: When a student switches a talk's PDF reader back to Adobe, the reader shall show the talk in Adobe's viewer again.
+  Rule: When a student switches a talk's PDF reader back to Adobe, the reader shall show the talk again in the Adobe viewer it already rendered, without asking Adobe to render it a second time.
 
     Scenario: Switching from the browser reader back to Adobe shows the talk again
       Given a student is reading a talk in Adobe's viewer
-      When the student switches the PDF reader to "Browser reader" and back to "Adobe"
-      Then Adobe's viewer shows the talk in a container it has not rendered into before
+      When the student switches the PDF reader to "Browser reader"
+      Then Adobe's viewer is hidden while the browser reader shows the talk
+      When the student switches the PDF reader back to "Adobe"
+      Then Adobe's viewer shows the talk again
+      And Adobe was asked to render the talk only once
