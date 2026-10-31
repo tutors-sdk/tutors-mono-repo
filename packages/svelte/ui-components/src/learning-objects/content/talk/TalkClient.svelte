@@ -17,9 +17,10 @@
   const showAdobe = $derived(!isMarp && !useMozilla);
   // Once Adobe's viewer has rendered a talk it stays mounted, hidden while the browser reader is in
   // use, so switching back shows it again without asking Adobe to render a second time (issue 374).
-  let keepAdobe = $state(false);
+  // It is kept for that talk only: moving to another talk in the browser reader lets it go.
+  let keptPdf = $state<string | null>(null);
   function chooseReader(reader: string) {
-    if (showAdobe) keepAdobe = true;
+    if (showAdobe) keptPdf = lo.pdf;
     readerOverride = reader;
   }
 </script>
@@ -56,7 +57,7 @@
     <p role="status" class="ui-muted">Loading presentation…</p>
   </div>
 {/if}
-{#if !isMarp && (showAdobe || keepAdobe)}
+{#if !isMarp && (showAdobe || keptPdf === lo.pdf)}
   <div hidden={!showAdobe}>
     <TalkAdobe {lo} {orientation} />
   </div>
