@@ -49,3 +49,12 @@ Feature: Theme Customisation
       When a fenced "typescript" code block is rendered with the code style "monokai"
       Then the highlighter shall be asked for the language "typescript" in the theme "monokai"
       And the rendered HTML shall contain the highlighter's output
+
+  @rule-0679 @ears-ubiquitous
+  Rule: Tutors shall load the Tutors theme stylesheets in every app through one shared index stylesheet.
+
+    Scenario: Each app imports the shared theme index
+      Given the stylesheets of the reader, catalogue, live and time apps
+      Then each stylesheet shall import "@tutors/themes/styles/index.css" once
+      And no stylesheet shall import a Tutors theme stylesheet such as "classic.css" on its own
+      And the shared index stylesheet shall declare every theme the theme menu offers

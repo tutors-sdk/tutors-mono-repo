@@ -7,12 +7,7 @@
 @import "@skeletonlabs/skeleton/themes/cerberus";
 @import "@skeletonlabs/skeleton/themes/terminus";
 @import "@skeletonlabs/skeleton/themes/rose";
-@import "@tutors/themes/styles/tutors.css";
-@import "@tutors/themes/styles/classic.css";
-@import "@tutors/themes/styles/dyslexia.css";
-@import "@tutors/themes/styles/easter.css";
-@import "@tutors/themes/styles/prose-headings.css";
-@import "@tutors/themes/styles/reduced-motion.css";
+@import "@tutors/themes/styles/index.css";
 @import "@tutors/ui-components/styles.css";
 
 @source "../../../packages/svelte/ui-navigators/src/**/*.svelte";
