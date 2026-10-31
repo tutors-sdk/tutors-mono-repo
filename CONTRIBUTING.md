@@ -42,8 +42,8 @@ Before starting work on a significant change, please open an issue or comment on
 
 ### Prerequisites
 
-- Node.js >= 22.17.0 (the `engines` field in `package.json` is the source of truth; `.nvmrc` pins the version CI uses)
-- pnpm 11.24.0, the version `packageManager` in `package.json` pins. `corepack enable` (bundled with Node 22) installs it; an older global pnpm may refuse to install the workspace
+- Node.js >= 26.13.0 (the `engines` field in `package.json` is the source of truth; `.nvmrc` pins the version CI uses)
+- pnpm 11.24.0, the version `packageManager` in `package.json` pins. install it directly with npm as shown below; an older global pnpm may refuse to install the workspace
 - Git
 - `kubectl` or `kustomize` on your `PATH`. Three platform conformance tests in `pnpm test` render the overlays in `deploy/k8s` and fail without one ("Install kustomize or kubectl")
 - [Deno](https://deno.com/) at the version in `.dvmrc`, only if you work in `packages/jsr/` or want to generate a course
@@ -53,7 +53,7 @@ Before starting work on a significant change, please open an issue or comment on
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
-corepack enable
+npm install --global "$(node -p "require('./package.json').packageManager")"
 pnpm install
 cp .env.example .env
 pnpm dev

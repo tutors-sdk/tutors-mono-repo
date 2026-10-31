@@ -408,6 +408,7 @@ any single one. Versioned with the monorepo.
 
 ### Unreleased
 
+- Development, CI, Netlify and container images use Node.js 26.13.0 LTS instead of Node 22; install the pinned pnpm version directly with npm because Node 26 no longer bundles Corepack. The devcontainer installs the same Node 26.13.0 release and Prometheus moves from 3.5.0 to 3.15.1 (runtime, image-manifest, sbom)
 - Every image is built from the Node base image pinned by digest instead of the floating `node:22-bookworm-slim` tag, which moved node 22.23.3 to 22.23.4 under an unchanged commit; Dependabot bumps the digest in its own pull request (Rule 0667) (image-manifest, sbom) (PR #541)
 
 ### v17.0.0 (2026-10)

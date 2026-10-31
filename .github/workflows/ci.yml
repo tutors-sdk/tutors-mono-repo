@@ -207,6 +207,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build devcontainer and check its Node version
+        run: |
+          docker build -t tutors-devcontainer:ci .devcontainer
+          test "$(docker run --rm tutors-devcontainer:ci node -p process.versions.node)" = "$(cat .nvmrc)"
+
       - name: Build fixture image
         run: docker build -t tutors-smoke-fixture tests/conformance/fixtures/faulty-image
 

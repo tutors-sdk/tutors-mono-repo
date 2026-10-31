@@ -3,7 +3,7 @@
   command = "pnpm install --frozen-lockfile && pnpm --filter tutors-reader... build"
 
 [build.environment]
-  NODE_VERSION = "22"
+  NODE_VERSION = "26.13.0"
 
 [[headers]]
   for = "/*"
