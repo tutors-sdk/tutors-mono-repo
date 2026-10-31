@@ -211,11 +211,13 @@ test("Switching from the browser reader back to Adobe shows the talk again", { t
   await expect(reader).toHaveValue("adobe");
   await expect(adobe).toContainText("Adobe viewer: https://adobe-talk-course.netlify.app/topic-01-typical/unit-1/talk-1/talk.pdf");
   await reader.selectOption("mozilla");
-  await expect(adobe).toHaveCount(0);
+  // Adobe's viewer stays mounted but hidden while the browser reader is in use (issue 374).
+  await expect(adobe).toBeHidden();
+  await expect(page.locator("section.media-viewer")).toBeVisible();
   await reader.selectOption("adobe");
+  await expect(adobe).toBeVisible();
   await expect(adobe).toContainText("Adobe viewer: https://adobe-talk-course.netlify.app/topic-01-typical/unit-1/talk-1/talk.pdf");
   const containers = await page.evaluate(() => (window as unknown as { __adobeContainers: string[] }).__adobeContainers);
-  expect(containers).toHaveLength(2);
-  expect(containers[1]).not.toBe(containers[0]);
-  expect(await adobe.getAttribute("id")).toBe(containers[1]);
+  expect(containers).toHaveLength(1);
+  expect(await adobe.getAttribute("id")).toBe(containers[0]);
 });
