@@ -62,7 +62,7 @@ x-signed-in-hosts: &signed-in-hosts
   - "harness-public.netlify.app:172.30.0.10"
 
 x-stub: &stub
-  image: docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
+  image: docker.io/library/node:26.13.0-bookworm-slim@sha256:bc0a2afd3b74ce12222fc8bab99271e66257f021078f5f4a5d687a77d280c1d9
   init: true
   read_only: true
   user: "1001:0"
@@ -110,7 +110,7 @@ services:
       - "${READER_UNCONFIGURED_PORT:-3005}:3005"
 
   course: &course
-    image: docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
+    image: docker.io/library/node:26.13.0-bookworm-slim@sha256:bc0a2afd3b74ce12222fc8bab99271e66257f021078f5f4a5d687a77d280c1d9
     init: true
     read_only: true
     user: "1001:0"

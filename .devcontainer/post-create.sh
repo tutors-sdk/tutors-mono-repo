@@ -3,10 +3,8 @@
 set -euo pipefail
 
 # pnpm at the exact version pinned in package.json ("packageManager").
-# The container runs as the non-root "node" user; enabling corepack writes
-# shims into /usr/local/bin, so it needs sudo. Installing pnpm itself does not.
-sudo corepack enable
-corepack install
+# The container runs as the non-root "node" user; the global install needs sudo.
+sudo npm install --global "$(node -p "require('./package.json').packageManager")"
 
 pnpm install --frozen-lockfile
 

@@ -20,7 +20,7 @@ reproducible static-file headers (see [Deterministic responses](#deterministic-r
 The build needs BuildKit (default in Docker 23+). Base images are fully
 qualified (`docker.io/library/node`), so the same file builds under
 Podman/Buildah and Quay's builders; `NODE_IMAGE` overrides the base for a
-mirror. The default base, `node:22-bookworm-slim`, is pinned by digest, so the
+mirror. The default base, `node:26.13.0-bookworm-slim`, is pinned by digest, so the
 same commit always builds on the same Node and Debian; Dependabot moves the
 digest in its own pull request.
 

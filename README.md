@@ -10,12 +10,12 @@ Before cutting a release, read the [daily A3](https://tutors-sdk.github.io/tutor
 
 ## Quick start
 
-Ten minutes from clone to a rendered course. Requires Node.js >= 22.17.0 (`.nvmrc` pins the version CI uses) and pnpm 11.24.0, the version `packageManager` in `package.json` pins; `corepack enable` installs it for you.
+Ten minutes from clone to a rendered course. Requires Node.js >= 26.13.0 (`.nvmrc` pins the version CI uses) and pnpm 11.24.0, the version `packageManager` in `package.json` pins; the command below installs that exact pnpm version directly with npm.
 
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
-corepack enable
+npm install --global "$(node -p "require('./package.json').packageManager")"
 pnpm install
 cp .env.example .env
 pnpm dev
@@ -113,8 +113,8 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 
 ### Prerequisites
 
-- Node.js >= 22.17.0 (`.nvmrc` pins the version CI uses)
-- pnpm 11.24.0 (`corepack enable` installs the version `package.json` pins)
+- Node.js >= 26.13.0 (`.nvmrc` pins the version CI uses)
+- pnpm 11.24.0 (the quick start installs the version `package.json` pins)
 - `kubectl` or `kustomize` on your `PATH`, for the platform conformance tests in `pnpm test`
 - [Deno](https://deno.com/) at the version in `.dvmrc`, only if you work in `packages/jsr/`
 
