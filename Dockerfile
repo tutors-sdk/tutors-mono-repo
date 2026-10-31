@@ -29,20 +29,19 @@ ARG NODE_IMAGE=node-pinned
 # Fully qualified so the file builds the same under Docker, Podman/Buildah and
 # Quay's builders, which do not assume docker.io for short names.
 # ---------------------------------------------------------------------------
-FROM docker.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS node-pinned
+FROM docker.io/library/node:26.13.0-bookworm-slim@sha256:bc0a2afd3b74ce12222fc8bab99271e66257f021078f5f4a5d687a77d280c1d9 AS node-pinned
 
 # ---------------------------------------------------------------------------
-# base: Node plus the exact pnpm version pinned in package.json (via corepack)
+# base: Node plus the exact pnpm version pinned in package.json (via npm)
 # ---------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS base
 ENV PNPM_HOME=/pnpm \
-    COREPACK_HOME=/pnpm/corepack \
     npm_config_store_dir=/pnpm/store \
     CI=true
 ENV PATH=${PNPM_HOME}:${PATH}
 WORKDIR /app
 COPY package.json ./
-RUN corepack enable && corepack install
+RUN npm install --global "$(node -p "require('./package.json').packageManager")"
 
 # ---------------------------------------------------------------------------
 # deps: download every package in the lockfile into the pnpm store.

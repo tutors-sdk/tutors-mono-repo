@@ -130,7 +130,7 @@ The monorepo follows a **layered architecture** with clear dependency boundaries
 
 **Runtime Environments**:
 - **Deno**: For JSR packages and CLI tools
-- **Node.js 22.17+**: For Svelte packages and applications (`engines.node` in `package.json`)
+- **Node.js 26.13+**: For Svelte packages and applications (`engines.node` in `package.json`)
 - **Browser**: For client-side applications
 
 **Frontend Framework**:
