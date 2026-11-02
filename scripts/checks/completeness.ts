@@ -105,9 +105,20 @@ export function themesLoadedBy(appCss: string, resolveTutorsStyle: (file: string
     themes.push(preset);
   }
   for (const [, file] of appCss.matchAll(/@import\s+["']@tutors\/themes\/styles\/([\w-]+\.css)["']/g)) {
-    themes.push(...dataThemes(resolveTutorsStyle(file)));
+    themes.push(...tutorsStyleThemes(file, resolveTutorsStyle, new Set()));
   }
   return themes;
+}
+
+/** `data-theme`s a Tutors stylesheet declares, following its `./sibling.css` imports (as `styles/index.css` uses). */
+function tutorsStyleThemes(file: string, resolveTutorsStyle: (file: string) => string, seen: Set<string>): string[] {
+  if (seen.has(file)) return [];
+  seen.add(file);
+  const css = resolveTutorsStyle(file);
+  const imported = [...css.matchAll(/@import\s+["']\.\/([\w-]+\.css)["']/g)].flatMap(([, sibling]) =>
+    tutorsStyleThemes(sibling, resolveTutorsStyle, seen)
+  );
+  return [...imported, ...dataThemes(css)];
 }
 
 export function offeredThemes(themeServiceSource: string): string[] {

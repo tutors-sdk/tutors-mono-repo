@@ -70,6 +70,18 @@ describe("completeness (runway tier N)", () => {
       expect(offeredThemes(`themes: [{ name: "tutors", icons: A }, { name: "rose", icons: A }]`)).toEqual(["tutors", "rose"]);
     });
 
+    it("themes: follows the shared index stylesheet to the themes it imports, and flags one it leaves out", () => {
+      const styles: Record<string, string> = {
+        "index.css": `@import "./tutors.css";\n@import "./classic.css";`,
+        "tutors.css": `[data-theme="tutors"] {}`,
+        "classic.css": `[data-theme="classic"] {}`,
+        "easter.css": `[data-theme="easter"] {}`
+      };
+      const loaded = themesLoadedBy(`@import "@tutors/themes/styles/index.css";`, (file) => styles[file]);
+      expect(loaded).toEqual(["tutors", "classic"]);
+      expect(themeRegistryFindings(["tutors", "classic", "easter"], loaded, "time")).toEqual(["theme-not-loaded: time: easter"]);
+    });
+
     it("icons: flags a library missing an icon the base library defines", () => {
       expect(iconLibraryFindings({ name: "Base", icons: { a: 1, b: 2 } }, [{ name: "Alt", icons: { a: 1 } }])).toEqual([
         "missing-icon: Alt: b"

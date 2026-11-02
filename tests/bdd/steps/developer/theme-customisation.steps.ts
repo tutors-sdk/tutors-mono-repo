@@ -2,6 +2,7 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 import { convertMdToHtml, initHighlighter } from "../../../../packages/jsr/model/src/utils/markdown-utils.ts";
+import { readFileSync } from "node:fs";
 import { themeService } from "../../../../packages/svelte/themes/src/services/themes.svelte.ts";
 import { startLaterSession, startWithNoStoredPreferences } from "../../support/theme.ts";
 
@@ -101,6 +102,38 @@ describeFeature(feature, ({ AfterEachScenario, Rule }) => {
       });
       And("the rendered HTML shall contain the highlighter's output", () => {
         expect(html).toContain('<pre class="highlighted monokai">const answer = 42;\n</pre>');
+      });
+    });
+  });
+
+  Rule("Tutors shall load the Tutors theme stylesheets in every app through one shared index stylesheet.", ({ RuleScenario }) => {
+    RuleScenario("Each app imports the shared theme index", ({ Given, Then, And }) => {
+      const STYLES = "packages/svelte/themes/src/styles";
+      const apps = ["reader", "catalogue", "live", "time"];
+      let sheets: { app: string; css: string }[] = [];
+      Given("the stylesheets of the reader, catalogue, live and time apps", () => {
+        sheets = apps.map((app) => ({ app, css: readFileSync(`apps/${app}/src/app.css`, "utf8") }));
+      });
+      Then("each stylesheet shall import {string} once", (_ctx, path: string) => {
+        for (const { css } of sheets) expect(css.split(`@import "${path}";`).length - 1).toBe(1);
+      });
+      And("no stylesheet shall import a Tutors theme stylesheet such as {string} on its own", (_ctx, example: string) => {
+        const themeSheets = [...readFileSync(`${STYLES}/index.css`, "utf8").matchAll(/@import\s+"\.\/([\w-]+\.css)"/g)].map((m) => m[1]);
+        expect(themeSheets).toContain(example);
+        for (const { css } of sheets) {
+          for (const file of themeSheets) expect(css).not.toContain(`@tutors/themes/styles/${file}`);
+        }
+      });
+      And("the shared index stylesheet shall declare every theme the theme menu offers", () => {
+        const loaded = new Set(
+          [...readFileSync(`${STYLES}/index.css`, "utf8").matchAll(/@import\s+"\.\/([\w-]+\.css)"/g)].flatMap(([, file]) =>
+            [...readFileSync(`${STYLES}/${file}`, "utf8").matchAll(/\[data-theme="([\w-]+)"\]/g)].map((m) => m[1])
+          )
+        );
+        // Skeleton's own presets (cerberus, terminus, rose) come from @skeletonlabs, not from this package.
+        const tutorsThemes = themeService.themes.map((theme) => theme.name).filter((name) => !["cerberus", "terminus", "rose"].includes(name));
+        expect(tutorsThemes.length).toBeGreaterThan(0);
+        for (const name of tutorsThemes) expect(loaded).toContain(name);
       });
     });
   });

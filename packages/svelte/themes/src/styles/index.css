@@ -1,0 +1,12 @@
+/*
+ * Every Tutors theme stylesheet, in load order. Each app's app.css imports
+ * this one file, so a new theme is added here once and every app loads it.
+ * paper-tokens.css and paper-ui.css stay separate: apps import them last so
+ * they win over the app's own rules.
+ */
+@import "./tutors.css";
+@import "./classic.css";
+@import "./dyslexia.css";
+@import "./easter.css";
+@import "./prose-headings.css";
+@import "./reduced-motion.css";
