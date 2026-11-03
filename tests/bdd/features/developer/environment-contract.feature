@@ -100,6 +100,11 @@ Feature: Environment contract
       When the environment check reads that code
       Then it fails naming "apps/catalogue/src/routes/+page.server.ts" and "PRIVATE_SUPABASE_SERVICE_ROLE_KEY"
 
+    Scenario: A shared package that reads a reader-only variable fails for the other apps that run it
+      Given a file "packages/svelte/community/src/utils/new-feature.ts" that reads "PRIVATE_TUTORS_ADMINS" from the private environment
+      When the environment check reads that code
+      Then it fails naming "the catalogue app" and "PRIVATE_TUTORS_ADMINS"
+
   @rule-0688 @ears-unwanted
   Rule: If a variable in the environment contract has no line in .env.example or deploy/staging/.env.example, then tutors shall fail the environment check naming the file and the variable.
 

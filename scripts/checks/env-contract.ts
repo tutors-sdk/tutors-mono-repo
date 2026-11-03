@@ -34,40 +34,74 @@ type Contract = typeof ENV_CONTRACT;
 const SOURCE = /\.(ts|js|svelte)$/;
 const IMPORT = /import\s+(?:\*\s+as\s+(\w+)|\{([^}]*)\})\s+from\s+["']\$app\/env\/(private|public)["']/g;
 
-/** One variable read through $app/env: the file, which app (if the file is in an app), and private or public. */
+/** One variable read through $app/env: the file, the apps that run it, and private or public. */
 export interface EnvRead {
   file: string;
-  app?: App;
+  /** The app the file is in, or every app that depends on the package it is in (directly or through other packages). */
+  apps: App[];
   name: string;
   scope: "private" | "public";
 }
 
 /** The $app/env/private and $app/env/public reads in one source file. */
-export function readsIn(file: string, text: string, app?: App): EnvRead[] {
+export function readsIn(file: string, text: string, apps: App[] = []): EnvRead[] {
   const reads: EnvRead[] = [];
   for (const match of text.matchAll(IMPORT)) {
     const [, namespace, named, scope] = match as unknown as [string, string | undefined, string | undefined, "private" | "public"];
     if (namespace) {
-      for (const use of text.matchAll(new RegExp(`\\b${namespace}\\.([A-Z][A-Z0-9_]*)\\b`, "g"))) reads.push({ file, app, name: use[1]!, scope });
+      for (const use of text.matchAll(new RegExp(`\\b${namespace}\\.([A-Z][A-Z0-9_]*)\\b`, "g"))) reads.push({ file, apps, name: use[1]!, scope });
     } else {
       for (const part of named!.split(",")) {
         const name = part.trim().split(/\s+as\s+/)[0]!.trim();
-        if (/^[A-Z][A-Z0-9_]*$/.test(name)) reads.push({ file, app, name, scope });
+        if (/^[A-Z][A-Z0-9_]*$/.test(name)) reads.push({ file, apps, name, scope });
       }
     }
   }
   return reads;
 }
 
+type Manifest = { name?: string; dependencies?: Record<string, string>; devDependencies?: Record<string, string>; peerDependencies?: Record<string, string> };
+const workspaceDeps = (m: Manifest) => Object.keys({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies }).filter((n) => n.startsWith("@tutors/"));
+
+/**
+ * For each Svelte package directory, the apps that run its code: an app that depends on it, or on a package
+ * that does, however deep. A variable a shared package reads is then checked for every one of those apps.
+ */
+export function packageConsumers(root: string = REPO_ROOT): Map<string, App[]> {
+  const packages = new Map<string, { dir: string; deps: string[] }>();
+  for (const manifest of walk(join(root, "packages/svelte"), (n) => n === "package.json")) {
+    const m = JSON.parse(readFileSync(manifest, "utf8")) as Manifest;
+    if (m.name) packages.set(m.name, { dir: toPosix(join(manifest, ".."), root), deps: workspaceDeps(m) });
+  }
+  const consumers = new Map<string, App[]>();
+  for (const app of APPS) {
+    const seen = new Set<string>();
+    const queue = workspaceDeps(JSON.parse(readText(join(root, "apps", app, "package.json"))) as Manifest);
+    while (queue.length > 0) {
+      const name = queue.shift()!;
+      if (seen.has(name)) continue;
+      seen.add(name);
+      const pkg = packages.get(name);
+      if (!pkg) continue;
+      consumers.set(pkg.dir, [...(consumers.get(pkg.dir) ?? []), app]);
+      queue.push(...pkg.deps);
+    }
+  }
+  return consumers;
+}
+
 /** Every $app/env read in the apps and the Svelte packages. */
 export function codeReads(root: string = REPO_ROOT): EnvRead[] {
   const reads: EnvRead[] = [];
   for (const app of APPS) {
-    for (const file of walk(join(root, "apps", app, "src"), (n) => SOURCE.test(n))) reads.push(...readsIn(toPosix(file, root), readFileSync(file, "utf8"), app));
+    for (const file of walk(join(root, "apps", app, "src"), (n) => SOURCE.test(n))) reads.push(...readsIn(toPosix(file, root), readFileSync(file, "utf8"), [app]));
   }
+  const consumers = [...packageConsumers(root)].sort(([a], [b]) => b.length - a.length);
   for (const file of walk(join(root, "packages/svelte"), (n) => SOURCE.test(n))) {
     if (file.includes("/tests/") || /\.test\.ts$/.test(file)) continue;
-    reads.push(...readsIn(toPosix(file, root), readFileSync(file, "utf8")));
+    const path = toPosix(file, root);
+    const apps = consumers.find(([dir]) => path.startsWith(`${dir}/`))?.[1] ?? [];
+    reads.push(...readsIn(path, readFileSync(file, "utf8"), apps));
   }
   return reads;
 }
@@ -81,8 +115,10 @@ export function codeFindings(reads: EnvRead[], contract: Contract = ENV_CONTRACT
       findings.push(`${read.file} reads ${read.name}, which the environment contract does not declare: add it to packages/svelte/app-config/src/env-contract.js`);
     } else if (read.scope === "public" && !declared.public) {
       findings.push(`${read.file} reads ${read.name} from $app/env/public, but the contract declares it private`);
-    } else if (read.app && !declared.apps[read.app]) {
-      findings.push(`${read.file} reads ${read.name} in the ${read.app} app, but the contract does not list ${read.app} for it`);
+    } else {
+      for (const app of read.apps.filter((a) => !declared.apps[a])) {
+        findings.push(`${read.file} reads ${read.name}, which runs in the ${app} app, but the contract does not list ${app} for it`);
+      }
     }
   }
   const read = new Set(reads.map((r) => r.name));

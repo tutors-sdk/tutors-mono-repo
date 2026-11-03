@@ -66,11 +66,13 @@ export const ENV_CONTRACT = {
 const isSet = (value) => typeof value === 'string' && value.trim() !== '';
 
 /**
- * Whether these values run the app anonymously (PUBLIC_ANON_MODE=TRUE, any case).
+ * Whether these values run the app anonymously: PUBLIC_ANON_MODE is exactly TRUE. The Supabase client, presence
+ * and connect compare the exact string, so "true" or " TRUE" is not anonymous for them, and must not excuse the
+ * sign-in variables here either.
  * @param {Record<string, string | undefined>} values
  */
 export function isAnonymous(values) {
-  return values.PUBLIC_ANON_MODE?.trim().toUpperCase() === 'TRUE';
+  return values.PUBLIC_ANON_MODE === 'TRUE';
 }
 
 /**

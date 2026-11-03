@@ -8,6 +8,7 @@ import {
   envFileFindings,
   overlayFindings,
   overlayVariables,
+  packageConsumers,
   processVerdict,
   readsIn,
   serviceKeyVerdict,
@@ -245,8 +246,8 @@ describeFeature(feature, ({ Rule }) => {
   Rule("If code reads an environment variable the environment contract does not declare for the app reading it, then tutors shall fail the environment check naming the file and the variable.", ({ RuleScenario }) => {
     let reads: EnvRead[];
     function fileReading(_ctx: unknown, file: string, name: string) {
-      const app = file.split("/")[1] as App;
-      reads = [...codeReads(), ...readsIn(file, `import * as env from "$app/env/private";\nexport const key = env.${name};\n`, app)];
+      const apps = file.startsWith("apps/") ? [file.split("/")[1] as App] : [...packageConsumers()].find(([dir]) => file.startsWith(`${dir}/`))![1];
+      reads = [...codeReads(), ...readsIn(file, `import * as env from "$app/env/private";\nexport const key = env.${name};\n`, apps)];
     }
 
     RuleScenario("The repository's code reads only declared variables", ({ When, Then }) => {
@@ -265,6 +266,14 @@ describeFeature(feature, ({ Rule }) => {
     });
 
     RuleScenario("A declared variable read by an app the contract does not list fails", ({ Given, When, Then }) => {
+      Given("a file {string} that reads {string} from the private environment", fileReading);
+      When("the environment check reads that code", () => {
+        findings = codeFindings(reads);
+      });
+      Then("it fails naming {string} and {string}", failsNaming);
+    });
+
+    RuleScenario("A shared package that reads a reader-only variable fails for the other apps that run it", ({ Given, When, Then }) => {
       Given("a file {string} that reads {string} from the private environment", fileReading);
       When("the environment check reads that code", () => {
         findings = codeFindings(reads);
