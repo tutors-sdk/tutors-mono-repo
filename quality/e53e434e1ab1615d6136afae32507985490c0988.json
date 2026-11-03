@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "commit": "e53e434e1ab1615d6136afae32507985490c0988",
+  "base": "432d46864626ce14e07eb7715e0408c643ca906a",
+  "generatedAt": "2026-11-03T11:37:55Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/41621420386",
+  "nightly": {
+    "result": "failure",
+    "jobs": {
+      "contract-snapshots": "success",
+      "mutation": "success",
+      "mutation-nightly": "failure",
+      "suite-health": "success",
+      "e2e-stack-nightly": "failure",
+      "timezone-matrix": "success",
+      "lighthouse": "success",
+      "load": "success",
+      "generator-corpus": "success"
+    }
+  }
+}
