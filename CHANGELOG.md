@@ -31,6 +31,8 @@
 - Course addresses are normalized once: a bare id, a Netlify host name and a full `https://` URL all fetch the same `tutors.json` exactly once and share one cache entry. A full URL used to be requested as `https://https://…` and fail. Each course is also fetched and linked over the protocol of its own address, so opening a localhost course no longer leaves later hosted courses loading over http (#528, Rules 0659, 0660) (network, dom) (PR #533)
 - Content locks: a lock change the server does not save is rolled back on the educator's screen and reported as not saved, instead of being shown as in force while students still see the previous setting. A reader with no lock database keeps the change in that browser and says so; a change still waiting for the server cannot be toggled again; and an answer that arrives after the educator has moved to another course no longer alters the course now on screen (#527, Rules 0630, 0631, 0632, 0657, 0658) (dom, persistence) (PR #535)
 - Calendar button: the name a screen reader speaks now begins with the week written on the button and ends with what the button does, instead of replacing the visible words with "View Calendar for this course". Someone driving the page by voice could not name the button by what they could read on it (WCAG 2.5.3, Rule 0051) (dom) (PR #545)
+- Talks: switching a talk's PDF reader to the browser reader and back shows the Adobe viewer that was already rendered. It is hidden while the browser reader is in use rather than torn down, so Adobe is never asked to render the same talk twice and the student keeps their page and zoom. The second render left a blank viewer before v17.0.0 and a 500 inside the viewer after it; the v17.0.0 note that recorded this as fixed (PR #446) was wrong (#374, Rule 0285) (dom) (PR #567)
+- Talks: leaving a talk that was open in the browser reader releases the PDF and reports nothing. The reader asked the loaded document to destroy itself, but pdfjs hangs `destroy()` on the loading task rather than the document, so every departure threw `destroy is not a function` into the error log and left the PDF worker running. The thrown error also stopped Adobe's viewer returning when a student switched back, so this had to be fixed before the switch could work at all (Rule 0682) (dom) (PR #567)
 
 #### Security
 
@@ -475,6 +477,12 @@ any single one. Versioned with the monorepo.
 Changes to how Tutors is specified, tested, reviewed and released. Nothing
 here is visible to a student; it is listed so that a release's claims and
 Rules can be traced to the work that introduced them.
+
+### Unreleased
+
+#### Fixes
+
+- The reader pre-bundles the PDF viewer's dependencies again. They are declared by `@tutors/ui-components`, so the bare names in `apps/reader/vite.config.ts` resolved from nowhere and Vite skipped them; naming them through their owner (`@tutors/ui-components > pdfjs-dist`) restores the guard. Opening the browser reader used to send the dev server off to optimise `pdfjs-dist` mid-session and reload the page, which reset the reader the student had chosen and failed `@rule-0285` on any cold cache (PR #567)
 
 ### v17.0.0 (2026-10)
 

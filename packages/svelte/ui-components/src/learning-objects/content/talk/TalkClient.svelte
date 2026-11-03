@@ -14,13 +14,22 @@
   let readerOverride = $state<string | null>(null);
   const useMozilla = $derived((readerOverride ?? currentCourse.value?.defaultPdfReader) === "mozilla");
   const isMarp = $derived(isMarpContent(lo));
+  const showAdobe = $derived(!isMarp && !useMozilla);
+  // Once Adobe's viewer has rendered a talk it stays mounted, hidden while the browser reader is in
+  // use, so switching back shows it again without asking Adobe to render a second time (issue 374).
+  // It is kept for that talk only: moving to another talk in the browser reader lets it go.
+  let keptPdf = $state<string | null>(null);
+  function chooseReader(reader: string) {
+    if (showAdobe) keptPdf = lo.pdf;
+    readerOverride = reader;
+  }
 </script>
 
 {#if !isMarp}
   <div class="ui-actions mb-4">
     <!-- On phones the label is read, not shown, so the picker and "Open original" share one row. -->
     <label class="ui-actions text-sm"><span class="sr-only sm:not-sr-only">PDF reader</span>
-      <select class="select w-auto" value={useMozilla ? "mozilla" : "adobe"} onchange={(event) => readerOverride = event.currentTarget.value}>
+      <select class="select w-auto" value={useMozilla ? "mozilla" : "adobe"} onchange={(event) => chooseReader(event.currentTarget.value)}>
         <option value="adobe">Adobe</option><option value="mozilla">Browser reader</option>
       </select>
     </label>
@@ -43,10 +52,13 @@
   {:then { default: TalkMozilla }}
     <TalkMozilla {lo} />
   {/await}
-{:else if useMozilla && !browser}
+{:else if useMozilla}
   <div class="flex min-h-64 items-center justify-center">
     <p role="status" class="ui-muted">Loading presentation…</p>
   </div>
-{:else}
-  <TalkAdobe {lo} {orientation} />
+{/if}
+{#if !isMarp && (showAdobe || keptPdf === lo.pdf)}
+  <div hidden={!showAdobe}>
+    <TalkAdobe {lo} {orientation} />
+  </div>
 {/if}
