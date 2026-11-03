@@ -52,7 +52,9 @@ export function keyShape(key) {
  * @returns {Promise<{ status: 'ok' } | { status: 'rejected', httpStatus: number } | { status: 'unreachable', message: string }>}
  */
 export async function probeKey({ url, key, fetch: fetchImpl = fetch, timeoutMs = 2_000 }) {
-  const endpoint = `${url.replace(/\/+$/, '')}/rest/v1/${encodeURIComponent(PROBE_TABLE)}?select=github_id&limit=0`;
+  let base = url;
+  while (base.endsWith('/')) base = base.slice(0, -1);
+  const endpoint = `${base}/rest/v1/${encodeURIComponent(PROBE_TABLE)}?select=github_id&limit=0`;
   try {
     const response = await fetchImpl(endpoint, {
       method: 'HEAD',
