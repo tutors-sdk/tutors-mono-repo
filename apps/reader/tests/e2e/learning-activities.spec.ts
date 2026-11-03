@@ -221,3 +221,26 @@ test("Switching from the browser reader back to Adobe shows the talk again", { t
   expect(containers).toHaveLength(1);
   expect(await adobe.getAttribute("id")).toBe(containers[0]);
 });
+
+test("Leaving the browser reader reports no error", { tag: "@rule-0682" }, async ({ page }) => {
+  const corpus = readFileSync(new URL("../../../../tests/fixtures/tutors-json-history/5.3.0/tutors.json", import.meta.url), "utf8");
+  // The browser reader parses the PDF itself, so it needs a real one: the generator corpus holds a
+  // 45-byte stand-in that only has to exist.
+  const pdf = readFileSync(new URL("../../../../tests/fixtures/pdf/one-page.pdf", import.meta.url));
+  await page.route("**/adobe-talk-course.netlify.app/tutors.json", route => route.fulfill({ contentType: "application/json", body: corpus }));
+  await page.route("**/view-sdk/viewer.js", route => route.fulfill({ contentType: "text/javascript", body: adobeStandIn }));
+  // The course is served from another origin, so the stand-in answers as that origin's server would.
+  await page.route("**/topic-01-typical/unit-1/talk-1/talk.pdf", route =>
+    route.fulfill({ contentType: "application/pdf", body: pdf, headers: { "access-control-allow-origin": "*" } })
+  );
+  const reported: string[] = [];
+  page.on("console", message => { if (message.type() === "error" && message.text().includes("Client error")) reported.push(message.text()); });
+
+  await page.goto("/talk/adobe-talk-course/topic-01-typical/unit-1/talk-1");
+  const reader = page.getByRole("combobox", { name: "PDF reader" });
+  await reader.selectOption("mozilla");
+  await expect(page.locator("section.media-viewer canvas")).toBeVisible();
+  await reader.selectOption("adobe");
+  await expect(page.locator("[id^=adobe-pdf-viewer-]")).toBeVisible();
+  expect(reported).toEqual([]);
+});

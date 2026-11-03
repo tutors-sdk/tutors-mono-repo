@@ -104,3 +104,11 @@ Feature: Quizzes, notebooks and slides
       When the student switches the PDF reader back to "Adobe"
       Then Adobe's viewer shows the talk again
       And Adobe was asked to render the talk only once
+
+  @rule-0682 @ears-event-driven
+  Rule: When a student leaves a talk shown in the browser reader, the reader shall release the PDF document it loaded and report no error.
+
+    Scenario: Leaving the browser reader reports no error
+      Given a student is reading a talk in the browser reader
+      When the student switches the PDF reader back to "Adobe"
+      Then the reader reports no error

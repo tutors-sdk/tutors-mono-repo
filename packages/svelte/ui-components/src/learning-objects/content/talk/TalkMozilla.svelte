@@ -4,7 +4,7 @@
   import FileSaver from "file-saver";
   import { onDestroy, tick } from "svelte";
   import { Progress } from "@skeletonlabs/skeleton-svelte";
-  import { PDFWorker, getDocument } from "pdfjs-dist";
+  import { PDFWorker, getDocument, type PDFDocumentLoadingTask } from "pdfjs-dist";
   import type { Talk } from "@tutors/tutors-model-lib";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
@@ -30,6 +30,7 @@
   let fullscreen = $state(false);
   let loadError = $state("");
   let worker: PDFWorker | undefined;
+  let task: PDFDocumentLoadingTask | undefined;
   let viewer: HTMLElement;
 
   $effect(() => {
@@ -50,13 +51,15 @@
     }
   }
 
-  onDestroy(() => { void pdfDoc?.destroy(); });
+  // pdfjs hangs destroy() on the loading task, not on the document it resolves to. Asking the
+  // document to destroy itself threw on every unmount and left the worker running behind it.
+  onDestroy(() => { void task?.destroy(); });
 
   async function loadDoc() {
     loading = true; loadError = "";
     try {
-      const loadingTask = await getDocument({ url, worker });
-      pdfDoc = await loadingTask.promise;
+      task = getDocument({ url, worker });
+      pdfDoc = await task.promise;
       loading = false;
       await tick();
       await renderPage(pageNum);
