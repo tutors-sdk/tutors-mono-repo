@@ -95,3 +95,36 @@ claims:
     scope: "GET /_app/immutable/chunks/\\{\\{hash\\}\\}.js"
     rule: "0330"
     reason: "Rule 0330: moving learning events from browser Realtime to the reader's server adds one immutable chunk on reference:course and reference:note (#478, #481)"
+  #
+  # ---------------------------------------------------------------------------------------------
+  # 17.1.0 claims audit, 3 Nov 2026, done during release prep — before the cut, so nothing here is
+  # a substitute for SOP steps 1 and 4. Step 1 still resets this list to `claims: []` when
+  # release/17.1.0 is cut, and step 4 still re-authors it from the forecast's unclaimed list.
+  #
+  # What the audit found, to make that re-authoring quick:
+  #
+  # The twelve claims above were written against 17.0.0 during main's own forecast runs, and 17.0.0
+  # is the production baseline for this release too (#493 archived 17.0.0's own list as
+  # release/claims/17.0.0.yaml). Every difference they describe is still in the candidate, so they
+  # are the starting set to paste back at step 4 — not work to redo from nothing.
+  #
+  # Nine further artefacts are named by an Unreleased CHANGELOG entry and have no claim at all.
+  # Their scope is deliberately left open here: every claim above records the Main-to-RC forecast
+  # run that observed its difference, and a scope guessed from the source is reported stale just as
+  # loudly as a missing claim is reported unclaimed. Run the forecast, then write these from the
+  # unclaimed list it prints.
+  #
+  #   artefact          from
+  #   dom               #567 talks keep a hidden Adobe container on every talk page; #511 lab
+  #                     columns; #506 LLM download links; #548 quiz code blocks; #514 enrollment
+  #                     export; #505 header button names
+  #   axe               #505 Label in Name on Preferences, Search and the search dialog's Close
+  #   console           #487 catalogue without Supabase logs nothing; #507 no GoTrueClient warning
+  #   screenshot        #509 heat map day grid laid out on the final fonts
+  #   headers           #500 immutable Cache-Control on /_app/immutable/* (Netlify only — confirm
+  #                     the harness observes it at all before claiming; it judges the images)
+  #   metrics           #501 /metrics carries both request SLIs at zero from the first scrape
+  #   image-hardening   #501 every image declares a HEALTHCHECK (policy check)
+  #   build-provenance  #502 SLSA v1 attestation on every published image (policy check)
+  #   runtime           Node 26.13.0 replaces Node 22 in every image
+  # ---------------------------------------------------------------------------------------------
