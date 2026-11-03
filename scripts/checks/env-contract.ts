@@ -17,12 +17,14 @@
  * The --app check (Rule 0686) runs first in each app's Netlify build command. On a Netlify production
  * build (CONTEXT=production) a missing variable fails the build, so Netlify keeps serving the previous
  * deploy; on deploy previews and branch deploys it warns. Outside Netlify it fails. It prints names, never values.
+ * For the reader it then checks the service-role key's value (Rule 0691): Supabase must accept it as service_role.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import yaml from "js-yaml";
 import { APPS, ENV_CONTRACT, isAnonymous, missingVariables, requiredVariables } from "../../packages/svelte/app-config/src/env-contract.js";
+import { checkServiceKey } from "../../packages/svelte/app-config/src/service-key.js";
 import { overlayDirs } from "./conformance.ts";
 import { REPO_ROOT, readText, toPosix, walk } from "./lib/repo.ts";
 
@@ -182,8 +184,29 @@ export function processVerdict(app: App, values: Record<string, string | undefin
   return { outcome: production ? "fail" : "warn", lines };
 }
 
+type Verdict = { outcome: "pass" | "warn" | "fail"; lines: string[] };
+
+/**
+ * Rule 0691: the reader's service-role key, checked by value before the build: a key that is not a
+ * service-role key, or one Supabase refuses, fails a production build; Supabase being unreachable only warns.
+ * Undefined when there is nothing to check (another app, anonymous mode, or no key: processVerdict reports that).
+ */
+export async function serviceKeyVerdict(app: App, values: Record<string, string | undefined>, fetchImpl?: typeof fetch): Promise<Verdict | undefined> {
+  if (app !== "reader" || isAnonymous(values)) return undefined;
+  const result = await checkServiceKey({ url: values.PUBLIC_SUPABASE_URL, key: values.PRIVATE_SUPABASE_SERVICE_ROLE_KEY, fetch: fetchImpl, timeoutMs: 10_000 });
+  if (result.status === "missing") return undefined;
+  if (result.status === "ok") return { outcome: "pass", lines: ["check:env: Supabase accepts PRIVATE_SUPABASE_SERVICE_ROLE_KEY as the service role."] };
+  const production = values.NETLIFY !== "true" || values.CONTEXT === "production";
+  if (result.status === "unreachable") {
+    return { outcome: "warn", lines: [`check:env: could not ask Supabase about PRIVATE_SUPABASE_SERVICE_ROLE_KEY (${result.message}); building anyway.`] };
+  }
+  const lines = [`check:env: ${result.message}.`, "Copy the service_role (secret) key from the Supabase project's API settings into this site's PRIVATE_SUPABASE_SERVICE_ROLE_KEY."];
+  if (!production) lines.push(`Not a production build (CONTEXT=${values.CONTEXT ?? "unset"}), so this is a warning.`);
+  return { outcome: production ? "fail" : "warn", lines };
+}
+
 /* eslint-disable no-console -- a command-line check: its findings are its output. */
-function main(argv: string[]): number {
+async function main(argv: string[]): Promise<number> {
   const appIndex = argv.indexOf("--app");
   if (appIndex >= 0) {
     const app = argv[appIndex + 1] as App;
@@ -191,9 +214,13 @@ function main(argv: string[]): number {
       console.error(`check:env: --app takes one of ${APPS.join(", ")}`);
       return 2;
     }
-    const verdict = processVerdict(app, process.env);
-    (verdict.outcome === "pass" ? console.log : console.error)(verdict.lines.join("\n"));
-    return verdict.outcome === "fail" ? 1 : 0;
+    const verdicts = [processVerdict(app, process.env)];
+    if (verdicts[0]!.outcome === "pass") {
+      const key = await serviceKeyVerdict(app, process.env);
+      if (key) verdicts.push(key);
+    }
+    for (const verdict of verdicts) (verdict.outcome === "pass" ? console.log : console.error)(verdict.lines.join("\n"));
+    return verdicts.some((v) => v.outcome === "fail") ? 1 : 0;
   }
   const findings = repositoryFindings();
   if (findings.length === 0) {
@@ -204,4 +231,4 @@ function main(argv: string[]): number {
   return 1;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exitCode = main(process.argv.slice(2));
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) void main(process.argv.slice(2)).then((code) => (process.exitCode = code));

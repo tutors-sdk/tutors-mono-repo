@@ -123,3 +123,55 @@ Feature: Environment contract
       Given the reader overlay without "PRIVATE_API_ALLOWED_ORIGINS"
       When the environment check reads those overlays
       Then it fails naming "reader" and "PRIVATE_API_ALLOWED_ORIGINS"
+
+  @rule-0690 @ears-unwanted
+  Rule: If the reader's service-role key is not a service-role key or Supabase refuses it, then the reader shall answer its readiness route /healthz with 503 and the reason in its service-key check.
+
+    After 17.1.0 the key was set on Netlify, but Supabase refused it, so /api/me answered 500. A missing key gives
+    503 on /api. A refused key surfaces only when a query runs, so readiness runs one: a HEAD request with limit 0,
+    which reads no rows.
+
+    Scenario: Supabase refuses the reader's service-role key
+      Given the reader's environment has sign-in on and every variable it needs, and Supabase answers 401 to its service-role key
+      When the reader's readiness route is asked
+      Then it answers 503 with status "misconfigured" and the service-key check "rejected"
+      And the answer contains none of the environment's values
+
+    Scenario: The reader is given a key for the anon role
+      Given the reader's environment has sign-in on and every variable it needs, with a service-role key whose role is "anon"
+      When the reader's readiness route is asked
+      Then it answers 503 with status "misconfigured" and the service-key check "rejected"
+
+    Scenario: Supabase cannot be reached
+      Given the reader's environment has sign-in on and every variable it needs, and Supabase cannot be reached
+      When the reader's readiness route is asked
+      Then it answers 200 with status "degraded" and the service-key check "unreachable"
+
+    Scenario: Supabase accepts the reader's service-role key
+      Given the reader's environment has sign-in on and every variable it needs, and Supabase answers 200 to its service-role key
+      When the reader's readiness route is asked
+      Then it answers 200 with status "ok" and the service-key check "ok"
+
+  @rule-0691 @ears-event-driven
+  Rule: When a Netlify production build of the reader starts with a service-role key Supabase refuses or one that is not a service-role key, tutors shall fail the build naming PRIVATE_SUPABASE_SERVICE_ROLE_KEY.
+
+    Scenario: A production build with a refused key fails
+      Given a Netlify production build of the reader with every variable it needs, and Supabase answers 401 to its service-role key
+      When the service-key check runs for the reader
+      Then it fails naming "PRIVATE_SUPABASE_SERVICE_ROLE_KEY"
+      And its output contains none of the environment's values
+
+    Scenario: A production build with the anon key in its place fails
+      Given a Netlify production build of the reader with every variable it needs, with a service-role key whose role is "anon"
+      When the service-key check runs for the reader
+      Then it fails naming "PRIVATE_SUPABASE_SERVICE_ROLE_KEY"
+
+    Scenario: A production build that cannot reach Supabase warns and builds
+      Given a Netlify production build of the reader with every variable it needs, and Supabase cannot be reached
+      When the service-key check runs for the reader
+      Then it warns and lets the build go on
+
+    Scenario: A production build with an accepted key passes
+      Given a Netlify production build of the reader with every variable it needs, and Supabase answers 200 to its service-role key
+      When the service-key check runs for the reader
+      Then it passes

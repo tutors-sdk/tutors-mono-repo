@@ -39,7 +39,8 @@ x-signed-in-env: &signed-in-env
   PUBLIC_SUPABASE_URL: http://persistence.e2e.test:8090
   PUBLIC_SUPABASE_ANON_KEY: e2e-anon-key
   # The reader writes content locks and Moodle rows with the service key (Rules 0630, 0633); the stub takes any key.
-  PRIVATE_SUPABASE_SERVICE_ROLE_KEY: e2e-service-key
+  # It is shaped like a service_role JWT (unsigned) because /healthz checks the role claim (Rule 0690).
+  PRIVATE_SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlMmUtc3RhY2siLCJyb2xlIjoic2VydmljZV9yb2xlIn0.not-a-signature
   PUBLIC_READER_URL: http://localhost:3100
   PRIVATE_API_ALLOWED_ORIGINS: http://localhost:3104
   # Moodle is the persistence stub's web service (Rule 0640); the token is not checked.
