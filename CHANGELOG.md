@@ -21,6 +21,10 @@
 
 ### Unreleased
 
+#### Database
+
+- **Five Supabase migrations must be applied before the deploy**, in name order. All five are expand only, so they were applied to tutors-prod on 3 November 2026, ahead of the release, while v17.0.0 was still serving: `20261015_calendar_course_day_index.sql` (an index on `calendar (courseid, id)` for Tutors Time's date-range read), `20261016_realtime_live_budget.sql` (the `realtime_settings`, `realtime_budget` and `realtime_watchers` tables and the `realtime_watch`, `realtime_claim_live_publish` and `live_budget_tier` functions), `20261017000000_create_whiteboard_scenes.sql`, `20261017000100_restrict_app_errors_reads.sql` and `20261017000200_create_get_student_count.sql`. The last three needed `20260822_create_app_errors.sql`, which had never reached tutors-prod, applied first. Without `realtime_claim_live_publish` the reader's server publishes no learning event at all and Tutors Live's feed is silent; the other four degrade rather than fail (migration, persistence) (PRs #320, #480, #481)
+
 #### Features
 
 - Enrollment: **Educator Control → Enrollment → Export enrollment.yaml** downloads a draft enrollment file assembled from the course's recorded visitors, so a lecturer no longer collects GitHub usernames by hand. It keeps the existing educators, whitelist, names and any additional enrollment fields, leaves educators out of the new student entries, deduplicates visitors and reads every activity page, and falls back to the username when someone has no display name. The server checks the caller is an educator of the published course before reading any student data, and returns a private, uncacheable attachment or nothing at all (PR #514) (dom, network, headers)
