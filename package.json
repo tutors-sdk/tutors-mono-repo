@@ -62,6 +62,7 @@
     "slo:alerts": "tsx scripts/checks/slo.ts --write-alerts",
     "check:migrations": "tsx scripts/checks/migrations.ts",
     "check:deploy-pins": "tsx scripts/checks/deploy-pins.ts",
+    "check:env": "tsx scripts/checks/env-contract.ts",
     "deploy:pin": "tsx scripts/deploy-pin.ts",
     "release:changelog": "tsx scripts/release-changelog.ts",
     "release:claims:draft": "tsx scripts/release-claims-draft.ts",

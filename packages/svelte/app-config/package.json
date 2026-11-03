@@ -8,7 +8,8 @@
   "exports": {
     "./vite": "./src/vite.js",
     "./svelte": "./src/svelte.js",
-    "./env": "./src/env.js"
+    "./env": "./src/env.js",
+    "./env-contract": "./src/env-contract.js"
   },
   "dependencies": {
     "@sveltejs/adapter-auto": "8.0.0",

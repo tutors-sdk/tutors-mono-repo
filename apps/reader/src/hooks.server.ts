@@ -13,6 +13,7 @@ import { building } from "$app/env";
 import { createIdentityHandle } from "@tutors/identity-sveltekit/server";
 import * as env from "$app/env/private";
 import * as publicEnv from "$app/env/public";
+import { missingVariables } from "@tutors/app-config/env-contract";
 import { initLocaleFromCookie } from "@tutors/i18n";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
@@ -31,6 +32,9 @@ export const init: ServerInit = async () => {
   const mode = currentAuthMode();
   logServiceStart({ version: APP_VERSION, authMode: mode });
   announceClock(log);
+  // Rule 0683: one error naming every variable this deployment needs and lacks.
+  const missing = missingVariables("reader", { ...publicEnv, ...env });
+  if (missing.length > 0) log.error("Environment incomplete: set the missing variables in this deployment (see .env.example), or set PUBLIC_ANON_MODE=TRUE where sign-in is not wanted; /healthz answers 503 until then", { missing });
   if (mode === "unconfigured") {
     log.error("Authentication disabled: PRIVATE_AUTH_SECRET is not set. Set it, or set PUBLIC_ANON_MODE=TRUE.");
   }
