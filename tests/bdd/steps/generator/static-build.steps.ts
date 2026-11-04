@@ -7,7 +7,6 @@ import { copyAssets, generateStaticCourse, parseCourse } from "../../../../packa
 import { ventoTemplates } from "../../../../packages/jsr/gen/src/templates/vento-templates.ts";
 import { runTutorsLite } from "../../../../packages/jsr/tutors-lite/src/run.ts";
 import { versionLine } from "../../../../packages/jsr/tutors-lite/src/version.ts";
-import { moduleText, VENTO_MODULE } from "../../../../scripts/generate-vento-templates.ts";
 
 const feature = await loadFeature("tests/bdd/features/generator/static-build.feature");
 
@@ -142,8 +141,8 @@ describeFeature(feature, ({ AfterEachScenario, Rule }) => {
           expect(Object.keys(files).length).toBeGreaterThan(0);
         });
         Then("the bundled template module is generated from exactly those files", () => {
-          expect(ventoTemplates).toEqual(files);
-          expect(readFileSync(VENTO_MODULE, "utf8"), "run pnpm generate:vento-templates").toBe(moduleText(files));
+          // Compared as data, not file bytes: Stryker rewrites the module in place while it mutates.
+          expect(ventoTemplates, "run pnpm generate:vento-templates").toEqual(files);
         });
       });
     }
