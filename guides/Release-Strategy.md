@@ -112,7 +112,7 @@ When the RC is validated and stable:
 
    ```bash
    git fetch origin --tags
-   git checkout release/X.Y.Z
+   git checkout release/vX.Y.Z   # the release branch as it was cut (release/X.Y.Z works too)
    test "$(git rev-parse vX.Y.Z-rc.N^{tree})" = "$(git rev-parse HEAD^{tree})" && echo same
    git tag vX.Y.Z
    git push origin vX.Y.Z
@@ -121,7 +121,7 @@ When the RC is validated and stable:
    Pushing the tag starts `image-build.yml`, which promotes the candidate's images to `X.Y.Z` and then opens the `deploy/pin-X.Y.Z` pull request (`deploy-pin-pr.yml`). Without the tag there is no pin pull request, so `release/deployed.json`, the overlays and the harness's `HARNESS_PRODUCTION_TAG` keep naming the previous release. On 3 November 2026 tutors.dev was moved to the 17.1.0 candidate with no `v17.1.0` tag, and that night's harness and Nightly judged 17.0.0.
 2. **Merge the release branch back to `main`** to capture any hardening fixes.
 3. **Create a GitHub Release** from the tag with release notes.
-4. **Deploy to production.** Merge the `deploy/pin-X.Y.Z` pull request, which pins the overlays to the release's images by digest and writes `release/deployed.json`; roll them out, and tell the release harness what is now deployed: [Deploy and post-deploy](#deploy-and-post-deploy). The Netlify sites (tutors.dev and its subdomains) are deployed by hand from the Netlify UI, outside this pipeline: deploy them only from the commit `vX.Y.Z` points at, and only after the tag is pushed. The release harness asks production's reader which commit it serves and warns ("Production is not the pin") when that is not the pinned release; if that warning appears, the release was deployed without its tag or pin, so tag it and merge its pin pull request.
+4. **Deploy to production.** Merge the `deploy/pin-X.Y.Z` pull request, which pins the overlays to the release's images by digest and writes `release/deployed.json`; roll them out, and tell the release harness what is now deployed: [Deploy and post-deploy](#deploy-and-post-deploy). The Netlify sites (tutors.dev and its subdomains) are deployed by hand from the Netlify UI, outside this pipeline: deploy them only from the commit `vX.Y.Z` points at, and only after the tag is pushed. The release harness asks production's reader which commit it serves and warns ("Production is not the pin") when that is not the pinned release; that warning means the commit production serves is not the pinned release. If production serves a release candidate whose final tag or pin pull request is missing, push the tag and merge the pin pull request; if the tag and pin are in place, production was deployed from the wrong commit, so redeploy Netlify from the commit `vX.Y.Z` points at.
 5. **Retain the release branch.** It is not deleted. The tag is the canonical, immutable artifact, but the branch is kept as a recovery point: if an issue surfaces late, the release line is still there to branch a fix from without first having to locate the right commit on `main`.
 
    Two things follow from retaining it. A branch is mutable where a tag is not, so a retained release branch must not be pushed to after its release ships — once it moves it no longer records what was released. And retention is not a substitute for tagging: every release still gets a `vX.Y.Z` tag and a GitHub Release, which are what consumers and tooling read.
