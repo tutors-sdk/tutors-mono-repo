@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: docker.io/grafana/grafana:12.1.0@sha256:6ac590e7cabc2fbe8d7b8fc1ce9c9f0582177b334e0df9c927ebd9670469440f
+    image: docker.io/grafana/grafana:13.3.0@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
     ports:
       - "${GRAFANA_PORT:-3004}:3000"
     environment:
