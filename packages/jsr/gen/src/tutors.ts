@@ -6,7 +6,7 @@ import { writeFile } from "./utils/file-utils.ts";
 import { generateNetlifyToml } from "./utils/netlify.ts";
 import { generateLlms } from "./utils/llms.ts";
 import { emitStaticCourse } from "./services/course-emitter.ts";
-import { downloadVentoTemplates } from "./templates/template-downloader.ts";
+import { writeVentoTemplates } from "./templates/template-writer.ts";
 import { initTemplateEngine } from "./templates/template-engine.ts";
 import { buildTree, copyAssetFiles } from "./services/resource-builder.ts";
 import type { LearningResource } from "./types/types.ts";
@@ -38,7 +38,7 @@ export function generateDynamicCourse(lo: Lo, folder: string) : boolean {
 
 export async function generateStaticCourse(course: Course, destFolder: string, srcVentoFolder: string = "") : Promise<boolean>  {
   try {
-    await downloadVentoTemplates(destFolder, srcVentoFolder);
+    writeVentoTemplates(destFolder, srcVentoFolder);
     decorateCourseTree(course);
     initTemplateEngine(destFolder);
     await emitStaticCourse(destFolder, course);

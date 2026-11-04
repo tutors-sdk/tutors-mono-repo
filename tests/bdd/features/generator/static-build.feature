@@ -33,3 +33,25 @@ Feature: Static HTML build with tutors-lite
       Then the build ends with exit status 1
       And the build reports "Cannot locate course.md"
       And no html/ folder is written
+
+  @rule-0693 @ears-event-driven
+  Rule: When tutors-lite builds a course, tutors shall render it with the templates bundled into its own release, without fetching templates over the network.
+
+    Scenario: A build with no template folder uses the bundled templates and never touches the network
+      Given a course folder holding course.md, a topic and the image "topic-01/topic.png"
+      When tutors-lite builds the course with no template folder while the network is unavailable
+      Then the build ends with exit status 0
+      And no request is made over the network
+      And the templates written for the build are the bundled templates, file for file
+
+    Scenario: The bundled templates are the template files in the generator
+      Given the template files under packages/jsr/gen/src/templates/vento
+      Then the bundled template module is generated from exactly those files
+
+  @rule-0694 @ears-event-driven
+  Rule: When tutors-lite finishes a build, tutors shall report the version named in tutors-lite's own package manifest.
+
+    Scenario: The version line names the manifest's version
+      Given the tutors-lite package manifest
+      Then the version line tutors-lite prints names the manifest's version
+      And no tutors-lite source file names a version of its own
