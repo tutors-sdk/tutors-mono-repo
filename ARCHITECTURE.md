@@ -461,7 +461,8 @@ packages/jsr/gen/src/
 │   └── course-emitter.ts   # Output generation
 └── templates/
     ├── template-engine.ts  # Vento integration
-    ├── template-downloader.ts
+    ├── template-writer.ts  # Writes the bundled templates for a static build
+    ├── vento-templates.ts  # Generated from vento/ (pnpm generate:vento-templates)
     ├── styles.ts           # CSS injection
     ├── utils.ts
     └── vento/              # HTML templates
