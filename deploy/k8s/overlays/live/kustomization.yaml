@@ -16,8 +16,8 @@ labels:
 images:
   - name: tutors-app
     newName: quay.io/tutors-sdk/tutors-live
-    newTag: "17.0.0"
-    digest: sha256:52740e55cfa7e7db3b2944137caada4e876990b937f1034c0c5e79796054f8a0
+    newTag: "17.1.0"
+    digest: sha256:ca80e0e78a9b225b297ce4ccee1825204cd8fd501f3784829680ac4c0e49a6f9
 
 patches:
   - target:

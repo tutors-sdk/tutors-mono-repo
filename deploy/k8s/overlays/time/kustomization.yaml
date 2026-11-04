@@ -16,8 +16,8 @@ labels:
 images:
   - name: tutors-app
     newName: quay.io/tutors-sdk/tutors-time
-    newTag: "17.0.0"
-    digest: sha256:d0a9f4a2f4624038ecea3629d1a536567756d458410bee43b45e060d738d195d
+    newTag: "17.1.0"
+    digest: sha256:786e81c15a7a9537d71845df7e46efe49e3706df3c27656ee7d8072ada164b90
 
 patches:
   - target:
