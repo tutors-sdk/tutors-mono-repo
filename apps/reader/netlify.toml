@@ -1,6 +1,8 @@
+# check:env fails a production build that lacks a variable this app needs (Rule 0686), so Netlify keeps
+# serving the previous deploy. It reads the site's environment variables, so give them the Builds scope.
 [build]
   base = "/"
-  command = "pnpm install --frozen-lockfile && pnpm --filter tutors-reader... build"
+  command = "pnpm install --frozen-lockfile && pnpm check:env --app reader && pnpm --filter tutors-reader... build"
 
 [build.environment]
   NODE_VERSION = "26.13.0"

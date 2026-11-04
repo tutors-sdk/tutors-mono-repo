@@ -1,28 +1,14 @@
 import { defineEnvVars } from '@sveltejs/kit/env';
+import { ENV_CONTRACT } from './env-contract.js';
 
 /** @type {{ schema: (value: string | undefined) => string | undefined }} */
 const optionalString = { schema: (value) => value };
 
-// Dynamic declarations keep the same image configurable at startup, even when built without a .env.
-export const variables = defineEnvVars({
-  PUBLIC_ANON_MODE: { ...optionalString, public: true },
-  PUBLIC_SUPABASE_URL: { ...optionalString, public: true },
-  PUBLIC_SUPABASE_ANON_KEY: { ...optionalString, public: true },
-  PUBLIC_PDF_KEY: { ...optionalString, public: true },
-  PUBLIC_READER_ORIGIN: { ...optionalString, public: true },
-  PUBLIC_CATALOGUE_ORIGIN: { ...optionalString, public: true },
-  PUBLIC_LIVE_ORIGIN: { ...optionalString, public: true },
-  PUBLIC_TIME_ORIGIN: { ...optionalString, public: true },
-  PRIVATE_AUTH_GITHUB_ID: optionalString,
-  PRIVATE_AUTH_GITHUB_SECRET: optionalString,
-  PRIVATE_AUTH_SECRET: optionalString,
-  PRIVATE_SUPABASE_SERVICE_ROLE_KEY: optionalString,
-  PRIVATE_API_ALLOWED_ORIGINS: optionalString,
-  PRIVATE_COURSE_HOSTS: optionalString,
-  PRIVATE_TUTORS_ADMINS: optionalString,
-  PUBLIC_READER_URL: { ...optionalString, public: true },
-  MOODLE_WS_URL: optionalString,
-  MOODLE_WS_TOKEN: optionalString,
-  MOODLE_WS_REST_FORMAT: optionalString,
-  SYNC_INTERVAL_MINUTES: optionalString
-});
+// Every variable in the environment contract (./env-contract.js), declared dynamic so the same image is
+// configurable at startup, even when built without a .env. The schema stays permissive: a missing
+// variable is reported by the startup log and /healthz (Rules 0683, 0684), not by a crash.
+export const variables = defineEnvVars(
+  Object.fromEntries(
+    Object.entries(ENV_CONTRACT).map(([name, v]) => [name, v.public ? { ...optionalString, public: true } : optionalString])
+  )
+);

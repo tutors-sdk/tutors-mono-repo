@@ -107,6 +107,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The environment contract against the code, .env.example files and overlays (Rules 0687-0689).
+      - name: Environment variables agree with the contract
+        run: pnpm check:env
+
       - name: Render overlays and substrate variants, check policies
         run: pnpm check:k8s --out rendered
 

@@ -452,6 +452,27 @@ client and the time app's Moodle calls do not yet. `/healthz` probes and
 `/metrics` scrapes get the header but no log line unless they answer 4xx or
 5xx (a scraper with a stale `METRICS_TOKEN` gets a 401 line).
 
+## Environment variables
+
+`packages/svelte/app-config/src/env-contract.js` lists every variable the apps read and, for each app,
+whether a deployment needs it: `required`, `signed-in` (needed unless `PUBLIC_ANON_MODE=TRUE`) or
+`optional`. Release 17.1.0 went out with two reader variables production lacked, and nothing noticed
+until students did. A missing variable, or a reader service key Supabase refuses, now shows up before that:
+
+| Where | What happens | Rule |
+| --- | --- | --- |
+| Startup | One error log, `Environment incomplete`, with the missing names in `missing` | 0683 |
+| `GET /healthz` | 503, `status: "misconfigured"`, `checks.environment.missing` lists the names (never values). Kubernetes keeps the old pods: readiness never passes | 0684 |
+| Netlify build | `pnpm check:env --app <app>` runs before the build. A production build fails, so Netlify keeps the previous deploy; previews warn. Give the site's variables the Builds scope | 0686 |
+| Reader key value | `/healthz` and the reader's Netlify build check `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` itself: it must be a service_role JWT or an `sb_secret_` key, and Supabase must accept it (one HEAD request, `limit=0`). A refused key is 503 and a failed production build; Supabase being unreachable only degrades `/healthz` and warns the build. After 17.1.0 the key was set but refused, and `/api/me` answered 500 | 0690, 0691 |
+| Pull request | `pnpm check:env` (CI, Platform conformance) fails when code reads an undeclared variable, or a variable is missing from `.env.example`, `deploy/staging/.env.example` or an app's overlay | 0687-0689 |
+
+To add a variable: add it to the contract with the apps that read it, then to both `.env.example`
+files and, unless it is optional, to the app's overlay (a ConfigMap patch, or a key in its
+`secrets.yaml.example` when it is a secret). Then set it on the Netlify site and in the Secret
+before the release that needs it. `pnpm check:env --app reader` checks a shell's environment the
+same way the Netlify build does.
+
 ## Kubernetes / OpenShift
 
 `deploy/k8s/base` holds a shared Deployment, Service, ConfigMap and

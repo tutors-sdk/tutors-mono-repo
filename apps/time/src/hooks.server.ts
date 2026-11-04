@@ -8,6 +8,9 @@
 import type { Handle, HandleServerError, ServerInit } from "@sveltejs/kit/hooks";
 import { sequence } from "@sveltejs/kit/hooks";
 import { building } from "$app/env";
+import * as env from "$app/env/private";
+import * as publicEnv from "$app/env/public";
+import { missingVariables } from "@tutors/app-config/env-contract";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
 import { announceClock } from "@tutors/runtime";
@@ -20,6 +23,9 @@ if (!building) installProcessLogging();
 export const init: ServerInit = async () => {
   logServiceStart({ version: APP_VERSION });
   announceClock(log);
+  // Rule 0683: one error naming every variable this deployment needs and lacks.
+  const missing = missingVariables("time", { ...publicEnv, ...env });
+  if (missing.length > 0) log.error("Environment incomplete: set the missing variables in this deployment (see .env.example), or set PUBLIC_ANON_MODE=TRUE where sign-in is not wanted; /healthz answers 503 until then", { missing });
 };
 
 const securityHeaders: Handle = async ({ event, resolve }) => {
