@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { expect, test, type APIRequestContext } from "@playwright/test";
 import { ROLES, cellFindings, parseGaps, parseMatrix, splitKey, type Observation, type Role } from "../../../scripts/checks/authorisation.ts";
 import { fixture, stack } from "./stack.ts";
-import { contextFor, persistence, signInToCourse, signedIn } from "./signed-in.ts";
+import { contextFor, persistence, signInToCourse, signedIn, stackNow } from "./signed-in.ts";
 
 /**
  * The authorisation journey: tests/bdd/features/journeys/authorisation.feature. Every endpoint in
@@ -26,7 +26,7 @@ async function ask(request: APIRequestContext, role: Role): Promise<Observation[
       method,
       headers: role === "operator" ? OPERATOR : undefined,
       data: entry.key === "reader POST /api/analytics"
-        ? { ...entry.request.body as object, day: new Date().toISOString().slice(0, 10) }
+        ? { ...entry.request.body as object, day: stackNow.toISOString().slice(0, 10) }
         : entry.request.body,
       maxRedirects: 0,
       timeout: 15_000
