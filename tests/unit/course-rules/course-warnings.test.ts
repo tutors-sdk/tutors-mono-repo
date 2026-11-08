@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
 import {
   applyFixes,
   fileSlug,
@@ -190,6 +193,8 @@ describe("V011 netlify.toml", () => {
     expect(await check('[build]\n  publish = "public"\n[context.deploy-preview]\n  publish = "json"\n')).toEqual([messages.netlifyPublish()]);
     expect(await check('[build]\n  command = "x"\n  publish = "json" # generator output\n[context.deploy-preview]\n  publish = "public"\n')).toEqual([]);
     expect(await check('[ build ]\npublish = "json"\n')).toEqual([]);
+    expect(await check('  [build]\n  command = "echo [x]"\n  publish= "json"\n')).toEqual([]);
+    for (const toml of ['[build]\n  # publish = "json"\n', '[build]\n  publish = "json" then\n']) expect(await check(toml), toml).toEqual([messages.netlifyPublish()]);
   });
 
   it("rejects any other folder, and a publish line that is commented out", async () => {
@@ -279,6 +284,10 @@ describe("--fix", () => {
 });
 
 describe("tutors validate --fix", () => {
+  // Every run names an empty temporary folder, never the default ".": under a mutant that ignores the
+  // injected file system, --fix would otherwise rename folders in the working directory (the repo).
+  const sandbox = mkdtempSync(join(tmpdir(), "validate-fix-"));
+  afterAll(() => rmSync(sandbox, { recursive: true, force: true }));
   const io = () => {
     const out: string[] = [];
     const err: string[] = [];
@@ -288,12 +297,12 @@ describe("tutors validate --fix", () => {
   it("prints what it fixed, then the report of what is left; JSON keeps the log on stderr", async () => {
     const text = io();
     const fs = new MemoryFileSystem({ "course.md": "# C\n" });
-    expect(await runValidate(["--fix"], { ...text.io, open: () => fs })).toBe(0);
+    expect(await runValidate([sandbox, "--fix"], { ...text.io, open: () => fs })).toBe(0);
     expect(text.out.join("")).toBe("fixed   write netlify.toml\nEverything checks out.\n");
 
     const json = io();
     const again = new MemoryFileSystem({ "course.md": "# C\n", "Read Me.md": "x" });
-    expect(await runValidate(["--fix", "--format", "json"], { ...json.io, open: () => again })).toBe(0);
+    expect(await runValidate([sandbox, "--fix", "--format", "json"], { ...json.io, open: () => again })).toBe(0);
     expect(JSON.parse(json.out.join(""))).toEqual([]);
     expect(json.err.join("")).toBe("fixed   rename Read Me.md to Read-Me.md\nfixed   write netlify.toml\n");
   });
@@ -301,7 +310,7 @@ describe("tutors validate --fix", () => {
   it("without --fix changes nothing; with nothing to fix says so", async () => {
     const plain = io();
     const fs = new MemoryFileSystem({ "course.md": "# C\n" });
-    expect(await runValidate(["--strict"], { ...plain.io, open: () => fs })).toBe(2);
+    expect(await runValidate([sandbox, "--strict"], { ...plain.io, open: () => fs })).toBe(2);
     expect(fs.paths()).toEqual(["course.md"]);
     expect(fixSummary({ applied: [], skipped: [] })).toBe("Nothing to fix automatically.\n");
     expect(fixSummary({ applied: [], skipped: [{ op: { op: "move", from: "a", to: "b" }, reason: "b already exists" }] })).toBe("skipped rename a to b: b already exists\n");

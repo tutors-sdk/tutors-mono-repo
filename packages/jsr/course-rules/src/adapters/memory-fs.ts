@@ -1,4 +1,5 @@
 import type { DirEntry, FileSystemPort } from "../ports.ts";
+import { trimRuns } from "../trim.ts";
 
 /**
  * A course held in memory: a map from "/"-separated relative path to bytes. Folders exist implicitly
@@ -63,8 +64,6 @@ export class MemoryFileSystem implements FileSystemPort {
 }
 
 function normalise(path: string): string {
-  return path
-    .replaceAll("\\", "/")
-    .replace(/^\.?\/+/, "")
-    .replace(/\/+$/, "");
+  const slashed = path.replaceAll("\\", "/");
+  return trimRuns(slashed.startsWith("./") ? slashed.slice(1) : slashed, "/");
 }
