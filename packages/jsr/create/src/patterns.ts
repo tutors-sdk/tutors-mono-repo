@@ -4,7 +4,7 @@
  * Studio shows these as four cards; `tutors create --pattern <id>` takes the id. Kept as typed data in a
  * module, not YAML files, so generateCourseFiles stays pure and runs unchanged in the reader's browser.
  */
-export type ItemKind = "talk" | "note" | "lab" | "archive";
+type ItemKind = "talk" | "note" | "lab" | "archive";
 
 export interface PatternItem {
   kind: ItemKind;

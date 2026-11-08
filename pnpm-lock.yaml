@@ -524,7 +524,11 @@ importers:
         specifier: ^4.0.9
         version: 4.0.9
 
-  packages/jsr/create: {}
+  packages/jsr/create:
+    dependencies:
+      '@tutors/course-rules':
+        specifier: workspace:*
+        version: link:../course-rules
 
   packages/jsr/identity: {}
 

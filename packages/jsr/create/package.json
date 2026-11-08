@@ -9,5 +9,8 @@
     "./generate": "./src/generate.ts",
     "./validate": "./src/validate-cli.ts",
     "./import": "./src/import-cli.ts"
+  },
+  "dependencies": {
+    "@tutors/course-rules": "workspace:*"
   }
 }
