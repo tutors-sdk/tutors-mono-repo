@@ -5,6 +5,7 @@ import { joinPath } from "./ports.ts";
 import { netlifyToml } from "./templates.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
 import { extensionOf, isImage, kindOf } from "./tree.ts";
+import { trimRuns } from "./trim.ts";
 
 /**
  * The warning and info rules, V007-V012: a course that breaks them still builds, but something about it
@@ -35,12 +36,12 @@ function typedNodes(tree: CourseTree): CourseNode[] {
 
 /** Lower-case, ASCII, hyphen-separated: "Week 3" becomes "week-3". */
 export function slugify(name: string): string {
-  return name
+  const slug = name
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, "-");
+  return trimRuns(slug, "-");
 }
 
 /** A file name with its case and extension kept, accents dropped and spaces turned to hyphens: "Café Notes.pdf" becomes "Cafe-Notes.pdf". */
@@ -48,13 +49,15 @@ export function fileSlug(name: string): string {
   const dot = name.lastIndexOf(".");
   const [stem, extension] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ""];
   const clean = (text: string) =>
-    text
-      .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/[^\x21-\x7e]/g, "")
-      .replace(/-{2,}/g, "-")
-      .replace(/^-+|-+$/g, "");
+    trimRuns(
+      text
+        .normalize("NFKD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/[^\x21-\x7e]/g, "")
+        .replace(/-{2,}/g, "-"),
+      "-"
+    );
   return (clean(stem) || "file") + clean(extension);
 }
 

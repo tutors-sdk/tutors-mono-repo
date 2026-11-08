@@ -10,6 +10,7 @@
     "packages/jsr/course-rules/src/shape.ts": 95,
     "packages/jsr/course-rules/src/templates.ts": 100,
     "packages/jsr/course-rules/src/tree.ts": 96,
+    "packages/jsr/course-rules/src/trim.ts": 100,
     "packages/jsr/course-rules/src/validate.ts": 99,
     "packages/jsr/course-rules/src/version.ts": 100,
     "packages/jsr/course-rules/src/warnings.ts": 98,

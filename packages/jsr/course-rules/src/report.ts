@@ -1,5 +1,6 @@
 import type { Finding } from "./finding.ts";
 import { ruleCatalogue } from "./finding.ts";
+import { trimRuns } from "./trim.ts";
 
 export type ReportFormat = "text" | "json" | "sarif";
 
@@ -29,7 +30,7 @@ const sarifLevel = { error: "error", warn: "warning", info: "note" } as const;
  * A finding on the course folder itself is located at course.md.
  */
 export function sarifReport(findings: readonly Finding[], version: string, root = ""): string {
-  const prefix = root === "" || root === "." ? "" : `${root.replace(/\/+$/, "")}/`;
+  const prefix = root === "" || root === "." ? "" : `${trimRuns(root, "/", false)}/`;
   const log = {
     $schema: "https://json.schemastore.org/sarif-2.1.0.json",
     version: "2.1.0",
