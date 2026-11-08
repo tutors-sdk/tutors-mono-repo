@@ -1,4 +1,7 @@
-import { extensionOf } from "./tree.ts";
+import { extensionOf as writtenExtension } from "./tree.ts";
+
+/** Lecturers' files come with any case (Slides.PDF); import reads the extension case-blind. */
+const extensionOf = (path: string) => writtenExtension(path).toLowerCase();
 
 /**
  * Shape from content: given a folder of a lecturer's existing material (a semester of PDFs, a Moodle
