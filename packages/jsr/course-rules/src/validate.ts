@@ -6,18 +6,19 @@ import type { FileSystemPort } from "./ports.ts";
 import { joinPath, readText } from "./ports.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
 import { buildCourseTree, extensionOf, holdsOnlyImages } from "./tree.ts";
+import { trimRuns } from "./trim.ts";
 
 const compositeKinds = ["unit", "side", "topic"];
 const STEP = /^(\d{2})\.[^.].*\.md$/;
 
 /** Lower-case, ASCII, hyphen-separated: "Week 3" becomes "week-3". */
 export function slugify(name: string): string {
-  return name
+  const slug = name
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, "-");
+  return trimRuns(slug, "-");
 }
 
 function finding(rule: RuleId, path: string, message: string, suggestedName?: string): Finding {
