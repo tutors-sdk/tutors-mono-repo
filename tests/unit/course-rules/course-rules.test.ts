@@ -19,6 +19,17 @@ const course = (files: Record<string, string>) => new MemoryFileSystem({ "course
 const found = async (files: Record<string, string>) => (await validate(course(files))).map((f) => `${f.rule} ${f.path}`);
 
 describe("MemoryFileSystem", () => {
+  it("keeps bytes as given, finds a folder by any file under it, and reads paths with extra slashes", async () => {
+    const bytes = new Uint8Array([0, 255, 7]);
+    const fs = new MemoryFileSystem({ "a.bin": bytes, "topic-1/t.md": "x", "b.md": "y" });
+    expect(await fs.read("a.bin")).toBe(bytes);
+    expect(await fs.exists("topic-1")).toBe(true);
+    expect(await fs.exists("topic")).toBe(false);
+    expect(await fs.read("//b.md")).toEqual(new TextEncoder().encode("y"));
+    expect(await fs.read("./topic-1/t.md")).toEqual(new TextEncoder().encode("x"));
+    expect(await fs.exists("topic-1//")).toBe(true);
+  });
+
   it("lists the files and folders directly inside a folder, with file sizes", async () => {
     const fs = new MemoryFileSystem({ "a.md": "abc", "topic-1/topic.md": "x", "topic-1/talk-1/s.pdf": "%PDF" });
     expect(await fs.list("")).toEqual([
@@ -186,6 +197,8 @@ describe("V001-V006 corners", () => {
     expect(await found({ "enrollment.yaml": "whitelist: [1234]\n" })).toEqual(["V006 enrollment.yaml"]);
     expect(await found({ "enrollment.yaml": "students: [cat]\n" })).toEqual(["V006 enrollment.yaml"]);
     expect(await found({ "enrollment.yaml": "students:\n  - {name: Cat}\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "students:\n  - {name: 5, id: cat1}\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "students:\n  - {id: cat1}\n" })).toEqual(["V006 enrollment.yaml"]);
     expect(await found({ "enrollment.yaml": "- alice\n" })).toEqual(["V006 enrollment.yaml"]);
   });
 
@@ -203,6 +216,7 @@ describe("V001-V006 corners", () => {
     expect(await found({ "calendar.yaml": "weeks: [invalid]\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "calendar.yaml": "weeks:\n  - null\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "calendar.yaml": "weeks:\n  - topic: no date\n" })).toEqual(["V006 calendar.yaml"]);
+    expect(await found({ "calendar.yaml": "weeks:\n  - 2027-02-01: {title: Two}\n    2027-02-08: {title: Three}\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "topic-1/t.md": "", "topic-1/properties.yaml": "\t:" })).toEqual([]);
     const [broken] = await validate(course({ "properties.yaml": "a: 1\n\tb: 2\n" }));
     expect(broken.message).toMatch(/^properties\.yaml can't be read: line 2, tab characters/);

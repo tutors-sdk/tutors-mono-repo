@@ -1,7 +1,7 @@
 {
   "staleMargin": 2,
   "files": {
-    "packages/jsr/course-rules/src/adapters/memory-fs.ts": 94,
+    "packages/jsr/course-rules/src/adapters/memory-fs.ts": 100,
     "packages/jsr/course-rules/src/finding.ts": 100,
     "packages/jsr/course-rules/src/messages.ts": 100,
     "packages/jsr/course-rules/src/ports.ts": 100,
