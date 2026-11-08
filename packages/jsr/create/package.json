@@ -8,5 +8,8 @@
     "./scaffolder": "./src/scaffolder.ts",
     "./generate": "./src/generate.ts",
     "./validate": "./src/validate-cli.ts"
+  },
+  "dependencies": {
+    "@tutors/course-rules": "workspace:*"
   }
 }
