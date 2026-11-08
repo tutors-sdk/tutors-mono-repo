@@ -41,9 +41,10 @@ export function isSkippedFolder(name: string): boolean {
   return name.startsWith(".") || name === "json" || name === "html";
 }
 
+/** The extension as written: the generator matches extensions case-sensitively, so topic.MD is not a topic.md. */
 export function extensionOf(name: string): string {
   const dot = name.lastIndexOf(".");
-  return dot <= 0 ? "" : name.slice(dot + 1).toLowerCase();
+  return dot <= 0 ? "" : name.slice(dot + 1);
 }
 
 export function isImage(name: string): boolean {

@@ -21,6 +21,17 @@ const errorsOf = async (fs: MemoryFileSystem, root?: string) => (await validate(
 const found = async (files: Record<string, string>) => (await errorsOf(course(files))).map((f) => `${f.rule} ${f.path}`);
 
 describe("MemoryFileSystem", () => {
+  it("keeps bytes as given, finds a folder by any file under it, and reads paths with extra slashes", async () => {
+    const bytes = new Uint8Array([0, 255, 7]);
+    const fs = new MemoryFileSystem({ "a.bin": bytes, "topic-1/t.md": "x", "b.md": "y" });
+    expect(await fs.read("a.bin")).toBe(bytes);
+    expect(await fs.exists("topic-1")).toBe(true);
+    expect(await fs.exists("topic")).toBe(false);
+    expect(await fs.read("//b.md")).toEqual(new TextEncoder().encode("y"));
+    expect(await fs.read("./topic-1/t.md")).toEqual(new TextEncoder().encode("x"));
+    expect(await fs.exists("topic-1//")).toBe(true);
+  });
+
   it("lists the files and folders directly inside a folder, with file sizes", async () => {
     const fs = new MemoryFileSystem({ "a.md": "abc", "topic-1/topic.md": "x", "topic-1/talk-1/s.pdf": "%PDF" });
     expect(await fs.list("")).toEqual([
@@ -97,7 +108,7 @@ describe("the course tree", () => {
     expect(isSkippedFolder("json")).toBe(true);
     expect(isSkippedFolder("html")).toBe(true);
     expect(isSkippedFolder("jsonx")).toBe(false);
-    expect(extensionOf("Main.PNG")).toBe("png");
+    expect(extensionOf("Main.PNG")).toBe("PNG");
     expect(extensionOf(".gitignore")).toBe("");
     expect(extensionOf("weburl")).toBe("");
     expect(isImage("main.jpeg")).toBe(true);
@@ -181,11 +192,33 @@ describe("V001-V006 corners", () => {
     expect((await errorsOf(course({ "web-1/w.md": "" })))[0].message).toBe(messages.linkMissing("web", "weburl"));
   });
 
+  it("V006 holds enrollment to the lists the reader accepts", async () => {
+    expect(await found({ "enrollment.yaml": "educators: [alice]\nwhitelist: [bob]\nstudents:\n  - {name: Cat, id: cat1}\n" })).toEqual([]);
+    expect(await found({ "enrollment.yaml": "educators:\nstudents: []\n" })).toEqual([]);
+    expect(await found({ "enrollment.yaml": "educators: alice\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "whitelist: [1234]\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "students: [cat]\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "students:\n  - {name: Cat}\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "students:\n  - {name: 5, id: cat1}\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "students:\n  - {id: cat1}\n" })).toEqual(["V006 enrollment.yaml"]);
+    expect(await found({ "enrollment.yaml": "- alice\n" })).toEqual(["V006 enrollment.yaml"]);
+  });
+
+  it("V003 and V004 match extensions as the generator does, case and all", async () => {
+    expect(await found({ "topic-1/topic.MD": "# T\n" })).toContain("V003 topic-1");
+    expect(await found({ "topic-1/topic.md": "# T\n", "topic-1/talk-1/talk.md": "# T\n", "topic-1/talk-1/slides.PDF": "%PDF" })).toContain("V004 topic-1/talk-1");
+  });
+
   it("V006 accepts empty and comment-only files, names the line of a parse error, and checks the calendar has weeks", async () => {
     expect(await found({ "properties.yaml": "", "enrollment.yaml": "# all commented out\n", "badges.yaml": "x: 1\n" })).toEqual([]);
     expect(await found({ "properties.yaml": "- a\n", "badges.yaml": "just text" })).toEqual(["V006 badges.yaml", "V006 properties.yaml"]);
     expect(await found({ "calendar.yaml": "title: S1\nweeks: none\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "calendar.yaml": "" })).toEqual(["V006 calendar.yaml"]);
+    expect(await found({ "calendar.yaml": "weeks:\n  - date: 2027-01-25\n    week: 1\n  - 2027-02-01: {title: Two, type: topic}\n" })).toEqual([]);
+    expect(await found({ "calendar.yaml": "weeks: [invalid]\n" })).toEqual(["V006 calendar.yaml"]);
+    expect(await found({ "calendar.yaml": "weeks:\n  - null\n" })).toEqual(["V006 calendar.yaml"]);
+    expect(await found({ "calendar.yaml": "weeks:\n  - topic: no date\n" })).toEqual(["V006 calendar.yaml"]);
+    expect(await found({ "calendar.yaml": "weeks:\n  - 2027-02-01: {title: Two}\n    2027-02-08: {title: Three}\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "topic-1/t.md": "", "topic-1/properties.yaml": "\t:" })).toEqual([]);
     const [broken] = await errorsOf(course({ "properties.yaml": "a: 1\n\tb: 2\n" }));
     expect(broken.message).toMatch(/^properties\.yaml can't be read: line 2, tab characters/);
