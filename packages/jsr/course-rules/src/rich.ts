@@ -58,9 +58,9 @@ const isTrue = (value: unknown) => value != null && String(value).toLowerCase() 
 const MARP_THEMES = ["default", "gaia", "uncover"];
 /**
  * What the reader's sanitiser strips from a slide (rule 0645): scripts, on...= handlers inside a tag, and
- * javascript: URLs as a link's target or an attribute's value. "JavaScript: behaviour" in prose is not one.
+ * javascript: URLs as a link's target or an attribute's value. "JavaScript: behaviour" in prose is not one, nor is "Frontend = JavaScript: behaviour" outside a tag.
  */
-const STRIPPED = [/<script\b/i, /<[^>]*\son[a-z]+\s*=/i, /\]\(<?\s*javascript:/i, /=["'\s]*javascript:/i];
+const STRIPPED = [/<script\b/i, /<[^>]*\son[a-z]+\s*=/i, /\]\(<?\s*javascript:/i, /<[^>]*=\s*["']?\s*javascript:/i];
 
 const FENCE_OPEN = /^\s*(`{3,}|~{3,})/;
 

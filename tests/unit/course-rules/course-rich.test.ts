@@ -109,8 +109,8 @@ describe("V015 and V016 Marp decks", () => {
 
   it("names a javascript: URL only as a link target or an attribute value, not the word JavaScript in prose", async () => {
     const deck =
-      "---\nmarp: true\n---\nJavaScript: behaviour.\n\n---\n\n[x](javascript:alert(1))\n\n---\n\n[y](< javascript:void(0)>)\n\n---\n\n<a href=\"javascript:x\">a</a>\n\n---\n\n<a href= ' JavaScript:x'>b</a>\n\n---\n\nsee (javascript: later)\n";
-    expect(await findings(talk(deck), "V016")).toEqual([2, 3, 4, 5].map((slide) => `topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", slide)}`));
+      "---\nmarp: true\n---\nJavaScript: behaviour.\n\n---\n\n[x](javascript:alert(1))\n\n---\n\n[y](< javascript:void(0)>)\n\n---\n\n<a href=\"javascript:x\">a</a>\n\n---\n\n<a href= ' JavaScript:x'>b</a>\n\n---\n\nsee (javascript: later)\n\n---\n\nFrontend = JavaScript: behaviour. <b>Back</b> = 'javascript: never'\n\n---\n\n<a href=javascript:x>c</a>\n";
+    expect(await findings(talk(deck), "V016")).toEqual([2, 3, 4, 5, 8].map((slide) => `topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", slide)}`));
   });
 
   it("takes out inline code spans, matching a run of backticks only with a run of the same length", () => {
