@@ -6,7 +6,7 @@ import type { FileSystemPort, ValidateOptions } from "./ports.ts";
 import { joinPath, readText } from "./ports.ts";
 import { checkDiagrams, checkMarp, checkQuizzes } from "./rich.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
-import { buildCourseTree, extensionOf, holdsOnlyImages } from "./tree.ts";
+import { buildCourseTree, extensionOf, holdsCourseMaterial, holdsOnlyImages } from "./tree.ts";
 import { checkEmpty, checkImages, checkNames, checkNetlify, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
 
 const compositeKinds = ["unit", "side", "topic"];
@@ -64,12 +64,19 @@ export function checkTree(tree: CourseTree): Finding[] {
 }
 
 function walk(node: CourseNode, findings: Finding[]): void {
+  // Inside a lab, note, talk or other single learning object, a folder of no kind is that object's
+  // resource folder: the generator types it as its parent and publishes its files (lab assets/, img/).
+  const holdsResources = node.kind !== "course" && !compositeKinds.includes(node.kind ?? "");
   for (const child of node.children) {
     if (child.kind === null) {
-      if (!holdsOnlyImages(child)) {
-        const suggestion = ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slugify(child.name)}` : undefined;
+      if (holdsResources || holdsOnlyImages(child)) continue;
+      const suggestion = ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slugify(child.name)}` : undefined;
+      if (holdsCourseMaterial(child)) {
         const fix: FileOp | undefined = suggestion === undefined ? undefined : { op: "move", from: child.path, to: joinPath(node.path, suggestion) };
         findings.push(finding("V002", child.path, messages.V002(child.name, suggestion), suggestion, fix));
+      } else {
+        // Working files the lecturer keeps beside the course; renaming is their call, so no fix is offered.
+        findings.push(finding("V018", child.path, messages.V018(child.name, suggestion)));
       }
       continue;
     }

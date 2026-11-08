@@ -99,7 +99,7 @@ describe("the course tree", () => {
   });
 
   it("validates a course below the port's root", async () => {
-    const fs = new MemoryFileSystem({ "courses/web/course.md": "# W", "courses/web/Week 3/a.md": "" });
+    const fs = new MemoryFileSystem({ "courses/web/course.md": "# W", "courses/web/Week 3/a.pdf": "" });
     expect((await errorsOf(fs, "courses/web")).map((f) => `${f.rule} ${f.path}`)).toEqual(["V002 Week 3"]);
   });
 
@@ -132,7 +132,15 @@ describe("V001-V006 corners", () => {
 
   it("V002 names a folder once and not what is inside it, and suggests a topic name only where a topic can go", async () => {
     const findings = await errorsOf(
-      course({ "Week 3/talk-1/s.pdf": "", "unit-1/u.md": "", "unit-1/Extra Reading/a.md": "", "side/s.md": "", "side/Misc/a.md": "", "topic-1/t.md": "", "topic-1/old/a.md": "" })
+      course({
+        "Week 3/talk-1/s.pdf": "",
+        "unit-1/u.md": "",
+        "unit-1/Extra Reading/a.pdf": "",
+        "side/s.md": "",
+        "side/Misc/a.marp": "",
+        "topic-1/t.md": "",
+        "topic-1/old/01.Setup.md": ""
+      })
     );
     expect(findings.map((f) => [f.path, f.suggestedName])).toEqual([
       ["Week 3", "topic-week-3"],
@@ -143,6 +151,50 @@ describe("V001-V006 corners", () => {
     expect(findings.find((f) => f.path === "topic-1/old")!.message).toContain("Rename it so it starts with the kind");
     expect(findings.find((f) => f.path === "Week 3")!.message).toContain("Rename it to topic-week-3.");
     expect("suggestedName" in findings.find((f) => f.path === "topic-1/old")!).toBe(false);
+  });
+
+  it("V002 counts slides, a video id, lab steps and learning objects at any depth as course material", async () => {
+    const material = { "a/x.pdf": "", "b/x.marp": "", "c/videoid": "", "d/02.Step.md": "", "e/deep/note-1/n.md": "", "f/deep/x.pdf": "", "h/topic.md": "", "i/book.md": "" };
+    expect(await found(material)).toEqual(["V002 a", "V002 b", "V002 c", "V002 d", "V002 e", "V002 f", "V002 h", "V002 i"]);
+  });
+
+  it("V018 warns, without a fix, about a folder of working files: code, scripts, notes to self, a step-like name without a number", async () => {
+    const working = {
+      "code/topic-05/search.py": "",
+      "scripts/build.sh": "",
+      "exams/README.md": "",
+      "slides/1-theory.md": "",
+      "x/Setup.md": "",
+      "y/1.md": "",
+      "videos/videoid.txt": ""
+    };
+    const findings = await validate(course(working));
+    expect(findings.filter((f) => f.rule === "V018").map((f) => `${f.severity} ${f.path} ${f.suggestedName ?? "-"} ${"fix" in f}`)).toEqual([
+      "warn code - false",
+      "warn exams - false",
+      "warn scripts - false",
+      "warn slides - false",
+      "warn videos - false",
+      "warn x - false",
+      "warn y - false"
+    ]);
+    expect(findings.find((f) => f.path === "code")!.message).toBe(messages.V018("code", "topic-code"));
+    expect(messages.V018("code", "topic-code")).toContain(
+      "That's fine for working files such as code, scripts or slide sources. If it holds course material, rename it to topic-code."
+    );
+    expect(messages.V018("old")).toContain("rename it so it starts with the kind of content it holds, like talk- or note-.");
+  });
+
+  it("names no folder inside a lab, note or talk: it is that learning object's resource folder, which the generator publishes", async () => {
+    const files = {
+      "topic-1/t.md": "",
+      "topic-1/book-1/01.A.md": "# A\n",
+      "topic-1/book-1/assets/s.py": "",
+      "topic-1/book-1/assets/deep/x.pdf": "",
+      "topic-1/note-1/n.md": "# N\n",
+      "topic-1/note-1/data/d.csv": ""
+    };
+    expect((await validate(course(files))).filter((f) => f.rule === "V002" || f.rule === "V018")).toEqual([]);
   });
 
   it("V003 covers units, sides and topics but not the root or simple kinds", async () => {
@@ -235,12 +287,12 @@ describe("findings", () => {
   });
 
   it("checkTree needs no file contents", async () => {
-    expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.md": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
+    expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.pdf": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
   });
 
-  it("carry the catalogue's severity, and the catalogue lists V001-V017 once each, in id order", async () => {
-    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 17 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
-    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error"]);
+  it("carry the catalogue's severity, and the catalogue lists V001-V018 once each, in id order", async () => {
+    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 18 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
+    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn"]);
     expect((await errorsOf(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
   });
 

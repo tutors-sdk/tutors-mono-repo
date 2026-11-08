@@ -92,10 +92,10 @@ describeFeature(feature, ({ Rule }) => {
     ])
   );
   Rule(
-    "If a Talk holds more than one Marp deck, a deck asks for a theme Tutors does not have, or a slide holds a script the reader removes, then tutors shall report rule V016 as a warning.",
+    "If a Talk holds more than one Marp deck, a deck asks for a theme Tutors does not have, or a slide holds a script, handler or javascript: link the reader removes outside its code, then tutors shall report rule V016 as a warning.",
     checkScenarios([
       { name: "Two decks, an unknown theme and a button with a click handler", then: "exactly", says: 1 },
-      { name: "One deck on a built-in theme with no script", then: "none" }
+      { name: "One deck on a built-in theme with no script, naming JavaScript in prose and showing a script as code", then: "none" }
     ])
   );
   Rule(
