@@ -38,6 +38,7 @@ describe("V013 quizzes", () => {
     );
     expect(messages.quizQuestion(1, "", "too-few-options", 0)).toBe("Question 1 won't appear in the quiz, because it has 0 answers to choose from. A question needs at least two.");
     expect(messages.quizQuestion(2, "Q", "no-text")).toContain("it has no question text");
+    expect(messages.quizQuestion(2, "Q", "no-answer")).toContain("it doesn't say which answer is right. Add correct:");
     expect(messages.quizQuestion(2, "Q", "answer-out-of-range", 3, "3")).toContain("its right answer is number 3, but its answers are numbered 0 to 2.");
     expect(messages.quizQuestion(2, "Q", "answer-not-true-false", 2, "yes")).toContain('right answer is "yes". Write correct: true or correct: false.');
     expect(messages.quizEmpty()).toContain("holds no questions yet");
@@ -55,6 +56,7 @@ describe("V015 and V016 Marp decks", () => {
     expect(frontMatterOf("---\nmarp: true\ntheme: gaia\n---\n# x")).toEqual({ marp: true, theme: "gaia" });
     expect(frontMatterOf("---\r\nmarp: true\r\n---")).toEqual({ marp: true });
     expect(frontMatterOf("# no front matter")).toEqual({});
+    expect(frontMatterOf("# Title\n---\nmarp: true\n---\n")).toEqual({});
     expect(frontMatterOf("---\n- a list\n---\n")).toEqual({});
     expect(frontMatterOf("---\nmarp\n---\n")).toEqual({});
     expect(frontMatterOf("---\nmarp: [unclosed\n---\n")).toEqual({});
@@ -77,7 +79,7 @@ describe("V015 and V016 Marp decks", () => {
 
   it("names each slide with something the reader strips, and only those", async () => {
     const deck =
-      '---\nmarp: true\n---\n# One\n\n<script>alert(1)</script>\n\n---\n\n## Two, onboarding=fine as text\n\n---\n\n[x](javascript:alert(1))\n\n---\n\n<img src=x onerror="y">\n';
+      '---\nmarp: true\n---\n# One\n\n<script>alert(1)</script>\n\n---\n\n## Two, onboarding=fine as text\n\n---\n\n[x](javascript:alert(1))\n\n---\n\n<img src=x onerror = "y">\n';
     expect(await findings(talk(deck), "V016")).toEqual([1, 3, 4].map((slide) => `topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", slide)}`));
   });
 
@@ -103,6 +105,7 @@ describe("V017 Mermaid diagrams", () => {
       { source: "unclosed", line: 14 }
     ]);
     expect(mermaidBlocks("```mermaid\r\na\r\n```")).toEqual([{ source: "a", line: 2 }]);
+    expect(mermaidBlocks("see ```mermaid\nx\n```\n```mermaidjs\ny\n```")).toEqual([]);
     expect(mermaidBlocks("````mermaid\n```\nstill inside\n````")).toEqual([{ source: "```\nstill inside", line: 2 }]);
   });
 

@@ -1,4 +1,4 @@
-import { extractQuizBlock } from "./content.ts";
+import { extractQuizBlock, OPEN_FENCE } from "./content.ts";
 import type { QuestionProblem } from "./parser.ts";
 import { extractField, hasQuestionText, readQuestion, splitSections } from "./parser.ts";
 
@@ -9,8 +9,6 @@ export type QuizDiagnosis =
   | { kind: "question"; number: number; excerpt: string; problem: QuestionProblem; optionCount?: number; answer?: string }
   | { kind: "second-block" }
   | { kind: "time-limit"; value: string };
-
-const OPEN_FENCE = /^\s*(`{3,}|~{3,})\s*quiz\s*$/i;
 
 /** The question's first line of text, cut to a length a lecturer can recognise it by; empty when it has none. */
 function excerptOf(section: string): string {

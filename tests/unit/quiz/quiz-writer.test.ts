@@ -4,14 +4,8 @@ import { extractQuizBlock } from "../../../packages/jsr/course-rules/src/quiz/co
 import { parseQuizMarkdown } from "../../../packages/jsr/course-rules/src/quiz/parser";
 import { QuizDraftError, writeQuizBlock, writeQuizPage, type QuizDraft } from "../../../packages/jsr/course-rules/src/quiz/writer";
 
-/** What the reader shows of typed text: \n line breaks, whitespace-only lines empty, ends trimmed. */
-const normal = (text: string) =>
-  text
-    .replace(/\r\n?/g, "\n")
-    .split("\n")
-    .map((line) => (line.trim() === "" ? "" : line))
-    .join("\n")
-    .trim();
+/** What the reader shows of typed text: \n line breaks, the ends trimmed. */
+const normal = (text: string) => text.replace(/\r\n?/g, "\n").trim();
 const readBack = (markdown: string) => parseQuizMarkdown(extractQuizBlock(markdown).quizSource ?? "");
 
 const draft: QuizDraft = {
@@ -88,11 +82,21 @@ describe("writeQuizBlock", () => {
     const block = writeQuizBlock(code);
     expect(block.startsWith("````quiz\n")).toBe(true);
     expect(block.endsWith("\n````\n")).toBe(true);
-    expect(block).toContain("question: |\n  What does this print?\n\n  ```js");
+    expect(block).toContain("question: |\n  What does this print?\n  \n  ```js");
     expect(block).toContain('  - |\n    "nothing"');
     const quiz = readBack(block)!;
     expect(quiz.questions[0].text).toBe(code.questions[0].text);
     expect(quiz.questions[0].options).toEqual(code.questions[0].options);
+  });
+
+  it("keeps a quote inside one-line text, and a negative time limit means untimed", () => {
+    const quiz: QuizDraft = { timeLimit: -5, questions: [{ type: "multiple-choice", text: "It's which?", options: ["it's this", "that"], correctIndex: 0 }] };
+    expect(writeQuizBlock(quiz).split("\n").slice(1, 6)).toEqual(["question: It's which?", "type: multiple-choice", "options:", "  - it's this", "  - that"]);
+  });
+
+  it("keeps whitespace-only lines inside a question as they were typed", () => {
+    const text = "Line one\n   \nLine three";
+    expect(readBack(writeQuizBlock({ questions: [{ type: "true-false", text, options: [], correctIndex: 0 }] }))!.questions[0].text).toBe(text);
   });
 
   it("writes an answer that looks like a list item as a block", () => {
@@ -154,7 +158,7 @@ describe("writeQuizBlock", () => {
 
 describe("writeQuizPage", () => {
   it("puts the title and introduction above the quiz", () => {
-    const page = writeQuizPage(" Week 3\nquiz ", "Answer before the lab.", { questions: [draft.questions[0]] });
+    const page = writeQuizPage(" Week  3\nquiz ", "Answer before the lab.", { questions: [draft.questions[0]] });
     expect(page.startsWith("# Week 3 quiz\n\nAnswer before the lab.\n\n```quiz\n")).toBe(true);
     expect(extractQuizBlock(page).prose).toBe("# Week 3 quiz\n\nAnswer before the lab.");
   });

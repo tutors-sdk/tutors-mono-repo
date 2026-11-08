@@ -31,24 +31,19 @@ export class QuizDraftError extends Error {
   }
 }
 
+/** Text as the parser will read it back: \n line breaks, the ends trimmed. */
+const clean = (text: string) => text.replace(/\r\n?/g, "\n").trim();
+
 const QUOTE = /^["']|["']$/;
 
-/** Text as the parser will read it back: \n line breaks, blank lines empty, the ends trimmed. */
-const clean = (text: string) =>
-  text
-    .replace(/\r\n?/g, "\n")
-    .split("\n")
-    .map((line) => (line.trim() === "" ? "" : line))
-    .join("\n")
-    .trim();
+/** Text (already cleaned and non-empty) the parser would read back unchanged from a field's first line. */
+const fitsOnOneLine = (text: string) => !text.includes("\n") && !QUOTE.test(text) && text !== "|" && text !== ">";
 
-/** Text the parser would read back unchanged from a field's first line. */
-const fitsOnOneLine = (text: string) => !text.includes("\n") && text === text.trim() && text !== "" && !QUOTE.test(text) && text !== "|" && text !== ">";
-
+/** Every line indented, blank ones too, so the parser's dedent gives back each line exactly. */
 const indent = (text: string, by: string) =>
   text
     .split("\n")
-    .map((line) => (line.trim() === "" ? "" : by + line))
+    .map((line) => by + line)
     .join("\n");
 
 /** The longest run of backticks in any text, so the quiz fence can be longer than every fence inside it. */
@@ -89,7 +84,8 @@ export function writeQuizBlock(draft: QuizDraft): string {
   const header: string[] = [];
   const title = draft.title?.replace(/\s+/g, " ").trim();
   if (title) header.push(`title: ${title}`);
-  if (draft.timeLimit && draft.timeLimit > 0) header.push(`time_limit: ${Math.round(draft.timeLimit)}`);
+  const limit = Math.round(draft.timeLimit ?? 0);
+  if (limit > 0) header.push(`time_limit: ${limit}`);
   if (header.length > 0) sections.push(header.join("\n"));
   draft.questions.forEach((question, index) => sections.push(questionMarkdown(question, index + 1)));
   const texts = draft.questions.flatMap((question) => [question.text, ...question.options]);
@@ -109,13 +105,7 @@ function firstUnreadQuestion(block: string, draft: QuizDraft): number | null {
   for (const [index, question] of draft.questions.entries()) {
     const read = parsed?.questions[index];
     const options = question.type === "true-false" ? ["True", "False"] : question.options.map(clean);
-    const same =
-      read !== undefined &&
-      read.type === question.type &&
-      read.text === clean(question.text) &&
-      read.correctIndex === question.correctIndex &&
-      read.options.length === options.length &&
-      read.options.every((option, at) => option === options[at]);
+    const same = read !== undefined && JSON.stringify([read.type, read.text, read.options, read.correctIndex]) === JSON.stringify([question.type, clean(question.text), options, question.correctIndex]);
     if (!same) return index + 1;
   }
   return null;
