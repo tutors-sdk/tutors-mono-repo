@@ -1,0 +1,17 @@
+broken:
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/web-docs/web.md: "# MDN\nhttps://developer.mozilla.org\n"
+  topic-01/web-spec/web.md: "# Spec\n"
+  topic-01/web-spec/weburl: "\n"
+  topic-01/github-starter/github.md: "# Starter code\n"
+  topic-01/github-starter/githubid: "the starter repo\n"
+fixed:
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/web-docs/web.md: "# MDN\n"
+  topic-01/web-docs/weburl: "https://developer.mozilla.org\n"
+  topic-01/web-spec/web.md: "# Spec\n"
+  topic-01/web-spec/weburl: "https://html.spec.whatwg.org\n"
+  topic-01/github-starter/github.md: "# Starter code\n"
+  topic-01/github-starter/githubid: "tutors-sdk/tutors-starter\n"
