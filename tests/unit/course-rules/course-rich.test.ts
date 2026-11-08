@@ -9,7 +9,7 @@ import {
   type DiagramCheck,
   type DiagramPort
 } from "../../../packages/jsr/course-rules/src/mod.ts";
-import { frontMatterOf } from "../../../packages/jsr/course-rules/src/rich.ts";
+import { frontMatterOf, withoutCode } from "../../../packages/jsr/course-rules/src/rich.ts";
 
 const NETLIFY = '[build]\n  publish = "json"\n';
 const course = (files: Record<string, string>) => new MemoryFileSystem({ "course.md": "# C\n", "netlify.toml": NETLIFY, "topic-01/topic.md": "# T\n", ...files });
@@ -107,6 +107,20 @@ describe("V015 and V016 Marp decks", () => {
     expect(await findings(talk(deck), "V016")).toEqual([`topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", 4)}`]);
   });
 
+  it("takes out inline code spans, matching a run of backticks only with a run of the same length", () => {
+    expect(withoutCode("a `x` b `y` c")).toBe("a  b  c");
+    expect(withoutCode("a `` x`y `` b")).toBe("a  b");
+    expect(withoutCode("`a``b` c")).toBe(" c");
+    expect(withoutCode("``a` b")).toBe("``a` b");
+    expect(withoutCode("`unclosed <script>")).toBe("`unclosed <script>");
+  });
+
+  it("takes out fenced code only where a fence opens a line", () => {
+    expect(withoutCode("say ```\n<script>\n```")).toBe("say ```\n<script>");
+    expect(withoutCode("~ not a fence\n<script>")).toBe("~ not a fence\n<script>");
+    expect(withoutCode("one\n  ~~~\nhidden\n~~~\ntwo")).toBe("one\ntwo");
+  });
+
   it("checks the images a deck shows under V009", async () => {
     const deck = "---\nmarp: true\n---\n![bg left](img/missing.png)\n";
     expect(await findings(talk(deck), "V009")).toEqual([`topic-01/talk-01/talk.marp :: ${messages.imageMissing("img/missing.png")}`]);
@@ -133,6 +147,7 @@ describe("V017 Mermaid diagrams", () => {
     expect(mermaidBlocks("````mermaid\n```\nstill inside\n````")).toEqual([{ source: "```\nstill inside", line: 2 }]);
     expect(mermaidBlocks("````markdown\n```mermaid\nexample\n```\n````\n```mermaid\nreal\n```")).toEqual([{ source: "real", line: 7 }]);
     expect(mermaidBlocks("~~~\n```mermaid\n~~~~\n```mermaid\nafter\n```")).toEqual([{ source: "after", line: 5 }]);
+    expect(mermaidBlocks("```xmermaid\na\n```\n  ```mermaid\nb\n```")).toEqual([{ source: "b", line: 5 }]);
   });
 
   it("does not run without a diagram checker, and skips empty diagrams", async () => {

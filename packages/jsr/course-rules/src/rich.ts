@@ -62,7 +62,7 @@ const STRIPPED = [/<script\b/i, /<[^>]*\son[a-z]+\s*=/i, /javascript:/i];
 const FENCE_OPEN = /^\s*(`{3,}|~{3,})/;
 
 /** A slide's text with fenced and inline code removed: Marp escapes code, so the sanitiser never sees it as markup. */
-function withoutCode(slide: string): string {
+export function withoutCode(slide: string): string {
   const kept: string[] = [];
   let fence: string | undefined;
   for (const line of slide.split("\n")) {
@@ -86,15 +86,15 @@ function withoutInlineCode(text: string): string {
     let after = at;
     while (text[after] === "`") after++;
     const close = closingRun(text, after, after - at);
-    if (close < 0) out += text.slice(at, after);
-    at = close < 0 ? after : close + (after - at);
+    if (close === -1) out += text.slice(at, after);
+    at = close === -1 ? after : close + (after - at);
   }
   return out;
 }
 
 /** Where the next run of exactly `length` backticks starts at or after `from`; -1 when there is none. */
 function closingRun(text: string, from: number, length: number): number {
-  for (let at = text.indexOf("`", from); at >= 0;) {
+  for (let at = text.indexOf("`", from); at !== -1;) {
     let end = at;
     while (text[end] === "`") end++;
     if (end - at === length) return at;
@@ -135,8 +135,6 @@ export async function checkMarp(tree: CourseTree, read: Read): Promise<Finding[]
   return findings;
 }
 
-const MERMAID_OPEN = /^\s*(`{3,}|~{3,})\s*mermaid\s*$/i;
-
 /** Each fenced mermaid block in a text: its source and the file line (1-based) its first line is on. */
 export function mermaidBlocks(text: string): { source: string; line: number }[] {
   const blocks: { source: string; line: number }[] = [];
@@ -149,7 +147,7 @@ export function mermaidBlocks(text: string): { source: string; line: number }[] 
     let end = at + 1;
     while (end < lines.length && !closes(lines[end], fence)) body.push(lines[end++]);
     // Any other fence is code, so a mermaid fence inside it is an example, not a diagram the reader draws.
-    if (MERMAID_OPEN.test(lines[at])) blocks.push({ source: body.join("\n"), line: at + 2 });
+    if (/^\s*mermaid\s*$/i.test(lines[at].trim().slice(fence.length))) blocks.push({ source: body.join("\n"), line: at + 2 });
     at = end;
   }
   return blocks;
