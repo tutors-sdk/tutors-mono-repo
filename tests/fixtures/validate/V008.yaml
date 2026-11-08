@@ -1,0 +1,12 @@
+broken:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "---\nicon:\n  type: fluent-color:notebook-24\n---\n\n"
+  topic-01/talk-01/talk.md: "\n# Intro\n"
+  topic-01/talk-01/slides.pdf: "%PDF"
+fixed:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "---\nicon:\n  type: fluent-color:notebook-24\n---\n\n# Week one\n"
+  topic-01/talk-01/talk.md: "# Intro\n"
+  topic-01/talk-01/slides.pdf: "%PDF"

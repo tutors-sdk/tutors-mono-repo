@@ -1,27 +1,23 @@
 import yaml from "js-yaml";
-import type { Finding, RuleId } from "./finding.ts";
+import type { FileOp, Finding, RuleId } from "./finding.ts";
 import { severityOf } from "./finding.ts";
 import { messages } from "./messages.ts";
 import type { FileSystemPort } from "./ports.ts";
 import { joinPath, readText } from "./ports.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
 import { buildCourseTree, extensionOf, holdsOnlyImages } from "./tree.ts";
+import { checkEmpty, checkImages, checkNames, checkNetlify, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
 
 const compositeKinds = ["unit", "side", "topic"];
 const STEP = /^(\d{2})\.[^.].*\.md$/;
 
-/** Lower-case, ASCII, hyphen-separated: "Week 3" becomes "week-3". */
-export function slugify(name: string): string {
-  return name
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+export { slugify };
 
-function finding(rule: RuleId, path: string, message: string, suggestedName?: string): Finding {
-  return suggestedName === undefined ? { rule, severity: severityOf(rule), path, message } : { rule, severity: severityOf(rule), path, message, suggestedName };
+function finding(rule: RuleId, path: string, message: string, suggestedName?: string, fix?: FileOp): Finding {
+  const base: Finding = { rule, severity: severityOf(rule), path, message };
+  if (suggestedName !== undefined) base.suggestedName = suggestedName;
+  if (fix !== undefined) base.fix = fix;
+  return base;
 }
 
 const severityRank = { error: 0, warn: 1, info: 2 } as const;
@@ -41,10 +37,20 @@ export function sortFindings(findings: Finding[]): Finding[] {
 export async function validate(fs: FileSystemPort, root = ""): Promise<Finding[]> {
   const tree = await buildCourseTree(fs, root);
   const read = (path: string) => readText(fs, joinPath(root, path));
-  return sortFindings([...checkTree(tree), ...(await checkLinks(tree, read)), ...(await checkYaml(tree, read))]);
+  return sortFindings([
+    ...checkTree(tree),
+    ...(await checkLinks(tree, read)),
+    ...(await checkYaml(tree, read)),
+    ...checkNames(tree),
+    ...(await checkTitles(tree, read)),
+    ...(await checkImages(tree, read)),
+    ...checkTopicNumbers(tree),
+    ...(await checkNetlify(tree, read)),
+    ...checkEmpty(tree)
+  ]);
 }
 
-/** The structural rules, V001-V004: everything that needs only names, not file contents. */
+/** The structural error rules, V001-V004: everything that needs only names, not file contents. */
 export function checkTree(tree: CourseTree): Finding[] {
   const findings: Finding[] = [];
   if (!tree.files.some((file) => file.name === "course.md")) findings.push(finding("V001", "", messages.V001()));
@@ -57,7 +63,8 @@ function walk(node: CourseNode, findings: Finding[]): void {
     if (child.kind === null) {
       if (!holdsOnlyImages(child)) {
         const suggestion = ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slugify(child.name)}` : undefined;
-        findings.push(finding("V002", child.path, messages.V002(child.name, suggestion), suggestion));
+        const fix: FileOp | undefined = suggestion === undefined ? undefined : { op: "move", from: child.path, to: joinPath(node.path, suggestion) };
+        findings.push(finding("V002", child.path, messages.V002(child.name, suggestion), suggestion, fix));
       }
       continue;
     }

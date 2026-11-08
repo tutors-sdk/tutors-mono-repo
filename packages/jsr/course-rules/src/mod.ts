@@ -7,12 +7,18 @@
  */
 export type { DirEntry, FileSystemPort } from "./ports.ts";
 export { joinPath } from "./ports.ts";
-export type { Finding, RuleId, RuleInfo, Severity } from "./finding.ts";
+export type { FileOp, Finding, RuleId, RuleInfo, Severity } from "./finding.ts";
 export { ruleCatalogue } from "./finding.ts";
 export { kindName, messages } from "./messages.ts";
 export type { CourseFile, CourseNode, CourseTree } from "./tree.ts";
 export { buildCourseTree, kindOf } from "./tree.ts";
 export { checkTree, slugify, sortFindings, validate } from "./validate.ts";
+export { fileSlug, IMAGE_LIMIT_BYTES, titleOf } from "./warnings.ts";
+export type { FixOutcome } from "./fix.ts";
+export { applyFixes, fixCourse, planFixes } from "./fix.ts";
+export type { ImportFile, ShapeItem, ShapeKind, ShapeProposal, ShapeTopic } from "./shape.ts";
+export { linkOf, proposeShape, weekOf } from "./shape.ts";
+export { netlifyToml } from "./templates.ts";
 export { MemoryFileSystem } from "./adapters/memory-fs.ts";
 export type { ExitCode, ReportFormat } from "./report.ts";
 export { exitCodeFor, jsonReport, report, sarifReport, textReport } from "./report.ts";

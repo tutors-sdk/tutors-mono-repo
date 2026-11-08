@@ -113,16 +113,17 @@ export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
   return files;
 }
 
-/**
- * A course shaped by a teaching pattern: the course root files every course gets (course.md,
- * properties.yaml, netlify.toml, .gitignore), then the calendar, side unit and one topic per teaching week.
- */
-function generatePatternCourse(spec: CourseSpec, choice: PatternChoice): GeneratedFile[] {
+/** The course root files every pattern-shaped or imported course gets: course.md, properties.yaml, netlify.toml and .gitignore. */
+export function courseRootFiles(spec: CourseSpec): GeneratedFile[] {
   return [
     { relativePath: "course.md", content: courseMd(spec) },
     { relativePath: "properties.yaml", content: propertiesYaml(spec) },
     { relativePath: "netlify.toml", content: netlifyToml() },
-    { relativePath: ".gitignore", content: gitignoreFile() },
-    ...patternFiles(spec, choice)
+    { relativePath: ".gitignore", content: gitignoreFile() }
   ];
+}
+
+/** A course shaped by a teaching pattern: the root files, then the calendar, side unit and one topic per teaching week. */
+function generatePatternCourse(spec: CourseSpec, choice: PatternChoice): GeneratedFile[] {
+  return [...courseRootFiles(spec), ...patternFiles(spec, choice)];
 }

@@ -27,7 +27,7 @@ Feature: Course validation
     Scenario: Folders named for a week, a lab and slides are each named once
       Given the "broken" course of fixture "V002"
       When the course is validated
-      Then the findings shall be exactly "V002 error Week 3; V002 error topic-01/Slides; V002 error unit-1/Lab1"
+      Then the findings shall be exactly "V002 error Week 3; V002 error topic-01/Slides; V002 error unit-1/Lab1; V012 info topic-01; V012 info unit-1"
       And the finding for "Week 3" shall say "won't appear in your course"
       And the finding for "Week 3" shall suggest the name "topic-week-3"
 
