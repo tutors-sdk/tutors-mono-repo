@@ -91,7 +91,7 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
         const choose = (file: File) => {
           const input = target.querySelector<HTMLInputElement>("#course-zip")!;
           Object.defineProperty(input, "files", { value: [file], configurable: true });
-          input.dispatchEvent(new Event("change"));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
         };
         Given(
           "the check page, with the {string} course of fixture {string} slow to read and the {string} course of fixture {string} quick",
