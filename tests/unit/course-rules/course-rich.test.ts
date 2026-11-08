@@ -42,6 +42,15 @@ describe("V013 quizzes", () => {
     expect(messages.quizQuestion(2, "Q", "answer-out-of-range", 3, "3")).toContain("its right answer is number 3, but its answers are numbered 0 to 2.");
     expect(messages.quizQuestion(2, "Q", "answer-not-true-false", 2, "yes")).toContain('right answer is "yes". Write correct: true or correct: false.');
     expect(messages.quizEmpty()).toContain("holds no questions yet");
+    expect(messages.quizDraft(null, "no-questions")).toBe("Add a question before saving the quiz.");
+    expect(messages.quizDraft(2, "no-text")).toBe("Question 2: type the question.");
+    expect(messages.quizDraft(1, "too-few-options")).toBe("Question 1: add at least two answers to choose from.");
+    expect(messages.quizDraft(1, "empty-option")).toBe("Question 1: one of the answers is blank. Type it, or remove it.");
+    expect(messages.quizDraft(3, "answer-out-of-range")).toBe("Question 3: pick the right answer.");
+    expect(messages.quizDraft(1, "unreadable")).toBe(
+      'Question 1: something in this question can\'t be saved as you typed it. A line starting with "options:" is the usual cause; reword that line.'
+    );
+    expect(messages.quizDraft(1, "something new")).toBe(messages.quizDraft(1, "unreadable"));
   });
 
   it("names an empty quiz block", async () => {

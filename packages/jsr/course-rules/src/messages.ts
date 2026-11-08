@@ -30,6 +30,16 @@ const quizReasons: Record<QuestionProblem, (optionCount: number, answer: string)
   "answer-not-true-false": (_count, answer) => `it is a true-or-false question whose right answer is "${answer}". Write correct: true or correct: false.`
 };
 
+/** What a lecturer reads when a quiz they are building can't be saved yet, by QuizDraftError problem. */
+const quizDraftReasons: Record<string, string> = {
+  "no-questions": "Add a question before saving the quiz.",
+  "no-text": "type the question.",
+  "too-few-options": "add at least two answers to choose from.",
+  "empty-option": "one of the answers is blank. Type it, or remove it.",
+  "answer-out-of-range": "pick the right answer.",
+  unreadable: 'something in this question can\'t be saved as you typed it. A line starting with "options:" is the usual cause; reword that line.'
+};
+
 export const messages = {
   V001: () => "This folder has no course.md, so Tutors can't tell it is a course. Add a course.md whose first line is the course title, like # Web Development.",
   V002: (name: string, suggestion?: string) =>
@@ -75,6 +85,8 @@ export const messages = {
   quizEmpty: () => "This Quiz's quiz block holds no questions yet. Add at least one before students see it.",
   quizQuestion: (number: number, excerpt: string, problem: QuestionProblem, optionCount = 0, answer = "") =>
     `Question ${number}${excerpt ? ` ("${excerpt}")` : ""} won't appear in the quiz, because ${quizReasons[problem](optionCount, answer)}`,
+  /** Why Studio's quiz designer can't save a quiz yet; `question` is 1-based, null for the quiz as a whole. */
+  quizDraft: (question: number | null, problem: string) => (question === null ? "" : `Question ${question}: `) + (quizDraftReasons[problem] ?? quizDraftReasons.unreadable),
   quizSecondBlock: () => "This Quiz has a second quiz block, which the reader ignores and shows as code. Move its questions into the first quiz block.",
   quizTimeLimit: (value: string) =>
     `The quiz's time limit is "${value}", which isn't a whole number of seconds, so the quiz runs untimed. Write it as a number, like time_limit: 30.`,
