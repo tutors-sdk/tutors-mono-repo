@@ -6,7 +6,7 @@ import { topicIcons } from "./templates.ts";
 import { padNumber, type CourseSpec } from "./types.ts";
 
 /** A lecturer's file copied into the new course: `from` is relative to the imported folder, `to` to the course. */
-export interface FileCopy {
+interface FileCopy {
   from: string;
   to: string;
 }
