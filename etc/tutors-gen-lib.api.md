@@ -24,11 +24,17 @@ export async function generateStaticCourse(course: Course, destFolder: string, s
 // (from src/tutors.ts)
 export function parseCourse(folder: string, silent: boolean = false) : [Course, LearningResource];
 
+// (from src/tutors.ts)
+export function pruneCourseTree(tree: CourseTree) : void;
+
+// (from src/tutors.ts)
+export function readCourseTree(folder: string) : CourseTree;
+
 ```
 
 ### Summary
 
 | Kind | Count |
 |------|-------|
-| function | 5 |
-| **Total** | **5** |
+| function | 7 |
+| **Total** | **7** |
