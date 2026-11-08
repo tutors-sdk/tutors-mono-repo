@@ -1,6 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { generateCourseFiles, nextSteps, slugify, type CourseSpec } from "@tutors/tutors-create/generate";
+  import type { Finding } from "@tutors/course-rules";
+  import { checkGeneratedFiles } from "./check";
   import { downloadCourseZip } from "./download";
   import StepIndicator from "./StepIndicator.svelte";
   import CourseInfoStep from "./CourseInfoStep.svelte";
@@ -48,6 +50,17 @@
   // so they can never diverge.
   const files = $derived(generateCourseFiles(spec));
 
+  // The preview shows what tutors validate says about these exact files, so a wizard course is known
+  // to be valid before it is downloaded. A newer check that finishes first is never overwritten.
+  let findings = $state<Finding[] | null>(null);
+  $effect(() => {
+    const checking = files;
+    findings = null;
+    void checkGeneratedFiles(checking).then((result) => {
+      if (checking === files) findings = result;
+    });
+  });
+
   // Identical to the CLI's next-steps: both render the shared nextSteps(spec).
   const downloadSteps = $derived(nextSteps(spec));
 
@@ -93,6 +106,7 @@
 <div class="ui-page max-w-4xl">
   <div class="ui-panel space-y-6">
     <h1 class="ui-title">Create a New Course</h1>
+    <p class="ui-muted">Already have a course folder? <a class="underline" href="/create/check">Check it for problems</a>.</p>
 
     <StepIndicator {steps} current={currentStep} onjump={(i) => (currentStep = i)} />
 
@@ -115,7 +129,7 @@
           onback={back}
         />
       {:else if currentStep === 2}
-        <PreviewStep {files} {courseId} onnext={next} onback={back} />
+        <PreviewStep {files} {courseId} {findings} onnext={next} onback={back} />
       {:else if currentStep === 3}
         {#if downloadError}<p role="alert">{downloadError}</p>{/if}
         <DownloadStep {courseId} steps={downloadSteps} {downloaded} ondownload={handleDownload} onback={back} />
