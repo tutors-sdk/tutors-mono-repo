@@ -64,7 +64,7 @@ export function pruneTree(lr: LearningResource): void {
 export type CourseTree = LearningResource;
 
 /**
- * Reads a course folder into a tree without pruning: folders of no known kind stay in, typed
+ * Reads a course folder into a tree without pruning: folders with no kind on their path stay in, typed
  * "unknown". A validator reads this tree to name what the generator would silently leave out.
  */
 export function buildUnprunedTree(dir: string): CourseTree {
