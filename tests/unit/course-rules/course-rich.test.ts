@@ -92,6 +92,21 @@ describe("V015 and V016 Marp decks", () => {
     expect(await findings(talk(deck), "V016")).toEqual([1, 3, 4].map((slide) => `topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", slide)}`));
   });
 
+  it("lets the talk page's front matter win over the deck's, as gen's talk builder does", async () => {
+    expect(await findings(talk("---\nmarp: true\n---\n# x\n", "---\nmarp: false\n---\n# Talk\n"), "V015")).toEqual([
+      `topic-01/talk-01/talk.marp :: ${messages.marpNotSlides("talk.marp")}`
+    ]);
+    expect(await findings(talk("---\nmarp: true\ntheme: gaia\n---\n# x\n", "---\ntheme: night\n---\n# Talk\n"), "V016")).toEqual([
+      `topic-01/talk-01/talk.marp :: ${messages.marpTheme("talk.marp", "night")}`
+    ]);
+  });
+
+  it("ignores markup a slide shows as code, which Marp escapes", async () => {
+    const deck =
+      '---\nmarp: true\n---\n```html\n<script>alert(1)</script>\n```\n\nUse `<a href="javascript:x">` or ``on`click=`` never.\n\n---\n\n~~~~\n<img onerror=y>\n~~~\nstill code\n~~~~\n\n---\n\n`` `<script>` ``\n\n---\n\n```\nshown\n```\n<script>real</script> `unclosed\n';
+    expect(await findings(talk(deck), "V016")).toEqual([`topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", 4)}`]);
+  });
+
   it("checks the images a deck shows under V009", async () => {
     const deck = "---\nmarp: true\n---\n![bg left](img/missing.png)\n";
     expect(await findings(talk(deck), "V009")).toEqual([`topic-01/talk-01/talk.marp :: ${messages.imageMissing("img/missing.png")}`]);
@@ -116,6 +131,8 @@ describe("V017 Mermaid diagrams", () => {
     expect(mermaidBlocks("```mermaid\r\na\r\n```")).toEqual([{ source: "a", line: 2 }]);
     expect(mermaidBlocks("see ```mermaid\nx\n```\n```mermaidjs\ny\n```")).toEqual([]);
     expect(mermaidBlocks("````mermaid\n```\nstill inside\n````")).toEqual([{ source: "```\nstill inside", line: 2 }]);
+    expect(mermaidBlocks("````markdown\n```mermaid\nexample\n```\n````\n```mermaid\nreal\n```")).toEqual([{ source: "real", line: 7 }]);
+    expect(mermaidBlocks("~~~\n```mermaid\n~~~~\n```mermaid\nafter\n```")).toEqual([{ source: "after", line: 5 }]);
   });
 
   it("does not run without a diagram checker, and skips empty diagrams", async () => {

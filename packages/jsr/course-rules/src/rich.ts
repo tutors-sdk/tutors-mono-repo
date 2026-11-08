@@ -59,6 +59,56 @@ const MARP_THEMES = ["default", "gaia", "uncover"];
 /** What the reader's sanitiser strips from a slide (rule 0645): scripts, on...= handlers inside a tag, javascript: URLs. */
 const STRIPPED = [/<script\b/i, /<[^>]*\son[a-z]+\s*=/i, /javascript:/i];
 
+const FENCE_OPEN = /^\s*(`{3,}|~{3,})/;
+
+/** A slide's text with fenced and inline code removed: Marp escapes code, so the sanitiser never sees it as markup. */
+function withoutCode(slide: string): string {
+  const kept: string[] = [];
+  let fence: string | undefined;
+  for (const line of slide.split("\n")) {
+    const marker = FENCE_OPEN.exec(line)?.[1];
+    if (fence === undefined && marker !== undefined) fence = marker;
+    else if (fence !== undefined && closes(line, fence)) fence = undefined;
+    else if (fence === undefined) kept.push(line);
+  }
+  return withoutInlineCode(kept.join("\n"));
+}
+
+/** Text with each inline code span (a run of backticks up to the next run of the same length) removed. */
+function withoutInlineCode(text: string): string {
+  let out = "";
+  let at = 0;
+  while (at < text.length) {
+    if (text[at] !== "`") {
+      out += text[at++];
+      continue;
+    }
+    let after = at;
+    while (text[after] === "`") after++;
+    const close = closingRun(text, after, after - at);
+    if (close < 0) out += text.slice(at, after);
+    at = close < 0 ? after : close + (after - at);
+  }
+  return out;
+}
+
+/** Where the next run of exactly `length` backticks starts at or after `from`; -1 when there is none. */
+function closingRun(text: string, from: number, length: number): number {
+  for (let at = text.indexOf("`", from); at >= 0;) {
+    let end = at;
+    while (text[end] === "`") end++;
+    if (end - at === length) return at;
+    at = text.indexOf("`", end);
+  }
+  return -1;
+}
+
+/** Whether a line closes a fence opened with the given marker: the same character, at least as many, nothing else. */
+const closes = (line: string, fence: string) => {
+  const trimmed = line.trim();
+  return trimmed.length >= fence.length && trimmed === fence[0].repeat(trimmed.length);
+};
+
 /** V015 and V016: each Talk's Marp decks, read the way gen's talk builder and Marp renderer read them. */
 export async function checkMarp(tree: CourseTree, read: Read): Promise<Finding[]> {
   const findings: Finding[] = [];
@@ -70,13 +120,15 @@ export async function checkMarp(tree: CourseTree, read: Read): Promise<Finding[]
     const talkMatter = pages.length > 0 ? frontMatterOf(await read(pages[0].path)) : {};
     for (const deck of decks) {
       const text = (await read(deck.path)).replace(/\r\n?/g, "\n");
-      const matter = frontMatterOf(text);
-      if (!isTrue(matter.marp) && !isTrue(talkMatter.marp)) findings.push(found("V015", deck.path, messages.marpNotSlides(deck.name)));
-      const theme = matter.theme ?? talkMatter.theme;
+      // gen's buildTalk spreads the deck's front matter first, so the talk page's values win.
+      const matter = { ...frontMatterOf(text), ...talkMatter };
+      if (!isTrue(matter.marp)) findings.push(found("V015", deck.path, messages.marpNotSlides(deck.name)));
+      const theme = matter.theme;
       if (theme != null && !MARP_THEMES.includes(String(theme))) findings.push(found("V016", deck.path, messages.marpTheme(deck.name, String(theme))));
       const body = text.replace(FRONT_MATTER, "");
       body.split(/^---$/m).forEach((slide, index) => {
-        if (STRIPPED.some((pattern) => pattern.test(slide))) findings.push(found("V016", deck.path, messages.marpScript(deck.name, index + 1)));
+        const prose = withoutCode(slide);
+        if (STRIPPED.some((pattern) => pattern.test(prose))) findings.push(found("V016", deck.path, messages.marpScript(deck.name, index + 1)));
       });
     }
   }
@@ -90,13 +142,14 @@ export function mermaidBlocks(text: string): { source: string; line: number }[] 
   const blocks: { source: string; line: number }[] = [];
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   for (let at = 0; at < lines.length; at++) {
-    const open = MERMAID_OPEN.exec(lines[at]);
+    const open = FENCE_OPEN.exec(lines[at]);
     if (open === null) continue;
     const fence = open[1];
     const body: string[] = [];
     let end = at + 1;
-    while (end < lines.length && !(lines[end].trim().startsWith(fence[0].repeat(fence.length)) && lines[end].trim().replaceAll(fence[0], "") === "")) body.push(lines[end++]);
-    blocks.push({ source: body.join("\n"), line: at + 2 });
+    while (end < lines.length && !closes(lines[end], fence)) body.push(lines[end++]);
+    // Any other fence is code, so a mermaid fence inside it is an example, not a diagram the reader draws.
+    if (MERMAID_OPEN.test(lines[at])) blocks.push({ source: body.join("\n"), line: at + 2 });
     at = end;
   }
   return blocks;
