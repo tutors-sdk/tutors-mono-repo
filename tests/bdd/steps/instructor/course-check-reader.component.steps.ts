@@ -4,6 +4,7 @@ import { flushSync, mount, tick, unmount } from "svelte";
 import { expect } from "vitest";
 import Findings from "../../../../apps/reader/src/routes/(create)/create/Findings.svelte";
 import PreviewStep from "../../../../apps/reader/src/routes/(create)/create/PreviewStep.svelte";
+import CheckPage from "../../../../apps/reader/src/routes/(create)/create/check/+page.svelte";
 import { checkGeneratedFiles, checkZip } from "../../../../apps/reader/src/routes/(create)/create/check.ts";
 import { validate, MemoryFileSystem, type Finding } from "../../../../packages/jsr/course-rules/src/mod.ts";
 import { defaultSpec, generateCourseFiles, type GeneratedFile } from "../../../../packages/jsr/create/src/generate.ts";
@@ -30,7 +31,7 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
     target.remove();
   });
 
-  const show = (Component: typeof Findings | typeof PreviewStep, props: Record<string, unknown>) => {
+  const show = (Component: typeof Findings | typeof PreviewStep | typeof CheckPage, props: Record<string, unknown>) => {
     component = mount(Component, { target, props });
     flushSync();
   };
@@ -78,6 +79,40 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
           expect(item.textContent).toContain(rule);
           const expected = (await validate(new MemoryFileSystem(fixture))).find((f) => f.path === path.join(" "))!;
           expect(item.querySelector(".finding-message")!.textContent).toBe(expected.message);
+        });
+      });
+      RuleScenario("A second zip chosen while the first is still being read", ({ Given, When, Then }) => {
+        let release: () => void = () => {};
+        const zipOf = (form: string, rule: string) =>
+          zipSync(Object.fromEntries(Object.entries(validateFixture(rule, form as FixtureForm)).map(([path, text]) => [path, strToU8(text)])));
+        const fileOf = (name: string, bytes: Uint8Array, gate: Promise<void>) => ({ name, arrayBuffer: async () => (await gate, bytes.slice().buffer) }) as unknown as File;
+        let slow: File;
+        let quick: File;
+        const choose = (file: File) => {
+          const input = target.querySelector<HTMLInputElement>("#course-zip")!;
+          Object.defineProperty(input, "files", { value: [file], configurable: true });
+          input.dispatchEvent(new Event("change"));
+        };
+        Given(
+          "the check page, with the {string} course of fixture {string} slow to read and the {string} course of fixture {string} quick",
+          (_ctx, slowForm: string, slowRule: string, quickForm: string, quickRule: string) => {
+            show(CheckPage, {});
+            slow = fileOf(`${slowForm}.zip`, zipOf(slowForm, slowRule), new Promise((resolve) => (release = resolve)));
+            quick = fileOf(`${quickForm}.zip`, zipOf(quickForm, quickRule), Promise.resolve());
+          }
+        );
+        When("the instructor chooses the slow zip and then the quick one", async () => {
+          choose(slow);
+          choose(quick);
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          release();
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          await tick();
+        });
+        Then("the page shall name {string} and say {string}", (_ctx, name: string, text: string) => {
+          expect(target.textContent).toContain(`Checked ${name}`);
+          expect(target.textContent).toContain(text);
+          expect(target.textContent).not.toContain("V002");
         });
       });
       RuleScenario("A course zipped from inside its folder", ({ Given, When, Then }) => {

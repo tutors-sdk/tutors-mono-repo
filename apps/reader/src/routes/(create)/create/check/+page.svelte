@@ -6,20 +6,24 @@
   let findings = $state<Finding[] | null>(null);
   let error = $state("");
   let fileName = $state("");
+  /** The latest choice: a slower check of an earlier .zip must not show under the later one's name. */
+  let latest = 0;
 
   async function handleFile(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    const choice = ++latest;
     fileName = file.name;
     findings = null;
     error = "";
-    try {
-      findings = await checkZip(new Uint8Array(await file.arrayBuffer()));
-    } catch (failure) {
-      error = failure instanceof UnreadableCourseError ? failure.message : "This course couldn't be checked. Please try again.";
-    }
     input.value = "";
+    try {
+      const result = await checkZip(new Uint8Array(await file.arrayBuffer()));
+      if (choice === latest) findings = result;
+    } catch (failure) {
+      if (choice === latest) error = failure instanceof UnreadableCourseError ? failure.message : "This course couldn't be checked. Please try again.";
+    }
   }
 </script>
 

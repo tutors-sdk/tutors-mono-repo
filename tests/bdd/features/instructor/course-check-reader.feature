@@ -34,6 +34,11 @@ Feature: Checking a course in the reader
       When the instructor checks the zip
       Then the list shall say "No problems found."
 
+    Scenario: A second zip chosen while the first is still being read
+      Given the check page, with the "broken" course of fixture "V002" slow to read and the "fixed" course of fixture "V005" quick
+      When the instructor chooses the slow zip and then the quick one
+      Then the page shall name "fixed.zip" and say "No problems found."
+
   @rule-0722 @ears-unwanted
   Rule: If the file an instructor checks is not a zip that holds anything, then the reader shall say what to do instead of listing findings.
 
