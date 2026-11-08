@@ -105,7 +105,9 @@ function firstUnreadQuestion(block: string, draft: QuizDraft): number | null {
   for (const [index, question] of draft.questions.entries()) {
     const read = parsed?.questions[index];
     const options = question.type === "true-false" ? ["True", "False"] : question.options.map(clean);
-    const same = read !== undefined && JSON.stringify([read.type, read.text, read.options, read.correctIndex]) === JSON.stringify([question.type, clean(question.text), options, question.correctIndex]);
+    const same =
+      read !== undefined &&
+      JSON.stringify([read.type, read.text, read.options, read.correctIndex]) === JSON.stringify([question.type, clean(question.text), options, question.correctIndex]);
     if (!same) return index + 1;
   }
   return null;

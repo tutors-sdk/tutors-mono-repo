@@ -114,7 +114,8 @@ describe("writeQuizBlock", () => {
     [{ questions: [{ type: "multiple-choice", text: "Q", options: ["a", "b"], correctIndex: -1 }] }, 1, "answer-out-of-range"],
     [{ questions: [{ type: "multiple-choice", text: "Q", options: ["a", "b"], correctIndex: 0.5 }] }, 1, "answer-out-of-range"],
     [{ questions: [draft.questions[0], { type: "true-false", text: "Q", options: [], correctIndex: 2 }] }, 2, "answer-out-of-range"],
-    [{ questions: [{ type: "multiple-choice", text: "Q\noptions: x", options: ["a", "b"], correctIndex: 0 }] }, 1, "unreadable"]
+    [{ questions: [{ type: "multiple-choice", text: "Q\noptions: x", options: ["a", "b"], correctIndex: 0 }] }, 1, "unreadable"],
+    [{ questions: [{ type: "multiple-choice", text: "Q", options: ["x", "y", "a\noptions: z"], correctIndex: 0 }] }, 1, "unreadable"]
   ] as [QuizDraft, number | null, string][])("refuses a draft the reader could not show as built (%#)", (bad, question, problem) => {
     let error: unknown;
     try {
