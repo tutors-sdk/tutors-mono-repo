@@ -193,6 +193,8 @@ describe("V011 netlify.toml", () => {
     expect(await check('[build]\n  publish = "public"\n[context.deploy-preview]\n  publish = "json"\n')).toEqual([messages.netlifyPublish()]);
     expect(await check('[build]\n  command = "x"\n  publish = "json" # generator output\n[context.deploy-preview]\n  publish = "public"\n')).toEqual([]);
     expect(await check('[ build ]\npublish = "json"\n')).toEqual([]);
+    expect(await check('  [build]\n  command = "echo [x]"\n  publish= "json"\n')).toEqual([]);
+    for (const toml of ['[build]\n  # publish = "json"\n', '[build]\n  publish = "json" then\n']) expect(await check(toml), toml).toEqual([messages.netlifyPublish()]);
   });
 
   it("rejects any other folder, and a publish line that is commented out", async () => {

@@ -23,7 +23,7 @@
     "packages/jsr/create/src/pattern-course.ts": 100,
     "packages/jsr/create/src/patterns.ts": 100,
     "packages/jsr/create/src/scaffolder.ts": 100,
-    "packages/jsr/create/src/templates.ts": 0,
+    "packages/jsr/create/src/templates.ts": 46,
     "packages/jsr/create/src/types.ts": 58,
     "packages/jsr/create/src/validate-cli.ts": 100,
     "packages/jsr/gen/src/services/course-builder.ts": 94,
