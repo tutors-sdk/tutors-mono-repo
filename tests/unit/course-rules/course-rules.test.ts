@@ -166,17 +166,23 @@ describe("V001-V006 corners", () => {
       "slides/1-theory.md": "",
       "x/Setup.md": "",
       "y/1.md": "",
-      "videos/videoid.txt": ""
+      "videos/videoid.txt": "",
+      "z/a01.Setup.md": "",
+      "w/01.Setup.md.bak": "",
+      "course-extra/x.py": ""
     };
     const findings = await validate(course(working));
     expect(findings.filter((f) => f.rule === "V018").map((f) => `${f.severity} ${f.path} ${f.suggestedName ?? "-"} ${"fix" in f}`)).toEqual([
       "warn code - false",
+      "warn course-extra - false",
       "warn exams - false",
       "warn scripts - false",
       "warn slides - false",
       "warn videos - false",
+      "warn w - false",
       "warn x - false",
-      "warn y - false"
+      "warn y - false",
+      "warn z - false"
     ]);
     expect(findings.find((f) => f.path === "code")!.message).toBe(messages.V018("code", "topic-code"));
     expect(messages.V018("code", "topic-code")).toContain(
