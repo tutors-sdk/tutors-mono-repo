@@ -41,7 +41,7 @@ export async function validate(fs: FileSystemPort, root = ""): Promise<Finding[]
     ...checkTree(tree),
     ...(await checkLinks(tree, read)),
     ...(await checkYaml(tree, read)),
-    ...checkNames(tree),
+    ...(await checkNames(tree, read)),
     ...(await checkTitles(tree, read)),
     ...(await checkImages(tree, read)),
     ...checkTopicNumbers(tree),

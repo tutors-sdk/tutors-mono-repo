@@ -56,6 +56,17 @@ describe("V007 names", () => {
     expect(await warnings({ "topic-01/topic.md": "# T\n", "topic-01/web-é/weburl": "https://a.b\n" }, "V007")).toEqual(["topic-01/web-é -> web-e (fix)"]);
   });
 
+  it("offers no rename for a file a page links to, as written or URL-encoded", async () => {
+    const base = { "course.md": "# C\n", "topic-01/topic.md": "# T\n", "topic-01/note-1/n.md": "# N\n" };
+    expect(await warnings({ ...base, "topic-01/note-1/Week 1 Slides.pdf": "%PDF", "topic-01/note-1/n.md": "# N\n[Slides](Week%201%20Slides.pdf)\n" }, "V007")).toEqual([
+      "topic-01/note-1/Week 1 Slides.pdf -> Week-1-Slides.pdf"
+    ]);
+    expect(await warnings({ ...base, "topic-01/note-1/Week 1.pdf": "%PDF", "topic-01/topic.md": "# T\nSee Week 1.pdf\n" }, "V007")).toEqual([
+      "topic-01/note-1/Week 1.pdf -> Week-1.pdf"
+    ]);
+    expect(await warnings({ ...base, "topic-01/note-1/Week 1.pdf": "%PDF" }, "V007")).toEqual(["topic-01/note-1/Week 1.pdf -> Week-1.pdf (fix)"]);
+  });
+
   it("names files with spaces or accents at the root and in typed folders, and fixes all but images", async () => {
     expect(await warnings({ "Read Me.md": "x", "topic-01/topic.md": "# T\n", "topic-01/Main Pic.png": "PNG", "topic-01/note-1/n.md": "# N\n" }, "V007")).toEqual([
       "Read Me.md -> Read-Me.md (fix)",
@@ -173,6 +184,12 @@ describe("V011 netlify.toml", () => {
 
   it("accepts json or html, quoted either way, with or without ./ and a trailing slash", async () => {
     for (const publish of ['"json"', "'html'", '"./json/"', '"/html"', '  "json"  ']) expect(await check(`[build]\n  publish =${publish}\n`), publish).toEqual([]);
+  });
+
+  it("reads publish from the [build] table only, not another context's", async () => {
+    expect(await check('[build]\n  publish = "public"\n[context.deploy-preview]\n  publish = "json"\n')).toEqual([messages.netlifyPublish()]);
+    expect(await check('[build]\n  command = "x"\n  publish = "json" # generator output\n[context.deploy-preview]\n  publish = "public"\n')).toEqual([]);
+    expect(await check('[ build ]\npublish = "json"\n')).toEqual([]);
   });
 
   it("rejects any other folder, and a publish line that is commented out", async () => {
