@@ -1,7 +1,7 @@
 import type { CourseSpec, PatternChoice } from "./types.ts";
 import { padNumber, LAB_STEP_COUNT } from "./types.ts";
 import { patternById, WEEKS_PER_UNIT, type PatternItem } from "./patterns.ts";
-import { labSetupMd, labStepMd, talkMarp, topicIcons } from "./templates.ts";
+import { labSetupMd, labStepMd, talkMarp, topicIcons, yamlText } from "./templates.ts";
 
 export interface GeneratedFile {
   relativePath: string;
@@ -91,7 +91,7 @@ function itemDirs(items: PatternItem[], parent: string): string[] {
 
 export function patternCalendarYaml(spec: CourseSpec, choice: PatternChoice): string {
   const { weeks, readingWeekDate } = teachingWeeks(choice);
-  const lines = [`title: ${spec.courseName} Calendar`, `year: ${weeks[0].date.slice(0, 4)}`, `weeks:`];
+  const lines = [`title: ${yamlText(`${spec.courseName} Calendar`)}`, `year: ${weeks[0].date.slice(0, 4)}`, `weeks:`];
   for (const { week, date } of weeks) {
     lines.push(`  - date: ${date}`, `    week: ${week}`, `    topic: Week ${week}`);
     if (week === choice.readingWeek && readingWeekDate) lines.push(`  - date: ${readingWeekDate}`, `    topic: Reading Week`);

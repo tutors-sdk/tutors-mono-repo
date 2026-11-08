@@ -1,3 +1,4 @@
+import yaml from "js-yaml";
 import { mkdtempSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -44,6 +45,13 @@ describe("patterns", () => {
     expect(() => teachingWeeks({ id: "x", weeks: 1, start: "25/01/2027" })).toThrow('"25/01/2027" is not a date like 2027-01-25');
     expect(() => teachingWeeks({ id: "x", weeks: 1, start: "2027-02-30" })).toThrow('"2027-02-30" is not a real date');
     expect(() => patternFiles(spec(), { id: "nope", weeks: 1, start: "2027-01-25" })).toThrow('Unknown pattern "nope"');
+  });
+
+  it("quotes a course name YAML would misread, so the calendar still parses", () => {
+    for (const courseName of ["Web Dev 1: Foundations!", "C# #1", "[Draft] Web", "Web "]) {
+      const parsed = yaml.load(patternCalendarYaml({ ...spec(), courseName }, { id: "x", weeks: 1, start: "2027-01-25", readingWeek: null })) as { title: string };
+      expect(parsed.title).toBe(`${courseName} Calendar`);
+    }
   });
 
   it("writes the calendar title, year and one entry per week", () => {
