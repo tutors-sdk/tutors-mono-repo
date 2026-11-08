@@ -27,3 +27,25 @@ export function joinPath(...parts: string[]): string {
 export async function readText(fs: FileSystemPort, path: string): Promise<string> {
   return new TextDecoder().decode(await fs.read(path));
 }
+
+/** What a diagram checker says about one diagram's source. */
+export type DiagramCheck =
+  /** It draws. */
+  | { draws: true }
+  /** It won't draw: `line` is the diagram's own line (1-based) where the drawing library stopped, when it says. */
+  | { draws: false; line?: number; unknownType?: boolean }
+  /** The checker could not tell (a diagram type it cannot load here, say): no finding is made. */
+  | { draws: "unknown" };
+
+/**
+ * Checks diagrams with the same library the reader draws them with. Optional: a shell that has Mermaid at
+ * hand (Studio's WebView, the reader's check page) supplies one; without it V017 does not run.
+ */
+export interface DiagramPort {
+  mermaid(source: string): Promise<DiagramCheck>;
+}
+
+/** The ports beyond the file system that a shell may hand validate(). */
+export interface ValidateOptions {
+  diagrams?: DiagramPort;
+}

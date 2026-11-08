@@ -1,6 +1,6 @@
 export type Severity = "error" | "warn" | "info";
 
-export type RuleId = "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012";
+export type RuleId = "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012" | "V013" | "V014" | "V015" | "V016" | "V017";
 
 /**
  * One change to a course folder. A fix is planned as file operations first and applied only when the
@@ -38,10 +38,15 @@ export const ruleCatalogue: readonly RuleInfo[] = [
   { id: "V006", severity: "error", summary: "properties.yaml, calendar.yaml, enrollment.yaml and badges.yaml parse and have the expected shape" },
   { id: "V007", severity: "warn", summary: "Folder names are lower-case ASCII with no spaces, and file names are ASCII with no spaces" },
   { id: "V008", severity: "warn", summary: "Every card's .md has a title on its first line" },
-  { id: "V009", severity: "warn", summary: "Images a .md file shows exist and are under 2 MB" },
+  { id: "V009", severity: "warn", summary: "Images a .md file or Marp deck shows exist and are under 2 MB" },
   { id: "V010", severity: "warn", summary: "Topics side by side are numbered in sequence (topic-01, topic-02, ...)" },
   { id: "V011", severity: "warn", summary: "A netlify.toml publishes the generated json or html folder" },
-  { id: "V012", severity: "info", summary: "A unit, side or topic holds something" }
+  { id: "V012", severity: "info", summary: "A unit, side or topic holds something" },
+  { id: "V013", severity: "error", summary: "Every question in a quiz reaches students: each has text, two or more answers and a right answer that exists" },
+  { id: "V014", severity: "warn", summary: "A quiz's settings are read as written: one quiz block, and a time limit in whole seconds" },
+  { id: "V015", severity: "error", summary: "A Marp deck starts with marp: true, so Tutors shows it as slides" },
+  { id: "V016", severity: "warn", summary: "A Talk has one Marp deck, on a theme Tutors has, with no script the reader removes" },
+  { id: "V017", severity: "error", summary: "Every Mermaid diagram draws (checked where a shell supplies a diagram checker)" }
 ];
 
 export function severityOf(rule: RuleId): Severity {

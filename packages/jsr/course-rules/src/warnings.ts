@@ -24,7 +24,7 @@ function warning(rule: RuleId, path: string, message: string, extra: { suggested
 const parentOf = (path: string) => (path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "");
 
 /** Every folder the generator reads: the root and each typed folder below it, depth first. */
-function typedNodes(tree: CourseTree): CourseNode[] {
+export function typedNodes(tree: CourseTree): CourseNode[] {
   const nodes: CourseNode[] = [];
   const visit = (node: CourseNode) => {
     nodes.push(node);
@@ -167,13 +167,13 @@ function fileIndex(tree: CourseTree): Map<string, number | undefined> {
   return index;
 }
 
-/** V009: the images a page shows exist and are small enough to load on a phone. */
+/** V009: the images a page or Marp deck shows exist and are small enough to load on a phone. */
 export async function checkImages(tree: CourseTree, read: (path: string) => Promise<string>): Promise<Finding[]> {
   const findings: Finding[] = [];
   const index = fileIndex(tree);
   for (const node of typedNodes(tree)) {
     for (const file of node.files) {
-      if (extensionOf(file.name) !== "md") continue;
+      if (!["md", "marp"].includes(extensionOf(file.name))) continue;
       for (const source of imageSources(await read(file.path))) {
         const target = resolveSource(node.path, source);
         if (target === null) continue;

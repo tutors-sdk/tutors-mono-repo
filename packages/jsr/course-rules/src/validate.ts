@@ -2,8 +2,9 @@ import yaml from "js-yaml";
 import type { FileOp, Finding, RuleId } from "./finding.ts";
 import { severityOf } from "./finding.ts";
 import { messages } from "./messages.ts";
-import type { FileSystemPort } from "./ports.ts";
+import type { FileSystemPort, ValidateOptions } from "./ports.ts";
 import { joinPath, readText } from "./ports.ts";
+import { checkDiagrams, checkMarp, checkQuizzes } from "./rich.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
 import { buildCourseTree, extensionOf, holdsOnlyImages } from "./tree.ts";
 import { checkEmpty, checkImages, checkNames, checkNetlify, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
@@ -32,9 +33,10 @@ export function sortFindings(findings: Finding[]): Finding[] {
 /**
  * Checks a course folder and reports every problem with the file or folder at fault. Reads through the
  * port and never writes. `root` is the course folder as the port addresses it ("" when the port is
- * already rooted at the course).
+ * already rooted at the course). `options.diagrams` checks Mermaid diagrams (V017) when the shell has
+ * Mermaid to hand; without it that rule does not run.
  */
-export async function validate(fs: FileSystemPort, root = ""): Promise<Finding[]> {
+export async function validate(fs: FileSystemPort, root = "", options: ValidateOptions = {}): Promise<Finding[]> {
   const tree = await buildCourseTree(fs, root);
   const read = (path: string) => readText(fs, joinPath(root, path));
   return sortFindings([
@@ -46,7 +48,10 @@ export async function validate(fs: FileSystemPort, root = ""): Promise<Finding[]
     ...(await checkImages(tree, read)),
     ...checkTopicNumbers(tree),
     ...(await checkNetlify(tree, read)),
-    ...checkEmpty(tree)
+    ...checkEmpty(tree),
+    ...(await checkQuizzes(tree, read)),
+    ...(await checkMarp(tree, read)),
+    ...(await checkDiagrams(tree, read, options.diagrams))
   ]);
 }
 

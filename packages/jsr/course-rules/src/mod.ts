@@ -5,7 +5,7 @@
  *
  * @module
  */
-export type { DirEntry, FileSystemPort } from "./ports.ts";
+export type { DiagramCheck, DiagramPort, DirEntry, FileSystemPort, ValidateOptions } from "./ports.ts";
 export { joinPath } from "./ports.ts";
 export type { FileOp, Finding, RuleId, RuleInfo, Severity } from "./finding.ts";
 export { ruleCatalogue } from "./finding.ts";
@@ -20,6 +20,9 @@ export type { ImportFile, ShapeItem, ShapeKind, ShapeProposal, ShapeTopic } from
 export { linkOf, proposeShape, weekOf } from "./shape.ts";
 export { netlifyToml } from "./templates.ts";
 export { MemoryFileSystem } from "./adapters/memory-fs.ts";
+export type { MermaidParser } from "./adapters/mermaid.ts";
+export { mermaidDiagrams } from "./adapters/mermaid.ts";
+export { mermaidBlocks } from "./rich.ts";
 export type { ExitCode, ReportFormat } from "./report.ts";
 export { exitCodeFor, jsonReport, report, sarifReport, textReport } from "./report.ts";
 export { rulesVersion } from "./version.ts";
