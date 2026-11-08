@@ -14,3 +14,6 @@ export type { CourseFile, CourseNode, CourseTree } from "./tree.ts";
 export { buildCourseTree, kindOf } from "./tree.ts";
 export { checkTree, slugify, sortFindings, validate } from "./validate.ts";
 export { MemoryFileSystem } from "./adapters/memory-fs.ts";
+export type { ExitCode, ReportFormat } from "./report.ts";
+export { exitCodeFor, jsonReport, report, sarifReport, textReport } from "./report.ts";
+export { rulesVersion } from "./version.ts";

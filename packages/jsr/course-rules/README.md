@@ -21,3 +21,15 @@ The package has no file-system access of its own. A shell passes a `FileSystemPo
 | V006 | error    | properties.yaml, calendar.yaml, enrollment.yaml and badges.yaml parse and have the shape the generator reads                                                 |
 
 Each rule is an EARS Rule in `tests/bdd/features/instructor/course-validation.feature` (Rules 0695-0700) with a broken and a fixed course under `tests/fixtures/validate/`. A conformance test builds every fixture with the generator and checks that the folders it leaves out are exactly the V002 findings.
+
+## Reports and exit codes
+
+`report(findings, "text" | "json" | "sarif", version, root)` renders findings for a person, for a program (the JSON array of findings Studio and CI read) or for GitHub code scanning (SARIF 2.1.0, a finding on the course folder located at `course.md`). `exitCodeFor(findings, strict)` is 0 when clean, 1 with errors, 2 with only warnings under `--strict`.
+
+From a terminal:
+
+```sh
+deno run -A jsr:@tutors/tutors-create validate [folder] [--format text|json|sarif] [--strict]
+```
+
+Exit 3 means the folder could not be read or the arguments were wrong.

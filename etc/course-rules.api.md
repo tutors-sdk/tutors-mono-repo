@@ -22,10 +22,16 @@ export type { CourseTree };
 export type { DirEntry };
 
 // (from src/mod.ts)
+export type { ExitCode };
+
+// (from src/mod.ts)
 export type { FileSystemPort };
 
 // (from src/mod.ts)
 export type { Finding };
+
+// (from src/mod.ts)
+export type { ReportFormat };
 
 // (from src/mod.ts)
 export type { RuleId };
@@ -51,17 +57,32 @@ export async function buildCourseTree(fs: FileSystemPort, root) : Promise<Course
 // (from src/validate.ts)
 export function checkTree(tree: CourseTree) : Finding[];
 
+// (from src/report.ts)
+export function exitCodeFor(findings: readonly Finding[], strict: boolean) : ExitCode;
+
 // (from src/ports.ts)
 export function joinPath(...parts: string[]) : string;
 
+// (from src/report.ts)
+export function jsonReport(findings: readonly Finding[]) : string;
+
 // (from src/tree.ts)
 export function kindOf(folderName: string) : string | null;
+
+// (from src/report.ts)
+export function report(findings: readonly Finding[], format: ReportFormat, version: string, root) : string;
+
+// (from src/report.ts)
+export function sarifReport(findings: readonly Finding[], version: string, root) : string;
 
 // (from src/validate.ts)
 export function slugify(name: string) : string;
 
 // (from src/validate.ts)
 export function sortFindings(findings: Finding[]) : Finding[];
+
+// (from src/report.ts)
+export function textReport(findings: readonly Finding[]) : string;
 
 // (from src/validate.ts)
 export async function validate(fs: FileSystemPort, root) : Promise<Finding[]>;
@@ -78,6 +99,9 @@ export const messages;
 // (from src/finding.ts)
 export const ruleCatalogue: readonly RuleInfo[];
 
+// (from src/version.ts)
+export const rulesVersion;
+
 ```
 
 ### Summary
@@ -85,7 +109,7 @@ export const ruleCatalogue: readonly RuleInfo[];
 | Kind | Count |
 |------|-------|
 | class | 1 |
-| const | 3 |
-| function | 7 |
-| type | 9 |
-| **Total** | **20** |
+| const | 4 |
+| function | 12 |
+| type | 11 |
+| **Total** | **28** |
