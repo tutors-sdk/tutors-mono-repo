@@ -42,5 +42,21 @@ export const messages = {
     `The ${file} file of this ${kindName(kind)} doesn't start with ${kind === "web" ? "a web address (https://…)" : "a repository (https://github.com/owner/repo or owner/repo)"}. Put the address on its first line and nothing else.`,
   yamlBroken: (file: string, detail: string) =>
     `${file} can't be read: ${detail}. Check the indentation (spaces, not tabs) and that every "name: value" line has a space after the colon.`,
-  yamlShape: (file: string, expected: string) => `${file} is readable but not in the expected shape: ${expected}.`
+  yamlShape: (file: string, expected: string) => `${file} is readable but not in the expected shape: ${expected}.`,
+  folderName: (name: string, suggestion: string) =>
+    `The folder "${name}" has capitals, spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to ${suggestion}.`,
+  fileName: (name: string, suggestion: string) =>
+    `The file "${name}" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to ${suggestion}.`,
+  noTitle: (file: string) => `${file} has no title, so its card shows a blank heading. Put the title on the first line, like # Week 1.`,
+  imageMissing: (src: string) => `This page shows the image "${src}", but there is no such file next to it, so readers see a broken image. Add the image or fix the name.`,
+  imageLarge: (src: string, megabytes: string) =>
+    `The image "${src}" is ${megabytes} MB, so the page is slow to open on a phone. Shrink it below 2 MB (a screenshot saved as .jpg usually is).`,
+  topicUnnumbered: (name: string) =>
+    `The topic "${name}" has no number, so it sits in alphabetical order among its numbered neighbours. Name the topics topic-01, topic-02 and so on.`,
+  topicOutOfSequence: (expected: string, found: string) =>
+    `The topics here skip from ${expected} to ${found}, so the reader may show them in an order you don't expect. Number them in sequence with two digits: topic-01, topic-02 and so on.`,
+  netlifyMissing: () => "This course has no netlify.toml, so Netlify won't know how to build and publish it. Add the standard one (tutors validate --fix writes it).",
+  netlifyPublish: () =>
+    `netlify.toml doesn't publish the folder Tutors generates, so the site deploys to a "Page not found". Set publish = "json" under [build] (or "html" for tutors-lite).`,
+  empty: (kind: string) => `This ${kindName(kind)} is empty so far. That's fine while you are building the course; add content before students see it.`
 } as const;

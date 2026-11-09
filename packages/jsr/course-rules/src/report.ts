@@ -12,7 +12,7 @@ export function textReport(findings: readonly Finding[]): string {
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warn").length;
   const verdict =
-    findings.length === 0
+    errors + warnings === 0
       ? "Everything checks out."
       : `${errors} error${errors === 1 ? "" : "s"}, ${warnings} warning${warnings === 1 ? "" : "s"}.${errors > 0 ? " Fix the errors before publishing." : ""}`;
   return [...lines, verdict].join("\n") + "\n";

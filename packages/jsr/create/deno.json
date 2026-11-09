@@ -5,7 +5,8 @@
     ".": "./main.ts",
     "./scaffolder": "./src/scaffolder.ts",
     "./generate": "./src/generate.ts",
-    "./validate": "./src/validate-cli.ts"
+    "./validate": "./src/validate-cli.ts",
+    "./import": "./src/import-cli.ts"
   },
   "license": "MIT",
   "tasks": {

@@ -16,7 +16,9 @@ import { joinPath, readText } from "../../../packages/jsr/course-rules/src/ports
 import { extensionOf, holdsOnlyImages, isImage, isSkippedFolder } from "../../../packages/jsr/course-rules/src/tree.ts";
 
 const course = (files: Record<string, string>) => new MemoryFileSystem({ "course.md": "# C\n", ...files });
-const found = async (files: Record<string, string>) => (await validate(course(files))).map((f) => `${f.rule} ${f.path}`);
+/** The V001-V006 corners below look at errors only: their minimal courses also draw V007-V012 warnings, tested in course-warnings.test.ts. */
+const errorsOf = async (fs: MemoryFileSystem, root?: string) => (await validate(fs, root)).filter((f) => f.severity === "error");
+const found = async (files: Record<string, string>) => (await errorsOf(course(files))).map((f) => `${f.rule} ${f.path}`);
 
 describe("MemoryFileSystem", () => {
   it("keeps bytes as given, finds a folder by any file under it, and reads paths with extra slashes", async () => {
@@ -98,7 +100,7 @@ describe("the course tree", () => {
 
   it("validates a course below the port's root", async () => {
     const fs = new MemoryFileSystem({ "courses/web/course.md": "# W", "courses/web/Week 3/a.md": "" });
-    expect((await validate(fs, "courses/web")).map((f) => `${f.rule} ${f.path}`)).toEqual(["V002 Week 3"]);
+    expect((await errorsOf(fs, "courses/web")).map((f) => `${f.rule} ${f.path}`)).toEqual(["V002 Week 3"]);
   });
 
   it("knows images, hidden folders and extensions", () => {
@@ -124,12 +126,12 @@ describe("the course tree", () => {
 
 describe("V001-V006 corners", () => {
   it("V001 is reported once, against the root, and only when course.md is missing", async () => {
-    expect((await validate(new MemoryFileSystem({ "Course.md": "" }))).map((f) => [f.rule, f.path])).toEqual([["V001", ""]]);
+    expect((await errorsOf(new MemoryFileSystem({ "Course.md": "" }))).map((f) => [f.rule, f.path])).toEqual([["V001", ""]]);
     expect(await found({})).toEqual([]);
   });
 
   it("V002 names a folder once and not what is inside it, and suggests a topic name only where a topic can go", async () => {
-    const findings = await validate(
+    const findings = await errorsOf(
       course({ "Week 3/talk-1/s.pdf": "", "unit-1/u.md": "", "unit-1/Extra Reading/a.md": "", "side/s.md": "", "side/Misc/a.md": "", "topic-1/t.md": "", "topic-1/old/a.md": "" })
     );
     expect(findings.map((f) => [f.path, f.suggestedName])).toEqual([
@@ -145,7 +147,7 @@ describe("V001-V006 corners", () => {
 
   it("V003 covers units, sides and topics but not the root or simple kinds", async () => {
     expect(await found({ "unit-1/x.pdf": "", "side/x.png": "", "topic-1/x.txt": "" })).toEqual(["V003 side", "V003 topic-1", "V003 unit-1"]);
-    expect((await validate(course({ "side/x.png": "" })))[0].message).toBe(messages.V003("side"));
+    expect((await errorsOf(course({ "side/x.png": "" })))[0].message).toBe(messages.V003("side"));
   });
 
   it("V004 talks: a videoid or a Marp deck stands in for a PDF; a talk with no .md is named", async () => {
@@ -153,25 +155,25 @@ describe("V001-V006 corners", () => {
     expect(await found({ "talk-1/t.md": "", "talk-1/deck.marp": "" })).toEqual([]);
     expect(await found({ "paneltalk-1/t.md": "" })).toEqual(["V004 paneltalk-1"]);
     expect(await found({ "talk-1/s.pdf": "" })).toEqual(["V004 talk-1"]);
-    const two = await validate(course({ "talk-1/t.md": "", "talk-1/a.pdf": "", "talk-1/b.pdf": "" }));
+    const two = await errorsOf(course({ "talk-1/t.md": "", "talk-1/a.pdf": "", "talk-1/b.pdf": "" }));
     expect(two.map((f) => f.message)).toEqual([messages.talkTwoPdfs(["a.pdf", "b.pdf"])]);
-    expect((await validate(course({ "talk-1/t.md": "" })))[0].message).toBe(messages.talkNoSlides());
-    expect((await validate(course({ "talk-1/s.pdf": "" })))[0].message).toBe(messages.talkMissingDescriptor());
+    expect((await errorsOf(course({ "talk-1/t.md": "" })))[0].message).toBe(messages.talkNoSlides());
+    expect((await errorsOf(course({ "talk-1/s.pdf": "" })))[0].message).toBe(messages.talkMissingDescriptor());
   });
 
   it("V004 notes: none and two are both named; one passes", async () => {
-    expect((await validate(course({ "panelnote-1/x.png": "" })))[0].message).toBe(messages.noteMissing());
-    expect((await validate(course({ "note-1/a.md": "", "note-1/b.md": "" })))[0].message).toBe(messages.noteTwoFiles(["a.md", "b.md"]));
+    expect((await errorsOf(course({ "panelnote-1/x.png": "" })))[0].message).toBe(messages.noteMissing());
+    expect((await errorsOf(course({ "note-1/a.md": "", "note-1/b.md": "" })))[0].message).toBe(messages.noteTwoFiles(["a.md", "b.md"]));
     expect(await found({ "note-1/a.md": "" })).toEqual([]);
   });
 
   it("V004 labs: steps start at 00 or 01, skip nothing, and are named NN.Title.md", async () => {
     expect(await found({ "lab-1/00.Setup.md": "", "lab-1/01.Go.md": "" })).toEqual([]);
     expect(await found({ "book-1/01.Setup.md": "", "book-1/02.Go.md": "" })).toEqual([]);
-    expect((await validate(course({ "lab-1/x.png": "" })))[0].message).toBe(messages.labNoSteps());
-    expect((await validate(course({ "lab-1/02.Setup.md": "" })))[0].message).toBe(messages.labFirstStep("02"));
-    expect((await validate(course({ "lab-1/00.A.md": "", "lab-1/02.B.md": "" })))[0].message).toBe(messages.labStepOrder("01", "02"));
-    expect((await validate(course({ "lab-1/00.A.md": "", "lab-1/01.B.md": "", "lab-1/03.C.md": "", "lab-1/05.D.md": "" }))).length).toBe(1);
+    expect((await errorsOf(course({ "lab-1/x.png": "" })))[0].message).toBe(messages.labNoSteps());
+    expect((await errorsOf(course({ "lab-1/02.Setup.md": "" })))[0].message).toBe(messages.labFirstStep("02"));
+    expect((await errorsOf(course({ "lab-1/00.A.md": "", "lab-1/02.B.md": "" })))[0].message).toBe(messages.labStepOrder("01", "02"));
+    expect((await errorsOf(course({ "lab-1/00.A.md": "", "lab-1/01.B.md": "", "lab-1/03.C.md": "", "lab-1/05.D.md": "" }))).length).toBe(1);
     expect(await found({ "lab-1/1.Setup.md": "", "lab-1/01..md": "" })).toEqual(["V004 lab-1/01..md", "V004 lab-1/1.Setup.md"]);
     expect(await found({ "lab-1/01.Setup.md": "", "lab-1/01.Again.md": "" })).toEqual([]);
   });
@@ -187,7 +189,7 @@ describe("V001-V006 corners", () => {
     expect(await found({ "github-1/g.md": "", "github-1/githubid": "a/b/c" })).toEqual(["V005 github-1/githubid"]);
     expect(await found({ "topic-1/t.md": "", "topic-1/github-1/g.md": "" })).toEqual(["V005 topic-1/github-1"]);
     expect(await found({ "Old/web-1/w.md": "" })).toEqual(["V002 Old"]);
-    expect((await validate(course({ "web-1/w.md": "" })))[0].message).toBe(messages.linkMissing("web", "weburl"));
+    expect((await errorsOf(course({ "web-1/w.md": "" })))[0].message).toBe(messages.linkMissing("web", "weburl"));
   });
 
   it("V006 holds enrollment to the lists the reader accepts", async () => {
@@ -218,9 +220,9 @@ describe("V001-V006 corners", () => {
     expect(await found({ "calendar.yaml": "weeks:\n  - topic: no date\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "calendar.yaml": "weeks:\n  - 2027-02-01: {title: Two}\n    2027-02-08: {title: Three}\n" })).toEqual(["V006 calendar.yaml"]);
     expect(await found({ "topic-1/t.md": "", "topic-1/properties.yaml": "\t:" })).toEqual([]);
-    const [broken] = await validate(course({ "properties.yaml": "a: 1\n\tb: 2\n" }));
+    const [broken] = await errorsOf(course({ "properties.yaml": "a: 1\n\tb: 2\n" }));
     expect(broken.message).toMatch(/^properties\.yaml can't be read: line 2, tab characters/);
-    const [shape] = await validate(course({ "properties.yaml": "- a\n" }));
+    const [shape] = await errorsOf(course({ "properties.yaml": "- a\n" }));
     expect(shape.message).toBe(messages.yamlShape("properties.yaml", "a list of name: value lines"));
   });
 });
@@ -236,10 +238,10 @@ describe("findings", () => {
     expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.md": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
   });
 
-  it("carry the catalogue's severity, and the catalogue lists V001-V006 once each", async () => {
-    expect(ruleCatalogue.map((r) => r.id)).toEqual(["V001", "V002", "V003", "V004", "V005", "V006"]);
-    expect(ruleCatalogue.every((r) => r.severity === "error")).toBe(true);
-    expect((await validate(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
+  it("carry the catalogue's severity, and the catalogue lists V001-V012 once each, errors then warnings then the info rule", async () => {
+    expect(ruleCatalogue.map((r) => r.id)).toEqual(["V001", "V002", "V003", "V004", "V005", "V006", "V007", "V008", "V009", "V010", "V011", "V012"]);
+    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info"]);
+    expect((await errorsOf(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
   });
 
   it("slugify makes lower-case ASCII hyphenated names", () => {
