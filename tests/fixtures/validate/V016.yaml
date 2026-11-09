@@ -10,4 +10,4 @@ fixed:
   course.md: "# Web Development\n"
   topic-01/topic.md: "# Week one\n"
   topic-01/talk-01/talk.md: "# Introducing HTML\n\nThe first lecture.\n"
-  topic-01/talk-01/talk.marp: "---\nmarp: true\ntheme: gaia\n---\n\n# Introducing HTML\n\n---\n\n## Try it\n\nOpen the lab and click the button there.\n"
+  topic-01/talk-01/talk.marp: "---\nmarp: true\ntheme: gaia\n---\n\n# Introducing HTML\n\n---\n\n## Try it\n\nOpen the lab and click the button there.\n\n---\n\n## Separate the jobs\n\nHTML: structure. JavaScript: behaviour.\n\n```html\n<button onclick=\"go()\">Go</button>\n<script>go()</script>\n```\n"

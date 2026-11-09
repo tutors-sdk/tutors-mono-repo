@@ -72,6 +72,22 @@ async function buildNode(fs: FileSystemPort, root: string, path: string, kind: s
   return node;
 }
 
+const STEP_NAME = /^\d+\..+\.md$/;
+const MATERIAL = ["pdf", "marp"];
+const KIND_PAGES = loTypes.map((type) => `${type}.md`);
+
+/**
+ * True when a folder of no kind holds what students would miss: slides (a PDF or Marp deck), a video id,
+ * numbered lab steps, a page named for a kind (topic.md, talk.md), or a learning object with a page, at
+ * any depth. Code, scripts and notes to self
+ * are not, even in a folder named like a topic (code/topic-05/search.py).
+ */
+export function holdsCourseMaterial(node: CourseNode): boolean {
+  const material = node.files.some((file) => MATERIAL.includes(extensionOf(file.name)) || file.name === "videoid" || STEP_NAME.test(file.name) || KIND_PAGES.includes(file.name));
+  const page = node.kind !== null && node.files.some((file) => extensionOf(file.name) === "md");
+  return material || page || node.children.some(holdsCourseMaterial);
+}
+
 /** True when the folder, at any depth, holds only images: an img/ folder, which the generator copies as assets. */
 export function holdsOnlyImages(node: CourseNode): boolean {
   return node.files.every((file) => isImage(file.name)) && node.children.every((child) => child.kind === null && holdsOnlyImages(child));

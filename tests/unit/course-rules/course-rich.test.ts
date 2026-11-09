@@ -17,8 +17,8 @@ const findings = async (files: Record<string, string>, rule: string, diagrams?: 
   (await validate(course(files), "", { diagrams })).filter((f) => f.rule === rule).map((f) => `${f.path} :: ${f.message}`);
 
 describe("the catalogue", () => {
-  it("lists V013-V017 with their severities", () => {
-    expect(ruleCatalogue.slice(12).map((info) => `${info.id} ${info.severity}`)).toEqual(["V013 error", "V014 warn", "V015 error", "V016 warn", "V017 error"]);
+  it("lists V013-V018 with their severities", () => {
+    expect(ruleCatalogue.slice(12).map((info) => `${info.id} ${info.severity}`)).toEqual(["V013 error", "V014 warn", "V015 error", "V016 warn", "V017 error", "V018 warn"]);
   });
 });
 
@@ -105,6 +105,12 @@ describe("V015 and V016 Marp decks", () => {
     const deck =
       '---\nmarp: true\n---\n```html\n<script>alert(1)</script>\n```\n\nUse `<a href="javascript:x">` or ``on`click=`` never.\n\n---\n\n~~~~\n<img onerror=y>\n~~~\nstill code\n~~~~\n\n---\n\n`` `<script>` ``\n\n---\n\n```\nshown\n```\n<script>real</script> `unclosed\n';
     expect(await findings(talk(deck), "V016")).toEqual([`topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", 4)}`]);
+  });
+
+  it("names a javascript: URL only as a link target or an attribute value, not the word JavaScript in prose", async () => {
+    const deck =
+      "---\nmarp: true\n---\nJavaScript: behaviour.\n\n---\n\n[x](javascript:alert(1))\n\n---\n\n[y](< javascript:void(0)>)\n\n---\n\n<a href=\"javascript:x\">a</a>\n\n---\n\n<a href= ' JavaScript:x'>b</a>\n\n---\n\nsee (javascript: later)\n\n---\n\nFrontend = JavaScript: behaviour. <b>Back</b> = 'javascript: never'\n\n---\n\n<a href=javascript:x>c</a>\n";
+    expect(await findings(talk(deck), "V016")).toEqual([2, 3, 4, 5, 8].map((slide) => `topic-01/talk-01/talk.marp :: ${messages.marpScript("talk.marp", slide)}`));
   });
 
   it("takes out inline code spans, matching a run of backticks only with a run of the same length", () => {

@@ -52,7 +52,7 @@ Feature: Quizzes, Marp decks and Mermaid diagrams checked and written
       Then there shall be no findings
 
   @rule-0727 @ears-unwanted
-  Rule: If a Talk holds more than one Marp deck, a deck asks for a theme Tutors does not have, or a slide holds a script the reader removes, then tutors shall report rule V016 as a warning.
+  Rule: If a Talk holds more than one Marp deck, a deck asks for a theme Tutors does not have, or a slide holds a script, handler or javascript: link the reader removes outside its code, then tutors shall report rule V016 as a warning.
 
     Scenario: Two decks, an unknown theme and a button with a click handler
       Given the "broken" course of fixture "V016"
@@ -60,7 +60,7 @@ Feature: Quizzes, Marp decks and Mermaid diagrams checked and written
       Then the findings shall be exactly "V016 warn topic-01/talk-01; V016 warn topic-01/talk-01/talk.marp; V016 warn topic-01/talk-01/talk.marp"
       And the finding for "topic-01/talk-01" shall say "shows only one of them"
 
-    Scenario: One deck on a built-in theme with no script
+    Scenario: One deck on a built-in theme with no script, naming JavaScript in prose and showing a script as code
       Given the "fixed" course of fixture "V016"
       When the course is validated
       Then there shall be no findings

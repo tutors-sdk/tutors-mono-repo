@@ -45,6 +45,11 @@ export const messages = {
   V002: (name: string, suggestion?: string) =>
     `The folder "${name}" won't appear in your course, nor will anything inside it, because its name doesn't start with a kind Tutors knows (topic, unit, talk, note, lab and so on).` +
     (suggestion ? ` Rename it to ${suggestion}.` : " Rename it so it starts with the kind of content it holds, like talk-, note- or lab-."),
+  V018: (name: string, suggestion?: string) =>
+    `The folder "${name}" isn't part of your course, because its name doesn't start with a kind Tutors knows, so students won't see it. That's fine for working files such as code, scripts or slide sources.` +
+    (suggestion
+      ? ` If it holds course material, rename it to ${suggestion}.`
+      : " If it holds course material, rename it so it starts with the kind of content it holds, like talk- or note-."),
   V003: (kind: string) => `This ${kindName(kind)} has no .md file, so its card has no title. Add one, like ${kind}.md, whose first line is the title.`,
   talkMissingDescriptor: () => "This Talk has no .md file, so it has no title. Add a talk.md whose first line is the talk's title.",
   talkNoSlides: () => "This Talk has no slides. A Talk needs one PDF (or a Marp .marp deck, or a videoid file). Drop the PDF in this folder.",

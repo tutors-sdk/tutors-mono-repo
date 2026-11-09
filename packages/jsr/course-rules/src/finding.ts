@@ -1,6 +1,7 @@
 export type Severity = "error" | "warn" | "info";
 
-export type RuleId = "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012" | "V013" | "V014" | "V015" | "V016" | "V017";
+export type RuleId =
+  "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012" | "V013" | "V014" | "V015" | "V016" | "V017" | "V018";
 
 /**
  * One change to a course folder. A fix is planned as file operations first and applied only when the
@@ -31,7 +32,7 @@ export interface RuleInfo {
 /** The first release's catalogue. Ids are stable: EARS Rules, docs and Studio cite them. */
 export const ruleCatalogue: readonly RuleInfo[] = [
   { id: "V001", severity: "error", summary: "The course folder has a course.md" },
-  { id: "V002", severity: "error", summary: "Every folder's name starts with a learning-object kind, is hidden, or holds only images" },
+  { id: "V002", severity: "error", summary: "Every folder that holds course material has a name that starts with a learning-object kind" },
   { id: "V003", severity: "error", summary: "Every unit, side and topic has a descriptor .md" },
   { id: "V004", severity: "error", summary: "Talks, notes and labs hold the files their kind needs" },
   { id: "V005", severity: "error", summary: "Web and GitHub links hold a URL or repository in their link file" },
@@ -46,7 +47,8 @@ export const ruleCatalogue: readonly RuleInfo[] = [
   { id: "V014", severity: "warn", summary: "A quiz's settings are read as written: one quiz block, and a time limit in whole seconds" },
   { id: "V015", severity: "error", summary: "A Marp deck starts with marp: true, so Tutors shows it as slides" },
   { id: "V016", severity: "warn", summary: "A Talk has one Marp deck, on a theme Tutors has, with no script the reader removes" },
-  { id: "V017", severity: "error", summary: "Every Mermaid diagram draws (checked where a shell supplies a diagram checker)" }
+  { id: "V017", severity: "error", summary: "Every Mermaid diagram draws (checked where a shell supplies a diagram checker)" },
+  { id: "V018", severity: "warn", summary: "A folder Tutors leaves out holds working files (code, scripts, slide sources), not course material" }
 ];
 
 export function severityOf(rule: RuleId): Severity {

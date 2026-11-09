@@ -276,7 +276,7 @@ describe("--fix", () => {
   });
 
   it("fixCourse renames V002 and V007, writes netlify.toml, and reports what is left", async () => {
-    const fs = new MemoryFileSystem({ "course.md": "# C\n", "Week 3/topic.md": "# W\n", "Week 3/note-1/n.md": "# N\n", "topic-01/topic.md": "# T\n", "topic-01/Old/n.md": "" });
+    const fs = new MemoryFileSystem({ "course.md": "# C\n", "Week 3/topic.md": "# W\n", "Week 3/note-1/n.md": "# N\n", "topic-01/topic.md": "# T\n", "topic-01/Old/n.pdf": "" });
     const result = await fixCourse(fs);
     expect(result.applied.map((op) => (op.op === "move" ? op.to : op.path))).toEqual(["topic-week-3", "netlify.toml"]);
     expect(result.findings.map((f) => `${f.rule} ${f.path}`)).toEqual(["V002 topic-01/Old", "V010 topic-week-3", "V012 topic-01"]);

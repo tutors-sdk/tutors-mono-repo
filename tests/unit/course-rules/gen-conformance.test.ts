@@ -36,6 +36,9 @@ function droppedByGen(root: string): string[] {
   const [course] = parseCourse(root, true);
   const dropped: string[] = [];
   const visit = (folder: CourseTree, lo: Lo) => {
+    // A lab's, note's or talk's own subfolders (assets/, img/) build no learning object, yet gen types them
+    // as their parent, keeps them and copies their files: they are resources, not dropped content.
+    if (!["course", "unit", "side", "topic"].includes(lo.type)) return;
     const built = new Map(((lo as { los?: Lo[] }).los ?? []).map((child) => [child.id, child]));
     for (const child of folder.lrs) {
       const childLo = built.get(child.id);
@@ -47,16 +50,16 @@ function droppedByGen(root: string): string[] {
   return dropped.sort();
 }
 
-describe("V002 conforms to the generator", () => {
+describe("V002 and V018 conform to the generator", () => {
   // gen refuses a broken YAML file outright, which V006 reports; there is no pruned set to compare there.
   const cases = VALIDATE_RULES.flatMap((rule) => (["broken", "fixed"] as const).map((form) => ({ rule, form }))).filter(
     ({ rule, form }) => !(rule === "V006" && form === "broken")
   );
 
-  it.each(cases)("$rule $form: the V002 findings are the folders gen leaves out", async ({ rule, form }) => {
+  it.each(cases)("$rule $form: the V002 and V018 findings are the folders gen leaves out", async ({ rule, form }) => {
     const files = validateFixture(rule, form);
     const v002 = (await validate(new MemoryFileSystem(files)))
-      .filter((f) => f.rule === "V002")
+      .filter((f) => f.rule === "V002" || f.rule === "V018")
       .map((f) => f.path)
       .sort();
     expect(v002).toEqual(droppedByGen(onDisk(files)));

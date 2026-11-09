@@ -22,7 +22,7 @@ Feature: Course validation
       Then there shall be no findings
 
   @rule-0696 @ears-unwanted
-  Rule: If a folder's name starts with no learning-object kind and the folder holds anything other than images, then tutors shall report rule V002 against that folder with a sentence saying it won't appear in the course.
+  Rule: If a folder in the course, a unit, a side or a topic has a name that starts with no learning-object kind and holds course material (slides, a video id, lab steps, a page named for a kind or a learning object), then tutors shall report rule V002 against that folder with a sentence saying it won't appear in the course.
 
     Scenario: Folders named for a week, a lab and slides are each named once
       Given the "broken" course of fixture "V002"
@@ -89,3 +89,27 @@ Feature: Course validation
       Given the "fixed" course of fixture "V006"
       When the course is validated
       Then there shall be no findings
+
+  @rule-0731 @ears-unwanted
+  Rule: If a folder in the course, a unit, a side or a topic has a name that starts with no learning-object kind and holds only working files, then tutors shall report rule V018 as a warning against that folder, saying students won't see it and offering no fix.
+
+    Scenario: Code, scripts and exam notes kept beside a course
+      Given the "broken" course of fixture "V018"
+      When the course is validated
+      Then the findings shall be exactly "V018 warn code; V018 warn exams; V018 warn scripts"
+      And the finding for "code" shall say "That's fine for working files such as code, scripts or slide sources"
+      And the finding for "code" shall offer no fix
+
+    Scenario: The course without its working folders
+      Given the "fixed" course of fixture "V018"
+      When the course is validated
+      Then there shall be no findings
+
+  @rule-0732 @ears-ubiquitous
+  Rule: For a folder of no learning-object kind inside a lab, note, talk or other single learning object, tutors shall treat it as that learning object's resources and report neither V002 nor V018 against it.
+
+    Scenario: A lab's assets folder of downloads is not named
+      Given the "fixed" course of fixture "V018"
+      When the course is validated
+      Then the folder "topic-01/book-01/assets" shall not be named
+

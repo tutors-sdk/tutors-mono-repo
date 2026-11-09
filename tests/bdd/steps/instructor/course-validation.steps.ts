@@ -38,7 +38,7 @@ describeFeature(feature, ({ Rule }) => {
   });
 
   Rule(
-    "If a folder's name starts with no learning-object kind and the folder holds anything other than images, then tutors shall report rule V002 against that folder with a sentence saying it won't appear in the course.",
+    "If a folder in the course, a unit, a side or a topic has a name that starts with no learning-object kind and holds course material (slides, a video id, lab steps, a page named for a kind or a learning object), then tutors shall report rule V002 against that folder with a sentence saying it won't appear in the course.",
     ({ RuleScenario }) => {
       RuleScenario("Folders named for a week, a lab and slides are each named once", ({ Given, When, Then, And }) => {
         Given("the {string} course of fixture {string}", givenFixture);
@@ -114,6 +114,37 @@ describeFeature(feature, ({ Rule }) => {
         Given("the {string} course of fixture {string}", givenFixture);
         When("the course is validated", whenValidated);
         Then("there shall be no findings", none);
+      });
+    }
+  );
+  Rule(
+    "If a folder in the course, a unit, a side or a topic has a name that starts with no learning-object kind and holds only working files, then tutors shall report rule V018 as a warning against that folder, saying students won't see it and offering no fix.",
+    ({ RuleScenario }) => {
+      RuleScenario("Code, scripts and exam notes kept beside a course", ({ Given, When, Then, And }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the findings shall be exactly {string}", exactly);
+        And("the finding for {string} shall say {string}", says);
+        And("the finding for {string} shall offer no fix", (_ctx: unknown, path: string) => {
+          expect(findingFor(path).fix).toBeUndefined();
+          expect(findingFor(path).suggestedName).toBeUndefined();
+        });
+      });
+      RuleScenario("The course without its working folders", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("there shall be no findings", none);
+      });
+    }
+  );
+
+  Rule(
+    "For a folder of no learning-object kind inside a lab, note, talk or other single learning object, tutors shall treat it as that learning object's resources and report neither V002 nor V018 against it.",
+    ({ RuleScenario }) => {
+      RuleScenario("A lab's assets folder of downloads is not named", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the folder {string} shall not be named", (_ctx: unknown, path: string) => expect(findings.filter((f) => f.path.startsWith(path))).toEqual([]));
       });
     }
   );
