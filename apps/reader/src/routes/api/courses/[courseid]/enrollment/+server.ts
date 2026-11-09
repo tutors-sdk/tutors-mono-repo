@@ -6,14 +6,26 @@
  * when a query fails. Writes nothing.
  */
 import { error } from "@sveltejs/kit";
+import { z } from "zod";
 import { supabase } from "@tutors/community/utils/supabase-client";
 import log from "@tutors/logger";
 import { requireEducator } from "#lib/server/educator.ts";
 import type { RequestHandler } from "./$types";
 
+const enrollmentSchema = z
+  .object({
+    educators: z.array(z.string()).default([]),
+    whitelist: z.array(z.string()).default([]),
+    students: z.array(z.object({ name: z.string(), id: z.string() }).passthrough()).default([])
+  })
+  .passthrough();
+
 export const GET: RequestHandler = async ({ locals, params, fetch }) => {
   const courseId = params.courseid;
-  const { enrollment } = await requireEducator({ locals, courseId, fetch, action: "export enrollment" });
+  const { enrollment: publishedEnrollment } = await requireEducator({ locals, courseId, fetch, action: "export enrollment" });
+  const parsed = enrollmentSchema.safeParse(publishedEnrollment);
+  if (!parsed.success) error(502, "The published enrollment is invalid.");
+  const enrollment = parsed.data;
   if (!supabase) error(503, "Course activity is unavailable.");
 
   const educators = new Set(enrollment.educators.map((login) => login.toLowerCase()));
