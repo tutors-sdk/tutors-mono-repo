@@ -41,6 +41,7 @@
     "@tutors/runes": "workspace:*",
     "@tutors/runtime": "workspace:*",
     "@tutors/themes": "workspace:*",
+    "@tutors/course-rules": "workspace:*",
     "@tutors/tutors-create": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "@tutors/tutors-time-lib": "workspace:*",

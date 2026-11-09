@@ -83,6 +83,9 @@ importers:
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       front-matter:
         specifier: ^4.0.2
         version: 4.0.2
@@ -347,6 +350,9 @@ importers:
       '@tutors/course':
         specifier: workspace:*
         version: link:../../packages/svelte/course
+      '@tutors/course-rules':
+        specifier: workspace:*
+        version: link:../../packages/jsr/course-rules
       '@tutors/data-api':
         specifier: workspace:*
         version: link:../../packages/svelte/data-api
