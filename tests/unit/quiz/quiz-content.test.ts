@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractQuizBlock } from "../../../packages/svelte/quiz/src/services/quiz-content";
+import { extractQuizBlock } from "../../../packages/jsr/course-rules/src/quiz/content";
 
 const DOC = `# Recursion Check
 

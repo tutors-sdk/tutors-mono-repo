@@ -19,6 +19,12 @@ export type { CourseNode };
 export type { CourseTree };
 
 // (from src/mod.ts)
+export type { DiagramCheck };
+
+// (from src/mod.ts)
+export type { DiagramPort };
+
+// (from src/mod.ts)
 export type { DirEntry };
 
 // (from src/mod.ts)
@@ -38,6 +44,9 @@ export type { FixOutcome };
 
 // (from src/mod.ts)
 export type { ImportFile };
+
+// (from src/mod.ts)
+export type { MermaidParser };
 
 // (from src/mod.ts)
 export type { ReportFormat };
@@ -65,6 +74,9 @@ export type { ShapeTopic };
 
 // (from src/mod.ts)
 export { slugify };
+
+// (from src/mod.ts)
+export type { ValidateOptions };
 
 
 // --- classes ---
@@ -105,6 +117,12 @@ export function kindOf(folderName: string) : string | null;
 // (from src/shape.ts)
 export function linkOf(file: ImportFile) : string | null;
 
+// (from src/rich.ts)
+export function mermaidBlocks(text: string) :;
+
+// (from src/adapters/mermaid.ts)
+export function mermaidDiagrams(mermaid: MermaidParser) : DiagramPort;
+
 // (from src/fix.ts)
 export function planFixes(findings: readonly Finding[]) : FileOp[];
 
@@ -127,7 +145,7 @@ export function textReport(findings: readonly Finding[]) : string;
 export function titleOf(text: string) : string;
 
 // (from src/validate.ts)
-export async function validate(fs: FileSystemPort, root) : Promise<Finding[]>;
+export async function validate(fs: FileSystemPort, root, options: ValidateOptions = {}) : Promise<Finding[]>;
 
 // (from src/shape.ts)
 export function weekOf(name: string) : number | null;
@@ -161,6 +179,6 @@ export const rulesVersion;
 |------|-------|
 | class | 1 |
 | const | 6 |
-| function | 19 |
-| type | 19 |
-| **Total** | **45** |
+| function | 21 |
+| type | 23 |
+| **Total** | **51** |

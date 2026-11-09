@@ -6,6 +6,7 @@ import { parseCourse, readCourseTree, type CourseTree } from "../../../packages/
 import { MemoryFileSystem, validate } from "../../../packages/jsr/course-rules/src/mod.ts";
 import { VALIDATE_RULES, validateFixture } from "../../support/validate-fixtures.ts";
 import { imageTypes, type Lo } from "../../../packages/jsr/model/src/tutors.ts";
+import { isMarpContent } from "../../../packages/jsr/gen/src/services/marp-renderer.ts";
 
 /**
  * The validator's truth source is the generator: V002 must name exactly the folders gen leaves out of a
@@ -63,5 +64,28 @@ describe("V002 conforms to the generator", () => {
 
   it("the V002 fixture really does lose content in gen", () => {
     expect(droppedByGen(onDisk(validateFixture("V002", "broken")))).toEqual(["Week 3", "topic-01/Slides", "unit-1/Lab1"]);
+  });
+});
+
+describe("V015 conforms to the generator", () => {
+  /** Whether gen builds the fixture's talk as Marp slides, read with gen's own Marp test. */
+  const talkIsMarp = (files: Record<string, string>): boolean => {
+    const [course] = parseCourse(onDisk(files), true);
+    const talk = (course.los as Lo[]).flatMap((topic) => (topic as { los?: Lo[] }).los ?? []).find((lo) => lo.type === "talk")!;
+    return isMarpContent(talk);
+  };
+
+  it("gen shows the deck as slides exactly when V015 is silent", async () => {
+    for (const form of ["broken", "fixed"] as const) {
+      const files = validateFixture("V015", form);
+      const v015 = (await validate(new MemoryFileSystem(files))).some((f) => f.rule === "V015");
+      expect(talkIsMarp(files)).toBe(!v015);
+    }
+  });
+
+  it("marp: true in the talk's .md counts, as gen merges its front matter", async () => {
+    const files = { ...validateFixture("V015", "broken"), "topic-01/talk-01/talk.md": "---\nmarp: true\n---\n# Introducing HTML\n" };
+    expect((await validate(new MemoryFileSystem(files))).some((f) => f.rule === "V015")).toBe(false);
+    expect(talkIsMarp(files)).toBe(true);
   });
 });

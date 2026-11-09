@@ -1,4 +1,4 @@
-import type { ParsedQuiz, QuestionType, QuizQuestion } from "../types.ts";
+import type { ParsedQuiz, QuestionType, QuizQuestion } from "./types.ts";
 
 /**
  * Parse the body of a fenced `quiz` block into a quiz definition.
@@ -57,28 +57,40 @@ export function parseQuizMarkdown(source: string): ParsedQuiz | null {
   };
 }
 
-function hasQuestionText(section: string): boolean {
+export function hasQuestionText(section: string): boolean {
   return extractBlockField(section, "question") !== null || extractBlockField(section, "text") !== null;
 }
 
 function parseQuestionSection(section: string, index: number): QuizQuestion | null {
+  const read = readQuestion(section, index);
+  return "problem" in read ? null : read;
+}
+
+/** Why the reader leaves a question out: it is shown to the lecturer, never to a student. */
+export type QuestionProblem = "no-text" | "too-few-options" | "no-answer" | "answer-out-of-range" | "answer-not-true-false";
+
+/** A question section read as the reader reads it: the question, or why it is left out. */
+export function readQuestion(section: string, index: number): QuizQuestion | { problem: QuestionProblem; optionCount?: number; answer?: string } {
   // `question:` is the documented key; `text:` is accepted as an alias.
   const text = extractBlockField(section, "question") ?? extractBlockField(section, "text");
-  if (!text) return null;
+  if (!text) return { problem: "no-text" };
 
   const type: QuestionType = extractField(section, "type") === "true-false" ? "true-false" : "multiple-choice";
   const options = type === "true-false" ? ["True", "False"] : extractListField(section, "options");
-  if (options.length < 2) return null;
+  if (options.length < 2) return { problem: "too-few-options", optionCount: options.length };
 
-  const correctIndex = resolveCorrectIndex(type, extractField(section, "correct"));
-  if (correctIndex < 0 || correctIndex >= options.length) return null;
+  const answer = extractField(section, "correct");
+  if (answer === null) return { problem: "no-answer" };
+  const correctIndex = resolveCorrectIndex(type, answer);
+  if (correctIndex < 0 || correctIndex >= options.length) {
+    return type === "true-false" ? { problem: "answer-not-true-false", answer } : { problem: "answer-out-of-range", optionCount: options.length, answer };
+  }
 
   return { id: `q${index + 1}`, type, text, options, correctIndex };
 }
 
-/** Returns -1 for a missing or uninterpretable answer, so the caller rejects the question. */
-function resolveCorrectIndex(type: QuestionType, correct: string | null): number {
-  if (correct === null) return -1;
+/** Returns -1 for an uninterpretable answer, so the caller rejects the question. */
+function resolveCorrectIndex(type: QuestionType, correct: string): number {
   if (type === "true-false") {
     const value = correct.toLowerCase();
     if (value === "true" || value === "0") return 0;
@@ -119,7 +131,7 @@ class FenceTracker {
 }
 
 /** Split on lines containing only `---`, except inside a code fence. */
-function splitSections(source: string): string[] {
+export function splitSections(source: string): string[] {
   const sections: string[][] = [[]];
   const fences = new FenceTracker();
   for (const line of source.split("\n")) {
@@ -153,7 +165,7 @@ function fieldsOf(section: string): Map<string, { value: string; lines: string[]
 }
 
 /** A one-line field's value, as it has always been read. */
-function extractField(section: string, key: string): string | null {
+export function extractField(section: string, key: string): string | null {
   const value = fieldsOf(section).get(key)?.value;
   return value ? stripQuotes(value) : null;
 }

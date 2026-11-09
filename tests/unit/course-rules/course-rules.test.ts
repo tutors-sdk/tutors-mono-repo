@@ -152,7 +152,7 @@ describe("V001-V006 corners", () => {
 
   it("V004 talks: a videoid or a Marp deck stands in for a PDF; a talk with no .md is named", async () => {
     expect(await found({ "talk-1/t.md": "", "talk-1/videoid": "abc" })).toEqual([]);
-    expect(await found({ "talk-1/t.md": "", "talk-1/deck.marp": "" })).toEqual([]);
+    expect(await found({ "talk-1/t.md": "", "talk-1/deck.marp": "---\nmarp: true\n---\n" })).toEqual([]);
     expect(await found({ "paneltalk-1/t.md": "" })).toEqual(["V004 paneltalk-1"]);
     expect(await found({ "talk-1/s.pdf": "" })).toEqual(["V004 talk-1"]);
     const two = await errorsOf(course({ "talk-1/t.md": "", "talk-1/a.pdf": "", "talk-1/b.pdf": "" }));
@@ -238,9 +238,9 @@ describe("findings", () => {
     expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.md": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
   });
 
-  it("carry the catalogue's severity, and the catalogue lists V001-V012 once each, errors then warnings then the info rule", async () => {
-    expect(ruleCatalogue.map((r) => r.id)).toEqual(["V001", "V002", "V003", "V004", "V005", "V006", "V007", "V008", "V009", "V010", "V011", "V012"]);
-    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info"]);
+  it("carry the catalogue's severity, and the catalogue lists V001-V017 once each, in id order", async () => {
+    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 17 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
+    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error"]);
     expect((await errorsOf(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
   });
 
@@ -254,7 +254,8 @@ describe("findings", () => {
   it("kind names are a lecturer's words, falling back to the kind", () => {
     expect(kindName("paneltalk")).toBe("Panel talk");
     expect(kindName("side")).toBe("Side unit");
-    expect(kindName("quiz")).toBe("quiz");
+    expect(kindName("quiz")).toBe("Quiz");
+    expect(kindName("podcast")).toBe("podcast");
     expect(messages.linkEmpty("web", "weburl")).toContain("a web address");
     expect(messages.linkEmpty("github", "githubid")).toContain("a repository");
     expect(messages.linkMissing("github", "githubid")).toContain("repository address");
