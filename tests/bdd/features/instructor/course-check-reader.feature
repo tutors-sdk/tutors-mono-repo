@@ -26,7 +26,7 @@ Feature: Checking a course in the reader
     Scenario: A zipped course folder with a misnamed week
       Given the "broken" course of fixture "V002" zipped inside the folder "web-dev"
       When the instructor checks the zip
-      Then the list shall say "3 errors, 0 warnings. Fix the errors before publishing."
+      Then the list shall say "4 errors, 0 warnings. Fix the errors before publishing."
       And the list shall show "Error V002 Week 3" with the message tutors validate gives
 
     Scenario: A course zipped from inside its folder
