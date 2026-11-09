@@ -565,8 +565,10 @@ jobs:
         with:
           deno-version-file: .dvmrc
 
+      # --no-check: `tutors validate` loads @tutors/course-rules, whose kinds come from the model lib, which does
+      # not type-check under Deno's markdown-it types (the same reason the tutors-lite tests skip it).
       - name: Run create scaffolder tests
-        run: cd packages/jsr/create && deno test test/ --allow-all
+        run: cd packages/jsr/create && deno test --no-check test/ --allow-all
 
       # --no-check: these tests load the generator, whose model lib does not type-check under
       # Deno's markdown-it types; `deno run` (how tutors-lite ships) never type-checks either.
