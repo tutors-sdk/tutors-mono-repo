@@ -4,26 +4,43 @@ import { padNumber, LAB_STEP_COUNT } from "./types.ts";
 export type { CourseSpec } from "./types.ts";
 export { slugify, defaultSpec } from "./types.ts";
 export { nextSteps } from "./templates.ts";
-import { courseMd, propertiesYaml, netlifyToml, calendarYaml, enrollmentYaml, gitignoreFile, readmeMd, sideMd, unitMd, topicMd, topicIcons, labSetupMd, labStepMd, talkMd, talkMarp, noteMd } from "./templates.ts";
+import { patternFiles, type GeneratedFile } from "./pattern-course.ts";
+import type { PatternChoice } from "./types.ts";
+import {
+  courseMd,
+  propertiesYaml,
+  netlifyToml,
+  calendarYaml,
+  enrollmentYaml,
+  gitignoreFile,
+  readmeMd,
+  sideMd,
+  unitMd,
+  topicMd,
+  topicIcons,
+  labSetupMd,
+  labStepMd,
+  talkMd,
+  talkMarp,
+  noteMd
+} from "./templates.ts";
 
-export interface GeneratedFile {
-  relativePath: string;
-  content: string;
-}
+export type { GeneratedFile } from "./pattern-course.ts";
+export type { Pattern, PatternId, PatternItem } from "./patterns.ts";
+export { patterns, patternById } from "./patterns.ts";
+export type { PatternChoice } from "./types.ts";
 
 /** Emit the talk descriptor + starter Marp deck for a talk folder. */
 function talkFiles(talkDir: string, topicNumber: number, talkSlug: string): GeneratedFile[] {
   return [
     { relativePath: `${talkDir}/${talkSlug}.md`, content: talkMd(topicNumber) },
-    { relativePath: `${talkDir}/talk.marp`, content: talkMarp(topicNumber) },
+    { relativePath: `${talkDir}/talk.marp`, content: talkMarp(topicNumber) }
   ];
 }
 
 /** Emit a lab (Setup step + a fixed number of instruction steps). */
 function labFiles(labDir: string, labName: string): GeneratedFile[] {
-  const files: GeneratedFile[] = [
-    { relativePath: `${labDir}/00.Setup.md`, content: labSetupMd(labName) },
-  ];
+  const files: GeneratedFile[] = [{ relativePath: `${labDir}/00.Setup.md`, content: labSetupMd(labName) }];
   for (let s = 1; s <= LAB_STEP_COUNT; s++) {
     files.push({ relativePath: `${labDir}/${padNumber(s)}.Step-${padNumber(s)}.md`, content: labStepMd(s, LAB_STEP_COUNT) });
   }
@@ -35,6 +52,7 @@ function labFiles(labDir: string, labName: string): GeneratedFile[] {
  * any filesystem dependency, so it can run in Deno, Node, or the browser.
  */
 export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
+  if (spec.pattern) return generatePatternCourse(spec, spec.pattern);
   const files: GeneratedFile[] = [];
   files.push({ relativePath: "course.md", content: courseMd(spec) });
   files.push({ relativePath: "properties.yaml", content: propertiesYaml(spec) });
@@ -93,4 +111,18 @@ export function generateCourseFiles(spec: CourseSpec): GeneratedFile[] {
     }
   }
   return files;
+}
+
+/**
+ * A course shaped by a teaching pattern: the course root files every course gets (course.md,
+ * properties.yaml, netlify.toml, .gitignore), then the calendar, side unit and one topic per teaching week.
+ */
+function generatePatternCourse(spec: CourseSpec, choice: PatternChoice): GeneratedFile[] {
+  return [
+    { relativePath: "course.md", content: courseMd(spec) },
+    { relativePath: "properties.yaml", content: propertiesYaml(spec) },
+    { relativePath: "netlify.toml", content: netlifyToml() },
+    { relativePath: ".gitignore", content: gitignoreFile() },
+    ...patternFiles(spec, choice)
+  ];
 }
