@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "exports": {
     ".": "./src/mod.ts",
-    "./memory": "./src/adapters/memory-fs.ts"
+    "./memory": "./src/adapters/memory-fs.ts",
+    "./quiz": "./src/quiz/mod.ts"
   },
   "license": "MIT",
   "imports": {

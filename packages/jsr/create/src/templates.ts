@@ -1,5 +1,8 @@
 import type { CourseSpec } from "./types.ts";
 
+/** A YAML scalar for free text: plain when that reads back unchanged, double-quoted otherwise ("Web Dev 1: Foundations!"). */
+export const yamlText = (text: string): string => (/^[A-Za-z0-9][A-Za-z0-9 ._()/-]*$/.test(text) && !text.endsWith(" ") ? text : JSON.stringify(text));
+
 export function courseMd(spec: CourseSpec): string {
   return `# ${spec.courseName}
 
@@ -251,9 +254,9 @@ export function calendarYaml(spec: CourseSpec): string {
     `# Course calendar. For the full format (weeks, breaks and assessments), see:`,
     `#   https://tutors.dev/note/tutors-reference-manual/unit-1-getting-started/note-d-properties#calendar`,
     ``,
-    `title: ${spec.courseName} Calendar`,
+    `title: ${yamlText(`${spec.courseName} Calendar`)}`,
     `year: ${start.getFullYear()}`,
-    `weeks:`,
+    `weeks:`
   ];
 
   let slot = 0;
@@ -336,7 +339,7 @@ export const topicIcons = [
   "fluent-color:code-24",
   "fluent-color:trophy-24",
   "fluent-color:clipboard-24",
-  "fluent-color:board-24",
+  "fluent-color:board-24"
 ];
 
 export function topicMd(topicNumber: number, topicName: string, icon: string): string {
@@ -469,7 +472,7 @@ export function nextSteps(spec: CourseSpec): string[] {
     `Edit course.md - update your course description`,
     `Edit each topic-*/topic-*.md - rename and describe your topics/note/labs`,
     `Drag and drop the course folder to Netlify to republish`,
-    'Explore the docs: https://tutors.dev/course/tutors-reference-manual'
+    "Explore the docs: https://tutors.dev/course/tutors-reference-manual"
   ];
 }
 

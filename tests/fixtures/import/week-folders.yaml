@@ -1,0 +1,24 @@
+description: A Moodle-style export with one folder per week, a lab of numbered steps, starter code and links
+files:
+  - Week 1/slides.pdf
+  - Week 1/Lab/01 Setup.md
+  - Week 1/Lab/02 Install Node.md
+  - Week 1/Lab/03 Deploy.md
+  - Week 1/Lab/img/terminal.png
+  - Week 2/slides.pdf
+  - Week 2/starter.zip
+  - { path: "Week 2/MDN reference.url", text: "[InternetShortcut]\r\nURL=https://developer.mozilla.org/\r\n" }
+  - { path: "Week 2/reading.txt", text: "Read chapter 3 before class.\n" }
+  - Week 3/diagram.png
+expected:
+  topics:
+    - week: 1
+      items:
+        - { kind: talk, files: [Week 1/slides.pdf] }
+        - { kind: lab, files: [Week 1/Lab/01 Setup.md, Week 1/Lab/02 Install Node.md, Week 1/Lab/03 Deploy.md, Week 1/Lab/img/terminal.png] }
+    - week: 2
+      items:
+        - { kind: talk, files: [Week 2/slides.pdf] }
+        - { kind: archive, files: [Week 2/starter.zip] }
+        - { kind: web, files: [Week 2/MDN reference.url] }
+  tray: [Week 2/reading.txt, Week 3/diagram.png]

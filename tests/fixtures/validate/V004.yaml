@@ -1,4 +1,5 @@
 broken:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
   course.md: "# Web Development\n"
   topic-01/topic.md: "# Week one\n"
   topic-01/talk-01/talk.md: "# Intro\n"
@@ -9,9 +10,10 @@ broken:
   topic-01/note-01/more.md: "# More reading\n"
   topic-01/lab-01/01.Setup.md: "# Setup\n"
   topic-01/lab-01/02.Install.md: "# Install\n"
-  topic-01/lab-01/04.Deploy.md: "# Deploy\n"
+  topic-01/lab-01/03.Deploy.md: "# Deploy\n"
   topic-01/lab-01/notes.md: "# Notes\n"
 fixed:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
   course.md: "# Web Development\n"
   topic-01/topic.md: "# Week one\n"
   topic-01/talk-01/talk.md: "# Intro\n"

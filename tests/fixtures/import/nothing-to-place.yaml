@@ -1,0 +1,8 @@
+description: A folder with no week anywhere, which proposes no topics and trays everything
+files:
+  - notes.pdf
+  - code.zip
+  - photo.jpg
+expected:
+  topics: []
+  tray: [code.zip, notes.pdf, photo.jpg]

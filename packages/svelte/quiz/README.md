@@ -1,9 +1,9 @@
 # @tutors/quiz
 
-Parses quiz definitions authored by hand in course markdown.
-
-The package is deliberately dependency-free and framework-free: it turns text
-into data. Rendering lives in `@tutors/ui-components`.
+Scores quizzes, and re-exports the quiz format from `@tutors/course-rules/quiz`,
+which owns it: the parser the reader shows quizzes with, the diagnosis
+`tutors validate` reports (V013, V014) and the writer Tutors Studio's quiz
+designer uses. Rendering lives in `@tutors/ui-components`.
 
 ## Authoring a quiz
 

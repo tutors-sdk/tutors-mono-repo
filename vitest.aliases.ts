@@ -24,6 +24,8 @@ const ventoStub = resolve(root, "tests/support/vento-stub.ts");
 export const workspaceAliases: Record<string, string> = {
   "@tutors/tutors-model-lib": resolve(root, "packages/jsr/model/src/tutors.ts"),
   "@tutors/tutors-gen-lib": resolve(root, "packages/jsr/gen/src/tutors.ts"),
+  // The subpath first: an alias also matches the names under it.
+  "@tutors/course-rules/quiz": resolve(root, "packages/jsr/course-rules/src/quiz/mod.ts"),
   "@tutors/course-rules": resolve(root, "packages/jsr/course-rules/src/mod.ts"),
   "@tutors/tutors-time-lib": resolve(root, "packages/jsr/time/src/index.ts"),
   "@tutors/tutors-types": resolve(root, "packages/jsr/types/src/index.ts"),

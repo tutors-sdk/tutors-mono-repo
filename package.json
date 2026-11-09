@@ -90,6 +90,7 @@
     "eslint": "^10.13.0",
     "eslint-plugin-svelte": "^3.23.0",
     "fast-check": "^4.10.2",
+    "fflate": "^0.8.3",
     "front-matter": "^4.0.2",
     "globals": "^17.13.0",
     "happy-dom": "^21.0.4",

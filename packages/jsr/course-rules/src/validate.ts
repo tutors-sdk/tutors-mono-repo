@@ -1,28 +1,24 @@
 import yaml from "js-yaml";
-import type { Finding, RuleId } from "./finding.ts";
+import type { FileOp, Finding, RuleId } from "./finding.ts";
 import { severityOf } from "./finding.ts";
 import { messages } from "./messages.ts";
-import type { FileSystemPort } from "./ports.ts";
+import type { FileSystemPort, ValidateOptions } from "./ports.ts";
 import { joinPath, readText } from "./ports.ts";
+import { checkDiagrams, checkMarp, checkQuizzes } from "./rich.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
-import { buildCourseTree, extensionOf, holdsOnlyImages } from "./tree.ts";
-import { trimRuns } from "./trim.ts";
+import { buildCourseTree, extensionOf, holdsCourseMaterial, holdsOnlyImages, kindOf } from "./tree.ts";
+import { checkEmpty, checkImages, checkNames, checkNetlify, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
 
 const compositeKinds = ["unit", "side", "topic"];
 const STEP = /^(\d{2})\.[^.].*\.md$/;
 
-/** Lower-case, ASCII, hyphen-separated: "Week 3" becomes "week-3". */
-export function slugify(name: string): string {
-  const slug = name
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-");
-  return trimRuns(slug, "-");
-}
+export { slugify };
 
-function finding(rule: RuleId, path: string, message: string, suggestedName?: string): Finding {
-  return suggestedName === undefined ? { rule, severity: severityOf(rule), path, message } : { rule, severity: severityOf(rule), path, message, suggestedName };
+function finding(rule: RuleId, path: string, message: string, suggestedName?: string, fix?: FileOp): Finding {
+  const base: Finding = { rule, severity: severityOf(rule), path, message };
+  if (suggestedName !== undefined) base.suggestedName = suggestedName;
+  if (fix !== undefined) base.fix = fix;
+  return base;
 }
 
 const severityRank = { error: 0, warn: 1, info: 2 } as const;
@@ -37,15 +33,29 @@ export function sortFindings(findings: Finding[]): Finding[] {
 /**
  * Checks a course folder and reports every problem with the file or folder at fault. Reads through the
  * port and never writes. `root` is the course folder as the port addresses it ("" when the port is
- * already rooted at the course).
+ * already rooted at the course). `options.diagrams` checks Mermaid diagrams (V017) when the shell has
+ * Mermaid to hand; without it that rule does not run.
  */
-export async function validate(fs: FileSystemPort, root = ""): Promise<Finding[]> {
+export async function validate(fs: FileSystemPort, root = "", options: ValidateOptions = {}): Promise<Finding[]> {
   const tree = await buildCourseTree(fs, root);
   const read = (path: string) => readText(fs, joinPath(root, path));
-  return sortFindings([...checkTree(tree), ...(await checkLinks(tree, read)), ...(await checkYaml(tree, read))]);
+  return sortFindings([
+    ...checkTree(tree),
+    ...(await checkLinks(tree, read)),
+    ...(await checkYaml(tree, read)),
+    ...(await checkNames(tree, read)),
+    ...(await checkTitles(tree, read)),
+    ...(await checkImages(tree, read)),
+    ...checkTopicNumbers(tree),
+    ...(await checkNetlify(tree, read)),
+    ...checkEmpty(tree),
+    ...(await checkQuizzes(tree, read)),
+    ...(await checkMarp(tree, read)),
+    ...(await checkDiagrams(tree, read, options.diagrams))
+  ]);
 }
 
-/** The structural rules, V001-V004: everything that needs only names, not file contents. */
+/** The structural error rules, V001-V004: everything that needs only names, not file contents. */
 export function checkTree(tree: CourseTree): Finding[] {
   const findings: Finding[] = [];
   if (!tree.files.some((file) => file.name === "course.md")) findings.push(finding("V001", "", messages.V001()));
@@ -54,11 +64,21 @@ export function checkTree(tree: CourseTree): Finding[] {
 }
 
 function walk(node: CourseNode, findings: Finding[]): void {
+  // Inside a lab, note, talk or other single learning object, a folder of no kind is that object's
+  // resource folder: the generator types it as its parent and publishes its files (lab assets/, img/).
+  const holdsResources = node.kind !== "course" && !compositeKinds.includes(node.kind ?? "");
   for (const child of node.children) {
     if (child.kind === null) {
-      if (!holdsOnlyImages(child)) {
-        const suggestion = ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slugify(child.name)}` : undefined;
-        findings.push(finding("V002", child.path, messages.V002(child.name, suggestion), suggestion));
+      if (holdsResources || holdsOnlyImages(child)) continue;
+      // A name that only needs tidying to start with a kind ("-talk-01", "Talk 01") keeps that kind; anything else becomes a topic.
+      const slug = slugify(child.name);
+      const suggestion = kindOf(slug) !== null ? slug : ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slug}` : undefined;
+      if (holdsCourseMaterial(child)) {
+        const fix: FileOp | undefined = suggestion === undefined ? undefined : { op: "move", from: child.path, to: joinPath(node.path, suggestion) };
+        findings.push(finding("V002", child.path, messages.V002(child.name, suggestion), suggestion, fix));
+      } else {
+        // Working files the lecturer keeps beside the course; renaming is their call, so no fix is offered.
+        findings.push(finding("V018", child.path, messages.V018(child.name, suggestion)));
       }
       continue;
     }
@@ -105,12 +125,12 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
   if (numbers.length === 0) return;
   const pad = (n: number) => String(n).padStart(2, "0");
   if (numbers[0] > 1) {
-    findings.push(finding("V004", node.path, messages.labFirstStep(pad(numbers[0]))));
+    findings.push(finding("V019", node.path, messages.labFirstStep(pad(numbers[0]))));
     return;
   }
   for (let i = 1; i < numbers.length; i++) {
     if (numbers[i] > numbers[i - 1] + 1) {
-      findings.push(finding("V004", node.path, messages.labStepOrder(pad(numbers[i - 1] + 1), pad(numbers[i]))));
+      findings.push(finding("V019", node.path, messages.labStepOrder(pad(numbers[i - 1] + 1), pad(numbers[i]))));
       return;
     }
   }

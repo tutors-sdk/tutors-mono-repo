@@ -38,7 +38,7 @@ describeFeature(feature, ({ Rule }) => {
   });
 
   Rule(
-    "If a folder's name starts with no learning-object kind and the folder holds anything other than images, then tutors shall report rule V002 against that folder with a sentence saying it won't appear in the course.",
+    "If a folder in the course, a unit, a side or a topic has a name that starts with no learning-object kind and holds course material (slides, a video id, lab steps, a page named for a kind or a learning object), then tutors shall report rule V002 against that folder with a sentence saying it won't appear in the course.",
     ({ RuleScenario }) => {
       RuleScenario("Folders named for a week, a lab and slides are each named once", ({ Given, When, Then, And }) => {
         Given("the {string} course of fixture {string}", givenFixture);
@@ -69,9 +69,9 @@ describeFeature(feature, ({ Rule }) => {
   });
 
   Rule(
-    "If a talk lacks a .md or holds other than one deck, a note holds other than one .md, or a lab's steps are misnamed or skip a number, then tutors shall report rule V004 against the folder or file at fault.",
+    "If a talk lacks a .md or holds other than one deck, a note holds other than one .md, or a lab's steps are misnamed, then tutors shall report rule V004 against the folder or file at fault.",
     ({ RuleScenario }) => {
-      RuleScenario("Two PDFs, no slides, two notes and a gap in the steps", ({ Given, When, Then, And }) => {
+      RuleScenario("Two PDFs, no slides, two notes and a misnamed step", ({ Given, When, Then, And }) => {
         Given("the {string} course of fixture {string}", givenFixture);
         When("the course is validated", whenValidated);
         Then("the findings shall be exactly {string}", exactly);
@@ -114,6 +114,66 @@ describeFeature(feature, ({ Rule }) => {
         Given("the {string} course of fixture {string}", givenFixture);
         When("the course is validated", whenValidated);
         Then("there shall be no findings", none);
+      });
+    }
+  );
+  Rule(
+    "If a folder in the course, a unit, a side or a topic has a name that starts with no learning-object kind and holds only working files, then tutors shall report rule V018 as a warning against that folder, saying students won't see it and offering no fix.",
+    ({ RuleScenario }) => {
+      RuleScenario("Code, scripts and exam notes kept beside a course", ({ Given, When, Then, And }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the findings shall be exactly {string}", exactly);
+        And("the finding for {string} shall say {string}", says);
+        And("the finding for {string} shall offer no fix", (_ctx: unknown, path: string) => {
+          expect(findingFor(path).fix).toBeUndefined();
+          expect(findingFor(path).suggestedName).toBeUndefined();
+        });
+      });
+      RuleScenario("The course without its working folders", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("there shall be no findings", none);
+      });
+    }
+  );
+
+  Rule(
+    "For a folder of no learning-object kind inside a lab, note, talk or other single learning object, tutors shall treat it as that learning object's resources and report neither V002 nor V018 against it.",
+    ({ RuleScenario }) => {
+      RuleScenario("A lab's assets folder of downloads is not named", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the folder {string} shall not be named", (_ctx: unknown, path: string) => expect(findings.filter((f) => f.path.startsWith(path))).toEqual([]));
+      });
+    }
+  );
+
+  Rule(
+    "If a lab's first step is numbered above 01 or its steps skip a number, then tutors shall report rule V019 as a warning against the lab, saying students still see every step.",
+    ({ RuleScenario }) => {
+      RuleScenario("A gap in one lab's steps and another lab starting at 02", ({ Given, When, Then, And }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the findings shall be exactly {string}", exactly);
+        And("the finding for {string} shall say {string}", says);
+      });
+      RuleScenario("Steps numbered from 00 or 01 with no gaps", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("there shall be no findings", none);
+      });
+    }
+  );
+
+  Rule(
+    "If a folder V002 names becomes a learning-object kind once its name is tidied to lower case and hyphens, then tutors shall suggest that tidied name, keeping the kind, rather than a topic.",
+    ({ RuleScenario }) => {
+      RuleScenario("A lab and a talk whose names only need tidying", ({ Given, When, Then, And }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the finding for {string} shall suggest the name {string}", suggests);
+        And("the finding for {string} shall also suggest the name {string}", suggests);
       });
     }
   );

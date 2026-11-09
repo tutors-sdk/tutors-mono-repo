@@ -13,6 +13,22 @@ export interface CourseSpec {
   includeReadme: boolean;
   /** Free text placed under the heading of the generated README. */
   readmeDescription: string;
+  /**
+   * When set, the course's shape comes from a teaching pattern and the calendar, not from the unit and
+   * topic counts above: one topic per teaching week. See patterns.ts.
+   */
+  pattern?: PatternChoice;
+}
+
+export interface PatternChoice {
+  /** One of the ids in patterns.ts. */
+  id: string;
+  /** Teaching weeks, 1-52. */
+  weeks: number;
+  /** The Monday teaching starts, YYYY-MM-DD. */
+  start: string;
+  /** A reading week falls after this teaching week; leave out for none. */
+  readingWeek?: number;
 }
 
 /** Fixed number of steps generated for each lab (in addition to the Setup step). */
@@ -31,7 +47,7 @@ export const defaultSpec: CourseSpec = {
   includeEnrollment: false,
   includeGitignore: true,
   includeReadme: false,
-  readmeDescription: "",
+  readmeDescription: ""
 };
 
 export function slugify(name: string): string {

@@ -2,11 +2,14 @@
   "name": "@tutors/quiz",
   "version": "0.0.1",
   "license": "MIT",
-  "description": "Quiz services for Tutors: parses quiz definitions authored in course markdown",
+  "description": "Quiz scoring for Tutors; the quiz format itself (parse, diagnose, write) is @tutors/course-rules/quiz",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./services/*": "./src/services/*"
+  },
+  "dependencies": {
+    "@tutors/course-rules": "workspace:*"
   }
 }

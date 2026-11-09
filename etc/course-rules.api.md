@@ -19,16 +19,34 @@ export type { CourseNode };
 export type { CourseTree };
 
 // (from src/mod.ts)
+export type { DiagramCheck };
+
+// (from src/mod.ts)
+export type { DiagramPort };
+
+// (from src/mod.ts)
 export type { DirEntry };
 
 // (from src/mod.ts)
 export type { ExitCode };
 
 // (from src/mod.ts)
+export type { FileOp };
+
+// (from src/mod.ts)
 export type { FileSystemPort };
 
 // (from src/mod.ts)
 export type { Finding };
+
+// (from src/mod.ts)
+export type { FixOutcome };
+
+// (from src/mod.ts)
+export type { ImportFile };
+
+// (from src/mod.ts)
+export type { MermaidParser };
 
 // (from src/mod.ts)
 export type { ReportFormat };
@@ -42,6 +60,24 @@ export type { RuleInfo };
 // (from src/mod.ts)
 export type { Severity };
 
+// (from src/mod.ts)
+export type { ShapeItem };
+
+// (from src/mod.ts)
+export type { ShapeKind };
+
+// (from src/mod.ts)
+export type { ShapeProposal };
+
+// (from src/mod.ts)
+export type { ShapeTopic };
+
+// (from src/mod.ts)
+export { slugify };
+
+// (from src/mod.ts)
+export type { ValidateOptions };
+
 
 // --- classes ---
 
@@ -50,6 +86,9 @@ export class MemoryFileSystem implements FileSystemPort;
 
 
 // --- functions ---
+
+// (from src/fix.ts)
+export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[]) : Promise<FixOutcome>;
 
 // (from src/tree.ts)
 export async function buildCourseTree(fs: FileSystemPort, root) : Promise<CourseTree>;
@@ -60,6 +99,12 @@ export function checkTree(tree: CourseTree) : Finding[];
 // (from src/report.ts)
 export function exitCodeFor(findings: readonly Finding[], strict: boolean) : ExitCode;
 
+// (from src/warnings.ts)
+export function fileSlug(name: string) : string;
+
+// (from src/fix.ts)
+export async function fixCourse(fs: FileSystemPort, root) : Promise<FixOutcome & { findings: Finding[] }>;
+
 // (from src/ports.ts)
 export function joinPath(...parts: string[]) : string;
 
@@ -69,6 +114,21 @@ export function jsonReport(findings: readonly Finding[]) : string;
 // (from src/tree.ts)
 export function kindOf(folderName: string) : string | null;
 
+// (from src/shape.ts)
+export function linkOf(file: ImportFile) : string | null;
+
+// (from src/rich.ts)
+export function mermaidBlocks(text: string) :;
+
+// (from src/adapters/mermaid.ts)
+export function mermaidDiagrams(mermaid: MermaidParser) : DiagramPort;
+
+// (from src/fix.ts)
+export function planFixes(findings: readonly Finding[]) : FileOp[];
+
+// (from src/shape.ts)
+export function proposeShape(files: readonly ImportFile[]) : ShapeProposal;
+
 // (from src/report.ts)
 export function report(findings: readonly Finding[], format: ReportFormat, version: string, root) : string;
 
@@ -76,25 +136,34 @@ export function report(findings: readonly Finding[], format: ReportFormat, versi
 export function sarifReport(findings: readonly Finding[], version: string, root) : string;
 
 // (from src/validate.ts)
-export function slugify(name: string) : string;
-
-// (from src/validate.ts)
 export function sortFindings(findings: Finding[]) : Finding[];
 
 // (from src/report.ts)
 export function textReport(findings: readonly Finding[]) : string;
 
+// (from src/warnings.ts)
+export function titleOf(text: string) : string;
+
 // (from src/validate.ts)
-export async function validate(fs: FileSystemPort, root) : Promise<Finding[]>;
+export async function validate(fs: FileSystemPort, root, options: ValidateOptions = {}) : Promise<Finding[]>;
+
+// (from src/shape.ts)
+export function weekOf(name: string) : number | null;
 
 
 // --- consts ---
+
+// (from src/warnings.ts)
+export const IMAGE_LIMIT_BYTES;
 
 // (from src/messages.ts)
 export const kindName;
 
 // (from src/messages.ts)
 export const messages;
+
+// (from src/templates.ts)
+export const netlifyToml;
 
 // (from src/finding.ts)
 export const ruleCatalogue: readonly RuleInfo[];
@@ -109,7 +178,7 @@ export const rulesVersion;
 | Kind | Count |
 |------|-------|
 | class | 1 |
-| const | 4 |
-| function | 12 |
-| type | 11 |
-| **Total** | **28** |
+| const | 6 |
+| function | 21 |
+| type | 23 |
+| **Total** | **51** |

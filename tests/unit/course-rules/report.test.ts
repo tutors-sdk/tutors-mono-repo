@@ -27,7 +27,7 @@ describe("reports", () => {
     const run = log.runs[0];
     expect(log.$schema).toContain("sarif-2.1.0");
     expect(run.tool.driver).toMatchObject({ name: "tutors validate", version: "9.9.9" });
-    expect(run.tool.driver.rules.map((r: { id: string }) => r.id)).toEqual(["V001", "V002", "V003", "V004", "V005", "V006"]);
+    expect(run.tool.driver.rules.map((r: { id: string }) => r.id)).toEqual(Array.from({ length: 19 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
     expect(run.tool.driver.rules[0].defaultConfiguration.level).toBe("error");
     expect(run.results.map((r: { level: string }) => r.level)).toEqual(["error", "warning", "note"]);
     expect(run.results.map((r: { locations: { physicalLocation: { artifactLocation: { uri: string } } }[] }) => r.locations[0].physicalLocation.artifactLocation.uri)).toEqual([
@@ -55,16 +55,16 @@ describe("reports", () => {
 });
 
 describe("tutors validate arguments", () => {
-  it("defaults to the current folder, text, not strict", () => {
-    expect(parseValidateArgs([])).toEqual({ dir: ".", format: "text", strict: false });
-    expect(parseValidateArgs(["web", "--format=sarif", "--strict"])).toEqual({ dir: "web", format: "sarif", strict: true });
-    expect(parseValidateArgs(["--format", "json", "web"])).toEqual({ dir: "web", format: "json", strict: false });
+  it("defaults to the current folder, text, not strict, no fixes", () => {
+    expect(parseValidateArgs([])).toEqual({ dir: ".", format: "text", strict: false, fix: false });
+    expect(parseValidateArgs(["web", "--format=sarif", "--strict"])).toEqual({ dir: "web", format: "sarif", strict: true, fix: false });
+    expect(parseValidateArgs(["--format", "json", "web", "--fix"])).toEqual({ dir: "web", format: "json", strict: false, fix: true });
   });
 
   it("refuses an unknown format or option, a missing format and two folders, with the usage", () => {
     expect(parseValidateArgs(["--format", "xml"])).toBe(`Unknown format "xml". ${validateUsage}`);
     expect(parseValidateArgs(["--format"])).toBe(`Unknown format "". ${validateUsage}`);
-    expect(parseValidateArgs(["--fix"])).toBe(`Unknown option "--fix". ${validateUsage}`);
+    expect(parseValidateArgs(["--fixes"])).toBe(`Unknown option "--fixes". ${validateUsage}`);
     expect(parseValidateArgs(["a", "b"])).toBe(`Give one folder, not two. ${validateUsage}`);
   });
 

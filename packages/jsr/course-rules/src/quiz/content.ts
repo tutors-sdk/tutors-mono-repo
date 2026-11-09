@@ -1,7 +1,7 @@
-import type { QuizContent } from "../types.ts";
+import type { QuizContent } from "./types.ts";
 
 /** Opening fence of a quiz block: three or more backticks (or tildes) then `quiz`. */
-const OPEN_FENCE = /^\s*(`{3,}|~{3,})\s*quiz\s*$/i;
+export const OPEN_FENCE = /^\s*(`{3,}|~{3,})\s*quiz\s*$/i;
 
 /** Any fence line, with or without a language after it, including one opened on an option's dash line. */
 const CODE_FENCE = /^\s*(?:-\s+)?(`{3,}|~{3,})/;

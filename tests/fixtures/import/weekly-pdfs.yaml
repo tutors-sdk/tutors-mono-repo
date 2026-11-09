@@ -1,0 +1,32 @@
+description: Twelve lecture PDFs named Week01..Week12, plus a module handbook and an Office lock file
+files:
+  - Week01.pdf
+  - Week02.pdf
+  - Week03.pdf
+  - Week04.pdf
+  - Week05.pdf
+  - Week06.pdf
+  - Week07.pdf
+  - Week08.pdf
+  - Week09.pdf
+  - Week10.pdf
+  - Week11.pdf
+  - Week12.pdf
+  - Module Handbook.docx
+  - ~$Week03.pptx
+  - .DS_Store
+expected:
+  topics:
+    - { week: 1, items: [{ kind: talk, files: [Week01.pdf] }] }
+    - { week: 2, items: [{ kind: talk, files: [Week02.pdf] }] }
+    - { week: 3, items: [{ kind: talk, files: [Week03.pdf] }] }
+    - { week: 4, items: [{ kind: talk, files: [Week04.pdf] }] }
+    - { week: 5, items: [{ kind: talk, files: [Week05.pdf] }] }
+    - { week: 6, items: [{ kind: talk, files: [Week06.pdf] }] }
+    - { week: 7, items: [{ kind: talk, files: [Week07.pdf] }] }
+    - { week: 8, items: [{ kind: talk, files: [Week08.pdf] }] }
+    - { week: 9, items: [{ kind: talk, files: [Week09.pdf] }] }
+    - { week: 10, items: [{ kind: talk, files: [Week10.pdf] }] }
+    - { week: 11, items: [{ kind: talk, files: [Week11.pdf] }] }
+    - { week: 12, items: [{ kind: talk, files: [Week12.pdf] }] }
+  tray: [Module Handbook.docx]
