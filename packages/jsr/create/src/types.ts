@@ -1,3 +1,5 @@
+import type { PatternItem } from "./patterns.ts";
+
 export interface CourseSpec {
   courseName: string;
   lecturerName: string;
@@ -29,6 +31,11 @@ export interface PatternChoice {
   start: string;
   /** A reading week falls after this teaching week; leave out for none. */
   readingWeek?: number;
+  /**
+   * What each weekly topic holds when the lecturer shaped the week themselves (two lectures, a lab and a
+   * reading, say), in order; leave out for the pattern's own week. The side unit still comes from the pattern.
+   */
+  week?: PatternItem[];
 }
 
 /** Fixed number of steps generated for each lab (in addition to the Setup step). */
