@@ -44,7 +44,7 @@ export function slugify(name: string): string {
   return trimRuns(slug, "-");
 }
 
-/** A file name with its case and extension kept, accents dropped and spaces turned to hyphens: "Café Notes.pdf" becomes "Cafe-Notes.pdf". */
+/** A file name with its case and extension kept, accents dropped, and spaces and symbols turned to hyphens: "Café Notes & Links.pdf" becomes "Cafe-Notes-Links.pdf". */
 export function fileSlug(name: string): string {
   const dot = name.lastIndexOf(".");
   const [stem, extension] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ""];
@@ -53,8 +53,7 @@ export function fileSlug(name: string): string {
       text
         .normalize("NFKD")
         .replace(/[̀-ͯ]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/[^\x21-\x7e]/g, "")
+        .replace(/[^A-Za-z0-9._-]+/g, "-")
         .replace(/-{2,}/g, "-"),
       "-"
     );

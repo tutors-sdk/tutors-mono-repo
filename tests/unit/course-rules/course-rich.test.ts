@@ -18,7 +18,15 @@ const findings = async (files: Record<string, string>, rule: string, diagrams?: 
 
 describe("the catalogue", () => {
   it("lists V013-V018 with their severities", () => {
-    expect(ruleCatalogue.slice(12).map((info) => `${info.id} ${info.severity}`)).toEqual(["V013 error", "V014 warn", "V015 error", "V016 warn", "V017 error", "V018 warn"]);
+    expect(ruleCatalogue.slice(12).map((info) => `${info.id} ${info.severity}`)).toEqual([
+      "V013 error",
+      "V014 warn",
+      "V015 error",
+      "V016 warn",
+      "V017 error",
+      "V018 warn",
+      "V019 warn"
+    ]);
   });
 });
 

@@ -69,3 +69,11 @@ Feature: Importing a folder of existing material as a course
       When the instructor runs tutors import on it with "--name Web Development"
       Then the exit status shall be 1
       And no course folder shall have been written
+
+  @rule-0743 @ears-ubiquitous
+  Rule: Tutors shall take a file's week from the nearest file or folder whose name says week outright (Week 3, Wk3, w3) before a lecture number or a leading number in the file's own name.
+
+    Scenario: Week folders whose files are numbered within the week
+      Given the import corpus folder "week-folders-numbered"
+      When tutors proposes a shape for it
+      Then the proposal shall match the corpus

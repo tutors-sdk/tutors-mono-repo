@@ -27,7 +27,7 @@ Feature: Course validation
     Scenario: Folders named for a week, a lab and slides are each named once
       Given the "broken" course of fixture "V002"
       When the course is validated
-      Then the findings shall be exactly "V002 error Week 3; V002 error topic-01/Slides; V002 error unit-1/Lab1; V012 info topic-01; V012 info unit-1"
+      Then the findings shall be exactly "V002 error Week 3; V002 error topic-01/Slides; V002 error unit-1/-talk-02-anatomy; V002 error unit-1/Lab1; V012 info topic-01; V012 info unit-1"
       And the finding for "Week 3" shall say "won't appear in your course"
       And the finding for "Week 3" shall suggest the name "topic-week-3"
 
@@ -50,13 +50,13 @@ Feature: Course validation
       Then there shall be no findings
 
   @rule-0698 @ears-unwanted
-  Rule: If a talk lacks a .md or holds other than one deck, a note holds other than one .md, or a lab's steps are misnamed or skip a number, then tutors shall report rule V004 against the folder or file at fault.
+  Rule: If a talk lacks a .md or holds other than one deck, a note holds other than one .md, or a lab's steps are misnamed, then tutors shall report rule V004 against the folder or file at fault.
 
-    Scenario: Two PDFs, no slides, two notes and a gap in the steps
+    Scenario: Two PDFs, no slides, two notes and a misnamed step
       Given the "broken" course of fixture "V004"
       When the course is validated
-      Then the findings shall be exactly "V004 error topic-01/lab-01; V004 error topic-01/lab-01/notes.md; V004 error topic-01/note-01; V004 error topic-01/talk-01; V004 error topic-01/talk-02"
-      And the finding for "topic-01/lab-01" shall say "step 03 is missing"
+      Then the findings shall be exactly "V004 error topic-01/lab-01/notes.md; V004 error topic-01/note-01; V004 error topic-01/talk-01; V004 error topic-01/talk-02"
+      And the finding for "topic-01/lab-01/notes.md" shall say "isn't named as a step"
 
     Scenario: Each talk with one deck, each note with one file, contiguous steps
       Given the "fixed" course of fixture "V004"
@@ -113,3 +113,25 @@ Feature: Course validation
       When the course is validated
       Then the folder "topic-01/book-01/assets" shall not be named
 
+  @rule-0740 @ears-unwanted
+  Rule: If a lab's first step is numbered above 01 or its steps skip a number, then tutors shall report rule V019 as a warning against the lab, saying students still see every step.
+
+    Scenario: A gap in one lab's steps and another lab starting at 02
+      Given the "broken" course of fixture "V019"
+      When the course is validated
+      Then the findings shall be exactly "V019 warn topic-01/lab-01; V019 warn topic-01/lab-02"
+      And the finding for "topic-01/lab-01" shall say "step 02 is missing before 03"
+
+    Scenario: Steps numbered from 00 or 01 with no gaps
+      Given the "fixed" course of fixture "V019"
+      When the course is validated
+      Then there shall be no findings
+
+  @rule-0741 @ears-unwanted
+  Rule: If a folder V002 names becomes a learning-object kind once its name is tidied to lower case and hyphens, then tutors shall suggest that tidied name, keeping the kind, rather than a topic.
+
+    Scenario: A lab and a talk whose names only need tidying
+      Given the "broken" course of fixture "V002"
+      When the course is validated
+      Then the finding for "unit-1/-talk-02-anatomy" shall suggest the name "talk-02-anatomy"
+      And the finding for "unit-1/Lab1" shall also suggest the name "lab1"

@@ -66,7 +66,7 @@ describe("V002 and V018 conform to the generator", () => {
   });
 
   it("the V002 fixture really does lose content in gen", () => {
-    expect(droppedByGen(onDisk(validateFixture("V002", "broken")))).toEqual(["Week 3", "topic-01/Slides", "unit-1/Lab1"]);
+    expect(droppedByGen(onDisk(validateFixture("V002", "broken")))).toEqual(["Week 3", "topic-01/Slides", "unit-1/-talk-02-anatomy", "unit-1/Lab1"]);
   });
 });
 

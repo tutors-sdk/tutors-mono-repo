@@ -64,9 +64,21 @@ export function weekOf(name: string): number | null {
   return week >= 1 && week <= MAX_WEEK ? week : null;
 }
 
-/** The week of a path: from the file's own name, else from the nearest folder that names one. */
+/** "Week 3", "Wk3", "w3": a name that says week outright, which outranks a lecture number or a leading number. */
+const WEEK_ONLY = /(?:^|[^a-z])(?:week|wk|w)[\s._-]*0*(\d{1,2})(?!\d)/i;
+
+/**
+ * The week of a path. A file or folder that says "Week N" outright wins, nearest first, so
+ * "Week 3/Lecture 1.pdf" is week 3 and "Week 2/Lab/01 Setup.md" week 2; otherwise the file's own name,
+ * else the nearest folder that names a week some other way.
+ */
 function weekOfPath(path: string): number | null {
   const parts = path.split("/");
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const match = WEEK_ONLY.exec(stemOf(parts[i]));
+    const week = match === null ? null : Number(match[1]);
+    if (week !== null && week >= 1 && week <= MAX_WEEK) return week;
+  }
   for (let i = parts.length - 1; i >= 0; i--) {
     const week = weekOf(parts[i]);
     if (week !== null) return week;

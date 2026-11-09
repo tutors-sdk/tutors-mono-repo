@@ -1,0 +1,20 @@
+description: Week folders whose files carry their own lecture or step numbers; the folder's week wins
+files:
+  - Week 3/Lecture 1.pdf
+  - Week 3/Lecture 2.pdf
+  - Week 2/Lab/01 Setup.md
+  - Week 2/Lab/02 Run.md
+  - Week 4/01 Intro.pdf
+  - Lecture 5.pdf
+expected:
+  topics:
+    - week: 2
+      items:
+        - { kind: lab, files: [Week 2/Lab/01 Setup.md, Week 2/Lab/02 Run.md] }
+    - week: 3
+      items:
+        - { kind: talk, files: [Week 3/Lecture 1.pdf] }
+        - { kind: talk, files: [Week 3/Lecture 2.pdf] }
+    - { week: 4, items: [{ kind: talk, files: [Week 4/01 Intro.pdf] }] }
+    - { week: 5, items: [{ kind: talk, files: [Lecture 5.pdf] }] }
+  tray: []
