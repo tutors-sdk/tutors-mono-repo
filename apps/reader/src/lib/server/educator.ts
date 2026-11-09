@@ -9,13 +9,8 @@ import { error } from "@sveltejs/kit";
 import { z } from "zod";
 import log from "@tutors/logger";
 
-const enrollmentSchema = z
-  .object({
-    educators: z.array(z.string()).default([]),
-    whitelist: z.array(z.string()).default([]),
-    students: z.array(z.object({ name: z.string(), id: z.string() }).passthrough()).default([])
-  })
-  .passthrough();
+// Student lists are not needed to establish educator permissions; the export route validates them.
+const enrollmentSchema = z.object({ educators: z.array(z.string()).default([]) }).passthrough();
 
 interface EducatorRequest {
   locals: App.Locals;
