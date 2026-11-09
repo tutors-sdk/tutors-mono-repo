@@ -90,6 +90,19 @@ Feature: Course warnings and safe fixes
       When the course is validated
       Then there shall be no findings
 
+  @rule-0744 @ears-ubiquitous
+  Rule: Tutors shall write a standard netlify.toml whose build runs tutors validate before the generator, so that Netlify fails the deploy of a course with errors.
+
+    Scenario: The build checks the course before generating it
+      Given the netlify.toml that tutors writes
+      Then its build command shall run "deno run -A jsr:@tutors/tutors-create@^5.4.0 validate" and then "deno run -A jsr:@tutors/tutors"
+      And the build command shall stop at the first command that fails
+
+    Scenario: A course with errors fails the check that gates the deploy
+      Given the "broken" course of fixture "V001"
+      When the course is validated
+      Then the validate exit status shall be 1
+
   @rule-0715 @ears-unwanted
   Rule: If a unit, side or topic holds no learning objects, then tutors shall report rule V012 against it as a note, which no exit status counts.
 
