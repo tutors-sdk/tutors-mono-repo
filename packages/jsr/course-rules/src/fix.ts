@@ -32,7 +32,7 @@ export interface FixOutcome {
 
 /**
  * Applies a plan through the port. An operation whose target already exists is skipped, never
- * overwritten. A rename that changes only letter case goes through a temporary name, so it also works on
+ * overwritten, unless it is a write marked `replace` (a rewiring planner rewriting a title or the ignore list). A rename that changes only letter case goes through a temporary name, so it also works on
  * the case-insensitive disks of macOS and Windows.
  */
 export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[]): Promise<FixOutcome> {
@@ -40,7 +40,7 @@ export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly
   for (const op of ops) {
     try {
       if (op.op === "write") {
-        if (await fs.exists(joinPath(root, op.path))) {
+        if (op.replace !== true && (await fs.exists(joinPath(root, op.path)))) {
           outcome.skipped.push({ op, reason: `${op.path} already exists` });
           continue;
         }

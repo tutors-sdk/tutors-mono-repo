@@ -6,6 +6,7 @@
     "./scaffolder": "./src/scaffolder.ts",
     "./generate": "./src/generate.ts",
     "./validate": "./src/validate-cli.ts",
+    "./rewire": "./src/rewire-cli.ts",
     "./import": "./src/import-cli.ts"
   },
   "license": "MIT",

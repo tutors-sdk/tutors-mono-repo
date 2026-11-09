@@ -110,5 +110,18 @@ export const messages = {
       : ` Mermaid stopped at line ${diagramLine} of the diagram${text ? `: ${text}` : ""}. Check the brackets and arrows there.`),
   diagramUnknown: (file: string, line: number, first: string) =>
     `The diagram starting on line ${line} of ${file} won't draw: its first line, "${first}", isn't a kind of diagram Mermaid knows. Start it with one, like flowchart TD, sequenceDiagram or pie.`,
+  rewireMissing: (path: string) => `There is nothing called "${path === "" ? "the course" : path}" in the course to change.`,
+  rewireMixedKinds: () => "Tutors shows a folder's items grouped by kind (talks, then labs, then notes and so on), so only items of the same kind can be put in a new order.",
+  rewireWholeKind: (kind: string) => `Give every ${kindName(kind)} in the folder, each once, in its new order.`,
+  rewireIntoItself: () => "A folder can't be moved into itself or into a folder inside it.",
+  rewireCantHold: (kind: string, target: string, holders: readonly string[]) =>
+    `Tutors won't show a ${kindName(kind)} inside a ${kindName(target)}. A ${kindName(kind)} can go ${holders.map((holder) => (holder === "course" ? "at the top of the course" : `in a ${kindName(holder)}`)).join(" or ")}.`,
+  rewireNoTitle: () => "Give the new title at least one word.",
+  rewireNoPage: (kind: string) => `This ${kind} has no page to hold its title yet. Add its page first.`,
+  rewireHideTopOnly: (kind: string) =>
+    `Tutors can hide only a whole topic or unit at the top of the course, not a ${kind} inside one. To keep it from students, remove it: it goes to the bin and can be put back.`,
+  rewireLinked: (name: string) => `A page in the course links to "${name}" by name. After this change, update that link so it still works.`,
+  rewireNotInBin: (name: string) => `The bin holds nothing called "${name}".`,
+  rewireTaken: (path: string) => `"${path}" is already in the course, so the item can't go back under that name. Rename or move the one there first.`,
   empty: (kind: string) => `This ${kindName(kind)} is empty so far. That's fine while you are building the course; add content before students see it.`
 } as const;

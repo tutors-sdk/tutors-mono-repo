@@ -16,6 +16,8 @@ export { checkTree, slugify, sortFindings, validate } from "./validate.ts";
 export { fileSlug, IMAGE_LIMIT_BYTES, titleOf } from "./warnings.ts";
 export type { FixOutcome } from "./fix.ts";
 export { applyFixes, fixCourse, planFixes } from "./fix.ts";
+export type { RewirePlan } from "./rewire.ts";
+export { BIN_FOLDER, planBin, planHide, planMove, planReorder, planRestore, planRetitle } from "./rewire.ts";
 export type { ImportFile, ShapeItem, ShapeKind, ShapeProposal, ShapeTopic } from "./shape.ts";
 export { linkOf, proposeShape, weekOf } from "./shape.ts";
 export { netlifyToml } from "./templates.ts";
