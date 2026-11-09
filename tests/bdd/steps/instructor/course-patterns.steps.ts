@@ -146,4 +146,20 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       And("the output folder shall still be empty", () => expect(readdirSync(dir)).toEqual([]));
     });
   });
+
+  Rule(
+    "When an instructor shapes the teaching week themselves, tutors shall generate each weekly topic holding exactly the lectures, labs and readings they named, numbered per kind, and the pattern's side unit.",
+    ({ RuleScenario }) => {
+      RuleScenario("Two lectures, a lab and a reading every week", ({ Given, When, Then, And }) => {
+        Given("the pattern {string} for {int} weeks from {string} with weeks of {string}", (_ctx, id: string, weeks: number, start: string, kinds: string) => {
+          choose(id, weeks, start);
+          const week = kinds.split(", ").map((kind, i) => ({ kind: kind as "talk" | "lab" | "note", title: `Week {n} ${kind} ${i + 1}` }));
+          spec = { ...spec, pattern: { ...spec.pattern!, week } };
+        });
+        When("the course is generated", generate);
+        Then("topic {string} shall hold exactly {string}", (_ctx, topic: string, list: string) => expect(foldersUnder(topic)).toEqual(list.split(", ")));
+        And("tutors validate shall report no findings on the shaped course", async () => expect(await validate(new MemoryFileSystem(files))).toEqual([]));
+      });
+    }
+  );
 });

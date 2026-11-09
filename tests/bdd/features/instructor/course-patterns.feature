@@ -57,3 +57,12 @@ Feature: Creating a course from a teaching pattern
       When the instructor runs the course creator with "--pattern lab-lecture --name Web --start 2027-01-25"
       Then the creator shall list the patterns "lecture-lab, lecture-only, project-based, flipped"
       And the output folder shall still be empty
+
+  @rule-0742 @ears-event-driven
+  Rule: When an instructor shapes the teaching week themselves, tutors shall generate each weekly topic holding exactly the lectures, labs and readings they named, numbered per kind, and the pattern's side unit.
+
+    Scenario: Two lectures, a lab and a reading every week
+      Given the pattern "lecture-lab" for 4 weeks from "2027-01-25" with weeks of "talk, talk, lab, note"
+      When the course is generated
+      Then topic "unit-1/topic-03" shall hold exactly "lab-01, note-01, talk-01, talk-02"
+      And tutors validate shall report no findings on the shaped course

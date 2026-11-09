@@ -108,6 +108,7 @@ const longDate = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateStr
 export function patternFiles(spec: CourseSpec, choice: PatternChoice): GeneratedFile[] {
   const pattern = patternById(choice.id);
   if (!pattern) throw new Error(`Unknown pattern "${choice.id}"`);
+  const weekItems = choice.week ?? pattern.week;
   const files: GeneratedFile[] = [];
   files.push({ relativePath: "calendar.yaml", content: patternCalendarYaml(spec, choice) });
 
@@ -126,7 +127,7 @@ export function patternFiles(spec: CourseSpec, choice: PatternChoice): Generated
         relativePath: `${topicDir}/topic.md`,
         content: md(`Week ${week}`, `Week of ${longDate(date)}.`, topicIcons[(week - 1) % topicIcons.length])
       });
-      itemDirs(pattern.week, topicDir).forEach((dir, i) => files.push(...itemFiles(dir, pattern.week[i], week)));
+      itemDirs(weekItems, topicDir).forEach((dir, i) => files.push(...itemFiles(dir, weekItems[i], week)));
     }
   }
   return files;
