@@ -1,0 +1,13 @@
+{
+  "name": "@tutors/course-rules",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/mod.ts",
+    "./memory": "./src/adapters/memory-fs.ts"
+  },
+  "license": "MIT",
+  "imports": {
+    "@tutors/tutors-model-lib": "jsr:@tutors/tutors-model-lib@^5.3.0",
+    "js-yaml": "npm:js-yaml@^4.1.1"
+  }
+}

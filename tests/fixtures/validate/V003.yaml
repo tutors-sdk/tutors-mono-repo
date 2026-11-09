@@ -1,0 +1,10 @@
+broken:
+  course.md: "# Web Development\n"
+  unit-1/topic-01/talk-01/talk.md: "# Intro\n"
+  unit-1/topic-01/talk-01/slides.pdf: "%PDF"
+fixed:
+  course.md: "# Web Development\n"
+  unit-1/unit.md: "# Unit 1\n"
+  unit-1/topic-01/topic-01.md: "# Week one\n"
+  unit-1/topic-01/talk-01/talk.md: "# Intro\n"
+  unit-1/topic-01/talk-01/slides.pdf: "%PDF"

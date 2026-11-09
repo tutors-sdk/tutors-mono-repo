@@ -1,6 +1,13 @@
 {
   "staleMargin": 2,
   "files": {
+    "packages/jsr/course-rules/src/adapters/memory-fs.ts": 100,
+    "packages/jsr/course-rules/src/finding.ts": 100,
+    "packages/jsr/course-rules/src/messages.ts": 100,
+    "packages/jsr/course-rules/src/ports.ts": 100,
+    "packages/jsr/course-rules/src/tree.ts": 96,
+    "packages/jsr/course-rules/src/trim.ts": 100,
+    "packages/jsr/course-rules/src/validate.ts": 97,
     "packages/jsr/create/src/cli.ts": 20,
     "packages/jsr/create/src/generate.ts": 0,
     "packages/jsr/create/src/scaffolder.ts": 100,

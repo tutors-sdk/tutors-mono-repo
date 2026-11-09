@@ -77,6 +77,13 @@ module.exports = {
       to: { pathNot: "^packages/jsr/realtime/" }
     },
     {
+      name: "course-rules-no-file-system",
+      comment: "The course validator reads a course only through its FileSystemPort, so the CLI, Studio and the reader's browser wizard run the same rules.",
+      severity: "error",
+      from: { path: "^packages/jsr/course-rules/" },
+      to: { dependencyTypes: ["core"] }
+    },
+    {
       name: "identity-no-server-in-browser",
       comment: "Browser entry points cannot reach server adapters or private environment modules, even through a shared barrel.",
       severity: "error",

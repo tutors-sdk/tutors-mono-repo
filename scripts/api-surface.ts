@@ -12,6 +12,7 @@
  * Tracked packages:
  *   - @tutors/tutors-model-lib (packages/jsr/model)
  *   - @tutors/tutors-gen-lib   (packages/jsr/gen)
+ *   - @tutors/course-rules     (packages/jsr/course-rules)
  *   - @tutors/tutors-time-lib  (packages/jsr/time)
  *   - @tutors/tutors-types     (packages/jsr/types)
  *   - @tutors/identity         (packages/jsr/identity)
@@ -61,6 +62,12 @@ const TRACKED_PACKAGES: PackageConfig[] = [
     dir: "packages/jsr/gen",
     entry: "src/tutors.ts",
     reportFile: "tutors-gen-lib.api.md",
+  },
+  {
+    name: "@tutors/course-rules",
+    dir: "packages/jsr/course-rules",
+    entry: "src/mod.ts",
+    reportFile: "course-rules.api.md",
   },
   {
     name: "@tutors/tutors-time-lib",

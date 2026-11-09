@@ -7,6 +7,7 @@
     "./packages/jsr/gen",
     "./packages/jsr/time",
     "./packages/jsr/create",
+    "./packages/jsr/course-rules",
     "./packages/jsr/types",
     "./packages/jsr/identity",
     "./packages/jsr/realtime"
@@ -14,6 +15,7 @@
   "fmt": {
     "include": [
       "./packages/jsr/gen/src/",
+      "./packages/jsr/course-rules/",
       "./packages/jsr/model/src/",
       "./packages/jsr/tutors/",
       "./packages/jsr/tutors-lite/",
