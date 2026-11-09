@@ -72,6 +72,12 @@ describe("V007 names", () => {
     expect(await warnings({ ...base, "topic-01/note-1/Week 1.pdf": "%PDF" }, "V007")).toEqual(["topic-01/note-1/Week 1.pdf -> Week-1.pdf (fix)"]);
   });
 
+  it("offers no rename for a folder a page links to", async () => {
+    const base = { "course.md": "# C\n", "topic-01/topic.md": "# T\n", "topic-01/talk-Intro/talk.md": "# I\n", "topic-01/talk-Intro/s.pdf": "%PDF" };
+    expect(await warnings({ ...base, "topic-01/note-1/n.md": "# N\n[Slides](../talk-Intro/talk.md)\n" }, "V007")).toEqual(["topic-01/talk-Intro -> talk-intro"]);
+    expect(await warnings({ ...base, "topic-01/note-1/n.md": "# N\n" }, "V007")).toEqual(["topic-01/talk-Intro -> talk-intro (fix)"]);
+  });
+
   it("names files with spaces or accents at the root and in typed folders, and fixes all but images", async () => {
     expect(await warnings({ "Read Me.md": "x", "topic-01/topic.md": "# T\n", "topic-01/Main Pic.png": "PNG", "topic-01/note-1/n.md": "# N\n" }, "V007")).toEqual([
       "Read Me.md -> Read-Me.md (fix)",

@@ -63,13 +63,13 @@ export function fileSlug(name: string): string {
 const CLEAN_FOLDER = /^[a-z0-9][a-z0-9._-]*$/;
 const CLEAN_FILE = /^[\x21-\x7e]+$/;
 
-/** Whether any page names the file, as written or URL-encoded ("Week 1 Slides.pdf", "Week%201%20Slides.pdf"). */
+/** Whether any page names the file or folder, as written or URL-encoded ("Week 1 Slides.pdf", "Week%201%20Slides.pdf"). */
 const mentionedIn = (pages: string[], name: string) => [name, encodeURI(name), name.replace(/ /g, "%20")].some((form) => pages.some((page) => page.includes(form)));
 
 /**
  * V007: names that survive a round trip through Windows, macOS, git and a web server unchanged. A
- * rename is offered as a fix only when nothing links to the name, since a page that links to it would
- * break; images are never renamed, as pages show them by name.
+ * rename of a file or folder is offered as a fix only when nothing links to the name, since a page that
+ * links to it would break; images are never renamed, as pages show them by name.
  */
 export async function checkNames(tree: CourseTree, read: (path: string) => Promise<string>): Promise<Finding[]> {
   const findings: Finding[] = [];
@@ -78,8 +78,9 @@ export async function checkNames(tree: CourseTree, read: (path: string) => Promi
   for (const node of typedNodes(tree)) {
     if (node.path !== "" && !CLEAN_FOLDER.test(node.name)) {
       const suggestion = slugify(node.name);
-      // Only a rename that keeps the folder's kind is safe to apply unasked.
-      const fix: FileOp | undefined = kindOf(suggestion) === node.kind ? { op: "move", from: node.path, to: joinPath(parentOf(node.path), suggestion) } : undefined;
+      // Only a rename that keeps the folder's kind, and that no page links to, is safe to apply unasked.
+      const fix: FileOp | undefined =
+        kindOf(suggestion) === node.kind && !mentionedIn(pages, node.name) ? { op: "move", from: node.path, to: joinPath(parentOf(node.path), suggestion) } : undefined;
       findings.push(warning("V007", node.path, messages.folderName(node.name, suggestion), fix ? { suggestedName: suggestion, fix } : { suggestedName: suggestion }));
     }
     for (const file of node.files) {

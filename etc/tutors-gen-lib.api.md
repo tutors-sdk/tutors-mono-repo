@@ -7,6 +7,15 @@
 
 ```ts
 
+// --- types ---
+
+// (from src/services/resource-builder.ts)
+export type CourseTree = LearningResource;
+
+// (from src/types/types.ts)
+export type LearningResource = { courseRoot: string; route: string; id: string; lrs: LearningResource[]; files: Array<string>; type: string; };
+
+
 // --- functions ---
 
 // (from src/tutors.ts)
@@ -37,4 +46,5 @@ export function readCourseTree(folder: string) : CourseTree;
 | Kind | Count |
 |------|-------|
 | function | 7 |
-| **Total** | **7** |
+| type | 2 |
+| **Total** | **9** |

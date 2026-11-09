@@ -23,9 +23,11 @@ export function parseCourse(folder: string, silent: boolean = false): [Course, L
 }
 
 /**
- * The course folder as a tree before pruning: every folder is present, and one whose name starts
- * with no learning-object kind is typed "unknown". pruneCourseTree removes those, which is exactly
- * what parseCourse does before building.
+ * The course folder as a tree before pruning: every folder is present, typed as the generator types
+ * it. A folder takes its kind from the nearest segment of its path that names one, so a folder inside
+ * a topic (topic-1/drafts) is typed as that topic, and one with no kind anywhere on its path is typed
+ * "unknown". pruneCourseTree removes the "unknown" ones, which is exactly what parseCourse does before
+ * building.
  */
 export function readCourseTree(folder: string): CourseTree {
   return buildUnprunedTree(folder);
@@ -35,7 +37,8 @@ export function pruneCourseTree(tree: CourseTree): void {
   pruneTree(tree);
 }
 
-export type { CourseTree, LearningResource };
+export type { CourseTree } from "./services/resource-builder.ts";
+export type { LearningResource } from "./types/types.ts";
 
 export function copyAssets(lr: LearningResource, folder: string) {
   copyAssetFiles(lr, folder);
