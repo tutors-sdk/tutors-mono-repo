@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "47b7ddbba1fb3b2f5c07059b4d63ceb30eb3859b",
+  "commit": "ab462bd72c54b63da9d0b3b4cfe799c982641c31",
   "base": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
-  "generatedAt": "2026-11-09T02:26:36Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/42545801759",
+  "generatedAt": "2026-11-09T12:12:20Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/42607692140",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -28,6 +28,12 @@
       "mutationScore": 70.1,
       "changed": false,
       "path": "packages/svelte/course"
+    },
+    {
+      "name": "@tutors/course-rules",
+      "mutationScore": 98.77,
+      "changed": true,
+      "path": "packages/jsr/course-rules"
     },
     {
       "name": "@tutors/data-api",
@@ -67,8 +73,8 @@
     },
     {
       "name": "@tutors/quiz",
-      "mutationScore": 95.9,
-      "changed": false,
+      "mutationScore": 100,
+      "changed": true,
       "path": "packages/svelte/quiz"
     },
     {
@@ -115,8 +121,8 @@
     },
     {
       "name": "@tutors/tutors-create",
-      "mutationScore": 42.45,
-      "changed": false,
+      "mutationScore": 84.43,
+      "changed": true,
       "path": "packages/jsr/create"
     },
     {
@@ -169,13 +175,13 @@
     },
     {
       "name": "packages/jsr/gen/src/services/marp-renderer.ts",
-      "mutationScore": 0,
+      "mutationScore": 26.83,
       "changed": false,
       "path": "packages/jsr/gen/src/services/marp-renderer.ts"
     },
     {
       "name": "packages/jsr/gen/src/services/resource-builder.ts",
-      "mutationScore": 74.58,
+      "mutationScore": 86.67,
       "changed": false,
       "path": "packages/jsr/gen/src/services/resource-builder.ts"
     },
@@ -205,13 +211,13 @@
     },
     {
       "name": "packages/jsr/gen/src/tutors.ts",
-      "mutationScore": 65,
+      "mutationScore": 69.57,
       "changed": false,
       "path": "packages/jsr/gen/src/tutors.ts"
     },
     {
       "name": "packages/jsr/gen/src/utils/file-utils.ts",
-      "mutationScore": 66.93,
+      "mutationScore": 67.72,
       "changed": false,
       "path": "packages/jsr/gen/src/utils/file-utils.ts"
     },
@@ -241,10 +247,10 @@
     }
   ],
   "nightly": {
-    "result": "success",
+    "result": "failure",
     "jobs": {
       "contract-snapshots": "success",
-      "mutation": "success",
+      "mutation": "failure",
       "mutation-nightly": "success",
       "suite-health": "success",
       "e2e-stack-nightly": "success",
