@@ -9,6 +9,8 @@ broken:
   Week 3/talk-01/slides.pdf: "%PDF"
   unit-1/unit.md: "# Unit 1\n"
   unit-1/Lab1/01.Setup.md: "# Setup\n"
+  unit-1/-talk-02-anatomy/talk.md: "# Anatomy\n"
+  unit-1/-talk-02-anatomy/anatomy.pdf: "%PDF"
   .github/workflows/build.yml: "on: push\n"
 fixed:
   netlify.toml: "[build]\n  publish = \"json\"\n"
@@ -21,6 +23,7 @@ fixed:
   topic-02/talk-01/talk.md: "# Normal forms\n"
   topic-02/talk-01/slides.pdf: "%PDF"
   unit-1/unit.md: "# Unit 1\n"
-  unit-1/topic-lab1/topic.md: "# Lab 1\n"
-  unit-1/topic-lab1/lab-1/01.Setup.md: "# Setup\n"
+  unit-1/lab1/01.Setup.md: "# Setup\n"
+  unit-1/talk-02-anatomy/talk.md: "# Anatomy\n"
+  unit-1/talk-02-anatomy/anatomy.pdf: "%PDF"
   .github/workflows/build.yml: "on: push\n"

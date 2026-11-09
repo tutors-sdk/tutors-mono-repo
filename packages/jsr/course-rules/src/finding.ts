@@ -1,7 +1,7 @@
 export type Severity = "error" | "warn" | "info";
 
 export type RuleId =
-  "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012" | "V013" | "V014" | "V015" | "V016" | "V017" | "V018";
+  "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012" | "V013" | "V014" | "V015" | "V016" | "V017" | "V018" | "V019";
 
 /**
  * One change to a course folder. A fix is planned as file operations first and applied only when the
@@ -48,7 +48,8 @@ export const ruleCatalogue: readonly RuleInfo[] = [
   { id: "V015", severity: "error", summary: "A Marp deck starts with marp: true, so Tutors shows it as slides" },
   { id: "V016", severity: "warn", summary: "A Talk has one Marp deck, on a theme Tutors has, with no script the reader removes" },
   { id: "V017", severity: "error", summary: "Every Mermaid diagram draws (checked where a shell supplies a diagram checker)" },
-  { id: "V018", severity: "warn", summary: "A folder Tutors leaves out holds working files (code, scripts, slide sources), not course material" }
+  { id: "V018", severity: "warn", summary: "A folder Tutors leaves out holds working files (code, scripts, slide sources), not course material" },
+  { id: "V019", severity: "warn", summary: "A lab's steps start at 00 or 01 and skip no number" }
 ];
 
 export function severityOf(rule: RuleId): Severity {

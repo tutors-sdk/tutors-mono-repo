@@ -6,7 +6,7 @@ import type { FileSystemPort, ValidateOptions } from "./ports.ts";
 import { joinPath, readText } from "./ports.ts";
 import { checkDiagrams, checkMarp, checkQuizzes } from "./rich.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
-import { buildCourseTree, extensionOf, holdsCourseMaterial, holdsOnlyImages } from "./tree.ts";
+import { buildCourseTree, extensionOf, holdsCourseMaterial, holdsOnlyImages, kindOf } from "./tree.ts";
 import { checkEmpty, checkImages, checkNames, checkNetlify, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
 
 const compositeKinds = ["unit", "side", "topic"];
@@ -70,7 +70,9 @@ function walk(node: CourseNode, findings: Finding[]): void {
   for (const child of node.children) {
     if (child.kind === null) {
       if (holdsResources || holdsOnlyImages(child)) continue;
-      const suggestion = ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slugify(child.name)}` : undefined;
+      // A name that only needs tidying to start with a kind ("-talk-01", "Talk 01") keeps that kind; anything else becomes a topic.
+      const slug = slugify(child.name);
+      const suggestion = kindOf(slug) !== null ? slug : ["course", "unit", "side"].includes(node.kind ?? "") ? `topic-${slug}` : undefined;
       if (holdsCourseMaterial(child)) {
         const fix: FileOp | undefined = suggestion === undefined ? undefined : { op: "move", from: child.path, to: joinPath(node.path, suggestion) };
         findings.push(finding("V002", child.path, messages.V002(child.name, suggestion), suggestion, fix));
@@ -123,12 +125,12 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
   if (numbers.length === 0) return;
   const pad = (n: number) => String(n).padStart(2, "0");
   if (numbers[0] > 1) {
-    findings.push(finding("V004", node.path, messages.labFirstStep(pad(numbers[0]))));
+    findings.push(finding("V019", node.path, messages.labFirstStep(pad(numbers[0]))));
     return;
   }
   for (let i = 1; i < numbers.length; i++) {
     if (numbers[i] > numbers[i - 1] + 1) {
-      findings.push(finding("V004", node.path, messages.labStepOrder(pad(numbers[i - 1] + 1), pad(numbers[i]))));
+      findings.push(finding("V019", node.path, messages.labStepOrder(pad(numbers[i - 1] + 1), pad(numbers[i]))));
       return;
     }
   }

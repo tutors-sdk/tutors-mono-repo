@@ -225,13 +225,15 @@ describe("V001-V006 corners", () => {
     expect(await found({ "note-1/a.md": "" })).toEqual([]);
   });
 
-  it("V004 labs: steps start at 00 or 01, skip nothing, and are named NN.Title.md", async () => {
+  it("V004 labs: steps are named NN.Title.md; V019 warns when they start above 01 or skip a number", async () => {
     expect(await found({ "lab-1/00.Setup.md": "", "lab-1/01.Go.md": "" })).toEqual([]);
     expect(await found({ "book-1/01.Setup.md": "", "book-1/02.Go.md": "" })).toEqual([]);
     expect((await errorsOf(course({ "lab-1/x.png": "" })))[0].message).toBe(messages.labNoSteps());
-    expect((await errorsOf(course({ "lab-1/02.Setup.md": "" })))[0].message).toBe(messages.labFirstStep("02"));
-    expect((await errorsOf(course({ "lab-1/00.A.md": "", "lab-1/02.B.md": "" })))[0].message).toBe(messages.labStepOrder("01", "02"));
-    expect((await errorsOf(course({ "lab-1/00.A.md": "", "lab-1/01.B.md": "", "lab-1/03.C.md": "", "lab-1/05.D.md": "" }))).length).toBe(1);
+    const steps = async (files: Record<string, string>) => (await validate(course(files))).filter((f) => f.path === "lab-1");
+    expect(await steps({ "lab-1/02.Setup.md": "" })).toMatchObject([{ rule: "V019", severity: "warn", message: messages.labFirstStep("02") }]);
+    expect(await steps({ "lab-1/00.A.md": "", "lab-1/02.B.md": "" })).toMatchObject([{ rule: "V019", severity: "warn", message: messages.labStepOrder("01", "02") }]);
+    expect(await steps({ "lab-1/00.A.md": "", "lab-1/01.B.md": "", "lab-1/03.C.md": "", "lab-1/05.D.md": "" })).toHaveLength(1);
+    expect(await errorsOf(course({ "lab-1/00.A.md": "", "lab-1/02.B.md": "" }))).toEqual([]);
     expect(await found({ "lab-1/1.Setup.md": "", "lab-1/01..md": "" })).toEqual(["V004 lab-1/01..md", "V004 lab-1/1.Setup.md"]);
     expect(await found({ "lab-1/01.Setup.md": "", "lab-1/01.Again.md": "" })).toEqual([]);
   });
@@ -296,9 +298,9 @@ describe("findings", () => {
     expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.pdf": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
   });
 
-  it("carry the catalogue's severity, and the catalogue lists V001-V018 once each, in id order", async () => {
-    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 18 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
-    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn"]);
+  it("carry the catalogue's severity, and the catalogue lists V001-V019 once each, in id order", async () => {
+    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 19 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
+    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn", "warn"]);
     expect((await errorsOf(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
   });
 

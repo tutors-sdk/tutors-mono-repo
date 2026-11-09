@@ -16,12 +16,13 @@ The package has no file-system access of its own. A shell passes a `FileSystemPo
 | V001 | error    | The course folder has a course.md                                                                                                                                                                      |
 | V002 | error    | A folder holding course material (slides, a video id, lab steps, a page named for a kind, a learning object) has a name that starts with a learning-object kind; otherwise the generator leaves it out |
 | V003 | error    | Every unit, side and topic has a descriptor .md                                                                                                                                                        |
-| V004 | error    | A talk has a .md and one PDF (or a .marp deck or a videoid); a note has one .md; a lab's steps are named `NN.Title.md`, start at 00 or 01 and skip no number                                           |
+| V004 | error    | A talk has a .md and one PDF (or a .marp deck or a videoid); a note has one .md; a lab's steps are named `NN.Title.md`                                                                                 |
 | V005 | error    | A web link's `weburl` starts with `https://`; a GitHub link's `githubid` is `owner/repo` or its github.com URL                                                                                         |
 | V006 | error    | properties.yaml, calendar.yaml, enrollment.yaml and badges.yaml parse and have the shape the generator reads                                                                                           |
 | V018 | warn     | A folder of no kind that holds only working files (code, scripts, slide sources) is named, without a fix: students won't see it, which may be intended                                                 |
+| V019 | warn     | A lab's steps start at 00 or 01 and skip no number; the generator shows every step either way, in file-name order                                                                                      |
 
-Each rule is an EARS Rule in `tests/bdd/features/instructor/course-validation.feature` (Rules 0695-0700, and 0731-0732 for V018 and for a learning object's own resource folders, such as a lab's `assets/`, which are never named) with a broken and a fixed course under `tests/fixtures/validate/`. A conformance test builds every fixture with the generator and checks that the folders it leaves out are exactly the V002 and V018 findings.
+Each rule is an EARS Rule in `tests/bdd/features/instructor/course-validation.feature` (Rules 0695-0700, 0731-0732 for V018 and for a learning object's own resource folders, such as a lab's `assets/`, which are never named, 0740 for V019 and 0741 for a V002 suggestion that keeps a kind the name already has) with a broken and a fixed course under `tests/fixtures/validate/`. A conformance test builds every fixture with the generator and checks that the folders it leaves out are exactly the V002 and V018 findings.
 
 ## Quizzes, Marp decks and Mermaid diagrams
 

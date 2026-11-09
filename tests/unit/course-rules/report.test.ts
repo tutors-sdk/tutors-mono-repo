@@ -27,7 +27,7 @@ describe("reports", () => {
     const run = log.runs[0];
     expect(log.$schema).toContain("sarif-2.1.0");
     expect(run.tool.driver).toMatchObject({ name: "tutors validate", version: "9.9.9" });
-    expect(run.tool.driver.rules.map((r: { id: string }) => r.id)).toEqual(Array.from({ length: 18 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
+    expect(run.tool.driver.rules.map((r: { id: string }) => r.id)).toEqual(Array.from({ length: 19 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
     expect(run.tool.driver.rules[0].defaultConfiguration.level).toBe("error");
     expect(run.results.map((r: { level: string }) => r.level)).toEqual(["error", "warning", "note"]);
     expect(run.results.map((r: { locations: { physicalLocation: { artifactLocation: { uri: string } } }[] }) => r.locations[0].physicalLocation.artifactLocation.uri)).toEqual([

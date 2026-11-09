@@ -61,8 +61,8 @@ export const messages = {
   labNoSteps: () => "This Lab has no steps. Add the steps as numbered files: 00.Setup.md, 01.Step-01.md, 02.Step-02.md and so on.",
   labStepName: (file: string) => `"${file}" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md.`,
   labStepOrder: (expected: string, found: string) =>
-    `The Lab's steps skip a number: step ${expected} is missing before ${found}. Number the steps 00, 01, 02 and so on with no gaps.`,
-  labFirstStep: (found: string) => `The Lab's first step is ${found}. Start the steps at 00 or 01.`,
+    `The Lab's steps skip a number: step ${expected} is missing before ${found}. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow.`,
+  labFirstStep: (found: string) => `The Lab's first step is ${found}. Students still see every step; start the steps at 00 or 01 so the order stays easy to follow.`,
   linkMissing: (kind: string, file: string) =>
     `This ${kindName(kind)} has no ${file} file. Add a file named ${file} whose first line is the ${kind === "web" ? "web address" : "repository address"}.`,
   linkEmpty: (kind: string, file: string) =>

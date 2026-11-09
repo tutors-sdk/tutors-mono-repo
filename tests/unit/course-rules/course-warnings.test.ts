@@ -27,13 +27,15 @@ const warnings = async (files: Record<string, string | Uint8Array>, rule: string
   (await validate(course(files))).filter((f) => f.rule === rule).map((f) => `${f.path}${f.suggestedName ? ` -> ${f.suggestedName}` : ""}${f.fix ? " (fix)" : ""}`);
 
 describe("V007 names", () => {
-  it("fileSlug keeps case and extension, drops accents and turns spaces into single hyphens", () => {
+  it("fileSlug keeps case and extension, drops accents and turns spaces and symbols into single hyphens", () => {
     expect(fileSlug("Café Notes.PDF")).toBe("Cafe-Notes.PDF");
     expect(fileSlug("  Week  1 – Intro .md")).toBe("Week-1-Intro.md");
     expect(fileSlug("ñ.md")).toBe("n.md");
     expect(fileSlug("中文.pdf")).toBe("file.pdf");
     expect(fileSlug("weburl")).toBe("weburl");
     expect(fileSlug(".hidden name")).toBe(".hidden-name");
+    expect(fileSlug("00.Lab-01 Eclipse & Java.md")).toBe("00.Lab-01-Eclipse-Java.md");
+    expect(fileSlug("notes (final)?.pdf")).toBe("notes-final.pdf");
   });
 
   it("flags capitals in typed folders, offers a fix only when the kind survives, and never flags the root or untyped folders", async () => {

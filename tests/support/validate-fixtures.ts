@@ -20,7 +20,8 @@ export const VALIDATE_RULES = [
   "V015",
   "V016",
   "V017",
-  "V018"
+  "V018",
+  "V019"
 ] as const;
 export type FixtureForm = "broken" | "fixed";
 
