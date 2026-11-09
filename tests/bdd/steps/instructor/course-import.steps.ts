@@ -138,4 +138,15 @@ describeFeature(feature, ({ Rule }) => {
       });
     }
   );
+
+  Rule(
+    "Tutors shall take a file's week from the nearest file or folder whose name says week outright (Week 3, Wk3, w3) before a lecture number or a leading number in the file's own name.",
+    ({ RuleScenario }) => {
+      RuleScenario("Week folders whose files are numbered within the week", ({ Given, When, Then }) => {
+        Given("the import corpus folder {string}", givenCase);
+        When("tutors proposes a shape for it", propose);
+        Then("the proposal shall match the corpus", matches);
+      });
+    }
+  );
 });
