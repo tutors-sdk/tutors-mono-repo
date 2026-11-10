@@ -153,7 +153,6 @@ describe("tutors validate --plan", () => {
   });
 });
 
-const text = async (fs: MemoryFileSystem, path: string) => new TextDecoder().decode(await fs.read(path));
 const refused = (reason: string) => ({ ok: false, reason });
 const nothing = { ok: true, ops: [], notes: [] };
 
