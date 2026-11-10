@@ -35,6 +35,27 @@ describe("published findings", () => {
     expect(validatePublishedCourse({ ...publishedCourse, enrollment: { educators: ["lecturer"], whitelist: ["alice"], students: [{ name: "Alice", id: "alice" }] } })).toEqual([]);
   });
 
+  it.each(["properties", "enrollment"])("accepts supported null %s metadata without changing the published data", (field) => {
+    const course = { ...publishedCourse, [field]: null };
+    const original = structuredClone(course);
+    expect(validatePublishedCourse(course)).toEqual([]);
+    expect(course).toEqual(original);
+  });
+
+  it.each(["properties", "enrollment"])("still rejects malformed non-null %s metadata", (field) => {
+    for (const value of [[], "invalid", 42]) {
+      expect(validatePublishedCourse({ ...publishedCourse, [field]: value })).toContainEqual(
+        expect.objectContaining({ rule: "V020", path: `tutors.json/${field}`, severity: "error" })
+      );
+    }
+  });
+
+  it("still rejects a null calendar", () => {
+    const findings = validatePublishedCourse({ ...publishedCourse, calendar: null });
+    expect(findings).toContainEqual(expect.objectContaining({ rule: "V020", path: "tutors.json/calendar", severity: "error" }));
+    expect(findings).toContainEqual(expect.objectContaining({ rule: "V006", path: "calendar.yaml", severity: "error" }));
+  });
+
   it.each([{ students: [{ name: "Alice", github: "alice" }] }, { whitelist: "alice" }, { educators: [null] }])(
     "flags enrollment problems that can break course services: %j",
     (enrollment) => {

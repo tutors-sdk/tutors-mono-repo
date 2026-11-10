@@ -71,6 +71,11 @@ export async function fetchPublishedCourse(url: string, signal: AbortSignal): Pr
 
 export function validatePublishedCourse(course: unknown): Finding[] {
   const compatible = structuredClone(course);
+  if (compatible && typeof compatible === "object" && !Array.isArray(compatible)) {
+    const data = compatible as Record<string, unknown>;
+    // Empty properties/enrollment YAML may publish as null; source validation treats it as absent.
+    for (const field of ["properties", "enrollment"]) if (data[field] === null) delete data[field];
+  }
   const pendingCompatibility: unknown[] = [compatible];
   let legacyItems = 0;
   while (pendingCompatibility.length) {
