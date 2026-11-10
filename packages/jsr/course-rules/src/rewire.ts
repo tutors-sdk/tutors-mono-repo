@@ -36,7 +36,7 @@ const ITEM_HOLDERS = ["course", "unit", "side", "topic"];
 const holdersOf = (kind: string) => HOLDERS[kind] ?? ITEM_HOLDERS;
 
 /** Longest first, so "paneltalk" wins over "talk", as the generator matches. */
-const prefixes = [...loTypes].filter((type) => type !== "course").sort((a, b) => b.length - a.length);
+const prefixes = [...loTypes].sort((a, b) => b.length - a.length);
 
 /** The kind word a folder's name starts with, as written ("book" stays "book"). */
 const prefixOf = (name: string) => prefixes.find((type) => name.startsWith(type)) ?? "";
@@ -54,7 +54,7 @@ const numberedName = (name: string, n: number) => `${prefixOf(name)}-${pad(n)}${
 function nextFreeName(name: string, taken: readonly string[]): string {
   const prefix = prefixOf(name);
   let n = 1;
-  while (taken.some((other) => prefixOf(other) === prefix && new RegExp(`^${prefix}-?0*${n}(?:-|$)`).test(other))) n++;
+  while (taken.some((other) => new RegExp(`^${prefix}-?0*${n}(?:-|$)`).test(other))) n++;
   return numberedName(name, n);
 }
 
@@ -105,7 +105,7 @@ function withIgnore(text: string, ids: readonly string[]): string {
     }
     kept.push(lines[i]);
   }
-  while (kept.length > 0 && kept[kept.length - 1] === "") kept.pop();
+  while (kept.at(-1) === "") kept.pop();
   const block = ids.length === 0 ? [] : ["ignore:", ...ids.map((id) => `  - ${id}`)];
   const all = [...kept, ...block];
   return all.length === 0 ? "" : `${all.join("\n")}\n`;
@@ -114,7 +114,7 @@ function withIgnore(text: string, ids: readonly string[]): string {
 /** The write that keeps properties.yaml's ignore list pointing at top-level folders after they are renamed. */
 async function ignoreFollows(fs: FileSystemPort, renames: ReadonlyMap<string, string>): Promise<FileOp[]> {
   const { text, ids } = await ignoreList(fs);
-  if (!ids.some((id) => renames.has(id))) return [];
+  if (!ids.some((id) => (renames.get(id) ?? id) !== id)) return [];
   return [
     {
       op: "write",
@@ -248,8 +248,10 @@ export async function planBin(fs: FileSystemPort, item: string): Promise<RewireP
 export async function planRestore(fs: FileSystemPort, binned: string, into: string): Promise<RewirePlan> {
   const name = binned.startsWith(`${BIN_FOLDER}/`) ? binned.slice(BIN_FOLDER.length + 1) : binned;
   const path = joinPath(BIN_FOLDER, name);
-  if (name === "" || name.includes("/") || !(await fs.exists(path))) return refuse(messages.rewireNotInBin(name));
-  const kind = kindOf(name);
+  const entry = name === "" || name.includes("/") || !(await fs.exists(BIN_FOLDER)) ? undefined : (await fs.list(BIN_FOLDER)).find((found) => found.name === name);
+  if (entry === undefined) return refuse(messages.rewireNotInBin(name));
+  // Only a folder has a kind; a file goes back under its own name.
+  const kind = entry.kind === "dir" ? kindOf(name) : null;
   const tree = await buildCourseTree(fs);
   const target = find(tree, into);
   if (target === undefined || target.kind === null) return refuse(messages.rewireMissing(into));
