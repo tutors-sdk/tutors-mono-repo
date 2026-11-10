@@ -1,4 +1,5 @@
 const en = {
+  "home.validator": "Validator",
   "lecturer.enrollment.export": "Export enrollment.yaml",
   "lecturer.enrollment.exporting": "Exporting…",
   "lecturer.enrollment.exportHelp": "Add recorded course visitors to your existing list. Review the draft before using it to restrict access.",

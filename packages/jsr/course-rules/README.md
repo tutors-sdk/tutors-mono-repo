@@ -21,6 +21,7 @@ The package has no file-system access of its own. A shell passes a `FileSystemPo
 | V006 | error    | properties.yaml, calendar.yaml, enrollment.yaml and badges.yaml parse and have the shape the generator reads                                                                                           |
 | V018 | warn     | A folder of no kind that holds only working files (code, scripts, slide sources) is named, without a fix: students won't see it, which may be intended                                                 |
 | V019 | warn     | A lab's steps start at 00 or 01 and skip no number; the generator shows every step either way, in file-name order                                                                                      |
+| V020 | error | Published `tutors.json` matches the generated-course schema; run by Tutors Validator for URL checks, not by source-folder validation |
 
 Each rule is an EARS Rule in `tests/bdd/features/instructor/course-validation.feature` (Rules 0695-0700, 0731-0732 for V018 and for a learning object's own resource folders, such as a lab's `assets/`, which are never named, 0740 for V019 and 0741 for a V002 suggestion that keeps a kind the name already has) with a broken and a fixed course under `tests/fixtures/validate/`. A conformance test builds every fixture with the generator and checks that the folders it leaves out are exactly the V002 and V018 findings.
 
@@ -60,3 +61,7 @@ deno run -A jsr:@tutors/tutors-create validate [folder] [--format text|json|sari
 ```
 
 Exit 3 means the folder could not be read or the arguments were wrong.
+
+## Tutors Validator
+
+`apps/validator` checks published `tutors.json` against the shared data schema (V020) and runs `checkMetadata` on properties, calendar, and enrollment (V006). Enrollment checks identify every invalid student entry and null list, including how to correct `name` and `id`. Published quizzes use the same `checkQuizText` as source quizzes. Source ZIPs enable all rules, including the browser Mermaid parser, and use `validate` through the shared browser adapter in `@tutors/course/validation`. Rules 0754–0757 in `tests/bdd/features/ui/course-validator.feature` cover the app.

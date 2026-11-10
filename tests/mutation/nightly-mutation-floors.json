@@ -140,6 +140,7 @@
     "packages/jsr/time/src/services/source.ts": 96,
     "packages/svelte/data-api/src/client.ts": 90,
     "packages/svelte/community/src/services/live-activity.server.ts": 95,
-    "packages/svelte/ui-components/src/time/heatmap-layout.ts": 50
+    "packages/svelte/ui-components/src/time/heatmap-layout.ts": 50,
+    "packages/svelte/course/src/validation/check.ts": 82
   }
 }

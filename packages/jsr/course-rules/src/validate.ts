@@ -137,7 +137,7 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
 }
 
 const linkFiles: Record<string, { file: string; valid: (line: string) => boolean }> = {
-  web: { file: "weburl", valid: (line) => /^https?:\/\/\S+$/.test(line) },
+  web: { file: "weburl", valid: (line) => /^https?:\/\/\S+$/.test(line) || /^\/(?!\/)\S+$/.test(line) },
   github: { file: "githubid", valid: (line) => /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/?$/.test(line) || /^[\w.-]+\/[\w.-]+$/.test(line) }
 };
 
@@ -174,21 +174,42 @@ const isWeek = (week: unknown) => {
   const keys = Object.keys(week);
   return keys.length === 1 && isMap(week[keys[0]]);
 };
-const listOf = (value: unknown, each: (item: unknown) => boolean) => value === undefined || value === null || (Array.isArray(value) && value.every(each));
 const isText = (item: unknown) => typeof item === "string";
 const isStudent = (item: unknown) => isMap(item) && typeof item.name === "string" && typeof item.id === "string";
-/** The enrollment the reader accepts: educators and whitelist are lists of logins, students a list of name and id. */
-const isEnrollment = (value: unknown) =>
-  value === null || value === undefined || (isMap(value) && listOf(value.educators, isText) && listOf(value.whitelist, isText) && listOf(value.students, isStudent));
 const yamlShapes: Record<string, Shape> = {
   "properties.yaml": { expected: "a list of name: value lines", ok: emptyOrMap },
   "calendar.yaml": {
     expected: "a title and a list of weeks (weeks:, then one - date: line per week)",
     ok: (value) => isMap(value) && Array.isArray(value.weeks) && value.weeks.every(isWeek)
   },
-  "enrollment.yaml": { expected: "lists named educators and whitelist (GitHub logins) or students (each a name and an id), or nothing at all", ok: isEnrollment },
+  "enrollment.yaml": { expected: "lists named educators and whitelist (GitHub logins) or students (each a name and an id), or nothing at all", ok: emptyOrMap },
   "badges.yaml": { expected: "a list of name: value lines", ok: emptyOrMap }
 };
+
+/** The same metadata checks apply to source YAML and the values published in tutors.json. */
+export function checkMetadata(file: string, value: unknown): Finding[] {
+  if (file === "enrollment.yaml" && isMap(value)) {
+    const findings: Finding[] = [];
+    const report = (field: string, detail: string) => findings.push(finding("V006", file, `${file}: ${field} ${detail}`));
+    if ("enrollment" in value) report("enrollment", "is nested inside another enrollment block. Start the file with educators:, whitelist:, or students: directly.");
+    for (const field of ["educators", "whitelist", "students"]) {
+      const list = value[field];
+      if (list === undefined) continue;
+      if (!Array.isArray(list)) {
+        report(field, "must be a list. Use [] for an empty list, or remove the field when it is unused.");
+        continue;
+      }
+      list.forEach((entry, index) => {
+        if (field === "students") {
+          if (!isStudent(entry)) report(`${field}[${index}]`, "must contain both name and id as text. For example: {name: Alice, id: alice}. Use id for the GitHub login, not github.");
+        } else if (!isText(entry)) report(`${field}[${index}]`, "must be a GitHub login written as text. Quote a numeric-looking login.");
+      });
+    }
+    return findings;
+  }
+  const shape = yamlShapes[file];
+  return shape && !shape.ok(value) ? [finding("V006", file, messages.yamlShape(file, shape.expected))] : [];
+}
 
 /** V006: the course-root YAML files parse and have the shape the generator reads. */
 async function checkYaml(tree: CourseTree, read: (path: string) => Promise<string>): Promise<Finding[]> {
@@ -204,7 +225,7 @@ async function checkYaml(tree: CourseTree, read: (path: string) => Promise<strin
       findings.push(finding("V006", file.path, messages.yamlBroken(file.name, detail)));
       continue;
     }
-    if (!shape.ok(value)) findings.push(finding("V006", file.path, messages.yamlShape(file.name, shape.expected)));
+    findings.push(...checkMetadata(file.name, value));
   }
   return findings;
 }

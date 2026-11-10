@@ -9,7 +9,7 @@
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "dev:reader": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
-    "check": "pnpm --filter tutors-reader --filter tutors-catalogue --filter tutors-live --filter tutors-time check",
+    "check": "pnpm --filter tutors-reader --filter tutors-catalogue --filter tutors-live --filter tutors-time --filter tutors-validator check",
     "generate:okf": "tsx scripts/generate-okf.ts",
     "generate:tutors-json-schema": "tsx scripts/generate-tutors-json-schema.ts",
     "test": "vitest run",
@@ -71,7 +71,9 @@
     "release:candidate": "tsx scripts/release-candidate.ts",
     "release:quality": "tsx scripts/checks/release-quality.ts",
     "release:rules": "tsx scripts/release-rules.ts",
-    "release:report-comment": "tsx scripts/release-report-comment.ts"
+    "release:report-comment": "tsx scripts/release-report-comment.ts",
+    "dev:validator": "pnpm --filter tutors-validator dev",
+    "test:e2e:validator": "playwright test --config apps/validator/playwright.config.ts"
   },
   "devDependencies": {
     "@amiceli/vitest-cucumber": "8.0.0",

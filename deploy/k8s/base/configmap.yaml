@@ -17,6 +17,7 @@ data:
   PUBLIC_CATALOGUE_ORIGIN: "https://catalogue.tutors.dev"
   PUBLIC_LIVE_ORIGIN: "https://live.tutors.dev"
   PUBLIC_TIME_ORIGIN: "https://time.tutors.dev"
+  PUBLIC_VALIDATOR_ORIGIN: "https://validator.tutors.dev"
   # Trust the proxy headers set by the OpenShift router / ingress controller.
   PROTOCOL_HEADER: "x-forwarded-proto"
   HOST_HEADER: "x-forwarded-host"

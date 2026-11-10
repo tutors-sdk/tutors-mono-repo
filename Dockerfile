@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Builds any of the four SvelteKit apps in this monorepo into a self-contained
-# Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time>.
+# Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time|validator>.
 #
 #   docker build --build-arg APP_NAME=reader -t tutors/reader .
 #   docker compose up --no-build reader proxy # local HTTP origin headers
