@@ -55,6 +55,7 @@
     "check:load": "tsx scripts/checks/load-test.ts",
     "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
     "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
+    "check:validate-corpus": "tsx scripts/checks/validate-corpus.ts",
     "check:release-claims": "tsx scripts/checks/release-claims.ts",
     "check:changelog-hint": "tsx scripts/checks/changelog-hint.ts",
     "check:openvex": "tsx scripts/checks/openvex.ts",

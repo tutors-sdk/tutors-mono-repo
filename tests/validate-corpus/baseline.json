@@ -1,0 +1,599 @@
+{
+  "courses": {
+    "agile-soft-dev-2013": {
+      "commit": "0a68842326ddff4bd3b3f90a6d81a480aa42bc04",
+      "findings": [
+        {
+          "rule": "V002",
+          "severity": "error",
+          "path": "topic01-paradigms-and-languages/reference-5",
+          "message": "The folder \"reference-5\" won't appear in your course, nor will anything inside it, because its name doesn't start with a kind Tutors knows (topic, unit, talk, note, lab and so on). Rename it so it starts with the kind of content it holds, like talk-, note- or lab-."
+        },
+        {
+          "rule": "V002",
+          "severity": "error",
+          "path": "topic01-paradigms-and-languages/reference-6",
+          "message": "The folder \"reference-6\" won't appear in your course, nor will anything inside it, because its name doesn't start with a kind Tutors knows (topic, unit, talk, note, lab and so on). Rename it so it starts with the kind of content it holds, like talk-, note- or lab-."
+        },
+        {
+          "rule": "V002",
+          "severity": "error",
+          "path": "topic05-tdd-2/reference-1",
+          "message": "The folder \"reference-1\" won't appear in your course, nor will anything inside it, because its name doesn't start with a kind Tutors knows (topic, unit, talk, note, lab and so on). Rename it so it starts with the kind of content it holds, like talk-, note- or lab-."
+        },
+        {
+          "rule": "V002",
+          "severity": "error",
+          "path": "topic06-exceptions-and-maven/reference-5-maven-modules",
+          "message": "The folder \"reference-5-maven-modules\" won't appear in your course, nor will anything inside it, because its name doesn't start with a kind Tutors knows (topic, unit, talk, note, lab and so on). Rename it so it starts with the kind of content it holds, like talk-, note- or lab-."
+        },
+        {
+          "rule": "V011",
+          "severity": "warn",
+          "path": "netlify.toml",
+          "message": "This course has no netlify.toml, so Netlify won't know how to build and publish it. Add the standard one (tutors validate --fix writes it)."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic01-paradigms-and-languages/book-eclipse-and-java",
+          "message": "The Lab's steps skip a number: step 09 is missing before 10. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic01-paradigms-and-languages/book-eclipse-and-java/00.Lab-01 Eclipse & Java.md",
+          "message": "The file \"00.Lab-01 Eclipse & Java.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-01-Eclipse-Java.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic02-java-language/book-cli-and-classes/00.Lab-02 CLI & Classes.md",
+          "message": "The file \"00.Lab-02 CLI & Classes.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-02-CLI-Classes.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic03-inheritance-and-collections/book-objects-and-serialization/00.Lab-03 Objects & Serialization.md",
+          "message": "The file \"00.Lab-03 Objects & Serialization.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-03-Objects-Serialization.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic04-serialisation-and-tdd-1/book-testing/00.Lab-04 Testing.md",
+          "message": "The file \"00.Lab-04 Testing.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-04-Testing.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic04-serialisation-and-tdd-1/talk-2-TDD-intro",
+          "message": "The folder \"talk-2-TDD-intro\" has capitals, spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to talk-2-tdd-intro."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic05-tdd-2/book-refactoring/00.Lab-05 Refactoring.md",
+          "message": "The file \"00.Lab-05 Refactoring.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-05-Refactoring.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic06-exceptions-and-maven/book-maven/00.Lab-06 Maven.md",
+          "message": "The file \"00.Lab-06 Maven.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-06-Maven.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic07-tdd-3-and-pacemaker-solution/book-a-pacemaker-models/00.Lab-07a Pacemaker Models.md",
+          "message": "The file \"00.Lab-07a Pacemaker Models.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-07a-Pacemaker-Models.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic07-tdd-3-and-pacemaker-solution/book-b-pacemaker-api/00.Lab-07b Pacemaker API.md",
+          "message": "The file \"00.Lab-07b Pacemaker API.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-07b-Pacemaker-API.md."
+        },
+        {
+          "rule": "V018",
+          "severity": "warn",
+          "path": "topic07-tdd-3-and-pacemaker-solution/pacemaker-solution",
+          "message": "The folder \"pacemaker-solution\" isn't part of your course, because its name doesn't start with a kind Tutors knows, so students won't see it. That's fine for working files such as code, scripts or slide sources. If it holds course material, rename it so it starts with the kind of content it holds, like talk- or note-."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic08-srp-and-tdd-4/book--assignmment-2-skeleton/00.Lab-08 Skeleton.md",
+          "message": "The file \"00.Lab-08 Skeleton.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-08-Skeleton.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic09-ocp-and-rest/book-simple-rest-api/00.Lab-09 Rest API.md",
+          "message": "The file \"00.Lab-09 Rest API.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-09-Rest-API.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic10-lsp-and-tdd-5-and-kotlin/book-rest-cli-test/00.Lab-10 Rest CLI.md",
+          "message": "The file \"00.Lab-10 Rest CLI.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-10-Rest-CLI.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic11-isp-dip-and-kotlin/book-pacemaker-service-test/00.Lab-11 Rest Test.md",
+          "message": "The file \"00.Lab-11 Rest Test.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-11-Rest-Test.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic12-tdd-6/book-kotlin-pacemaker-client/00.Lab-12 Kotlin.md",
+          "message": "The file \"00.Lab-12 Kotlin.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-12-Kotlin.md."
+        }
+      ]
+    },
+    "mobile-app-dev-oth": {
+      "commit": "6950eb7b20b9d382e372599caff1fbbb2a2b8c2a",
+      "findings": [
+        {
+          "rule": "V002",
+          "severity": "error",
+          "path": "topic-06-persistence/unit-02-android-programming/-talk-00-andoid-anatomy-2",
+          "message": "The folder \"-talk-00-andoid-anatomy-2\" won't appear in your course, nor will anything inside it, because its name doesn't start with a kind Tutors knows (topic, unit, talk, note, lab and so on). Rename it to talk-00-andoid-anatomy-2."
+        },
+        {
+          "rule": "V011",
+          "severity": "warn",
+          "path": "netlify.toml",
+          "message": "This course has no netlify.toml, so Netlify won't know how to build and publish it. Add the standard one (tutors validate --fix writes it)."
+        },
+        {
+          "rule": "V010",
+          "severity": "warn",
+          "path": "topic---assignment",
+          "message": "The topic \"topic---assignment\" has no number, so it sits in alphabetical order among its numbered neighbours. Name the topics topic-01, topic-02 and so on."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic---assignment/unit-2/talk-project-2/topic-08-mvp/unit-01-android-retrofit/book-a-donation-v3/00.Lab K08 Donation-V3.md",
+          "message": "The file \"00.Lab K08 Donation-V3.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-K08-Donation-V3.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic---assignment/unit-2/talk-project-2/topic-08-mvp/unit-02a/book-1-mvp-1/00.Lab-A08a MVP I.md",
+          "message": "The file \"00.Lab-A08a MVP I.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A08a-MVP-I.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic---assignment/unit-2/talk-project-2/topic-08-mvp/unit-02b/book-2-mvp-2",
+          "message": "The Lab's steps skip a number: step 06 is missing before 07. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic---assignment/unit-2/talk-project-2/topic-08-mvp/unit-02b/book-2-mvp-2/00.Lab-A08b MVP II.md",
+          "message": "The file \"00.Lab-A08b MVP II.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A08b-MVP-II.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-00-introduction/unit-03-android-platform/book-00-studio/00.Lab A00 Studio.md",
+          "message": "The file \"00.Lab A00 Studio.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A00-Studio.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-01-activities/unit-01-android-programming/book-01-activity/00.Lab-A01 Activities.md",
+          "message": "The file \"00.Lab-A01 Activities.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A01-Activities.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-02-adapters/unit-02-android-programming/book-02-adapters/00.Lab-A02 Adapters.md",
+          "message": "The file \"00.Lab-A02 Adapters.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A02-Adapters.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-02-adapters/unit-02-android-programming/book-02-adapters/01.Exercise Solutions.md",
+          "message": "The file \"01.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-models/unit-02-android-programming/book-03-models/00.Lab-A03 Models.md",
+          "message": "The file \"00.Lab-A03 Models.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A03-Models.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-models/unit-02-android-programming/book-03-models/01.SDK Upgrade.md",
+          "message": "The file \"01.SDK Upgrade.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.SDK-Upgrade.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-models/unit-02-android-programming/book-03-models/02.Exercise Solutions.md",
+          "message": "The file \"02.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 02.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-04-images/unit-02-android-programming/book-04-images/00.Lab-A04 Images.md",
+          "message": "The file \"00.Lab-A04 Images.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A04-Images.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-04-images/unit-02-android-programming/book-04-images/01.Exercise Solutions.md",
+          "message": "The file \"01.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-05-maps/unit-02-android-programming/book-maps/00.Lab-A05 MapActivity.md",
+          "message": "The file \"00.Lab-A05 MapActivity.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A05-MapActivity.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-05-maps/unit-02-android-programming/book-maps/01.Exercise Solutions.md",
+          "message": "The file \"01.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-06-persistence/unit-02-android-programming/book-json",
+          "message": "The Lab's steps skip a number: step 06 is missing before 07. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-06-persistence/unit-02-android-programming/book-json/00.Lab-A06 JSON.md",
+          "message": "The file \"00.Lab-A06 JSON.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A06-JSON.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-07-layouts/unit-02-map-view/book-0-map-view/00.Lab-A07 MapView.md",
+          "message": "The file \"00.Lab-A07 MapView.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A07-MapView.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-08-mvp/unit-02a/book-1-mvp-1/00.Lab-A08a MVP I.md",
+          "message": "The file \"00.Lab-A08a MVP I.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A08a-MVP-I.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-08-mvp/unit-02b/book-2-mvp-2",
+          "message": "The Lab's steps skip a number: step 06 is missing before 07. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-08-mvp/unit-02b/book-2-mvp-2/00.Lab-A08b MVP II.md",
+          "message": "The file \"00.Lab-A08b MVP II.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-A08b-MVP-II.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-09-location/unit-09b-location/book-1-location/00.Lab-09a Location.md",
+          "message": "The file \"00.Lab-09a Location.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-09a-Location.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-09-location/unit-09c-tracking/book-2-location/00.Lab-09b Tracking.md",
+          "message": "The file \"00.Lab-09b Tracking.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-09b-Tracking.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-10-rooms/unit-11b-rooms/book-1",
+          "message": "The Lab's steps skip a number: step 05 is missing before 07. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-10-rooms/unit-11b-rooms/book-1/00.Lab-10a Up Support.md",
+          "message": "The file \"00.Lab-10a Up Support.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-10a-Up-Support.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-10-rooms/unit-11b-rooms/book-2",
+          "message": "The Lab's steps skip a number: step 07 is missing before 08. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-10-rooms/unit-11b-rooms/book-2/00.Lab-10b Rooms.md",
+          "message": "The file \"00.Lab-10b Rooms.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-10b-Rooms.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-10-rooms/unit-11c-firebase-auth/book/00.Lab-10c Firebase Auth.md",
+          "message": "The file \"00.Lab-10c Firebase Auth.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-10c-Firebase-Auth.md."
+        },
+        {
+          "rule": "V009",
+          "severity": "warn",
+          "path": "topic-10-rooms/unit-11c-firebase-auth/book/07.07.md",
+          "message": "This page shows the image \"img/17/png\", but there is no such file next to it, so readers see a broken image. Add the image or fix the name."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-11-firebase/unit-12b-firebase-placemark/book-01/00.Lab-11a Firebase Database.md",
+          "message": "The file \"00.Lab-11a Firebase Database.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-11a-Firebase-Database.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-11-firebase/unit-12b-firebase-placemark/book-02/00.Lab-11b Firebase Storage.md",
+          "message": "The file \"00.Lab-11b Firebase Storage.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-11b-Firebase-Storage.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-11-firebase/unit-12b-firebase-placemark/book-02/untitled file",
+          "message": "The file \"untitled file\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to untitled-file."
+        }
+      ]
+    },
+    "python": {
+      "commit": "ab84bc06743b2b968222f5a2a3c05c3ec2ae02e6",
+      "findings": [
+        {
+          "rule": "V011",
+          "severity": "warn",
+          "path": "netlify.toml",
+          "message": "This course has no netlify.toml, so Netlify won't know how to build and publish it. Add the standard one (tutors validate --fix writes it)."
+        }
+      ]
+    },
+    "reference-course": {
+      "commit": "78b771238c58bcb3d97d6ef3eb8fa41c02359a23",
+      "findings": [
+        {
+          "rule": "V004",
+          "severity": "error",
+          "path": "topic-02-side/side-unit/book-c/talk.md",
+          "message": "\"talk.md\" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md."
+        },
+        {
+          "rule": "V004",
+          "severity": "error",
+          "path": "topic-09-podcasts/side-unit/book-c/talk.md",
+          "message": "\"talk.md\" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md."
+        },
+        {
+          "rule": "V009",
+          "severity": "warn",
+          "path": "README.md",
+          "message": "This page shows the image \"./tutors-light.png\", but there is no such file next to it, so readers see a broken image. Add the image or fix the name."
+        },
+        {
+          "rule": "V011",
+          "severity": "warn",
+          "path": "netlify.toml",
+          "message": "This course has no netlify.toml, so Netlify won't know how to build and publish it. Add the standard one (tutors validate --fix writes it)."
+        },
+        {
+          "rule": "V010",
+          "severity": "warn",
+          "path": "topic-07-reference",
+          "message": "The topics here skip from topic-05-panel-talk to topic-07-reference, so the reader may show them in an order you don't expect. Number them in sequence with two digits: topic-01, topic-02 and so on."
+        },
+        {
+          "rule": "V010",
+          "severity": "warn",
+          "path": "topic-09-svg",
+          "message": "The topics here skip from topic-09-podcasts to topic-09-svg, so the reader may show them in an order you don't expect. Number them in sequence with two digits: topic-01, topic-02 and so on."
+        }
+      ]
+    },
+    "web-dev-2-2022": {
+      "commit": "dfa26b8cc5dbe4904f77411f3df881fdba1f722d",
+      "findings": [
+        {
+          "rule": "V004",
+          "severity": "error",
+          "path": "topic-01-js-intro/unit-1/book-b-js-introduction/solutions.md",
+          "message": "\"solutions.md\" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md."
+        },
+        {
+          "rule": "V011",
+          "severity": "warn",
+          "path": "netlify.toml",
+          "message": "This course has no netlify.toml, so Netlify won't know how to build and publish it. Add the standard one (tutors validate --fix writes it)."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-01-js-intro/unit-1/book-b-js-introduction/00.Lab-01 JS Intro.md",
+          "message": "The file \"00.Lab-01 JS Intro.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-01-JS-Intro.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-02-arrays/unit-1/book-a-js-arrays/00.Lab-02 JS Arrays.md",
+          "message": "The file \"00.Lab-02 JS Arrays.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-02-JS-Arrays.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-1/book-a-glitch-intro/00.Lab-03a Glitch Intro.md",
+          "message": "The file \"00.Lab-03a Glitch Intro.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-03a-Glitch-Intro.md."
+        },
+        {
+          "rule": "V009",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-1/book-a-glitch-intro/03.03.md",
+          "message": "The image \"img/21x.png\" is 2.0 MB, so the page is slow to open on a phone. Shrink it below 2 MB (a screenshot saved as .jpg usually is)."
+        },
+        {
+          "rule": "V009",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-1/book-a-glitch-intro/03.03.md",
+          "message": "The image \"img/24.png\" is 2.3 MB, so the page is slow to open on a phone. Shrink it below 2 MB (a screenshot saved as .jpg usually is)."
+        },
+        {
+          "rule": "V009",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-1/book-a-glitch-intro/03.03.md",
+          "message": "The image \"img/40.png\" is 2.9 MB, so the page is slow to open on a phone. Shrink it below 2 MB (a screenshot saved as .jpg usually is)."
+        },
+        {
+          "rule": "V009",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-1/book-a-glitch-intro/04.04.md",
+          "message": "The image \"img/33.png\" is 2.3 MB, so the page is slow to open on a phone. Shrink it below 2 MB (a screenshot saved as .jpg usually is)."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-2/book-1/00.Lab-03b Todo 1.md",
+          "message": "The file \"00.Lab-03b Todo 1.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-03b-Todo-1.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-2/book-2/00.Lab-03c Todo 2.md",
+          "message": "The file \"00.Lab-03c Todo 2.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-03c-Todo-2.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-03-glitch-overview/unit-2/book-3/00.Lab-03d Todo 3.md",
+          "message": "The file \"00.Lab-03d Todo 3.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-03d-Todo-3.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-04-web-apps/unit-2/book-a-glitch-playlist-1/00.Lab-04a Playlist 1.md",
+          "message": "The file \"00.Lab-04a Playlist 1.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-04a-Playlist-1.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-04-web-apps/unit-2/book-b-web-storm/00.Lab-04b WebStorm.md",
+          "message": "The file \"00.Lab-04b WebStorm.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-04b-WebStorm.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-05-app-templates+views",
+          "message": "The folder \"topic-05-app-templates+views\" has capitals, spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to topic-05-app-templates-views."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-05-app-templates+views/unit-0/talk-b-templates+json",
+          "message": "The folder \"talk-b-templates+json\" has capitals, spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to talk-b-templates-json."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-05-app-templates+views/unit-1/book-a-playlist-2/00.Lab-05 Playlist 2.md",
+          "message": "The file \"00.Lab-05 Playlist 2.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-05-Playlist-2.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-05-app-templates+views/unit-1/book-a-playlist-2/01.Exercise Solutions.md",
+          "message": "The file \"01.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-06-app-models/unit/book-a-gomix-playlist-3",
+          "message": "The Lab's steps skip a number: step 05 is missing before 06. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-06-app-models/unit/book-a-gomix-playlist-3/00.Lab-06 Playlist 3.md",
+          "message": "The file \"00.Lab-06 Playlist 3.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-06-Playlist-3.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-06-app-models/unit/book-a-gomix-playlist-3/01.Exercise Solutions.md",
+          "message": "The file \"01.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-07-sessions/unit-1/book-b-gomix-sessions/00.Lab-07a Playlist 4.md",
+          "message": "The file \"00.Lab-07a Playlist 4.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-07a-Playlist-4.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-07-sessions/unit-1/book-b-gomix-sessions/01.Exercise Solutions.md",
+          "message": "The file \"01.Exercise Solutions.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 01.Exercise-Solutions.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-07-sessions/unit-1/book-update-song",
+          "message": "The Lab's steps skip a number: step 06 is missing before 07. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-07-sessions/unit-1/book-update-song/00.Lab-07b Playlist 5.md",
+          "message": "The file \"00.Lab-07b Playlist 5.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-07b-Playlist-5.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-07-sessions/unit-1/book-uplaylist-utils",
+          "message": "The Lab's steps skip a number: step 07 is missing before 08. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-07-sessions/unit-1/book-uplaylist-utils/00.Lab-07c Playlist 6.md",
+          "message": "The file \"00.Lab-07c Playlist 6.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-07c-Playlist-6.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-08-apis/unit-2/book-1-open-weather-map",
+          "message": "The Lab's steps skip a number: step 01 is missing before 02. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-08-apis/unit-2/book-1-open-weather-map/00.Lab 08a OpenWeatherMap.md",
+          "message": "The file \"00.Lab 08a OpenWeatherMap.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-08a-OpenWeatherMap.md."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-08-apis/unit-2/book-2-weather-api/00.Lab 08b API Access.md",
+          "message": "The file \"00.Lab 08b API Access.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-08b-API-Access.md."
+        },
+        {
+          "rule": "V019",
+          "severity": "warn",
+          "path": "topic-08-apis/unit-2/book-3-charts",
+          "message": "The Lab's steps skip a number: step 06 is missing before 07. Students still see every step, in file-name order; number them 00, 01, 02 and so on so the order stays easy to follow."
+        },
+        {
+          "rule": "V007",
+          "severity": "warn",
+          "path": "topic-08-apis/unit-2/book-3-charts/00.Lab 08c Charts.md",
+          "message": "The file \"00.Lab 08c Charts.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-08c-Charts.md."
+        }
+      ]
+    }
+  }
+}
