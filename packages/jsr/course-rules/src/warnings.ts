@@ -64,7 +64,7 @@ const CLEAN_FOLDER = /^[a-z0-9][a-z0-9._-]*$/;
 const CLEAN_FILE = /^[\x21-\x7e]+$/;
 
 /** Whether any page names the file or folder, as written or URL-encoded ("Week 1 Slides.pdf", "Week%201%20Slides.pdf"). */
-const mentionedIn = (pages: string[], name: string) => [name, encodeURI(name), name.replace(/ /g, "%20")].some((form) => pages.some((page) => page.includes(form)));
+export const mentionedIn = (pages: string[], name: string) => [name, encodeURI(name), name.replace(/ /g, "%20")].some((form) => pages.some((page) => page.includes(form)));
 
 /**
  * V007: names that survive a round trip through Windows, macOS, git and a web server unchanged. A
@@ -97,7 +97,7 @@ export async function checkNames(tree: CourseTree, read: (path: string) => Promi
 }
 
 /** The .md file whose first line becomes the card's title, read as the generator picks it. */
-function descriptorOf(node: CourseNode): string | undefined {
+export function descriptorOf(node: CourseNode): string | undefined {
   const md = node.files.filter((file) => extensionOf(file.name) === "md");
   if (node.kind === "course") return md.find((file) => file.name === "course.md")?.path;
   if (node.kind === "lab") return md.find((file) => STEP.test(file.name))?.path;

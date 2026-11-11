@@ -56,7 +56,32 @@ The quiz format lives in `@tutors/course-rules/quiz`, so the reader, the validat
 From a terminal:
 
 ```sh
-deno run -A jsr:@tutors/tutors-create validate [folder] [--format text|json|sarif] [--strict]
+deno run -A jsr:@tutors/tutors-create validate [folder] [--format text|json|sarif] [--strict] [--fix | --plan]
 ```
 
 Exit 3 means the folder could not be read or the arguments were wrong.
+
+`--plan` prints the safe fixes `--fix` would apply as a JSON array of file operations and changes nothing, so a shell such as Studio can show the plan before anything moves (Rule 0745).
+
+## Rewiring a course
+
+`planReorder`, `planMove`, `planRetitle`, `planHide`, `planBin` and `planRestore` sit beside `planFixes` (`src/rewire.ts`). Each returns `{ ok: true, ops, notes }`, the file operations that leave names and files Tutors accepts, or `{ ok: false, reason }` in a lecturer's words. None of them writes; `applyFixes` (or Studio's own apply) does, once the plan is accepted.
+
+- **Reorder** renumbers the items of one kind in a folder (`talk-01-css`, `talk-02-html`), keeping each name after its number. Tutors orders a folder's items by kind first, so items of different kinds are refused.
+- **Move** gives an item the next free number of its kind in its new folder, and refuses a folder Tutors would not show that kind in.
+- **Retitle** rewrites only the title line of the page the card takes its title from.
+- **Hide** adds a top-level topic or unit to `properties.yaml`'s `ignore` list. Tutors can't hide an item inside a topic, so that is refused.
+- **Remove** moves the item into `.tutors-bin/` in the course. The generator never reads a folder that starts with a dot, so the item is not published, and nothing is deleted. **Restore** puts it back.
+
+A write that replaces a file is marked `replace: true`. Renaming a top-level folder keeps the `ignore` list pointing at it, and a page that links to a renamed folder by name is named in `notes`. From a terminal:
+
+```sh
+deno run -A jsr:@tutors/tutors-create rewire reorder topic-01 talk-02-css talk-01-html [--course folder] [--plan]
+deno run -A jsr:@tutors/tutors-create rewire move topic-01/talk-02-css topic-02
+deno run -A jsr:@tutors/tutors-create rewire retitle topic-01/talk-01-html "HTML basics"
+deno run -A jsr:@tutors/tutors-create rewire hide topic-02        # or show topic-02
+deno run -A jsr:@tutors/tutors-create rewire remove topic-01/talk-01-html
+deno run -A jsr:@tutors/tutors-create rewire restore talk-01-html topic-01
+```
+
+These are Rules 0745-0753 in `tests/bdd/features/instructor/course-rewiring.feature`.

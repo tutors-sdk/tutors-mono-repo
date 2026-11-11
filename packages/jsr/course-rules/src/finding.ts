@@ -7,7 +7,10 @@ export type RuleId =
  * One change to a course folder. A fix is planned as file operations first and applied only when the
  * lecturer (or `--fix`) accepts it, so nothing is ever written behind their back.
  */
-export type FileOp = { op: "move"; from: string; to: string } | { op: "write"; path: string; content: string };
+export type FileOp =
+  | { op: "move"; from: string; to: string }
+  /** A write adds a file that isn't there; with `replace`, a planner that rewrites a file (a new title, the ignore list) says it may already be. */
+  | { op: "write"; path: string; content: string; replace?: true };
 
 /** One problem with a course, in the shape every shell renders: the CLI's text and JSON, Studio's badges, SARIF. */
 export interface Finding {
