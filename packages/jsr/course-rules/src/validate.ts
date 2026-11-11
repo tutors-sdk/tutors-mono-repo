@@ -117,13 +117,19 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
     return;
   }
   const numbers: number[] = [];
+  const strays: string[] = [];
   for (const file of md) {
     const match = STEP.exec(file);
-    if (match === null) findings.push(finding("V004", joinPath(node.path, file), messages.labStepName(file)));
+    if (match === null) strays.push(file);
     else numbers.push(Number(match[1]));
   }
-  if (numbers.length === 0) return;
   const pad = (n: number) => String(n).padStart(2, "0");
+  for (const [file, name] of stepNames(strays, numbers)) {
+    const path = joinPath(node.path, file);
+    const fix: FileOp | undefined = name === undefined ? undefined : { op: "move", from: path, to: joinPath(node.path, name) };
+    findings.push(finding("V004", path, messages.labStepName(file, name), name, fix));
+  }
+  if (numbers.length === 0) return;
   if (numbers[0] > 1) {
     findings.push(finding("V019", node.path, messages.labFirstStep(pad(numbers[0]))));
     return;
@@ -134,6 +140,35 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
       return;
     }
   }
+}
+
+/**
+ * The step name each misnamed lab page can take. Older courses keep pages such as solutions.md or talk.md in a lab; the
+ * generator shows each as a step whose id and address are empty. A name that already starts with a free number
+ * ("1-Setup.md", "02 Deploy.md") keeps it; any other page becomes the step after the last, in name order, so the lab
+ * reads as before with the page at its end. No name is offered when the title would be empty or the steps run past 99.
+ */
+function stepNames(strays: readonly string[], numbers: readonly number[]): [string, string | undefined][] {
+  const taken = new Set(numbers);
+  const named: [string, string | undefined][] = [];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const later: [string, string][] = [];
+  for (const file of [...strays].sort()) {
+    const base = file.slice(0, -".md".length);
+    const numbered = /^(\d{1,2})[\s._-]+(.*)$/.exec(base);
+    const title = (numbered ? numbered[2] : base).replace(/^[\s._-]+|[\s.]+$/g, "");
+    if (title === "") named.push([file, undefined]);
+    else if (numbered && !taken.has(Number(numbered[1]))) {
+      taken.add(Number(numbered[1]));
+      named.push([file, `${pad(Number(numbered[1]))}.${title}.md`]);
+    } else later.push([file, title]);
+  }
+  let next = Math.max(0, ...taken) + 1;
+  for (const [file, title] of later) {
+    named.push([file, next > 99 ? undefined : `${pad(next)}.${title}.md`]);
+    next++;
+  }
+  return named;
 }
 
 const linkFiles: Record<string, { file: string; valid: (line: string) => boolean }> = {

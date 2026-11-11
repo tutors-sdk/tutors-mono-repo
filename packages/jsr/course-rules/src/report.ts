@@ -6,7 +6,7 @@ export type ReportFormat = "text" | "json" | "sarif";
 
 const where = (path: string) => (path === "" ? "(course folder)" : path);
 
-/** Human text: one line per finding, then a one-line verdict. What the CLI prints by default. */
+/** Human text: one line per finding, a one-line verdict, then how many --fix can fix. What the CLI prints by default. */
 export function textReport(findings: readonly Finding[]): string {
   const lines = findings.map((f) => `${f.severity.padEnd(5)} ${f.rule} ${where(f.path)}: ${f.message}`);
   const errors = findings.filter((f) => f.severity === "error").length;
@@ -15,7 +15,10 @@ export function textReport(findings: readonly Finding[]): string {
     errors + warnings === 0
       ? "Everything checks out."
       : `${errors} error${errors === 1 ? "" : "s"}, ${warnings} warning${warnings === 1 ? "" : "s"}.${errors > 0 ? " Fix the errors before publishing." : ""}`;
-  return [...lines, verdict].join("\n") + "\n";
+  // Courses written before validate ran in every deploy often fail only on renames; say that one command does them.
+  const fixable = findings.filter((f) => f.fix !== undefined).length;
+  const fixes = fixable === 0 ? [] : [`${findings.length === 1 ? "It" : `${fixable} of these`} can be fixed for you: run tutors validate --fix.`];
+  return [...lines, verdict, ...fixes].join("\n") + "\n";
 }
 
 /** The contract Studio and CI consume: a JSON array, one object per finding, in the Finding shape. */

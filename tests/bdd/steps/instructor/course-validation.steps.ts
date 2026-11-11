@@ -1,6 +1,6 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { MemoryFileSystem, validate, type Finding } from "../../../../packages/jsr/course-rules/src/mod.ts";
+import { fixCourse, MemoryFileSystem, validate, type Finding } from "../../../../packages/jsr/course-rules/src/mod.ts";
 import { validateFixture, type FixtureForm } from "../../../support/validate-fixtures.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/course-validation.feature");
@@ -174,6 +174,34 @@ describeFeature(feature, ({ Rule }) => {
         When("the course is validated", whenValidated);
         Then("the finding for {string} shall suggest the name {string}", suggests);
         And("the finding for {string} shall also suggest the name {string}", suggests);
+      });
+    }
+  );
+
+  Rule(
+    "If a lab holds a .md not named as a step, then tutors shall offer, as the V004 finding's fix, a rename to a step name that keeps the page's title, using a free step number the name already starts with or else the number after the lab's last step.",
+    ({ RuleScenario }) => {
+      const offers = (_ctx: unknown, path: string, to: string) => expect(findingFor(path).fix).toEqual({ op: "move", from: path, to });
+      RuleScenario("A notes page after three steps becomes step 04", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the finding for {string} shall offer the rename to {string}", offers);
+      });
+      RuleScenario("A page numbered without the dot keeps its number, the rest follow the last step, and the fixes settle", ({ Given, When, Then, And }) => {
+        let lab = "";
+        Given("a lab {string} holding {string}", (_ctx: unknown, path: string, files: string) => {
+          lab = path;
+          const pages = Object.fromEntries(files.split(", ").map((file) => [`${path}/${file}`, `# ${file}\n`]));
+          course = new MemoryFileSystem({ "course.md": "# Course\n", "topic-01/topic.md": "# Week one\n", ...pages });
+        });
+        When("the course is validated", whenValidated);
+        Then("the finding for {string} shall offer the rename to {string}", offers);
+        And("the finding for {string} shall next offer the rename to {string}", offers);
+        And("the finding for {string} shall then offer the rename to {string}", offers);
+        And("once the fixes are applied the lab shall have no V004 finding", async () => {
+          const { findings: left } = await fixCourse(course);
+          expect(left.filter((f) => f.rule === "V004" && f.path.startsWith(lab))).toEqual([]);
+        });
       });
     }
   );

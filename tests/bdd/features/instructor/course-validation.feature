@@ -135,3 +135,22 @@ Feature: Course validation
       When the course is validated
       Then the finding for "unit-1/-talk-02-anatomy" shall suggest the name "talk-02-anatomy"
       And the finding for "unit-1/Lab1" shall also suggest the name "lab1"
+
+  @rule-0763 @ears-unwanted
+  Rule: If a lab holds a .md not named as a step, then tutors shall offer, as the V004 finding's fix, a rename to a step name that keeps the page's title, using a free step number the name already starts with or else the number after the lab's last step.
+
+    Older courses kept a solutions or talk page beside a lab's steps. The generator shows such a page as a step with no
+    id or address, so it stays an error; the fix puts the standard one command away.
+
+    Scenario: A notes page after three steps becomes step 04
+      Given the "broken" course of fixture "V004"
+      When the course is validated
+      Then the finding for "topic-01/lab-01/notes.md" shall offer the rename to "topic-01/lab-01/04.notes.md"
+
+    Scenario: A page numbered without the dot keeps its number, the rest follow the last step, and the fixes settle
+      Given a lab "topic-01/lab-01" holding "01.Setup.md, 02.Build.md, 4-Deploy.md, solutions.md, talk.md"
+      When the course is validated
+      Then the finding for "topic-01/lab-01/4-Deploy.md" shall offer the rename to "topic-01/lab-01/04.Deploy.md"
+      And the finding for "topic-01/lab-01/solutions.md" shall next offer the rename to "topic-01/lab-01/05.solutions.md"
+      And the finding for "topic-01/lab-01/talk.md" shall then offer the rename to "topic-01/lab-01/06.talk.md"
+      And once the fixes are applied the lab shall have no V004 finding
