@@ -107,21 +107,29 @@ const errorCounts = (findings: readonly Finding[]) => {
   return counts;
 };
 
+/** One --fix pass over the findings; returns what it changed, one line per operation applied. */
+export type FixPass = (findings: Finding[]) => Promise<string[]>;
+
+const describe = (op: { op: string; from?: string; to?: string; path?: string }) => (op.op === "move" ? `${op.from} -> ${op.to}` : (op.path ?? ""));
+
 /**
  * Applies --fix twice to a course (it changes the course: give it a copy) and lists what breaks the promise
  * of Rules 0716 and 0760: the second pass must apply nothing, every file's content must still be in the course, and no
- * rule may report more errors than before. An empty list means --fix settles.
+ * rule may report more errors than before. An empty list means --fix settles. `check` and `fix` default to the rules'
+ * own functions; the corpus check passes the tutors validate command itself, so the CLI's --fix is what is held.
  */
-export async function fixSettles(fs: FileSystemPort, check: (fs: FileSystemPort) => Promise<Finding[]> = validate): Promise<string[]> {
+export async function fixSettles(
+  fs: FileSystemPort,
+  check: (fs: FileSystemPort) => Promise<Finding[]> = validate,
+  fix: FixPass = async (findings) => (await applyFixes(fs, "", planFixes(findings))).applied.map(describe)
+): Promise<string[]> {
   const problems: string[] = [];
   const before = await check(fs);
   const kept = await contents(fs);
-  await applyFixes(fs, "", planFixes(before));
+  await fix(before);
   const after = await check(fs);
-  const second = await applyFixes(fs, "", planFixes(after));
-  if (second.applied.length > 0) {
-    problems.push(`a second --fix still changed ${second.applied.map((op) => (op.op === "move" ? `${op.from} -> ${op.to}` : op.path)).join(", ")}`);
-  }
+  const second = await fix(after);
+  if (second.length > 0) problems.push(`a second --fix still changed ${second.join(", ")}`);
   const now = await contents(fs);
   const remaining = [...now];
   for (const item of kept) {
