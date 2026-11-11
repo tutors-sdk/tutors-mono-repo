@@ -1,6 +1,6 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { exitCodeFor, fixCourse, MemoryFileSystem, validate, type Finding, type FixOutcome } from "../../../../packages/jsr/course-rules/src/mod.ts";
+import { exitCodeFor, fixCourse, MemoryFileSystem, netlifyToml, validate, type Finding, type FixOutcome } from "../../../../packages/jsr/course-rules/src/mod.ts";
 import { validateFixture, type FixtureForm } from "../../../support/validate-fixtures.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/course-warnings.feature");
@@ -138,6 +138,25 @@ describeFeature(feature, ({ Rule }) => {
         Given("the {string} course of fixture {string}", givenFixture);
         When("the course is validated", whenValidated);
         Then("there shall be no findings", none);
+      });
+    }
+  );
+
+  Rule(
+    "Tutors shall write a standard netlify.toml whose build runs tutors validate before the generator, so that Netlify fails the deploy of a course with errors.",
+    ({ RuleScenario }) => {
+      let command = "";
+      RuleScenario("The build checks the course before generating it", ({ Given, Then, And }) => {
+        Given("the netlify.toml that tutors writes", () => {
+          command = /^\s*command\s*=\s*"(.*)"\s*$/m.exec(netlifyToml)?.[1] ?? "";
+        });
+        Then("its build command shall run {string} and then {string}", (_ctx, check: string, build: string) => expect(command.split(" && ")).toEqual([check, build]));
+        And("the build command shall stop at the first command that fails", () => expect(command).not.toMatch(/;|\|\|/));
+      });
+      RuleScenario("A course with errors fails the check that gates the deploy", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("the validate exit status shall be {int}", (_ctx, status: number) => expect(exitCodeFor(findings, false)).toBe(status));
       });
     }
   );
