@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "769010a7d05a491694d5a30967e968e99632491f",
+  "commit": "dacdeb8af16ee50cd4bc23d94a73147a0aa214ad",
   "base": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
-  "generatedAt": "2026-11-12T02:26:21Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/43134795428",
+  "generatedAt": "2026-11-12T12:04:58Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/43204088722",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -25,8 +25,8 @@
     },
     {
       "name": "@tutors/course",
-      "mutationScore": 70.1,
-      "changed": false,
+      "mutationScore": 71.96,
+      "changed": true,
       "path": "packages/svelte/course"
     },
     {
@@ -44,7 +44,7 @@
     {
       "name": "@tutors/i18n",
       "mutationScore": 72.73,
-      "changed": false,
+      "changed": true,
       "path": "packages/svelte/utils/i18n"
     },
     {
@@ -103,7 +103,7 @@
     },
     {
       "name": "@tutors/runtime",
-      "mutationScore": 88.73,
+      "mutationScore": 90.14,
       "changed": false,
       "path": "packages/svelte/utils/runtime"
     },
@@ -139,26 +139,26 @@
     },
     {
       "name": "@tutors/tutors-types",
-      "mutationScore": 85.71,
+      "mutationScore": 90.48,
       "changed": false,
       "path": "packages/jsr/types"
     },
     {
       "name": "@tutors/ui-components",
       "mutationScore": 95.56,
-      "changed": false,
+      "changed": true,
       "path": "packages/svelte/ui-components"
     },
     {
       "name": "@tutors/ui-navigators",
       "mutationScore": 56.09,
-      "changed": false,
+      "changed": true,
       "path": "packages/svelte/ui-navigators"
     },
     {
       "name": "@tutors/ui-primitives",
-      "mutationScore": 29.73,
-      "changed": false,
+      "mutationScore": 27.85,
+      "changed": true,
       "path": "packages/svelte/ui-primitives"
     },
     {
@@ -253,10 +253,10 @@
       "mutation": "failure",
       "mutation-nightly": "success",
       "suite-health": "success",
-      "e2e-stack-nightly": "success",
+      "e2e-stack-nightly": "failure",
       "timezone-matrix": "success",
       "lighthouse": "success",
-      "load": "success",
+      "load": "failure",
       "generator-corpus": "success"
     }
   }
