@@ -23,7 +23,16 @@ The package has no file-system access of its own. A shell passes a `FileSystemPo
 | V019 | warn     | A lab's steps start at 00 or 01 and skip no number; the generator shows every step either way, in file-name order                                                                                      |
 | V020 | error | Published `tutors.json` matches the generated-course schema; run by Tutors Validator for URL checks, not by source-folder validation |
 
-Each rule is an EARS Rule in `tests/bdd/features/instructor/course-validation.feature` (Rules 0695-0700, 0731-0732 for V018 and for a learning object's own resource folders, such as a lab's `assets/`, which are never named, 0740 for V019 and 0741 for a V002 suggestion that keeps a kind the name already has) with a broken and a fixed course under `tests/fixtures/validate/`. A conformance test builds every fixture with the generator and checks that the folders it leaves out are exactly the V002 and V018 findings.
+Each rule is an EARS Rule in `tests/bdd/features/instructor/course-validation.feature` (Rules 0695-0700, 0731-0732 for V018 and for a learning object's own resource folders, such as a lab's `assets/`, which are never named, 0740 for V019, 0741 for a V002 suggestion that keeps a kind the name already has, and 0763 for V004's step-name fix) with a broken and a fixed course under `tests/fixtures/validate/`. A conformance test builds every fixture with the generator and checks that the folders it leaves out are exactly the V002 and V018 findings.
+
+## Older courses
+
+Since the standard netlify.toml runs `tutors validate` before the generator, an error stops a course's deploy. Courses written before then often break a rule without anyone noticing, because the generator quietly made do. The two most common:
+
+- **A page in a lab that isn't a step** (V004), such as `solutions.md` or `talk.md` kept beside `01.Setup.md`. The generator shows it as a step with no id or address. `tutors validate --fix` renames it to a step, keeping its title: a free number the name already starts with (`4-Deploy.md` to `04.Deploy.md`), otherwise the number after the lab's last step (`solutions.md` to `09.solutions.md`).
+- **A folder whose name has no kind** (V002), such as `-talk-00-intro` or `Week 3`. `--fix` renames it when the name only needs tidying or belongs in a topic. A folder inside a topic whose name names no kind, such as `reference-5`, has no safe rename: the lecturer chooses its kind.
+
+The text report ends by saying how many findings `--fix` can fix, so a failed deploy log names the command.
 
 ## Quizzes, Marp decks and Mermaid diagrams
 
