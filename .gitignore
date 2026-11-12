@@ -72,3 +72,6 @@ deploy/k8s/**/secrets.yaml
 graphify-out/
 # Local-only observability guides (contain production setup steps)
 observability/grafana/PRODUCTION-SETUP.md
+
+# Validate corpus work area (scripts/checks/validate-corpus.ts)
+.validate-corpus/
