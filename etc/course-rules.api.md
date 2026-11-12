@@ -10,6 +10,9 @@
 // --- types ---
 
 // (from src/mod.ts)
+export { checkQuizText };
+
+// (from src/mod.ts)
 export type { CourseFile };
 
 // (from src/mod.ts)
@@ -92,6 +95,9 @@ export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly
 
 // (from src/tree.ts)
 export async function buildCourseTree(fs: FileSystemPort, root) : Promise<CourseTree>;
+
+// (from src/validate.ts)
+export function checkMetadata(file: string, value: unknown) : Finding[];
 
 // (from src/validate.ts)
 export function checkTree(tree: CourseTree) : Finding[];
@@ -179,6 +185,6 @@ export const rulesVersion;
 |------|-------|
 | class | 1 |
 | const | 6 |
-| function | 21 |
-| type | 23 |
-| **Total** | **51** |
+| function | 22 |
+| type | 24 |
+| **Total** | **53** |

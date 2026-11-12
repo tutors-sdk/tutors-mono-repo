@@ -63,6 +63,12 @@ jobs:
       - name: Type check (time)
         run: pnpm --filter tutors-time check
 
+      - name: Type check (validator)
+        run: pnpm --filter tutors-validator check
+
+      - name: Build validator
+        run: pnpm --filter tutors-validator... build
+
       - name: Lint
         run: pnpm lint
 
@@ -142,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [reader, catalogue, live, time]
+        app: [reader, catalogue, live, time, validator]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -300,12 +306,12 @@ jobs:
 
       - name: Create .env for SvelteKit apps
         run: |
-          for dir in apps/reader apps/catalogue apps/live apps/time; do
+          for dir in apps/reader apps/catalogue apps/live apps/time apps/validator; do
             cp .env.example "$dir/.env"
           done
 
       - name: Build every app
-        run: pnpm --filter "tutors-reader..." --filter "tutors-catalogue..." --filter "tutors-live..." --filter "tutors-time..." build
+        run: pnpm --filter "tutors-reader..." --filter "tutors-catalogue..." --filter "tutors-live..." --filter "tutors-time..." --filter "tutors-validator..." build
         env:
           SVELTEKIT_ADAPTER: node
           # As in the Dockerfile: the build is named after a hash of the commit.
@@ -479,6 +485,9 @@ jobs:
       - name: Prove every @ui scenario
         run: pnpm test:e2e:reader --project=chromium
 
+      - name: Prove Validator browser checks and ZIP privacy
+        run: pnpm test:e2e:validator
+
       - name: Build reader for the identity browser regression
         run: SVELTEKIT_ADAPTER=node pnpm build
 
@@ -522,7 +531,7 @@ jobs:
 
       - name: Create .env for SvelteKit apps
         run: |
-          for dir in apps/reader apps/catalogue apps/live apps/time; do
+          for dir in apps/reader apps/catalogue apps/live apps/time apps/validator; do
             cp .env.example "$dir/.env"
           done
 

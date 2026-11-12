@@ -9,6 +9,7 @@
   onMount(async () => {
     contentHtml = convertMdToHtml(t("footer.message")
       .replaceAll("https://catalogue.tutors.dev", siteUrls.catalogue)
+      .replaceAll("](/course/", `](${siteUrls.reader}/course/`)
       .replaceAll("https://tutors.dev", siteUrls.reader));
   });
 </script>

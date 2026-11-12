@@ -23,15 +23,15 @@
  * Kubernetes overlay (a ConfigMap entry, or a key in its secrets.yaml.example). `pnpm check:env` says what is missing.
  */
 
-/** @typedef {'reader' | 'catalogue' | 'live' | 'time'} App */
+/** @typedef {'reader' | 'catalogue' | 'live' | 'time' | 'validator'} App */
 /** @typedef {'required' | 'signed-in' | 'optional'} Level */
 /** @typedef {{ public?: boolean, secret?: boolean, apps: Partial<Record<App, Level>> }} Variable */
 
 /** @type {readonly App[]} */
-export const APPS = ['reader', 'catalogue', 'live', 'time'];
+export const APPS = ['reader', 'catalogue', 'live', 'time', 'validator'];
 
 /** @param {Level} level @returns {Record<App, Level>} */
-const everyApp = (level) => ({ reader: level, catalogue: level, live: level, time: level });
+const everyApp = (level) => ({ reader: level, catalogue: level, live: level, time: level, validator: 'optional' });
 
 /** @type {Readonly<Record<string, Variable>>} */
 export const ENV_CONTRACT = {
@@ -44,6 +44,7 @@ export const ENV_CONTRACT = {
   PUBLIC_CATALOGUE_ORIGIN: { public: true, apps: everyApp('optional') },
   PUBLIC_LIVE_ORIGIN: { public: true, apps: everyApp('optional') },
   PUBLIC_TIME_ORIGIN: { public: true, apps: everyApp('optional') },
+  PUBLIC_VALIDATOR_ORIGIN: { public: true, apps: everyApp('optional') },
   PRIVATE_AUTH_GITHUB_ID: { secret: true, apps: { reader: 'signed-in' } },
   PRIVATE_AUTH_GITHUB_SECRET: { secret: true, apps: { reader: 'signed-in' } },
   PRIVATE_AUTH_SECRET: { secret: true, apps: { reader: 'signed-in' } },
@@ -54,7 +55,7 @@ export const ENV_CONTRACT = {
   PRIVATE_COURSE_HOSTS: { apps: { reader: 'optional' } },
   PRIVATE_TUTORS_ADMINS: { apps: { reader: 'optional' } },
   // Defaults to https://tutors.dev (apps/time/src/lib/time-source.ts).
-  PUBLIC_READER_URL: { public: true, apps: { time: 'optional' } },
+  PUBLIC_READER_URL: { public: true, apps: { time: 'optional', validator: 'optional' } },
   // The educator Moodle sync is off without a URL and token.
   MOODLE_WS_URL: { apps: { reader: 'optional' } },
   MOODLE_WS_TOKEN: { secret: true, apps: { reader: 'optional' } },

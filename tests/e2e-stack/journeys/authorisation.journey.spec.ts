@@ -15,7 +15,7 @@ const matrix = parseMatrix(read("matrix.json"));
 const gaps = parseGaps(read("known-gaps.txt"));
 
 /** The catalogue runs only in the anonymous half of the stack; the other apps are asked where sign-in works. */
-const base: Record<string, string> = { catalogue: stack.catalogue, reader: signedIn.reader, live: signedIn.live, time: signedIn.time };
+const base: Record<string, string> = { catalogue: stack.catalogue, reader: signedIn.reader, live: signedIn.live, time: signedIn.time, validator: process.env.VALIDATOR_URL ?? "http://localhost:3004" };
 const OPERATOR = { authorization: "Bearer e2e-metrics-token" };
 
 async function ask(request: APIRequestContext, role: Role): Promise<Observation[]> {
