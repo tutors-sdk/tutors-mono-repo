@@ -43,6 +43,7 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 - `@tutors/data-api` is the typed contract the reader's `/api` routes implement (the reader hosts the data API for now; see [guides/SERVER-WRITES.md](../../guides/SERVER-WRITES.md))
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
+- `@tutors/course-rules` checks a course on the /create check page, the same rules as `tutors validate` and Tutors Studio
 - `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
 - `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 

@@ -3,6 +3,8 @@
 exports[`Public API Surface — @tutors/tutors-gen-lib > should export generation functions 1`] = `
 [
   "parseCourse",
+  "readCourseTree",
+  "pruneCourseTree",
   "copyAssets",
   "decorateCourse",
   "generateDynamicCourse",
@@ -17,5 +19,7 @@ exports[`Public API Surface — @tutors/tutors-gen-lib > should maintain stable 
   "generateDynamicCourse",
   "generateStaticCourse",
   "parseCourse",
+  "pruneCourseTree",
+  "readCourseTree",
 ]
 `;

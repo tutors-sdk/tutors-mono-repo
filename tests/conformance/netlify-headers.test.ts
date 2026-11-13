@@ -9,7 +9,7 @@ import { REPO_ROOT, readText } from "../../scripts/checks/lib/repo.ts";
  * cache header for its chunks while the images (adapter-node) did, and post-deploy
  * read 24 cache-control differences.
  */
-const APPS = ["catalogue", "live", "reader", "time"] as const;
+const APPS = ["catalogue", "live", "reader", "time", "validator"] as const;
 
 describe("Netlify caches SvelteKit's hashed assets", () => {
   it.each(APPS)("%s sets immutable Cache-Control on /_app/immutable/*", (app) => {

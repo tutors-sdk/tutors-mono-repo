@@ -189,6 +189,15 @@ services:
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: x-forwarded-host
 
+  validator:
+    <<: *app
+    image: tutors/validator:${TUTORS_TAG:-local}
+    ports:
+      - "${VALIDATOR_PORT:-3004}:3000"
+    environment:
+      <<: *app-env
+      METRICS_TOKEN: e2e-metrics-token
+
   # ---- signed in ---------------------------------------------------------
   proxy-signed-in:
     image: docker.io/library/caddy:2@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772

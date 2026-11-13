@@ -1,0 +1,12 @@
+broken:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  properties.yaml: "credits: Dr Ada\n\tauth: 1\n"
+  calendar.yaml: "title: Semester 1\n"
+  enrollment.yaml: "- ada\n- grace\n"
+fixed:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  properties.yaml: "credits: Dr Ada\nauth: 1\n"
+  calendar.yaml: "title: Semester 1\nweeks:\n  - date: 2027-01-25\n    title: Week 1\n    type: tuition\n"
+  enrollment.yaml: "whitelist:\n  - ada\n  - grace\n"

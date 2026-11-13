@@ -217,4 +217,4 @@ Feature: Test quality ratchets
 
     Scenario: No Playwright configuration retries a failed test
       Given the repository's Playwright configurations
-      Then each of "apps/reader/playwright.config.ts", "apps/catalogue/playwright.config.ts", "apps/live/playwright.config.ts" and "playwright.e2e-stack.config.ts" shall set retries to 0
+      Then each of "apps/reader/playwright.config.ts", "apps/catalogue/playwright.config.ts", "apps/live/playwright.config.ts", "apps/validator/playwright.config.ts" and "playwright.e2e-stack.config.ts" shall set retries to 0

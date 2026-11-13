@@ -1,14 +1,19 @@
 {
   "name": "@tutors/tutors-create",
-  "version": "5.3.0",
+  "version": "5.4.0",
   "exports": {
     ".": "./main.ts",
     "./scaffolder": "./src/scaffolder.ts",
-    "./generate": "./src/generate.ts"
+    "./generate": "./src/generate.ts",
+    "./validate": "./src/validate-cli.ts",
+    "./import": "./src/import-cli.ts"
   },
   "license": "MIT",
   "tasks": {
     "run": "deno run --allow-write --allow-read main.ts",
     "test": "deno test test/ --allow-all"
+  },
+  "imports": {
+    "@tutors/course-rules": "jsr:@tutors/course-rules@^0.1.0"
   }
 }

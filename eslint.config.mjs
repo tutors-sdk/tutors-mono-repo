@@ -105,6 +105,7 @@ export default tseslint.config(
       "services/**",
       ".claude/**",
       ".generator-diff/**",
+      ".validate-corpus/**",
     ],
   },
 );

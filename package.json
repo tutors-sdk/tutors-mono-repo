@@ -9,7 +9,7 @@
     "dev": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "dev:reader": "pnpm --filter @tutors/ui-primitives build && pnpm --filter @tutors/ui-navigators build && pnpm --filter @tutors/ui-components build && pnpm --filter tutors-reader dev",
     "build": "pnpm --filter tutors-reader... build",
-    "check": "pnpm --filter tutors-reader --filter tutors-catalogue --filter tutors-live --filter tutors-time check",
+    "check": "pnpm --filter tutors-reader --filter tutors-catalogue --filter tutors-live --filter tutors-time --filter tutors-validator check",
     "generate:okf": "tsx scripts/generate-okf.ts",
     "generate:tutors-json-schema": "tsx scripts/generate-tutors-json-schema.ts",
     "generate:vento-templates": "tsx scripts/generate-vento-templates.ts",
@@ -56,6 +56,7 @@
     "check:load": "tsx scripts/checks/load-test.ts",
     "check:lighthouse": "tsx scripts/checks/lighthouse.ts",
     "check:generator-diff": "tsx scripts/checks/generator-diff.ts",
+    "check:validate-corpus": "tsx scripts/checks/validate-corpus.ts",
     "check:release-claims": "tsx scripts/checks/release-claims.ts",
     "check:changelog-hint": "tsx scripts/checks/changelog-hint.ts",
     "check:openvex": "tsx scripts/checks/openvex.ts",
@@ -72,7 +73,9 @@
     "release:candidate": "tsx scripts/release-candidate.ts",
     "release:quality": "tsx scripts/checks/release-quality.ts",
     "release:rules": "tsx scripts/release-rules.ts",
-    "release:report-comment": "tsx scripts/release-report-comment.ts"
+    "release:report-comment": "tsx scripts/release-report-comment.ts",
+    "dev:validator": "pnpm --filter tutors-validator dev",
+    "test:e2e:validator": "playwright test --config apps/validator/playwright.config.ts"
   },
   "devDependencies": {
     "@amiceli/vitest-cucumber": "8.0.0",
@@ -91,6 +94,7 @@
     "eslint": "^10.13.0",
     "eslint-plugin-svelte": "^3.23.0",
     "fast-check": "^4.10.2",
+    "fflate": "^0.8.3",
     "front-matter": "^4.0.2",
     "globals": "^17.13.0",
     "happy-dom": "^21.0.4",

@@ -27,9 +27,38 @@
     }
   },
   "apps": {
-    "reader": { "paths": ["/", "/runway-smoke-not-found", "/api/auth/get-session", "/auth", "/auth/runway-smoke-course"] },
-    "catalogue": { "paths": ["/", "/runway-smoke-not-found"] },
-    "live": { "paths": ["/", "/runway-smoke-not-found"] },
-    "time": { "paths": ["/", "/runway-smoke-not-found"] }
+    "reader": {
+      "paths": [
+        "/",
+        "/runway-smoke-not-found",
+        "/api/auth/get-session",
+        "/auth",
+        "/auth/runway-smoke-course"
+      ]
+    },
+    "catalogue": {
+      "paths": [
+        "/",
+        "/runway-smoke-not-found"
+      ]
+    },
+    "live": {
+      "paths": [
+        "/",
+        "/runway-smoke-not-found"
+      ]
+    },
+    "time": {
+      "paths": [
+        "/",
+        "/runway-smoke-not-found"
+      ]
+    },
+    "validator": {
+      "paths": [
+        "/",
+        "/runway-smoke-not-found"
+      ]
+    }
   }
 }

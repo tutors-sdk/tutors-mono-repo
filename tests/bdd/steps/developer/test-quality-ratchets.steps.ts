@@ -599,7 +599,7 @@ describeFeature(feature, ({ Rule }) => {
             .map((file) => toPosix(file))
             .filter((file) => !file.includes("node_modules") && !file.startsWith("tests/suite-health/fixtures/"));
         });
-        Then("each of {string}, {string}, {string} and {string} shall set retries to 0", (_ctx, ...files: string[]) => {
+        Then("each of {string}, {string}, {string}, {string} and {string} shall set retries to 0", (_ctx, ...files: string[]) => {
           // Every config in the repo is named, so a new one is held to the Rule too.
           expect([...configs].sort()).toEqual([...files].sort());
           for (const file of files) expect(readText(resolve(REPO_ROOT, file)), file).toMatch(/^\s*retries:\s*0,/m);

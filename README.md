@@ -51,6 +51,7 @@ This repository uses pnpm workspaces. Directory names and package names differ, 
 | `apps/catalogue` | `tutors-catalogue` | Course catalogue | 5175 |
 | `apps/live` | `tutors-live` | Live classroom / presence | 5174 |
 | `apps/time` | `tutors-time` | Student activity and time-tracking dashboard | 5176 |
+| `apps/validator` | `tutors-validator` | Published course and private local ZIP validation | 5177 |
 
 ### Packages
 
@@ -134,6 +135,7 @@ pnpm dev
 pnpm --filter tutors-catalogue dev   # :5175
 pnpm --filter tutors-live dev        # :5174
 pnpm --filter tutors-time dev        # :5176
+pnpm dev:validator                    # :5177
 
 # Minimum bar before opening a PR
 pnpm lint

@@ -60,10 +60,22 @@ export function pruneTree(lr: LearningResource): void {
   lr.lrs.forEach((resource) => pruneTree(resource));
 }
 
-export function buildTree(dir: string): LearningResource {
+/** A course folder as Tutors reads it, before folders of no known kind are pruned. */
+export type CourseTree = LearningResource;
+
+/**
+ * Reads a course folder into a tree without pruning: folders with no kind on their path stay in, typed
+ * "unknown". A validator reads this tree to name what the generator would silently leave out.
+ */
+export function buildUnprunedTree(dir: string): CourseTree {
   root = dir;
   const mainLr = build(dir);
   mainLr.type = "course";
+  return mainLr;
+}
+
+export function buildTree(dir: string): LearningResource {
+  const mainLr = buildUnprunedTree(dir);
   pruneTree(mainLr);
   return mainLr;
 }

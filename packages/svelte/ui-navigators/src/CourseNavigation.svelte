@@ -164,6 +164,8 @@
     {:else}<a data-tour="live" class="nav-row" href={siteUrls.live} target="_blank" rel="noreferrer"><Icon type="live" />{t("home.live")} ↗</a>{/if}
     {#if current === "time"}<a data-tour="time" class="nav-row" href="/" aria-current="page"><Icon type="tutorsTime" />{t("classTime.app")}</a>
     {:else}<a data-tour="time" class="nav-row" href={siteUrls.time} target="_blank" rel="noreferrer"><Icon type="tutorsTime" />{t("classTime.app")} ↗</a>{/if}
+    {#if current === "validator"}<a data-tour="validator" class="nav-row" href="/" aria-current="page"><Icon icon="lucide:clipboard-check" />{t("home.validator")}</a>
+    {:else}<a data-tour="validator" class="nav-row" href={siteUrls.validator} target="_blank" rel="noreferrer"><Icon icon="lucide:clipboard-check" />{t("home.validator")} ↗</a>{/if}
     <a data-tour="create" class="nav-row" href={showConnect ? "/create" : `${siteUrls.reader}/create`} aria-current={page.url.pathname === "/create" ? "page" : undefined}><Icon type="course" />{t("home.create")}</a>
     <a data-tour="docs" class="nav-row" href={showConnect ? "/course/tutors-reference-manual" : `${siteUrls.reader}/course/tutors-reference-manual`}><Icon type="note" />{t("home.docs")}</a>
   {/if}

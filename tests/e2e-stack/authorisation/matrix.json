@@ -469,6 +469,47 @@
         "*": 204
       },
       "why": "The same-origin preflight contains no personal data."
+    },
+    {
+      "key": "validator GET /healthz",
+      "request": {
+        "path": "/healthz"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "validator GET /healthz/live",
+      "request": {
+        "path": "/healthz/live"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
+    },
+    {
+      "key": "validator GET /metrics",
+      "request": {
+        "path": "/metrics"
+      },
+      "expect": {
+        "*": 401,
+        "operator": 200
+      },
+      "why": "only the scraper's bearer token (METRICS_TOKEN) reads metrics; a reader session is not enough"
+    },
+    {
+      "key": "validator GET /version",
+      "request": {
+        "path": "/version"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "probes and build identity answer everyone: the platform and the release harness ask without a session"
     }
   ]
 }

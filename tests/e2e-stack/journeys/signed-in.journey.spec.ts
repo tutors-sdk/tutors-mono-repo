@@ -188,7 +188,8 @@ test("An enrolled student moves forward a slide of a talk and a cell of a notebo
 test("A student filters the calendar to assessments and finds the course for LLMs (exercises Rules 0042, 0284)", { tag: "@rule-0637" }, async ({ browser }) => {
   const page = await (await contextFor(browser, "enrolled")).newPage();
   await signInToCourse(page, signedIn.courseId, signedInCourse.title);
-  await page.getByRole("button", { name: /^View Calendar/ }).filter({ visible: true }).first().click();
+  // The trigger is named by the week written on it, then the tip (#545, WCAG 2.5.3): "Calendar This week · Week 3, View Calendar for this course".
+  await page.getByRole("button", { name: "View Calendar for this course" }).filter({ visible: true }).first().click();
   await expect(page.getByRole("dialog", { name: `${signedInCourse.title} Calendar · 2026` })).toBeVisible(VISIBLE);
   const rows = page.getByRole("table", { name: `${signedInCourse.title} Calendar`, exact: true }).getByRole("row");
   // The header row and four weeks.

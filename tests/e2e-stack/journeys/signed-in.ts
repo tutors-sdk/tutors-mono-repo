@@ -42,12 +42,21 @@ export const people: Record<Role, { login: string; name: string }> = {
 export const VISIBLE = { timeout: 15_000 };
 
 /**
+ * The instant the signed-in apps run at: compose.yaml's HARNESS_NOW, which the servers read through the clock seam
+ * (@tutors/runtime `now()`). Since #556 the reader stamps what it stores, and checks the browser's day, by that seam,
+ * so a browser on the real calendar sends a day the reader refuses (400) and reads every stamp as months old. The
+ * browsers start at the same instant (and their clocks then run, so timers and back-offs behave). Change both together.
+ */
+export const stackNow = new Date(process.env.HARNESS_NOW ?? "2026-09-16T09:05:00.000Z");
+
+/**
  * A browser context whose GitHub OAuth hops go to the identity stub, signing in as `role` (GitHub's own `login_hint`,
  * which the stub reads), and whose requests for the signed-in course by its Netlify name (the time dashboard's PIN, and
  * the reader opening it as `harness-rules`, which the educator-checked routes need) are answered by the course server.
  */
 export async function contextFor(browser: Browser, role: Role): Promise<BrowserContext> {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, timezoneId: "Europe/Dublin", locale: "en-IE" });
+  await context.clock.setSystemTime(stackNow);
   await context.route(/^https:\/\/(api\.)?github\.com\//, async (route) => {
     const original = new URL(route.request().url());
     if (original.pathname === "/login/oauth/authorize") original.searchParams.set("login_hint", role);

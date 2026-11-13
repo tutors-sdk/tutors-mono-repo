@@ -1,0 +1,31 @@
+broken:
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/talk-01/talk.md: "# Intro\n"
+  topic-01/talk-01/slides.pdf: "%PDF"
+fixed:
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/talk-01/talk.md: "# Intro\n"
+  topic-01/talk-01/slides.pdf: "%PDF"
+  netlify.toml: |
+    # Build & publish this Tutors course straight from Git.
+    # Connect the repository in Netlify; no other settings needed.
+    # The build checks the course first: a course with errors fails to deploy,
+    # and the deploy log says what to fix.
+
+    [build]
+      command = "deno run -A jsr:@tutors/tutors-create@^5.4.0 validate && deno run -A jsr:@tutors/tutors"
+      publish = "json"
+
+    # The site is read by the tutors.dev reader, which fetches tutors.json
+    # cross-origin - allow that, and bounce direct visits to the reader.
+    [[redirects]]
+      from = "/*"
+      to = "/index.html"
+      status = 200
+
+    [[headers]]
+      for = "/*"
+      [headers.values]
+        Access-Control-Allow-Origin = "*"

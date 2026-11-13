@@ -7,6 +7,15 @@
 
 ```ts
 
+// --- types ---
+
+// (from src/services/resource-builder.ts)
+export type CourseTree = LearningResource;
+
+// (from src/types/types.ts)
+export type LearningResource = { courseRoot: string; route: string; id: string; lrs: LearningResource[]; files: Array<string>; type: string; };
+
+
 // --- functions ---
 
 // (from src/tutors.ts)
@@ -24,11 +33,18 @@ export async function generateStaticCourse(course: Course, destFolder: string, s
 // (from src/tutors.ts)
 export function parseCourse(folder: string, silent: boolean = false) : [Course, LearningResource];
 
+// (from src/tutors.ts)
+export function pruneCourseTree(tree: CourseTree) : void;
+
+// (from src/tutors.ts)
+export function readCourseTree(folder: string) : CourseTree;
+
 ```
 
 ### Summary
 
 | Kind | Count |
 |------|-------|
-| function | 5 |
-| **Total** | **5** |
+| function | 7 |
+| type | 2 |
+| **Total** | **9** |

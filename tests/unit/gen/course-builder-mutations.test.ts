@@ -2,7 +2,8 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { copyAssets, parseCourse } from "../../../packages/jsr/gen/src/tutors.ts";
+import { copyAssets, parseCourse, pruneCourseTree, readCourseTree } from "../../../packages/jsr/gen/src/tutors.ts";
+import type { CourseTree } from "../../../packages/jsr/gen/src/tutors.ts";
 import type { TutorsJsonCourse, TutorsJsonLo } from "../../../packages/jsr/types/src/tutors-json.ts";
 import { descendants } from "../../support/synthetic-course.ts";
 
@@ -250,5 +251,36 @@ describe("buildTree: what the generator reads", () => {
     expect(existsSync(join(out, "topic-1/note-1/pic.png"))).toBe(true);
     expect(existsSync(join(out, "topic-1/note-1/notes.txt"))).toBe(false);
     expect(existsSync(join(out, "drafts"))).toBe(false);
+  });
+});
+
+describe("readCourseTree: the course before pruning", () => {
+  const ids = (tree: CourseTree): string[] => [tree.id, ...tree.lrs.flatMap(ids)];
+  const files = {
+    "topic-1/topic.md": "# T\n",
+    "topic-1/note-1/note.md": "# N\n",
+    "topic-1/drafts/readme.md": "# Draft\n",
+    "Week 3/topic.md": "# Week three\n",
+    ".git/topic-8/topic.md": "# In .git\n",
+    "json/topic-7/topic.md": "# Old output\n"
+  };
+
+  it("keeps folders of no known kind, typed unknown, and still skips dot and output folders", () => {
+    const tree = readCourseTree(folder(files));
+    expect(tree.type).toBe("course");
+    const week3 = tree.lrs.find((lr) => lr.id === "Week 3")!;
+    expect(week3.type).toBe("unknown");
+    expect(ids(tree)).not.toContain(".git");
+    expect(ids(tree)).not.toContain("json");
+    expect(ids(tree)).toContain("drafts");
+  });
+
+  it("pruning the unpruned tree leaves exactly what parseCourse builds from", () => {
+    const root = folder(files);
+    const tree = readCourseTree(root);
+    pruneCourseTree(tree);
+    const [, pruned] = parseCourse(root, true);
+    expect(tree).toEqual(pruned);
+    expect(ids(tree)).not.toContain("Week 3");
   });
 });
