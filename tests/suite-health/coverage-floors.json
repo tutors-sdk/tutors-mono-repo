@@ -5,7 +5,7 @@
   "packages": {
     "packages/jsr/model/src/**": { "statements": 98, "branches": 91, "functions": 100, "lines": 99 },
     "packages/jsr/time/src/**": { "statements": 97, "branches": 87, "functions": 98, "lines": 98 },
-    "packages/jsr/gen/src/**": { "statements": 84, "branches": 79, "functions": 88, "lines": 84 },
+    "packages/jsr/gen/src/**": { "statements": 87, "branches": 81, "functions": 90, "lines": 86 },
     "packages/svelte/connect/src/**": { "statements": 88, "branches": 81, "functions": 82, "lines": 90 },
     "packages/svelte/quiz/src/**": { "statements": 100, "branches": 99, "functions": 100, "lines": 100 },
     "packages/svelte/course/src/**": { "statements": 81, "branches": 73, "functions": 84, "lines": 81 },

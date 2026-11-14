@@ -364,13 +364,13 @@
           "rule": "V004",
           "severity": "error",
           "path": "topic-02-side/side-unit/book-c/talk.md",
-          "message": "\"talk.md\" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md."
+          "message": "\"talk.md\" is in a Lab but isn't named as a step, so students see it as a step with no title or address of its own. Rename it to 01.talk.md."
         },
         {
           "rule": "V004",
           "severity": "error",
           "path": "topic-09-podcasts/side-unit/book-c/talk.md",
-          "message": "\"talk.md\" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md."
+          "message": "\"talk.md\" is in a Lab but isn't named as a step, so students see it as a step with no title or address of its own. Rename it to 01.talk.md."
         },
         {
           "rule": "V009",
@@ -405,7 +405,7 @@
           "rule": "V004",
           "severity": "error",
           "path": "topic-01-js-intro/unit-1/book-b-js-introduction/solutions.md",
-          "message": "\"solutions.md\" is in a Lab but isn't named as a step. Name each step with two digits, a dot and a title, like 01.Setup.md."
+          "message": "\"solutions.md\" is in a Lab but isn't named as a step, so students see it as a step with no title or address of its own. Rename it to 09.solutions.md."
         },
         {
           "rule": "V011",

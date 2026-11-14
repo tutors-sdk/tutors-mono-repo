@@ -1725,9 +1725,6 @@
     "acorn-jsx-walk@2.0.0": {
       "integrity": "sha512-uuo6iJj4D4ygkdzd6jPtcxs8vZgDX9YFIkqczGImoypX2fQ4dVImmu3UzA4ynixCIMTrEOWW+95M2HuBaCEOVA=="
     },
-    "acorn-jsx@5.3.2_acorn@8.18.0": {
-      "integrity": "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ=="
-    },
     "acorn-jsx@5.3.2_acorn@8.19.0": {
       "integrity": "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==",
       "dependencies": [
@@ -2365,11 +2362,11 @@
     "esm@3.2.25": {
       "integrity": "sha512-U1suiZ2oDVWv4zPO56S0NcR5QriEahGtdN2OR6FiOG4WJvcjBVFB0qI4+eKoWFH483PKGuLuu6V8Z4T5g63UVA=="
     },
-    "espree@10.4.0_acorn@8.18.0": {
+    "espree@10.4.0_acorn@8.19.0": {
       "integrity": "sha512-j6PAQ2uUr79PZhBjP5C5fhl8e39FmRnOjsD5lGnWrFU8i2G776tBK7+nP8KuQUTTyAZUwfQqXAgrVH5MbH9CYQ==",
       "dependencies": [
         "acorn",
-        "acorn-jsx@5.3.2_acorn@8.18.0",
+        "acorn-jsx@5.3.2_acorn@8.19.0",
         "eslint-visitor-keys@4.2.1"
       ]
     },
@@ -3778,7 +3775,7 @@
       "dependencies": [
         "eslint-scope@8.4.0",
         "eslint-visitor-keys@4.2.1",
-        "espree@10.4.0_acorn@8.18.0",
+        "espree@10.4.0_acorn@8.19.0",
         "postcss@8.5.26",
         "postcss-scss",
         "postcss-selector-parser",
