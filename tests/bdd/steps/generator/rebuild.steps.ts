@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import { compressToZip, copyFileToFolder, zipEntryNames } from "../../../../packages/jsr/gen/src/utils/file-utils.ts";
@@ -28,6 +28,7 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
 
   /** Writes a course file whose modified time is a minute ago. */
   const write = (name: string, text: string) => {
+    mkdirSync(dirname(join(course, name)), { recursive: true });
     writeFileSync(join(course, name), text);
     utimesSync(join(course, name), earlier, earlier);
   };
@@ -86,7 +87,8 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
       /** When the earlier build wrote the zip: after its PDFs, before now. */
       const zipped = new Date(earlier.getTime() + 1000);
       const zippedEarlier = async (_: unknown, first: string, second: string) => {
-        for (const name of [first, second]) write(name, `the talk ${name}`);
+        write(first, `the talk ${first}`);
+        write(second, `the longer talk ${second}`);
         pdfs = [first, second].map((name) => join(course, name));
         await compressToZip(pdfs, zip());
         utimesSync(zip(), zipped, zipped);
@@ -104,6 +106,13 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
       RuleScenario("A changed PDF writes the zip again", ({ Given, And, When, Then }) => {
         Given("a PDF zip of {string} and {string} written by an earlier build", zippedEarlier);
         And("the lecturer has changed {string}", (_, name: string) => change(name));
+        When("the course is built again", builtAgain);
+        Then("the build wrote the zip again", () => expect(zipWrittenAt()).toBeGreaterThan(zipped.getTime()));
+      });
+
+      RuleScenario("Talks whose PDFs share a name swap places", ({ Given, And, When, Then }) => {
+        Given("a PDF zip of {string} and {string} written by an earlier build", zippedEarlier);
+        And("the lecturer has swapped the two talks", () => void (pdfs = [...pdfs].reverse()));
         When("the course is built again", builtAgain);
         Then("the build wrote the zip again", () => expect(zipWrittenAt()).toBeGreaterThan(zipped.getTime()));
       });

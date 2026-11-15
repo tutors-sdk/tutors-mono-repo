@@ -197,32 +197,51 @@ export function readYamlFile(yamlFilePath: string): any {
 }
 
 /**
- * The names of the entries in a zip file, read from its central directory; null when it isn't there or
- * isn't a zip Tutors can read.
+ * The entries in a zip file, by name with their uncompressed sizes, read from its central directory; null when
+ * it isn't there or isn't a zip Tutors can read. Reads only the end of the file and the directory, never the
+ * compressed files.
  */
-export function zipEntryNames(zipPath: string): string[] | null {
+export function zipEntries(zipPath: string): Map<string, number> | null {
+  let fd: number | undefined;
   try {
-    const zip = fs.readFileSync(zipPath);
+    fd = fs.openSync(zipPath, "r");
+    const size = fs.fstatSync(fd).size;
     // The end of central directory record: signature 0x06054b50, in the last 22 bytes plus any comment.
-    for (let end = zip.length - 22; end >= Math.max(0, zip.length - 22 - 0xffff); end--) {
-      if (zip.readUInt32LE(end) !== 0x06054b50) continue;
-      const count = zip.readUInt16LE(end + 10);
-      let at = zip.readUInt32LE(end + 16);
-      const names: string[] = [];
+    const tailLength = Math.min(size, 22 + 0xffff);
+    const tail = Buffer.alloc(tailLength);
+    fs.readSync(fd, tail, 0, tailLength, size - tailLength);
+    for (let end = tailLength - 22; end >= 0; end--) {
+      if (tail.readUInt32LE(end) !== 0x06054b50) continue;
+      const count = tail.readUInt16LE(end + 10);
+      const directoryLength = tail.readUInt32LE(end + 12);
+      const directoryAt = tail.readUInt32LE(end + 16);
+      if (directoryAt + directoryLength > size) return null;
+      const directory = Buffer.alloc(directoryLength);
+      fs.readSync(fd, directory, 0, directoryLength, directoryAt);
+      const entries = new Map<string, number>();
+      let at = 0;
       for (let i = 0; i < count; i++) {
-        if (zip.readUInt32LE(at) !== 0x02014b50) return null;
-        const nameLength = zip.readUInt16LE(at + 28);
-        const extraLength = zip.readUInt16LE(at + 30);
-        const commentLength = zip.readUInt16LE(at + 32);
-        names.push(zip.toString("utf8", at + 46, at + 46 + nameLength));
+        if (at + 46 > directoryLength || directory.readUInt32LE(at) !== 0x02014b50) return null;
+        const nameLength = directory.readUInt16LE(at + 28);
+        const extraLength = directory.readUInt16LE(at + 30);
+        const commentLength = directory.readUInt16LE(at + 32);
+        entries.set(directory.toString("utf8", at + 46, at + 46 + nameLength), directory.readUInt32LE(at + 24));
         at += 46 + nameLength + extraLength + commentLength;
       }
-      return names;
+      return entries;
     }
     return null;
   } catch {
     return null;
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
+}
+
+/** The names of the entries in a zip file; null when it isn't there or isn't a zip Tutors can read. */
+export function zipEntryNames(zipPath: string): string[] | null {
+  const entries = zipEntries(zipPath);
+  return entries === null ? null : [...entries.keys()];
 }
 
 /** The name each file has inside a PDF zip: its place in the list, then its own name ("03-week-3.pdf"). */
@@ -230,20 +249,22 @@ export const zipEntryName = (file: string, index: number) => `${index.toString()
 
 /**
  * True when the zip at `outputPath` already holds exactly these files, under the names compressToZip gives
- * them, and was written after the newest of them changed (Rule 0767). Then building it again would write the
- * same zip.
+ * them and at their sizes, and was written after the newest of them changed (Rule 0767). Then building it again
+ * would write the same zip.
  */
 export function isZipUpToDate(files: string[], outputPath: string): boolean {
   try {
-    const present = files.filter((file) => fs.existsSync(file));
-    const names = zipEntryNames(outputPath);
-    if (names === null) return false;
-    // archiver adds entries in the order their reads finish, so compare the names, not their order.
-    const expected = files.map(zipEntryName).filter((_, index) => fs.existsSync(files[index])).sort();
-    const found = [...names].sort();
-    if (found.length !== expected.length || found.some((name, index) => name !== expected[index])) return false;
+    const entries = zipEntries(outputPath);
+    if (entries === null) return false;
+    const present = files.flatMap((file, index) => (fs.existsSync(file) ? [{ file, name: zipEntryName(file, index) }] : []));
+    if (entries.size !== present.length) return false;
     const written = fs.statSync(outputPath).mtimeMs;
-    return present.every((file) => fs.statSync(file).mtimeMs <= written);
+    // archiver adds entries in the order their reads finish, so match by name, not by order. The size tells two
+    // PDFs with the same name apart when their talks swap places (02-slides.pdf, 03-slides.pdf).
+    return present.every(({ file, name }) => {
+      const stat = fs.statSync(file);
+      return entries.get(name) === stat.size && stat.mtimeMs <= written;
+    });
   } catch {
     return false;
   }

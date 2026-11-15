@@ -49,3 +49,9 @@ Feature: Rebuilding a course writes only what changed
       And the lecturer has added the talk PDF "forms.pdf"
       When the course is built again
       Then the zip holds "00-review.pdf, 01-labs.pdf, 02-forms.pdf"
+
+    Scenario: Talks whose PDFs share a name swap places
+      Given a PDF zip of "week-1/slides.pdf" and "week-2/slides.pdf" written by an earlier build
+      And the lecturer has swapped the two talks
+      When the course is built again
+      Then the build wrote the zip again
