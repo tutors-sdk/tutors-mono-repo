@@ -1,0 +1,206 @@
+name: Reusable Publish to JSR
+
+# The release back end for JSR packages, callable from any workflow here or in
+# another repository. guides/Release-Capability.md is the guide.
+#
+#   1. validate  deno publish --dry-run for every released path (type check,
+#                slow types, the files that would ship), then the caller's own
+#                validate-command if it gave one.
+#   2. publish   deno publish from each path, in the order the release-please
+#                config lists them, so a library goes out before the packages
+#                that import it. In GitHub Actions deno publish authenticates
+#                with OIDC and JSR records Sigstore provenance for the run; no
+#                token is stored. A version JSR already has is skipped, so a
+#                re-run is safe.
+#   3. canary    with no repository on disk, wait until JSR serves each exact
+#                version, check it carries provenance, and resolve its whole
+#                module graph from the registry. A failure opens one issue per
+#                package version.
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: JSON array of package paths to publish (release-please's paths_released)
+        type: string
+        required: true
+      config-file:
+        description: release-please config, whose package order is the publish order
+        type: string
+        default: release-please-config.json
+      validate-command:
+        description: Optional shell command run from the repository root before publishing
+        type: string
+        default: ''
+      deno-version:
+        type: string
+        default: v2.x
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Validate the release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      ordered: ${{ steps.order.outputs.ordered }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: ${{ inputs.deno-version }}
+
+      # The config's order, keeping only the paths this run released.
+      - name: Order the released paths
+        id: order
+        env:
+          PATHS: ${{ inputs.paths }}
+          CONFIG: ${{ inputs.config-file }}
+        run: |
+          ordered=$(jq -c --argjson released "$PATHS" \
+            '[.packages | keys_unsorted[] | select(. as $p | $released | index($p))]' "$CONFIG")
+          echo "Publishing, in order: $ordered"
+          echo "ordered=$ordered" >> "$GITHUB_OUTPUT"
+
+      - name: Dry-run every package
+        env:
+          ORDERED: ${{ steps.order.outputs.ordered }}
+        run: |
+          for path in $(jq -r '.[]' <<< "$ORDERED"); do
+            echo "::group::$path"
+            (cd "$path" && deno publish --dry-run)
+            echo "::endgroup::"
+          done
+
+      - name: Caller's validation
+        if: inputs.validate-command != ''
+        env:
+          VALIDATE: ${{ inputs.validate-command }}
+        run: bash -c "$VALIDATE"
+
+  publish:
+    name: Publish to JSR with provenance
+    needs: validate
+    if: needs.validate.outputs.ordered != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # JSR's OIDC publish and Sigstore provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: ${{ inputs.deno-version }}
+
+      - name: Publish
+        env:
+          ORDERED: ${{ needs.validate.outputs.ordered }}
+        run: |
+          for path in $(jq -r '.[]' <<< "$ORDERED"); do
+            echo "::group::$path"
+            (cd "$path" && deno publish)
+            echo "::endgroup::"
+          done
+
+  canary:
+    name: Verify what JSR serves
+    needs: [validate, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      # For the package names and versions only. The checks below run from an
+      # empty directory, so nothing in the repository can satisfy an import.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: ${{ inputs.deno-version }}
+
+      - name: List what was published
+        env:
+          ORDERED: ${{ needs.validate.outputs.ordered }}
+        run: |
+          for path in $(jq -r '.[]' <<< "$ORDERED"); do
+            jq -r '"\(.name)@\(.version)"' "$path/deno.json"
+          done > "$RUNNER_TEMP/published.txt"
+          cat "$RUNNER_TEMP/published.txt"
+
+      # Publishing and the registry serving it are not the same instant: wait
+      # up to ten minutes per package. Provenance is the rekorLogId JSR records
+      # when the publish came from a verified OIDC run. deno cache resolves and
+      # downloads the whole graph without running the module.
+      - name: Install from JSR and verify
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir canary && cd canary
+          failed=0
+          while IFS= read -r spec; do
+            name=${spec%@*}; version=${spec##*@}
+            scope=${name%%/*}; scope=${scope#@}; pkg=${name#*/}
+            served=false
+            for _ in $(seq 1 60); do
+              if curl -fsS "https://jsr.io/${name}/meta.json" | jq -e --arg v "$version" '.versions[$v]' > /dev/null; then
+                served=true; break
+              fi
+              sleep 10
+            done
+            if [ "$served" != "true" ]; then
+              echo "::error title=Canary ${spec}::JSR does not serve ${spec}"; failed=1; continue
+            fi
+            rekor=$(curl -fsS "https://api.jsr.io/scopes/${scope}/packages/${pkg}/versions/${version}" | jq -r '.rekorLogId // empty')
+            if [ -z "$rekor" ]; then
+              echo "::error title=Canary ${spec}::${spec} has no provenance; was it published outside CI?"; failed=1
+            fi
+            if ! deno cache --no-config --reload "jsr:${spec}"; then
+              echo "::error title=Canary ${spec}::jsr:${spec} does not resolve from the registry"; failed=1
+            fi
+            echo "${spec}: served, provenance ${rekor:-missing}"
+          done < "$RUNNER_TEMP/published.txt"
+          exit "$failed"
+
+  report:
+    name: File an issue when the canary fails
+    needs: [validate, canary]
+    if: always() && needs.canary.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ORDERED: ${{ needs.validate.outputs.ordered }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Post-publish canary failed (run ${GITHUB_RUN_ID})"
+          body=$(printf '%s\n' \
+            "JSR did not serve, sign or resolve at least one package this release published." \
+            "" \
+            "Released paths: \`${ORDERED}\`" \
+            "Run: ${RUN_URL}" \
+            "" \
+            "A published JSR version cannot be replaced. Yank it on jsr.io if it is broken," \
+            "fix forward and release again (guides/Release-Capability.md).")
+          gh issue create --repo "$REPO" --title "$title" --body "$body"

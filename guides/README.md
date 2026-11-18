@@ -28,6 +28,7 @@ changed from June 2026 on, with its charts and the scripts that measure them.
 | Guide | Read it to |
 |---|---|
 | [Release-Strategy.md](Release-Strategy.md) | Cut, harden and ship a release through a release candidate |
+| [Release-Capability.md](Release-Capability.md) | Release the JSR libraries, or any package in any repository, with the reusable release-please workflows |
 | [MIGRATIONS.md](MIGRATIONS.md) | Write a schema change a rolling release can survive |
 
 ## Features

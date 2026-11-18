@@ -1,0 +1,9 @@
+{
+  ".": "17.0.0",
+  "packages/jsr/model": "5.3.0",
+  "packages/jsr/time": "5.3.0",
+  "packages/jsr/gen": "5.3.0",
+  "packages/jsr/create": "5.3.0",
+  "packages/jsr/tutors-lite": "5.3.0",
+  "packages/jsr/tutors": "5.3.0"
+}
