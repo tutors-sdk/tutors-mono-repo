@@ -7,14 +7,48 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-/** Every file under `root`, by its path with forward slashes, to the SHA-256 of its bytes. */
+/**
+ * What a zip holds: each entry's name, CRC-32 and size, from its central directory. A zip's bytes also carry
+ * each entry's modified time and the platform's file attributes, which differ between runners without the
+ * lecturer seeing any difference, so a zip is compared by its entries.
+ */
+export function zipEntries(bytes) {
+  let end = bytes.length - 22;
+  while (end >= 0 && bytes.readUInt32LE(end) !== 0x06054b50) end--;
+  if (end < 0) return null;
+  const count = bytes.readUInt16LE(end + 10);
+  let at = bytes.readUInt32LE(end + 16);
+  const entries = [];
+  for (let i = 0; i < count; i++) {
+    if (bytes.readUInt32LE(at) !== 0x02014b50) return null;
+    const crc = bytes
+      .readUInt32LE(at + 16)
+      .toString(16)
+      .padStart(8, "0");
+    const size = bytes.readUInt32LE(at + 24);
+    const nameLength = bytes.readUInt16LE(at + 28);
+    const name = bytes.toString("utf8", at + 46, at + 46 + nameLength);
+    entries.push(`${name} ${crc} ${size}`);
+    at += 46 + nameLength + bytes.readUInt16LE(at + 30) + bytes.readUInt16LE(at + 32);
+  }
+  return entries;
+}
+
+function digestOf(file, bytes) {
+  const entries = file.endsWith(".zip") ? zipEntries(bytes) : null;
+  return createHash("sha256")
+    .update(entries ? `zip\n${entries.join("\n")}` : bytes)
+    .digest("hex");
+}
+
+/** Every file under `root`, by its path with forward slashes, to the SHA-256 of its bytes (of its entries, for a zip). */
 export function outputsOf(root) {
   const files = {};
   const visit = (dir) => {
     for (const name of readdirSync(dir).sort()) {
       const full = join(dir, name);
       if (statSync(full).isDirectory()) visit(full);
-      else files[relative(root, full).split("\\").join("/")] = createHash("sha256").update(readFileSync(full)).digest("hex");
+      else files[relative(root, full).split("\\").join("/")] = digestOf(name, readFileSync(full));
     }
   };
   visit(root);

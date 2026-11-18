@@ -28,3 +28,15 @@ Feature: The generator on Windows
       And Windows wrote "synthetic-course/json" with "tutors.json" holding "a"
       When the platform outputs are compared
       Then the comparison names nothing
+
+    Scenario: A zip is compared by the files it holds, not when or where it was zipped
+      Given Linux wrote "synthetic-course/json" with a zip holding "00-intro.pdf" made on Unix in 2026
+      And Windows wrote "synthetic-course/json" with a zip holding "00-intro.pdf" made on Windows in 2027
+      When the platform outputs are compared
+      Then the comparison names nothing
+
+    Scenario: A zip holding a different file is named
+      Given Linux wrote "synthetic-course/json" with a zip holding "00-intro.pdf" made on Unix in 2026
+      And Windows wrote "synthetic-course/json" with a zip holding "01-intro.pdf" made on Windows in 2026
+      When the platform outputs are compared
+      Then the comparison names "synthetic-course/json/pdfs.zip: differs between linux and windows"
