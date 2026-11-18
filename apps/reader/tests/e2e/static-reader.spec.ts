@@ -4,7 +4,7 @@ import { test, expect, type Page } from "@playwright/test";
 // static build (the default config ignores this file: its dev server is not a static build).
 
 const COURSE_HOST = "127.0.0.1:8190";
-const SERVER_ROUTES = /^\/(api\/|healthz|version$|metrics$)|__data\.json$/;
+const SERVER_ROUTES = /^\/(api\/|actor$|healthz|version$|metrics$)|__data\.json$/;
 
 /** Every request the page makes to the reader's own origin for a route only a server could answer. */
 function serverRouteRequests(page: Page): string[] {

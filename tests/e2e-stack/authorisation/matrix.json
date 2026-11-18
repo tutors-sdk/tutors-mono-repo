@@ -262,9 +262,9 @@
       "why": "Only a verified session records its own activity; the journey supplies today's calendar day (Rules 0071-0072)."
     },
     {
-      "key": "reader GET /api/actor",
+      "key": "reader GET /actor",
       "request": {
-        "path": "/api/actor"
+        "path": "/actor"
       },
       "expect": {
         "*": 200

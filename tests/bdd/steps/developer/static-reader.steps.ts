@@ -78,11 +78,11 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
         expect(data).toEqual({ actor: null, loggedIn: false, user: undefined, locale });
       });
     });
-    RuleScenario("A reader with sign-in on asks GET /api/actor once", ({ Given, And, When, Then }) => {
+    RuleScenario("A reader with sign-in on asks GET /actor once", ({ Given, And, When, Then }) => {
       Given("sign-in is on", () => {
         anonymous = false;
       });
-      And("the reader's server answers GET /api/actor for the login {string}", (_ctx: unknown, login: string) => {
+      And("the reader's server answers GET /actor for the login {string}", (_ctx: unknown, login: string) => {
         answer = Response.json(actorData({ subject: `github:1`, login, name: null, email: null, image: null }));
       });
       When("the root layout loads", load);

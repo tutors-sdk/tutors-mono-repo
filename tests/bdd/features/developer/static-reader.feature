@@ -7,7 +7,7 @@ Feature: A static reader that needs no server
   Issue #600 (M1 to M3 of #599). SVELTEKIT_ADAPTER=static builds the reader with SvelteKit's static adapter, with
   PUBLIC_ANON_MODE=TRUE. The root load used to be a server load (+layout.server.ts), so every navigation asked the
   server for __data.json; it is now a universal load that works the actor and locale out in the browser. A hosted
-  reader that has sign-in on asks GET /api/actor once per load instead, which the release harness sees as a network
+  reader that has sign-in on asks GET /actor once per load instead, which the release harness sees as a network
   difference. Rule 0773 is proved by Playwright over a real static build (apps/reader/playwright.static.config.ts).
 
   @rule-0770 @ears-optional
@@ -38,11 +38,11 @@ Feature: A static reader that needs no server
       And the page is signed out with the locale "ga"
 
     @inactive
-    Scenario: A reader with sign-in on asks GET /api/actor once
+    Scenario: A reader with sign-in on asks GET /actor once
       Given sign-in is on
-      And the reader's server answers GET /api/actor for the login "alice"
+      And the reader's server answers GET /actor for the login "alice"
       When the root layout loads
-      Then exactly one request was made, to "/api/actor"
+      Then exactly one request was made, to "/actor"
       And the page is signed in as "alice" with the locale "en"
 
   @rule-0772 @ears-ubiquitous

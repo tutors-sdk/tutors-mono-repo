@@ -10,16 +10,16 @@ Feature: The static reader opens a course with no server
   PUBLIC_ANON_MODE=TRUE, serves the build with its 200.html fallback and serves a built course with CORS.
 
   @rule-0773 @ears-event-driven
-  Rule: When a visitor opens a course or a topic in a static build of the reader, the reader shall show it without a request to /api, __data.json, /healthz, /version or /metrics.
+  Rule: When a visitor opens a course or a topic in a static build of the reader, the reader shall show it without a request to /api, /actor, __data.json, /healthz, /version or /metrics.
 
     Scenario: A course and a topic open with no request to a server route
       Given the static reader and a built course are served by plain file servers
       When a visitor opens the course and then its first topic
       Then the course title and the topic are shown
-      And no request went to /api, __data.json, /healthz, /version or /metrics
+      And no request went to /api, /actor, __data.json, /healthz, /version or /metrics
 
     Scenario: A topic opened straight from its address is answered by the fallback page
       Given the static reader and a built course are served by plain file servers
       When a visitor opens a topic's address directly
       Then the topic is shown
-      And no request went to /api, __data.json, /healthz, /version or /metrics
+      And no request went to /api, /actor, __data.json, /healthz, /version or /metrics
