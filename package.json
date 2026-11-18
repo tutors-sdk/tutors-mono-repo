@@ -29,6 +29,7 @@
     "test:identity:built": "node tests/fixtures/reader-session/built.mjs",
     "test:e2e:reader": "playwright test --config apps/reader/playwright.config.ts",
     "test:e2e:catalogue": "playwright test --config apps/catalogue/playwright.config.ts",
+    "test:e2e:static-reader": "playwright test --config apps/reader/playwright.static.config.ts",
     "test:e2e:live": "playwright test --config apps/live/playwright.config.ts",
     "e2e:stack:fixture": "deno run -A --no-lock --node-modules-dir=none tests/e2e-stack/fixture-course/build.ts && deno run -A --no-lock --node-modules-dir=none tests/e2e-stack/fixture-course/build-signed-in.ts",
     "e2e:stack:up": "docker compose -f tests/e2e-stack/compose.yaml up -d --wait",

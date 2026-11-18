@@ -262,6 +262,16 @@
       "why": "Only a verified session records its own activity; the journey supplies today's calendar day (Rules 0071-0072)."
     },
     {
+      "key": "reader GET /api/actor",
+      "request": {
+        "path": "/api/actor"
+      },
+      "expect": {
+        "*": 200
+      },
+      "why": "Says who the caller is, for the root load (Rule 0771): a caller with no session is told it has none, never refused."
+    },
+    {
       "key": "reader GET /api/me",
       "request": {
         "path": "/api/me"
