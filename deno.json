@@ -3,6 +3,7 @@
   "workspace": [
     "./packages/jsr/tutors",
     "./packages/jsr/tutors-lite",
+    "./packages/jsr/tutors-cli",
     "./packages/jsr/model",
     "./packages/jsr/gen",
     "./packages/jsr/time",
@@ -19,6 +20,7 @@
       "./packages/jsr/model/src/",
       "./packages/jsr/tutors/",
       "./packages/jsr/tutors-lite/",
+      "./packages/jsr/tutors-cli/",
       "./packages/jsr/types/",
       "./packages/jsr/identity/",
       "./packages/jsr/realtime/"

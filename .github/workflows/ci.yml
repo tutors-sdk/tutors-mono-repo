@@ -639,12 +639,75 @@ jobs:
       - name: Run tutors-lite CLI tests
         run: cd packages/jsr/tutors-lite && deno test --no-check test/ --allow-all
 
+  # Rule 0777 (issue #603): the one tutors program, compiled with deno compile on Linux and on Windows, builds the
+  # corpus course into the same json/ as deno run of the generator, and validates it as tutors-create does.
+  tutors-cli:
+    name: tutors program on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version-file: .dvmrc
+
+      - name: Compile
+        working-directory: packages/jsr/tutors-cli
+        run: |
+          deno compile -A --no-check --output dist/tutors main.ts
+          ls -l dist
+
+      - name: Build the corpus course both ways and compare
+        env:
+          NO_COLOR: "1"
+        run: |
+          repo="$(pwd)"
+          exe="$repo/packages/jsr/tutors-cli/dist/tutors"
+          [ -f "$exe.exe" ] && exe="$exe.exe"
+          "$exe" --version
+          for way in run compiled; do
+            mkdir -p "$RUNNER_TEMP/$way"
+            cp -r tests/generator/corpus/synthetic-course "$RUNNER_TEMP/$way/synthetic-course"
+          done
+          (cd "$RUNNER_TEMP/run/synthetic-course" && deno run -A --config "$repo/deno.json" "$repo/packages/jsr/tutors/main.ts" > /dev/null)
+          (cd "$RUNNER_TEMP/compiled/synthetic-course" && "$exe" build > /dev/null)
+          diff -r "$RUNNER_TEMP/run/synthetic-course/json" "$RUNNER_TEMP/compiled/synthetic-course/json"
+          (cd "$RUNNER_TEMP/compiled/synthetic-course" && "$exe" website > /dev/null && test -f html/index.html)
+          (cd "$RUNNER_TEMP/compiled/synthetic-course" && "$exe" validate . --format json > validate.json || true; node -e "JSON.parse(require('fs').readFileSync('validate.json','utf8'))")
+
   # The one check to mark as required in branch protection. A skipped or
   # cancelled job counts as a failure.
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, bundle-budgets, generator-diff, validate-corpus, cli-tests, ears-audit, ui-contract, mutation-pr]
+    needs:
+      [
+        build-and-test,
+        platform-conformance,
+        container-smoke,
+        container-smoke-fixtures,
+        dependency-audit,
+        bundle-budgets,
+        generator-diff,
+        validate-corpus,
+        cli-tests,
+        ears-audit,
+        ui-contract,
+        mutation-pr,
+        tutors-cli
+      ]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
