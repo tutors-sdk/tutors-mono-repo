@@ -109,6 +109,10 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       });
       Then("version.json holds the same fields, in the same shape, as GET /version for that build", () => {
         expect(written).toEqual(versionInfo({ app: pkg.name, version: pkg.version, env }));
+        // The same for the variables a build may or may not have: Netlify's COMMIT_REF alone, and the harness's frozen clock.
+        for (const other of [{ COMMIT_REF: "556c7f2" }, { ...env, HARNESS_NOW: "2026-11-18T22:00:00Z" }, { ...env, HARNESS_NOW: "not a time" }, {}]) {
+          expect(staticVersion(pkg, other)).toEqual(versionInfo({ app: pkg.name, version: pkg.version, env: other }));
+        }
       });
     });
   });

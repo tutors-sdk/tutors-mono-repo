@@ -22,10 +22,19 @@ export function staticVersion(pkg, env) {
   return {
     app: pkg.name,
     version: pkg.version,
-    revision: env.GIT_SHA?.trim() || env.COMMIT_REF?.trim() || 'unknown',
+    revision: env.GIT_SHA?.trim() || 'unknown',
     built: env.BUILD_DATE?.trim() || 'unknown',
-    clock: 'system'
+    clock: frozenClock(env.HARNESS_NOW) ? 'frozen' : 'system'
   };
+}
+
+/** Mirrors @tutors/runtime's clockStatus: frozen only for a valid ISO instant in HARNESS_NOW. */
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})$/;
+
+/** @param {string | undefined} raw */
+function frozenClock(raw) {
+  const value = raw?.trim();
+  return Boolean(value) && ISO_INSTANT.test(value) && !Number.isNaN(Date.parse(value));
 }
 
 /**
