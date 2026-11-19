@@ -99,7 +99,8 @@ export type MoodleThing =
 const xmlText = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
 /** A Moodle course backup (.mbz) in the shape Moodle 4 writes: section 0 first, then one section per week. */
-export function moodleBackup(sections: { title: string; things: MoodleThing[] }[]): Uint8Array {
+/** A Moodle backup: gzipped tar by default, or zip when the site sets usezipbackups. */
+export function moodleBackup(sections: { title: string; things: MoodleThing[] }[], format: "tgz" | "zip" = "tgz"): Uint8Array {
   const files: Files = {};
   const fileRows: string[] = [];
   const sectionRows: string[] = [];
@@ -145,7 +146,7 @@ export function moodleBackup(sections: { title: string; things: MoodleThing[] }[
     `<activities>${activityRows.join("")}</activities><sections>${sectionRows.join("")}</sections><course><courseid>2</courseid></course>` +
     `</contents></information></moodle_backup>`;
   files["files.xml"] = `<?xml version="1.0" encoding="UTF-8"?>\n<files>${fileRows.join("")}</files>`;
-  return tar(files);
+  return format === "zip" ? zip(files) : tar(files);
 }
 
 export type CartridgeThing = { file: string; content: string } | { link: string; href: string } | { page: string; html: string } | { discussion: string };

@@ -74,7 +74,7 @@ describe("layOut", () => {
 });
 
 describe("a Moodle backup", () => {
-  const backup = moodleBackup([
+  const backupSections = [
     { title: "", things: [{ forum: "News" }] },
     {
       title: "Intro",
@@ -86,7 +86,8 @@ describe("a Moodle backup", () => {
         { page: "Welcome", html: "<p>Hello &amp; welcome</p>" }
       ]
     }
-  ]);
+  ];
+  const backup = moodleBackup(backupSections);
 
   it("lists each section's files, links and pages in course order", () => {
     const sections = moodleSections(untar(backup));
@@ -108,6 +109,14 @@ describe("a Moodle backup", () => {
       "Week 01 Intro/MDN.url": "[InternetShortcut]\nURL=https://developer.mozilla.org/\n",
       "Week 01 Intro/Welcome.md": "# Welcome\n\n<p>Hello &amp; welcome</p>\n"
     });
+  });
+
+  it("unpacks a zip backup, as a site with usezipbackups writes it, the same as a tar", () => {
+    const zipped = moodleBackup(backupSections, "zip");
+    expect(read(unpackCourseArchive("mbz", zipped))).toEqual(read(unpackCourseArchive("mbz", backup)));
+    expect(() => unpackCourseArchive("mbz", zip({ "other.xml": "<x/>" }))).toThrow("This isn't a course export: it has no moodle_backup.xml.");
+    const plainTar = tar({ "P.txt": "a tar whose first byte is P", ...Object.fromEntries(untar(backup)) }, false);
+    expect(read(unpackCourseArchive("mbz", plainTar))).toEqual(read(unpackCourseArchive("mbz", backup)));
   });
 
   it("skips what it can't find, and refuses an archive that isn't a backup", () => {

@@ -26,7 +26,15 @@ type Thing = { kind: "file"; name: string; bytes: Uint8Array } | { kind: "link";
 
 /** A name safe for a file or folder on every system: no separators or reserved characters, at most 60 characters. */
 export function safeName(name: string): string {
-  return [...name].map((char) => (char.charCodeAt(0) < 32 ? " " : char)).join("").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().replace(/\.+$/, "").slice(0, 60).trim();
+  return [...name]
+    .map((char) => (char.charCodeAt(0) < 32 ? " " : char))
+    .join("")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\.+$/, "")
+    .slice(0, 60)
+    .trim();
 }
 
 /** The folder a course's section becomes: "Week 03 Testing", with the week first so nothing in the title outranks it. */
@@ -83,7 +91,7 @@ export function moodleSections(files: ArchiveFiles): Section[] {
   const sections = children(child(contents, "sections"), "section").map((section) => ({
     id: textOf(section, "sectionid"),
     title: textOf(section, "title"),
-    things: [] as Thing[],
+    things: [] as Thing[]
   }));
   for (const activity of children(child(contents, "activities"), "activity")) {
     const section = sections.find((each) => each.id === textOf(activity, "sectionid"));
@@ -149,7 +157,8 @@ export function cartridgeSections(files: ArchiveFiles): Section[] {
 /** A course export as a folder of material, by path. Throws ArchiveError for anything it can't read. */
 export function unpackCourseArchive(kind: CourseArchiveKind, bytes: Uint8Array): ArchiveFiles {
   if (kind === "mbz") {
-    const sections = moodleSections(untar(bytes));
+    // A site with usezipbackups writes a zip .mbz; otherwise it is a tar, gzipped or not.
+    const sections = moodleSections(bytes[0] === 0x50 && bytes[1] === 0x4b ? unzip(bytes) : untar(bytes));
     return layOut(sections, true);
   }
   return layOut(cartridgeSections(unzip(bytes)), false);
