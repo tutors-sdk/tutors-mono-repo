@@ -11,7 +11,5 @@
     "@tutors/tutors-lite": "jsr:@tutors/tutors-lite@^5.3.0",
     "@tutors/tutors-create": "jsr:@tutors/tutors-create@^5.4.0"
   },
-  "publish": {
-    "exclude": ["dist/"]
-  }
+  "publish": false
 }
