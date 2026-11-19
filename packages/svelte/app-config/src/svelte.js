@@ -33,8 +33,8 @@ const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\
 
 /** @param {string | undefined} raw */
 function frozenClock(raw) {
-  const value = raw?.trim();
-  return Boolean(value) && ISO_INSTANT.test(value) && !Number.isNaN(Date.parse(value));
+  const value = raw?.trim() ?? '';
+  return value !== '' && ISO_INSTANT.test(value) && !Number.isNaN(Date.parse(value));
 }
 
 /**
