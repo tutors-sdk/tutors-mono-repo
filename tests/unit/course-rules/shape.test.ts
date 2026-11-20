@@ -233,7 +233,7 @@ describe("tutors import", () => {
     });
     expect(parseImportArgs(["src", "--name", "X"])).toMatchObject({ outputDir: ".", spec: { lecturerName: "" } });
     expect(parseImportArgs(["src", "--name", "X"])).not.toHaveProperty("start");
-    expect(parseImportArgs(["a", "b", "--name", "X"])).toMatch(/^Give one folder to import, not two\. Usage: tutors import/);
+    expect(parseImportArgs(["a", "b", "--name", "X"])).toMatch(/^Give one folder or course export to import, not two\. Usage: tutors import <folder \| course\.mbz \| course\.imscc>/);
     expect(parseImportArgs(["src", "--name"])).toMatch(/^--name needs a value\./);
     expect(parseImportArgs(["src", "--name", "X", "--weeks", "3"])).toMatch(/^Unknown option "--weeks"\./);
     expect(parseImportArgs(["--name", "X"])).toMatch(/^Name the folder of material to import\./);
