@@ -290,13 +290,13 @@ function withTempDir(fn: (dir: string) => void): void {
   }
 }
 
-// Every file under a folder, relative to it, with its bytes.
+// Every file under a folder, relative to it with forward slashes (as generateCourseFiles names them, on Windows too), with its bytes.
 function snapshot(dir: string): Record<string, string> {
   const entries = fs.readdirSync(dir, { recursive: true, withFileTypes: true }).filter((e) => e.isFile());
   return Object.fromEntries(
     entries.map((e) => {
       const full = path.join(e.parentPath, e.name);
-      return [path.relative(dir, full), fs.readFileSync(full, "utf-8")];
+      return [path.relative(dir, full).split(path.sep).join("/"), fs.readFileSync(full, "utf-8")];
     })
   );
 }
