@@ -681,6 +681,13 @@ jobs:
       - name: Open a course with no server
         run: pnpm test:e2e:static-reader
 
+      # Rule 0776: what static-reader-release.yml attaches to a release.
+      - name: Pack it as a release asset and verify the sum
+        run: |
+          node scripts/release/static-reader-asset.mjs pack apps/reader/build "$(node -p "require('./apps/reader/package.json').version")" dist
+          node scripts/release/static-reader-asset.mjs verify dist
+          ls -l dist
+
   # Rule 0774 (issue #604): the generator and tutors-lite from this tree build both corpus courses on Linux and
   # on Windows, in a folder whose path has spaces and accents, and every file they write is compared.
   generator-platforms:

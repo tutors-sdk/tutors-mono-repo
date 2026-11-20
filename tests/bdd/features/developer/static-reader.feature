@@ -52,3 +52,23 @@ Feature: A static reader that needs no server
       Given the app "tutors-reader" at version "17.2.0" is built from the commit "556c7f2" on "2026-11-18T22:00:00Z"
       When the static build writes its version file
       Then version.json holds the same fields, in the same shape, as GET /version for that build
+
+  @rule-0776 @ears-event-driven
+  Rule: When a Tutors release is published, tutors shall attach the static reader to it as tutors-reader-static-<version>.tar.gz with a SHA256SUMS file that verifies it.
+
+    Scenario: A static build is packed with a sum that verifies
+      Given a static reader build of version "17.2.0"
+      When it is packed for the release "17.2.0"
+      Then the release folder holds "tutors-reader-static-17.2.0.tar.gz" and "SHA256SUMS"
+      And the sums verify
+
+    Scenario: A changed asset fails verification
+      Given a static reader build of version "17.2.0"
+      When it is packed for the release "17.2.0"
+      And the packed asset is changed afterwards
+      Then verification names "tutors-reader-static-17.2.0.tar.gz: checksum does not match"
+
+    Scenario: A build of another version is refused
+      Given a static reader build of version "17.1.0"
+      When it is packed for the release "17.2.0"
+      Then packing fails, saying it "is version 17.1.0, not 17.2.0"

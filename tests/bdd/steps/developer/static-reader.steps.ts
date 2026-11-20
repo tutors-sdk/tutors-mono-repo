@@ -1,9 +1,13 @@
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 import { createSvelteKitOptions, STATIC_FALLBACK, STATIC_OUT, staticVersion } from "../../../../packages/svelte/app-config/src/svelte.js";
 import { versionInfo } from "../../../../packages/svelte/utils/runtime/src/version.ts";
 import { rootData, type RootData } from "../../../../apps/reader/src/lib/root-data.ts";
 import { actorData } from "../../../../apps/reader/src/lib/actor-data.ts";
+import { pack, verify } from "../../../../scripts/release/static-reader-asset.mjs";
 
 // `rune()` needs the Svelte compiler; @tutors/i18n holds the locale in one. See the stub.
 vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
@@ -113,6 +117,59 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
         for (const other of [{ COMMIT_REF: "556c7f2" }, { ...env, HARNESS_NOW: "2026-11-18T22:00:00Z" }, { ...env, HARNESS_NOW: "not a time" }, {}]) {
           expect(staticVersion(pkg, other)).toEqual(versionInfo({ app: pkg.name, version: pkg.version, env: other }));
         }
+      });
+    });
+  });
+
+  Rule("When a Tutors release is published, tutors shall attach the static reader to it as tutors-reader-static-<version>.tar.gz with a SHA256SUMS file that verifies it.", ({ RuleScenario }) => {
+    let root = "";
+    let packError = "";
+    const build = () => join(root, "build");
+    const out = () => join(root, "dist");
+    const built = (_ctx: unknown, version: string) => {
+      root = mkdtempSync(join(tmpdir(), "static-reader-asset-"));
+      mkdirSync(join(build(), "_app"), { recursive: true });
+      writeFileSync(join(build(), "200.html"), "<!doctype html>");
+      writeFileSync(join(build(), "_app", "start.js"), "export {}");
+      writeFileSync(join(build(), "version.json"), JSON.stringify({ app: "tutors-reader", version, revision: "unknown", built: "unknown", clock: "system" }));
+    };
+    const packed = (_ctx: unknown, version: string) => {
+      packError = "";
+      try {
+        pack(build(), version, out());
+      } catch (error) {
+        packError = String((error as Error).message);
+      }
+    };
+    const cleanUp = () => rmSync(root, { recursive: true, force: true });
+
+    RuleScenario("A static build is packed with a sum that verifies", ({ Given, When, Then, And }) => {
+      Given("a static reader build of version {string}", built);
+      When("it is packed for the release {string}", packed);
+      Then("the release folder holds {string} and {string}", (_ctx: unknown, asset: string, sums: string) => {
+        expect(existsSync(join(out(), asset))).toBe(true);
+        expect(existsSync(join(out(), sums))).toBe(true);
+      });
+      And("the sums verify", () => {
+        expect(verify(out())).toEqual([]);
+        cleanUp();
+      });
+    });
+    RuleScenario("A changed asset fails verification", ({ Given, When, And, Then }) => {
+      Given("a static reader build of version {string}", built);
+      When("it is packed for the release {string}", packed);
+      And("the packed asset is changed afterwards", () => appendFileSync(join(out(), "tutors-reader-static-17.2.0.tar.gz"), "x"));
+      Then("verification names {string}", (_ctx: unknown, problem: string) => {
+        expect(verify(out())).toEqual([problem]);
+        cleanUp();
+      });
+    });
+    RuleScenario("A build of another version is refused", ({ Given, When, Then }) => {
+      Given("a static reader build of version {string}", built);
+      When("it is packed for the release {string}", packed);
+      Then("packing fails, saying it {string}", (_ctx: unknown, message: string) => {
+        expect(packError).toContain(message);
+        cleanUp();
       });
     });
   });
