@@ -6,6 +6,7 @@ import { expect } from "vitest";
 import type { Finding } from "../../../../packages/jsr/course-rules/src/mod.ts";
 import { defaultSpec, writeCourseToFilesystem } from "../../../../packages/jsr/create/src/scaffolder.ts";
 import { runValidate, type ValidateIo } from "../../../../packages/jsr/create/src/validate-cli.ts";
+import { onlyIn } from "../../../support/only-in.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/course-validation-cli.feature");
 
@@ -36,7 +37,7 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
   const run = async (_ctx: unknown, flags = "") => {
     out = "";
     err = "";
-    status = await runValidate([dir, ...flags.split(" ").filter(Boolean)], { out: (t) => (out += t), err: (t) => (err += t), check });
+    status = await runValidate([dir, ...flags.split(" ").filter(Boolean)], { out: (t) => (out += t), err: (t) => (err += t), check, open: onlyIn(() => dir) });
   };
   const runWith = (ctx: unknown, flags: string) => run(ctx, flags);
   const exit = (_ctx: unknown, code: number) => expect(status).toBe(code);

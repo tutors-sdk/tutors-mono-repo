@@ -8,6 +8,7 @@ import { validate, type FileOp } from "../../../../packages/jsr/course-rules/src
 import { diskCourse } from "../../../../packages/jsr/create/src/course-fs.ts";
 import { runRewire } from "../../../../packages/jsr/create/src/rewire-cli.ts";
 import { runValidate } from "../../../../packages/jsr/create/src/validate-cli.ts";
+import { onlyIn } from "../../../support/only-in.ts";
 import { parseCourse } from "../../../../packages/jsr/gen/src/tutors.ts";
 import type { Lo } from "../../../../packages/jsr/model/src/tutors.ts";
 
@@ -54,7 +55,7 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
     out = "";
     err = "";
     const words = command.split(" ").map((word) => (word === '""' ? "" : word));
-    status = await runRewire([...words, "--course", dir], { out: (t) => (out += t), err: (t) => (err += t) });
+    status = await runRewire([...words, "--course", dir], { out: (t) => (out += t), err: (t) => (err += t), open: onlyIn(() => dir) });
   };
   const noErrors = async () => expect((await validate(diskCourse(dir))).filter((finding) => finding.severity === "error")).toEqual([]);
   const errorSays = (_ctx: unknown, text: string) => expect(err).toContain(text);
@@ -78,7 +79,7 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       });
       When("the instructor runs tutors validate on it with {string}", async (_ctx, flags: string) => {
         out = "";
-        status = await runValidate([dir, flags], { out: (t) => (out += t), err: () => {} });
+        status = await runValidate([dir, flags], { out: (t) => (out += t), err: () => {}, open: onlyIn(() => dir) });
       });
       Then("the output shall parse as a JSON array holding a move from {string} to {string}", (_ctx, from: string, to: string) => {
         expect(JSON.parse(out) as FileOp[]).toContainEqual({ op: "move", from, to });
@@ -147,7 +148,7 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       When("the instructor runs tutors rewire {string} with the title {string}", async (_ctx, command: string, title: string) => {
         out = "";
         err = "";
-        status = await runRewire([...command.split(" "), title, "--course", dir], { out: (t) => (out += t), err: (t) => (err += t) });
+        status = await runRewire([...command.split(" "), title, "--course", dir], { out: (t) => (out += t), err: (t) => (err += t), open: onlyIn(() => dir) });
       });
       Then("the talk's page shall keep its front matter and paragraph under the title {string}", (_ctx, heading: string) => {
         expect(readFileSync(join(dir, "topic-01/talk-01-html/talk.md"), "utf8")).toBe(`---\nicon: mdi:web\n---\n\n${heading}\n\nTags and elements.\n`);
