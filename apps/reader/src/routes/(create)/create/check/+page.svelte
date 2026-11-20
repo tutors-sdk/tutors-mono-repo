@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Finding } from "@tutors/course-rules";
-  import Findings from "../Findings.svelte";
+  import Findings from "@tutors/ui-components/validation/Findings.svelte";
   import { checkZip, UnreadableCourseError } from "../check";
 
   let findings = $state<Finding[] | null>(null);

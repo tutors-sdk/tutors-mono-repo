@@ -75,3 +75,21 @@ Feature: Validating a course from the command line
       When the instructor runs tutors validate on it
       Then the error output shall begin "Couldn't read the course folder"
       And the exit status shall be 3
+
+  @rule-0764 @ears-unwanted
+  Rule: If tutors validate prints a text report holding findings that its --fix option can fix, then tutors shall end the report by saying how many and naming tutors validate --fix.
+
+    Courses written before validate ran in every Netlify deploy (mono-repo #591) often fail only on renames, so the
+    deploy log says that one command fixes them.
+
+    @active
+    Scenario: A misnamed week the fix renames
+      Given a generated course with a folder "Week 3" holding a topic
+      When the instructor runs tutors validate on it
+      Then the output shall include "can be fixed for you: run tutors validate --fix."
+
+    @inactive
+    Scenario: A clean course says nothing about fixes
+      Given a generated course
+      When the instructor runs tutors validate on it
+      Then the output shall be "Everything checks out."

@@ -27,15 +27,22 @@ export async function checkQuizzes(tree: CourseTree, read: Read): Promise<Findin
       findings.push(found("V013", node.path, messages.quizNoFile()));
       continue;
     }
-    for (const diagnosis of diagnoseQuiz(await read(page.path))) {
-      if (diagnosis.kind === "no-block") findings.push(found("V013", page.path, messages.quizNoBlock()));
-      else if (diagnosis.kind === "empty-block") findings.push(found("V013", page.path, messages.quizEmpty()));
-      else if (diagnosis.kind === "question") {
-        const { number, excerpt, problem, optionCount, answer } = diagnosis;
-        findings.push(found("V013", page.path, messages.quizQuestion(number, excerpt, problem, optionCount, answer)));
-      } else if (diagnosis.kind === "second-block") findings.push(found("V014", page.path, messages.quizSecondBlock()));
-      else findings.push(found("V014", page.path, messages.quizTimeLimit(diagnosis.value)));
-    }
+    findings.push(...checkQuizText(await read(page.path), page.path));
+  }
+  return findings;
+}
+
+/** Quiz content has the same meaning in a source file and in a published learning object. */
+export function checkQuizText(text: string, path: string): Finding[] {
+  const findings: Finding[] = [];
+  for (const diagnosis of diagnoseQuiz(text)) {
+    if (diagnosis.kind === "no-block") findings.push(found("V013", path, messages.quizNoBlock()));
+    else if (diagnosis.kind === "empty-block") findings.push(found("V013", path, messages.quizEmpty()));
+    else if (diagnosis.kind === "question") {
+      const { number, excerpt, problem, optionCount, answer } = diagnosis;
+      findings.push(found("V013", path, messages.quizQuestion(number, excerpt, problem, optionCount, answer)));
+    } else if (diagnosis.kind === "second-block") findings.push(found("V014", path, messages.quizSecondBlock()));
+    else findings.push(found("V014", path, messages.quizTimeLimit(diagnosis.value)));
   }
   return findings;
 }

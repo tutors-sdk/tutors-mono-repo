@@ -1,6 +1,6 @@
 {
   "name": "@tutors/tutors-create",
-  "version": "5.3.0",
+  "version": "5.4.0",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -9,7 +9,9 @@
     "./generate": "./src/generate.ts",
     "./validate": "./src/validate-cli.ts",
     "./rewire": "./src/rewire-cli.ts",
-    "./import": "./src/import-cli.ts"
+    "./import": "./src/import-cli.ts",
+    "./cli": "./src/cli.ts",
+    "./pattern": "./src/pattern-cli.ts"
   },
   "dependencies": {
     "@tutors/course-rules": "workspace:*"

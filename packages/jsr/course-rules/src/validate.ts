@@ -117,13 +117,19 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
     return;
   }
   const numbers: number[] = [];
+  const strays: string[] = [];
   for (const file of md) {
     const match = STEP.exec(file);
-    if (match === null) findings.push(finding("V004", joinPath(node.path, file), messages.labStepName(file)));
+    if (match === null) strays.push(file);
     else numbers.push(Number(match[1]));
   }
-  if (numbers.length === 0) return;
   const pad = (n: number) => String(n).padStart(2, "0");
+  for (const [file, name] of stepNames(strays, numbers)) {
+    const path = joinPath(node.path, file);
+    const fix: FileOp | undefined = name === undefined ? undefined : { op: "move", from: path, to: joinPath(node.path, name) };
+    findings.push(finding("V004", path, messages.labStepName(file, name), name, fix));
+  }
+  if (numbers.length === 0) return;
   if (numbers[0] > 1) {
     findings.push(finding("V019", node.path, messages.labFirstStep(pad(numbers[0]))));
     return;
@@ -136,8 +142,37 @@ function checkLab(node: CourseNode, md: string[], findings: Finding[]): void {
   }
 }
 
+/**
+ * The step name each misnamed lab page can take. Older courses keep pages such as solutions.md or talk.md in a lab; the
+ * generator shows each as a step whose id and address are empty. A name that already starts with a free number
+ * ("1-Setup.md", "02 Deploy.md") keeps it; any other page becomes the step after the last, in name order, so the lab
+ * reads as before with the page at its end. No name is offered when the title would be empty or the steps run past 99.
+ */
+function stepNames(strays: readonly string[], numbers: readonly number[]): [string, string | undefined][] {
+  const taken = new Set(numbers);
+  const named: [string, string | undefined][] = [];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const later: [string, string][] = [];
+  for (const file of [...strays].sort()) {
+    const base = file.slice(0, -".md".length);
+    const numbered = /^(\d{1,2})[\s._-]+(.*)$/.exec(base);
+    const title = (numbered ? numbered[2] : base).replace(/^[\s._-]+|[\s.]+$/g, "");
+    if (title === "") named.push([file, undefined]);
+    else if (numbered && !taken.has(Number(numbered[1]))) {
+      taken.add(Number(numbered[1]));
+      named.push([file, `${pad(Number(numbered[1]))}.${title}.md`]);
+    } else later.push([file, title]);
+  }
+  let next = Math.max(0, ...taken) + 1;
+  for (const [file, title] of later) {
+    named.push([file, next > 99 ? undefined : `${pad(next)}.${title}.md`]);
+    next++;
+  }
+  return named;
+}
+
 const linkFiles: Record<string, { file: string; valid: (line: string) => boolean }> = {
-  web: { file: "weburl", valid: (line) => /^https?:\/\/\S+$/.test(line) },
+  web: { file: "weburl", valid: (line) => /^https?:\/\/\S+$/.test(line) || /^\/(?!\/)\S+$/.test(line) },
   github: { file: "githubid", valid: (line) => /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/?$/.test(line) || /^[\w.-]+\/[\w.-]+$/.test(line) }
 };
 
@@ -174,21 +209,42 @@ const isWeek = (week: unknown) => {
   const keys = Object.keys(week);
   return keys.length === 1 && isMap(week[keys[0]]);
 };
-const listOf = (value: unknown, each: (item: unknown) => boolean) => value === undefined || value === null || (Array.isArray(value) && value.every(each));
 const isText = (item: unknown) => typeof item === "string";
 const isStudent = (item: unknown) => isMap(item) && typeof item.name === "string" && typeof item.id === "string";
-/** The enrollment the reader accepts: educators and whitelist are lists of logins, students a list of name and id. */
-const isEnrollment = (value: unknown) =>
-  value === null || value === undefined || (isMap(value) && listOf(value.educators, isText) && listOf(value.whitelist, isText) && listOf(value.students, isStudent));
 const yamlShapes: Record<string, Shape> = {
   "properties.yaml": { expected: "a list of name: value lines", ok: emptyOrMap },
   "calendar.yaml": {
     expected: "a title and a list of weeks (weeks:, then one - date: line per week)",
     ok: (value) => isMap(value) && Array.isArray(value.weeks) && value.weeks.every(isWeek)
   },
-  "enrollment.yaml": { expected: "lists named educators and whitelist (GitHub logins) or students (each a name and an id), or nothing at all", ok: isEnrollment },
+  "enrollment.yaml": { expected: "lists named educators and whitelist (GitHub logins) or students (each a name and an id), or nothing at all", ok: emptyOrMap },
   "badges.yaml": { expected: "a list of name: value lines", ok: emptyOrMap }
 };
+
+/** The same metadata checks apply to source YAML and the values published in tutors.json. */
+export function checkMetadata(file: string, value: unknown): Finding[] {
+  if (file === "enrollment.yaml" && isMap(value)) {
+    const findings: Finding[] = [];
+    const report = (field: string, detail: string) => findings.push(finding("V006", file, `${file}: ${field} ${detail}`));
+    if ("enrollment" in value) report("enrollment", "is nested inside another enrollment block. Start the file with educators:, whitelist:, or students: directly.");
+    for (const field of ["educators", "whitelist", "students"]) {
+      const list = value[field];
+      if (list === undefined) continue;
+      if (!Array.isArray(list)) {
+        report(field, "must be a list. Use [] for an empty list, or remove the field when it is unused.");
+        continue;
+      }
+      list.forEach((entry, index) => {
+        if (field === "students") {
+          if (!isStudent(entry)) report(`${field}[${index}]`, "must contain both name and id as text. For example: {name: Alice, id: alice}. Use id for the GitHub login, not github.");
+        } else if (!isText(entry)) report(`${field}[${index}]`, "must be a GitHub login written as text. Quote a numeric-looking login.");
+      });
+    }
+    return findings;
+  }
+  const shape = yamlShapes[file];
+  return shape && !shape.ok(value) ? [finding("V006", file, messages.yamlShape(file, shape.expected))] : [];
+}
 
 /** V006: the course-root YAML files parse and have the shape the generator reads. */
 async function checkYaml(tree: CourseTree, read: (path: string) => Promise<string>): Promise<Finding[]> {
@@ -204,7 +260,7 @@ async function checkYaml(tree: CourseTree, read: (path: string) => Promise<strin
       findings.push(finding("V006", file.path, messages.yamlBroken(file.name, detail)));
       continue;
     }
-    if (!shape.ok(value)) findings.push(finding("V006", file.path, messages.yamlShape(file.name, shape.expected)));
+    findings.push(...checkMetadata(file.name, value));
   }
   return findings;
 }

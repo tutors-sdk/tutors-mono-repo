@@ -241,6 +241,7 @@ describe("V001-V006 corners", () => {
   it("V005 accepts a web address and both GitHub forms, reads only the first line, and tolerates CRLF", async () => {
     expect(await found({ "web-1/w.md": "", "web-1/weburl": "https://example.com/x\r\nignored" })).toEqual([]);
     expect(await found({ "web-1/w.md": "", "web-1/weburl": "http://example.com" })).toEqual([]);
+    expect(await found({ "web-1/w.md": "", "web-1/weburl": "/course/edeleastar-portfolio-web-dev-1" })).toEqual([]);
     expect(await found({ "web-1/w.md": "", "web-1/weburl": "example.com" })).toEqual(["V005 web-1/weburl"]);
     expect(await found({ "web-1/w.md": "", "web-1/weburl": "https://a b" })).toEqual(["V005 web-1/weburl"]);
     expect(await found({ "github-1/g.md": "", "github-1/githubid": "https://github.com/tutors-sdk/tutors/" })).toEqual([]);
@@ -254,7 +255,7 @@ describe("V001-V006 corners", () => {
 
   it("V006 holds enrollment to the lists the reader accepts", async () => {
     expect(await found({ "enrollment.yaml": "educators: [alice]\nwhitelist: [bob]\nstudents:\n  - {name: Cat, id: cat1}\n" })).toEqual([]);
-    expect(await found({ "enrollment.yaml": "educators:\nstudents: []\n" })).toEqual([]);
+    expect(await found({ "enrollment.yaml": "educators:\nstudents: []\n" })).toEqual(["V006 enrollment.yaml"]);
     expect(await found({ "enrollment.yaml": "educators: alice\n" })).toEqual(["V006 enrollment.yaml"]);
     expect(await found({ "enrollment.yaml": "whitelist: [1234]\n" })).toEqual(["V006 enrollment.yaml"]);
     expect(await found({ "enrollment.yaml": "students: [cat]\n" })).toEqual(["V006 enrollment.yaml"]);
@@ -298,9 +299,9 @@ describe("findings", () => {
     expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.pdf": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
   });
 
-  it("carry the catalogue's severity, and the catalogue lists V001-V019 once each, in id order", async () => {
-    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 19 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
-    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn", "warn"]);
+  it("carry the catalogue's severity, and the catalogue lists V001-V020 once each, in id order", async () => {
+    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 20 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
+    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn", "warn", "error"]);
     expect((await errorsOf(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
   });
 

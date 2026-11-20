@@ -109,7 +109,7 @@ describe("the sources that read build identity", () => {
 
   it.each(APPS)("%s takes its SvelteKit config from the shared helper", (app) => {
     const config = readText(join(REPO_ROOT, "apps", app, "vite.config.ts"));
-    expect(config).toContain("from '@tutors/app-config/vite'");
+    expect(config).toMatch(/from ["']@tutors\/app-config\/vite["']/);
     expect(config).not.toMatch(/\bkit\s*:/);
   });
 

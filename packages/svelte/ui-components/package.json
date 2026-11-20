@@ -17,7 +17,8 @@
     "./learning-objects/content/*": "./src/learning-objects/content/*",
     "./learning-objects/structure/*": "./src/learning-objects/structure/*",
     "./time/*": "./src/time/*",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./validation/*": "./src/validation/*"
   },
   "scripts": {
     "build": "svelte-package -i src -o dist && vite build --config vite.config.ts",
@@ -48,7 +49,8 @@
     "file-saver": "^2.0.5",
     "jheat.js": "^5.2.0",
     "pdfjs-dist": "^6.4.299",
-    "@tutors/data-api": "workspace:*"
+    "@tutors/data-api": "workspace:*",
+    "@tutors/course-rules": "workspace:*"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "^5.0.0",

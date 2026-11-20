@@ -1,4 +1,5 @@
 const de: Record<string, string> = {
+  "home.validator": "Kursprüfung",
   "lecturer.enrollment.export": "enrollment.yaml exportieren",
   "lecturer.enrollment.exporting": "Wird exportiert…",
   "lecturer.enrollment.exportHelp": "Erfasste Kursbesucher zur vorhandenen Liste hinzufügen. Prüfen Sie den Entwurf, bevor Sie den Zugang beschränken.",

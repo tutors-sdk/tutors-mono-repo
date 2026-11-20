@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./course": "./src/course/index.ts",
-    "./markdown": "./src/markdown/index.ts"
+    "./markdown": "./src/markdown/index.ts",
+    "./validation": "./src/validation/check.ts"
   },
   "dependencies": {
     "@marp-team/marp-core": "^4.3.1",
@@ -17,7 +18,9 @@
     "@tutors/themes": "workspace:*",
     "@tutors/tutors-model-lib": "workspace:*",
     "mermaid": "^12.2.0",
-    "shiki": "^4.5.0"
+    "shiki": "^4.5.0",
+    "@tutors/course-rules": "workspace:*",
+    "fflate": "^0.8.3"
   },
   "peerDependencies": {
     "@sveltejs/kit": "^3.0.1",

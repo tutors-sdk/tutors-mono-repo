@@ -2,7 +2,7 @@
   import type { Finding } from "@tutors/course-rules";
   import type { GeneratedFile } from "@tutors/tutors-create/generate";
   import FileTree from "./FileTree.svelte";
-  import Findings from "./Findings.svelte";
+  import Findings from "@tutors/ui-components/validation/Findings.svelte";
 
   type Props = {
     files: GeneratedFile[];

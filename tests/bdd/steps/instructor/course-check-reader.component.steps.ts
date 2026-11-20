@@ -2,7 +2,7 @@ import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { strToU8, zipSync } from "fflate";
 import { flushSync, mount, tick, unmount } from "svelte";
 import { expect } from "vitest";
-import Findings from "../../../../apps/reader/src/routes/(create)/create/Findings.svelte";
+import Findings from "../../../../packages/svelte/ui-components/src/validation/Findings.svelte";
 import PreviewStep from "../../../../apps/reader/src/routes/(create)/create/PreviewStep.svelte";
 import CheckPage from "../../../../apps/reader/src/routes/(create)/create/check/+page.svelte";
 import { checkGeneratedFiles, checkZip } from "../../../../apps/reader/src/routes/(create)/create/check.ts";

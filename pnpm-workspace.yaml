@@ -57,5 +57,8 @@ overrides:
   katex@>=0.11.0 <0.18.2: ">=0.18.2 <0.19"
   # GHSA-rj75-hqrm-r3gf (eslint-plugin-svelte, @marp-team/marpit > postcss-selector-parser).
   postcss-selector-parser@<7.1.6: ">=7.1.6 <8"
+  # GHSA-g3hv-75wg-m249 (eslint, stryker, ts-morph, archiver > minimatch; dev only). The fix is
+  # in the next major; 11 keeps the minimatch(), Minimatch and braceExpand surface these use.
+  minimatch@>=7.0.0 <11.0.1: ">=11.0.1 <12"
 patchedDependencies:
   '@stryker-mutator/vitest-runner@10.0.0': patches/@stryker-mutator__vitest-runner@10.0.0.patch

@@ -1,12 +1,15 @@
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
-import { proposeShape, validate, type ImportFile, type ShapeProposal } from "@tutors/course-rules";
+import { type ImportFile, proposeShape, type ShapeProposal, validate } from "@tutors/course-rules";
+import { ArchiveError } from "./archive.ts";
+import { archiveKind, unpackCourseArchive } from "./course-archive.ts";
 import { diskCourse } from "./course-fs.ts";
-import { importLayout, type ImportLayout } from "./import-course.ts";
+import { type ImportLayout, importLayout } from "./import-course.ts";
 import { CourseDirectoryExistsError } from "./scaffolder.ts";
-import { defaultSpec, slugify, type CourseSpec } from "./types.ts";
+import { type CourseSpec, defaultSpec, slugify } from "./types.ts";
 
-export const importUsage = "Usage: tutors import <folder> --name <course name> [--start YYYY-MM-DD] [--lecturer <name>] [--out <folder>]\n";
+export const importUsage = "Usage: tutors import <folder | course.mbz | course.imscc> --name <course name> [--start YYYY-MM-DD] [--lecturer <name>] [--out <folder>]\n";
 
 export interface ImportArgs {
   source: string;
@@ -22,7 +25,7 @@ export function parseImportArgs(args: readonly string[]): ImportArgs | string {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (!arg.startsWith("--")) {
-      if (source !== undefined) return `Give one folder to import, not two. ${importUsage}`;
+      if (source !== undefined) return `Give one folder or course export to import, not two. ${importUsage}`;
       source = arg;
       continue;
     }
@@ -61,6 +64,22 @@ export function readImportFolder(root: string): ImportFile[] {
   return files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
 }
 
+/**
+ * A Moodle backup or Common Cartridge unpacked as a folder of material in a new temporary folder (issue #611),
+ * which the caller removes. Throws ArchiveError for an export tutors can't read.
+ */
+export function unpackToFolder(file: string): string {
+  const kind = archiveKind(file);
+  if (kind === null) throw new ArchiveError(`${file} isn't a Moodle backup (.mbz) or a Common Cartridge (.imscc).`);
+  const files = unpackCourseArchive(kind, new Uint8Array(fs.readFileSync(file)));
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "tutors-unpacked-"));
+  for (const [relative, bytes] of files) {
+    fs.mkdirSync(path.dirname(path.join(folder, relative)), { recursive: true });
+    fs.writeFileSync(path.join(folder, relative), bytes);
+  }
+  return folder;
+}
+
 /** Writes a laid-out course into a folder that must not exist yet, so nothing of the lecturer's is ever overwritten. */
 export function writeImport(layout: ImportLayout, source: string, courseDir: string): void {
   fs.mkdirSync(path.dirname(courseDir), { recursive: true });
@@ -91,7 +110,7 @@ export function importSummary(courseDir: string, proposal: ShapeProposal, errors
   lines.push(
     errors === 0
       ? "The course validates clean. Run tutors validate after you place the rest."
-      : `tutors validate found ${errors} error${errors === 1 ? "" : "s"}; run it in ${courseDir} to see them.`
+      : `tutors validate found ${errors} error${errors === 1 ? "" : "s"}; run it in ${courseDir} to see them.`,
   );
   return lines.join("\n") + "\n";
 }
@@ -107,20 +126,28 @@ export async function runImport(args: readonly string[], io: { out: (t: string) 
     io.err(parsed);
     return 1;
   }
-  let proposal: ShapeProposal;
+  let source = parsed.source;
   try {
-    proposal = proposeShape(readImportFolder(parsed.source));
+    // A course export is read from its own folder of material, removed again once the course is written (issue #611).
+    if (archiveKind(source) !== null && fs.statSync(source).isFile()) source = unpackToFolder(source);
+    return await importFrom(source, parsed, io);
   } catch (error) {
     io.err(`Couldn't read ${parsed.source}: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
+  } finally {
+    if (source !== parsed.source) fs.rmSync(source, { recursive: true, force: true });
   }
+}
+
+async function importFrom(source: string, parsed: ImportArgs, io: { out: (t: string) => void; err: (t: string) => void }): Promise<number> {
+  const proposal: ShapeProposal = proposeShape(readImportFolder(source));
   if (proposal.topics.length === 0) {
     io.err(`Nothing in ${parsed.source} names a week (like Week01.pdf or Lecture 3.pdf), so there is no course to propose.\n`);
     return 1;
   }
   const courseDir = path.join(parsed.outputDir, parsed.spec.courseId);
   try {
-    writeImport(importLayout(parsed.spec, proposal, parsed.start === undefined ? {} : { start: parsed.start }), parsed.source, courseDir);
+    writeImport(importLayout(parsed.spec, proposal, parsed.start === undefined ? {} : { start: parsed.start }), source, courseDir);
   } catch (error) {
     io.err(error instanceof CourseDirectoryExistsError ? `${error.message}\n` : `Could not create the course: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;

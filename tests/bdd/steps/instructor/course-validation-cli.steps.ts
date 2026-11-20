@@ -67,22 +67,25 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
     }
   );
 
-  Rule("Where the format json is chosen for tutors validate, tutors shall print the findings as a JSON array of objects carrying rule, severity, path and message.", ({ RuleScenario }) => {
-    RuleScenario("JSON for Studio and CI", ({ Given, When, Then }) => {
-      Given("a generated course with a folder {string} holding a topic", withWeek3);
-      When("the instructor runs tutors validate on it with {string}", runWith);
-      Then("the output shall parse as a JSON array whose first item has rule {string} and path {string}", (_ctx, rule: string, path: string) => {
-        const findings = JSON.parse(out) as Finding[];
-        expect(findings[0]).toMatchObject({ rule, path, severity: "error" });
-        expect(typeof findings[0].message).toBe("string");
+  Rule(
+    "Where the format json is chosen for tutors validate, tutors shall print the findings as a JSON array of objects carrying rule, severity, path and message.",
+    ({ RuleScenario }) => {
+      RuleScenario("JSON for Studio and CI", ({ Given, When, Then }) => {
+        Given("a generated course with a folder {string} holding a topic", withWeek3);
+        When("the instructor runs tutors validate on it with {string}", runWith);
+        Then("the output shall parse as a JSON array whose first item has rule {string} and path {string}", (_ctx, rule: string, path: string) => {
+          const findings = JSON.parse(out) as Finding[];
+          expect(findings[0]).toMatchObject({ rule, path, severity: "error" });
+          expect(typeof findings[0].message).toBe("string");
+        });
       });
-    });
-    RuleScenario("Text when no format is chosen", ({ Given, When, Then }) => {
-      Given("a generated course with a folder {string} holding a topic", withWeek3);
-      When("the instructor runs tutors validate on it", run);
-      Then("the output shall not parse as JSON", () => expect(parsesAsJson(out)).toBe(false));
-    });
-  });
+      RuleScenario("Text when no format is chosen", ({ Given, When, Then }) => {
+        Given("a generated course with a folder {string} holding a topic", withWeek3);
+        When("the instructor runs tutors validate on it", run);
+        Then("the output shall not parse as JSON", () => expect(parsesAsJson(out)).toBe(false));
+      });
+    }
+  );
 
   Rule(
     "Where the format sarif is chosen for tutors validate, tutors shall print a SARIF 2.1.0 log with one result per finding, located at the file or folder at fault.",
@@ -133,4 +136,20 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       And("the exit status shall be {int}", exit);
     });
   });
+
+  Rule(
+    "If tutors validate prints a text report holding findings that its --fix option can fix, then tutors shall end the report by saying how many and naming tutors validate --fix.",
+    ({ RuleScenario }) => {
+      RuleScenario("A misnamed week the fix renames", ({ Given, When, Then }) => {
+        Given("a generated course with a folder {string} holding a topic", withWeek3);
+        When("the instructor runs tutors validate on it", run);
+        Then("the output shall include {string}", (_ctx, text: string) => expect(out.trimEnd().endsWith(text)).toBe(true));
+      });
+      RuleScenario("A clean course says nothing about fixes", ({ Given, When, Then }) => {
+        Given("a generated course", generated);
+        When("the instructor runs tutors validate on it", run);
+        Then("the output shall be {string}", (_ctx, text: string) => expect(out).toBe(`${text}\n`));
+      });
+    }
+  );
 });

@@ -2,10 +2,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { parseCourse, readCourseTree, type CourseTree } from "../../../packages/jsr/gen/src/tutors.ts";
+import { parseCourse } from "../../../packages/jsr/gen/src/tutors.ts";
+import { droppedByGen } from "../../../scripts/checks/lib/gen-dropped.ts";
 import { MemoryFileSystem, validate } from "../../../packages/jsr/course-rules/src/mod.ts";
 import { VALIDATE_RULES, validateFixture } from "../../support/validate-fixtures.ts";
-import { imageTypes, type Lo } from "../../../packages/jsr/model/src/tutors.ts";
+import type { Lo } from "../../../packages/jsr/model/src/tutors.ts";
 import { isMarpContent } from "../../../packages/jsr/gen/src/services/marp-renderer.ts";
 
 /**
@@ -25,29 +26,6 @@ function onDisk(files: Record<string, string>): string {
     writeFileSync(join(root, path), contents);
   }
   return root;
-}
-
-const onlyImages = (tree: CourseTree): boolean =>
-  tree.files.every((file) => imageTypes.includes(file.slice(file.lastIndexOf(".") + 1).toLowerCase())) && tree.lrs.every(onlyImages);
-
-/** Top-most folders under the root that the generator built no learning object for, and which hold more than images. */
-function droppedByGen(root: string): string[] {
-  const tree = readCourseTree(root);
-  const [course] = parseCourse(root, true);
-  const dropped: string[] = [];
-  const visit = (folder: CourseTree, lo: Lo) => {
-    // A lab's, note's or talk's own subfolders (assets/, img/) build no learning object, yet gen types them
-    // as their parent, keeps them and copies their files: they are resources, not dropped content.
-    if (!["course", "unit", "side", "topic"].includes(lo.type)) return;
-    const built = new Map(((lo as { los?: Lo[] }).los ?? []).map((child) => [child.id, child]));
-    for (const child of folder.lrs) {
-      const childLo = built.get(child.id);
-      if (childLo) visit(child, childLo);
-      else if (!onlyImages(child)) dropped.push(child.route.slice(root.length + 1));
-    }
-  };
-  visit(tree, course);
-  return dropped.sort();
 }
 
 describe("V002 and V018 conform to the generator", () => {

@@ -46,6 +46,7 @@ import {
 } from "./generator-compare.ts";
 import { REPO_ROOT } from "./lib/repo.ts";
 import { tutorsJsonErrors } from "./lib/tutors-json.ts";
+import { moduleText as ventoModuleText, readVentoTemplates } from "../generate-vento-templates.ts";
 
 // Outside tests/ so Vitest never collects the materialised generator trees.
 const WORK = join(REPO_ROOT, ".generator-diff");
@@ -156,6 +157,10 @@ function materialiseCandidate(plant: boolean): string {
       if (!text.includes(from)) throw new Error(`plant target not found in ${file}: ${from}. Update PLANTS.`);
       writeFileSync(path, text.replace(from, to));
     }
+    // A planted template change is what a developer commits after `pnpm generate:vento-templates`:
+    // tutors-lite renders from the bundled module, so regenerate it from the planted .vto files.
+    const gen = join(dir, "packages/jsr/gen/src/templates");
+    writeFileSync(join(gen, "vento-templates.ts"), ventoModuleText(readVentoTemplates(join(gen, "vento"))));
   }
   return dir;
 }
@@ -235,9 +240,11 @@ function assertConforms(file: string, label: string) {
 }
 
 /**
- * tutors-lite falls back to downloading templates from GitHub main when it
- * cannot find the local ones. Rendered that way, both sides use main's
- * templates and a template change is invisible, so treat it as a failure.
+ * tutors-lite must render with the tree's own templates. Base refs from before
+ * Rule 0693 fell back to downloading them from GitHub main; rendered that way,
+ * both sides use main's templates and a template change is invisible, so treat
+ * it as a failure. On newer trees it also catches a bundled module
+ * (vento-templates.ts) that was not regenerated after a .vto change.
  */
 function assertLocalTemplates(tree: string, snapshot: Snapshot, label: string) {
   const expected = snapshotDirectory(join(tree, "packages/jsr/gen/src/templates/vento"));
