@@ -1,6 +1,7 @@
 import process from "node:process";
 import { runValidate } from "@tutors/tutors-create/validate";
 import { runImport } from "@tutors/tutors-create/import";
+import { runRewire } from "@tutors/tutors-create/rewire";
 import { runPatternCreate } from "@tutors/tutors-create/pattern";
 import { runCli } from "@tutors/tutors-create/cli";
 import { commandFor, usage } from "./src/commands.ts";
@@ -23,6 +24,9 @@ switch (command.kind) {
     break;
   case "import":
     Deno.exitCode = await runImport(command.args, io);
+    break;
+  case "rewire":
+    Deno.exitCode = await runRewire(command.args, io);
     break;
   case "create":
     if (command.args.some((arg) => arg === "--pattern" || arg.startsWith("--pattern="))) Deno.exitCode = runPatternCreate(command.args, io);
