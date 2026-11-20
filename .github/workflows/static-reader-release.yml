@@ -1,0 +1,79 @@
+name: Static reader release asset
+
+# Rule 0776 (issue #601): every Tutors release carries the reader as static files,
+# tutors-reader-static-X.Y.Z.tar.gz with a SHA256SUMS, built from the tag with SVELTEKIT_ADAPTER=static and
+# PUBLIC_ANON_MODE=TRUE (Rules 0770 to 0773). Tutors Studio bundles it (tutors-sdk/tutors-studio,
+# tutors-bundle.json), downloading it with `gh release download` and checking the sum.
+#
+# A final release published on github.com starts this workflow. A candidate's prerelease is made by
+# release-dispatch.yml with GITHUB_TOKEN, which starts no workflow, so release-dispatch.yml calls this one.
+
+on:
+  release:
+    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: An existing release tag, e.g. v17.2.0
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  asset:
+    name: Build and attach the static reader
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # upload the asset to the release
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      # No dependency cache: this publishes.
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the reader as static files
+        run: |
+          cp .env.example .env
+          GIT_SHA="$(git rev-parse HEAD)" BUILD_DATE="$(git log -1 --format=%cI)" pnpm --filter "tutors-reader..." build
+        env:
+          SVELTEKIT_ADAPTER: static
+          PUBLIC_ANON_MODE: "TRUE"
+
+      - name: Pack, verify and attach
+        run: |
+          version="$(node -p "require('./apps/reader/package.json').version")"
+          node scripts/release/static-reader-asset.mjs pack apps/reader/build "$version" dist
+          node scripts/release/static-reader-asset.mjs verify dist
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          {
+            echo "## Static reader"
+            echo ""
+            echo "Attached to $TAG:"
+            echo ""
+            sed 's/^/    /' dist/SHA256SUMS
+          } >> "$GITHUB_STEP_SUMMARY"

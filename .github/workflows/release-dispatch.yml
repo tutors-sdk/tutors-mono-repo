@@ -336,6 +336,18 @@ jobs:
           echo "Rules: $url" >> "$GITHUB_STEP_SUMMARY"
           cat changelog.md >> "$GITHUB_STEP_SUMMARY"
 
+  # Rule 0776: the candidate's prerelease carries the static reader too, for Tutors Studio. The prerelease was
+  # made with GITHUB_TOKEN, which starts no workflow, so it is called here. The harness dispatch does not wait for it.
+  static-reader:
+    name: Attach the static reader
+    needs: [candidate, rules]
+    if: needs.candidate.outputs.ready == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/static-reader-release.yml
+    with:
+      tag: v${{ needs.candidate.outputs.candidate }}
+
   dispatch:
     name: Dispatch the release harness
     needs: [candidate, images, rules]
