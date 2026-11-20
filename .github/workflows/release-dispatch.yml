@@ -348,6 +348,19 @@ jobs:
     with:
       tag: v${{ needs.candidate.outputs.candidate }}
 
+  # Rule 0778: the candidate's prerelease carries the compiled tutors program, for Tutors Studio. The prerelease
+  # was made with GITHUB_TOKEN, which starts no workflow, so it is called here. The harness dispatch does not
+  # wait for it.
+  tutors-cli:
+    name: Attach the tutors program
+    needs: [candidate, rules]
+    if: needs.candidate.outputs.ready == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/tutors-cli-release.yml
+    with:
+      tag: v${{ needs.candidate.outputs.candidate }}
+
   dispatch:
     name: Dispatch the release harness
     needs: [candidate, images, rules]

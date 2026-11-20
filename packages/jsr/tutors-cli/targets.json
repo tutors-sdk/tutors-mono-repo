@@ -1,0 +1,6 @@
+{
+  "x86_64-pc-windows-msvc": "tutors-x86_64-pc-windows-msvc.exe",
+  "aarch64-apple-darwin": "tutors-aarch64-apple-darwin",
+  "x86_64-apple-darwin": "tutors-x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu": "tutors-x86_64-unknown-linux-gnu"
+}

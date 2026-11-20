@@ -1,0 +1,69 @@
+name: tutors program release assets
+
+# Rule 0778 (issue #603): every Tutors release carries the one `tutors` program (packages/jsr/tutors-cli),
+# compiled with `deno compile` from the tag for each target in packages/jsr/tutors-cli/targets.json, with a
+# SHA256SUMS. Windows x64 first: Tutors Studio bundles it as its tools sidecar. deno compile cross-compiles, so
+# one Linux runner builds every target.
+#
+# A final release published on github.com starts this workflow; release-dispatch.yml calls it for the
+# candidate's prerelease, which GITHUB_TOKEN made and so starts no workflow.
+
+on:
+  release:
+    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: An existing release tag, e.g. v17.2.0
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  compile:
+    name: Compile and attach the tutors program
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # upload the assets to the release
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version-file: .dvmrc
+
+      - name: Compile for every target
+        working-directory: packages/jsr/tutors-cli
+        run: |
+          mkdir -p dist
+          for target in $(jq -r 'keys[]' targets.json); do
+            name="$(jq -r --arg t "$target" '.[$t]' targets.json)"
+            deno compile -A --no-check --target "$target" --output "dist/$name" main.ts
+          done
+          ./dist/tutors-x86_64-unknown-linux-gnu --version
+          (cd dist && sha256sum -- * > SHA256SUMS && sha256sum -c SHA256SUMS)
+
+      - name: Attach to the release
+        run: |
+          gh release upload "$TAG" packages/jsr/tutors-cli/dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          {
+            echo "## tutors program"
+            echo ""
+            sed 's/^/    /' packages/jsr/tutors-cli/dist/SHA256SUMS
+          } >> "$GITHUB_STEP_SUMMARY"
