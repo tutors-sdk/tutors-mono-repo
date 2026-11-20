@@ -1,0 +1,85 @@
+name: Publish to JSR
+
+# Rule 0775 (issue #602): when a Tutors release is published, every library in packages/jsr whose deno.json
+# version JSR does not serve yet is published, each before the libraries that import it
+# (scripts/release/jsr-publish.mjs plan). That is how @tutors/course-rules and @tutors/tutors-create with
+# `validate` reach JSR, which Tutors Studio and netlify.toml's `tutors-create validate` need.
+#
+# deno publish authenticates with GitHub's OIDC token, so no JSR token is stored, and JSR records Sigstore
+# provenance. Each package must be linked to this repository in its settings on jsr.io once.
+# When release-please (#472) lands, its publish step can take this over: its config then needs
+# packages/jsr/course-rules listed before packages/jsr/create.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: jsr-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish what JSR lacks
+    # Final app releases only (vX.Y.Z); a candidate's prerelease publishes nothing.
+    if: github.event_name == 'workflow_dispatch' || (startsWith(github.event.release.tag_name, 'v') && !github.event.release.prerelease)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # JSR's OIDC publish and Sigstore provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version-file: .dvmrc
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Plan
+        run: |
+          node scripts/release/jsr-publish.mjs plan | tee "$RUNNER_TEMP/plan.tsv"
+          {
+            echo "## JSR publish"
+            echo ""
+            if [ -s "$RUNNER_TEMP/plan.tsv" ]; then
+              cut -f2 "$RUNNER_TEMP/plan.tsv" | sed 's/^/- /'
+            else
+              echo "JSR already has every version; nothing to publish."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # --no-check: the model lib does not type-check under Deno's markdown-it types (as in ci.yml's CLI tests);
+      # deno run, how these ship, never type-checks either. The slow-types check still runs.
+      - name: Dry run, then publish, in order
+        run: |
+          while IFS=$'\t' read -r path spec; do
+            echo "::group::$spec"
+            (cd "$path" && deno publish --dry-run --no-check && deno publish --no-check)
+            echo "::endgroup::"
+          done < "$RUNNER_TEMP/plan.tsv"
+
+      - name: Resolve each from the registry
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir canary && cd canary
+          while IFS=$'\t' read -r path spec; do
+            for _ in $(seq 1 30); do
+              deno cache --no-config --reload "jsr:$spec" && continue 2
+              sleep 10
+            done
+            echo "::error title=JSR::jsr:$spec does not resolve from the registry"
+            exit 1
+          done < "$RUNNER_TEMP/plan.tsv"
