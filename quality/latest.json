@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "commit": "b1e19afe5af58124dd398b08c957e265ded3e344",
   "base": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
-  "generatedAt": "2026-11-22T12:09:25Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45015101700",
+  "generatedAt": "2026-11-23T13:05:49Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45171693992",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -31,7 +31,7 @@
     },
     {
       "name": "@tutors/course-rules",
-      "mutationScore": 98.82,
+      "mutationScore": 98.91,
       "changed": true,
       "path": "packages/jsr/course-rules"
     },
@@ -121,7 +121,7 @@
     },
     {
       "name": "@tutors/tutors-create",
-      "mutationScore": 89.52,
+      "mutationScore": 89.29,
       "changed": true,
       "path": "packages/jsr/create"
     },
