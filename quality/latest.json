@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "commit": "b1e19afe5af58124dd398b08c957e265ded3e344",
   "base": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
-  "generatedAt": "2026-11-23T13:39:07Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45173519337",
+  "generatedAt": "2026-11-24T14:47:55Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45404022199",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -121,13 +121,13 @@
     },
     {
       "name": "@tutors/tutors-create",
-      "mutationScore": 89.52,
+      "mutationScore": 89.37,
       "changed": true,
       "path": "packages/jsr/create"
     },
     {
       "name": "@tutors/tutors-model-lib",
-      "mutationScore": 91.08,
+      "mutationScore": 90.95,
       "changed": false,
       "path": "packages/jsr/model"
     },
