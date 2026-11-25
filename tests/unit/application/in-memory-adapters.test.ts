@@ -6,9 +6,7 @@ import {
   FixedClock,
   FixedSession,
   InMemoryAssignmentSource,
-  InMemoryCourseEmitter,
   InMemoryCourseSource,
-  InMemoryLearningRecords,
   PassThroughRenderer,
   RecordingIdentityClient
 } from "@tutors/application/testing";
@@ -36,13 +34,6 @@ describe("the in-memory adapters behind every port", () => {
     expect(source.loads.map((l) => l.courseId)).toEqual(["cs101", "cs102", "cs103"]);
   });
 
-  it("InMemoryCourseEmitter remembers each course and its destination", async () => {
-    const emitter = new InMemoryCourseEmitter();
-    const course = { courseId: "cs101" } as Course;
-    await emitter.emit(course, "/tmp/out");
-    expect(emitter.emitted).toEqual([{ course, destination: "/tmp/out" }]);
-  });
-
   it("PassThroughRenderer wraps markdown, spots maths and counts maths loads", async () => {
     const renderer = new PassThroughRenderer();
     const lo = { contentMd: "# Hi", summary: "*sum*" } as Lo;
@@ -53,27 +44,6 @@ describe("the in-memory adapters behind every port", () => {
     expect(renderer.mayContainMath("plain")).toBe(false);
     await renderer.loadMath();
     expect(renderer.mathLoads).toBe(1);
-  });
-
-  it("InMemoryLearningRecords filters calendar entries, records and learners by course", async () => {
-    const records = new InMemoryLearningRecords(
-      [
-        { id: "2026-01-04", courseid: "cs101", studentid: "ann", pageloads: 1, duration: 1 },
-        { id: "2026-01-06", courseid: "cs101", studentid: "ann", pageloads: 1, duration: 1 },
-        { id: "2026-01-05", courseid: "cs102", studentid: "ann", pageloads: 1, duration: 1 }
-      ] as never,
-      [
-        { course_id: "cs101", student_id: "ann", lo_id: "/topic/1" },
-        { course_id: "cs101", student_id: "bob", lo_id: "/topic/1" },
-        { course_id: "cs102", student_id: "cat", lo_id: "/topic/1" }
-      ] as never,
-      [{ github_id: "ann" }, { github_id: "bob" }, { github_id: "cat" }] as never
-    );
-    expect((await records.calendarEntries("cs101")).map((e) => e.id)).toEqual(["2026-01-04", "2026-01-06"]);
-    expect((await records.calendarEntries("cs101", "2026-01-05", "2026-01-31")).map((e) => e.id)).toEqual(["2026-01-06"]);
-    expect((await records.learningRecords("cs101")).map((r) => r.student_id)).toEqual(["ann", "bob"]);
-    expect((await records.learningRecords("cs101", "bob")).map((r) => r.student_id)).toEqual(["bob"]);
-    expect((await records.learners("cs101")).map((u) => u.github_id)).toEqual(["ann", "bob"]);
   });
 
   it("FixedSession answers with its actor, or nobody", async () => {

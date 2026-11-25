@@ -3,7 +3,12 @@
  * Builds the E2E fixture course with the repo's own scaffolder and generator,
  * so the journeys never depend on GitHub or Netlify.
  *
- *   deno run -A --no-lock tests/e2e-stack/fixture-course/build.ts [outDir]
+ *   deno run -A --no-lock --node-modules-dir=none tests/e2e-stack/fixture-course/build.ts [outDir]
+ *
+ * `--node-modules-dir=none` keeps Deno out of the pnpm node_modules: with the
+ * root deno.json's "auto" it re-resolved package.json's ranges unlocked and
+ * relinked them, so the journeys that run next used whatever was newest (e.g.
+ * @axe-core/playwright 4.14.0 instead of the locked 4.13.0).
  *
  * Output (default tests/e2e-stack/work/course, git-ignored): tutors.json plus
  * assets, ready for serve.mjs. The spec below is the contract the journeys rely

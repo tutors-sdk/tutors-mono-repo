@@ -24,6 +24,18 @@ Feature: LLM exports
       When the reader builds the course's LLM docs page
       Then the page offers no course-wide PDF archive
 
+  @rule-0600 @ears-event-driven
+  Rule: When the reader builds the LLM docs page of a course it fetched over http, the reader shall link the course's downloads over http.
+
+    Scenario: A course served from localhost links its downloads on localhost
+      Given the course is served over http from "localhost:8081"
+      When the reader builds the course's LLM docs page
+      Then every download the page offers is under "http://localhost:8081/llms/"
+
+    Scenario: A published course keeps its https links
+      When the reader builds the course's LLM docs page
+      Then every download the page offers is under "https://web-dev-101.netlify.app/llms/"
+
   @rule-0301 @ears-ubiquitous
   Rule: Tutors shall leave a hidden learning object and its descendants out of the LLM text and PDF downloads it generates.
 

@@ -3,9 +3,9 @@
 # the forwarded port comes up on its own; the log is in /tmp/tutors-dev.log.
 set -uo pipefail
 
-if [ ! -f apps/reader/.env ]; then
-  cp .env.example apps/reader/.env
-  sed -i 's/^PUBLIC_ANON_MODE=.*/PUBLIC_ANON_MODE=TRUE/' apps/reader/.env
+if [ ! -f .env ]; then
+  cp .env.example .env
+  sed -i 's/^PUBLIC_ANON_MODE=.*/PUBLIC_ANON_MODE=TRUE/' .env
 fi
 
 nohup pnpm --filter tutors-reader dev --host 0.0.0.0 > /tmp/tutors-dev.log 2>&1 &

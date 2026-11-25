@@ -25,6 +25,8 @@ describe("shared reader OAuth fixture", () => {
   it("isolates accounts per token/code and rejects unknown codes and incorrect credentials", () => {
     execFileSync(process.execPath, ["--import", preload.href, "--input-type=module", "-e", `
       import assert from "node:assert/strict";
+      const course = await fetch("https://reference-course.netlify.app/tutors.json");
+      assert.deepEqual(await course.json(), { enrollment: { educators: ["lecturer"] } });
       const exchange = async (code, client_secret = ${JSON.stringify(GITHUB_CLIENT_SECRET)}) => fetch("https://github.com/login/oauth/access_token", {
         method: "POST", body: new URLSearchParams({ code, client_id: ${JSON.stringify(GITHUB_CLIENT_ID)}, client_secret })
       });

@@ -6,9 +6,11 @@
     ".": "./src/index.ts",
     "./course": "./src/course/index.ts",
     "./course/vocabulary": "./src/course/vocabulary.ts",
+    "./course/address": "./src/course/address.ts",
     "./learning": "./src/learning/index.ts",
     "./presence": "./src/presence/index.ts",
     "./access": "./src/access/index.ts",
-    "./quiz": "./src/quiz/index.ts"
+    "./quiz": "./src/quiz/index.ts",
+    "./catalogue": "./src/catalogue/index.ts"
   }
 }

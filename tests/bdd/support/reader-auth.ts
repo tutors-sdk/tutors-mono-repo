@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { Actor } from "@tutors/identity";
+import type { Actor } from "@tutors/domain/access";
 import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, githubResponse, signInRequest, isClaimsCookie } from "./reader-oauth.mjs";
 import type { GithubAccount } from "./reader-oauth.mjs";
 export { GITHUB_CLIENT_ID, githubAccount } from "./reader-oauth.mjs";
@@ -86,8 +86,10 @@ type LayoutLoad = (input: { locals: Record<string, unknown> }) => Promise<{ logg
 
 async function reader(): Promise<{ handle: Handle; load: LayoutLoad }> {
   const hooks = await import("../../../apps/reader/src/hooks.server.ts");
-  const layout = await import("../../../apps/reader/src/routes/+layout.server.ts");
-  return { handle: hooks.handle as unknown as Handle, load: layout.load as unknown as LayoutLoad };
+  // The page's actor comes from GET /actor (Rule 0771), shaped by actorData from what the hooks put on locals.
+  const { actorData } = await import("../../../apps/reader/src/lib/actor-data.ts");
+  const load: LayoutLoad = async ({ locals }) => actorData((locals.actor as Actor | null | undefined) ?? null);
+  return { handle: hooks.handle as unknown as Handle, load };
 }
 
 /** What the root layout hands the page, captured when a request reaches SvelteKit's router. */

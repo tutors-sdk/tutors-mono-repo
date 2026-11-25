@@ -10,11 +10,12 @@ Before cutting a release, read the [daily A3](https://tutors-sdk.github.io/tutor
 
 ## Quick start
 
-Ten minutes from clone to a rendered course. Requires Node.js >= 22.17.0 and pnpm >= 8.
+Ten minutes from clone to a rendered course. Requires Node.js >= 26.13.0 (`.nvmrc` pins the version CI uses) and pnpm 11.24.0, the version `packageManager` in `package.json` pins; the command below installs that exact pnpm version directly with npm.
 
 ```bash
 git clone https://github.com/tutors-sdk/tutors-mono-repo.git
 cd tutors-mono-repo
+npm install --global "$(node -p "require('./package.json').packageManager")"
 pnpm install
 cp .env.example .env
 pnpm dev
@@ -23,6 +24,8 @@ pnpm dev
 Then open **http://localhost:5173/course/reference-course**.
 
 That is it. `pnpm dev` builds the three UI packages in the right order and starts the reader. The copied `.env` sits at the repository root and all four apps read it. It has `PUBLIC_ANON_MODE=TRUE`, so no Supabase project, GitHub OAuth app or other backend is needed; the reader fetches the course straight from `https://reference-course.netlify.app/tutors.json`. Any published Tutors course works the same way: `http://localhost:5173/course/<course-id>`.
+
+If the page says **404 Page Not Found**, the reader could not reach `reference-course.netlify.app`: offline, behind a firewall, or a typo all look the same to the browser. [CONTRIBUTING.md](CONTRIBUTING.md#if-the-course-does-not-load) shows how to serve a course from your own machine instead.
 
 New here? Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) next. It follows that URL through the code to the rendered cards, naming every file on the way. Then pick something from the [`good first issue`](https://github.com/tutors-sdk/tutors-mono-repo/labels/good%20first%20issue) list.
 
@@ -50,6 +53,7 @@ Each app composes its adapters in `src/lib/compose.ts`, the only place that read
 | `apps/catalogue` | `tutors-catalogue` | Course catalogue | 5175 |
 | `apps/live` | `tutors-live` | Live classroom / presence | 5174 |
 | `apps/time` | `tutors-time` | Student activity and time-tracking dashboard | 5176 |
+| `apps/validator` | `tutors-validator` | Published course and private local ZIP validation | 5177 |
 
 ### Rings
 
@@ -117,12 +121,14 @@ These carry a `deno.json` and are run and published with Deno; some also carry a
 
 ### Prerequisites
 
-- Node.js >= 22.17.0
-- pnpm >= 8.0.0
+- Node.js >= 26.13.0 (`.nvmrc` pins the version CI uses)
+- pnpm 11.24.0 (the quick start installs the version `package.json` pins)
+- `kubectl` or `kustomize` on your `PATH`, for the platform conformance tests in `pnpm test`
+- [Deno](https://deno.com/) at the version in `.dvmrc`, only if you work in `packages/jsr/`
 
 ### Installation
 
-The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so the `$env` modules resolve from the same file. There is nothing further to copy.
+The [Quick start](#quick-start) above is the whole install, for every app. All four read the single `.env` at the repository root: each app's `vite.config.ts` uses `createViteConfig` from `@tutors/app-config/vite`, which sets Vite's `envDir` and the SvelteKit plugin's `env.dir` to the root so `$app/env/public` and `$app/env/private` resolve from the same file. There is nothing further to copy.
 
 Deployed builds are unaffected by this: they have no `.env` file and read their configuration from the platform environment.
 
@@ -136,12 +142,15 @@ pnpm dev
 pnpm --filter tutors-catalogue dev   # :5175
 pnpm --filter tutors-live dev        # :5174
 pnpm --filter tutors-time dev        # :5176
+pnpm dev:validator                    # :5177
 
 # Minimum bar before opening a PR
 pnpm lint
 pnpm test
 pnpm check
 ```
+
+CI gates a pull request on more than these three; [CONTRIBUTING.md](CONTRIBUTING.md#what-ci-checks-on-your-pull-request) lists every check and how to run it.
 
 `pnpm dev` is a shortcut for the four commands below. You only need them individually if you have changed a UI package and want to rebuild it without restarting:
 
@@ -152,7 +161,7 @@ pnpm --filter @tutors/ui-components build
 pnpm --filter tutors-reader dev
 ```
 
-The order matters. `ui-components` is built last because its build produces `dist/style.css`, the pre-compiled Tailwind and Skeleton stylesheet the apps import.
+The order follows the dependency direction, `ui-components → ui-navigators → ui-primitives`: `ui-primitives` and `ui-components` are imported from their built `dist/`, so each is built after the packages it depends on. Styles are not part of that build; every app's `src/app.css` imports `@tutors/ui-components/styles.css` straight from source.
 
 ### Building
 
@@ -182,7 +191,7 @@ Docs live in five places. This is the index.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The authority on the shape: C4 and sequence diagrams, ports, adapters, ownership and data boundaries, the EARS rules that enforce them |
 | [guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/testing/TESTING.md](guides/testing/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
-| [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite |
+| [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite; start with `pnpm ears:dashboard` to browse every requirement |
 | [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
 | [guides/Release-Strategy.md](guides/Release-Strategy.md), [tests/release/RELEASE-TESTING.md](tests/release/RELEASE-TESTING.md) | Cut or validate a release |
 | [docs/LOCAL-CONTAINERS.md](docs/LOCAL-CONTAINERS.md), [deploy/README.md](deploy/README.md) | Run in containers or deploy to a cluster |
@@ -191,7 +200,7 @@ Docs live in five places. This is the index.
 
 ## Technology Stack
 
-- **Framework:** SvelteKit 2.x with Svelte 5
+- **Framework:** SvelteKit 3 with Svelte 5
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4.x + Skeleton UI
 - **Package Manager:** pnpm workspaces (Deno for the JSR packages)
@@ -215,6 +224,8 @@ The reader uses the GitHub-only Better Auth stateless adapter. See [identity rol
 
 The three UI packages follow a strict one-directional dependency flow: `ui-components → ui-navigators → ui-primitives`.
 
+Browser packages reach personal data only through the typed data API, `@tutors/data-api` (a core package): never through the database client, which only the Realtime/public-read factory and server code may import. See [guides/SERVER-WRITES.md](guides/SERVER-WRITES.md#the-data-api-the-seam).
+
 That is the vertical view, which answers "what may depend on what". [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) is the horizontal view, which answers "where does this pixel come from". Most changes need the second one.
 
 ## Contributing
@@ -229,4 +240,3 @@ See LICENSE file for details.
 
 - **Documentation:** [tutors.dev](https://tutors.dev)
 - **Issues:** [GitHub Issues](https://github.com/tutors-sdk/tutors-mono-repo/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/tutors-sdk/tutors-mono-repo/discussions)

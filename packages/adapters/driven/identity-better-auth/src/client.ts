@@ -1,5 +1,9 @@
+/**
+ * Browser entry point of @tutors/identity-sveltekit, used by the reader's root layout to sign in with
+ * GitHub and sign out through /api/auth. Return URLs must be on the current origin or it throws.
+ */
 import { createAuthClient } from "better-auth/client";
-import type { IdentityClient } from "@tutors/identity";
+import type { IdentityClient } from "@tutors/application/ports";
 
 function returnUrl(returnTo: string): string {
   const url = new URL(returnTo, window.location.origin);

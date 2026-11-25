@@ -1,9 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { insert } = vi.hoisted(() => ({ insert: vi.fn() }));
 
 import { configureSupabase, createSupabaseErrorTransport } from "../../../packages/adapters/driven/store-supabase/src/index.ts";
 
 // The composition root's job: the client the transport inserts through, and the URL and key its unload beacon needs.
-configureSupabase({ from: () => ({ insert: vi.fn() }) } as never, { url: "https://project.supabase.co", key: "anon-key" });
+configureSupabase({ from: () => ({ insert }) } as never, { url: "https://project.supabase.co", key: "anon-key" });
 
 // The flush on page unload: tutors.dev answered it with 400 because the URL carried `Prefer=return=none`,
 // which PostgREST parses as a filter (release harness rollback report, tutors-release-harness#38).
@@ -34,18 +36,16 @@ describe("error transport: flush on unload", () => {
     return fetch;
   }
 
-  it("beacons to the table with only the key in the query string", () => {
+  // sendBeacon always sends credentials, and the gateway's `Access-Control-Allow-Origin: *` is refused for a
+  // credentialed request, so every beacon was blocked on CORS (release harness forecast, 28 Oct 2026).
+  it("never beacons, even where the browser offers sendBeacon", () => {
     const sendBeacon = vi.fn(() => true);
-    unloadWith({ sendBeacon });
-    expect(sendBeacon).toHaveBeenCalledOnce();
-    const [url] = sendBeacon.mock.calls[0] as unknown as [string];
-    expect(url).toBe(
-      "https://project.supabase.co/rest/v1/app_errors?apikey=anon-key",
-    );
-    expect(new URL(url).searchParams.has("Prefer")).toBe(false);
+    const fetch = unloadWith({ sendBeacon });
+    expect(sendBeacon).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
-  it("falls back to a keepalive fetch that asks for no body in the header PostgREST reads", () => {
+  it("sends a keepalive fetch without credentials, with only the key in the query string and no body asked for", () => {
     const fetch = unloadWith({});
     expect(fetch).toHaveBeenCalledOnce();
     const [url, init] = fetch.mock.calls[0] as unknown as [
@@ -54,8 +54,75 @@ describe("error transport: flush on unload", () => {
         headers: Record<string, string>;
       },
     ];
+    expect(url).toBe(
+      "https://project.supabase.co/rest/v1/app_errors?apikey=anon-key",
+    );
     expect(new URL(url).searchParams.has("Prefer")).toBe(false);
+    expect(init.method).toBe("POST");
     expect(init.headers.Prefer).toBe("return=minimal");
+    expect(init.headers["Content-Type"]).toBe("application/json");
     expect(init.keepalive).toBe(true);
+    expect(init.credentials).toBe("omit");
+    expect(JSON.parse(String(init.body))).toEqual([
+      expect.objectContaining({ app: "reader", level: "error", message: "boom" }),
+    ]);
+  });
+});
+
+// The ordinary path: entries buffer until the batch is full, then go to the table in one insert.
+describe("error transport: the full buffer", () => {
+  beforeEach(() => {
+    insert.mockClear();
+    vi.stubGlobal("window", {
+      location: { href: "https://tutors.dev/note/course/x" },
+      addEventListener: () => {},
+    });
+    vi.stubGlobal("navigator", { userAgent: "test" });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  function sendMany(count: number, level = "error") {
+    const send = createSupabaseErrorTransport("reader");
+    for (let i = 0; i < count; i++) {
+      send({
+        timestamp: "t",
+        level,
+        message: `boom ${i}`,
+        app: "reader",
+        courseId: "course-1",
+        studentId: "student-1",
+      } as never);
+    }
+  }
+
+  it("writes the whole batch in one insert once 20 entries are buffered", () => {
+    sendMany(20);
+    expect(insert).toHaveBeenCalledOnce();
+    const [rows] = insert.mock.calls[0] as unknown as [
+      Record<string, unknown>[],
+    ];
+    expect(rows).toHaveLength(20);
+    expect(rows[0]).toMatchObject({
+      app: "reader",
+      level: "error",
+      message: "boom 0",
+      course_id: "course-1",
+      student_id: "student-1",
+      url: "https://tutors.dev/note/course/x",
+      user_agent: "test",
+    });
+  });
+
+  it("keeps a partial batch buffered rather than writing it", () => {
+    sendMany(19);
+    expect(insert).not.toHaveBeenCalled();
+    // The buffer outlives the transport, so empty it rather than leave 19 entries for the next test.
+    sendMany(1);
+    expect(insert).toHaveBeenCalledOnce();
+  });
+
+  it("ignores anything below warn, so a full buffer of debug writes nothing", () => {
+    sendMany(20, "debug");
+    expect(insert).not.toHaveBeenCalled();
   });
 });

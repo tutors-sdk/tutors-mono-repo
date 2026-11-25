@@ -1,0 +1,20 @@
+description: Lecture N slides with a same-named handout, an L-numbered deck, and slides in PowerPoint only
+files:
+  - Lecture 1 - Introduction.pdf
+  - Lecture 1 - Introduction.docx
+  - Lecture 2 - Databases.pdf
+  - Lecture 2 - Databases.md
+  - L3 Normal Forms.pdf
+  - Lecture 4.pptx
+expected:
+  topics:
+    - week: 1
+      items:
+        - { kind: talk, files: [Lecture 1 - Introduction.pdf] }
+        - { kind: note, files: [Lecture 1 - Introduction.docx] }
+    - week: 2
+      items:
+        - { kind: talk, files: [Lecture 2 - Databases.pdf] }
+        - { kind: note, files: [Lecture 2 - Databases.md] }
+    - { week: 3, items: [{ kind: talk, files: [L3 Normal Forms.pdf] }] }
+  tray: [Lecture 4.pptx]

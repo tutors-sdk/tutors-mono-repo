@@ -52,6 +52,31 @@ describe("clock seam (HARNESS_NOW)", () => {
     }
   );
 
+  it("accepts an instant without seconds, and trims the blanks around a value", () => {
+    expect(clockStatus({ HARNESS_NOW: "2026-09-16T09:05Z" })).toEqual({ mode: "frozen", instant: FROZEN });
+    expect(clockStatus({ HARNESS_NOW: `  ${FROZEN}\n` })).toEqual({ mode: "frozen", instant: FROZEN });
+    expect(clockStatus({ HARNESS_NOW: "  " })).toEqual({ mode: "system" });
+  });
+
+  it("rejects an expanded-year instant Date.parse would take: the value must start with the year", () => {
+    expect(clockStatus({ HARNESS_NOW: "+002026-09-16T09:05:00.000Z" })).toEqual({ mode: "system", rejected: "+002026-09-16T09:05:00.000Z" });
+  });
+
+  it.each([
+    ["no process at all (a browser bundle)", undefined],
+    ["a process with no environment", {}]
+  ])("answers the system clock where there is %s", (_, stand) => {
+    const real = globalThis.process;
+    let status: ReturnType<typeof clockStatus>;
+    try {
+      (globalThis as { process: unknown }).process = stand;
+      status = clockStatus();
+    } finally {
+      globalThis.process = real;
+    }
+    expect(status).toEqual({ mode: "system" });
+  });
+
   it("reads process.env at call time, not at import time", () => {
     process.env.HARNESS_NOW = FROZEN;
     expect(now().toISOString()).toBe(FROZEN);

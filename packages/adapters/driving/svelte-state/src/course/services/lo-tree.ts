@@ -1,6 +1,8 @@
-import { courseProtocol } from "../../index.svelte.ts";
 import { adapters } from "../../adapters.ts";
 import { decorateCourseTree as decorateDomainCourseTree, type Course, type Lo } from "@tutors/domain/course";
+import { courseAddress } from "@tutors/domain/course/address";
+
+export { courseProtocolOf, type CourseAddress } from "@tutors/domain/course/address";
 import type { ContentRenderer, LoadCourseDeps } from "@tutors/application";
 
 /** The learning-object kinds whose bodies the reader renders on demand, as opening one can take a while. */
@@ -10,16 +12,16 @@ const RENDERED_ON_DEMAND = new Set(["lab", "note", "notebook", "quiz"]);
  * How the reader decorates a course tree, over the domain's decoration: labs, notes, notebooks and
  * quizzes keep their markdown until opened (only their one-line summary is rendered, so a card does
  * not show "**bold**"); web links stay out of the route index; a course served over plain http has
- * its links rewritten; custom companion icons are registered with the theme.
+ * its links rewritten (the protocol comes with the course's address, not from shared state); custom companion icons are registered with the theme.
  */
-export function readerDecoration(renderer: ContentRenderer): Pick<LoadCourseDeps, "render" | "decorated" | "omitFromIndex"> {
+export function readerDecoration(renderer: ContentRenderer, protocol = "https://"): Pick<LoadCourseDeps, "render" | "decorated" | "omitFromIndex"> {
   return {
     render: (course, lo) => {
       if (RENDERED_ON_DEMAND.has(lo.type)) {
         // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
         renderer.renderSummary(lo);
       } else {
-        renderer.renderLo(course, lo, courseProtocol.value);
+        renderer.renderLo(course, lo, protocol);
       }
     },
     decorated: registerCompanionIcons,
@@ -28,12 +30,12 @@ export function readerDecoration(renderer: ContentRenderer): Pick<LoadCourseDeps
 }
 
 /** Decorate a parsed course the way the reader does, with the renderer the app composed. */
-export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "", renderer?: ContentRenderer): void {
-  const decoration = renderer ? readerDecoration(renderer) : { render: undefined, decorated: registerCompanionIcons, omitFromIndex: (lo: Lo) => lo.type === "web" };
+export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "", renderer?: ContentRenderer, protocol = "https://"): void {
+  const decoration = renderer ? readerDecoration(renderer, protocol) : { render: undefined, decorated: registerCompanionIcons, omitFromIndex: (lo: Lo) => lo.type === "web" };
   decorateDomainCourseTree(course, courseId, courseUrl, {
     render: decoration.render,
     today: adapters().clock.nowMs(),
-    protocol: courseProtocol.value,
+    protocol,
     omitFromIndex: decoration.omitFromIndex
   });
   decoration.decorated?.(course);
@@ -68,30 +70,5 @@ function registerCompanionIcons(course: Course) {
   }
 }
 
-/**
- * Determines the course URL and normalized course ID from various input formats.
- * Handles full URLs, Netlify domains, localhost/IP addresses, and plain course IDs.
- * @param input - Course identifier (URL, domain, or ID)
- * @returns Object with normalized courseId and courseUrl
- */
-export function determineCourseUrl(input: string): { courseId: string; courseUrl: string } {
-  const urlPattern = /^(https?:\/\/)?([A-Za-z0-9.-]+\.[A-Za-z]{2,})(:[0-9]+)?(\/[A-Za-z0-9_.-]+)*(\/[A-Za-z0-9_.-]+\?[A-Za-z0-9_=-]+)?(#.*)?$/;
-  const isValidURL = urlPattern.test(input);
-
-  if (isValidURL) {
-    // Full URL provided (e.g., https://example.netlify.app)
-    const courseUrl = input;
-    const courseId = input.includes(".netlify.app") ? input.replace(".netlify.app", "") : input;
-    return { courseId, courseUrl };
-  }
-
-  // Course ID only - determine protocol and construct URL
-  const isLocalhost = input.startsWith("192") || input.startsWith("localhost");
-  if (isLocalhost) {
-    courseProtocol.value = "http://";
-    return { courseId: input, courseUrl: input };
-  }
-
-  // Default to Netlify subdomain
-  return { courseId: input, courseUrl: `${input}.netlify.app` };
-}
+/** Resolves what a student opened a course by to where it is served: the domain's `courseAddress`, under the name the reader has always used. */
+export const determineCourseUrl = courseAddress;

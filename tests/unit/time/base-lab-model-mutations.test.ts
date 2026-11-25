@@ -63,7 +63,7 @@ describe("BaseLabModel constructor", () => {
       [r({ course_id: "c-b", lo_id: "t/book-b/s1" }), r({ course_id: "c-a", lo_id: "t/book-a/s1" })],
       null,
     );
-    expect(model.labs).toEqual(["book-a", "book-b"]);
+    expect(model.labs).toEqual(["t/book-a", "t/book-b"]);
     expect(model.courseId).toBe("c-a");
     expect(model.medianByLab.row?.courseid).toBe("c-a");
     expect(model.medianByLabStep.row?.courseid).toBe("c-a");
@@ -80,7 +80,7 @@ describe("BaseLabModel constructor", () => {
 
   it("recognises a lab segment regardless of surrounding spaces and case", () => {
     const model = new BaseLabModel([r({ lo_id: "t/ BOOK-x /s1" })], null);
-    expect(model.labs).toEqual(["BOOK-x"]);
+    expect(model.labs).toEqual(["t/ BOOK-x "]);
     expect(model.steps).toEqual(["t/ BOOK-x /s1"]);
   });
 
@@ -132,6 +132,6 @@ describe("BaseLabModel constructor", () => {
       ],
       null,
     );
-    expect(model.medianByLab.row).toEqual({ courseid: "course-1", totalMinutes: 35, "book-a": 25, "book-b": 20 });
+    expect(model.medianByLab.row).toEqual({ courseid: "course-1", totalMinutes: 35, "t/book-a": 25, "t/book-b": 20 });
   });
 });

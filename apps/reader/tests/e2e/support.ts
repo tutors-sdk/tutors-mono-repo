@@ -26,7 +26,7 @@ export async function seedOneOnline(page: Page, { online = 1 } = {}): Promise<vo
   await page.goto(course);
   await page.getByRole("heading", { name: "Reference Course", exact: true }).waitFor();
   // Opening Preferences loads the presence module, so its URL is known before seeding.
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   await expect.poll(() => preferences.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");

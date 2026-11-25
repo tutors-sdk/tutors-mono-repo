@@ -104,30 +104,20 @@ export function accessStoreContract(make: Make<AccessStore>): ContractCase[] {
       name: "a lock is kept per course and route, and the last write wins",
       run: async () => {
         const store = await make();
-        assert(await store.setLock("cs101", "/lab/cs101/week-01", true, "lecturer"), "first write");
-        assert(await store.setLock("cs101", "/lab/cs101/week-01", false, "lecturer"), "second write");
-        assert(await store.setLock("cs102", "/lab/cs102/week-01", true, "lecturer"), "other course");
+        assertEqual(await store.setLock("cs101", "/lab/cs101/week-01", true), "saved", "first write");
+        assertEqual(await store.setLock("cs101", "/lab/cs101/week-01", false), "saved", "second write");
+        assertEqual(await store.setLock("cs102", "/lab/cs102/week-01", true), "saved", "other course");
         const locks = await store.locks("cs101");
-        assertEqual(locks.map((l) => [l.lo_route, l.locked, l.locked_by]), [["/lab/cs101/week-01", false, "lecturer"]], "cs101 locks");
+        assertEqual(locks.map((l) => [l.route, l.locked]), [["/lab/cs101/week-01", false]], "cs101 locks");
+        assert(locks[0].lockedBy, "who set the lock is recorded");
       }
     },
     {
-      name: "a removed lock is gone; removing again changes nothing",
+      name: "a change without a course or a route is refused and nothing is written",
       run: async () => {
         const store = await make();
-        await store.setLock("cs101", "/lab/cs101/week-01", true, "lecturer");
-        assert(await store.removeLock("cs101", "/lab/cs101/week-01"), "remove");
-        assertEqual(await store.locks("cs101"), [], "locks after remove");
-        assertEqual(await store.removeLock("cs101", "/lab/cs101/week-01"), false, "remove again");
-      }
-    },
-    {
-      name: "nothing is written without a course, a route and a lecturer",
-      run: async () => {
-        const store = await make();
-        assertEqual(await store.setLock("", "/lab/x", true, "lecturer"), false, "no course");
-        assertEqual(await store.setLock("cs101", "", true, "lecturer"), false, "no route");
-        assertEqual(await store.setLock("cs101", "/lab/x", true, ""), false, "no lecturer");
+        assertEqual(await store.setLock("", "/lab/x", true), "refused", "no course");
+        assertEqual(await store.setLock("cs101", "", true), "refused", "no route");
         assertEqual(await store.locks("cs101"), [], "locks");
       }
     }

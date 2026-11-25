@@ -1,42 +1,36 @@
 /**
- * Quiz data model.
- *
- * Deliberately minimal: quizzes are authored by hand in course markdown, so
- * there is no authoring, session or persistence state to model yet; those
- * types are added when they are actually needed.
+ * The quiz a learner takes: questions with one correct option each, and the score a set of
+ * answers earns. How a quiz is written in course markdown (the format: parsing, diagnosis,
+ * writing) belongs to the authoring toolchain, `@tutors/course-rules/quiz`; what it parses to is
+ * this shape, and `tests/unit/quiz/quiz-model-agreement.test.ts` fails if the two drift apart.
  */
 
 export type QuestionType = "multiple-choice" | "true-false";
 
 export interface QuizQuestion {
   /** Stable within a quiz: `q1`, `q2`, ... in authored order. */
-  id: string;
-  type: QuestionType;
-  text: string;
-  options: string[];
+  readonly id: string;
+  readonly type: QuestionType;
+  readonly text: string;
+  readonly options: readonly string[];
   /** 0-based index into `options` of the correct answer. */
-  correctIndex: number;
+  readonly correctIndex: number;
 }
 
-export interface ParsedQuiz {
-  /** From the block's `title:` field; null means "use the learning object title". */
-  title: string | null;
+export interface Quiz {
+  /** Null means "use the learning object's title". */
+  readonly title: string | null;
   /** Seconds allowed per question, or null for untimed. */
-  timeLimit: number | null;
-  questions: QuizQuestion[];
+  readonly timeLimit: number | null;
+  readonly questions: readonly QuizQuestion[];
 }
+
+/** The name the quiz had before the format moved to course-rules; kept for the components that use it. */
+export type ParsedQuiz = Quiz;
 
 export interface QuizScore {
-  correct: number;
-  total: number;
+  readonly correct: number;
+  readonly total: number;
   /** `correct` as a whole-number percentage of `total`; 0 for an empty quiz. */
-  percentage: number;
-}
-
-/** A quiz learning object's markdown, split into prose and quiz definition. */
-export interface QuizContent {
-  /** Everything outside the quiz fence, still markdown. */
-  prose: string;
-  /** The body of the quiz fence, or null if the document has none. */
-  quizSource: string | null;
+  readonly percentage: number;
 }

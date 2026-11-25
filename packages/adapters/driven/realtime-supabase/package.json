@@ -2,11 +2,14 @@
   "name": "@tutors/realtime-supabase",
   "version": "0.1.0",
   "license": "MIT",
-  "description": "Presence over Supabase Realtime: the PresencePort adapter",
+  "description": "Presence over Supabase: the Realtime broker adapter, the PresenceFeed over it and the latest-activity table, and the reader server's Live publisher",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./live-activity.server": "./src/live-activity.server.ts"
+  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.1",
+    "@supabase/supabase-js": "^2.118.0",
     "@tutors/application": "workspace:*",
     "@tutors/domain": "workspace:*",
     "@tutors/logger": "workspace:*"

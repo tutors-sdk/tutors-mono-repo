@@ -23,11 +23,13 @@ const ventoStub = resolve(root, "tests/support/vento-stub.ts");
 
 export const workspaceAliases: Record<string, string> = {
   // Rings. Subpaths come before their package so the longer alias matches first.
+  "@tutors/domain/course/address": resolve(root, "packages/domain/src/course/address.ts"),
   "@tutors/domain/course/vocabulary": resolve(root, "packages/domain/src/course/vocabulary.ts"),
   "@tutors/domain/course": resolve(root, "packages/domain/src/course/index.ts"),
   "@tutors/domain/learning": resolve(root, "packages/domain/src/learning/index.ts"),
   "@tutors/domain/presence": resolve(root, "packages/domain/src/presence/index.ts"),
   "@tutors/domain/access": resolve(root, "packages/domain/src/access/index.ts"),
+  "@tutors/domain/catalogue": resolve(root, "packages/domain/src/catalogue/index.ts"),
   "@tutors/domain/quiz": resolve(root, "packages/domain/src/quiz/index.ts"),
   "@tutors/domain": resolve(root, "packages/domain/src/index.ts"),
   "@tutors/application/ports": resolve(root, "packages/application/src/ports/index.ts"),
@@ -36,17 +38,22 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/render-markdown": resolve(root, "packages/adapters/driven/render-markdown/src/index.ts"),
   "@tutors/tutors-model-lib": resolve(root, "packages/jsr/model/src/tutors.ts"),
   "@tutors/tutors-gen-lib": resolve(root, "packages/jsr/gen/src/tutors.ts"),
+  // The subpath first: an alias also matches the names under it.
+  "@tutors/course-rules/quiz": resolve(root, "packages/jsr/course-rules/src/quiz/mod.ts"),
+  "@tutors/course-rules": resolve(root, "packages/jsr/course-rules/src/mod.ts"),
+  "@tutors/course-archive": resolve(root, "packages/adapters/driven/course-archive/src/index.ts"),
   "@tutors/tutors-time-lib": resolve(root, "packages/jsr/time/src/index.ts"),
   "@tutors/tutors-types": resolve(root, "packages/jsr/types/src/index.ts"),
   // Driven adapters the apps compose; tests reach them for their recording seams.
   "@tutors/store-supabase": resolve(root, "packages/adapters/driven/store-supabase/src/index.ts"),
+  "@tutors/realtime-supabase/live-activity.server": resolve(root, "packages/adapters/driven/realtime-supabase/src/live-activity.server.ts"),
   "@tutors/realtime-supabase": resolve(root, "packages/adapters/driven/realtime-supabase/src/index.ts"),
   "@tutors/course-http": resolve(root, "packages/adapters/driven/course-http/src/index.ts"),
   "@tutors/profile-localstorage": resolve(root, "packages/adapters/driven/profile-localstorage/src/index.ts"),
   "@tutors/bus-inprocess": resolve(root, "packages/adapters/driven/bus-inprocess/src/index.ts"),
   "@tutors/moodle": resolve(root, "packages/adapters/driven/moodle/src/index.ts"),
   "@tutors/svelte-state/adapters": resolve(root, "packages/adapters/driving/svelte-state/src/adapters.ts"),
-  "@tutors/identity": resolve(root, "packages/jsr/identity/src/index.ts"),
+  "@tutors/data-api": resolve(root, "packages/adapters/driven/data-api/src/index.ts"),
   "@tutors/identity-better-auth/server": resolve(root, "packages/adapters/driven/identity-better-auth/src/index.server.ts"),
   "@tutors/identity-better-auth/client": resolve(root, "packages/adapters/driven/identity-better-auth/src/client.ts"),
   "@tutors/logger": resolve(root, "packages/platform/logger/src/index.ts"),

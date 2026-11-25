@@ -1,0 +1,10 @@
+broken:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/note-01/note.md: "# How the web works\n\nA request goes out and a page comes back.\n\n```mermaid\nflowchart LR\n  Browser --> Server\n  Server[Web server --> Browser\n```\n\nAnd the browser draws it:\n\n```mermaid\nflowhcart TD\n  A --> B\n```\n"
+fixed:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/note-01/note.md: "# How the web works\n\nA request goes out and a page comes back.\n\n```mermaid\nflowchart LR\n  Browser --> Server\n  Server[Web server] --> Browser\n```\n\nAnd the browser draws it:\n\n```mermaid\nflowchart TD\n  A --> B\n```\n"

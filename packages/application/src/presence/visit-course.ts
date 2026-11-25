@@ -1,6 +1,7 @@
 import type { Course } from "@tutors/domain/course";
-import { recordCourseVisit, type CourseVisit } from "@tutors/domain/presence";
+import { catalogueRecordOf, favouriteCourseVisit, forgetCourseVisit as withoutCourse, isCatalogueCourseId, recordCourseVisit, type CourseVisit } from "@tutors/domain/presence";
 import type { Clock } from "../ports/clock.ts";
+import type { CourseCatalogue } from "../ports/course-catalogue.ts";
 import type { ProfilePort } from "../ports/profile.ts";
 
 export type CourseVisitsDeps = { profile: ProfilePort; clock: Clock };
@@ -15,16 +16,26 @@ export const visitCourse = ({ profile, clock }: CourseVisitsDeps) =>
 
 export const setFavouriteCourse = ({ profile }: Pick<CourseVisitsDeps, "profile">) =>
   async (learnerId: string, courseId: string, favourite: boolean): Promise<CourseVisit[]> => {
-    const visits = await profile.getCourseVisits(learnerId);
-    const visit = visits.find((c) => c.id === courseId);
-    if (visit) visit.favourite = favourite;
+    const visits = favouriteCourseVisit(await profile.getCourseVisits(learnerId), courseId, favourite);
     await profile.saveCourseVisits(learnerId, visits);
     return visits;
   };
 
 export const forgetCourseVisit = ({ profile }: Pick<CourseVisitsDeps, "profile">) =>
   async (learnerId: string, courseId: string): Promise<CourseVisit[]> => {
-    const visits = (await profile.getCourseVisits(learnerId)).filter((c) => c.id !== courseId);
+    const visits = withoutCourse(await profile.getCourseVisits(learnerId), courseId);
     await profile.saveCourseVisits(learnerId, visits);
     return visits;
+  };
+
+export type CountCourseVisitDeps = { catalogue: CourseCatalogue; clock: Clock };
+
+/**
+ * Someone opened a course: the public catalogue counts it and keeps its card current. Branch and
+ * preview deploys of a course site are not courses, so they are never counted.
+ */
+export const countCourseVisit = ({ catalogue, clock }: CountCourseVisitDeps) =>
+  async (course: Course): Promise<void> => {
+    if (!isCatalogueCourseId(course.courseId)) return;
+    await catalogue.recordVisit(course.courseId, catalogueRecordOf(course, clock.now()));
   };

@@ -10,7 +10,7 @@ async function seriousViolations(page: Page) {
 }
 
 async function chooseAppearance(page: Page, mode: "Light" | "Dark", theme?: string) {
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   if (theme) await preferences.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
   await preferences.getByRole("button", { name: mode, exact: true }).click();

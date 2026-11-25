@@ -7,3 +7,4 @@ export const PUBLIC_READER_ORIGIN: string | undefined = undefined;
 export const PUBLIC_CATALOGUE_ORIGIN: string | undefined = undefined;
 export const PUBLIC_LIVE_ORIGIN: string | undefined = undefined;
 export const PUBLIC_TIME_ORIGIN: string | undefined = undefined;
+export const PUBLIC_READER_URL: string | undefined = undefined;

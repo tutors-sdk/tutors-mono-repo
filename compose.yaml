@@ -66,6 +66,7 @@ services:
       - "${CATALOGUE_PORT:-3001}:3001"
       - "${LIVE_PORT:-3002}:3002"
       - "${TIME_PORT:-3003}:3003"
+      - "${VALIDATOR_PORT:-3004}:3004"
 
   reader:
     <<: *app
@@ -118,3 +119,16 @@ services:
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: x-forwarded-host
       PUBLIC_ANON_MODE: ${PUBLIC_ANON_MODE:-TRUE}
+
+  validator:
+    <<: *app
+    image: ${TUTORS_IMAGE_PREFIX:-tutors/}validator:${TUTORS_TAG:-local}
+    build:
+      context: .
+      args:
+        <<: *build-args
+        APP_NAME: validator
+    environment:
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+      PUBLIC_ANON_MODE: "TRUE"

@@ -120,6 +120,21 @@ describe("Better Auth identity boundary", () => {
     expect(response.headers.has("cache-control")).toBe(false);
   });
 
+  it.each(["/api/me", "/api/profile", "/api/live/activity"])("a delayed %s response cannot restore a signed-out session", async (path) => {
+    const browser = new Browser();
+    await signInThroughGithub(browser, "/");
+    vi.useFakeTimers({ now: Date.now() + 29 * 86400000, toFake: ["Date"] });
+    const inFlight = new Browser();
+    inFlight.jar = new Map(browser.jar);
+    const delayed = await send(inFlight, "GET", path);
+    expect(delayed.page?.actor?.login).toBe("alice");
+    expect(delayed.cookies).toEqual([]);
+    expect(delayed.headers.get("cache-control")).toBe("private, no-store");
+    await send(browser, "POST", "/api/auth/sign-out", {});
+    browser.keep(delayed);
+    expect((await openPage(browser)).actor).toBeNull();
+  });
+
   it("keeps concurrent signed-in and signed-out requests isolated", async () => {
     const alice = new Browser();
     await signInThroughGithub(alice, "/");

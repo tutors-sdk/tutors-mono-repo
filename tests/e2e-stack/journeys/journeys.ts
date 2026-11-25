@@ -21,6 +21,21 @@ async function labSteps(page: Page) {
   return mobile;
 }
 
+/**
+ * Assert the course navigation leads with the open learning object (Rule 0260): the sidebar on desktop;
+ * on phones the sidebar is hidden and the same navigation opens as a dialog from the menu button.
+ */
+async function expectNavigationLeadsWith(page: Page, title: string) {
+  const sidebar = page.getByRole("complementary", { name: "Course navigation" });
+  const heading = { level: 2 as const, name: title };
+  if (await sidebar.isVisible()) return expect(sidebar.getByRole("heading", heading)).toBeVisible();
+  await page.getByRole("button", { name: "Course navigation" }).click();
+  const dialog = page.getByRole("dialog", { name: "Course navigation" });
+  await expect(dialog.getByRole("heading", heading)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+}
+
 /** Anonymous student: home page, open the fixture course, topic, lab, move through steps (math and a diagram on the second), open the Marp talk. */
 export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, courseId: string = stack.courseId) {
   await page.goto(`${stack.reader}/`);
@@ -34,7 +49,7 @@ export async function anonymousStudentReadsCourse(page: Page, onPage: OnPage, co
 
   await page.getByRole("link", { name: new RegExp(`^${fixture.topicTitle}\\b`) }).click();
   await expect(page).toHaveURL(new RegExp(`/topic/${courseId}/${fixture.topicPath}$`));
-  await expect(page.getByRole("complementary", { name: "Course navigation" }).getByRole("heading", { level: 2, name: fixture.topicTitle })).toBeVisible();
+  await expectNavigationLeadsWith(page, fixture.topicTitle);
   await onPage("reader:topic");
 
   await page.getByRole("main").getByRole("link", { name: new RegExp(`^${fixture.labTitle}\\b`) }).first().click();

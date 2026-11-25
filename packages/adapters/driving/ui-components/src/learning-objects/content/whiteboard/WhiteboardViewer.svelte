@@ -1,22 +1,17 @@
 <script lang="ts">
   import { browser } from "$app/env";
-  import * as env from "$app/env/public";
   import type { Whiteboard } from "@tutors/tutors-model-lib";
+  import type { WhiteboardRoom } from "@tutors/application/ports";
   import { tutorsId } from "@tutors/svelte-state";
   import { adapters } from "@tutors/svelte-state/adapters";
   import log from "@tutors/logger";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { themeService } from "@tutors/themes";
 
-  // Whiteboard scenes are read and saved straight through the composed Supabase client: a known
-  // violation (tests/architecture/known-violations.txt) until a whiteboard port exists.
-  type SceneStore = {
-    from(table: string): {
-      select(columns: string): { eq(column: string, value: string): { single(): Promise<{ data: any }> } };
-      upsert(row: Record<string, unknown>, options?: Record<string, unknown>): Promise<{ error: unknown }>;
-    };
-  };
-  const supabase = adapters().whiteboardClient as SceneStore | undefined;
+  // Scenes are kept by whichever WhiteboardStore the app composed (none in an anonymous reader), and
+  // a shared board's editors meet on the relay it composed. This component reads no environment.
+  const store = adapters().whiteboard;
+  const relay = adapters().whiteboardRelay;
 
   interface Props {
     lo: Whiteboard;
@@ -49,41 +44,24 @@
     return `wb-${courseId}-${route}-${getUserId()}`;
   }
 
-  async function loadSceneFromDb(roomId: string): Promise<any | null> {
-    if (!supabase) return null;
-    try {
-      const { data } = await supabase
-        .from("whiteboard_scenes")
-        .select("elements, app_state, files")
-        .eq("room_id", roomId)
-        .single();
-      if (data) {
-        return { elements: data.elements, appState: data.app_state, files: data.files };
-      }
-    } catch {
-      // fall through to static file
-    }
-    return null;
+  function sceneRoom(): WhiteboardRoom {
+    return { courseId: lo.parentCourse?.courseId || "unknown", route: lo.route, shared: isShared };
   }
 
-  function saveSceneToDb(roomId: string, elements: any[]) {
-    if (!supabase) { saveStatus = "Edits are not saved in this session."; return; }
+  const canSave = () => !!store && !!tutorsId.value?.login;
+
+  async function loadSceneFromDb(): Promise<any | null> {
+    if (!store || (!isShared && !tutorsId.value?.login)) return null;
+    return store.load(sceneRoom());
+  }
+
+  function saveSceneToDb(elements: any[]) {
+    if (!canSave()) { saveStatus = "Sign in to save your edits. Use the export menu to keep a copy."; return; }
     if (saveTimer) clearTimeout(saveTimer);
     saveStatus = "Saving…";
     saveTimer = setTimeout(async () => {
-      try {
-        const { error: saveError } = await supabase.from("whiteboard_scenes").upsert({
-          room_id: roomId,
-          elements,
-          app_state: { viewBackgroundColor: "#ffffff" },
-          files: {},
-          updated_at: new Date().toISOString(),
-        });
-        if (saveError) throw saveError;
-        saveStatus = "Drawing changes saved";
-      } catch {
-        saveStatus = "Changes could not be saved. Keep this whiteboard open and export your work.";
-      }
+      const saved = (await store?.save(sceneRoom(), elements)) ?? false;
+      saveStatus = saved ? "Drawing changes saved" : "Changes could not be saved. Keep this whiteboard open and export your work.";
     }, 2000);
   }
 
@@ -135,11 +113,11 @@
       postViewerScene();
     } else if (type === "editor-ready" && isEditing) {
       const roomId = getWhiteboardRoomId();
-      const savedScene = await loadSceneFromDb(roomId);
+      const savedScene = await loadSceneFromDb();
       iframe?.contentWindow?.postMessage({
         type: "init-editor",
-        supabaseUrl: env.PUBLIC_SUPABASE_URL,
-        supabaseAnonKey: env.PUBLIC_SUPABASE_ANON_KEY,
+        supabaseUrl: isShared ? relay?.url : undefined,
+        supabaseAnonKey: isShared ? relay?.key : undefined,
         roomId,
         user: {
           name: tutorsId.value?.name || "Anonymous",
@@ -151,7 +129,7 @@
       }, window.location.origin);
       loading = false;
     } else if (type === "scene-changed" && isEditing) {
-      saveSceneToDb(getWhiteboardRoomId(), event.data.elements);
+      saveSceneToDb(event.data.elements);
     }
   }
 
@@ -208,7 +186,7 @@
       {/if}
       <button class="ui-button fullscreen" aria-pressed={isFullscreen} onclick={toggleFullscreen}><Icon icon={isFullscreen ? "lucide:minimize-2" : "lucide:maximize-2"} height="16" />{isFullscreen ? "Exit fullscreen" : "Fullscreen"}</button>
     </div>
-    {#if isEditing}<p class="whiteboard-status ui-muted" role="status">{saveStatus || (!supabase ? "Edits are not saved in this session." : "Use the whiteboard export menu to keep a copy of your work.")}</p>{/if}
+    {#if isEditing}<p class="whiteboard-status ui-muted" role="status">{saveStatus || (canSave() ? "Use the whiteboard export menu to keep a copy of your work." : "Sign in to save your edits. Use the export menu to keep a copy.")}</p>{/if}
     <div class="whiteboard-canvas" class:editing={isEditing}>
       {#if loading}<p class="whiteboard-loading ui-muted" role="status">Loading whiteboard…</p>{/if}
       {#if cachedScene}

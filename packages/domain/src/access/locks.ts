@@ -1,12 +1,34 @@
 import type { Lo } from "../course/types/index.ts";
 
+/** One lock a lecturer set: a route of a course, locked or unlocked, by whom and when. */
 export interface ContentLock {
-  id?: string;
-  course_id: string;
-  lo_route: string;
-  locked: boolean;
-  locked_by: string;
-  locked_at?: string;
+  readonly courseId: string;
+  /** The learning object's route, or SHOW_LOCKED_KEY for the course's "show locked content" setting. */
+  readonly route: string;
+  readonly locked: boolean;
+  /** The lecturer's login; the server records it from the session, never from the request. */
+  readonly lockedBy: string;
+  readonly lockedAt?: string;
+}
+
+/**
+ * What became of a lock change sent to be saved: saved; refused (not an educator, or the store
+ * failed); unavailable (there is no lock store, as in the anonymous reader); or unreachable (the
+ * request never got an answer).
+ */
+export type LockWrite = "saved" | "refused" | "unavailable" | "unreachable";
+
+/**
+ * What a lock change came to for the lecturer who made it (Rules 0657-0658): saved for everyone;
+ * kept in this browser only, because there is no lock store; or not saved, so the previous setting
+ * is back.
+ */
+export type LockChangeResult = "saved" | "local" | "unsaved";
+
+/** The outcome a lecturer sees for a lock write: without a store the browser's copy stays the record. */
+export function lockChangeResult(write: LockWrite): LockChangeResult {
+  if (write === "saved") return "saved";
+  return write === "unavailable" ? "local" : "unsaved";
 }
 
 /**
@@ -80,8 +102,8 @@ export function showsLockedToStudents(locks: Map<string, boolean>): boolean {
 }
 
 /** The lock map a stored list of locks gives. */
-export function lockMapOf(locks: ContentLock[]): Map<string, boolean> {
+export function lockMapOf(locks: readonly ContentLock[]): Map<string, boolean> {
   const map = new Map<string, boolean>();
-  for (const lock of locks) map.set(lock.lo_route, lock.locked);
+  for (const lock of locks) map.set(lock.route, lock.locked);
   return map;
 }

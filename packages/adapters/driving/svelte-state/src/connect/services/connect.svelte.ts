@@ -10,6 +10,7 @@ import { goto } from "$app/navigation";
 import type { Course } from "@tutors/domain/course";
 import { courseAdmission, forgetCourseVisit, setFavouriteCourse, visitCourse } from "@tutors/application";
 import type { ProfilePort } from "@tutors/application/ports";
+import { whitelistAdmits } from "@tutors/domain/access";
 import { parseSentiment } from "@tutors/domain/presence";
 
 import { adapters } from "../../adapters.ts";
@@ -147,7 +148,8 @@ export const tutorsConnectService: TutorsConnectService = {
       rbacService.clear();
     }
     if (this.anonMode) return;
-    if (analyticsEnabled) {
+    // A course that turns the person away is not one they visited, so it stays out of their Recently accessed.
+    if (analyticsEnabled && whitelistAdmits(course, tutorsId.value?.login)) {
       const { publisher, clock } = adapters();
       void publisher.publish({ type: "course-visit", learnerId: learnerId(), course }).catch((err) => log.error("Failed to publish course visit:", err));
       void visitCourse({ profile: profile(), clock })(learnerId(), course).catch((err) => log.error("Failed to log course visit:", err));
@@ -251,10 +253,11 @@ export const tutorsConnectService: TutorsConnectService = {
 
   /**
    * Starts periodic analytics update timer
-   * Updates page counts every 30 seconds when page is visible
+   * Updates page counts every 30 seconds when page is visible.
+   * One timer per tab: a start while one is running keeps it, so repeated starts never stack heartbeats.
    */
   startTimer() {
-    if (this.anonMode) return;
+    if (this.anonMode || this.intervalId !== null) return;
     this.intervalId = setInterval(() => {
       if (!document.hidden && currentCourse.value && currentLo.value && tutorsId.value) {
         if (analyticsEnabled) analyticsService.updatePageCount(currentCourse.value, currentLo.value, tutorsId.value);
@@ -266,7 +269,7 @@ export const tutorsConnectService: TutorsConnectService = {
    * Stops analytics update timer
    */
   stopTimer() {
-    if (this.intervalId) {
+    if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
@@ -274,10 +277,6 @@ export const tutorsConnectService: TutorsConnectService = {
 
   checkWhiteList(): void {
     const course = currentCourse.value;
-    if (!course?.authLevel || course.authLevel < 1) return;
-    if (!course.enrollment?.whitelist?.length) return;
-    if (courseAdmission(course, tutorsId.value?.login) !== "admit") {
-      goto(`/`);
-    }
+    if (course && !whitelistAdmits(course, tutorsId.value?.login)) goto(`/`);
   }
 };

@@ -8,7 +8,7 @@ const note = "/note/tutors-reference-manual/unit-1-getting-started/note-a-gettin
 test("Preferences menu offers its choices above the page", { tag: "@rule-0037" }, async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(course);
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   await expect(preferences.getByRole("heading", { name: "Preferences", exact: true })).toBeVisible();
   await expect(preferences.getByRole("combobox", { name: "Theme", exact: true }).locator("option")).toHaveCount(7);
@@ -32,7 +32,7 @@ test("Every theme is readable in both appearances", { tag: "@rule-0038" }, async
   test.setTimeout(180_000);
   await page.goto(note);
   await expect(page.locator(".reading-panel")).toBeVisible();
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   const theme = preferences.getByRole("combobox", { name: "Theme", exact: true });
   const names = await theme.locator("option").evaluateAll(options => options.map(option => (option as HTMLOptionElement).value));
@@ -76,7 +76,7 @@ test("Every theme is readable in both appearances", { tag: "@rule-0038" }, async
 
 test("Dyslexia theme survives a reload", { tag: "@rule-0039" }, async ({ page }) => {
   await page.goto(note);
-  await page.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
   await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("dyslexia");
   await page.keyboard.press("Escape");
   await page.reload();

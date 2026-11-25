@@ -101,7 +101,7 @@ describe("BaseLabModel with single student single lab", () => {
     const row = model.lab.rows[0];
     expect(row.studentid).toBe("alice");
     expect(row.full_name).toBe("Alice Smith");
-    expect(row["book-lab1"]).toBe(25);
+    expect(row["topic/book-lab1"]).toBe(25);
     expect(row.totalMinutes).toBe(25);
   });
 
@@ -120,7 +120,7 @@ describe("BaseLabModel with single student single lab", () => {
 
   it("labs and steps arrays are populated", () => {
     const model = new BaseLabModel([record], null);
-    expect(model.labs).toEqual(["book-lab1"]);
+    expect(model.labs).toEqual(["topic/book-lab1"]);
     expect(model.steps).toEqual(["topic/book-lab1/step-01"]);
   });
 });
@@ -142,13 +142,13 @@ describe("BaseLabModel with multiple students and labs", () => {
     expect(model.lab.rows).toHaveLength(2);
     const alice = model.lab.rows.find((r) => r.studentid === "alice")!;
     // Alice: book-lab1 = 10 + 20, book-lab2 = 30
-    expect(alice["book-lab1"]).toBe(30);
-    expect(alice["book-lab2"]).toBe(30);
+    expect(alice["topic/book-lab1"]).toBe(30);
+    expect(alice["topic/book-lab2"]).toBe(30);
     expect(alice.totalMinutes).toBe(60);
 
     const bob = model.lab.rows.find((r) => r.studentid === "bob")!;
-    expect(bob["book-lab1"]).toBe(15);
-    expect(bob["book-lab2"]).toBe(25);
+    expect(bob["topic/book-lab1"]).toBe(15);
+    expect(bob["topic/book-lab2"]).toBe(25);
     expect(bob.totalMinutes).toBe(40);
   });
 
@@ -181,7 +181,7 @@ describe("BaseLabModel median calculations", () => {
     ];
     const model = new BaseLabModel(records, null);
     expect(model.medianByLab.row).not.toBeNull();
-    expect(model.medianByLab.row!["book-lab1"]).toBe(20);
+    expect(model.medianByLab.row!["topic/book-lab1"]).toBe(20);
   });
 
   it("medianByLabStep computes median per step across students", () => {
@@ -204,7 +204,7 @@ describe("BaseLabModel median calculations", () => {
       makeLabRecord({ lo_id: "topic/book-lab1/step-01", student_id: "d", duration: 30 })
     ];
     const model = new BaseLabModel(records, null);
-    expect(model.medianByLab.row!["book-lab1"]).toBe(25);
+    expect(model.medianByLab.row!["topic/book-lab1"]).toBe(25);
   });
 
   it("median totalMinutes is median of per-student totals", () => {
@@ -241,7 +241,7 @@ describe("BaseLabModel duration edge cases", () => {
       makeLabRecord({ lo_id: "topic/book-lab1/step-01", student_id: "alice", duration: 10 })
     ];
     const model = new BaseLabModel(records, null);
-    expect(model.lab.rows[0]["book-lab1"]).toBe(10);
+    expect(model.lab.rows[0]["topic/book-lab1"]).toBe(10);
     expect(model.lab.rows[0].totalMinutes).toBe(10);
   });
 });

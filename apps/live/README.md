@@ -17,7 +17,7 @@ Real-time student activity tracking across all Tutors courses.
 ## Development
 
 ```bash
-npm run dev
+pnpm --filter tutors-live dev
 ```
 
 Runs on http://localhost:5174
@@ -25,7 +25,7 @@ Runs on http://localhost:5174
 ## Technology
 
 - SvelteKit + Svelte 5
-- `@tutors/ui` components
+- `@tutors/ui-primitives`, `@tutors/ui-components` and `@tutors/ui-navigators` for the cards, feeds and shell
 - `@tutors/svelte-state` for live presence tracking, over the `@tutors/domain` and `@tutors/application` rings
 - `@tutors/realtime-supabase` and `@tutors/store-supabase` are the adapters `src/lib/compose.ts` puts behind the presence port and the health check
 - `@tutors/app-config` for the shared Vite-based SvelteKit configuration (build time only)

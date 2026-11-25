@@ -1,11 +1,12 @@
 <script lang="ts">
   import { currentCourse, contentLocks } from "@tutors/svelte-state";
-  import { rbacService } from "@tutors/svelte-state/rbac";
+  import { rbacService, SHOW_LOCKED_KEY } from "@tutors/svelte-state/rbac";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import Sidebar from "@tutors/ui-primitives/components/Sidebar.svelte";
   import { t } from "@tutors/i18n";
   import { Tabs, Switch } from "@skeletonlabs/skeleton-svelte";
   import type { Lo, Composite } from "@tutors/tutors-model-lib";
+  import { reportLockChange } from "./lock-change";
 
   // Administration only: the course summary is its own Course Info row in the same menu, so this
   // panel no longer carries a copy of it and opens on Content Locks. Mount it for educators only -
@@ -14,6 +15,54 @@
 
   const course = $derived(currentCourse.value);
   const enrollment = $derived(course?.enrollment);
+  const exportSupported = $derived(/^(?:https?:\/\/)?[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?$/i.test(course?.courseId ?? ""));
+  let exporting = $state(false);
+  let exportError = $state(false);
+
+  async function exportEnrollment() {
+    if (!course || exporting) return;
+    exporting = true;
+    exportError = false;
+    try {
+      const response = await fetch(`/api/courses/${encodeURIComponent(course.courseId)}/enrollment`);
+      if (!response.ok) throw new Error(`Enrollment export returned ${response.status}`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "enrollment.yaml";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      exportError = true;
+    } finally {
+      exporting = false;
+    }
+  }
+
+  // Moodle sync (Rules 0633-0634): the reader checks the educator on the server, then copies the
+  // course's Moodle assignments and submissions into the tables Tutors Time reads.
+  let moodleCourseId = $state("");
+  let moodleSectionId = $state("");
+  let syncing = $state(false);
+  let syncResult = $state<"done" | "error" | null>(null);
+
+  async function syncMoodle() {
+    if (!course || syncing || !moodleCourseId.trim()) return;
+    syncing = true;
+    syncResult = null;
+    try {
+      const response = await fetch(`/api/courses/${encodeURIComponent(course.courseId)}/moodle-sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moodleCourseId: moodleCourseId.trim(), moodleSectionId: moodleSectionId.trim() || undefined })
+      });
+      syncResult = response.ok ? "done" : "error";
+    } catch {
+      syncResult = "error";
+    } finally {
+      syncing = false;
+    }
+  }
 
   type LockGroup = { title?: string; los: Lo[] };
 
@@ -64,7 +113,8 @@
             aria-label={t("lecturer.locks.showToStudents")}
             name="show-locked-to-students"
             checked={rbacService.showLockedToStudents()}
-            onCheckedChange={(details) => rbacService.setShowLockedToStudents(details.checked)}
+            disabled={rbacService.isLockPending(SHOW_LOCKED_KEY)}
+            onCheckedChange={(details) => reportLockChange(rbacService.setShowLockedToStudents(details.checked))}
           >
             <Switch.Control>
               <Switch.Thumb />
@@ -72,6 +122,7 @@
             <Switch.HiddenInput />
           </Switch>
         </div>
+        {#if rbacService.locksSavedLocally}<p role="status" class="ui-muted info-text">{t("lecturer.locks.localOnly")}</p>{/if}
         {#if lockGroups.length === 0 || lockGroups.every((g) => g.los.length === 0)}
           <p class="ui-muted info-text">{t("lecturer.locks.empty")}</p>
         {:else}
@@ -89,7 +140,8 @@
                   aria-label={`Lock ${lo.title}`}
                   name="lock-{lo.route}"
                   checked={contentLocks.value.get(lo.route) ?? false}
-                  onCheckedChange={(details) => rbacService.toggleContentLock(lo.route, details.checked)}
+                  disabled={rbacService.isLockPending(lo.route)}
+                  onCheckedChange={(details) => reportLockChange(rbacService.toggleContentLock(lo.route, details.checked))}
                 >
                   <Switch.Control>
                     <Switch.Thumb />
@@ -105,6 +157,34 @@
 
     <Tabs.Content value="enrollment">
       <div class="space-y-3 p-2">
+        <div class="space-y-2">
+          <button class="ui-button" onclick={exportEnrollment} disabled={exporting || !exportSupported} aria-describedby="enrollment-export-help">
+            {exporting ? t("lecturer.enrollment.exporting") : t("lecturer.enrollment.export")}
+          </button>
+          <p id="enrollment-export-help" class="ui-muted info-text">
+            {exportSupported ? t("lecturer.enrollment.exportHelp") : t("lecturer.enrollment.exportUnsupported")}
+          </p>
+          {#if exportError}<p role="alert" class="info-text">{t("lecturer.enrollment.exportError")}</p>{/if}
+        </div>
+        <form class="info-divider space-y-2" onsubmit={(event) => { event.preventDefault(); syncMoodle(); }}>
+          <h4 class="info-heading">{t("lecturer.moodle.title")}</h4>
+          <p id="moodle-sync-help" class="ui-muted info-text">{t("lecturer.moodle.help")}</p>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="info-text">
+              {t("lecturer.moodle.courseId")}
+              <input class="input w-full" inputmode="numeric" required bind:value={moodleCourseId} placeholder={`${t("lecturer.moodle.example")} 1234`} />
+            </label>
+            <label class="info-text">
+              {t("lecturer.moodle.sectionId")}
+              <input class="input w-full" inputmode="numeric" bind:value={moodleSectionId} placeholder={`${t("lecturer.moodle.example")} 5678`} />
+            </label>
+          </div>
+          <button type="submit" class="ui-button" disabled={syncing || !exportSupported || !moodleCourseId.trim()} aria-describedby="moodle-sync-help">
+            {syncing ? t("lecturer.moodle.syncing") : t("lecturer.moodle.sync")}
+          </button>
+          {#if syncResult === "done"}<p role="status" class="info-text">{t("lecturer.moodle.done")}</p>{/if}
+          {#if syncResult === "error"}<p role="alert" class="info-text">{t("lecturer.moodle.error")}</p>{/if}
+        </form>
         {#if enrollment?.educators && enrollment.educators.length > 0}
           <div>
             <h4 class="info-heading">Educators</h4>

@@ -3,6 +3,7 @@
   import CourseIdDialog from "#lib/components/CourseIdDialog.svelte";
   import { TutorsTime } from "@tutors/tutors-time-lib";
   import { goto } from "$app/navigation";
+  import { courseTimeHref } from "#lib/dateRange.ts";
   import log from "@tutors/logger";
 
 
@@ -13,27 +14,14 @@
   async function handleLoadCourse(
     courseId: string,
     startDate: string | null,
-    endDate: string | null,
-    moodleCourseId: string | null,
-    moodleSectionId: string | null
+    endDate: string | null
   ) {
     dialogError = null;
     dialogLoading = true;
     try {
+      // Loads the period here so the dialog can show a failure; the destination reuses this load.
       await TutorsTime.loadCourseTime(courseId, startDate, endDate);
-
-
-      if (moodleCourseId) {
-        const response = await fetch("/api/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseId, moodleCourseId, moodleSectionId })
-        });
-        if (!response.ok) throw new Error(t("classTime.moodleSyncFailed"));
-      }
-
-
-      goto(`/${courseId}/medians`);
+      goto(courseTimeHref(courseId, { startDate, endDate }));
     } catch (e) {
       dialogError = e instanceof Error ? e.message : t("shell.loadError");
     } finally {
@@ -50,5 +38,5 @@
 
 <section class="ui-page">
   <CourseIdDialog loading={dialogLoading} error={dialogError}
-    onsubmit={({ courseId, startDate, endDate, moodleCourseId, moodleSectionId }) => handleLoadCourse(courseId, startDate, endDate, moodleCourseId, moodleSectionId)} />
+    onsubmit={({ courseId, startDate, endDate }) => handleLoadCourse(courseId, startDate, endDate)} />
 </section>

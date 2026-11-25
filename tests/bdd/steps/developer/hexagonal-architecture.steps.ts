@@ -30,7 +30,7 @@ const FIXTURE_ALIASES = {
   "tutors-catalogue": fixture("apps/catalogue/src/lib/page.ts"),
   "better-auth": fixture("external/better-auth/index.ts"),
   "@sveltejs/kit": fixture("external/sveltekit.ts"),
-  "@supabase/supabase-js": fixture("external/@supabase/supabase-js.ts"),
+  "@supabase/supabase-js": fixture("external/@supabase/supabase-js/index.ts"),
   "shiki/core": fixture("external/shiki/core.ts"),
   "$app/env/private": fixture("external/$app/env/private.ts"),
   "$env/dynamic/private": fixture("external/$env/dynamic/private.ts")

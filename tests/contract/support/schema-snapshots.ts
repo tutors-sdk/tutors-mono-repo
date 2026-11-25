@@ -16,11 +16,9 @@ import {
   RealtimeChannelSchema,
   IncrementCalendarParamsSchema,
   GetCountLearningRecordsParamsSchema,
-  WhiteboardSceneInitSchema,
   WhiteboardSceneUpdateSchema,
-  WhiteboardSceneSnapshotSchema,
   WhiteboardCursorUpdateSchema,
-  WhiteboardRoomSchema,
+  WhiteboardPresenceSchema,
   WhiteboardInitEditorSchema,
 } from "./schemas";
 
@@ -139,11 +137,9 @@ export const SCHEMA_SNAPSHOTS: Record<string, JsonSchema> = {
   RealtimeChannel: zodToJsonSchema(RealtimeChannelSchema),
   IncrementCalendarParams: zodToJsonSchema(IncrementCalendarParamsSchema),
   GetCountLearningRecordsParams: zodToJsonSchema(GetCountLearningRecordsParamsSchema),
-  WhiteboardSceneInit: zodToJsonSchema(WhiteboardSceneInitSchema),
   WhiteboardSceneUpdate: zodToJsonSchema(WhiteboardSceneUpdateSchema),
-  WhiteboardSceneSnapshot: zodToJsonSchema(WhiteboardSceneSnapshotSchema),
   WhiteboardCursorUpdate: zodToJsonSchema(WhiteboardCursorUpdateSchema),
-  WhiteboardRoom: zodToJsonSchema(WhiteboardRoomSchema),
+  WhiteboardPresence: zodToJsonSchema(WhiteboardPresenceSchema),
   WhiteboardInitEditor: zodToJsonSchema(WhiteboardInitEditorSchema),
 };
 

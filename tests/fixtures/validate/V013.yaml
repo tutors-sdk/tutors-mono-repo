@@ -1,0 +1,12 @@
+broken:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/quiz-01/quiz.md: "# Week one quiz\n\nAnswer these before the lab.\n\n```quiz\nquestion: Which keyword declares a constant?\noptions:\n  - var\n  - const\ncorrect: 1\n---\nquestion: Which tag makes a link?\noptions:\n  - <a>\n  - <link>\n---\nquestion: HTML is a programming language.\ntype: true-false\ncorrect: false\n```\n"
+  topic-01/quiz-02/quiz.md: "# Week one recap\n\nQuestions to follow.\n"
+fixed:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Web Development\n"
+  topic-01/topic.md: "# Week one\n"
+  topic-01/quiz-01/quiz.md: "# Week one quiz\n\nAnswer these before the lab.\n\n```quiz\nquestion: Which keyword declares a constant?\noptions:\n  - var\n  - const\ncorrect: 1\n---\nquestion: Which tag makes a link?\noptions:\n  - <a>\n  - <link>\ncorrect: 0\n---\nquestion: HTML is a programming language.\ntype: true-false\ncorrect: false\n```\n"
+  topic-01/quiz-02/quiz.md: "# Week one quiz\n\nAnswer these before the lab.\n\n```quiz\nquestion: HTML is a programming language.\ntype: true-false\ncorrect: false\n```\n"

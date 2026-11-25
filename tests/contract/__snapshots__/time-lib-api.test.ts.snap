@@ -3,6 +3,7 @@
 exports[`Public API Surface — @tutors/tutors-time-lib > should export service classes and types 1`] = `
 [
   "extractLabIdentifier",
+  "extractLabPath",
   "extractStepName",
   "filterByDateRange",
   "formatDateShort",
@@ -13,12 +14,19 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should export service 
   "getDistinctSortedWeeks",
   "getMondayForDate",
   "heatColor",
+  "labColumnLabels",
   "minutesOf",
   "toggleLabViewMode",
   "BaseCalendarModel",
   "BaseLabModel",
   "getSupabase",
   "initSupabase",
+  "readerTimeSource",
+  "supabaseTimeSource",
+  "setTutorsTimeSource",
+  "getTutorsTimeSource",
+  "TutorsTimeSourceError",
+  "withoutTrailingSlashes",
   "CourseTime",
 ]
 `;
@@ -29,7 +37,9 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should maintain stable
   "BaseLabModel",
   "CourseTime",
   "TutorsTime",
+  "TutorsTimeSourceError",
   "extractLabIdentifier",
+  "extractLabPath",
   "extractStepName",
   "filterByDateRange",
   "formatDateShort",
@@ -40,9 +50,15 @@ exports[`Public API Surface — @tutors/tutors-time-lib > should maintain stable
   "getDistinctSortedWeeks",
   "getMondayForDate",
   "getSupabase",
+  "getTutorsTimeSource",
   "heatColor",
   "initSupabase",
+  "labColumnLabels",
   "minutesOf",
+  "readerTimeSource",
+  "setTutorsTimeSource",
+  "supabaseTimeSource",
   "toggleLabViewMode",
+  "withoutTrailingSlashes",
 ]
 `;

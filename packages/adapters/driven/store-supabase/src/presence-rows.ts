@@ -1,37 +1,10 @@
 /**
  * The latest presence snapshot per learner per course (`tutors-connect-latest`), as the live
- * app reads it. The reader's own roster reads go through the realtime adapter's PresencePort.
+ * app reads it. Nothing here writes: the reader's server keeps the snapshot (POST /api/presence).
  */
 import type { TutorsConnectLatestRow } from "@tutors/domain/learning";
 import log from "@tutors/logger";
 import { supabase } from "./client.ts";
-
-/**
- * Upsert latest Lo snapshot for (course, student) into tutors-connect-latest.
- * Fire-and-forget from presence; does not throw.
- */
-export async function upsertTutorsConnectLatestLo(loRecord: object): Promise<void> {
-  if (!supabase) return;
-
-  const rec = loRecord as { courseId?: string; user?: { id?: string } };
-  const courseId = rec.courseId?.trim();
-  const studentId = rec.user?.id?.trim();
-  if (!courseId || !studentId) return;
-
-  const { error } = await supabase.from("tutors-connect-latest").upsert(
-    {
-      course_id: courseId,
-      student_id: studentId,
-      payload: loRecord,
-      received_at: new Date().toISOString()
-    },
-    { onConflict: "course_id,student_id" }
-  );
-
-  if (error) {
-    log.error("upsertTutorsConnectLatestLo failed:", error);
-  }
-}
 
 /**
  * All stored Lo snapshots for a course (one row per student, already “latest” by key).

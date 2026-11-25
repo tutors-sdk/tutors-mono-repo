@@ -12,9 +12,10 @@
  * Tracked packages:
  *   - @tutors/tutors-model-lib (packages/jsr/model)
  *   - @tutors/tutors-gen-lib   (packages/jsr/gen)
+ *   - @tutors/course-rules     (packages/jsr/course-rules)
  *   - @tutors/tutors-time-lib  (packages/jsr/time)
  *   - @tutors/tutors-types     (packages/jsr/types)
- *   - @tutors/identity         (packages/jsr/identity)
+ *   - @tutors/application/ports (packages/application), the ports every adapter implements
  */
 
 import * as fs from "fs";
@@ -38,10 +39,10 @@ interface PackageConfig {
 
 const TRACKED_PACKAGES: PackageConfig[] = [
   {
-    name: "@tutors/identity",
-    dir: "packages/jsr/identity",
-    entry: "src/index.ts",
-    reportFile: "identity.api.md",
+    name: "@tutors/application/ports",
+    dir: "packages/application",
+    entry: "src/ports/index.ts",
+    reportFile: "application-ports.api.md",
   },
   {
     name: "@tutors/tutors-model-lib",
@@ -54,6 +55,12 @@ const TRACKED_PACKAGES: PackageConfig[] = [
     dir: "packages/jsr/gen",
     entry: "src/tutors.ts",
     reportFile: "tutors-gen-lib.api.md",
+  },
+  {
+    name: "@tutors/course-rules",
+    dir: "packages/jsr/course-rules",
+    entry: "src/mod.ts",
+    reportFile: "course-rules.api.md",
   },
   {
     name: "@tutors/tutors-time-lib",

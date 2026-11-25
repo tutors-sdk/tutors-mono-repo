@@ -8,12 +8,15 @@
   "exports": {
     "./vite": "./src/vite.js",
     "./svelte": "./src/svelte.js",
-    "./env": "./src/env.js"
+    "./env": "./src/env.js",
+    "./env-contract": "./src/env-contract.js",
+    "./service-key": "./src/service-key.js"
   },
   "dependencies": {
     "@sveltejs/adapter-auto": "8.0.0",
     "@sveltejs/adapter-node": "6.0.0",
-    "@sveltejs/kit": "3.0.1",
+    "@sveltejs/adapter-static": "4.0.1",
+    "@sveltejs/kit": "3.1.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "svelte": "5.57.2",

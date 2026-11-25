@@ -44,12 +44,7 @@
   line-height: 1.2;
 }
 
-@import "@tutors/themes/styles/tutors.css";
-@import "@tutors/themes/styles/classic.css";
-@import "@tutors/themes/styles/dyslexia.css";
-@import "@tutors/themes/styles/easter.css";
-@import "@tutors/themes/styles/prose-headings.css";
-@import "@tutors/themes/styles/reduced-motion.css";
+@import "@tutors/themes/styles/index.css";
 @import "@tutors/ui-components/styles.css";
 @import "@tutors/themes/styles/paper-tokens.css";
 @import "@tutors/themes/styles/paper-ui.css";

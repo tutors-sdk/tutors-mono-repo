@@ -18,26 +18,36 @@ export type LlmsVisibility = {
   hideCourseWideLinks: boolean;
 };
 
-function courseSummary(course: Course, visibility?: LlmsVisibility): string {
+/**
+ * Where the course's files are: on the protocol the reader fetched the course with, so a course served over http
+ * (localhost or a 192.* address, as a local or test course is) links its downloads over http too.
+ */
+function courseOrigin(course: Course, protocol: string): string {
+  return `${protocol}${course.courseUrl}`;
+}
+
+function courseSummary(course: Course, visibility?: LlmsVisibility, protocol = "https://"): string {
   const isVisible = visibility?.isVisible ?? (() => true);
   const hideCourseWide = visibility?.hideCourseWideLinks ?? false;
 
   const fileName = toSnakeCase(course.title);
+  const origin = courseOrigin(course, protocol);
   const links: string[] = [];
 
   if (!hideCourseWide) {
-    links.push(`- [${fileName}-complete-llms.txt](https://${course.courseUrl}/llms/${fileName}-complete-llms.txt) — ${llmsText}`);
+    links.push(`- [${fileName}-complete-llms.txt](${origin}/llms/${fileName}-complete-llms.txt) — ${llmsText}`);
     const talks = filterByType(course.los, "talk").filter((lo) => !lo.hide && isVisible(lo));
     if (talks.length > 0) {
-      links.push(`- [${fileName}-complete-pdfs.zip](https://${course.courseUrl}/llms/${fileName}-complete-pdfs.zip) — ${pdfsZip}`);
+      links.push(`- [${fileName}-complete-pdfs.zip](${origin}/llms/${fileName}-complete-pdfs.zip) — ${pdfsZip}`);
     }
   }
 
   return links.join("\n");
 }
 
-function topics(course: Course, visibility?: LlmsVisibility): string {
+function topics(course: Course, visibility?: LlmsVisibility, protocol = "https://"): string {
   const isVisible = visibility?.isVisible ?? (() => true);
+  const origin = courseOrigin(course, protocol);
   const topicStr: string[] = [];
   const topicLos = filterByType(course.los, "topic");
   topicLos.forEach((lo: Lo, index: number) => {
@@ -46,8 +56,8 @@ function topics(course: Course, visibility?: LlmsVisibility): string {
       const paddedIndex = index.toString().padStart(2, "0");
       const title = `${paddedIndex}-${toSnakeCase(topic.title)}`;
       topicStr.push(`### ${topic.title}`);
-      topicStr.push(`- [${toSnakeCase(topic.title)}-llms.txt](https://${course.courseUrl}/llms/topics/${title}-llms.txt) — ${llmsText}`);
-      topicStr.push(`- [${toSnakeCase(topic.title)}-pdfs.zip](https://${course.courseUrl}/llms/topics/${title}-pdfs.zip) — ${pdfsZip}`);
+      topicStr.push(`- [${toSnakeCase(topic.title)}-llms.txt](${origin}/llms/topics/${title}-llms.txt) — ${llmsText}`);
+      topicStr.push(`- [${toSnakeCase(topic.title)}-pdfs.zip](${origin}/llms/topics/${title}-pdfs.zip) — ${pdfsZip}`);
 
       const allLos = flattenLos(topic.los);
       const videos = allLos.filter((lo) => lo.type === "panelvideo");
@@ -67,8 +77,8 @@ function topics(course: Course, visibility?: LlmsVisibility): string {
   return str;
 }
 
-export function generateLlms(course: Course, visibility?: LlmsVisibility): string {
-  const summary = courseSummary(course, visibility);
-  const topicStr = topics(course, visibility);
+export function generateLlms(course: Course, visibility?: LlmsVisibility, protocol = "https://"): string {
+  const summary = courseSummary(course, visibility, protocol);
+  const topicStr = topics(course, visibility, protocol);
   return convertMdToHtml(summary + topicStr);
 }

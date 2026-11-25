@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Builds any of the four SvelteKit apps in this monorepo into a self-contained
-# Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time>.
+# Node.js image. Select the app with --build-arg APP_NAME=<reader|catalogue|live|time|validator>.
 #
 #   docker build --build-arg APP_NAME=reader -t tutors/reader .
 #   docker compose up --no-build reader proxy # local HTTP origin headers
@@ -17,24 +17,31 @@
 # environment at runtime via SvelteKit's $env/dynamic modules, so one image
 # serves every environment and no secret is ever baked into a layer.
 
-ARG NODE_VERSION=22
-# Base images are fully qualified so the file builds the same under Docker,
-# Podman/Buildah and Quay's builders, which do not assume docker.io for short
-# names.
-ARG NODE_IMAGE=docker.io/library/node:${NODE_VERSION}-bookworm-slim
+# NODE_IMAGE overrides the base for a mirror (any image ref); by default it is
+# the pinned stage below.
+ARG NODE_IMAGE=node-pinned
 
 # ---------------------------------------------------------------------------
-# base: Node plus the exact pnpm version pinned in package.json (via corepack)
+# node-pinned: the Node base image, pinned by digest (Rule 0667). A floating tag
+# changes Node and Debian under the same commit whenever Docker Hub moves it:
+# on 2026-10-22 node 22.23.3 -> 22.23.4 reached all four images with no PR.
+# Dependabot's docker ecosystem bumps the digest in its own pull request.
+# Fully qualified so the file builds the same under Docker, Podman/Buildah and
+# Quay's builders, which do not assume docker.io for short names.
+# ---------------------------------------------------------------------------
+FROM docker.io/library/node:26.13.0-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS node-pinned
+
+# ---------------------------------------------------------------------------
+# base: Node plus the exact pnpm version pinned in package.json (via npm)
 # ---------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS base
 ENV PNPM_HOME=/pnpm \
-    COREPACK_HOME=/pnpm/corepack \
     npm_config_store_dir=/pnpm/store \
     CI=true
 ENV PATH=${PNPM_HOME}:${PATH}
 WORKDIR /app
 COPY package.json ./
-RUN corepack enable && corepack install
+RUN npm install --global "$(node -p "require('./package.json').packageManager")"
 
 # ---------------------------------------------------------------------------
 # deps: download every package in the lockfile into the pnpm store.
@@ -43,6 +50,8 @@ RUN corepack enable && corepack install
 # ---------------------------------------------------------------------------
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+# pnpm-workspace.yaml's patchedDependencies (dev tooling only) must resolve for the lockfile to install.
+COPY patches ./patches
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm fetch
 
@@ -122,5 +131,13 @@ ENV GIT_SHA=${GIT_SHA} \
 
 USER 1001
 EXPOSE 3000
+
+# Docker, Podman and the release harness read the image's own health from the
+# liveness route Kubernetes probes (/healthz/live: cheap, no Supabase call),
+# with the same timings as compose.yaml. The runtime has no curl or wget, so
+# node's fetch asks; PORT is read so an overridden port is still probed
+# (Rule 0573).
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/healthz/live').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
 
 CMD ["node", "build/index.js"]

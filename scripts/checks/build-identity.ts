@@ -33,7 +33,7 @@ import { fileURLToPath } from "node:url";
 import { REPO_ROOT, readText, toPosix, walk } from "./lib/repo.ts";
 
 /** The apps that ship as images, and so must each answer `GET /version`. */
-export const APPS = ["reader", "catalogue", "live", "time"] as const;
+export const APPS = ["reader", "catalogue", "live", "time", "validator"] as const;
 
 export interface BuildIdentity {
   /** Git commit: `GIT_SHA`, answered as `revision`. */

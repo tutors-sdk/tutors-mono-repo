@@ -1,0 +1,16 @@
+description: Decks named only by the date they were given; weeks follow the dates in order
+files:
+  - 2027-02-01 slides.pdf
+  - 2027-01-25 slides.pdf
+  - 2027-01-25 handout.md
+  - 2027-02-08 slides.pdf
+  - syllabus.pdf
+expected:
+  topics:
+    - week: 1
+      items:
+        - { kind: talk, files: [2027-01-25 slides.pdf] }
+        - { kind: note, files: [2027-01-25 handout.md] }
+    - { week: 2, items: [{ kind: talk, files: [2027-02-01 slides.pdf] }] }
+    - { week: 3, items: [{ kind: talk, files: [2027-02-08 slides.pdf] }] }
+  tray: [syllabus.pdf]

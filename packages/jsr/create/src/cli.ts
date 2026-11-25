@@ -1,6 +1,6 @@
 import type { CourseSpec } from "./types.ts";
 import { slugify, defaultSpec } from "./types.ts";
-import { writeCourseToFilesystem, nextStepsMessage } from "./scaffolder.ts";
+import { writeCourseToFilesystem, nextStepsMessage, CourseDirectoryExistsError } from "./scaffolder.ts";
 import denoConfig from "../deno.json" with { type: "json" };
 
 function promptRequired(message: string): string {
@@ -17,7 +17,7 @@ function promptNumber(message: string, min: number, max: number, fallback: numbe
   if (!value) return fallback;
   const n = parseInt(value, 10);
   if (isNaN(n) || n < min || n > max) {
-    process.stderr.write(`Please enter a number between ${min} and ${max}.\n`);;
+    process.stderr.write(`Please enter a number between ${min} and ${max}.\n`);
     return promptNumber(message, min, max, fallback);
   }
   return n;
@@ -29,7 +29,7 @@ function promptYesNo(message: string, fallback: boolean): boolean {
   return value.toLowerCase().startsWith("y");
 }
 
-export function runCli(): void {
+export function runCli(outputDir = "."): void {
   process.stdout.write(`\n  Welcome to Tutors Course Creator (${denoConfig.version})\n`);
 
   const courseName = promptRequired("  Course name:");
@@ -60,10 +60,18 @@ export function runCli(): void {
     includeEnrollment,
     includeGitignore,
     includeReadme,
-    readmeDescription: readmeDescription.trim(),
+    readmeDescription: readmeDescription.trim()
   };
 
-  process.stdout.write(`\n  Creating course in ./${courseId}/ ...\n`);
-  writeCourseToFilesystem(spec, ".");
+  process.stdout.write(`\n  Creating course in ${outputDir}/${courseId}/ ...\n`);
+  try {
+    writeCourseToFilesystem(spec, outputDir);
+  } catch (error) {
+    // Never print the publishing steps for a course that was not (fully) created.
+    const reason = error instanceof CourseDirectoryExistsError ? error.message : `Could not create the course: ${String(error)}`;
+    process.stderr.write(`\n  ${reason}\n`);
+    process.exitCode = 1;
+    return;
+  }
   process.stdout.write(nextStepsMessage(spec));
 }

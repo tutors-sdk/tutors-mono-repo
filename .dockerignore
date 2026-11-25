@@ -5,8 +5,12 @@
 !package.json
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
+!patches
 !apps
 !packages
+!scripts
+scripts/*
+!scripts/generate-validator-schema.ts
 
 # Generated output and local-only files inside the allowed trees. The image
 # rebuilds all of these from source.

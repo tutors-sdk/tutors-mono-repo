@@ -1,5 +1,6 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 
 vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
   createClient: (await import("../../support/supabase-recorder.ts")).createClient
@@ -8,7 +9,7 @@ vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, loEventArrives, onlineListLoads, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, liveWatcher, loEventArrives, onlineListLoads, openLo, publishedCourse, signIn, storedActivity } from "../../support/connect.ts";
 import { recorder, settle, type RecordingChannel } from "../../support/supabase-recorder.ts";
 import { mountWhiteboardEditor } from "../../support/whiteboard-editor.ts";
 import { liveService } from "../../../../packages/adapters/driving/svelte-state/src/community/services/live.svelte.ts";
@@ -48,6 +49,15 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       whiteboard.participants(2);
     }
   };
+  const moveContinuously = (_ctx: unknown, elapsed: number) => {
+    for (let i = 1; i <= elapsed; i++) {
+      cursor(i);
+      vi.advanceTimersByTime(1);
+    }
+  };
+  const sent = (event: string) => whiteboard!.channel.send.mock.calls.filter(([message]) => message.event === event);
+  const cursorBroadcasts = (_ctx: unknown, count: number) => expect(sent("cursor-update")).toHaveLength(count);
+  const roomOf = (_ctx: unknown, count: number) => whiteboard!.participants(count);
   const finalPosition = () =>
     expect(whiteboard!.channel.send.mock.lastCall?.[0]).toMatchObject({
       event: "cursor-update",
@@ -123,9 +133,13 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       When("the live service is asked to monitor {string} again", (_ctx, courseId: string) => liveService.startCoursePresenceListener(courseId));
       Then("the original live course channel remains subscribed", () => expect(recorder.joined(course.courseId)).toEqual([original]));
     });
-    RuleScenario("Repeating global publisher setup creates one publish-only channel", ({ When, Then }) => {
-      When("activity is published {number} times", (_ctx, count: number) => {
+    // The reader's server publishes for the browser, and only to a feed a Live tab is watching.
+    RuleScenario("Repeated global publishing reuses one publish-only channel", ({ Given, When, Then }) => {
+      Given("a live dashboard is watching the platform feed", () => liveWatcher(ALL_COURSES_CHANNEL, "live-tab"));
+      When("course activity is published {number} times", async (_ctx, count: number) => {
         for (let i = 0; i < count; i++) presenceService.sendLoEvent(course, labsOf(course)[0], githubUser("Alice"));
+        await settle();
+        expect(recorder.sentOn(ALL_COURSES_CHANNEL)).toHaveLength(count);
       });
       Then("one global channel exists without a subscription", () => {
         expect(recorder.channels.filter((channel) => channel.name === ALL_COURSES_CHANNEL)).toHaveLength(1);
@@ -171,6 +185,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("completing removal creates one replacement subscription", async () => {
         finishRemoval();
         await restarting;
+        // The replacement joins once the removal it waits on has settled.
+        await settle();
         expect(recorder.joined(course.courseId)).toHaveLength(1);
         expect(recorder.joined(course.courseId)[0]).not.toBe(original);
       });
@@ -189,13 +205,15 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("completing removal creates one replacement global subscription", async () => {
         finishRemoval();
         await restarting;
+        // The replacement joins once the removal it waits on has settled.
+        await settle();
         expect(recorder.joined(ALL_COURSES_CHANNEL)).toHaveLength(1);
         expect(recorder.joined(ALL_COURSES_CHANNEL)[0]).not.toBe(original);
       });
     });
   });
 
-  Rule("When whiteboard cursor updates arrive, the reader shall coalesce them into at most one broadcast every 50 milliseconds.", ({ RuleScenario }) => {
+  Rule("When whiteboard cursor updates arrive, the reader shall coalesce them into at most one broadcast per cursor interval.", ({ RuleScenario }) => {
     RuleScenario("A cursor burst sends its final position", ({ Given, When, Then, And }) => {
       Given("a subscribed whiteboard editor", () => mountEditor(true));
       When("{number} cursor positions arrive within {number} milliseconds", (_ctx, count: number, elapsed: number) => {
@@ -204,20 +222,15 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       });
       Then("no cursor broadcast has been sent", () => expect(whiteboard!.channel.send).not.toHaveBeenCalled());
       And("at {number} milliseconds one broadcast carries the final position", (_ctx, at: number) => {
-        vi.advanceTimersByTime(at - 49);
+        vi.advanceTimersByTime(at - 99);
         expect(whiteboard!.channel.send).toHaveBeenCalledTimes(1);
         finalPosition();
       });
     });
-    RuleScenario("Continuous pointer movement sends at most 20 broadcasts per second", ({ Given, When, Then, And }) => {
+    RuleScenario("Continuous pointer movement in a small room sends at most 10 broadcasts per second", ({ Given, When, Then, And }) => {
       Given("a subscribed whiteboard editor", () => mountEditor(true));
-      When("the cursor moves every millisecond for {number} milliseconds", (_ctx, elapsed: number) => {
-        for (let i = 1; i <= elapsed; i++) {
-          cursor(i);
-          vi.advanceTimersByTime(1);
-        }
-      });
-      Then("{number} cursor broadcasts have been sent", (_ctx, count: number) => expect(whiteboard!.channel.send).toHaveBeenCalledTimes(count));
+      When("the cursor moves every millisecond for {number} milliseconds", moveContinuously);
+      Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
       And("the final broadcast carries the final position", finalPosition);
     });
   });
@@ -225,7 +238,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
   Rule("While its whiteboard channel is disconnected, the reader shall suppress cursor broadcasts.", ({ RuleScenario }) => {
     const moveAndWait = () => {
       cursor(1);
-      vi.advanceTimersByTime(50);
+      vi.advanceTimersByTime(100);
     };
     const noCursor = () => expect(whiteboard!.channel.send).not.toHaveBeenCalled();
     RuleScenario("Cursor movement before subscription sends no broadcast", ({ Given, When, Then }) => {
@@ -238,7 +251,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       When("a cursor position is queued and the channel disconnects", () => {
         cursor(1);
         whiteboard!.status("CHANNEL_ERROR");
-        vi.advanceTimersByTime(50);
+        vi.advanceTimersByTime(100);
       });
       Then("no cursor broadcast has been sent", noCursor);
     });
@@ -383,7 +396,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       Given("a subscribed whiteboard editor with no visible peer", alone);
       And("a scene edit has been saved without broadcasting", () => {
         whiteboard!.editor.onChange([{ id: "shape-1", version: 1 }]);
-        vi.advanceTimersByTime(100);
+        vi.advanceTimersByTime(250);
         expect(whiteboard!.postMessage).toHaveBeenCalledWith({ type: "scene-changed", elements: [{ id: "shape-1", version: 1 }] }, "https://reader.invalid");
         expect(whiteboard!.channel.send).not.toHaveBeenCalled();
       });
@@ -415,7 +428,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
           ]
         ]) {
           whiteboard!.editor.onChange(elements);
-          vi.advanceTimersByTime(100);
+          vi.advanceTimersByTime(250);
         }
         expect(whiteboard!.channel.send).not.toHaveBeenCalled();
       });
@@ -435,24 +448,163 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       And("another Presence sync sends no duplicate scene broadcast", noDuplicate);
     });
   });
-  Rule("When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.", ({ RuleScenario }) => {
-    RuleScenario("Entering a course lists classmates from stored activity", ({ Given, And, When, Then }) => {
-      Given("{string} was active in the course {number} minutes ago", wasActive);
-      And("{string} is signed in with sharing {word}", signInWithSharing);
-      When("the student enters the course", enterCourse);
-      Then("the online list is {string}", onlineListIs);
-      And("no course channel remains subscribed", noCourseChannel);
-    });
-    RuleScenario("The student's activity is published to the course without joining it", ({ Given, When, Then, And }) => {
-      Given("{string} is signed in with sharing {word}", signInWithSharing);
-      When("the student enters the course", enterCourse);
-      Then("the course activity is published through HTTP", () => {
-        const published = recorder.sentOn(course.courseId).map((message) => message.payload as { courseId?: string; user?: { fullName?: string } });
-        expect(published).toEqual([expect.objectContaining({ courseId: course.courseId, user: expect.objectContaining({ fullName: "Alice" }) })]);
+
+  Rule(
+    "When the whiteboard Presence count changes, the reader shall set the cursor interval to 100 milliseconds for up to 3 participants, 250 milliseconds for up to 6 and 500 milliseconds for up to 8.",
+    ({ RuleScenario }) => {
+      for (const title of ["Three participants share cursors 10 times a second", "Six participants share cursors 4 times a second"]) {
+        RuleScenario(title, ({ Given, And, When, Then }) => {
+          Given("a subscribed whiteboard editor", () => mountEditor(true));
+          And("{number} participants are present in the room", roomOf);
+          When("the cursor moves every millisecond for {number} milliseconds", moveContinuously);
+          Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
+        });
+      }
+      RuleScenario("A cursor queued before the room grows waits for the longer interval", ({ Given, And, When, Then }) => {
+        Given("a subscribed whiteboard editor", () => mountEditor(true));
+        And("{number} participants are present in the room", roomOf);
+        When("a cursor position is queued and the room grows to {number} participants", (_ctx, count: number) => {
+          cursor(1);
+          whiteboard!.participants(count);
+        });
+        And("{number} milliseconds elapse", (_ctx, duration: number) => vi.advanceTimersByTime(duration));
+        Then("no cursor broadcast has been sent", () => expect(sent("cursor-update")).toHaveLength(0));
+        And("at {number} milliseconds one broadcast carries the final position", () => {
+          vi.advanceTimersByTime(1);
+          expect(sent("cursor-update")).toHaveLength(1);
+          finalPosition();
+        });
       });
-      And("no course channel remains subscribed", noCourseChannel);
+      RuleScenario("Eight participants share cursors twice a second", ({ Given, And, When, Then }) => {
+        Given("a subscribed whiteboard editor", () => mountEditor(true));
+        And("{number} participants are present in the room", roomOf);
+        When("the cursor moves every millisecond for {number} milliseconds", moveContinuously);
+        Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
+        And("the final broadcast carries the final position", finalPosition);
+      });
+    }
+  );
+
+  Rule("While a whiteboard room has more than 8 participants, the reader shall not send cursor broadcasts.", ({ RuleScenario }) => {
+    RuleScenario("A crowded room shares no cursors", ({ Given, And, When, Then }) => {
+      Given("a subscribed whiteboard editor", () => mountEditor(true));
+      And("{number} participants are present in the room", roomOf);
+      When("the cursor moves every millisecond for {number} milliseconds", moveContinuously);
+      Then("no cursor broadcast has been sent", () => expect(sent("cursor-update")).toHaveLength(0));
+    });
+    RuleScenario("A crowded room still shares scene edits", ({ Given, And, When, Then }) => {
+      Given("a subscribed whiteboard editor", () => mountEditor(true));
+      And("{number} participants are present in the room", roomOf);
+      When("a scene change and a cursor position are queued", () => {
+        whiteboard!.editor.onChange([{ id: "shape-1", version: 1 }]);
+        cursor(1);
+      });
+      And("{number} milliseconds elapse", (_ctx, duration: number) => vi.advanceTimersByTime(duration));
+      Then("only a scene broadcast is sent", () => {
+        expect(whiteboard!.channel.send.mock.calls.map(([message]) => message.event)).toEqual(["scene-update"]);
+      });
+    });
+    RuleScenario("Cursors resume when the room shrinks to 8", ({ Given, And, When, Then }) => {
+      Given("a subscribed whiteboard editor", () => mountEditor(true));
+      And("{number} participants are present in the room", roomOf);
+      And("the room shrinks to {number} participants", roomOf);
+      When("the cursor moves every millisecond for {number} milliseconds", moveContinuously);
+      Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
     });
   });
+
+  Rule(
+    "If the pointer has moved less than 4 pixels with an unchanged button since the last cursor broadcast, then the reader shall not send a cursor broadcast.",
+    ({ RuleScenario }) => {
+      const point = (x: number, y: number, button = "up") => whiteboard!.editor.onPointerUpdate({ pointer: { x, y }, button });
+      const broadcastAt = (_ctx: unknown, x: number, y: number) => {
+        point(x, y);
+        vi.advanceTimersByTime(100);
+        expect(sent("cursor-update")).toHaveLength(1);
+      };
+      const moveTo = (_ctx: unknown, x: number, y: number, elapsed: number) => {
+        point(x, y);
+        vi.advanceTimersByTime(elapsed);
+      };
+      RuleScenario("A pointer jitter is not broadcast", ({ Given, And, When, Then }) => {
+        Given("a subscribed whiteboard editor", () => mountEditor(true));
+        And("a cursor broadcast has been sent at {number}, {number}", broadcastAt);
+        When("the pointer moves to {number}, {number} and {number} milliseconds elapse", moveTo);
+        Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
+      });
+      RuleScenario("A press without movement is broadcast", ({ Given, And, When, Then }) => {
+        Given("a subscribed whiteboard editor", () => mountEditor(true));
+        And("a cursor broadcast has been sent at {number}, {number}", broadcastAt);
+        When("the pointer is pressed at {number}, {number} and {number} milliseconds elapse", (_ctx, x: number, y: number, elapsed: number) => {
+          point(x, y, "down");
+          vi.advanceTimersByTime(elapsed);
+        });
+        Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
+      });
+      RuleScenario("A 4 pixel move is broadcast", ({ Given, And, When, Then }) => {
+        Given("a subscribed whiteboard editor", () => mountEditor(true));
+        And("a cursor broadcast has been sent at {number}, {number}", broadcastAt);
+        When("the pointer moves to {number}, {number} and {number} milliseconds elapse", moveTo);
+        Then("{number} cursor broadcasts have been sent", cursorBroadcasts);
+      });
+    }
+  );
+
+  Rule("When a whiteboard scene changes, the reader shall send the accumulated changes at most once every 250 milliseconds.", ({ RuleScenario }) => {
+    const scenes = () => sent("scene-update");
+    RuleScenario("A single edit is sent after 250 milliseconds", ({ Given, When, And, Then }) => {
+      Given("a subscribed whiteboard editor", () => mountEditor(true));
+      When("a scene change is made", () => whiteboard!.editor.onChange([{ id: "shape-1", version: 1 }]));
+      And("{number} milliseconds elapse", (_ctx, duration: number) => vi.advanceTimersByTime(duration));
+      Then("no collaboration broadcast is sent", () => expect(whiteboard!.channel.send).not.toHaveBeenCalled());
+      And("at {number} milliseconds one scene broadcast carries the edit", () => {
+        vi.advanceTimersByTime(1);
+        expect(scenes()).toEqual([[{ type: "broadcast", event: "scene-update", payload: { elements: [{ id: "shape-1", version: 1 }] } }]]);
+      });
+    });
+    RuleScenario("A continuous drag sends 4 scene broadcasts a second with the latest version", ({ Given, When, Then, And }) => {
+      let version = 0;
+      Given("a subscribed whiteboard editor", () => mountEditor(true));
+      When("an element is dragged every {number} milliseconds for {number} milliseconds", (_ctx, every: number, elapsed: number) => {
+        for (let at = 0; at < elapsed; at += every) {
+          whiteboard!.editor.onChange([{ id: "shape-1", version: ++version }]);
+          vi.advanceTimersByTime(every);
+        }
+        // Let the last batch go out once the drag stops.
+        vi.advanceTimersByTime(250);
+      });
+      Then("{number} scene broadcasts have been sent", (_ctx, count: number) => expect(scenes()).toHaveLength(count));
+      And("the scene is saved {number} times", (_ctx, count: number) => {
+        expect(whiteboard!.postMessage.mock.calls.filter(([message]) => message.type === "scene-changed")).toHaveLength(count);
+      });
+      And("the final scene broadcast carries the latest version", () => {
+        expect(scenes().at(-1)![0].payload).toEqual({ elements: [{ id: "shape-1", version }] });
+      });
+    });
+  });
+
+  Rule(
+    "When a sharing student enters a course, the reader shall load the course online list from stored activity without joining a course Realtime channel.",
+    ({ RuleScenario }) => {
+      RuleScenario("Entering a course lists classmates from stored activity", ({ Given, And, When, Then }) => {
+        Given("{string} was active in the course {number} minutes ago", wasActive);
+        And("{string} is signed in with sharing {word}", signInWithSharing);
+        When("the student enters the course", enterCourse);
+        Then("the online list is {string}", onlineListIs);
+        And("no course channel remains subscribed", noCourseChannel);
+      });
+      RuleScenario("The student's activity is published to the course without joining it", ({ Given, When, Then, And }) => {
+        Given("a live dashboard is watching the course feed", () => liveWatcher(course.courseId, "live-tab"));
+        And("{string} is signed in with sharing {word}", signInWithSharing);
+        When("the student enters the course", enterCourse);
+        Then("the course activity is published through HTTP", () => {
+          const published = recorder.sentOn(course.courseId).map((message) => message.payload as { courseId?: string; user?: { fullName?: string } });
+          expect(published).toEqual([expect.objectContaining({ courseId: course.courseId, user: expect.objectContaining({ fullName: "Alice" }) })]);
+        });
+        And("no course channel remains subscribed", noCourseChannel);
+      });
+    }
+  );
 
   Rule("While the course tab is visible, the reader shall refresh the course online list every 60 seconds.", ({ RuleScenario }) => {
     RuleScenario("A classmate who arrives appears on the next refresh", ({ Given, And, When, Then }) => {

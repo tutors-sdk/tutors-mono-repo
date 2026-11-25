@@ -1,15 +1,23 @@
 import type { LayoutLoad } from "./$types";
-import { initSupabase, TutorsTime } from "@tutors/tutors-time-lib";
-import * as env from "$app/env/public";
+import { TutorsTime } from "@tutors/tutors-time-lib";
 import { enrichCourseUserFields } from "#lib/enrichCourseUserFields.ts";
+import { isSignedOut, readerSignInUrl, useReaderTimeSource } from "#lib/time-source.ts";
+import { readDateRange } from "#lib/dateRange.ts";
 
-export const load: LayoutLoad = async ({ params }) => {
-  initSupabase(env.PUBLIC_SUPABASE_URL ?? "", env.PUBLIC_SUPABASE_ANON_KEY ?? "");
+export const load: LayoutLoad = async ({ params, url }) => {
+  useReaderTimeSource();
+  // The reporting period lives in the address, so reload, history and links keep it.
+  const { startDate, endDate } = readDateRange(url.searchParams);
   const courseId = (params.courseid ?? "").trim();
   if (!courseId) {
-    return { course: null };
+    return { course: null, signInUrl: null };
   }
-  const course = await TutorsTime.loadCourseTime(courseId);
-  await enrichCourseUserFields(course);
-  return { course };
+  try {
+    const course = await TutorsTime.loadCourseTime(courseId, startDate, endDate);
+    await enrichCourseUserFields(course, startDate, endDate);
+    return { course, signInUrl: null };
+  } catch (error) {
+    if (isSignedOut(error)) return { course: null, signInUrl: readerSignInUrl() };
+    throw error;
+  }
 };

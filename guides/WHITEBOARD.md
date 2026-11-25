@@ -12,23 +12,23 @@ A toolbar sits above the whiteboard with three controls:
 
 | Button | Description |
 |--------|-------------|
-| **Edit** | Switches from read-only SVG view to the full Excalidraw editor with real-time collaboration via Supabase Realtime. Click again to return to view mode. |
+| **Edit** | Switches from read-only SVG view to the full Excalidraw editor. Shared rooms collaborate through Supabase Realtime; personal rooms save privately. Click again to return to view mode. |
 | **Personal / Shared** | Visible in edit mode only. Toggles between a personal whiteboard (unique to the current user) and a shared whiteboard (all users collaborate on the same canvas). Uses a lock/unlock icon. Switching reloads the editor into the other room. |
 | **Fullscreen** | Expands the whiteboard to fill the browser viewport. |
 
 ### View Mode vs Edit Mode
 
 - **View mode** always renders the course author's original `.excalidraw` file as a static SVG. This is the canonical reference content.
-- **Edit mode** connects to a Supabase Realtime broadcast channel where edits are synced in real time and persisted to the `whiteboard_scenes` table. Edits in the collaboration room are independent of the source `.excalidraw` file.
+- **Edit mode** persists edits to `whiteboard_scenes` through the reader's `/api/whiteboard` route. Shared boards also sync through a public Supabase Realtime channel. Personal boards never join that channel; their stored room is derived from the session, so only its owner can read or overwrite it (Rule 0068). Saving needs a signed-in student; an anonymous visitor can draw and export but nothing is saved.
 - Switching from edit back to view returns to the original course content. This is intentional — the course author's whiteboard is the reference, and collaboration edits live separately.
 
 ### Personal vs Shared
 
-- **Personal** (lock icon): Each user gets their own isolated channel. Edits are private and persist across sessions for that user.
+- **Personal** (lock icon): Each user gets their own stored scene. Edits stay in the browser until the authenticated save; no public Realtime channel is joined.
 - **Shared** (unlock icon, green): All users connect to the same channel. Edits are visible to everyone in real time, with remote cursors showing collaborator positions.
 
 Room IDs follow the pattern:
-- Personal: `wb-{courseId}-{route}-{userId}`
+- Personal: `wb-personal:{encodedCourseId}:{encodedRoute}:{encodedUserId}` (stored scene only)
 - Shared: `wb-{courseId}-{route}`
 
 ## Course Whiteboard (Toolbar Button)
@@ -89,8 +89,8 @@ WhiteboardViewer.svelte
 
 The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collaboration:
 
-- **Scene sync**: Broadcasts element changes via the `scene-update` event. Elements are merged by ID using Excalidraw's version numbers (higher version wins).
-- **Cursor sync**: Coalesces pointer positions into at most 20 `cursor-update` broadcasts per second, preserving the final position. Cursor colors are deterministically assigned from the user's ID. Pending scene and cursor timers are cleared and the channel is removed when the editor unmounts.
+- **Scene sync**: Batches element changes and sends them at most once every 250 ms via the `scene-update` event, so a long drag still reaches peers. Elements are merged by ID using Excalidraw's version numbers (higher version wins).
+- **Cursor sync**: Coalesces pointer positions into one `cursor-update` broadcast per interval, preserving the final position. Each broadcast is delivered to every other editor, so the interval grows with the room: 100 ms up to 3 participants, 250 ms up to 6, 500 ms up to 8, and no cursor broadcasts above 8 (Presence still shows who is there). A pointer that has moved less than 4 px with the same button since the last broadcast is not sent. Cursor colors are deterministically assigned from the user's ID. Pending scene and cursor timers are cleared and the channel is removed when the editor unmounts.
 - **User tracking**: Uses Supabase Presence to track active collaborators. When a user disconnects, they are automatically removed from the presence state.
 - **Solo rooms**: Scene and cursor broadcasts stop when no other editor is present; local scene saving continues. Skipped scene deltas retain the latest version of each element, including deletions, and are sent once when a peer appears in Presence. Each editor uses a distinct presence key, so two tabs belonging to the same user still collaborate.
 - **Persistence**: The parent Svelte component listens for `scene-changed` postMessages from the iframe and debounces writes to the `whiteboard_scenes` table. `WhiteboardViewer.svelte` keeps a single `message` listener for its lifetime (it must keep receiving `scene-changed` after `editor-ready`) and ignores messages that do not come from its own iframe. The iframe is recreated when the mode or the personal/shared room changes, so each room starts with a fresh `editor-ready` handshake.
@@ -99,7 +99,7 @@ The editor iframe (`excalidraw-editor.html`) uses Supabase Realtime for collabor
 
 ### Excalidraw Loading
 
-Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap — no bundling required. The editor additionally loads `@supabase/supabase-js` for real-time connectivity.
+Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap — no bundling required. The editor additionally loads `@supabase/supabase-js`, pinned to the version the workspace uses, for real-time connectivity.
 
 ## Development
 
@@ -109,7 +109,7 @@ Both viewer and editor HTML files load Excalidraw from `esm.sh` via importmap �
 pnpm dev
 ```
 
-Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (see `packages/adapters/driven/store-supabase/sql/003_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
+Whiteboard collaboration requires a running Supabase instance with the `whiteboard_scenes` table created (created by `supabase/migrations/20261017000000_create_whiteboard_scenes.sql`). Without real Supabase credentials the view mode and the Excalidraw editor still load and draw; only the real-time sync and saving are unavailable.
 
 To try a whiteboard against a course on your machine, generate one that contains a `whiteboard-*` folder, serve its `json/` output over HTTP with CORS enabled, and open `/whiteboard/localhost:<port>/<topic>/<whiteboard-folder>` on the reader (add `whiteboard: 1` to the course's `properties.yaml` to see the toolbar button). The reader treats a `localhost` course id as plain HTTP, but the generator writes the `.excalidraw` URL into `tutors.json` as `https://{{COURSEURL}}/...`, so when serving over plain HTTP change that prefix to `http://` in the generated `tutors.json`.
 

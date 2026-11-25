@@ -1,3 +1,7 @@
+# ClusterIP Service on port 80 in front of the app pods' http port (3000 in deployment.yaml).
+# Overlays add a name prefix and app labels. The optional Route or Ingress component and the
+# ServiceMonitor component point at this Service.
+
 apiVersion: v1
 kind: Service
 metadata:

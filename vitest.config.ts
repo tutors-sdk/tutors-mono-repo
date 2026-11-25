@@ -11,7 +11,8 @@ export default defineConfig({
     // Fuzz suites use vitest.config.fuzz.ts (threads pool) — see issue #8.
     // Replaces Vitest's default exclude, so node_modules must be listed again (the isolated
     // Lighthouse runner under tests/performance/lighthouse has its own).
-    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/fuzz/**"],
+    // Tests that mount a Svelte component run under vitest.components.config.ts (Rules 0680, 0681).
+    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/fuzz/**", "tests/**/*.component.steps.ts", "tests/**/*.component.test.ts"],
     // Unit and property tiers never reach the network (runway tier B).
     setupFiles: ["tests/support/no-network.ts"],
     coverage: {
@@ -24,7 +25,8 @@ export default defineConfig({
       exclude: ["**/__tests__/**", "**/*.d.ts", "**/.svelte-kit/**", "**/node_modules/**"],
       // Floors live in tests/suite-health/coverage-floors.json and only go up (Rules 0111, 0112).
       thresholds: { ...coverageFloors.global, ...coverageFloors.packages }
-    }
+    },
+    projects: [{ extends: true, test: { name: "node" } }, "./vitest.components.config.ts"]
   },
   resolve: {
     alias: workspaceAliases

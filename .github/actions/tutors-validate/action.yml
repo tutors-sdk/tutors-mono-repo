@@ -1,0 +1,82 @@
+name: Tutors validate
+description: Check a Tutors course folder with tutors validate, show each finding on the pull request, and fail on errors.
+author: tutors-sdk
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  path:
+    description: The course folder, relative to the repository root.
+    default: "."
+  strict:
+    description: "true to fail on warnings as well as errors (tutors validate --strict)."
+    default: "false"
+  upload-sarif:
+    description: "true to upload the findings as SARIF, so GitHub code scanning shows each one on the pull request's Files tab. Needs security-events: write."
+    default: "true"
+  version:
+    description: The @tutors/tutors-create version range to run from JSR, like 5 or 5.4.0.
+    default: "5"
+
+outputs:
+  exit-code:
+    description: "tutors validate's exit status: 0 clean, 1 errors, 2 warnings under strict, 3 the folder could not be read."
+    value: ${{ steps.validate.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+      with:
+        deno-version: v2.x
+
+    - id: validate
+      shell: bash
+      env:
+        COURSE_PATH: ${{ inputs.path }}
+        STRICT: ${{ inputs.strict }}
+        CREATE_VERSION: ${{ inputs.version }}
+        SARIF_FILE: ${{ runner.temp }}/tutors-validate.sarif
+      run: |
+        # Inputs arrive through env, never spliced into this script. The version is checked before it
+        # becomes part of a module specifier.
+        if ! [[ "$CREATE_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+          echo "::error title=tutors validate::version must look like 5 or 5.4.0, not \"$CREATE_VERSION\""
+          echo "exit-code=3" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        flags=()
+        if [ "$STRICT" = "true" ]; then flags+=(--strict); fi
+        module="jsr:@tutors/tutors-create@$CREATE_VERSION"
+        # Text for the job log, then SARIF for code scanning; both runs see the same folder.
+        set +e
+        deno run -A "$module" validate "$COURSE_PATH" "${flags[@]}"
+        status=$?
+        set -e
+        echo "exit-code=$status" >> "$GITHUB_OUTPUT"
+        # A folder that could not be read (3) has no findings to upload.
+        if [ "$status" -lt 3 ]; then
+          set +e
+          deno run -A "$module" validate "$COURSE_PATH" --format sarif "${flags[@]}" > "$SARIF_FILE"
+          set -e
+          echo "sarif=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - if: ${{ always() && inputs.upload-sarif == 'true' && steps.validate.outputs.sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+      with:
+        sarif_file: ${{ runner.temp }}/tutors-validate.sarif
+        category: tutors-validate
+
+    - shell: bash
+      env:
+        EXIT_CODE: ${{ steps.validate.outputs.exit-code }}
+      run: |
+        case "$EXIT_CODE" in
+          0) echo "tutors validate: the course checks out." ;;
+          1) echo "::error title=tutors validate::The course has errors. The job log and the Files tab list each one." ;;
+          2) echo "::error title=tutors validate::The course has warnings, and strict is on." ;;
+          *) echo "::error title=tutors validate::The course folder could not be checked." ;;
+        esac
+        exit "$EXIT_CODE"

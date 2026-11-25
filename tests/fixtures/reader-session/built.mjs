@@ -3,8 +3,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -12,8 +11,6 @@ import { fileURLToPath } from "node:url";
 import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, isSessionCookie, signInRequest } from "../../bdd/support/reader-oauth.mjs";
 
 const reader = fileURLToPath(new URL("../../../apps/reader/", import.meta.url));
-const fromKit = createRequire(await realpath(join(reader, "node_modules/@sveltejs/kit/package.json")));
-const { unflatten } = await import(fromKit.resolve("devalue"));
 const ORIGIN = "https://tutors.test";
 const DAY = 86400000;
 const initialTime = Date.now();
@@ -113,12 +110,11 @@ class Browser {
     }
     return response;
   }
+  /** What the root layout hands every page: GET /actor, which its universal load asks (Rule 0771). */
   async page() {
-    const response = await this.send("/auth/__data.json");
+    const response = await this.send("/actor");
     assert.equal(response.status, 200, await response.clone().text());
-    const data = await response.json();
-    assert.equal(data.type, "data");
-    return unflatten(data.nodes[0].data);
+    return response.json();
   }
   async actor() {
     return (await this.page()).actor;
@@ -188,10 +184,17 @@ try {
     assert.equal((await browser.page()).user.login, "student");
     for (const path of ["/auth", "/auth/reference-course"]) assert.equal((await browser.send(path)).status, 200);
   });
+  await check("verified Better Auth session reaches protected data routes", async () => {
+    for (const path of ["/api/me", "/api/profile", "/api/time/reference-course"]) {
+      assert.equal((await new Browser().send(path)).status, 401, path);
+      // This fixture has no database key: 503 proves the verified actor passed the 401 gate.
+      assert.equal((await browser.send(path)).status, 503, path);
+    }
+  });
   const initialJar = new Map(browser.jar);
   await check("0253 inactive expiry and rolling renewal survive restart without revival", async () => {
     await writeFile(clockFile, String(initialTime + 29 * DAY));
-    const response = await browser.send("/auth/__data.json");
+    const response = await browser.send("/actor");
     const renewedCookies = response.headers.getSetCookie().filter((cookie) => isSessionCookie(cookie.split("=")[0]));
     assert.ok(renewedCookies.length);
     assert.equal(response.headers.get("cache-control"), "private, no-store");

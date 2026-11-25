@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "@prometheus-io/client": "^0.16.1"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": "^3.0.1"
   }
 }

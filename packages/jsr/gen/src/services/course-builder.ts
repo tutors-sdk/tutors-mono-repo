@@ -23,6 +23,7 @@ import {
 } from "../utils/lr-utils.ts";
 import { type Archive, type Composite, type Course, isCompositeLo, type Lab, type Lo, type Notebook, type NotebookCell, type NotebookOutput, Podcast, preOrder, Properties, type Talk, Tutorial, type Whiteboard } from "@tutors/tutors-model-lib";
 import { getFileName, readWholeFile, readYamlFile } from "../utils/file-utils.ts";
+import { namesItsKind } from "./resource-builder.ts";
 import type { LearningResource } from "../types/types.ts";
 
 let silentGlobal = false;
@@ -239,7 +240,9 @@ function buildCompositeLo(lo: Lo, lr: LearningResource, level: number): Lo {
       break;
     default:
   }
-  lr.lrs.forEach((lr) => {
+  // A folder of no kind inside a topic or unit is not content (Rule 0268). It stays in the resource
+  // tree so its files are still copied as assets.
+  lr.lrs.filter(namesItsKind).forEach((lr) => {
     const subLo = buildLo(lr, level + 1);
     if (subLo.type !== "unknown") compositeLo.los.push(subLo);
   });

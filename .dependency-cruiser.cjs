@@ -10,7 +10,7 @@
 //   apps         apps/<name>                        composition roots: compose(env) picks the adapters
 //
 // packages/platform/* (logger, metrics) are plumbing any adapter or app may use; packages/jsr/*
-// are the published packages: facades over the rings (model, time, types, identity) and the
+// are the published packages: facades over the rings (model, time, types) and the
 // authoring toolchain (gen, tutors, tutors-lite, create).
 //
 //   pnpm test:runway                 # the gate: fails on new violations or stale baseline entries
@@ -24,7 +24,7 @@ const RINGS = "^packages/(domain|application)/";
 const DRIVEN = "^packages/adapters/driven/";
 const DRIVING = "^packages/adapters/driving/";
 const PLATFORM = "^packages/platform/";
-const FACADES = "^packages/jsr/(model|time|types|identity)/";
+const FACADES = "^packages/jsr/(model|time|types)/";
 
 /** A workspace root: apps/x, packages/jsr/x, packages/platform/x, packages/adapters/driven/x, packages/adapters/driving/x, packages/domain or packages/application. */
 const WORKSPACE = "^((?:apps|packages/jsr|packages/platform|packages/adapters/driven|packages/adapters/driving)/[^/]+|packages/domain|packages/application)/";
@@ -125,7 +125,7 @@ module.exports = {
     {
       name: "facades-import-rings-only",
       comment:
-        "The published packages model-lib, time-lib, tutors-types and identity are facades: they re-export the rings (model-lib also the markdown renderer) and import no other adapter, platform package or app.",
+        "The published packages model-lib, time-lib and tutors-types are facades: they re-export the rings (model-lib also the markdown renderer) and import no other adapter, platform package or app.",
       severity: "error",
       from: { path: FACADES },
       to: { path: "^(apps|packages)/", pathNot: "^(packages/domain|packages/application|packages/jsr|packages/adapters/driven/render-markdown)/" }
@@ -146,11 +146,11 @@ module.exports = {
       to: { path: "(^|/)(@better-auth/|better-auth(/|$))" }
     },
     {
-      name: "identity-contracts-self-contained",
-      comment: "Identity contracts are the identity port: they import the domain's actor and the application's ports, and no framework, database or provider.",
+      name: "course-rules-no-file-system",
+      comment: "The course validator reads a course only through its FileSystemPort, so the CLI, Studio and the reader's browser wizard run the same rules.",
       severity: "error",
-      from: { path: "^packages/jsr/identity/" },
-      to: { pathNot: "^(packages/jsr/identity|packages/domain|packages/application)/" }
+      from: { path: "^packages/jsr/course-rules/" },
+      to: { dependencyTypes: ["core"] }
     },
     {
       name: "identity-no-server-in-browser",
@@ -175,6 +175,17 @@ module.exports = {
       to: { dependencyTypes: ["local"], dependencyTypesNot: ["aliased"], pathNot: "^$1/" }
     },
     {
+      name: "no-database-client-in-browser-code",
+      comment:
+        "Browser code reaches a learner's data through the data API adapter (@tutors/data-api, the reader's /api routes), never through the database client, so the database behind it can change without touching a browser package. In packages the vendor rule already keeps the client inside the Supabase adapters; in an app only server-only code may import it, and type-only imports. See guides/SERVER-WRITES.md.",
+      severity: "error",
+      from: {
+        path: "^apps/[^/]+/src/",
+        pathNot: "^apps/[^/]+/src/(lib/server/|hooks\\.server\\.ts$)|^apps/[^/]+/src/routes/.*\\+(server|page\\.server|layout\\.server)\\.ts$"
+      },
+      to: { path: "@supabase/supabase-js($|/)", dependencyTypesNot: ["type-only"] }
+    },
+    {
       name: "no-cross-package-cycle",
       comment:
         "A cycle that leaves a workspace and comes back makes the rings meaningless; invert one edge through a port or seam. Cycles inside one package (a recursive component, for instance) are allowed.",
@@ -184,6 +195,7 @@ module.exports = {
     }
   ],
   options: {
+    // Dependencies are recorded as leaves, never walked: no-database-client-in-browser-code needs the edge.
     doNotFollow: { path: "node_modules" },
     exclude: {
       // Workspace build output and tests are out; node_modules stays in the graph (unfollowed) so a

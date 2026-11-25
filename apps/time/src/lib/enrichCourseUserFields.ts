@@ -1,4 +1,4 @@
-import { getSupabase } from "@tutors/tutors-time-lib";
+import { getTutorsTimeSource } from "@tutors/tutors-time-lib";
 import log from "@tutors/logger";
 import type { TutorsTimeCourse } from "@tutors/tutors-time-lib";
 import type { ConnectUserFieldsRow } from "#lib/connectUserFieldsRow.ts";
@@ -22,10 +22,11 @@ function applyUserFields(fieldsByGithub: Map<string, UserFields>, rows: ConnectU
 }
 
 /**
- * Fetches `online_status`, `sentiment`, and `avatar_url` from tutors-connect-users for all students
- * in calendar and lab views, and attaches them to day/week and lab/step rows.
+ * Fill in each student's presence fields from the course's user rows.
+ * The reporting period is the one the course was loaded for, so this reuses that bounded
+ * request instead of asking the reader a second time for every day the course ever ran.
  */
-export async function enrichCourseUserFields(course: TutorsTimeCourse | null): Promise<void> {
+export async function enrichCourseUserFields(course: TutorsTimeCourse | null, startDate: string | null = null, endDate: string | null = null): Promise<void> {
   if (!course) return;
 
   const ids = new Set<string>();
@@ -47,14 +48,11 @@ export async function enrichCourseUserFields(course: TutorsTimeCourse | null): P
   }
   if (ids.size === 0) return;
 
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("tutors-connect-users")
-    .select("github_id, online_status, sentiment, avatar_url")
-    .in("github_id", [...ids]);
-
-  if (error) {
-    log.warn("enrichCourseUserFields:", error.message);
+  let data: { github_id?: string; online_status?: string | null; sentiment?: string | null; avatar_url?: string | null }[];
+  try {
+    data = (await getTutorsTimeSource().courseRows(course.id, startDate, endDate)).users.filter((u) => ids.has(u.github_id?.trim() ?? ""));
+  } catch (error) {
+    log.warn("enrichCourseUserFields:", error instanceof Error ? error.message : String(error));
     return;
   }
 

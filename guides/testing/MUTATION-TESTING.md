@@ -69,7 +69,7 @@ STRYKER_CONCURRENCY=2 ./tests/mutation/run-mutation-tests.sh
 
 ## When to Run
 
-Mutation testing is too slow for every PR: the targeted run takes about 3 minutes and the comprehensive run about 25. Both run in the nightly workflow (`mutation` and `mutation-nightly`), and the nightly summary names any module below its floor. Run one locally after adding tests to a module, to confirm the new tests kill mutants and to raise that module's floor with `--update` in the same change.
+The full runs are too slow for every PR: the targeted run takes about 3 minutes and the comprehensive run about 25. Both run in the nightly workflow (`mutation` and `mutation-nightly`), and the nightly summary names any module below its floor. A pull request runs a smaller job, **Mutation of changed modules** in `ci.yml` (`pnpm test:mutation:pr`, Rules 0618 and 0619): it mutates only the library modules the PR changes, with the nightly configuration, and fails one below its nightly floor or a new module with no floor. Run one locally after adding tests to a module, to confirm the new tests kill mutants and to raise that module's floor with `--update` in the same change.
 
 ## Reading the Report
 
@@ -95,7 +95,7 @@ The config excludes `StringLiteral` and `ObjectLiteral` mutations. These produce
 
 ## Configuration
 
-The targeted run is `stryker.config.json` with `vitest.config.mutation.ts`; the comprehensive run is `stryker.nightly.config.json` with `vitest.config.mutation-nightly.ts` (every package source file, in place, no break threshold, `disableTypeChecks: false`). Key settings of the targeted run:
+The targeted run is `stryker.config.json` with `vitest.config.mutation.ts`; the comprehensive run is `stryker.nightly.config.json` with `vitest.config.mutation-nightly.ts` (every package source file, in place, no break threshold, `disableTypeChecks` limited to the mutated files). Key settings of the targeted run:
 
 ```json
 {
@@ -109,3 +109,5 @@ The targeted run is `stryker.config.json` with `vitest.config.mutation.ts`; the 
 - `high` (85): green in report — tests are strong
 - `low` (75): yellow — tests need attention
 - `break` (90): the nightly `mutation` job fails — the floor sits under the measured score (93.6) and only rises
+
+`@stryker-mutator/vitest-runner` 10.0.0 is patched (`patches/`, `patchedDependencies` in `pnpm-workspace.yaml`). It names each test by joining its suite names with spaces and filters each mutant's run with that name, but Vitest 5 matches the filter against `suite > test`. Unpatched, every mutant runs no tests and survives, so the score drops to about 22. The patch uses Vitest's own `fullTestName`. Drop it when a runner release does the same.

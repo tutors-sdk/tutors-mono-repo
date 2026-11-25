@@ -5,17 +5,17 @@
 
 import type { Lo, Course, Lab, Note, Notebook } from "@tutors/domain/course";
 import { loadCourse } from "@tutors/application";
-import { CourseNotFoundError, CourseUnreachableError } from "@tutors/application/ports";
+import { COURSE_FETCH_TIMEOUT_MS, CourseNotFoundError, CourseTimedOutError, CourseUnreachableError } from "@tutors/application/ports";
 import { adapters } from "../../adapters.ts";
 import { LiveLab } from "./live-lab.ts";
 import { LiveNotebook } from "./live-notebook.ts";
 import { markdownService } from "../../markdown/index.ts";
 import { courseProtocol, currentCourse, currentLo, rune } from "../../index.svelte.ts";
 import type { CourseService, LabService, NotebookService } from "../types.ts";
-import { determineCourseUrl, readerDecoration } from "./lo-tree.ts";
+import { courseProtocolOf, determineCourseUrl, readerDecoration } from "./lo-tree.ts";
 import log, { serializeError } from "@tutors/logger";
 
-export { CourseNotFoundError };
+export { CourseNotFoundError, COURSE_FETCH_TIMEOUT_MS };
 
 let courseNotFound: (error: CourseNotFoundError) => never = (error) => {
   throw error;
@@ -45,9 +45,22 @@ export function setCourseUnreachableHandler(handler: (cause: TypeError) => never
   courseUnreachable = handler;
 }
 
+let courseTimedOut: (cause: Error) => never = (cause) => {
+  throw cause;
+};
+
+/**
+ * A course host that accepts the connection and never answers would otherwise leave the page loading for as long as
+ * the browser keeps the request open. The course source gives up after COURSE_FETCH_TIMEOUT_MS (Rule 0614) and this is
+ * called with the `TimeoutError`; an app sets it to render an error page that says so, as it does setCourseNotFoundHandler.
+ */
+export function setCourseTimedOutHandler(handler: (cause: Error) => never): void {
+  courseTimedOut = handler;
+}
+
 /** A course that arrived but could not be built: logged with the same fixed message as a fetch failure, so the harness groups them. */
-function logCourseFailure(courseId: string, courseUrl: string, cause: unknown): void {
-  log.error("Error fetching course", { courseId, url: `https://${courseUrl}/tutors.json`, ...serializeError(cause) });
+function logCourseFailure(courseId: string, url: string, cause: unknown): void {
+  log.error("Error fetching course", { courseId, url, ...serializeError(cause) });
 }
 
 export const courseService: CourseService = {
@@ -69,26 +82,28 @@ export const courseService: CourseService = {
    * @returns Promise resolving to the loaded Course
    */
   async getOrLoadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
+    // Normalize before the cache lookup, so every form of one course's address shares one entry.
+    const { courseId: normalizedCourseId, courseUrl, protocol } = determineCourseUrl(courseId);
+    courseId = normalizedCourseId;
     let course = this.courses.get(courseId);
 
     if (!course) {
-      const { courseId: normalizedCourseId, courseUrl } = determineCourseUrl(courseId);
-      courseId = normalizedCourseId;
       const { courseSource, renderer, clock } = adapters();
-      const protocol = courseProtocol.value as "https://" | "http://";
       const load = loadCourse({
         source: { load: (location) => courseSource.load(location, fetchFunction) },
         renderer,
         clock,
-        ...readerDecoration(renderer)
+        ...readerDecoration(renderer, protocol)
       });
 
       try {
         course = await load({ courseId, courseUrl, protocol });
       } catch (error) {
         if (error instanceof CourseNotFoundError) return courseNotFound(error);
+        if (error instanceof CourseTimedOutError) return courseTimedOut(error.cause);
         if (error instanceof CourseUnreachableError) return courseUnreachable(error.cause);
-        if (!(error instanceof Error && error.message.startsWith("Fetch failed"))) logCourseFailure(courseId, courseUrl, error);
+        // The course source logs what it could not fetch; what arrived and could not be built is logged here.
+        if (!(error instanceof Error && error.message.startsWith("Fetch failed"))) logCourseFailure(courseId, `${protocol}${courseUrl}/tutors.json`, error);
         throw error;
       }
       this.courses.set(courseId, course);
@@ -106,6 +121,8 @@ export const courseService: CourseService = {
   async readCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
     const course = await this.getOrLoadCourse(courseId, fetchFunction);
     this.courseUrl.value = course.courseUrl;
+    // Set on every selection, cache hits included, so a course viewed earlier cannot leave its protocol behind.
+    courseProtocol.value = courseProtocolOf(course);
     currentCourse.value = course;
     currentLo.value = course;
     return course;

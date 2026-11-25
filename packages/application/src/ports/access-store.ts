@@ -1,9 +1,11 @@
-import type { ContentLock } from "@tutors/domain/access";
+import type { ContentLock, LockWrite } from "@tutors/domain/access";
 
-/** Keeps the content locks lecturers set on a course. */
+/**
+ * The content locks lecturers set on a course. Who is changing a lock is not an argument: the
+ * adapter behind this port knows the caller from the session, so a caller cannot name someone else.
+ */
 export interface AccessStore {
   locks(courseId: string): Promise<ContentLock[]>;
-  /** Lock or unlock a route; resolves false when nothing was written. */
-  setLock(courseId: string, loRoute: string, locked: boolean, lockedBy: string): Promise<boolean>;
-  removeLock(courseId: string, loRoute: string): Promise<boolean>;
+  /** Lock or unlock a route, and say what became of the change. */
+  setLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWrite>;
 }

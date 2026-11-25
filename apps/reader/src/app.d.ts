@@ -1,6 +1,6 @@
 /// <reference types="$app/types" />
 
-import type { Actor } from "@tutors/identity";
+import type { Actor } from "@tutors/domain/access";
 
 declare global {
   const APP_VERSION: string;

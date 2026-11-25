@@ -1,2 +1,2 @@
 export { sharePresence, courseRoster, type SharePresenceDeps, type CourseRosterDeps } from "./share-presence.ts";
-export { visitCourse, setFavouriteCourse, forgetCourseVisit, type CourseVisitsDeps } from "./visit-course.ts";
+export { visitCourse, setFavouriteCourse, forgetCourseVisit, countCourseVisit, type CourseVisitsDeps, type CountCourseVisitDeps } from "./visit-course.ts";

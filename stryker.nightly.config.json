@@ -35,5 +35,5 @@
   },
   "ignorePatterns": ["node_modules", "dist", "reports", ".stryker-tmp*"],
   "checkers": [],
-  "disableTypeChecks": false
+  "disableTypeChecks": "{packages/*/*/src,packages/*/*/*/src}/**/!(*.d|*.test).ts"
 }

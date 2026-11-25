@@ -1,12 +1,6 @@
 import DOMPurify from "isomorphic-dompurify";
 
-const ALLOWED_IFRAME_HOSTS = [
-  "www.youtube.com",
-  "youtube.com",
-  "media.heanet.ie",
-  "vimp.oth-regensburg.de",
-  "player.vimeo.com"
-];
+const ALLOWED_IFRAME_HOSTS = ["www.youtube.com", "youtube.com", "media.heanet.ie", "vimp.oth-regensburg.de", "player.vimeo.com"];
 
 function isAllowedIframeSrc(src: string): boolean {
   try {
@@ -32,11 +26,22 @@ function ensureHooks(): void {
   hooksInstalled = true;
 }
 
+const ADD_TAGS = ["iframe", "video", "source", "audio"];
+const ADD_ATTR = ["allow", "allowfullscreen", "frameborder", "loading", "controls", "poster", "autoplay", "src", "type", "width", "height", "title", "data-testid", "target"];
+
 export function sanitizeHtml(html: string): string {
   ensureHooks();
 
-  return DOMPurify.sanitize(html, {
-    ADD_TAGS: ["iframe", "video", "source", "audio"],
-    ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "loading", "controls", "poster", "autoplay", "src", "type", "width", "height", "title", "data-testid", "target"]
-  });
+  return DOMPurify.sanitize(html, { ADD_TAGS, ADD_ATTR });
+}
+
+/**
+ * One Marp slide section, sanitized as sanitizeHtml does plus MathJax's container element, whose
+ * jax and display attributes Marp's theme CSS selects on. The caller rebuilds the SVG stage
+ * around it, since DOMPurify drops HTML inside foreignObject.
+ */
+export function sanitizeMarpSectionHtml(html: string): string {
+  ensureHooks();
+
+  return DOMPurify.sanitize(html, { ADD_TAGS: [...ADD_TAGS, "mjx-container"], ADD_ATTR: [...ADD_ATTR, "jax", "display"] });
 }

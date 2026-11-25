@@ -16,8 +16,8 @@ labels:
 images:
   - name: tutors-app
     newName: quay.io/tutors-sdk/tutors-time
-    newTag: "16.2.2"
-    digest: sha256:ddf3ad22b79bbba96199791a49367677bf9ad0ebdd7542f3246d56e7879d5e4e
+    newTag: "17.1.0"
+    digest: sha256:786e81c15a7a9537d71845df7e46efe49e3706df3c27656ee7d8072ada164b90
 
 patches:
   - target:
@@ -27,13 +27,9 @@ patches:
       - op: replace
         path: /data/TUTORS_ORIGIN
         value: "https://time.tutors.dev"
-      # Moodle sync. MOODLE_WS_TOKEN is a secret: see secrets.yaml.example.
+      # Course time data comes from the reader's /api/time with the viewer's
+      # reader session; the reader lists this origin in PRIVATE_API_ALLOWED_ORIGINS.
+      # It must be the host people sign in at (tutors.dev): the session cookie is host-only.
       - op: add
-        path: /data/MOODLE_WS_URL
-        value: ""
-      - op: add
-        path: /data/MOODLE_WS_REST_FORMAT
-        value: "json"
-      - op: add
-        path: /data/SYNC_INTERVAL_MINUTES
-        value: "60"
+        path: /data/PUBLIC_READER_URL
+        value: "https://tutors.dev"

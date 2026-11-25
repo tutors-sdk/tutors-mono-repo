@@ -1,3 +1,6 @@
+# PodDisruptionBudget: keeps at least one app pod running during voluntary disruptions such as node
+# drains. With the base's 2 replicas, a drain evicts one pod at a time.
+
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

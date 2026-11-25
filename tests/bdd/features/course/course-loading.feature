@@ -64,3 +64,57 @@ Feature: Course Loading
       Given the course has a calendar.yaml titled "Semester 1" with 0 weeks
       When the reader loads the course
       Then the course should have no calendar
+
+  # Issue #528. A course is opened by a bare Netlify id, a host name or a full URL. Each names one
+  # tutors.json, fetched with one scheme, and is cached under one id, so opening it again fetches nothing.
+  @rule-0659 @ears-event-driven
+  Rule: When a student opens a course by its id, its host name or its full URL, the reader shall fetch that course's tutors.json once, from the one URL the address names.
+
+    Scenario Outline: Each form of a course address names one tutors.json
+      When a student opens the course at "<address>" twice
+      Then the reader shall have requested only "<url>"
+      And the course shall have the id "<id>"
+      And the course image shall be "<image>"
+
+      Examples:
+        | address                                         | url                                                  | id                              | image                                              |
+        | web-dev-101                                     | https://web-dev-101.netlify.app/tutors.json          | web-dev-101                     | https://web-dev-101.netlify.app/course.png         |
+        | web-dev-101.netlify.app                         | https://web-dev-101.netlify.app/tutors.json          | web-dev-101                     | https://web-dev-101.netlify.app/course.png         |
+        | https://web-dev-101.netlify.app                 | https://web-dev-101.netlify.app/tutors.json          | web-dev-101                     | https://web-dev-101.netlify.app/course.png         |
+        | https://web-dev-101.netlify.app/                | https://web-dev-101.netlify.app/tutors.json          | web-dev-101                     | https://web-dev-101.netlify.app/course.png         |
+        | courses.example.edu/web/dev-101                 | https://courses.example.edu/web/dev-101/tutors.json  | courses.example.edu/web/dev-101 | https://courses.example.edu/web/dev-101/course.png |
+        | https://courses.example.edu/web/dev-101/?term=1 | https://courses.example.edu/web/dev-101/tutors.json  | courses.example.edu/web/dev-101 | https://courses.example.edu/web/dev-101/course.png |
+        | localhost:3000                                  | http://localhost:3000/tutors.json                    | localhost:3000                  | http://localhost:3000/course.png                   |
+        | http://192.168.1.100:8080/course                | http://192.168.1.100:8080/course/tutors.json         | 192.168.1.100:8080/course       | http://192.168.1.100:8080/course/course.png        |
+
+  # Issue #528. The protocol belongs to the course: a local course opened earlier must not turn a
+  # hosted course's requests and links into http, nor a hosted one turn a local course's into https.
+  @rule-0660 @ears-event-driven
+  Rule: When a student opens a course after another course, the reader shall fetch and link that course over the protocol of its own address.
+
+    Scenario: A hosted course opened after a local course is served over https
+      Given the first lab shows the image "img/diagram.png"
+      And a student has opened the course at "localhost:3000"
+      When a student opens the course at "web-dev-101"
+      Then the reader shall last have requested "https://web-dev-101.netlify.app/tutors.json"
+      And the course image shall be "https://web-dev-101.netlify.app/course.png"
+      And every image in the first lab shall be served from "https://web-dev-101.netlify.app/"
+      And the reader shall link the course's downloads over "https://"
+
+    Scenario: A local course opened after a hosted course is served over http
+      Given the first lab shows the image "img/diagram.png"
+      And a student has opened the course at "web-dev-101"
+      When a student opens the course at "localhost:3000"
+      Then the reader shall last have requested "http://localhost:3000/tutors.json"
+      And the course image shall be "http://localhost:3000/course.png"
+      And every image in the first lab shall be served from "http://localhost:3000/"
+      And the reader shall link the course's downloads over "http://"
+
+    Scenario: A hosted course reopened from the cache after a local course keeps https
+      Given the first lab shows the image "img/diagram.png"
+      And a student has opened the course at "web-dev-101"
+      And a student has then opened the course at "localhost:3000"
+      When a student opens the course at "web-dev-101"
+      Then the reader shall have requested 2 URLs
+      And every image in the first lab shall be served from "https://web-dev-101.netlify.app/"
+      And the reader shall link the course's downloads over "https://"

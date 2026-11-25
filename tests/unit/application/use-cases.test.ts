@@ -5,10 +5,16 @@ import { FixedClock, InMemoryAccessStore, InMemoryCourseSource, PassThroughRende
 describe("content locks", () => {
   it("reads the course's locks as a route map and writes a lecturer's lock through the store", async () => {
     const store = new InMemoryAccessStore();
-    expect(await setContentLock({ store })("cs101", "/lab/cs101/1", true, "lecturer")).toBe(true);
-    expect(await setContentLock({ store })("", "/lab/cs101/1", true, "lecturer")).toBe(false);
+    expect(await setContentLock({ store })("cs101", "/lab/cs101/1", true)).toBe("saved");
+    expect(await setContentLock({ store })("", "/lab/cs101/1", true)).toBe("unsaved");
     expect(await loadContentLocks({ store })("cs101")).toEqual(new Map([["/lab/cs101/1", true]]));
     expect(await loadContentLocks({ store })("cs102")).toEqual(new Map());
+  });
+
+  it("tells the lecturer a change stays in their browser when the store keeps nothing", async () => {
+    const store = new InMemoryAccessStore(undefined, { persists: false });
+    expect(await setContentLock({ store })("cs101", "/lab/cs101/1", true)).toBe("local");
+    expect(await loadContentLocks({ store })("cs101")).toEqual(new Map());
   });
 });
 

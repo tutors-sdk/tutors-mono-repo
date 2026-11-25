@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "courseId": {
+      "type": "string"
+    },
+    "courseUrl": {
+      "type": "string"
+    },
+    "img": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "courseTitle": {
+      "type": "string"
+    },
+    "loRoute": {
+      "type": "string"
+    },
+    "user": {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "sentiment": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullName",
+        "avatar",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "type": {
+      "type": "string"
+    },
+    "isPrivate": {
+      "type": "boolean"
+    },
+    "icon": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "courseId",
+    "courseUrl",
+    "title",
+    "courseTitle",
+    "loRoute",
+    "user",
+    "type",
+    "isPrivate"
+  ],
+  "additionalProperties": false
+}

@@ -11,13 +11,118 @@
 > `focus`, `metrics`, `logs`, `timing`, `persistence`, `bus`, `migration`, `upgrade`,
 > `image-manifest`, `sbom`, `vulns`, `runtime`, `startup`, and the policy checks
 > `image-hardening`, `build-provenance`, `vuln-ceiling`, and the informing checks
-> `timing-tolerance`, `asset-graph`, `replay`, `slo`) and how an entry
+> `timing-tolerance`, `asset-graph`, `replay`, `slo`, `realtime`) and how an entry
 > becomes a release claim are in [CONTRIBUTING.md](CONTRIBUTING.md#changelog-entries).
 > Earlier entries carry no hints and are not rewritten.
 
 ---
 
 ## Reader (`tutors-reader`)
+
+### Unreleased
+
+#### Database
+
+- **Five Supabase migrations must be applied before the deploy**, in name order. All five are expand only, so they were applied to tutors-prod on 3 November 2026, ahead of the release, while v17.0.0 was still serving: `20261015_calendar_course_day_index.sql` (an index on `calendar (courseid, id)` for Tutors Time's date-range read), `20261016_realtime_live_budget.sql` (the `realtime_settings`, `realtime_budget` and `realtime_watchers` tables and the `realtime_watch`, `realtime_claim_live_publish` and `live_budget_tier` functions), `20261017000000_create_whiteboard_scenes.sql`, `20261017000100_restrict_app_errors_reads.sql` and `20261017000200_create_get_student_count.sql`. The last three needed `20260822_create_app_errors.sql`, which had never reached tutors-prod, applied first. Without `realtime_claim_live_publish` the reader's server publishes no learning event at all and Tutors Live's feed is silent; the other four degrade rather than fail (migration, persistence) (PRs #320, #480, #481)
+
+#### Features
+
+- Enrollment: **Educator Control → Enrollment → Export enrollment.yaml** downloads a draft enrollment file assembled from the course's recorded visitors, so a lecturer no longer collects GitHub usernames by hand. It keeps the existing educators, whitelist, names and any additional enrollment fields, leaves educators out of the new student entries, deduplicates visitors and reads every activity page, and falls back to the username when someone has no display name. The server checks the caller is an educator of the published course before reading any student data, and returns a private, uncacheable attachment or nothing at all (PR #514) (dom, network, headers)
+- Quizzes: a question or an option can carry a fenced code block, highlighted the way a lab step's is. Open the quiz with four backticks or `~~~quiz` to nest a three-backtick snippet; a `---` or `field:` line inside a snippet stays part of the code (PR #548) (dom)
+
+#### Fixes
+
+- Database: `whiteboard_scenes` is created by a migration (`20261017000000_create_whiteboard_scenes.sql`) instead of a hand-run script that never reached tutors-prod; it has Row-Level Security and no anon policy (migration) (PR #320)
+- Database: app_errors is no longer readable with the anon key; the table has never existed on tutors-prod, so no deployed version reads it. `get_error_counts` now runs as its owner and returns only per-app counts, so `/healthz` keeps its error counts (migration) (PR #320)
+- Database: `get_student_count()` returns the number of student profiles without exposing them, ahead of removing anon reads of `tutors-connect-profiles` (PR #320)
+- Database: the contract step that revokes anonymous access to personal student rows, assignment rows, content-lock writes and student-counter RPCs is written (`supabase/contracts/revoke_anon_student_data.sql`) but ships in the next release, once no pod of this one's predecessors is left. `pnpm check:migrations` now refuses a contract step in the same release as its expand (`-- contract-for:` header) (PR #320)
+- Course reader: a tab keeps one activity heartbeat however often the course pages open, and leaving the course pages stops it. Each entry to the course pages used to start another 30-second heartbeat that leaving never stopped, so activity time was over-counted and every extra heartbeat made its own database write (Rules 0649, 0650) (network, persistence) (PR #530)
+- Course addresses are normalized once: a bare id, a Netlify host name and a full `https://` URL all fetch the same `tutors.json` exactly once and share one cache entry. A full URL used to be requested as `https://https://…` and fail. Each course is also fetched and linked over the protocol of its own address, so opening a localhost course no longer leaves later hosted courses loading over http (#528, Rules 0659, 0660) (network, dom) (PR #533)
+- Content locks: a lock change the server does not save is rolled back on the educator's screen and reported as not saved, instead of being shown as in force while students still see the previous setting. A reader with no lock database keeps the change in that browser and says so; a change still waiting for the server cannot be toggled again; and an answer that arrives after the educator has moved to another course no longer alters the course now on screen (#527, Rules 0630, 0631, 0632, 0657, 0658) (dom, persistence) (PR #535)
+- Calendar button: the name a screen reader speaks now begins with the week written on the button and ends with what the button does, instead of replacing the visible words with "View Calendar for this course". Someone driving the page by voice could not name the button by what they could read on it (WCAG 2.5.3, Rule 0051) (dom) (PR #545)
+- Talks: switching a talk's PDF reader to the browser reader and back shows the Adobe viewer that was already rendered. It is hidden while the browser reader is in use rather than torn down, so Adobe is never asked to render the same talk twice and the student keeps their page and zoom. The second render left a blank viewer before v17.0.0 and a 500 inside the viewer after it; the v17.0.0 note that recorded this as fixed (PR #446) was wrong (#374, Rule 0285) (dom) (PR #567)
+- Talks: leaving a talk that was open in the browser reader releases the PDF and reports nothing. The reader asked the loaded document to destroy itself, but pdfjs hangs `destroy()` on the loading task rather than the document, so every departure threw `destroy is not a function` into the error log and left the PDF worker running. The thrown error also stopped Adobe's viewer returning when a student switched back, so this had to be fixed before the switch could work at all (Rule 0682) (dom) (PR #567)
+- Header buttons: Preferences is announced as "Preferences" rather than "Open Theme Menu", and the `Ctrl K` / `⌘K` hint on Search and the `esc` hint on the search dialog's Close are drawn in CSS instead of being part of the button's text, with the keys announced through `aria-keyshortcuts`. All three controls showed one thing and were announced as another, which axe 4.14 reports as a Label in Name failure (WCAG 2.5.3) and which left anyone driving the page by voice unable to name them (PR #505) (dom, axe)
+- Docs for LLMs: the download links use the protocol the reader read the course with, so a course served over http from `localhost` or a `192.*` address links to its own files instead of to an `https://localhost:8081/...` address that never loads. Published courses are unchanged (Rule 0600) (dom) (PR #506)
+- Recently accessed: a private course that turns a signed-in student away is no longer recorded as a visit, so its name and card stop appearing under Recently accessed for someone it will not let in. The layout sent them away but the visit was written anyway. A whitelisted student or an educator is recorded as before (Rule 0605) (persistence) (PR #510)
+
+#### Security
+
+- Content locks are written by the reader's server, which checks the signed-in user is an educator of the published course and records the lock under their own login, through a new `PUT /api/courses/:courseid/locks` using the private service_role key. Educator Control used to write `tutors_content_locks` straight to Supabase with the anon key that ships in every page, and that table's policies allowed any insert, update or delete, so anyone holding the key could lock or unlock any course's content under any name. A refused change puts the switch back; with no database the browser keeps its local copy as before, and `removeLock` — an unused anon delete — is gone (Rules 0630-0632) (persistence, sbom, logs) (PR #518)
+- The Moodle sync is an educator-only action in the reader (**Educator Control → Enrollment → Moodle sync**) behind a new `POST /api/courses/:courseid/moodle-sync` that checks the educator, validates the ids and writes with the service_role key. Tutors Time's `POST /api/sync` had no authentication at all: anyone who could reach the app could make its server call Moodle with the institution's web-service token for any course id and write rows with the anon key. Tutors Time still shows assignments; it no longer runs the sync (Rules 0633, 0634) (persistence, sbom, logs) (PR #519)
+
+- Browser packages reach personal data only through the new `@tutors/data-api` package; CI refuses a database-client import in browser code and any browser write outside the data API (PR #327)
+
+- Background data responses do not refresh session cookies, so a delayed response cannot undo logout or restore the previous account after a switch (network) (PR #320)
+- Student data goes through the reader's server: learning records, calendar time, sentiment, online status, presence, course-visit history and the course catalogue are saved by new `/api` routes that check the verified Better Auth identity and use a private service_role key, and each row is stored under the session's login whatever the request names (Rules 0071, 0072) (network, persistence) (PR #320)
+- Content locks: only an educator of the course (its `enrollment.yaml`, or `PRIVATE_TUTORS_ADMINS`) can lock or unlock it; the server checks, and answers 403 to anyone else (Rule 0065) (network) (PR #320)
+- My time: a student sees their own time and their classmates under pseudonyms, with no classmate's name or avatar (Rule 0066). The pseudonyms are random and new on every answer, so they cannot be linked from one request to the next (Rule 0075) (network) (PR #320)
+- Content locks and time data: when a course's host cannot be read, the reader decides from the educators it read within the last hour (Rule 0074), and without such a copy answers 503 instead of treating an educator as a student (Rule 0073) (network) (PR #320)
+- Whiteboards: edits are saved through the server, for signed-in students only, in a personal room only its owner can read or overwrite; personal rooms have their own namespace, so no shared room id can name one, and no longer use public Realtime channels; an anonymous visitor is told to sign in to save (Rule 0068) (network, dom on `reader:whiteboard`) (PR #320, PR #328)
+- Marp talks: a slide's HTML is sanitized before it is shown, so a course author's markdown can no longer run script in the reader's origin. Event handler attributes, scripts, `javascript:` URLs (in links, images and SVG), `object`, `embed`, `meta` refresh and iframe `srcdoc` are removed; headings, images, links, highlighted code, math, Mermaid diagrams and split backgrounds are unchanged. Sanitization was dropped from Marp rendering in v16.0.2 because DOMPurify empties a slide by discarding everything inside its SVG `foreignObject`; each `<section>` is now sanitized on its own and Marp's SVG stage rebuilt around it (#521, Rules 0645, 0646) (dom) (PR #537)
+
+  Deploy with `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` (a Secret, never a `PUBLIC_` variable) and `PRIVATE_API_ALLOWED_ORIGINS`; see guides/SERVER-WRITES.md. Apply the anon-access revocation after the new pods are serving traffic.
+
+#### Chores
+
+- Whiteboards: every room has a Realtime budget. The cursor interval follows the number of people in the room (100ms up to 3, 250ms up to 6, 500ms up to 8), cursors stop being broadcast above 8, a pointer that has moved less than 4 pixels sends nothing, and scene changes are batched to at most one send every 250ms (Rules 0275, 0276, 0281, 0307-0310) (PR #476)
+- Every Realtime channel is opened through one budgeted port, shaped like the identity port, instead of services calling `supabase.channel()` for themselves. Nothing capped what a tab sent, nothing counted messages, and realtime-js rejoined on a fixed schedule so every tab came back at the same moment after a Supabase blip (PR #478)
+- The gaps #488 raised that main could close without new work are closed (PR #489)
+
+### v17.0.0 (2026-10)
+
+#### Breaking Changes
+
+- **The GitHub OAuth callback URL has moved.** Sign-in runs on Better Auth instead of Auth.js, and its routes are mounted at `/api/auth` rather than `/auth`: the callback is now `https://<host>/api/auth/callback/github`. There is no redirect from the old path, so **add the new callback URL to each deployment's GitHub OAuth app before upgrading** or sign-in fails. The environment variable names are unchanged (`PRIVATE_AUTH_SECRET`, `PRIVATE_AUTH_GITHUB_ID`, `PRIVATE_AUTH_GITHUB_SECRET`) (dom, network) (PRs #417, #438, #461, #463)
+- **The upgrade signs everyone out.** Better Auth cannot read an Auth.js session cookie, so every student signs in once more after the deploy. Sessions remain cookie-held with no new database table; they last 30 days and renew on a visit (Rules 0250-0259) (PRs #417, #461, #463)
+- **Per-app `.env` files are no longer read.** All four apps resolve their environment from the single `.env` at the repository root. Move any per-app values into it and delete the old files; `.env.example` lists every key (PRs #276, #392)
+
+#### Features
+
+- **Tutors is rebuilt on the Paper design system.** Every page is redrawn: a resource card carries its title and type icon above its artwork and its summary below, tinted and bordered in its type's colour, and every card in a grid takes the height of the tallest; the course tree aligns its counts and chevrons in one column whether open or closed; theme, appearance and language move into a Preferences menu drawn above the page; search becomes a dialog opened from the header or with Ctrl+K that ranks title matches ahead of summary and body matches, accepts several words in any order, and scrolls to and highlights the match on the page it opens; a lab's step list marks only the current step however the student got there; a note collapses its table of contents under "On this page" and gives every code block a "Copy code" button; the content width and theme a student chooses survive a reload. Pages lay out without horizontal scrolling from 320 to 1440 pixels and carry no critical or serious WCAG 2.1 AA violations in either appearance (Rules 0019-0058) (dom, screenshot, axe) (PR #313)
+- Phones and tablets fit: two cards to a row from 390 pixels and one below that, a header that slides out of view as the student scrolls down and back as they scroll up, lab and note tables that scroll sideways within their panel rather than breaking words, and no keyboard shortcut hints on a device with no pointer (Rules 0031, 0059-0062) (dom, screenshot) (PRs #318, #330)
+- The side menu leads with the learning object that is open — its title and artwork, then a link to its parent — with the full title, artwork and summary card on request for labs and notebooks and immediately for everything else, in place of a heading on the canvas. A course that names credits in its properties shows them beside its title on screens 1024 pixels and wider (Rules 0260, 0261) (dom) (PR #400)
+- A notebook's markdown headings appear in the course navigation beside a lab's steps, and the cell being read is marked whether the student scrolls, uses the outline or pages through the cells (Rules 0232, 0233) (dom) (PR #386)
+- Runnable notebook exercises: a cell its author tagged as an exercise is editable and runs in the student's browser, a cell tagged as a solution appears only once the student asks for it, and every other code cell shows its saved output alone (Rules 0237, 0238) (dom) (PR #387)
+- The guided tour walks the whole shell — across the header left to right, down the side menu top to bottom, then through each kind of card on the page — waits at the menu step until the mobile drawer is open, and restores the drawer's original state if the tour is cancelled (Rules 0242-0249) (dom) (PR #396)
+- Educator Control moved into the side menu's Learn section, as its last option, for an educator of the course (Rules 0024, 0053, 0217) (dom) (PR #373)
+- Course tools badge the "View Online" row with how many classmates are online; the account avatar is no longer badged (Rules 0046, 0239) (dom) (PR #389)
+- The side menu's course sections are ordered Learn, then Activity, then Companions (Rule 0240) (dom) (PR #390)
+- The reader runs on SvelteKit 3 (asset-graph) (PR #466)
+
+#### Fixes
+
+- Hidden content is left out of everything a course offers to LLMs: a hidden learning object and its descendants get no entry on the LLM docs page and no text or PDF download of their own (Rules 0300, 0301) (dom, network) (PR #473)
+- Readers no longer join a course Realtime channel. The online list is read from stored activity, lists the classmates active in the last five minutes, refreshes every 60 seconds while the tab is visible, and keeps the last list rather than emptying it when a read fails (Rules 0302, 0306, 0317, 0318) (network, bus) (PR #474)
+- A page view, and each 30 seconds of activity on a visible course page, is recorded in one database request instead of several read-then-write requests. A database without the new functions falls back to the per-table requests (Rules 0303-0305) (persistence, network, migration) (PR #475)
+- Supabase Realtime volume cut across the board: an activity channel is reused for the same scope and dropped when its view is left, whiteboard cursor updates coalesce into at most one broadcast every 50 milliseconds, a whiteboard with no other participant saves without broadcasting, and a course activity message carrying no student identity is ignored (Rules 0273-0282) (network, bus) (PR #429)
+- The reader no longer subscribes to the platform-wide `tutors-all-course-access` channel it never read. It still publishes to it, so Tutors Live is fed as before at one message per event per watching dashboard. Shipped ahead of this release as the 16.2.3 hotfix (Rules 0271, 0272) (network, bus) (PR #414)
+- A learning event is reported once the navigation lands, for the learning object the student arrives at (Rule 0283) (network) (PR #428)
+- Switching a talk's PDF reader back to Adobe shows the Adobe viewer again (Rule 0285) (dom) (PR #446)
+- The course calendar is offered only when the course's `calendar.yaml` lists at least one week (Rule 0284) (dom) (PR #445)
+- Topic pages carry a level-1 heading naming the topic, visually hidden because the side menu's card already shows the title (Rule 0262) (dom, axe) (PR #420)
+- The site footer sits at the bottom of the viewport when the content fits and after the content when it does not (Rule 0241) (screenshot) (PR #397)
+- The sign-in page has a title, and the Paper rebuild's accessibility fixes are recorded: sign-in button contrast, a navigation dialog trigger that no longer wraps a control, and named code-block copy buttons (Rules 0051, 0216) (axe) (PR #364)
+- Every landmark and header control in the course shell has an accessible name no sibling shares, the site footer is a named `contentinfo` outside `main`, and a search result list is named "Search results" (Rules 0170-0173) (axe, dom) (PR #338)
+- A course that does not exist shows Page Not Found with a link home instead of "500 Server Error", and an unreachable host is distinguished from a 404 (Rule 0028) (dom) (PRs #274, #293)
+- The whiteboard loads its scene, follows dark mode and matches the Paper UI (dom, screenshot) (PR #316)
+- Error reports flushed on page unload reach `app_errors` (console, network) (PR #353)
+- A first visit counts as one when the increments rpc returns no rows (persistence) (PR #286)
+- A Supabase error's message reaches the log instead of being swallowed (logs) (PR #273)
+- Variable data is kept out of log messages, and a test guards it (logs) (PR #297)
+- The course calendar is read through the clock seam, and the commit is kept off `/_app/version.json` (timing) (PR #296)
+- Netlify cold starts restored for all four apps: `@opentelemetry/api` is resolved at runtime rather than left to the function bundle (timing, startup) (PR #468)
+- Netlify builds are named after their commit (network) (PR #354)
+- Dependency advisories and reader warnings remediated, with `devalue` held at 5.9.1 or later for GHSA-9rgm-9g3h-6x36 (sbom, vulns) (PRs #391, #352)
+
+#### Chores
+
+- The connect, course home and course tools menus rationalised: an educator of a course is offered its class activity link in course tools, and the sentiment picker lives in the account menu alone (Rules 0025, 0026, 0046, 0063, 0064) (dom) (commit 8582ef2, not from a pull request)
+- Sign-in and session behaviour pinned by Rules before the move off Auth.js (Rules 0250-0259) (PR #417)
+- Quizzes documented as a formative self-check rather than assessment (PR #302)
+- Shared Vite and Svelte config helpers, and shared app configuration moved into Vite (PRs #266, #464)
+- Backward-compatibility type aliases dropped from `connect` (PR #393)
+- The reader README rewritten (PR #395)
 
 ### v16.2.2 (2026-09)
 
@@ -180,6 +285,26 @@
 
 ## Live (`tutors-live`)
 
+### Unreleased
+
+- Learning events are published by the reader's server within a daily Realtime budget instead of being broadcast from the browser. The reader posts each event to `POST /api/live/activity`; the server asks the database which feeds to publish to, charges the day's budget, and reports itself as a watcher of a feed it is showing every 60 seconds (Rules 0317, 0330, 0331, 0334) (network, persistence) (PR #481)
+
+### v17.0.0 (2026-10)
+
+#### Breaking Changes
+
+- **Per-app `.env` files are no longer read** — see Reader above (PRs #276, #392)
+
+#### Features
+
+- Live is brought onto the Paper design system and the reader's UX patterns: the same cards, header, navigation and Preferences menu (dom, screenshot, axe) (PRs #313, #331)
+- Live runs on SvelteKit 3 (asset-graph) (PR #466)
+
+#### Fixes
+
+- Live's landing page is now the only subscriber to the platform-wide `tutors-all-course-access` channel; readers publish to it without joining it, so Live is fed at one message per event per watching dashboard instead of one per reader online (network, bus) (PRs #414, #429, #474)
+- Netlify cold starts restored, and builds named after their commit (timing, startup, network) (PRs #468, #354)
+
 ### v16.2.0 (2026-09)
 
 #### Features
@@ -214,6 +339,27 @@
 
 ## Catalogue (`tutors-catalogue`)
 
+### Unreleased
+
+- The student count comes from `get_student_count()`, which returns the number without reading any student's profile (Rule 0070) (network) (PR #320)
+- The catalogue no longer deletes courses from the browser; the unused `pruneCatalogue` and `deleteCourses` are removed (PR #320)
+- Without Supabase configured, the catalogue shows an empty list and a student count of 0 instead of logging two errors. The package already promised to degrade rather than throw, but the catalogue read the client unguarded, so the home page threw a `TypeError` that was caught and written to the error log and to `app_errors`. This affected local development, anon mode and the release harness; production has Supabase configured (Rule 0370) (console) (PR #487)
+### v17.0.0 (2026-10)
+
+#### Breaking Changes
+
+- **Per-app `.env` files are no longer read** — see Reader above (PRs #276, #392)
+
+#### Features
+
+- The catalogue is brought onto the Paper design system and the reader's UX patterns (dom, screenshot, axe) (PRs #313, #331)
+- The catalogue runs on SvelteKit 3 (asset-graph) (PR #466)
+
+#### Fixes
+
+- Every link in the catalogue header has an accessible name no other header link shares (Rule 0173) (axe) (PR #338)
+- Netlify cold starts restored, and builds named after their commit (timing, startup, network) (PRs #468, #354)
+
 ### v16.2.0 (2026-09)
 
 #### Features
@@ -233,6 +379,35 @@
 ---
 
 ## Time (`tutors-time`)
+
+### Unreleased
+
+- Course time data is read from the reader's `GET /api/time/<course>` with the viewer's reader session instead of from the database with the anon key; an educator of the course sees every student, anyone else signed in sees their own time, and a viewer not signed in to the reader is shown a link to sign in (Rule 0067). The reader logs each read with the course and the viewer's role (network, dom, screenshot, logs) (PR #320)
+
+  Deploy Time with `PUBLIC_READER_URL` set to the reader people sign in at; the reader holds `PRIVATE_SUPABASE_SERVICE_ROLE_KEY`.
+- The reporting period an instructor picks is part of the address (`?start=YYYY-MM-DD&end=YYYY-MM-DD`, both inclusive, either optional), so every total covers those days and no others. Sidebar links, student drill-downs, the breadcrumb, the raw tables and the `/<course>`, `/calendar` and `/lab` redirects all keep it, and so do reload and back/forward. The header names the period. A date that is not a calendar date, or a start after the end, is a 400 page saying so rather than a silently wider report. (#526, Rules 0655, 0656) (dom, network) (PR #534)
+- A chosen date range goes into the database query (`id >= start`, `id <= end`) with a new `(courseid, id)` index behind it, so only those days leave the database. The whole calendar used to be fetched and the days outside the range dropped in the browser; the calendar was one of the original Supabase load culprits. With no range the report reads the whole course as before (Rule 0319) (network) (PR #480)
+- Labs are keyed by their path within the course rather than by the `book…` segment alone, so two topics that each hold a `book-lab-01` get a column and a median each instead of being added together — a student with 25 minutes in Topic 1's lab and 5 in Topic 2's showed as 30 minutes in one lab. Column labels stay short where a lab id is unique and gain their topic (`topic-01/book-lab-01`) only where two labs share one; the full path is in the header tooltip. Found by the release harness (Rule 0602) (dom) (PR #511)
+- A course's PIN is read from the host that actually serves the course, resolved the way the reader resolves a course id, instead of always from `https://<course id>.netlify.app/tutors.json`. A course on its own domain or on a local machine fetched the wrong host, got no PIN, and could never be opened past the PIN prompt. A bare id is still a Netlify site, so existing courses are unaffected. Found by the release harness (Rule 0603) (network) (PR #508)
+- One database client is reused per url and key instead of a new one per read. Each read built another auth client on the same storage key, so supabase-js logged "Multiple GoTrueClient instances detected" and concurrent reads contended for the auth lock; about one fresh-browser load in eight, the shell rendered but the course's time never finished loading with no request open. Found by the release harness (Rule 0601) (console, network) (PR #507)
+- Heat maps are laid out only after the page has been laid out and its web fonts have loaded, so the day grid is the same on every load of the same build and data. Heat.js measures text and cell widths once while it draws, and Inter loads with `display=swap`, so the grid was previously laid out on whichever font happened to be active at that moment. Found by the release harness (Rule 0604) (screenshot) (PR #509)
+- The Moodle sync has moved to the reader, where it is educator-only; Tutors Time still shows assignments but no longer runs the sync, and its unauthenticated `POST /api/sync`, the Moodle fields in the open-course dialog and the `classTime.moodle*` messages are gone. `MOODLE_WS_URL`, `MOODLE_WS_REST_FORMAT`, `SYNC_INTERVAL_MINUTES` and `MOODLE_WS_TOKEN` move from the time overlay and secret to the reader's (Rules 0633, 0634) (PR #519)
+
+### v17.0.0 (2026-10)
+
+#### Breaking Changes
+
+- **Per-app `.env` files are no longer read** — see Reader above (PRs #276, #392)
+
+#### Features
+
+- Time is brought onto the Paper design system and the reader's UX patterns (dom, screenshot, axe) (PRs #313, #331)
+- Time runs on SvelteKit 3 (asset-graph) (PR #466)
+
+#### Chores
+
+- `apps/time` is type-checked as a blocking CI step, and is included in the container build check and the registry wait (PRs #394, #299)
+- Package-local lib imports throughout (PR #465)
 
 ### v16.2.0 (2026-09)
 
@@ -267,6 +442,49 @@
 Cross-cutting changes that land in every application at once, rather than in
 any single one. Versioned with the monorepo.
 
+### Unreleased
+
+- Development, CI, Netlify and container images use Node.js 26.13.0 LTS instead of Node 22; install the pinned pnpm version directly with npm because Node 26 no longer bundles Corepack. The devcontainer installs the same Node 26.13.0 release and Prometheus moves from 3.5.0 to 3.15.1 (runtime, image-manifest, sbom)
+- Every image is built from the Node base image pinned by digest instead of the floating `node:22-bookworm-slim` tag, which moved node 22.23.3 to 22.23.4 under an unchanged commit; Dependabot bumps the digest in its own pull request (Rule 0667) (image-manifest, sbom) (PR #541)
+- Every image declares a `HEALTHCHECK` on `/healthz/live` — the route the Kubernetes liveness and startup probes already use, run with `node` because the runtime image carries no curl, and honouring `PORT`. All four images previously declared none, which the release harness reported against production as well (Rule 0573) (image-hardening, image-manifest) (PR #501)
+- `/metrics` carries the request SLIs from the first scrape: `http_requests_total` and every `http_request_duration_seconds` bucket are primed at zero for an unmatched GET. A labelled series was only created on the first request it counted, so an idle app looked uninstrumented — Tutors Time, which no harness journey visits, had neither SLI at all and could not be judged for availability or latency (Rule 0574) (metrics) (PR #501)
+- Every published image carries an SLSA v1 build provenance attestation (build-provenance) (PR #502)
+- On Netlify, all four apps set the one-year immutable `Cache-Control` on `/_app/immutable/*` instead of `/build/*`, a path SvelteKit never serves from. Production's hashed chunks went out with no cache header at all, while the container images sent it, so post-deploy reported 24 cache-control differences and stayed red. A conformance test now checks each app has exactly one immutable header and that it sits on SvelteKit's real asset path (headers) (PR #500)
+- `/metrics` scrapes get no request log line. Only `/healthz` was ignored, so under user-workload monitoring two Prometheus replicas scraping every pod every 15s wrote eight signal-free `request.completed` lines a minute per pod. Two raw `process.stderr.write` calls in the model and time libraries are now `console.warn`, so every server line is JSON as deploy/README.md promises, and a malformed calendar no longer throws a `ReferenceError` out of its own catch block in the browser (logs) (PR #515)
+- The compose and devcontainer images are pinned by digest, part of production hardening 1.3 (image-manifest) (PR #550)
+- The toolchain is pinned and every CI job has a timeout, part of production hardening 0.4/1.1 (PR #542)
+- The deploy pin pull request is opened automatically once a release tag's images are published (PR #484)
+
+### v17.0.0 (2026-10)
+
+#### Breaking Changes
+
+- **The runtime image ships no package manager.** `npm`, `npx`, `corepack` and `yarn` are removed from the runtime stage — npm's bundled `tar` and `brace-expansion` failed the Trivy gate and the runtime only runs `node build/index.js`. Anything that shells into a Tutors image to run a package manager breaks; the SBOM of each image loses 174 packages (Rule 0220) (sbom, image-manifest, vulns) (PRs #143, #376)
+- **Two Supabase migrations must be applied before the deploy**, in this order. Both are additions only and the reader degrades rather than fails without them, but the saving they exist for is not realised until they are applied: `20261013_tutors_connect_latest_recent_index.sql` adds an index on `(course_id, received_at DESC)` for the online list, and `20261014_record_page_view_and_heartbeat.sql` adds the `record_page_view` and `record_heartbeat` functions (migration, persistence) (PRs #474, #475)
+
+#### Features
+
+- Container image build pipeline publishing `quay.io/tutors-sdk/tutors-{reader,catalogue,live,time}`, with Trivy scanning, cosign signing and SBOM attestation (image-manifest, sbom, build-provenance) (PRs #143, #279, #299, #334)
+- A final version tag **promotes** the release candidate's judged image rather than rebuilding it, so the digest, signature and attestation that ship are the ones the release harness judged; an image that cannot be promoted is rebuilt and loudly marked as unjudged (build-provenance) (PRs #303, #351)
+- The release harness is driven from this repository: release candidates are tagged and dispatched on every release-branch push, digests, `rules_url` and five runs are sent with the dispatch, and the harness's verdict is posted back onto the release pull request (PRs #280, #310, #312)
+- `pnpm release:candidate`, `release/deployed.json` and the release SOP: one command from a commit to a harness report (Rules 0206-0213) (PR #355)
+- The release changelog is generated from merged pull requests and the EARS Rules they moved, and published as the notes and assets of each candidate's prerelease (Rules 0190-0195) (PR #349)
+- Production overlays are pinned by digest and the harness is told what is deployed after a rollout (PRs #298, #310)
+- Migration expand/contract checks, so a destructive and unclaimed migration fails the release branch (migration) (PR #300)
+- Service level objectives per app in `release/slo.yaml`, with one-hour and six-hour paging burn-rate alerts and a three-day ticket alert generated from them (Rules 0295-0299) (slo) (PR #448)
+- A local Grafana stack for Tutors learning insights (PR #135)
+- Route and Ingress components with per-substrate variants (PR #281)
+- Deployment URLs are configured at runtime rather than baked at build. `PUBLIC_READER_ORIGIN`, `PUBLIC_LIVE_ORIGIN`, `PUBLIC_CATALOGUE_ORIGIN` and `PUBLIC_TIME_ORIGIN` are optional; set them where the apps are not on their default origins (network) (PR #365)
+- Deterministic responses and a stable log and metrics shape, so the harness's A/A runs have no noise of their own to explain (`HARNESS_NOW`, `/version`, stable headers) (logs, metrics, headers, timing) (PRs #282, #283)
+
+#### Fixes
+
+- Row level security enabled on the public tables (persistence) (PR #317)
+
+#### Chores
+
+- Dependabot updates consolidated and future updates grouped, replacing the stream of single-package pull requests (sbom) (PRs #368, #412, #470, #479)
+
 ### v16.2.2 (2026-09)
 
 #### Chores
@@ -296,13 +514,104 @@ any single one. Versioned with the monorepo.
 
 ---
 
-## Shared Packages
+## Development
+
+Changes to how Tutors is specified, tested, reviewed and released. Nothing
+here is visible to a student; it is listed so that a release's claims and
+Rules can be traced to the work that introduced them.
 
 ### Unreleased
 
+#### Features
+
+- `pnpm ears:dashboard` writes `reports/ears-dashboard/index.html`: one self-contained page with every feature file, Rule and scenario, searchable and filterable by EARS pattern, area and audit status, each Rule linked to its source lines and to the steps or Playwright tests that prove it, plus the next free Rule id and a guide to writing a Rule built from the repo's own examples. It reuses `scripts/checks/ears-audit.ts` and its libraries rather than a second parser, so the page says what CI says. `--since <ref>` marks what changed; the `ears-audit` job uploads the page even when the audit fails and writes a pull request's changed Rules to the job summary (Rules 0510-0515) (PR #491)
+
+#### Fixes
+
+- The reader pre-bundles the PDF viewer's dependencies again. They are declared by `@tutors/ui-components`, so the bare names in `apps/reader/vite.config.ts` resolved from nowhere and Vite skipped them; naming them through their owner (`@tutors/ui-components > pdfjs-dist`) restores the guard. Opening the browser reader used to send the dev server off to optimise `pdfjs-dist` mid-session and reload the page, which reset the reader the student had chosen and failed `@rule-0285` on any cold cache (PR #567)
+- The Nightly is green for real, with no test skipped and no floor lowered. Mutation testing scored 21.96 because Vitest 5 matches a test name as `suite > test` while the Stryker runner joined names with spaces, so every mutant ran zero tests and survived; a pnpm patch makes the runner use Vitest's own `fullTestName`. The comprehensive run's dry run failed because mutating in place made the strict type check compile the instrumented sources, so `disableTypeChecks` now names only the files the run mutates. The mobile E2E journey looks for the topic heading in the navigation dialog rather than in the sidebar, which is hidden below 1024px. Stale floors are raised to what CI measured and thirteen new modules get floors (PR #504)
+- The Nightly is green again after three further causes: it builds the time image the stack's signed-in half needs, two new unit tests kill the `lab-utils.ts` mutants, and `heatmap-layout.ts` gets a floor (sbom) (PR #544)
+- Three advisories failing the dependency audit are cleared by bounded overrides — katex to 0.18.4, postcss-selector-parser to 7.1.6 — with a dated allowance for sprintf-js, which has no patched release and no input path through argparse's fixed help strings (PR #485)
+- dompurify, undici, markdown-it, vite and happy-dom are patched to clear the advisories Trivy reports against the images, each override bounded to the same major (sbom) (PR #547)
+- Signed-in, resilience and authorisation journeys; message contracts; migrations run against real Postgres; and mutation testing on pull requests rather than only nightly (29 Rules) (dom, network) (PR #520)
+- Every executable scenario now sits under a Rule, and the future-facing specifications that described work not yet done are dropped (54 Rules) (PR #492)
+- A CI job checks the CHANGELOG hint in a pull request's title against what the diff actually moves, and adds what the hint left out (3 Rules) (PR #539)
+- The knip baseline is empty: the unused dependencies, files and exports it was suppressing are removed (sbom) (PR #490)
+- The E2E journeys run nightly instead of on every pull request, which is where the signal is (PR #546)
+- Every theme loads from one `styles/index.css` (PR #565)
+- `Image` and `Icon` are mounted in a real render test rather than asserted on in isolation (PR #566)
+- The dependencies group is bumped across two ecosystems (PR #513)
+- Header comments on the production request path, so the files a reviewer reaches first say what they are for (PR #517)
+- Documentation brought in line with main after the move to SvelteKit 3 (PR #516)
+
+#### Chores
+
+- 17.0.0 is released to main and production pinned to it (PR #483)
+- Release claims: main's Live budget differences are claimed and 17.0.0's list archived as `release/claims/17.0.0.yaml` (PR #493); the Live budget RPCs are claimed on every harness journey (PR #512); and #327's claims are rewritten in the harness's scope shapes (PR #558)
+
+### v17.0.0 (2026-10)
+
+#### Features
+
+- **EARS Rules.** Behaviour is specified as numbered `Rule:` sentences in `tests/bdd/features/`, each proved by Gherkin scenarios bound to product code and audited for shape by `pnpm test:ears:audit`. A release claim cites the Rule it relies on. This release adds 176 Rules, listed in the release notes (Rules 0001-0018 and onward) (PRs #301, #277, #350)
+- `pnpm release:harness` builds the harness dispatch from a local checkout, and a claim may cite its Rule by id through a published `rules.json` (PRs #307, #308)
+- `pnpm release:quality` and a nightly quality record on the quality branch: each package's mutation score over the mutants of every module, marked changed against the production commit (Rules 0221-0225) (PR #382)
+- `release/openvex.json` and `pnpm check:openvex`, checked in the same job as the claims (Rules 0226-0229) (PR #385)
+- Holopin badge earning (PR #411)
+
+#### Fixes
+
+- `check:release-claims` accepts the harness's 19 claim artefacts, the policy and informing checks, claim lifetimes (`until`) and per-app `digests`, and rejects a malformed one by name (Rules 0230, 0231, 0234, 0235, 0236) (PRs #309, #388)
+- Script output goes to the process streams, and the `no-console` ESLint rule is enforced with standardised error catching (PRs #287, #306)
+- The Node-only log line is gone from the k6 reader traffic script (PR #337)
+
+#### Chores
+
+- Honest coverage floors and mutation floors, with a nightly mutation job over every library module; a floor two or more points below measured coverage fails until it is raised (Rules 0110-0119) (PRs #333, #335, #336, #340, #367, #423)
+- Three type-check steps made blocking, and the built server smoked for ESM globals, 5xx on `/auth` and authentication enabled (PRs #269, #278, #295, #394, #459)
+- `tutors.json` held to a schema in `@tutors/tutors-types`, to EARS Rules and to earlier releases, with a generator differential that fails on any unclaimed change to the generated corpus (Rules 0263-0270) (PR #421)
+- Auth.js isolated behind an identity boundary, then removed after the Better Auth cutover (Rule 0253) (PRs #438, #461, #463)
+- `ui-primitives` kept off the data and access packages; the primitives import no community type; the Node floor, JSR packages and specs brought into agreement with the code (PRs #339, #467)
+- Architecture and process documentation: `guides/testing` and `guides/evolution` with an index, the release SOP matched to the harness as built, a repository root organised by concern, the daily A3 and readiness page, a graphify knowledge-graph report, an OpenSSF Baseline badge, and a note to delete leftover per-app `.env` files (PRs #284, #363, #366, #392, #398, #401, #413)
+- Root `.editorconfig` and `.prettierrc` (PR #415)
+- The create scaffolder's Deno tests run in CI, and Deno test steps count as runners (PR #275)
+
+---
+
+## Shared Packages
+
+### v17.0.0 (2026-10)
+
+> The JSR packages (`model`, `gen`, `time`, `tutors`, `tutors-lite`, `create`)
+> remain published at 5.3.0. The changes below ship inside the apps at v17.0.0;
+> the Unreleased section records earlier package changes still awaiting a JSR
+> publish.
+
+#### Features
+
+- New `@tutors/tutors-types` package: the shared type surface, free of runtime dependencies, listing the same learning-object kinds and sentiments as `tutors-model-lib`, with an adoption plan (Rules 0130, 0131) (PR #418)
+
+#### Fixes
+
+- `gen`: a hidden learning object and its descendants are left out of the LLM text and PDF downloads the generator writes (Rule 0301) (PR #473)
+- `model`: a course calendar is offered only when `calendar.yaml` lists at least one week (Rule 0284) (PR #445)
+- `model`: a learning object with `order: 0` sorts first rather than last (PR #272)
+- `model`: a search hit in one-line content comes back with its text (PR #270)
+- `model`: the second and later matches in a search carry the right line, fence and language (PR #271)
+
+#### Chores
+
+- Vitest 5, vitest-cucumber 8 and markdown-it-deflist 4; TypeScript held at 6 (PR #479)
+
+### Unreleased
+
+- `time`: a pluggable data source. `readerTimeSource(readerUrl)` reads a course's rows from the Tutors reader with the viewer's session; `supabaseTimeSource()` (the default) keeps reading the tables. New exports `setTutorsTimeSource`, `getTutorsTimeSource`, `TutorsTimeSourceError`; `getStudentDisplayInfo` takes the course id and no longer returns an email address
 - `gen-lib` (`tutors`, `tutors-lite`): lab step ids come from the step's file name, so a course under a dotted directory (`.claude`, `~/.cache`, `my.courses`) no longer gets broken step ids and routes
 - `gen-lib` (`tutors`, `tutors-lite`): titles no longer keep the space after `#` or a trailing `\r` from CRLF files. `llms/` file names are slugs of those titles, so they lose their stray leading and trailing dashes (`-simple--llms.txt` is now `simple-llms.txt`); the reader derives the same names from `tutors.json`
 - `tutors-lite`: note pages no longer render a stray `s` after the note card
+- `gen-lib` (`tutors`, `tutors-lite`): a folder whose name starts with no learning-object kind inside a topic or unit (`topic-1/drafts`) is no longer published as a learning object of its parent's kind; its files are still copied as assets, at any depth (#424, Rule 0268) (PR #425)
+- `tutors-lite`: a build that does not produce a course ends unsuccessfully. A folder with no `course.md` reports it on stderr and exits nonzero, and a failed static generation exits nonzero without copying the course's assets, saying on stderr that `html/` is incomplete. Both used to print to stdout and exit 0, so a publishing script read a failed build as a success. The partial `html/` is left where it is (#529, Rules 0661, 0662) (none) (PR #536)
+- `tutors-create`: the course creator refuses to scaffold over a destination that already exists — a folder, a regular file, or a symlink, even a dangling one. It writes nothing, names the conflicting path on stderr, prints no publishing steps and exits unsuccessfully; previously it overwrote an author's edited course with template text and reported success (#522, Rules 0647, 0648) (PR #531)
 
 ### v5.3.0 (2026-09)
 

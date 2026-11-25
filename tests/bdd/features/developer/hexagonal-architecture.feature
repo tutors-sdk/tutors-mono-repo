@@ -29,7 +29,7 @@ Feature: Hexagonal architecture
     Scenario: A use case that imports an adapter or a vendor client is a violation
       Given the architecture rules run over the fixture workspace
       Then they name "application-imports-domain-only" for "packages/application/src/reaches-adapter.ts" importing "packages/adapters/driven/store-supabase/src/index.ts"
-      And they name "application-imports-domain-only" for "packages/application/src/reaches-vendor.ts" importing "external/@supabase/supabase-js.ts"
+      And they name "application-imports-domain-only" for "packages/application/src/reaches-vendor.ts" importing "external/@supabase/supabase-js/index.ts"
 
     Scenario: The repository's application ring imports only the domain
       Given the architecture rules run over the repository
@@ -40,7 +40,7 @@ Feature: Hexagonal architecture
 
     Scenario: A package other than the wrapping adapter importing a vendor library is a violation
       Given the architecture rules run over the fixture workspace
-      Then they name "vendor-only-in-its-adapter" for "packages/adapters/driven/course-http/src/index.ts" importing "external/@supabase/supabase-js.ts"
+      Then they name "vendor-only-in-its-adapter" for "packages/adapters/driven/course-http/src/index.ts" importing "external/@supabase/supabase-js/index.ts"
       And they name "vendor-only-in-its-adapter" for "packages/adapters/driving/svelte-state/src/vendor.ts" importing "external/shiki/core.ts"
       And they also name "vendor-only-in-its-adapter" for "packages/adapters/driving/svelte-state/src/connect/provider.ts" importing "external/better-auth/index.ts"
 

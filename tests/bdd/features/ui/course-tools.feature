@@ -7,6 +7,30 @@ Feature: Course tools
   Each scenario is proved by the Playwright test with the same title, tagged with the Rule id,
   in apps/reader/tests/e2e. `pnpm test:ears:audit` fails if a scenario has no such test.
 
+  @rule-0375 @ears-event-driven
+  Rule: When an educator activates Export enrollment.yaml in the Enrollment tab, the reader shall download the enrollment draft.
+
+    Scenario: An educator downloads the enrollment draft
+      Given an educator has opened the Enrollment tab
+      When the educator activates Export enrollment.yaml using the keyboard
+      Then enrollment.yaml is downloaded with the draft returned by the data API
+      And the panel explains that the draft needs review
+
+    Scenario: An educator exports a course identified by a full Netlify URL
+      Given an educator is viewing a course with a URL-derived course ID
+      When the educator exports enrollment from the Enrollment tab
+      Then enrollment.yaml is downloaded
+      And the export request preserves the URL-derived course ID
+
+  @rule-0376 @ears-unwanted
+  Rule: If the enrollment export fails, then the reader shall announce the failure and allow the educator to retry.
+
+    Scenario: A failed enrollment export can be retried
+      Given an educator has opened the Enrollment tab
+      When the export fails
+      Then the panel announces the failure
+      And the export button can be activated again
+
   @rule-0040 @ears-event-driven
   Rule: When a student follows a link in the course tree, the reader shall open that page and mark it as the only current page in the tree.
 

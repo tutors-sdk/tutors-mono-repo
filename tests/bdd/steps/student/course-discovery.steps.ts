@@ -8,8 +8,11 @@ import { configureSupabase } from "../../../../packages/adapters/driven/store-su
 const supabase = new MockSupabaseClient();
 configureSupabase(supabase as never);
 
+import log from "@tutors/logger";
+import { catalogueService } from "../../../../packages/adapters/driven/store-supabase/src/catalogue.ts";
 import { flattenLos, type Composite, type Course, type Lo } from "../../../../packages/jsr/model/src/tutors.ts";
 import { load as loadCataloguePage } from "../../../../apps/catalogue/src/routes/+page.ts";
+import { arrangeCatalogue, isCatalogueSort } from "../../../../packages/domain/src/catalogue/order.ts";
 import type { LoShape } from "../../../support/arbitraries/course-tree.ts";
 import { labShape, loadCourse, shape } from "../../support/course.ts";
 
@@ -18,7 +21,9 @@ const feature = await loadFeature("tests/bdd/features/student/course-discovery.f
 const list = (csv: string) => csv.split(",").map((item) => item.trim());
 
 type CatalogueRow = { id: string; title: string; visits: string };
-type CourseRecord = { id: string; title: string; credits: string; img: string; visits: number };
+type CourseRecord = { id: string; title: string; credits: string; img: string; visits: number; lastVisit: string };
+type StepFn = (title: string, fn: (...args: never[]) => unknown) => void;
+type ListedCourse = { id: string; title: string; credits: string; visits: string; visited: string };
 
 describeFeature(feature, ({ Rule }) => {
   Rule("When a student opens the catalogue, the catalogue shall list the courses with at least 20 visits, most visited first, each with its title, summary, image and visit count.", ({ RuleScenario }) => {
@@ -51,8 +56,8 @@ describeFeature(feature, ({ Rule }) => {
       And("each course shall show its title, summary, image and visit count", () => {
         for (const course of displayed) {
           const row = rows.find((candidate) => candidate.id === course.id)!;
-          // The catalogue card takes its summary from the course credits.
-          expect(course).toEqual({ ...record(row), visits: Number(row.visits) });
+          // The catalogue card takes its summary from the course credits; the last visit orders "most recently visited".
+          expect(course).toEqual({ ...record(row), visits: Number(row.visits), lastVisit: `2026-09-0${rows.indexOf(row) + 1}T09:00:00Z` });
         }
       });
     });
@@ -103,6 +108,96 @@ describeFeature(feature, ({ Rule }) => {
         const composite = course as unknown as Composite;
         expect(composite.units.standardLos.map((lo) => lo.title)).toEqual(list(expected));
         expect(composite.toc.map((lo) => lo.title)).toEqual(list(expected));
+      });
+    });
+  });
+
+  Rule("If Supabase is not configured, then the catalogue shall show an empty catalogue and a student count of 0 without logging an error.", ({ RuleScenario }) => {
+    RuleScenario("Open the catalogue with no Supabase configured", ({ Given, When, Then, And }) => {
+      let displayed: CourseRecord[];
+      let logError: ReturnType<typeof vi.spyOn>;
+
+      Given("Supabase is not configured", () => {
+        configureSupabase(undefined);
+        logError = vi.spyOn(log, "error");
+      });
+      When("a student opens the catalogue", async () => {
+        const data = (await loadCataloguePage({ fetch } as Parameters<typeof loadCataloguePage>[0])) as { courseRecords: CourseRecord[] };
+        displayed = data.courseRecords;
+      });
+      Then("the catalogue shall display no courses", () => {
+        expect(displayed).toEqual([]);
+      });
+      And("the catalogue shall show a student count of 0", async () => {
+        // The catalogue page asks for the student count once it has rendered.
+        expect(await catalogueService.getStudentCount()).toBe(0);
+      });
+      And("no error shall be logged", () => {
+        try {
+          expect(logError).not.toHaveBeenCalled();
+        } finally {
+          logError.mockRestore();
+          configureSupabase(supabase as never);
+        }
+      });
+    });
+  });
+
+  // Issue #549: the real catalogue page loads the courses; the visitor then sorts and searches them as the catalogue does.
+  let listed: CourseRecord[];
+  let arranged: CourseRecord[];
+
+  async function givenListed(_ctx: unknown, table: ListedCourse[]) {
+    (supabase as unknown as MockSupabaseClient).setTableData(
+      "tutors-connect-courses",
+      table.map((row) => ({
+        course_id: row.id,
+        visited_at: row.visited,
+        visit_count: Number(row.visits),
+        course_record: { id: row.id, title: row.title, credits: row.credits, img: `https://${row.id}.netlify.app/course.png` }
+      }))
+    );
+    const data = (await loadCataloguePage({ fetch } as Parameters<typeof loadCataloguePage>[0])) as { courseRecords: CourseRecord[] };
+    listed = data.courseRecords;
+  }
+  function arrange(sort: string, search?: string) {
+    expect(isCatalogueSort(sort)).toBe(true);
+    arranged = arrangeCatalogue(listed, sort as Parameters<typeof arrangeCatalogue>[1], search);
+  }
+  function thenDisplayed(_ctx: unknown, expected: string) {
+    expect(arranged.map((course) => course.title)).toEqual(list(expected));
+  }
+  const whenSorted = (_ctx: unknown, sort: string) => arrange(sort);
+  const whenSearched = (_ctx: unknown, search: string, sort: string) => arrange(sort, search);
+
+  const sortScenario =
+    (scenario: string) =>
+    ({ RuleScenario }: { RuleScenario: (title: string, steps: (keywords: { Given: StepFn; When: StepFn; Then: StepFn }) => void) => void }) =>
+      RuleScenario(scenario, ({ Given, When, Then }) => {
+        Given("the catalogue lists the courses:", givenListed);
+        When("a visitor sorts the catalogue by {string}", whenSorted);
+        Then("the catalogue shall display the courses {string}", thenDisplayed);
+      });
+
+  Rule("When a visitor sorts the catalogue by visits, the catalogue shall list the courses most visited first.", sortScenario("Sort the catalogue by visits"));
+  Rule("When a visitor sorts the catalogue by most recently visited, the catalogue shall list the courses latest visit first.", sortScenario("Sort the catalogue by most recent visit"));
+  Rule("When a visitor sorts the catalogue by title, the catalogue shall list the courses alphabetically by title, ignoring case.", sortScenario("Sort the catalogue by title"));
+  Rule("When a visitor sorts the catalogue by credits, the catalogue shall list the courses alphabetically by credits, ignoring case, and list the courses without credits last.", sortScenario("Sort the catalogue by credits"));
+
+  Rule("When a visitor searches the catalogue, the catalogue shall show only the courses whose title or credits contain every word of the search, ignoring case and accents, in the chosen order.", ({ RuleScenario }) => {
+    for (const scenario of ["Search the catalogue by title", "Search the catalogue by credits", "Every word of the search must match", "Search results keep the chosen order"]) {
+      RuleScenario(scenario, ({ Given, When, Then }) => {
+        Given("the catalogue lists the courses:", givenListed);
+        When("a visitor searches the catalogue for {string} sorted by {string}", whenSearched);
+        Then("the catalogue shall display the courses {string}", thenDisplayed);
+      });
+    }
+    RuleScenario("No course matches every word of the search", ({ Given, When, Then }) => {
+      Given("the catalogue lists the courses:", givenListed);
+      When("a visitor searches the catalogue for {string} sorted by {string}", whenSearched);
+      Then("the catalogue shall display no courses", () => {
+        expect(listed).toHaveLength(3);
+        expect(arranged).toEqual([]);
       });
     });
   });

@@ -19,6 +19,15 @@ export function getLoType(route: string): string {
   return lotype;
 }
 
+/**
+ * True when the folder's own name starts with a learning-object kind. getLoType reads the whole route,
+ * so a folder of no kind takes the kind of its nearest typed ancestor; inside a composite that would
+ * publish it as a learning object.
+ */
+export function namesItsKind(lr: LearningResource): boolean {
+  return findLastMatchingString(loSignatures, lr.id, "") !== "unknown";
+}
+
 export function build(dir: string): LearningResource {
   const tree: LearningResource = {
     courseRoot: root,
@@ -51,10 +60,22 @@ export function pruneTree(lr: LearningResource): void {
   lr.lrs.forEach((resource) => pruneTree(resource));
 }
 
-export function buildTree(dir: string): LearningResource {
+/** A course folder as Tutors reads it, before folders of no known kind are pruned. */
+export type CourseTree = LearningResource;
+
+/**
+ * Reads a course folder into a tree without pruning: folders with no kind on their path stay in, typed
+ * "unknown". A validator reads this tree to name what the generator would silently leave out.
+ */
+export function buildUnprunedTree(dir: string): CourseTree {
   root = dir;
   const mainLr = build(dir);
   mainLr.type = "course";
+  return mainLr;
+}
+
+export function buildTree(dir: string): LearningResource {
+  const mainLr = buildUnprunedTree(dir);
   pruneTree(mainLr);
   return mainLr;
 }

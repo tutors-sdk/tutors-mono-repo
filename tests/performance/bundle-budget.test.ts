@@ -107,7 +107,7 @@ describe("bundle budgets (runway tier L)", () => {
 
   it("the committed budgets cover every app with positive ceilings", () => {
     const budgets = readBudgets();
-    expect(Object.keys(budgets.apps).sort()).toEqual(["catalogue", "live", "reader", "time"]);
+    expect(Object.keys(budgets.apps).sort()).toEqual(["catalogue", "live", "reader", "time", "validator"]);
     expect(budgets.headroom).toBeGreaterThan(0);
     expect(budgets.headroom).toBeLessThanOrEqual(0.1);
     for (const budget of Object.values(budgets.apps)) {

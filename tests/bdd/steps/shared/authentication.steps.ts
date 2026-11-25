@@ -9,10 +9,11 @@ vi.mock("$app/env/public", async () => (await import("../../support/supabase-rec
 // `$app/env` and `$app/navigation` are aliased to one stub file, so one mock serves both.
 vi.mock("$app/env", () => ({ browser: true, goto: vi.fn() }));
 // The application injects this client into connect.
+vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 const authSignIn = vi.hoisted(() => vi.fn());
 
 import { goto } from "$app/navigation";
-import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
+import { ALL_COURSES_CHANNEL, freshBrowser, githubUser, labsOf, openLo, publishedCourse, readerServer, signIn } from "../../support/connect.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
@@ -34,6 +35,7 @@ describeFeature(feature, ({ Background, Rule }) => {
     expect(recorder.rows("calendar")).toEqual([]);
     expect(recorder.rows("tutors-connect-latest")).toEqual([]);
     expect([...recorder.sentOn(course.courseId), ...recorder.sentOn(ALL_COURSES_CHANNEL)]).toEqual([]);
+    expect(readerServer.posts).toEqual([]);
   };
 
   Background(({ Given }) => {

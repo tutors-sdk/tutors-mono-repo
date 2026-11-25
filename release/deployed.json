@@ -1,11 +1,11 @@
 {
-  "tag": "16.2.2",
-  "deployedAt": "2026-09-21T10:57:28Z",
-  "commit": "caa53d021e63004ad6e52a76428f8acd95a87c21",
+  "tag": "17.1.0",
+  "deployedAt": "2026-11-04T10:51:47Z",
+  "commit": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
   "digests": {
-    "catalogue": "sha256:f6cdb7f6adaba1d227e2cf62260ec2fe7064c58114666774331da3530bf52187",
-    "live": "sha256:12ed5642e5cbec601790771a8f9fc85221f8202679a312a0e707622bb6e84e9a",
-    "reader": "sha256:7567d5927767bd39b7991a586d594f6c310387471109a456d2cff49fa12488cb",
-    "time": "sha256:ddf3ad22b79bbba96199791a49367677bf9ad0ebdd7542f3246d56e7879d5e4e"
+    "catalogue": "sha256:ecd47ce9b7cc160b8a913a31309e3b2aa637933988569d6aaedab3ae5fe78361",
+    "live": "sha256:ca80e0e78a9b225b297ce4ccee1825204cd8fd501f3784829680ac4c0e49a6f9",
+    "reader": "sha256:84aa66d82a6482006b0c92ed6db363ca244c5afea3d5673806560371e062f5c3",
+    "time": "sha256:786e81c15a7a9537d71845df7e46efe49e3706df3c27656ee7d8072ada164b90"
   }
 }

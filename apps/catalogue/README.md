@@ -17,7 +17,7 @@ Browse all Tutors courses with visitor statistics.
 ## Development
 
 ```bash
-npm run dev
+pnpm --filter tutors-catalogue dev
 ```
 
 Runs on http://localhost:5175

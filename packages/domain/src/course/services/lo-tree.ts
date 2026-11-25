@@ -1,6 +1,7 @@
 import { isCompositeLo } from "../types/type-utils.ts";
 import type { Composite, Course, Lo, Topic } from "../types/index.ts";
 import { allVideoLos, crumbs, filterByType, flattenLos, getPanels, getUnits, injectCourseUrl, loadIcon, removeUnknownLos } from "../utils/lo-utils.ts";
+import { rememberCourseProtocol } from "../address.ts";
 import { createCompanions, createWalls, initCalendar, loadPropertyFlags } from "../utils/course-utils.ts";
 
 /**
@@ -30,6 +31,7 @@ export function decorateCourseTree(
   course.courseId = courseId;
   course.courseUrl = courseUrl;
   course.route = `/course/${courseId}`;
+  rememberCourseProtocol(course, options.protocol ?? "https://");
 
   // retrieve all Los in course
   let allLos = flattenLos(course.los);

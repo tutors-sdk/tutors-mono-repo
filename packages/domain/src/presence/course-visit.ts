@@ -20,16 +20,30 @@ export function courseVisitOf(course: Course, now: Date): CourseVisit {
 
 /**
  * A learner's history after visiting `course` at `now`: the existing entry's count and time move
- * on, or a new entry goes to the front.
+ * on, or a new entry goes to the front. The history handed in is left as it was.
  */
-export function recordCourseVisit(visits: CourseVisit[], course: Course, now: Date): CourseVisit[] {
-  const visit = visits.find((c) => c.id === course.courseId);
-  if (visit) {
-    visit.visits = (visit.visits ?? 0) + 1;
-    visit.lastVisit = now.toISOString();
-    return visits;
-  }
-  return [courseVisitOf(course, now), ...visits];
+export function recordCourseVisit(visits: readonly CourseVisit[], course: Course, now: Date): CourseVisit[] {
+  if (!visits.some((visit) => visit.id === course.courseId)) return [courseVisitOf(course, now), ...visits];
+  return visits.map((visit) => (visit.id === course.courseId ? { ...visit, visits: (visit.visits ?? 0) + 1, lastVisit: now.toISOString() } : visit));
+}
+
+/** A learner's history with one course marked, or unmarked, as a favourite. */
+export function favouriteCourseVisit(visits: readonly CourseVisit[], courseId: string, favourite: boolean): CourseVisit[] {
+  return visits.map((visit) => (visit.id === courseId ? { ...visit, favourite } : visit));
+}
+
+/** A learner's history without one course. */
+export function forgetCourseVisit(visits: readonly CourseVisit[], courseId: string): CourseVisit[] {
+  return visits.filter((visit) => visit.id !== courseId);
+}
+
+/**
+ * What the public catalogue keeps about a course when someone opens it: its card, whether it is
+ * private, and no visit count of its own (the catalogue counts).
+ */
+export function catalogueRecordOf(course: Course, now: Date): CourseVisit {
+  const { visits: _visits, ...card } = courseVisitOf(course, now);
+  return { ...card, private: course.isPrivate };
 }
 
 /**

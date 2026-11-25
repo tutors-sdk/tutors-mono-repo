@@ -3,20 +3,20 @@
  * keeps its state in plain collections and behaves as the contract suites say a real adapter must.
  */
 import type { Course, Lo } from "@tutors/domain/course";
-import type { ContentLock } from "@tutors/domain/access";
-import type { LearningEvent, CalendarEntry, LearningRecord, TutorsConnectUser } from "@tutors/domain/learning";
+import type { ContentLock, LockWrite } from "@tutors/domain/access";
+import type { LearningEvent } from "@tutors/domain/learning";
 import type { CourseVisit, PresenceEvent, Sentiment, StoredPresence } from "@tutors/domain/presence";
 import { CourseNotFoundError, type CourseLocation, type CourseSource } from "../ports/course-source.ts";
-import type { CourseEmitter } from "../ports/course-emitter.ts";
 import type { ContentRenderer } from "../ports/content-renderer.ts";
 import type { LearningEventSink } from "../ports/learning-event-sink.ts";
-import type { LearningRecords } from "../ports/learning-records.ts";
 import type { PresencePort, Unsubscribe } from "../ports/presence.ts";
 import type { LearnerProfile, ProfilePort } from "../ports/profile.ts";
 import type { IdentityClient, SessionPort } from "../ports/session.ts";
 import type { AccessStore } from "../ports/access-store.ts";
 import type { AppEvent, EventPublisher } from "../ports/event-publisher.ts";
 import type { Clock } from "../ports/clock.ts";
+import type { CourseCatalogue } from "../ports/course-catalogue.ts";
+import type { WhiteboardRoom, WhiteboardScene, WhiteboardStore } from "../ports/whiteboard.ts";
 import type { AssignmentSource, MoodleAssignSubmissionsResponse, MoodleCourseSection } from "../ports/assignment-source.ts";
 import type { Actor } from "@tutors/domain/access";
 
@@ -52,14 +52,6 @@ export class InMemoryCourseSource implements CourseSource {
   }
 }
 
-/** Remembers what was emitted where. */
-export class InMemoryCourseEmitter implements CourseEmitter {
-  readonly emitted: Array<{ course: Course; destination: string }> = [];
-  async emit(course: Course, destination: string): Promise<void> {
-    this.emitted.push({ course, destination });
-  }
-}
-
 /** Wraps markdown in a paragraph: enough to see that rendering happened and where. */
 export class PassThroughRenderer implements ContentRenderer {
   mathLoads = 0;
@@ -86,25 +78,6 @@ export class InMemoryLearningEventSink implements LearningEventSink {
   readonly recorded: Array<{ event: LearningEvent; learnerId: string }> = [];
   async record(event: LearningEvent, learnerId: string): Promise<void> {
     this.recorded.push({ event, learnerId });
-  }
-}
-
-/** Answers from the rows it was given. */
-export class InMemoryLearningRecords implements LearningRecords {
-  constructor(
-    private readonly calendar: CalendarEntry[] = [],
-    private readonly records: LearningRecord[] = [],
-    private readonly users: TutorsConnectUser[] = []
-  ) {}
-  async calendarEntries(courseId: string, start?: string | null, end?: string | null): Promise<CalendarEntry[]> {
-    return this.calendar.filter((e) => e.courseid === courseId && (!start || e.id >= start) && (!end || e.id <= end));
-  }
-  async learningRecords(courseId: string, learnerId?: string): Promise<LearningRecord[]> {
-    return this.records.filter((r) => r.course_id === courseId && (!learnerId || r.student_id === learnerId));
-  }
-  async learners(courseId: string): Promise<TutorsConnectUser[]> {
-    const ids = new Set(this.records.filter((r) => r.course_id === courseId).map((r) => r.student_id));
-    return this.users.filter((u) => ids.has(u.github_id));
   }
 }
 
@@ -185,21 +158,24 @@ export class RecordingIdentityClient implements IdentityClient {
   }
 }
 
-/** Content locks per course, in memory. */
+/**
+ * Content locks per course, in memory, saved as `actor`. With `persists: false` it is the store of
+ * a reader that has none (anonymous mode): nothing is kept and every change is "unavailable".
+ */
 export class InMemoryAccessStore implements AccessStore {
   private readonly rows = new Map<string, ContentLock>();
-  constructor(private readonly clock: Clock = new FixedClock()) {}
+  constructor(
+    private readonly clock: Clock = new FixedClock(),
+    private readonly options: { actor?: string; persists?: boolean } = {}
+  ) {}
   async locks(courseId: string): Promise<ContentLock[]> {
-    return [...this.rows.values()].filter((lock) => lock.course_id === courseId).map((lock) => ({ ...lock }));
+    return [...this.rows.values()].filter((lock) => lock.courseId === courseId).map((lock) => ({ ...lock }));
   }
-  async setLock(courseId: string, loRoute: string, locked: boolean, lockedBy: string): Promise<boolean> {
-    if (!courseId || !loRoute || !lockedBy) return false;
-    this.rows.set(`${courseId}\t${loRoute}`, { course_id: courseId, lo_route: loRoute, locked, locked_by: lockedBy, locked_at: this.clock.now().toISOString() });
-    return true;
-  }
-  async removeLock(courseId: string, loRoute: string): Promise<boolean> {
-    if (!courseId || !loRoute) return false;
-    return this.rows.delete(`${courseId}\t${loRoute}`);
+  async setLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWrite> {
+    if (!courseId || !loRoute) return "refused";
+    if (this.options.persists === false) return "unavailable";
+    this.rows.set(`${courseId}\t${loRoute}`, { courseId, route: loRoute, locked, lockedBy: this.options.actor ?? "lecturer", lockedAt: this.clock.now().toISOString() });
+    return "saved";
   }
 }
 
@@ -228,5 +204,31 @@ export class InMemoryAssignmentSource implements AssignmentSource {
   }
   async assignmentSubmissions(assignmentIds: number[]): Promise<MoodleAssignSubmissionsResponse> {
     return { assignments: this.submissions.assignments.filter((a) => assignmentIds.includes(a.assignmentid)) };
+  }
+}
+
+/** Counts each course's visits and keeps the latest card it was given. */
+export class InMemoryCourseCatalogue implements CourseCatalogue {
+  readonly counts = new Map<string, number>();
+  readonly records = new Map<string, CourseVisit>();
+  async recordVisit(courseId: string, record: CourseVisit): Promise<void> {
+    this.counts.set(courseId, (this.counts.get(courseId) ?? 0) + 1);
+    this.records.set(courseId, structuredClone(record));
+  }
+}
+
+/** Keeps each room's elements; a shared board and a personal one on the same page are two rooms. */
+export class InMemoryWhiteboard implements WhiteboardStore {
+  private readonly scenes = new Map<string, unknown[]>();
+  private key(room: WhiteboardRoom): string {
+    return `${room.courseId}\t${room.route}\t${room.shared ? "shared" : "own"}`;
+  }
+  async load(room: WhiteboardRoom): Promise<WhiteboardScene | null> {
+    const elements = this.scenes.get(this.key(room));
+    return elements ? { elements: structuredClone(elements), appState: {}, files: {} } : null;
+  }
+  async save(room: WhiteboardRoom, elements: unknown[]): Promise<boolean> {
+    this.scenes.set(this.key(room), structuredClone(elements));
+    return true;
   }
 }

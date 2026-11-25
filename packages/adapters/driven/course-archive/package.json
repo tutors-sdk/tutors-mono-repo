@@ -1,0 +1,13 @@
+{
+  "name": "@tutors/course-archive",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Checks a course handed over as a zip or a set of generated files against the course rules: the validator's and the create page's driven adapter over fflate",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@tutors/course-rules": "workspace:*",
+    "fflate": "^0.8.3"
+  }
+}

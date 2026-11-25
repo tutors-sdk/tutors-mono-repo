@@ -17,6 +17,18 @@ Feature: Content Search
       Then the reader shall return 4 results from 4 different learning objects
       And the results shall show the matching lines "A function groups statements., A function groups statements., A function groups statements., Call the function by name."
 
+    Scenario: Search shows the matching line of single-line content
+      Given the course has a note whose whole content is the single line "Call the function by name."
+      When a student searches for "function"
+      Then the reader shall return 1 result
+      And the result shall show the matching line "Call the function by name."
+
+    Scenario: Search shows the matching line for every occurrence in one learning object
+      Given a lab step whose content mentions "function" on 3 separate lines
+      When a student searches for "function"
+      Then the reader shall return 3 results
+      And each result shall show only the line on which its match occurs
+
   @rule-0015 @ears-event-driven
   Rule: When a student searches for text in a fenced code block, the reader shall mark the result as fenced code and give its language.
 

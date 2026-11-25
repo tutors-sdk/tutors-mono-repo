@@ -1,7 +1,7 @@
 <script lang="ts">
   import { convertMdToHtml, type Lo } from "@tutors/tutors-model-lib";
   import { currentCodeTheme } from "@tutors/svelte-state/markdown";
-  import { extractQuizBlock, parseQuizMarkdown } from "@tutors/domain/quiz";
+  import { extractQuizBlock, parseQuizMarkdown } from "@tutors/course-rules/quiz";
   import { sanitizeHtml } from "@tutors/ui-primitives/utils/sanitize";
   import QuizTaker from "../../quiz/QuizTaker.svelte";
 

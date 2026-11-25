@@ -250,7 +250,9 @@ export function initCalendar(course: Course, today: number = Date.now()) {
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    // The domain has no logger; a malformed calendar is reported on stderr where one exists.
-    (globalThis as { process?: { stderr?: { write(s: string): unknown } } }).process?.stderr?.write(`Error loading calendar: ${message}\n`);
+    // console, not process.stderr: this also runs in the browser, and on the server the apps turn console output into JSON log lines.
+    // The domain imports nothing, the logger included, and the published model library has always warned here.
+    // eslint-disable-next-line no-console
+    console.warn("Error loading calendar", { error: message });
   }
 }

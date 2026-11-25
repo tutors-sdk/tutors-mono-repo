@@ -11,7 +11,9 @@ export default defineConfig({
       "tests/bdd/steps/**/*.steps.ts",
       "tests/contract/**/*.test.ts",
     ],
-    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**"],
+    // Tests that mount a Svelte component need vitest.components.config.ts (Rules 0680, 0681);
+    // under this config they cannot resolve @iconify/svelte and crash Stryker's dry run.
+    exclude: ["**/node_modules/**", "tests/e2e/**", "tests/release/**", "tests/**/*.component.steps.ts", "tests/**/*.component.test.ts"],
     setupFiles: ["tests/support/no-network.ts"],
   },
   resolve: { alias: workspaceAliases },

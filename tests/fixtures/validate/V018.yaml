@@ -1,0 +1,17 @@
+broken:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Leaving Cert Computer Science\n"
+  topic-01/topic.md: "# Algorithms\n"
+  topic-01/book-01/01.Practice.md: "# Practice\n\n[Download the starter](assets/starter.zip)\n"
+  topic-01/book-01/assets/starter.zip: "PK"
+  topic-01/book-01/assets/solution.py: "print(42)\n"
+  code/topic-01/search.py: "def search(): pass\n"
+  scripts/download_exams.py: "import sys\n"
+  exams/README.md: "# Past papers\n\nWhere the papers come from.\n"
+fixed:
+  netlify.toml: "[build]\n  publish = \"json\"\n"
+  course.md: "# Leaving Cert Computer Science\n"
+  topic-01/topic.md: "# Algorithms\n"
+  topic-01/book-01/01.Practice.md: "# Practice\n\n[Download the starter](assets/starter.zip)\n"
+  topic-01/book-01/assets/starter.zip: "PK"
+  topic-01/book-01/assets/solution.py: "print(42)\n"

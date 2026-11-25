@@ -1,4 +1,4 @@
-import { currentCourse, isEducator } from "@tutors/svelte-state";
+import { courseProtocol, currentCourse, isEducator } from "@tutors/svelte-state";
 import { courseService } from "@tutors/svelte-state/course";
 import { rbacService } from "@tutors/svelte-state/rbac";
 import type { Lo } from "@tutors/tutors-model-lib";
@@ -21,7 +21,8 @@ export const load = async ({ params, fetch }) => {
       }
     : undefined;
 
-  const llmsLinks = generateLlms(course, visibility);
+  // readCourse set the protocol the course is served on (lo-tree.ts): its downloads are on the same one.
+  const llmsLinks = generateLlms(course, visibility, courseProtocol.value);
   return {
     course,
     llmsLinks,

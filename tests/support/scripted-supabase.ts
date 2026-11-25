@@ -6,7 +6,7 @@
 export type ScriptedAnswer = { data?: unknown; error?: { message: string } | null; count?: number | null };
 export type ScriptedCall = { table: string; op: string; args: unknown[] };
 
-const OPS = ["select", "eq", "in", "gte", "lte", "order", "upsert", "delete", "insert", "update"] as const;
+const OPS = ["select", "eq", "in", "gte", "lte", "order", "upsert", "delete", "insert", "update", "range", "maybeSingle"] as const;
 
 export function scriptedSupabase(answers: Record<string, ScriptedAnswer[]>) {
   const calls: ScriptedCall[] = [];

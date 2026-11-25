@@ -7,13 +7,15 @@
 import type {
   AccessStore,
   Clock,
+  CourseCatalogue,
   ContentRenderer,
   CourseSource,
   EventPublisher,
   IdentityClient,
   LearningEventSink,
   PresencePort,
-  ProfilePort
+  ProfilePort,
+  WhiteboardStore
 } from "@tutors/application/ports";
 import {
   InMemoryAccessStore,
@@ -38,11 +40,12 @@ export type Adapters = {
   accessStore: AccessStore;
   publisher: EventPublisher;
   identityClient: IdentityClient | null;
-  /**
-   * The whiteboard's own persistence client, until it has a port of its own. Typed as unknown
-   * here so this package names no vendor; the whiteboard component casts it.
-   */
-  whiteboardClient: unknown;
+  /** Counts course visits for the public catalogue; null where nothing is counted. */
+  catalogue: CourseCatalogue | null;
+  /** Keeps whiteboard drawings; null where nothing is saved. */
+  whiteboard: WhiteboardStore | null;
+  /** The realtime service a shared whiteboard's editors meet on, handed to the editor frame; null where there is none. */
+  whiteboardRelay: { url: string; key: string } | null;
 };
 
 const systemClock: Clock = { now: () => new Date(), nowMs: () => Date.now() };
@@ -58,10 +61,12 @@ export function anonymousAdapters(overrides: Partial<Adapters> = {}): Adapters {
     learningEvents: new InMemoryLearningEventSink(),
     presence: new InMemoryPresence(systemClock),
     profile: { local: profile, signedIn: null },
-    accessStore: new InMemoryAccessStore(systemClock),
+    accessStore: new InMemoryAccessStore(systemClock, { persists: false }),
     publisher: new RecordingPublisher(),
     identityClient: null,
-    whiteboardClient: undefined,
+    catalogue: null,
+    whiteboard: null,
+    whiteboardRelay: null,
     ...overrides
   };
 }

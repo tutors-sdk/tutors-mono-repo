@@ -27,7 +27,7 @@ const FIXTURE_ALIASES = {
   "tutors-catalogue": fixture("apps/catalogue/src/lib/page.ts"),
   "better-auth": fixture("external/better-auth/index.ts"),
   "@sveltejs/kit": fixture("external/sveltekit.ts"),
-  "@supabase/supabase-js": fixture("external/@supabase/supabase-js.ts"),
+  "@supabase/supabase-js": fixture("external/@supabase/supabase-js/index.ts"),
   "shiki/core": fixture("external/shiki/core.ts"),
   "$app/env/private": fixture("external/$app/env/private.ts"),
   "$env/dynamic/private": fixture("external/$env/dynamic/private.ts")
@@ -47,9 +47,9 @@ describe("architecture rules (runway tier A)", () => {
     it.each([
       ["domain-self-contained", "packages/domain/src/reaches-out.ts", "packages/platform/logger/src/index.ts"],
       ["domain-self-contained", "packages/domain/src/reaches-up.ts", "packages/application/src/index.ts"],
-      ["application-imports-domain-only", "packages/application/src/reaches-vendor.ts", "external/@supabase/supabase-js.ts"],
+      ["application-imports-domain-only", "packages/application/src/reaches-vendor.ts", "external/@supabase/supabase-js/index.ts"],
       ["application-imports-domain-only", "packages/application/src/reaches-adapter.ts", "packages/adapters/driven/store-supabase/src/index.ts"],
-      ["vendor-only-in-its-adapter", "packages/adapters/driven/course-http/src/index.ts", "external/@supabase/supabase-js.ts"],
+      ["vendor-only-in-its-adapter", "packages/adapters/driven/course-http/src/index.ts", "external/@supabase/supabase-js/index.ts"],
       ["vendor-only-in-its-adapter", "packages/adapters/driving/svelte-state/src/vendor.ts", "external/shiki/core.ts"],
       ["vendor-only-in-its-adapter", "packages/adapters/driving/svelte-state/src/connect/provider.ts", "external/better-auth/index.ts"],
       ["no-adapter-to-adapter", "packages/adapters/driven/realtime-supabase/src/index.ts", "packages/adapters/driven/store-supabase/src/index.ts"],
@@ -65,8 +65,6 @@ describe("architecture rules (runway tier A)", () => {
       ["facades-import-rings-only", "packages/jsr/model/src/reaches-adapter.ts", "packages/adapters/driven/store-supabase/src/index.ts"],
       ["tutors-types-self-contained", "packages/jsr/types/src/reaches-out.ts", "packages/jsr/model/src/index.ts"],
       ["identity-provider-only-in-adapter", "apps/reader/src/lib/provider.ts", "external/better-auth/index.ts"],
-      ["identity-contracts-self-contained", "packages/jsr/identity/src/framework.ts", "external/sveltekit.ts"],
-      ["identity-contracts-self-contained", "packages/jsr/identity/src/database.ts", "external/@supabase/supabase-js.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/leak.client.ts", "packages/adapters/driven/identity-better-auth/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/Leak.svelte", "packages/adapters/driven/identity-better-auth/src/index.server.ts"],
       ["identity-no-server-in-browser", "apps/reader/src/lib/secret.client.ts", "external/$env/dynamic/private.ts"],
@@ -75,7 +73,8 @@ describe("architecture rules (runway tier A)", () => {
       ["no-app-to-app", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "packages/adapters/driving/svelte-state/src/community/relative.ts", "packages/domain/src/index.ts"],
-      ["no-cross-package-cycle", "packages/adapters/driving/svelte-state/src/connect/index.ts", "packages/adapters/driving/themes/src/index.ts"]
+      ["no-cross-package-cycle", "packages/adapters/driving/svelte-state/src/connect/index.ts", "packages/adapters/driving/themes/src/index.ts"],
+      ["no-database-client-in-browser-code", "apps/reader/src/lib/direct-db.ts", "external/@supabase/supabase-js/index.ts"]
     ])("%s catches %s -> %s", (rule, from, to) => {
       expect(violations).toContain(`${rule}: ${from} -> ${to}`);
     });
@@ -130,7 +129,7 @@ const sources = (dir: string, match: RegExp): string[] =>
  * above. This reads the source instead, so a type import cannot cross the same line unseen.
  */
 describe("ui-primitives import no data or access package, not even a type", () => {
-  it("names no @tutors/community, @tutors/connect or @tutors/rbac import beyond the baseline", () => {
+  it("names no @tutors/svelte-state/community, @tutors/svelte-state/connect or @tutors/svelte-state/rbac import beyond the baseline", () => {
     const baseline = readBaseline(resolve(REPO_ROOT, BASELINE)).filter((line) => line.startsWith("ui-primitives-no-data-features:"));
     const found = sources(resolve(REPO_ROOT, "packages/adapters/driving/ui-primitives/src"), /\.(svelte|ts)$/).flatMap((file) =>
       [...readFileSync(file, "utf8").matchAll(/^\s*import\s[^;]*?from\s+"@tutors\/svelte-state\/(community|connect|rbac)"/gm)].map(

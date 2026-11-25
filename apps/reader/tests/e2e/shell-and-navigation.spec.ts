@@ -30,7 +30,7 @@ test("Course home leads to the first topic", { tag: "@rule-0021" }, async ({ pag
   await expect(page.locator(".shell-header h1")).toHaveText("Reference Course");
   await expect(page.locator(".shell-header .brand")).toHaveCount(0);
   await expect(page.locator(".composite-heading")).toHaveCount(0);
-  await expect(page.locator(".shell-header").getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
+  await expect(page.locator(".shell-header").getByRole("button", { name: "View Calendar for this course" })).toHaveCount(0);
   await expect(page.locator(".shell-navigation .calendar-week")).toContainText("This week");
   await expect(page.locator(".main-group .ui-section-heading")).toHaveText("Course topics");
   // The course page reaches its first topic through the topic card itself; there is no separate
@@ -88,13 +88,13 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   const header = page.locator(".shell-header");
   for (const theme of ["tutors", "dyslexia"]) {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await header.getByRole("button", { name: "Open Theme Menu", exact: true }).click();
+    await header.getByRole("button", { name: "Preferences", exact: true }).click();
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
     for (const width of [320, 390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       await expect(header.locator('[data-tour="course-title"]')).toBeVisible();
-      await expect(header.getByRole("button", { name: "View Calendar for this course", exact: true })).toHaveCount(0);
+      await expect(header.getByRole("button", { name: "View Calendar for this course" })).toHaveCount(0);
       expect(await header.evaluate(el => el.scrollWidth <= el.clientWidth), `${theme} ${width}px header fits`).toBe(true);
       const tree = header.getByRole("button", { name: "Open course tree", exact: true });
       await expect(tree).toHaveText("");
@@ -111,7 +111,7 @@ test("Phone header opens the course tree and navigation", { tag: "@rule-0024" },
   await menu.click();
   const navigation = page.getByRole("dialog", { name: "Course navigation", exact: true });
   await expect(navigation.getByRole("link", { name: "Edit this course", exact: true })).toBeVisible();
-  await expect(navigation.getByRole("button", { name: "View Calendar for this course", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "View Calendar for this course" })).toBeVisible();
   await expect(navigation.locator(".calendar-week")).toContainText("This week");
   await expect.poll(() => navigation.evaluate(el => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Escape");
@@ -155,7 +155,7 @@ test("Desktop sidebar holds course info and the tools", { tag: "@rule-0024" }, a
 
 test("Closing the preferences menu returns focus to its button", { tag: "@rule-0025" }, async ({ page }) => {
   await page.goto(course);
-  const button = page.getByRole("button", { name: "Open Theme Menu", exact: true });
+  const button = page.getByRole("button", { name: "Preferences", exact: true });
   await button.click();
   const preferences = page.getByRole("dialog", { name: "Preferences", exact: true });
   await expect(preferences).toBeVisible();
@@ -302,8 +302,9 @@ test("Labs and notebooks keep their context compact", { tag: "@rule-0260" }, asy
       await expect(heading).toBeVisible();
       await expect(card).toBeHidden();
       const artwork = (await heading.locator(".lo-artwork").boundingBox())!;
-      expect(artwork.width).toBe(48);
-      expect(artwork.height).toBe(48);
+      // A scaled layout can land a 48px box a few millionths short (47.99999809 in CI), so compare to the pixel.
+      expect(artwork.width).toBeCloseTo(48, 1);
+      expect(artwork.height).toBeCloseTo(48, 1);
       const headingBox = (await heading.boundingBox())!;
       expect(headingBox.height).toBeGreaterThanOrEqual(44);
       expect(headingBox.height).toBeLessThan(160);

@@ -3,6 +3,7 @@
   import { t, type MessageKey } from "@tutors/i18n";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import CourseNavigation from "@tutors/ui-navigators/CourseNavigation.svelte";
+  import { withDateRange } from "#lib/dateRange.ts";
 
   interface Props {
     courseId: string;
@@ -28,8 +29,8 @@
 <nav class="time-navigation" aria-label={t("shell.classActivity")}>
   <p class="nav-section">{t("shell.classActivity")}</p>
   {#each navLinks as item (item.path)}
-    {@const href = `/${courseId}/${item.path}`}
-    <a class="nav-row" {href} aria-current={page.url.pathname === href ? "page" : undefined}><Icon icon={item.icon} height="24" /><span>{t(item.label)}</span></a>
+    {@const path = `/${courseId}/${item.path}`}
+    <a class="nav-row" href={withDateRange(path, page.url.search)} aria-current={page.url.pathname === path ? "page" : undefined}><Icon icon={item.icon} height="24" /><span>{t(item.label)}</span></a>
   {/each}
   <p class="nav-section">{t("classTime.course")}</p>
   <a class="nav-row" href="/"><Icon icon="lucide:arrow-left-right" height="24" /><span>{t("classTime.changeCourse")}</span></a>

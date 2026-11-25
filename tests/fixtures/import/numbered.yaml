@@ -1,0 +1,19 @@
+description: Leading numbers, topic-N and wN names, and a number too large to be a week
+files:
+  - 01 Intro.pdf
+  - 02_Variables.pdf
+  - topic-3-loops.pdf
+  - w4 functions.pdf
+  - { path: "w4 docs.webloc", text: '<?xml version="1.0"?><plist><dict><key>URL</key><string>https://docs.example.org/functions</string></dict></plist>' }
+  - 2024 exam paper.pdf
+  - Week 60 review.pdf
+expected:
+  topics:
+    - { week: 1, items: [{ kind: talk, files: [01 Intro.pdf] }] }
+    - { week: 2, items: [{ kind: talk, files: [02_Variables.pdf] }] }
+    - { week: 3, items: [{ kind: talk, files: [topic-3-loops.pdf] }] }
+    - week: 4
+      items:
+        - { kind: talk, files: [w4 functions.pdf] }
+        - { kind: web, files: [w4 docs.webloc] }
+  tray: [2024 exam paper.pdf, Week 60 review.pdf]

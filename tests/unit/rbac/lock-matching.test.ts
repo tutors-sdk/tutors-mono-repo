@@ -19,8 +19,9 @@ import type { Lo } from "@tutors/tutors-model-lib";
 import type { AccessStore } from "../../../packages/application/src/ports/index.ts";
 
 // The access store the app composes; here a recording stand-in behind the port.
-const locks = vi.fn<AccessStore["locks"]>();
-configureAdapters({ accessStore: { locks, setLock: vi.fn(async () => true), removeLock: vi.fn(async () => true) } });
+const getLocksForCourse = vi.fn<AccessStore["locks"]>(async () => []);
+const upsertLock = vi.fn<AccessStore["setLock"]>(async () => "saved");
+configureAdapters({ accessStore: { locks: getLocksForCourse, setLock: upsertLock } });
 
 describe("isLoRouteLocked", () => {
   it("returns true for an exact route match", () => {
@@ -170,20 +171,20 @@ describe("rbacService.isLoVisibleToStudent", () => {
 
 describe("rbacService.loadContentLocks", () => {
   beforeEach(() => {
-    locks.mockReset();
+    getLocksForCourse.mockReset();
     contentLocks.value = new Map();
     locksLoaded.value = false;
   });
 
   it("marks locks as loaded once the store responds", async () => {
-    locks.mockResolvedValue([{ lo_route: "/topic/cs101/week-01", locked: true } as any]);
+    getLocksForCourse.mockResolvedValue([{ courseId: "cs101", route: "/topic/cs101/week-01", locked: true, lockedBy: "lecturer" }]);
     await rbacService.loadContentLocks("cs101");
     expect(locksLoaded.value).toBe(true);
     expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
   });
 
   it("resolves rather than rejecting when the lock store fails", async () => {
-    locks.mockRejectedValue(new Error("network down"));
+    getLocksForCourse.mockRejectedValue(new Error("network down"));
     await expect(rbacService.loadContentLocks("cs999")).resolves.toBeUndefined();
     expect(locksLoaded.value).toBe(true);
     expect(contentLocks.value.size).toBe(0);
@@ -243,5 +244,88 @@ describe("route normalisation", () => {
     const start = performance.now();
     expect(isLoRouteLocked(`/topic/cs101${"/".repeat(50_000)}x`, locks)).toBe(false);
     expect(performance.now() - start).toBeLessThan(500);
+  });
+});
+
+describe("toggleContentLock", () => {
+  beforeEach(() => {
+    rbacService.clear();
+    vi.mocked(upsertLock).mockClear();
+    currentCourse.value = { courseId: "cs101" } as never;
+    contentLocks.value = new Map([["/topic/cs101/week-01", false]]);
+  });
+
+  it("keeps the change when the server saves it", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("saved");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("saved");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+    expect(rbacService.locksSavedLocally).toBe(false);
+  });
+
+  it("puts the switch back when the server refuses the change", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("refused");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("unsaved");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
+  });
+
+  it("puts the switch back when the server cannot be reached", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("unreachable");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("unsaved");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
+  });
+
+  it("keeps the browser's copy, marked local, when the server has no database to save to", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("unavailable");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", true)).toBe("local");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(true);
+    expect(rbacService.locksSavedLocally).toBe(true);
+  });
+
+  it("removes a lock the server refused to create", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("refused");
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-02", true)).toBe("unsaved");
+    expect(contentLocks.value.has("/topic/cs101/week-02")).toBe(false);
+  });
+
+  it("refuses a second change to a lock while the first is waiting, so a late answer cannot undo it", async () => {
+    let answer!: (result: "refused") => void;
+    vi.mocked(upsertLock).mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    const first = rbacService.toggleContentLock("/topic/cs101/week-01", true);
+    expect(rbacService.isLockPending("/topic/cs101/week-01")).toBe(true);
+    expect(await rbacService.toggleContentLock("/topic/cs101/week-01", false)).toBe("unsaved");
+    expect(upsertLock).toHaveBeenCalledTimes(1);
+    answer("refused");
+    expect(await first).toBe("unsaved");
+    expect(contentLocks.value.get("/topic/cs101/week-01")).toBe(false);
+    expect(rbacService.isLockPending("/topic/cs101/week-01")).toBe(false);
+  });
+
+  it("forgets the browser-only notice when the educator opens another course", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("unavailable");
+    await rbacService.toggleContentLock("/topic/cs101/week-01", true);
+    expect(rbacService.locksSavedLocally).toBe(true);
+    vi.mocked(getLocksForCourse).mockResolvedValueOnce([]);
+    await rbacService.loadContentLocks("cs102");
+    expect(rbacService.locksSavedLocally).toBe(false);
+  });
+
+  it("leaves another course's locks alone when a late answer refuses the change", async () => {
+    let answer!: (result: "refused") => void;
+    vi.mocked(upsertLock).mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    const change = rbacService.toggleContentLock(SHOW_LOCKED_KEY, true);
+    vi.mocked(getLocksForCourse).mockResolvedValueOnce([{ courseId: "cs102", route: SHOW_LOCKED_KEY, locked: true, lockedBy: "lecturer" }]);
+    currentCourse.value = { courseId: "cs102" } as never;
+    await rbacService.loadContentLocks("cs102");
+    // The setting key is shared by every course, so the waiting change must not block cs102's switch.
+    expect(rbacService.isLockPending(SHOW_LOCKED_KEY)).toBe(false);
+    answer("refused");
+    expect(await change).toBe("unsaved");
+    expect(rbacService.showLockedToStudents()).toBe(true);
+  });
+
+  it("gives the show-locked setting the same outcome", async () => {
+    vi.mocked(upsertLock).mockResolvedValueOnce("refused");
+    expect(await rbacService.setShowLockedToStudents(true)).toBe("unsaved");
+    expect(rbacService.showLockedToStudents()).toBe(false);
   });
 });

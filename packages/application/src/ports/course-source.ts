@@ -26,6 +26,24 @@ export class CourseUnreachableError extends Error {
   }
 }
 
+/**
+ * A course host that accepted the connection and did not answer within COURSE_FETCH_TIMEOUT_MS
+ * (Rule 0614). `cause` is the platform's `TimeoutError`.
+ */
+export class CourseTimedOutError extends Error {
+  constructor(
+    readonly courseId: string,
+    readonly courseUrl: string,
+    override readonly cause: Error
+  ) {
+    super(cause.message);
+    this.name = "CourseTimedOutError";
+  }
+}
+
+/** How long the course host has to answer for tutors.json before the reader gives up on it (Rule 0614). */
+export const COURSE_FETCH_TIMEOUT_MS = 15_000;
+
 /** Where a course's tutors.json is published. */
 export type CourseLocation = {
   courseId: string;
@@ -43,8 +61,8 @@ export type FetchLike = (url: string) => Promise<{ status: number; ok: boolean; 
 /** Reads a published course. The text comes back unparsed: the use case decides when to load maths before parsing. */
 export interface CourseSource {
   /**
-   * The tutors.json text of a course, or throws CourseNotFoundError, CourseUnreachableError, or an
-   * Error naming the HTTP status. A SvelteKit load passes its own `fetch` so a server read carries the request.
+   * The tutors.json text of a course, or throws CourseNotFoundError, CourseUnreachableError,
+   * CourseTimedOutError, or an Error naming the HTTP status. A SvelteKit load passes its own `fetch` so a server read carries the request.
    */
   load(location: CourseLocation, fetchFn?: FetchLike): Promise<string>;
 }

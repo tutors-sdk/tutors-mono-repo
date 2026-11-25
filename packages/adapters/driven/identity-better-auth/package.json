@@ -10,7 +10,7 @@
     "./client": "./src/client.ts"
   },
   "dependencies": {
-    "@tutors/identity": "workspace:*",
+    "@tutors/application": "workspace:*",
     "better-auth": "1.7.7"
   },
   "peerDependencies": {

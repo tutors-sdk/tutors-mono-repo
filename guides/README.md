@@ -10,7 +10,7 @@ Everything about how we test lives in [testing/](testing).
 |---|---|
 | [testing/TESTING-OVERVIEW.md](testing/TESTING-OVERVIEW.md) | See the test tiers on one page and where a new test belongs |
 | [testing/TESTING.md](testing/TESTING.md) | Read the long form: every tier, what it protects and how it runs |
-| [testing/EARS-METHODOLOGY.md](testing/EARS-METHODOLOGY.md) | Write a requirement as an EARS Rule and bind it to a test |
+| [testing/EARS-METHODOLOGY.md](testing/EARS-METHODOLOGY.md) | Write a requirement as an EARS Rule and bind it to a test; `pnpm ears:dashboard` shows every Rule and the format on one page |
 | [testing/MUTATION-TESTING.md](testing/MUTATION-TESTING.md) | Run the mutation suite and read a survivor |
 | [testing/journey.md](testing/journey.md) | See how our testing grew from 27 tests, and the ideas worth keeping |
 | [PERSONAS.md](PERSONAS.md) | Meet the three personas the BDD suite is written for |

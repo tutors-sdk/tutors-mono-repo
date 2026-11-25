@@ -1,4 +1,4 @@
-import { lockMapOf } from "@tutors/domain/access";
+import { lockChangeResult, lockMapOf, type LockChangeResult } from "@tutors/domain/access";
 import type { AccessStore } from "../ports/access-store.ts";
 
 export type ContentLocksDeps = { store: AccessStore };
@@ -7,7 +7,7 @@ export type ContentLocksDeps = { store: AccessStore };
 export const loadContentLocks = ({ store }: ContentLocksDeps) =>
   async (courseId: string): Promise<Map<string, boolean>> => lockMapOf(await store.locks(courseId));
 
-/** A lecturer locked or unlocked a route. */
+/** A lecturer locked or unlocked a route: save it, and say what the change came to for them. */
 export const setContentLock = ({ store }: ContentLocksDeps) =>
-  (courseId: string, loRoute: string, locked: boolean, lockedBy: string): Promise<boolean> =>
-    store.setLock(courseId, loRoute, locked, lockedBy);
+  async (courseId: string, loRoute: string, locked: boolean): Promise<LockChangeResult> =>
+    lockChangeResult(await store.setLock(courseId, loRoute, locked));

@@ -1,0 +1,33 @@
+import { json, error, type RequestHandler } from "@sveltejs/kit";
+import type { WhiteboardScene } from "@tutors/data-api";
+import { noContent, readJson, requireDb, requireUser, sessionUser, valid } from "../../../lib/server/api/http.ts";
+import { getWhiteboardScene, saveWhiteboardScene, whiteboardRoomId } from "../../../lib/server/api/store.ts";
+import * as check from "../../../lib/server/api/validate.ts";
+
+/** The largest whiteboard save accepted, matching the editor's 4 MiB scene limit (#538). Excalidraw caps one image at 2 MiB. */
+const MAX_WHITEBOARD_SAVE_BYTES = 4 * 1024 * 1024;
+
+export const GET: RequestHandler = async ({ url, locals }) => {
+  const courseId = valid(check.courseId(url.searchParams.get("courseId")), "courseId is required");
+  const route = valid(check.loRoute(url.searchParams.get("route")), "route is required");
+  const shared = url.searchParams.get("shared") === "true";
+  let owner: string | null = null;
+  if (!shared) {
+    const user = await sessionUser(locals);
+    if (!user) error(401, "Sign in to open your personal whiteboard");
+    owner = user.login;
+  }
+  const scene: WhiteboardScene | null = await getWhiteboardScene(requireDb(), whiteboardRoomId(courseId, route, owner));
+  return json({ scene });
+};
+
+export const PUT: RequestHandler = async ({ request, locals }) => {
+  const user = await requireUser(locals);
+  const body = await readJson(request, MAX_WHITEBOARD_SAVE_BYTES);
+  const courseId = valid(check.courseId(body.courseId), "courseId is required");
+  const route = valid(check.loRoute(body.route), "route is required");
+  if (!Array.isArray(body.elements)) error(400, "elements is a list");
+  const owner = body.shared === true ? null : user.login;
+  await saveWhiteboardScene(requireDb(), whiteboardRoomId(courseId, route, owner), body.elements);
+  return noContent();
+};

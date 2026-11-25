@@ -45,7 +45,7 @@ describe("TutorsTime.getStudentDisplayInfo", () => {
     });
   });
 
-  it("maps the stored row, filling missing fields with null", async () => {
+  it("maps the stored row, filling missing fields with null, and never passes on an email", async () => {
     result = {
       data: {
         github_id: " octocat ",
@@ -57,7 +57,7 @@ describe("TutorsTime.getStudentDisplayInfo", () => {
     const info = await TutorsTime.getStudentDisplayInfo("octocat");
     expect(info).toEqual({
       github_id: "octocat",
-      email: "o@example.com",
+      email: null,
       full_name: "Octo Cat",
       avatar_url: null,
       online_status: null,
