@@ -48,7 +48,7 @@ x-app: &app
 
 services:
   proxy:
-    image: docker.io/library/caddy:2@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
+    image: docker.io/library/caddy:2@sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b
     restart: unless-stopped
     user: "1001:1001"
     read_only: true
