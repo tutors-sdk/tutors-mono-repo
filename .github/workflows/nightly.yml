@@ -459,7 +459,9 @@ jobs:
   mutation-nightly:
     name: Mutation Testing (every library module)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # The run took 77 minutes before the domain, application and logger-core rings were split out
+    # and went past 90 with them; the limit leaves the same headroom as before.
+    timeout-minutes: 150
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
