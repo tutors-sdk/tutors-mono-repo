@@ -9,6 +9,7 @@ describe("the tutors program's commands", () => {
     expect(commandFor(["website", "x"])).toEqual({ kind: "website" });
     expect(commandFor(["validate", "courses/web", "--format", "json"])).toEqual({ kind: "validate", args: ["courses/web", "--format", "json"] });
     expect(commandFor(["import", "material", "--name", "Web"])).toEqual({ kind: "import", args: ["material", "--name", "Web"] });
+    expect(commandFor(["rewire", "hide", "topic-02", "--plan"])).toEqual({ kind: "rewire", args: ["hide", "topic-02", "--plan"] });
     expect(commandFor(["create", "--pattern", "lecture-and-lab"])).toEqual({ kind: "create", args: ["--pattern", "lecture-and-lab"] });
   });
 
@@ -20,6 +21,6 @@ describe("the tutors program's commands", () => {
   it("names an unknown command in the usage", () => {
     expect(commandFor(["bulid"])).toEqual({ kind: "help", unknown: "bulid" });
     expect(usage.startsWith("Usage: tutors <command>\n")).toBe(true);
-    for (const name of ["build", "website", "validate", "import", "create", "--version"]) expect(usage).toMatch(new RegExp(`^  ${name} `, "m"));
+    for (const name of ["build", "website", "validate", "import", "rewire", "create", "--version"]) expect(usage).toMatch(new RegExp(`^  ${name} `, "m"));
   });
 });

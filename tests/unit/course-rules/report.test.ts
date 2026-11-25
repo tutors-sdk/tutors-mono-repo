@@ -55,10 +55,10 @@ describe("reports", () => {
 });
 
 describe("tutors validate arguments", () => {
-  it("defaults to the current folder, text, not strict, no fixes", () => {
-    expect(parseValidateArgs([])).toEqual({ dir: ".", format: "text", strict: false, fix: false });
-    expect(parseValidateArgs(["web", "--format=sarif", "--strict"])).toEqual({ dir: "web", format: "sarif", strict: true, fix: false });
-    expect(parseValidateArgs(["--format", "json", "web", "--fix"])).toEqual({ dir: "web", format: "json", strict: false, fix: true });
+  it("defaults to the current folder, text, not strict, no fixes, no plan", () => {
+    expect(parseValidateArgs([])).toEqual({ dir: ".", format: "text", strict: false, fix: false, plan: false });
+    expect(parseValidateArgs(["web", "--format=sarif", "--strict"])).toEqual({ dir: "web", format: "sarif", strict: true, fix: false, plan: false });
+    expect(parseValidateArgs(["--format", "json", "web", "--fix"])).toEqual({ dir: "web", format: "json", strict: false, fix: true, plan: false });
   });
 
   it("refuses an unknown format or option, a missing format and two folders, with the usage", () => {
