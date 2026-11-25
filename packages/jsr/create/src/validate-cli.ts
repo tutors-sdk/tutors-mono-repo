@@ -19,18 +19,21 @@ export interface ValidateOptions {
   format: ReportFormat;
   strict: boolean;
   fix: boolean;
+  /** Print the safe fixes as a plan of file operations, as JSON, and change nothing. */
+  plan: boolean;
 }
 
-export const validateUsage = "Usage: tutors validate [folder] [--format text|json|sarif] [--strict] [--fix]\n";
+export const validateUsage = "Usage: tutors validate [folder] [--format text|json|sarif] [--strict] [--fix | --plan]\n";
 
-/** Reads `validate [dir] [--format f] [--strict] [--fix]`; returns a message instead when the arguments are wrong. */
+/** Reads `validate [dir] [--format f] [--strict] [--fix | --plan]`; returns a message instead when the arguments are wrong. */
 export function parseValidateArgs(args: readonly string[]): ValidateOptions | string {
-  const options: ValidateOptions = { dir: ".", format: "text", strict: false, fix: false };
+  const options: ValidateOptions = { dir: ".", format: "text", strict: false, fix: false, plan: false };
   let dirSeen = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "--strict") options.strict = true;
     else if (arg === "--fix") options.fix = true;
+    else if (arg === "--plan") options.plan = true;
     else if (arg === "--format" || arg.startsWith("--format=")) {
       const value = arg === "--format" ? args[++i] : arg.slice("--format=".length);
       if (value !== "text" && value !== "json" && value !== "sarif") return `Unknown format "${value ?? ""}". ${validateUsage}`;
@@ -42,6 +45,7 @@ export function parseValidateArgs(args: readonly string[]): ValidateOptions | st
       dirSeen = true;
     }
   }
+  if (options.fix && options.plan) return `Choose --fix to apply the safe fixes or --plan to see them, not both. ${validateUsage}`;
   return options;
 }
 
@@ -65,6 +69,7 @@ export function fixSummary(outcome: FixOutcome): string {
 /**
  * `tutors validate`: checks a course folder and prints every finding. With --fix it first applies the
  * safe fixes (renames and the standard netlify.toml, never an overwrite) and then reports what is left.
+ * With --plan it prints those fixes as a JSON array of file operations instead, and changes nothing.
  * Exit codes: 0 clean, 1 errors, 2 warnings under --strict, 3 the folder could not be read (or the
  * arguments were wrong).
  */
@@ -79,6 +84,11 @@ export async function runValidate(args: readonly string[], io: ValidateIo): Prom
     const course = (io.open ?? diskCourse)(options.dir);
     const check = io.check ?? validate;
     findings = await check(course);
+    if (options.plan) {
+      // The plan Studio shows before anything changes: the same operations --fix would apply, in order.
+      io.out(`${JSON.stringify(planFixes(findings), null, 2)}\n`);
+      return exitCodeFor(findings, options.strict);
+    }
     if (options.fix) {
       const outcome = await applyFixes(course, "", planFixes(findings));
       // The fix log goes to stderr when stdout is JSON or SARIF, so the machine-readable report stays parseable.

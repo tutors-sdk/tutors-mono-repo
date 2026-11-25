@@ -10,6 +10,9 @@
 // --- types ---
 
 // (from src/mod.ts)
+export type { ApplyOptions };
+
+// (from src/mod.ts)
 export { checkQuizText };
 
 // (from src/mod.ts)
@@ -55,6 +58,9 @@ export type { MermaidParser };
 export type { ReportFormat };
 
 // (from src/mod.ts)
+export type { RewirePlan };
+
+// (from src/mod.ts)
 export type { RuleId };
 
 // (from src/mod.ts)
@@ -91,7 +97,7 @@ export class MemoryFileSystem implements FileSystemPort;
 // --- functions ---
 
 // (from src/fix.ts)
-export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[]) : Promise<FixOutcome>;
+export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[], options: ApplyOptions = {}) : Promise<FixOutcome>;
 
 // (from src/tree.ts)
 export async function buildCourseTree(fs: FileSystemPort, root) : Promise<CourseTree>;
@@ -129,8 +135,26 @@ export function mermaidBlocks(text: string) :;
 // (from src/adapters/mermaid.ts)
 export function mermaidDiagrams(mermaid: MermaidParser) : DiagramPort;
 
+// (from src/rewire.ts)
+export async function planBin(fs: FileSystemPort, item: string) : Promise<RewirePlan>;
+
 // (from src/fix.ts)
 export function planFixes(findings: readonly Finding[]) : FileOp[];
+
+// (from src/rewire.ts)
+export async function planHide(fs: FileSystemPort, item: string, hidden: boolean) : Promise<RewirePlan>;
+
+// (from src/rewire.ts)
+export async function planMove(fs: FileSystemPort, item: string, into: string) : Promise<RewirePlan>;
+
+// (from src/rewire.ts)
+export async function planReorder(fs: FileSystemPort, parent: string, order: readonly string[]) : Promise<RewirePlan>;
+
+// (from src/rewire.ts)
+export async function planRestore(fs: FileSystemPort, binned: string, into: string) : Promise<RewirePlan>;
+
+// (from src/rewire.ts)
+export async function planRetitle(fs: FileSystemPort, item: string, title: string) : Promise<RewirePlan>;
 
 // (from src/shape.ts)
 export function proposeShape(files: readonly ImportFile[]) : ShapeProposal;
@@ -159,6 +183,9 @@ export function weekOf(name: string) : number | null;
 
 // --- consts ---
 
+// (from src/rewire.ts)
+export const BIN_FOLDER;
+
 // (from src/warnings.ts)
 export const IMAGE_LIMIT_BYTES;
 
@@ -170,6 +197,9 @@ export const messages;
 
 // (from src/templates.ts)
 export const netlifyToml;
+
+// (from src/fix.ts)
+export const NOT_ATTEMPTED;
 
 // (from src/finding.ts)
 export const ruleCatalogue: readonly RuleInfo[];
@@ -184,7 +214,7 @@ export const rulesVersion;
 | Kind | Count |
 |------|-------|
 | class | 1 |
-| const | 6 |
-| function | 22 |
-| type | 24 |
-| **Total** | **53** |
+| const | 8 |
+| function | 28 |
+| type | 26 |
+| **Total** | **63** |

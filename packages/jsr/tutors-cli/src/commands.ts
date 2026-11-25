@@ -7,6 +7,7 @@ export type Command =
   | { kind: "website" }
   | { kind: "validate"; args: string[] }
   | { kind: "import"; args: string[] }
+  | { kind: "rewire"; args: string[] }
   | { kind: "create"; args: string[] }
   | { kind: "version" }
   | { kind: "help"; unknown?: string };
@@ -17,6 +18,7 @@ export const usage = `Usage: tutors <command>
   website     build the course in this folder into html/, a website of its own (@tutors/tutors-lite)
   validate    check a course folder: tutors validate [folder] [--format text|json|sarif] [--strict] [--fix]
   import      propose a course from a folder of material: tutors import <folder> --name <course name>
+  rewire      reorder, move, retitle, hide, show, remove or restore an item: tutors rewire <action> ... [--plan]
   create      make a new course, from a pattern (--pattern) or by answering questions
   --version   print the versions inside this program
 `;
@@ -32,6 +34,8 @@ export function commandFor(args: readonly string[]): Command {
       return { kind: "validate", args: rest };
     case "import":
       return { kind: "import", args: rest };
+    case "rewire":
+      return { kind: "rewire", args: rest };
     case "create":
       return { kind: "create", args: rest };
     case "--version":
