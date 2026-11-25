@@ -176,18 +176,41 @@ flowchart TB
     domainModules["course · learning · presence · access · quiz · catalogue · input"]
   end
 
+  subgraph platform["Platform  ·  packages/platform  ·  imports nothing from the rings"]
+    direction LR
+    loggerCore["logger-core<br/>no dependencies at all"]
+    logger["logger<br/>core + server glue"]
+    metrics["metrics"]
+    appConfig["app-config<br/>env contract · readiness"]
+    logger --> loggerCore
+  end
+
+  subgraph published["Published  ·  packages/jsr  ·  JSR"]
+    direction LR
+    facades["model · time · types<br/>facades over the domain"]
+    toolchain["course-rules · create · gen<br/>tutors · tutors-cli · tutors-lite"]
+  end
+
   apps --> adapters
   apps --> application
   driving --> application
   driven -. implement .-> ports
   driven --> domain
   application --> domain
+  apps & adapters -.-> platform
+  facades --> domain
+  facades & toolchain -.-> loggerCore
+  apps -. "the validator runs the course rules" .-> toolchain
 
   classDef ring fill:#f6f8fa,stroke:#57606a,color:#24292f
   classDef core fill:#dafbe1,stroke:#1a7f37,color:#24292f
+  classDef side fill:#fff8c5,stroke:#9a6700,color:#24292f
   class apps,adapters ring
   class application,domain core
+  class platform,published side
 ```
+
+Solid arrows are dependencies between rings and always point inward. Dotted arrows are the two things beside the rings: the platform, which every adapter and app may use and which uses nothing back, and the published packages, which reach the domain only through their facades.
 
 | Ring | Directory | Package | May import | Owns |
 |---|---|---|---|---|
@@ -495,7 +518,7 @@ sequenceDiagram
   UC->>D: decorateCourseTree(course, courseId, courseUrl, { render, today, protocol })
   D->>R: render(course, lo) for each learning object (summaries only for labs, notes, notebooks, quizzes)
   UC-->>CS: Course
-  CS->>CS: cache; currentCourse.value = course
+  CS->>CS: cache, currentCourse.value = course
   CS-->>Route: Course
 ```
 
@@ -518,7 +541,7 @@ sequenceDiagram
   UC->>UC: pageLoadEvent(course, lo, clock.now())  (domain/learning)
   UC->>Sink: record({ kind: "page-load", courseId, loId, loType, day }, login)
   Sink->>Route: same-origin POST with the session cookie
-  Route->>Route: requireUser(locals); input rules (domain/input)
+  Route->>Route: requireUser(locals), input rules (domain/input)
   Route->>Store: recordPageLoad(db, user, ...) with the service key
   UC->>Bus: publish({ type: "learning", learnerId, event })
   loop every 30 s while the tab is visible
@@ -574,7 +597,7 @@ sequenceDiagram
   H->>I: createIdentityHandle({ enabled, secret, githubId, githubSecret })
   I->>GH: /api/auth/sign-in/social → OAuth
   GH-->>I: /api/auth/callback/github
-  I->>I: session cookie; locals.actor = { subject: github:<id>, login, name, email, image }
+  I->>I: session cookie, locals.actor = { subject: github:<id>, login, name, email, image }
   B->>H: next request
   I-->>L: locals.actor
   L->>TC: reconnect(tutorsId)
@@ -662,7 +685,7 @@ sequenceDiagram
   Route->>Store: readTimeRows(db, courseId, start, end)
   Route->>D: pseudonymise(rows, login) unless the asker is an educator
   Route-->>Src: rows
-  CT->>D: filterByDateRange; BaseCalendarModel; BaseLabModel
+  CT->>D: filterByDateRange, BaseCalendarModel, BaseLabModel
   CT-->>Page: calendarModel, labsModel
 ```
 
@@ -694,6 +717,37 @@ The authoring toolchain is deliberately outside the vendor rule. `tutors validat
 ## 11. The boundary map
 
 The rings say which way dependencies point. The boundaries say **whose concern a thing is**. Every workspace package belongs to exactly one boundary (Rule 0354), so a question about security, the schema or the look of a page has one set of files to read and one guide. Each boundary is described in full, with what may cross it and what must not, in [`docs/BOUNDARIES.md`](docs/BOUNDARIES.md).
+
+```mermaid
+flowchart TB
+  subgraph browser["In the browser"]
+    UI["UI<br/>ui-primitives · ui-navigators<br/>ui-components · themes"]
+    UX["UX<br/>svelte-state · i18n · a11y · tour"]
+    UI -- "reads a rune, calls a method" --> UX
+  end
+  subgraph core["The core, the same everywhere"]
+    APP["Application<br/>use cases · ports"]
+    DOM["Domain model"]
+    APP --> DOM
+  end
+  UX -- "a use case, with ports from adapters()" --> APP
+  UX -. "through a port" .-> INT["Integration<br/>data-api · course-http · course-archive<br/>moodle · profile-localstorage · bus-inprocess"]
+  UX -. "through a port" .-> REN["Content rendering<br/>render-markdown"]
+  INT -- "same-origin /api, session cookie" --> SEC
+  subgraph server["On the reader's server"]
+    SEC["Security<br/>identify · validate · authorise<br/>identity-better-auth · privacy"]
+    DBS["Database, service key<br/>store-supabase/server"]
+    SEC -- "passes the service client" --> DBS
+  end
+  SEC --> DOM
+  UX -. "public reads, anon key" .-> DBA["Database, anon key<br/>store-supabase · realtime-supabase"]
+  COMP["Composition<br/>the five apps: compose.ts, routes, hooks"] -. "chooses the adapter behind each port" .-> INT & DBA & REN
+  OPS["Operations<br/>logger-core · logger · metrics · app-config · clock"] -. "logs, metrics, config, time" .-> browser & server
+  AUTH["Authoring and published API<br/>course-rules · create · model · time · types<br/>gen · tutors · tutors-cli · tutors-lite"] --> DOM
+  TEST["Testing<br/>tests/ · application/testing"] -. "in-memory adapter and contract suite for every port" .-> APP
+```
+
+The picture shows the twelve boundaries and the form in which each crossing is allowed. The table is the authority on which package is in which boundary.
 
 <!-- boundary-map:start -->
 
@@ -924,7 +978,7 @@ The facades exist so that published courses and tools built on them keep working
 
 ## 19. How to change things
 
-[`HOW-TO-CONTRIBUTE.md`](HOW-TO-CONTRIBUTE.md) is the long form of this table, organised by what you want to do and what you know.
+[`HOW-TO-CONTRIBUTE.md`](HOW-TO-CONTRIBUTE.md) is the long form of this table, organised by what you want to do and what you know. [`guides/contributors/`](guides/contributors/README.md) has one guide per boundary, each leading from a skill to its ports and the files behind them.
 
 | You want to | Do this | Not this |
 |---|---|---|

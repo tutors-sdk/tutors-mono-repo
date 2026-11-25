@@ -43,6 +43,8 @@ The consequence for you: **find your port or your boundary, and everything on th
 
 The boundaries are defined in [`docs/BOUNDARIES.md`](docs/BOUNDARIES.md), each with what may and may not cross it.
 
+Each row has a guide of its own in [`guides/contributors/`](guides/contributors/README.md). A guide shows your part of the code in one picture, gives commands that list it as it is today, names your ports with their adapters and test stand-ins, and walks one first change from start to finish: [security](guides/contributors/security.md), [database](guides/contributors/database.md), [back end and integration](guides/contributors/backend.md), [UX, accessibility and translation](guides/contributors/ux.md), [UI](guides/contributors/ui.md), [testing](guides/contributors/testing.md), [operations](guides/contributors/operations.md), [the domain model](guides/contributors/domain.md), [course tooling](guides/contributors/authoring.md).
+
 ## Start from what you want to change
 
 Each row is a capability of the product, traced from the rule to the screen. Change the column that matches your change, and leave the others.
@@ -187,6 +189,7 @@ When a check fails with the name of a rule (`domain-self-contained`, `ui-imports
 
 | For | Read |
 |---|---|
+| A guide for your skill, down to the files | [`guides/contributors/`](guides/contributors/README.md) |
 | The shape, the diagrams, every table | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
 | The domain model and its language | [`docs/DOMAIN-MODEL.md`](docs/DOMAIN-MODEL.md) |
 | What may cross each boundary | [`docs/BOUNDARIES.md`](docs/BOUNDARIES.md) |

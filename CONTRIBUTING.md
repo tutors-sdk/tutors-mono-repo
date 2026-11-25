@@ -71,7 +71,7 @@ What just happened:
 
 ### If the course does not load
 
-A **404 Page Not Found** on the reference course usually means the browser could not reach `reference-course.netlify.app`. Offline, a firewall and a mistyped id look the same to the reader (`packages/svelte/course/src/course/services/course.svelte.ts` maps all three to "not found"). Serve a course from your own machine instead; the reader treats `localhost:<port>` as a course host:
+A **404 Page Not Found** on the reference course usually means the browser could not reach `reference-course.netlify.app`. Offline, a firewall and a mistyped id look the same to the reader (`packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts` maps all three to "not found"). Serve a course from your own machine instead; the reader treats `localhost:<port>` as a course host:
 
 ```bash
 # a generated course that ships with the tests
@@ -126,6 +126,8 @@ pnpm build
 Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) first. It follows one course page from the URL to the rendered cards and names every file on the way. Most changes people want to make (how a page looks, what a card shows, how navigation behaves) live on that path.
 
 [ARCHITECTURE.md](ARCHITECTURE.md) is the authority on the shape of the repository: the rings, the ports and adapters, who owns what, and the EARS rules that check it. Read sections 1, 4 and 11 first; use the rest to look things up.
+
+[guides/contributors/](guides/contributors/README.md) has a guide for each skill (security, database, back end, UX, UI, testing, operations, teaching, tooling) that leads to its ports and files.
 
 [HOW-TO-CONTRIBUTE.md](HOW-TO-CONTRIBUTE.md) maps what you know and what you want to change to the one place it goes: by role, by capability and port by port. If you only read one page before your first change, read that one. [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md) describes the domain model and [docs/BOUNDARIES.md](docs/BOUNDARIES.md) what may cross each boundary (security, database, UX, UI, testing, operations).
 

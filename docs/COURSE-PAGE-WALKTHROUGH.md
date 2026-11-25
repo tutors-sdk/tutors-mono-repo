@@ -29,7 +29,7 @@ export const load = async ({ params, fetch }) => {
 };
 ```
 
-`ssr = false` means the reader renders in the browser, not on the server. `params.courseid` is the string `reference-course`. Everything interesting happens inside `courseService.readCourse`, which comes from `@tutors/course`.
+`ssr = false` means the reader renders in the browser, not on the server. `params.courseid` is the string `reference-course`. Everything interesting happens inside `courseService.readCourse`, which comes from `@tutors/svelte-state` (`packages/adapters/driving/svelte-state/src/course`).
 
 `+page.svelte` is even shorter. It takes the loaded `course` and hands it to one component:
 
@@ -45,7 +45,7 @@ Before `+page.svelte` renders, three layout files have already run, outermost fi
 
 | File | What it does |
 |---|---|
-| `apps/reader/src/routes/+layout.server.ts` | Server side. Reads the auth session and the locale cookie from `locals` (populated by `apps/reader/src/hooks.server.ts`) and passes both down. |
+| `apps/reader/src/routes/+layout.ts` | A universal load that runs in the browser (every reader page has `ssr = false`). Through `rootData` in `apps/reader/src/lib/root-data.ts` it reads the locale cookie and, unless the reader is anonymous, asks the server who is signed in, and passes both down. |
 | `apps/reader/src/routes/+layout.svelte` | Imports `app.css` (section 7), calls `themeService.initDisplay()` to restore the saved theme, and sets the active locale on `<html lang>`. |
 | `apps/reader/src/routes/(course-reader)/+layout.svelte` | Wraps every course route in `TutorsShell` from `@tutors/ui-navigators` (the nav bar, footer and toasts). Starts the time-tracking timer, loads the user's role for the course if it has enrolment, redirects away from locked content, and moves focus to `#main-content` after each navigation. |
 
@@ -69,7 +69,7 @@ A bare id is assumed to be a Netlify subdomain. That is why the quick start work
 
 **Fetch `tutors.json`.** This file is the entire course: every topic, lab, talk and note, with their Markdown already inlined. The reader never reads a Markdown file from disk. `tutors.json` is produced ahead of time by the generator in `packages/jsr/tutors` from a course author's folder of Markdown and media. If you want to know what fields exist, the types are in `packages/domain/src/course/types/learning-objects.ts`; the top-level one is `Course`.
 
-**Decorate the tree.** The raw JSON is a plain nested object. `decorateCourseTree` (same `lo-tree.ts` in `@tutors/course`, built on helpers from `@tutors/tutors-model-lib` in `packages/domain/src/course/utils/lo-utils.ts` and `course-utils.ts`) walks it once and adds what the UI needs:
+**Decorate the tree.** The raw JSON is a plain nested object. `decorateCourseTree` (same `lo-tree.ts` in `@tutors/svelte-state`, over the domain's `decorateCourseTree` and its helpers in `packages/domain/src/course/utils/lo-utils.ts` and `course-utils.ts`) walks it once and adds what the UI needs:
 
 - `course.route` becomes `/course/reference-course`, and every learning object gets a route with the course id injected, such as `/topic/reference-course/topic-01`
 - `course.loIndex` maps every route to its learning object, so later pages can look one up in O(1)
@@ -155,24 +155,24 @@ This is also why `pnpm dev` builds the UI packages before starting the reader. `
 | How a card looks | `ui-components/src/learning-objects/layout/Card.svelte` and `themes/src/styles/card-styles.ts` |
 | Which cards appear, or their order | `layout/Cards.svelte`, `layout/Units.svelte`, and the `units`/`sides` split in `packages/domain/src/course/utils/lo-utils.ts` |
 | The icon or colour for a learning-object type | `themes/src/icons/fluent-icons.ts`, `themeService.getTypeColour` in `themes/src/services/themes.svelte.ts` |
-| How `tutors.json` becomes a tree | `course/src/course/services/lo-tree.ts` and the helpers in `packages/jsr/model/src/utils/` |
+| How `tutors.json` becomes a tree | `svelte-state/src/course/services/lo-tree.ts` and the domain's `packages/domain/src/course/services/lo-tree.ts` with the helpers in `packages/domain/src/course/utils/` |
 | The fields a learning object has | `packages/domain/src/course/types/learning-objects.ts` |
 | The top bar, breadcrumbs or footer | `ui-navigators/src/MainNavigator.svelte`, `SecondaryNavigator.svelte`, `footers/Footer.svelte` |
 | Any visible string | `packages/adapters/driving/i18n/src/messages/en.ts`, then the other five locales |
 | A theme, or a new one | `themes/src/styles/`, registered in `themes/src/services/themes.svelte.ts` |
 | What the reader does on first load | `apps/reader/src/routes/+layout.svelte` and `(course-reader)/+layout.svelte` |
 
-All `packages/svelte/...` paths above are shortened to their last segments.
+All `packages/adapters/driving/...` paths above are shortened to their last segments.
 
 ## 9. The whole path on one screen
 
 ```
 /course/reference-course
   └─ apps/reader/src/routes/(course-reader)/course/[courseid]/+page.ts
-       └─ courseService.readCourse                         @tutors/course  course.svelte.ts
+       └─ courseService.readCourse                         @tutors/svelte-state  course.svelte.ts
             ├─ determineCourseUrl → reference-course.netlify.app   lo-tree.ts
             ├─ fetch https://reference-course.netlify.app/tutors.json
-            ├─ decorateCourseTree                          lo-tree.ts + @tutors/tutors-model-lib
+            ├─ decorateCourseTree                          lo-tree.ts + @tutors/domain/course
             └─ currentCourse.value = course                @tutors/svelte-state
   └─ +page.svelte
        └─ <Composite>                                      @tutors/ui-components  structure/Composite.svelte

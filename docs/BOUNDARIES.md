@@ -2,6 +2,8 @@
 
 [`ARCHITECTURE.md`](../ARCHITECTURE.md) section 11 is the boundary map: every workspace package is in exactly one boundary, and a test fails when one is not (Rule 0354). This page says, for each boundary, what it owns, what it may depend on, what may cross it and in which form, and what holds the line. It is the page to read before a review, and the page to change when a boundary moves.
 
+Each boundary has a guide for the person who works in it, from the skill to the ports and the files: [`guides/contributors/`](../guides/contributors/README.md).
+
 A boundary is a **separation of concerns**, not a team. One person may work in several. What the boundary guarantees is that a question of one kind has one place to look:
 
 | If the question is | Look in |
@@ -69,7 +71,7 @@ Security is three things in three places, and the separation is the control.
 
 - **Owns as packages:** `@tutors/identity-better-auth` (sign-in, the session cookie, the actor) and `@tutors/privacy` (consent categories and the inventory of personal data Tutors holds).
 - **The trust line.** Everything in a browser is untrusted, including Tutors' own code. The browser's role check (`rbacService`) decides what to *show*. The server decides what to *do*, from `locals.actor` and nothing in the request body. A learner's login in a stored row is always the session's.
-- **Secrets.** Only the reader's server holds any: the session secret, the GitHub OAuth pair, the Supabase service key, the Moodle token. They are read from `$app/env/private` in `apps/reader/src/lib/server` and nowhere else, and `identity-no-server-in-browser` stops a browser entry point from reaching a module that reads them.
+- **Secrets.** Only the reader's server holds any: the session secret, the GitHub OAuth pair, the Supabase service key, the Moodle token. They are read from `$app/env/private` in the reader's `hooks.server.ts`, its `/healthz` route and `apps/reader/src/lib/server`, and nowhere else, and `identity-no-server-in-browser` stops a browser entry point from reaching a module that reads them.
 - **Server-side requests.** The server fetches a course only from a host `courseJsonUrl` accepts (a Netlify site or a host in `PRIVATE_COURSE_HOSTS`) and follows a redirect only where `redirectTarget` allows. A course id from a request can therefore not point the server at an internal address.
 - **Headers and origins.** `hooks.server.ts` sets the security headers on every response; `tests/security/header-contract.json` is their contract. `/api/time` answers other origins only from `PRIVATE_API_ALLOWED_ORIGINS`.
 - **Must not:** compare logins with `===`; check an educator list in a route; authorise from a value the browser sent; answer 403 when the truth is "the course host is down" (that is 503, Rule 0073); add a mutating route without a line in `tests/security/mutating-routes.txt`.

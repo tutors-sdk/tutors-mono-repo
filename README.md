@@ -195,6 +195,7 @@ Docs live in five places. This is the index.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The authority on the shape: C4 and sequence diagrams, ports, adapters, ownership and data boundaries, the EARS rules that enforce them |
 | [HOW-TO-CONTRIBUTE.md](HOW-TO-CONTRIBUTE.md) | Find the one place your change goes, by what you know (design, back end, database, security, operations, teaching) and by port |
+| [guides/contributors/](guides/contributors/README.md) | Go from your skill (security, database, back end, UX, UI, testing, operations, teaching, tooling) to the ports and the few files that need it, with commands that find them |
 | [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md), [docs/BOUNDARIES.md](docs/BOUNDARIES.md) | Understand the domain model context by context, and what may cross each boundary: security, database, UX, UI, testing, operations |
 | [guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/testing/TESTING.md](guides/testing/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
 | [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite; start with `pnpm ears:dashboard` to browse every requirement |
