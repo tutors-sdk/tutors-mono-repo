@@ -65,7 +65,7 @@ test("An educator exports a course identified by a full Netlify URL", { tag: "@r
     const runes = performance
       .getEntriesByType("resource")
       .map((entry) => entry.name)
-      .find((url) => url.includes("/runes/src/index.svelte.ts"))!;
+      .find((url) => url.includes("/svelte-state/src/index.svelte.ts"))!;
     const { currentCourse } = await import(runes);
     // Course content only: the reader assigns this ID when given a full Netlify URL.
     currentCourse.value.courseId = id;

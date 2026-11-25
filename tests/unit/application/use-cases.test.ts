@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { loadContentLocks, loadCourse, setContentLock } from "@tutors/application";
-import { FixedClock, InMemoryAccessStore, InMemoryCourseSource, PassThroughRenderer } from "@tutors/application/testing";
+import { loadContentLocks, loadCourse, recordHeartbeat, recordLearningEvent, setContentLock } from "@tutors/application";
+import { FixedClock, InMemoryAccessStore, InMemoryCourseSource, InMemoryLearningEventSink, PassThroughRenderer, RecordingPublisher } from "@tutors/application/testing";
 
 describe("content locks", () => {
   it("reads the course's locks as a route map and writes a lecturer's lock through the store", async () => {
@@ -56,5 +56,38 @@ describe("loadCourse", () => {
     });
     expect(renderer.mathLoads).toBe(0);
     expect(rendered).toContain("topic");
+  });
+});
+
+describe("recording learning", () => {
+  const course = { courseId: "cs101" } as never;
+  const lab = { type: "lab", route: "/lab/cs101/topic-1/lab-1" } as never;
+
+  it("records a page load and a tick for the signed-in learner and tells the rest of the application", async () => {
+    const events = new InMemoryLearningEventSink();
+    const publisher = new RecordingPublisher();
+    const deps = { events, clock: new FixedClock(), publish: (event: Parameters<RecordingPublisher["publish"]>[0]) => publisher.publish(event) };
+    await recordLearningEvent(deps)({ login: "ann" }, course, lab);
+    await recordHeartbeat(deps)({ login: "ann" }, course, lab);
+    await recordHeartbeat(deps)({ login: "ann" }, course, null);
+    expect(events.recorded.map(({ event, learnerId }) => [event.kind, learnerId, event.courseId, event.day])).toEqual([
+      ["page-load", "ann", "cs101", "2026-01-05"],
+      ["tick", "ann", "cs101", "2026-01-05"],
+      ["tick", "ann", "cs101", "2026-01-05"]
+    ]);
+    expect(events.recorded[2]!.event.loId).toBeNull();
+    expect(publisher.events.map((event) => event.type)).toEqual(["learning", "learning", "learning"]);
+  });
+
+  it("records nothing for a visitor who is not signed in, and needs no publisher", async () => {
+    const events = new InMemoryLearningEventSink();
+    const deps = { events, clock: new FixedClock() };
+    for (const visitor of [null, undefined, { login: "" }]) {
+      await recordLearningEvent(deps)(visitor, course, lab);
+      await recordHeartbeat(deps)(visitor, course, lab);
+    }
+    expect(events.recorded).toEqual([]);
+    await recordHeartbeat(deps)({ login: "ann" }, course, lab);
+    expect(events.recorded).toHaveLength(1);
   });
 });

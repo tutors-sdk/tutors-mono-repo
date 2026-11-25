@@ -6,7 +6,10 @@ import {
   FixedClock,
   FixedSession,
   InMemoryAssignmentSource,
+  InMemoryCourseCatalogue,
   InMemoryCourseSource,
+  InMemoryPresence,
+  InMemoryWhiteboard,
   PassThroughRenderer,
   RecordingIdentityClient
 } from "@tutors/application/testing";
@@ -72,5 +75,51 @@ describe("the in-memory adapters behind every port", () => {
     expect(() => assert(false, "nope")).toThrow(ContractFailure);
     expect(() => assertEqual([1], [1], "same")).not.toThrow();
     expect(() => assertEqual([1], [2], "lists")).toThrow('lists: expected [2], got [1]');
+  });
+  it("PassThroughRenderer leaves a learning object with nothing to render as it is", () => {
+    const lo = { title: "Empty" } as Lo;
+    new PassThroughRenderer().renderLo({} as Course, lo);
+    expect(lo).toEqual({ title: "Empty" });
+  });
+
+  it("InMemoryCourseCatalogue counts each visit and keeps its own copy of the latest card", async () => {
+    const catalogue = new InMemoryCourseCatalogue();
+    const card = { id: "cs101", title: "CS101" } as never as Parameters<InMemoryCourseCatalogue["recordVisit"]>[1];
+    await catalogue.recordVisit("cs101", card);
+    await catalogue.recordVisit("cs101", card);
+    await catalogue.recordVisit("cs102", card);
+    expect(Object.fromEntries(catalogue.counts)).toEqual({ cs101: 2, cs102: 1 });
+    expect(catalogue.records.get("cs101")).toEqual(card);
+    expect(catalogue.records.get("cs101")).not.toBe(card);
+  });
+
+  it("InMemoryWhiteboard keeps a shared board and a personal one on the same page apart", async () => {
+    const boards = new InMemoryWhiteboard();
+    const own = { courseId: "cs101", route: "/lab/1", shared: false };
+    const shared = { ...own, shared: true };
+    expect(await boards.load(own)).toBeNull();
+    const elements = [{ id: "a" }];
+    expect(await boards.save(own, elements)).toBe(true);
+    expect(await boards.save(shared, [{ id: "b" }, { id: "c" }])).toBe(true);
+    elements.push({ id: "later" });
+    expect(await boards.load(own)).toEqual({ elements: [{ id: "a" }], appState: {}, files: {} });
+    expect((await boards.load(shared))!.elements).toHaveLength(2);
+  });
+
+  it("InMemoryPresence tells every listener of an event with no learner but stores no snapshot for it, newest first otherwise", async () => {
+    const clock = new FixedClock();
+    const presence = new InMemoryPresence(clock);
+    const heard: string[] = [];
+    const stop = presence.subscribe((event) => heard.push(event.loRoute));
+    const event = (id: string | undefined, loRoute: string) => ({ courseId: "cs101", loRoute, user: id ? { id } : undefined }) as never;
+    await presence.publish(event(undefined, "/a"));
+    await presence.publish(event("ann", "/b"));
+    clock.advance(1000);
+    await presence.publish(event("bob", "/c"));
+    stop();
+    await presence.publish(event("cat", "/d"));
+    expect(heard).toEqual(["/a", "/b", "/c"]);
+    const rows = (await presence.recent("cs101", "2000-01-01T00:00:00.000Z"))!;
+    expect(rows.map((row) => (row.payload as { loRoute: string }).loRoute)).toEqual(["/d", "/c", "/b"]);
   });
 });

@@ -91,4 +91,16 @@ describe("createAuthorization", () => {
     now = 20;
     await expect(access.course("cs101")).rejects.toBeInstanceOf(AuthorizationUnavailableError);
   });
+  it("keeps facts for a bounded number of courses, forgetting the oldest first", async () => {
+    const source = new InMemoryCourseFacts();
+    for (let n = 0; n <= 2000; n++) source.publish(`course-${n}`, { enrollment: { educators: ["eve"] } });
+    const access = createAuthorization({ source });
+    for (let n = 0; n <= 2000; n++) await access.course(`course-${n}`);
+    expect(source.asked).toHaveLength(2001);
+    // The newest is still remembered; the oldest was dropped and is read again.
+    await access.course("course-2000");
+    expect(source.asked).toHaveLength(2001);
+    await access.course("course-0");
+    expect(source.asked).toHaveLength(2002);
+  });
 });
