@@ -1078,6 +1078,9 @@ importers:
       '@tutors/course-rules':
         specifier: workspace:*
         version: link:../course-rules
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../../platform/logger-core
 
   packages/jsr/model:
     dependencies:
@@ -1105,6 +1108,9 @@ importers:
       '@tutors/domain':
         specifier: workspace:*
         version: link:../../domain
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../../platform/logger-core
 
   packages/jsr/types:
     dependencies:
@@ -1142,7 +1148,13 @@ importers:
         specifier: '>=8.3.3 <9'
         version: 8.3.5(@types/node@26.2.0)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1)
 
-  packages/platform/logger: {}
+  packages/platform/logger:
+    dependencies:
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../logger-core
+
+  packages/platform/logger-core: {}
 
   packages/platform/metrics:
     dependencies:

@@ -2,10 +2,13 @@
   "name": "@tutors/logger",
   "version": "0.0.1",
   "license": "MIT",
-  "description": "Logging utilities for Tutors",
+  "description": "Logging for the Tutors apps: @tutors/logger-core plus SvelteKit server glue",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tutors/logger-core": "workspace:*"
   }
 }

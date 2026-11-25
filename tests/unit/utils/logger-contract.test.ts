@@ -16,8 +16,8 @@ import {
   withRequestId,
   type LogEntry
 } from "../../../packages/platform/logger/src/index.ts";
-import { formatJson } from "../../../packages/platform/logger/src/formatter.ts";
-import { setRawConsole } from "../../../packages/platform/logger/src/logger.ts";
+import { formatJson } from "../../../packages/platform/logger-core/src/formatter.ts";
+import { setRawConsole } from "../../../packages/platform/logger-core/src/logger.ts";
 
 /** A structured logger (the server production shape) that captures entries. */
 function capture() {
@@ -251,7 +251,7 @@ describe("entries the browser logs, and where the default output writes", () => 
     (process as { getBuiltinModule?: unknown }).getBuiltinModule = undefined;
     vi.resetModules();
     try {
-      const context = await import("../../../packages/platform/logger/src/context.ts");
+      const context = await import("../../../packages/platform/logger-core/src/context.ts");
       expect(context.runWithRequestContext({ requestId: "lost" }, () => context.currentRequestId() ?? "none")).toBe("none");
       expect(context.currentRequestId()).toBeUndefined();
     } finally {

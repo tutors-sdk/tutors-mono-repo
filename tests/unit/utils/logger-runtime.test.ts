@@ -11,8 +11,8 @@ import {
   LOG_LEVELS,
   logServiceStart,
 } from "../../../packages/platform/logger/src/index.ts";
-import type { LogEntry } from "../../../packages/platform/logger/src/types.ts";
-import { formatPretty } from "../../../packages/platform/logger/src/formatter.ts";
+import type { LogEntry } from "../../../packages/platform/logger-core/src/types.ts";
+import { formatPretty } from "../../../packages/platform/logger-core/src/formatter.ts";
 
 function capture(overrides: Record<string, unknown> = {}) {
   const entries: LogEntry[] = [];

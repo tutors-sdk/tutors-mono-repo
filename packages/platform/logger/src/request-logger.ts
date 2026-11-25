@@ -1,7 +1,5 @@
-import type { LogLevel, Logger, RequestErrorInput, RequestLikeEvent, RequestLoggerOptions } from "./types.ts";
-import { defaultLogger } from "./logger.ts";
-import { runWithRequestContext } from "./context.ts";
-import { serializeError } from "./errors.ts";
+import { defaultLogger, runWithRequestContext, serializeError, type LogLevel, type Logger } from "@tutors/logger-core";
+import type { RequestErrorInput, RequestLikeEvent, RequestLoggerOptions } from "./types.ts";
 
 /** The one correlation header: read from the request, set once on the response, forwarded on outbound calls. */
 export const REQUEST_ID_HEADER = "x-request-id";

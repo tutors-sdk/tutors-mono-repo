@@ -1,0 +1,10 @@
+{
+  "name": "@tutors/logger-core",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Runtime-agnostic structured logger for Tutors: levels, child loggers, transports and formats, with no dependencies, for Node, Deno and the browser",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

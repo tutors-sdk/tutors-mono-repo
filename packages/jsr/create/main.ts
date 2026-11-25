@@ -1,3 +1,4 @@
+import { useCliOutput } from "@tutors/logger-core";
 import { runCli } from "./src/cli.ts";
 import { runValidate } from "./src/validate-cli.ts";
 import { runRewire } from "./src/rewire-cli.ts";
@@ -9,6 +10,7 @@ import { runImport } from "./src/import-cli.ts";
 // teaching pattern without prompts, `rewire` reorders, moves, retitles, hides and removes items, `import` proposes a course from a folder of existing material, and
 // anything else starts the interactive creator.
 if (import.meta.main) {
+  useCliOutput("tutors-create");
   const [command, ...rest] = Deno.args;
   if (command === "validate") {
     Deno.exitCode = await runValidate(rest, { out: (text) => process.stdout.write(text), err: (text) => process.stderr.write(text) });

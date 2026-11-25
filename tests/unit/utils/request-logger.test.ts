@@ -6,7 +6,7 @@ import {
   requestIdFrom,
   levelForStatus,
 } from "../../../packages/platform/logger/src/index.ts";
-import type { LogEntry } from "../../../packages/platform/logger/src/types.ts";
+import type { LogEntry } from "../../../packages/platform/logger-core/src/types.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 

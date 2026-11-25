@@ -1,6 +1,4 @@
-import type { Logger, LogLevel } from "./types.ts";
-import { defaultLogger, setRawConsole } from "./logger.ts";
-import { safeStringify, serializeError } from "./errors.ts";
+import { defaultLogger, safeStringify, serializeError, setRawConsole, type Logger, type LogLevel } from "@tutors/logger-core";
 
 type ConsoleMethod = "log" | "info" | "debug" | "warn" | "error" | "trace";
 

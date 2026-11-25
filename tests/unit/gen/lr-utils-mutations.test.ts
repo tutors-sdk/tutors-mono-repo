@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import log from "@tutors/logger-core";
 import {
   getFileWithName,
   getFileWithType,
@@ -155,7 +156,7 @@ describe("removeLeadingHashes", () => {
 
 describe("no spurious missing-file warnings", () => {
   it("does not try to read an episode or markdown file that is not there", () => {
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const spy = vi.spyOn(log, "warn").mockImplementation(() => {});
     try {
       expect(getPodcastEpisode(lr({ files: ["/x/a.png"] }))).toEqual({ service: "spotify", id: "" });
       expect(getMarkdown(lr({ files: ["/x/a.png"] }))).toEqual(["", "", "", {}]);

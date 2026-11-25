@@ -5,9 +5,13 @@ import {
 } from "@tutors/tutors-gen-lib";
 import * as fs from "node:fs";
 import process from "node:process";
+import { useCliOutput } from "@tutors/logger-core";
 import denoConfig from "./deno.json" with { type: "json" };
 
 const versionStr = `tutors: ${denoConfig.version}`;
+
+// What the generator reports reads as one short line a person can act on (Rule 0292).
+useCliOutput("tutors");
 
 if (!fs.existsSync("course.md")) {
   process.stdout.write("Cannot locate course.md. Please change to course folder and try again.\n");

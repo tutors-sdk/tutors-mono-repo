@@ -4,6 +4,7 @@
  * and attaches learners' names, and how a failed read is reported.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { addTransport, removeTransport, type LogEntry } from "../../../packages/platform/logger-core/src/index.ts";
 import { scriptedSupabase } from "../../support/scripted-supabase.ts";
 
 const supabase = vi.hoisted(() => ({ current: null as unknown }));
@@ -73,6 +74,10 @@ describe("learning records", () => {
       learning_records: [{ data: [record("ann", "/lab/1", 2), record("bob", "/lab/1", 2), { ...record("ann", "/talk/1", 2), type: "talk" }] }, { data: null, error: { message: "down" } }]
     });
     supabase.current = client;
+    // The time library reports through the shared logger, so the app's transports see it (Rule 0291).
+    const entries: LogEntry[] = [];
+    const transport = (entry: LogEntry) => entries.push(entry);
+    addTransport(transport);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     expect(await CourseTime.getLearningRecords("ann", "cs101", "lab")).toEqual([record("ann", "/lab/1", 2)]);
     expect(calls.filter((c) => c.table === "learning_records").map((c) => [c.op, ...c.args])).toEqual([
@@ -82,8 +87,10 @@ describe("learning records", () => {
       ["range", 0, 999]
     ]);
     expect(await CourseTime.getLearningRecords("ann", "cs101", "lab")).toEqual([]);
-    expect(warn).toHaveBeenCalledWith("Failed to fetch learning records", { error: "Failed to fetch learning records: down", courseId: "cs101", type: "lab" });
+    removeTransport(transport);
     warn.mockRestore();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ level: "warn", message: "Failed to fetch learning records", error: "Failed to fetch learning records: down", courseId: "cs101", type: "lab" });
   });
 
   it("reads a course's records, converts durations to minutes and orders by learner then learning object", async () => {

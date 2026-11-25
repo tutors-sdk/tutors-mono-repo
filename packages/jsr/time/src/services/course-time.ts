@@ -8,6 +8,7 @@ import type {
 } from "@tutors/domain/learning";
 import { BaseCalendarModel, BaseLabModel } from "@tutors/domain/learning";
 import { getTutorsTimeSource, type TutorsTimeRows } from "./source.ts";
+import log from "@tutors/logger-core";
 
 function displayNames(users: Pick<TutorsConnectUser, "github_id" | "full_name">[]): Record<string, string> {
   const names: Record<string, string> = {};
@@ -84,7 +85,7 @@ export class CourseTime implements TutorsTimeCourse {
       const rows = await getTutorsTimeSource().courseRows(courseId);
       return (rows.learningRecords as unknown as LearningRecord[]).filter((r) => r.student_id === studentId && r.type === type);
     } catch (e) {
-      console.warn("Failed to fetch learning records", { error: e instanceof Error ? e.message : String(e), courseId, type });
+      log.warn("Failed to fetch learning records", { error: e instanceof Error ? e.message : String(e), courseId, type });
       return [];
     }
   }

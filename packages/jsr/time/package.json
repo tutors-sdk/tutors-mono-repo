@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
-    "@tutors/domain": "workspace:*"
+    "@tutors/domain": "workspace:*",
+    "@tutors/logger-core": "workspace:*"
   }
 }

@@ -1,4 +1,4 @@
-import { currentRequestId } from "./context.ts";
+import { currentRequestId } from "@tutors/logger-core";
 
 type FetchLike = typeof fetch;
 

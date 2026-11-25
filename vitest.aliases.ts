@@ -58,6 +58,7 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/data-api": resolve(root, "packages/adapters/driven/data-api/src/index.ts"),
   "@tutors/identity-better-auth/server": resolve(root, "packages/adapters/driven/identity-better-auth/src/index.server.ts"),
   "@tutors/identity-better-auth/client": resolve(root, "packages/adapters/driven/identity-better-auth/src/client.ts"),
+  "@tutors/logger-core": resolve(root, "packages/platform/logger-core/src/index.ts"),
   "@tutors/logger": resolve(root, "packages/platform/logger/src/index.ts"),
   "@tutors/metrics": resolve(root, "packages/platform/metrics/src/index.ts"),
   "@tutors/clock": resolve(root, "packages/adapters/driven/clock/src/index.ts"),

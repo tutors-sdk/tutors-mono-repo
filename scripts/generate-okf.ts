@@ -158,6 +158,7 @@ function extractPackages(): PackageInfo[] {
     { dir: "packages/adapters/driving/ui-primitives", category: "svelte" as const },
     { dir: "packages/adapters/driving/ui-components", category: "svelte" as const },
     { dir: "packages/platform/logger", category: "svelte" as const },
+    { dir: "packages/platform/logger-core", category: "jsr" as const },
     { dir: "packages/adapters/driving/a11y", category: "svelte" as const },
     { dir: "packages/adapters/driving/i18n", category: "svelte" as const },
     { dir: "apps/reader", category: "app" as const },

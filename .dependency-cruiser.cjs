@@ -116,6 +116,14 @@ module.exports = {
       to: { path: `${DRIVING}svelte-state/src/(community|connect|rbac)/` }
     },
     {
+      name: "logger-core-self-contained",
+      comment:
+        "@tutors/logger-core runs in Node, Deno and the browser and the published Deno packages log through it, so it imports nothing outside its own files: no workspace, no npm package, no Node built-in (Rule 0290).",
+      severity: "error",
+      from: { path: "^packages/platform/logger-core/" },
+      to: { pathNot: "^packages/platform/logger-core/" }
+    },
+    {
       name: "platform-self-contained",
       comment: "Platform plumbing (logger, metrics) imports no ring, adapter, facade or app.",
       severity: "error",
@@ -125,10 +133,10 @@ module.exports = {
     {
       name: "facades-import-rings-only",
       comment:
-        "The published packages model-lib, time-lib and tutors-types are facades: they re-export the rings (model-lib also the markdown renderer) and import no other adapter, platform package or app.",
+        "The published packages model-lib, time-lib and tutors-types are facades: they re-export the rings (model-lib also the markdown renderer) and import no other adapter, platform package or app. The one exception is the dependency-free logger core, so what a facade reports reaches the app's transports (Rule 0291).",
       severity: "error",
       from: { path: FACADES },
-      to: { path: "^(apps|packages)/", pathNot: "^(packages/domain|packages/application|packages/jsr|packages/adapters/driven/render-markdown)/" }
+      to: { path: "^(apps|packages)/", pathNot: "^(packages/domain|packages/application|packages/jsr|packages/adapters/driven/render-markdown|packages/platform/logger-core)/" }
     },
     {
       name: "tutors-types-self-contained",
