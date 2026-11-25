@@ -639,12 +639,188 @@ jobs:
       - name: Run tutors-lite CLI tests
         run: cd packages/jsr/tutors-lite && deno test --no-check test/ --allow-all
 
+  # Rule 0773 (issue #600): the reader built with SvelteKit's static adapter and sign-in off, as Tutors Studio
+  # bundles it, opens a course from plain file servers with no request to a server route.
+  static-reader:
+    name: Static reader
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the reader as static files
+        run: |
+          cp .env.example .env
+          pnpm --filter "tutors-reader..." build
+          test -f apps/reader/build/200.html
+          test -f apps/reader/build/version.json
+          cat apps/reader/build/version.json
+        env:
+          SVELTEKIT_ADAPTER: static
+          PUBLIC_ANON_MODE: "TRUE"
+          GIT_SHA: ${{ github.sha }}
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Open a course with no server
+        run: pnpm test:e2e:static-reader
+
+      # Rule 0776: what static-reader-release.yml attaches to a release.
+      - name: Pack it as a release asset and verify the sum
+        run: |
+          node scripts/release/static-reader-asset.mjs pack apps/reader/build "$(node -p "require('./apps/reader/package.json').version")" dist
+          node scripts/release/static-reader-asset.mjs verify dist
+          ls -l dist
+
+  # Rule 0774 (issue #604): the generator and tutors-lite from this tree build both corpus courses on Linux and
+  # on Windows, in a folder whose path has spaces and accents, and every file they write is compared.
+  generator-platforms:
+    name: Generator on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version-file: .dvmrc
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Run create and tutors-lite CLI tests
+        run: |
+          (cd packages/jsr/create && deno test --no-check test/ --allow-all)
+          (cd packages/jsr/tutors-lite && deno test --no-check test/ --allow-all)
+
+      - name: Build the corpus courses
+        env:
+          NO_COLOR: "1"
+          DENO_NO_UPDATE_CHECK: "1"
+        run: |
+          repo="$(pwd)"
+          work="$RUNNER_TEMP/Seán Ó Módúl - OneDrive"
+          mkdir -p "$work"
+          for course in synthetic-course synthetic-portfolio; do
+            cp -r "tests/generator/corpus/$course" "$work/$course"
+            (cd "$work/$course" && deno run -A --config "$repo/deno.json" "$repo/packages/jsr/tutors/main.ts")
+          done
+          cp -r tests/generator/corpus/synthetic-course "$work/lite"
+          (cd "$work/lite" && deno run -A --config "$repo/deno.json" "$repo/packages/jsr/tutors-lite/main.ts")
+          node scripts/checks/platform-outputs.mjs write \
+            "synthetic-course/json=$work/synthetic-course/json" \
+            "synthetic-portfolio/json=$work/synthetic-portfolio/json" \
+            "synthetic-course/html=$work/lite/html" > "outputs-${{ runner.os }}.json"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: generator-outputs-${{ runner.os }}
+          path: outputs-${{ runner.os }}.json
+          retention-days: 7
+
+  generator-platforms-compare:
+    name: Generator on Windows and Linux
+    needs: generator-platforms
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: generator-outputs-*
+          merge-multiple: true
+
+      - name: Compare what each platform wrote
+        run: node scripts/checks/platform-outputs.mjs compare outputs-Linux.json outputs-Windows.json
+
+  # Rule 0777 (issue #603): the one tutors program, compiled with deno compile on Linux and on Windows, builds the
+  # corpus course into the same json/ as deno run of the generator, and validates it as tutors-create does.
+  tutors-cli:
+    name: tutors program on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version-file: .dvmrc
+
+      - name: Compile
+        working-directory: packages/jsr/tutors-cli
+        run: |
+          deno compile -A --no-check --output dist/tutors main.ts
+          ls -l dist
+
+      - name: Build the corpus course both ways and compare
+        env:
+          NO_COLOR: "1"
+        run: |
+          repo="$(pwd)"
+          exe="$repo/packages/jsr/tutors-cli/dist/tutors"
+          [ -f "$exe.exe" ] && exe="$exe.exe"
+          "$exe" --version
+          for way in run compiled; do
+            mkdir -p "$RUNNER_TEMP/$way"
+            cp -r tests/generator/corpus/synthetic-course "$RUNNER_TEMP/$way/synthetic-course"
+          done
+          (cd "$RUNNER_TEMP/run/synthetic-course" && deno run -A --config "$repo/deno.json" "$repo/packages/jsr/tutors/main.ts" > /dev/null)
+          (cd "$RUNNER_TEMP/compiled/synthetic-course" && "$exe" build > /dev/null)
+          diff -r "$RUNNER_TEMP/run/synthetic-course/json" "$RUNNER_TEMP/compiled/synthetic-course/json"
+          (cd "$RUNNER_TEMP/compiled/synthetic-course" && "$exe" website > /dev/null && test -f html/index.html)
+          (cd "$RUNNER_TEMP/compiled/synthetic-course" && "$exe" validate . --format json > validate.json || true; node -e "JSON.parse(require('fs').readFileSync('validate.json','utf8'))")
+
   # The one check to mark as required in branch protection. A skipped or
   # cancelled job counts as a failure.
   ci-success:
     name: CI success
     if: always()
-    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, bundle-budgets, generator-diff, validate-corpus, cli-tests, ears-audit, ui-contract, mutation-pr]
+    needs: [build-and-test, platform-conformance, container-smoke, container-smoke-fixtures, dependency-audit, bundle-budgets, generator-diff, validate-corpus, cli-tests, ears-audit, ui-contract, mutation-pr, static-reader, generator-platforms, generator-platforms-compare, tutors-cli]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

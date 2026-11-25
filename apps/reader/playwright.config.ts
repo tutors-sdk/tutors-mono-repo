@@ -20,6 +20,8 @@ const oauthEnv = {
 export default defineConfig({
   // Tagged tests prove @ui Rules; authentication.spec.ts also checks the server/browser session boundary.
   testDir: "./tests/e2e",
+  // static-reader.spec.ts needs a static build; playwright.static.config.ts runs it (Rule 0773).
+  testIgnore: "static-reader.spec.ts",
   timeout: 90_000,
   expect: { timeout: 30_000 },
   fullyParallel: true,
