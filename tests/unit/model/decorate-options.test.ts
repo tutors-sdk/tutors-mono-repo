@@ -128,6 +128,10 @@ describe("a Panopto video address", () => {
     expect(urls("https://h.example/x?id=%E0%A4%A").viewerUrl).toBe(viewer("h.example", "%E0%A4%A"));
   });
 
+  it("keeps the colons of an IPv6 host and drops only its port", () => {
+    expect(getPanoptoUrls("https://[::1]:8443/Panopto/Pages/Viewer.aspx?id=abc").viewerUrl).toBe("https://[::1]/Panopto/Pages/Viewer.aspx?id=abc");
+  });
+
   it("gives the host as URL.hostname would: lower case, no credentials, no port", () => {
     expect(urls("https://SETU.Cloud.Panopto.EU/x?id=a").viewerUrl).toBe(viewer("setu.cloud.panopto.eu", "a"));
     expect(urls("https://user:pass@h.example:8443/x?id=a").viewerUrl).toBe(viewer("h.example", "a"));

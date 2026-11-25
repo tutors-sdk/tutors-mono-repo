@@ -13,3 +13,19 @@ it('keeps themed icons and falls back to the matching standard icon for missing 
   expect(themeService.getTypeColour('coursetree')).toBe(FluentIconLib.coursetree.color);
   themeService.setTheme('tutors');
 });
+
+it('gives a type no icon library knows the standard colour', () => {
+  expect(themeService.getTypeColour('no-such-type')).toBe('primary');
+});
+
+it('toggles between dark and light, on the page and in the stored choice', () => {
+  themeService.setDisplayMode('light');
+  themeService.toggleDisplayMode();
+  expect(themeService.lightMode.value).toBe('dark');
+  expect(document.documentElement.classList.contains('dark')).toBe(true);
+  expect(localStorage.modeCurrent).toBe('dark');
+  themeService.toggleDisplayMode();
+  expect(themeService.lightMode.value).toBe('light');
+  expect(document.documentElement.classList.contains('dark')).toBe(false);
+  expect(localStorage.modeCurrent).toBe('light');
+});

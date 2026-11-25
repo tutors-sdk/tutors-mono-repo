@@ -138,3 +138,16 @@ describe("live service: the whole platform", () => {
     expect(liveService.listeningAll).toBe(false);
   });
 });
+
+describe("live service: stopping", () => {
+  it("forgets every student it had listed for the course", () => {
+    liveService.startCoursePresenceListener("web-dev-101");
+    watches[0].listener(loEvent("alice", "web-dev-101"));
+    expect(liveService.studentEventMap.size).toBe(1);
+
+    liveService.stopCoursePresenceListener();
+
+    expect(liveService.studentEventMap.size).toBe(0);
+    expect(liveService.studentsOnline.value).toEqual([]);
+  });
+});

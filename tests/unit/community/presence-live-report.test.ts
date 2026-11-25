@@ -101,3 +101,17 @@ describe("presence: a learning event goes to the reader's server, not over Realt
     expect(snapshots()).toHaveLength(1);
   });
 });
+
+describe("presence: stopping the listener", () => {
+  it("forgets who was listed and says it is no longer listening", () => {
+    presenceService.listening = true;
+    presenceService.listeningTo = "web-dev";
+    presenceService.studentEventMap.set("alice", {} as never);
+
+    presenceService.stopPresenceListener();
+
+    expect(presenceService.listening).toBe(false);
+    expect(presenceService.listeningTo).toBe("");
+    expect(presenceService.studentEventMap.size).toBe(0);
+  });
+});

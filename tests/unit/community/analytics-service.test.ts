@@ -257,3 +257,36 @@ describe("analyticsService.updateLogin", () => {
     expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.objectContaining({ message: "upsert failed" }));
   });
 });
+
+describe("analyticsService: what it does when recording cannot even start", () => {
+  it("learningEvent logs a learning object it cannot read and does not throw", () => {
+    expect(() => analyticsService.learningEvent(makeCourse(), { loid: "step-1" }, null as any, makeStudent())).not.toThrow();
+    expect(log.error).toHaveBeenCalledWith("TutorStore Error:", expect.any(TypeError));
+  });
+
+  it("reportPageLoad and updatePageCount log a missing publisher and do not throw", () => {
+    const { publisher } = configureAdapters({});
+    configureAdapters({ publisher: undefined as any });
+    try {
+      expect(() => analyticsService.reportPageLoad(makeCourse(), makeLo(), makeStudent())).not.toThrow();
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(() => analyticsService.updatePageCount(makeCourse(), makeLo(), makeStudent())).not.toThrow();
+      expect(log.error).toHaveBeenCalledTimes(2);
+      expect(log.error).toHaveBeenLastCalledWith("TutorStore Error:", expect.any(TypeError));
+    } finally {
+      configureAdapters({ publisher });
+    }
+  });
+});
+
+describe("analyticsService.updateLogin: the sharing choice it stores", () => {
+  it.each([
+    ["true", true],
+    ["false", false],
+    ["online", null],
+    [undefined, null]
+  ])("share %s is stored as %s", async (share, sharing) => {
+    await analyticsService.updateLogin("course-1", { user: makeStudent({ share }) });
+    expect(upsertLearner).toHaveBeenCalledWith(expect.objectContaining({ sharing }));
+  });
+});

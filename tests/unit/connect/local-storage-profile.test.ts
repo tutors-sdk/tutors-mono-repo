@@ -223,3 +223,29 @@ describe("localStorageProfile: sentiment and sharing", () => {
     expect(await profile.getSentiment(learner)).toBe("delighted");
   });
 });
+
+describe("the browser's record where there is no storage (the server)", () => {
+  const nowhere = localStorageProfile(() => null);
+
+  it("reads as empty and writes nothing, without failing", async () => {
+    expect(await nowhere.getCourseVisits("")).toEqual([]);
+    await expect(nowhere.saveCourseVisits("", [])).resolves.toBeUndefined();
+    await expect(nowhere.upsertLearner({ login: "", name: null, email: null, image: null, sentiment: "happy", sharing: true })).resolves.toBeUndefined();
+    await expect(nowhere.setSentiment("", "happy")).resolves.toBeUndefined();
+    await expect(nowhere.setSharing("", false)).resolves.toBeUndefined();
+    expect(await nowhere.getSentiment("")).toBe(await localStorageProfile(() => ({ getItem: () => null, setItem: () => {}, removeItem: () => {} })).getSentiment(""));
+    expect(await nowhere.getSharing("")).toBeNull();
+  });
+});
+
+describe("the browser's record of a learner's choices", () => {
+  beforeEach(() => store.clear());
+
+  it("stores only the choices the learner has made", async () => {
+    await profile.upsertLearner({ login: "", name: null, email: null, image: null, sentiment: null, sharing: null });
+    expect([...store.keys()]).toEqual([]);
+    await profile.upsertLearner({ login: "", name: null, email: null, image: null, sentiment: "happy", sharing: false });
+    expect(Object.fromEntries(store)).toEqual({ share: "false", sentiment: "happy" });
+    expect(await profile.getSharing("")).toBe(false);
+  });
+});
