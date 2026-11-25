@@ -426,7 +426,7 @@ describe("logger: CLI format", () => {
 
   it("falls back to tutors and keeps one entry on one line", () => {
     expect(formatCli(entry({ message: "bad yaml", error: "line one\nline two\r\nthree", note: "x\ry" }))).toBe(
-      "tutors error: bad yaml: line one\\nline two\\nthree (note=x\\ny)"
+      "tutors error: bad yaml: line one line two three (note=x y)"
     );
   });
 });

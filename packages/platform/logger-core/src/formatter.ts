@@ -43,5 +43,6 @@ export function formatCli(entry: LogEntry): string {
     .map(([key, value]) => `${key}=${typeof value === "string" ? value : safeStringify(value)}`);
   const context = fields.length > 0 ? ` (${fields.join(", ")})` : "";
   // One entry, one line: a multi-line parser error must not leave unprefixed lines behind.
-  return `${scope} ${entry.level}: ${entry.message}${detail}${context}`.replace(/\r?\n|\r/g, "\\n");
+  // Line breaks fold into a space rather than an escape, so nothing in the text needs escaping.
+  return `${scope} ${entry.level}: ${entry.message}${detail}${context}`.replace(/[\r\n]+/g, " ");
 }
