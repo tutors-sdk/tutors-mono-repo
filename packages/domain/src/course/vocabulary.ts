@@ -5,7 +5,7 @@
  * is one edit and every `switch` over the type can be checked for exhaustiveness.
  */
 
-/** Learning objects that hold content directly. Same members as model-lib's `simpleTypes`. */
+/** Learning objects that hold content directly. Model-lib's `simpleTypes` is this list. */
 export const LO_SIMPLE_TYPES = [
   "note",
   "archive",
@@ -24,7 +24,7 @@ export const LO_SIMPLE_TYPES = [
   "quiz",
 ] as const;
 
-/** Learning objects that contain other learning objects. Same members as model-lib's `loCompositeTypes`. */
+/** Learning objects that contain other learning objects. Model-lib's `loCompositeTypes` is this list. */
 export const LO_COMPOSITE_TYPES = ["unit", "side", "topic", "course"] as const;
 
 /** Every learning-object kind. */
@@ -34,6 +34,33 @@ export type LoSimpleType = (typeof LO_SIMPLE_TYPES)[number];
 export type LoCompositeType = (typeof LO_COMPOSITE_TYPES)[number];
 /** A learning-object kind, such as "lab" or "topic". Model-lib's `Lo.type` is still `string`. */
 export type LoType = (typeof LO_TYPES)[number];
+
+/**
+ * Where a kind sorts among its siblings in a built course: containers first, then talks, then the
+ * rest. A record over `LoType`, so a kind added to the lists above does not compile until it has a
+ * place here; model-lib's `preOrder` is this record as a map.
+ */
+export const LO_TYPE_ORDER: Readonly<Record<LoType, number>> = {
+  course: 0,
+  unit: 1,
+  side: 2,
+  topic: 3,
+  talk: 4,
+  tutorial: 5,
+  book: 6,
+  lab: 7,
+  note: 8,
+  web: 9,
+  github: 10,
+  archive: 11,
+  panelnote: 12,
+  paneltalk: 13,
+  panelvideo: 14,
+  podcast: 15,
+  notebook: 16,
+  whiteboard: 17,
+  quiz: 18,
+};
 
 const LO_TYPE_SET: ReadonlySet<string> = new Set(LO_TYPES);
 const LO_COMPOSITE_SET: ReadonlySet<string> = new Set(LO_COMPOSITE_TYPES);

@@ -130,6 +130,9 @@ export const LO_COMPOSITE_TYPES;
 export const LO_SIMPLE_TYPES;
 
 // (from ../../domain/src/course/vocabulary.ts)
+export const LO_TYPE_ORDER: Readonly<Record<LoType, number>>;
+
+// (from ../../domain/src/course/vocabulary.ts)
 export const LO_TYPES;
 
 // (from ../../domain/src/presence/learner.ts)
@@ -147,8 +150,8 @@ export const TUTORS_JSON_SCHEMA;
 
 | Kind | Count |
 |------|-------|
-| const | 7 |
+| const | 8 |
 | function | 6 |
 | interface | 7 |
 | type | 21 |
-| **Total** | **41** |
+| **Total** | **42** |

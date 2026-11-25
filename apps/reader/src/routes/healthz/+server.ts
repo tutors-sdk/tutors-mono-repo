@@ -5,6 +5,7 @@ import { now } from "@tutors/clock";
 import * as env from "$app/env/private";
 import * as publicEnv from "$app/env/public";
 import { checkEnvironment, isAnonymous } from "@tutors/app-config/env-contract";
+import { readinessReport } from "@tutors/app-config/readiness";
 import { checkServiceKey } from "@tutors/app-config/service-key";
 
 /**
@@ -24,21 +25,6 @@ export const GET: RequestHandler = async () => {
 
   // Rule 0684: a deployment missing a variable it needs is not ready. The names are listed, never the values.
   const environment = checkEnvironment("reader", values);
-  const ready = environment.status === "ok" && serviceKey.status !== "rejected";
-  const supabaseOk = (supabaseCheck.status === "ok" || supabaseCheck.status === "skipped") && serviceKey.status !== "unreachable";
-  const overallStatus = !ready ? "misconfigured" : supabaseOk ? "ok" : "degraded";
-
-  return json({
-    status: overallStatus,
-    timestamp: now().toISOString(),
-    app: "tutors-reader",
-    checks: {
-      environment,
-      serviceKey,
-      supabase: supabaseCheck
-    },
-    errors: {
-      last60min: errorCounts
-    }
-  }, { status: ready ? 200 : 503 });
+  const report = readinessReport({ app: "tutors-reader", timestamp: now().toISOString(), environment, dependencies: { serviceKey, supabase: supabaseCheck }, errors: errorCounts });
+  return json(report.body, { status: report.status });
 };

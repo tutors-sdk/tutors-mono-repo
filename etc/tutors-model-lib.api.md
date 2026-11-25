@@ -265,7 +265,7 @@ export const COURSE_SENTIMENT_IDS;
 export const imageTypes;
 
 // (from ../../domain/src/course/types/type-utils.ts)
-export const loCompositeTypes;
+export const loCompositeTypes: string[];
 
 // (from ../../domain/src/course/types/type-utils.ts)
 export const loTypes: string[];
@@ -277,7 +277,7 @@ export const markdownIt: MarkdownItInstance;
 export const preOrder: Map<string, number>;
 
 // (from ../../domain/src/course/types/type-utils.ts)
-export const simpleTypes;
+export const simpleTypes: string[];
 
 ```
 

@@ -3,6 +3,7 @@
  */
 
 import type { Lo } from "./learning-objects.ts";
+import { LO_COMPOSITE_TYPES, LO_SIMPLE_TYPES, LO_TYPE_ORDER, LO_TYPES } from "../vocabulary.ts";
 
 /**
  * Dynamic property collection for learning objects
@@ -12,38 +13,22 @@ export class Properties {
 }
 
 /**
- * Simple learning object types
+ * Simple learning object types, from the one vocabulary in `../vocabulary.ts`.
  * Used for type checking and filtering
  */
-export const simpleTypes = [
-  "note",
-  "archive",
-  "web",
-  "github",
-  "panelnote",
-  "paneltalk",
-  "panelvideo",
-  "podcast",
-  "talk",
-  "book",
-  "lab",
-  "tutorial",
-  "notebook",
-  "whiteboard",
-  "quiz",
-];
+export const simpleTypes: string[] = [...LO_SIMPLE_TYPES];
 
 /**
- * Composite learning object types
+ * Composite learning object types, from the same vocabulary.
  * Used for type checking and filtering
  */
-export const loCompositeTypes = ["unit", "side", "topic", "course"];
+export const loCompositeTypes: string[] = [...LO_COMPOSITE_TYPES];
 
 /**
  * All learning object types
  * Used for type checking and filtering
  */
-export const loTypes: string[] = simpleTypes.concat(loCompositeTypes);
+export const loTypes: string[] = [...LO_TYPES];
 
 /**
  * Type alias for learning object types
@@ -63,27 +48,7 @@ export function isCompositeLo(lo: Lo): boolean {
  * Learning object type ordering
  * Used for sorting and display
  */
-export const preOrder: Map<string, number> = new Map([
-  ["course", 0],
-  ["unit", 1],
-  ["side", 2],
-  ["topic", 3],
-  ["talk", 4],
-  ["tutorial", 5],
-  ["book", 6],
-  ["lab", 7],
-  ["note", 8],
-  ["web", 9],
-  ["github", 10],
-  ["archive", 11],
-  ["panelnote", 12],
-  ["paneltalk", 13],
-  ["panelvideo", 14],
-  ["podcast", 15],
-  ["notebook", 16],
-  ["whiteboard", 17],
-  ["quiz", 18],
-]);
+export const preOrder: Map<string, number> = new Map(Object.entries(LO_TYPE_ORDER));
 
 /**
  * Student interaction tracking for learning objects

@@ -2,7 +2,7 @@
   "name": "@tutors/app-config",
   "version": "0.0.1",
   "license": "MIT",
-  "description": "Shared Vite and SvelteKit build configuration for the Tutors apps",
+  "description": "Shared Vite and SvelteKit build configuration for the Tutors apps, their environment contract and their readiness answer",
   "private": true,
   "type": "module",
   "exports": {
@@ -10,7 +10,8 @@
     "./svelte": "./src/svelte.js",
     "./env": "./src/env.js",
     "./env-contract": "./src/env-contract.js",
-    "./service-key": "./src/service-key.js"
+    "./service-key": "./src/service-key.js",
+    "./readiness": "./src/readiness.js"
   },
   "dependencies": {
     "@sveltejs/adapter-auto": "8.0.0",
