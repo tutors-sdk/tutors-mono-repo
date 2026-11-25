@@ -3,7 +3,7 @@
  * keeps its state in plain collections and behaves as the contract suites say a real adapter must.
  */
 import type { Course, Lo } from "@tutors/domain/course";
-import type { ContentLock, LockWrite } from "@tutors/domain/access";
+import { courseFactsFrom, type ContentLock, type LockWrite } from "@tutors/domain/access";
 import type { LearningEvent } from "@tutors/domain/learning";
 import type { CourseVisit, PresenceEvent, Sentiment, StoredPresence } from "@tutors/domain/presence";
 import { CourseNotFoundError, type CourseLocation, type CourseSource } from "../ports/course-source.ts";
@@ -16,6 +16,7 @@ import type { AccessStore } from "../ports/access-store.ts";
 import type { AppEvent, EventPublisher } from "../ports/event-publisher.ts";
 import type { Clock } from "../ports/clock.ts";
 import type { CourseCatalogue } from "../ports/course-catalogue.ts";
+import type { CourseFactsLookup, CourseFactsSource } from "../ports/course-facts.ts";
 import type { WhiteboardRoom, WhiteboardScene, WhiteboardStore } from "../ports/whiteboard.ts";
 import type { AssignmentSource, MoodleAssignSubmissionsResponse, MoodleCourseSection } from "../ports/assignment-source.ts";
 import type { Actor } from "@tutors/domain/access";
@@ -230,5 +231,28 @@ export class InMemoryWhiteboard implements WhiteboardStore {
   async save(room: WhiteboardRoom, elements: unknown[]): Promise<boolean> {
     this.scenes.set(this.key(room), structuredClone(elements));
     return true;
+  }
+}
+
+/**
+ * Published courses held in memory, by id: each as the tutors.json its host would serve.
+ * `unreachable` makes every read "unavailable", as when the hosts are down.
+ */
+export class InMemoryCourseFacts implements CourseFactsSource {
+  /** Every course id asked for, in order: lets a test count reads. */
+  readonly asked: string[] = [];
+  unreachable = false;
+
+  constructor(private readonly published: Record<string, unknown> = {}) {}
+
+  publish(courseId: string, tutorsJson: unknown): void {
+    this.published[courseId] = tutorsJson;
+  }
+
+  async read(courseId: string): Promise<CourseFactsLookup> {
+    this.asked.push(courseId);
+    if (this.unreachable) return { kind: "unavailable" };
+    if (!(courseId in this.published)) return { kind: "missing" };
+    return { kind: "found", facts: courseFactsFrom(courseId, this.published[courseId]) };
   }
 }

@@ -15,7 +15,6 @@
   "dependencies": {
     "@opentelemetry/api": "1.9.1",
     "@prometheus-io/client": "^0.16.1",
-    "@supabase/supabase-js": "^2.118.0",
     "@tutors/application": "workspace:*",
     "@tutors/bus-inprocess": "workspace:*",
     "@tutors/course-archive": "workspace:*",

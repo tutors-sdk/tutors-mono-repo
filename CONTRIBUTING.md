@@ -125,7 +125,9 @@ pnpm build
 
 Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) first. It follows one course page from the URL to the rendered cards and names every file on the way. Most changes people want to make (how a page looks, what a card shows, how navigation behaves) live on that path.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) is the authority on the shape of the repository: the rings, the ports and adapters, who owns what, and the EARS rules that check it. Read sections 1, 4 and 17 first; use the rest to look things up.
+[ARCHITECTURE.md](ARCHITECTURE.md) is the authority on the shape of the repository: the rings, the ports and adapters, who owns what, and the EARS rules that check it. Read sections 1, 4 and 11 first; use the rest to look things up.
+
+[HOW-TO-CONTRIBUTE.md](HOW-TO-CONTRIBUTE.md) maps what you know and what you want to change to the one place it goes: by role, by capability and port by port. If you only read one page before your first change, read that one. [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md) describes the domain model and [docs/BOUNDARIES.md](docs/BOUNDARIES.md) what may cross each boundary (security, database, UX, UI, testing, operations).
 
 The [Documentation](README.md#documentation) table in the README indexes everything else.
 
@@ -302,17 +304,18 @@ The tables in [README.md](README.md#structure) list every package with its direc
 ```
 tutors-mono-repo/
 ├── apps/                    # Deployable applications (pnpm)
-│   ├── reader/              # Main course reader        → tutors-reader
+│   ├── reader/              # Main course reader and the data API → tutors-reader
 │   ├── catalogue/           # Course catalog            → tutors-catalogue
 │   ├── live/                # Live classroom            → tutors-live
-│   └── time/                # Activity dashboard        → tutors-time
+│   ├── time/                # Activity dashboard        → tutors-time
+│   └── validator/           # Course checker            → tutors-validator
 ├── packages/
-│   ├── domain/              # Domain ring: course, learning, presence, access, quiz → @tutors/domain
+│   ├── domain/              # Domain ring: course, learning, presence, access, quiz, catalogue, input → @tutors/domain
 │   ├── application/         # Ports and use cases; /testing has in-memory adapters → @tutors/application
 │   ├── adapters/
-│   │   ├── driven/          # One technology behind a port each → @tutors/store-supabase, realtime-supabase,
-│   │   │                    #   course-http, render-markdown, profile-localstorage, bus-inprocess,
-│   │   │                    #   identity-better-auth, moodle, clock
+│   │   ├── driven/          # One technology behind a port each → @tutors/data-api, store-supabase,
+│   │   │                    #   realtime-supabase, course-http, course-archive, render-markdown,
+│   │   │                    #   profile-localstorage, bus-inprocess, identity-better-auth, moodle, clock
 │   │   └── driving/         # Svelte state and UI → @tutors/svelte-state, themes, i18n, a11y, tour,
 │   │                        #   privacy, ui-primitives, ui-navigators, ui-components
 │   ├── platform/            # logger, metrics, app-config → @tutors/<name>
@@ -320,9 +323,10 @@ tutors-mono-repo/
 │       ├── model/           # Facade over the domain      → @tutors/tutors-model-lib
 │       ├── time/            # Facade + time read models   → @tutors/tutors-time-lib
 │       ├── types/           # Facade over shared types    → @tutors/tutors-types
-│       ├── identity/        # Identity contracts          → @tutors/identity
+│       ├── course-rules/    # What a course must satisfy  → @tutors/course-rules
 │       ├── gen/             # Course generation           → @tutors/tutors-gen-lib
 │       ├── tutors/          # JSON course generator       → @tutors/tutors
+│       ├── tutors-cli/      # The tutors command          → @tutors/tutors-cli
 │       ├── tutors-lite/     # Static HTML generator       → @tutors/tutors-lite
 │       └── create/          # Course scaffolder           → @tutors/tutors-create
 ```

@@ -1,7 +1,7 @@
 # ADR 0001: Tutors is a hexagonal architecture
 
 **Status:** accepted, 14 October 2026. **Authority:** [ARCHITECTURE.md](../../ARCHITECTURE.md) is the full description of the shape, intent and ownership boundaries; this record holds the decision. **Enforced by:** `.dependency-cruiser.cjs`,
-`tests/architecture/dependency-rules.test.ts` and Rules 0340-0346 in
+`tests/architecture/dependency-rules.test.ts` and Rules 0340-0355 in
 `tests/bdd/features/developer/hexagonal-architecture.feature`.
 
 ## Context
@@ -21,20 +21,21 @@ The codebase is organised as three rings, with the dependency arrows pointing in
 
 | Ring | Where | May import |
 |---|---|---|
-| Domain | `packages/domain` (`@tutors/domain`) | Nothing outside itself. Pure TypeScript: course tree, learning records, presence rules, access rules, quiz. |
+| Domain | `packages/domain` (`@tutors/domain`) | Nothing outside itself. Pure TypeScript: course tree, learning records, presence rules, the access policy, quiz, catalogue order, input rules. |
 | Application | `packages/application` (`@tutors/application`) | The domain. Holds the ports (interfaces the application needs from the outside world) and the use cases over them, plus `@tutors/application/testing`: in-memory adapters and contract suites. |
 | Adapters | `packages/adapters/driven/*` and `packages/adapters/driving/*` | The application's ports, the domain, and their one technology. Never another adapter. |
 | Apps | `apps/*` | Everything. Each app is a composition root: `src/lib/compose.ts` reads the environment once and picks the adapter behind each port. |
 
-**Driven adapters** (the application calls them through a port): `store-supabase`,
-`realtime-supabase`, `course-http`, `render-markdown`, `profile-localstorage`, `bus-inprocess`,
-`identity-better-auth`, `moodle`, `clock`. **Driving adapters** (they call the application):
+**Driven adapters** (the application calls them through a port): `data-api`, `store-supabase`,
+`realtime-supabase`, `course-http`, `course-archive`, `render-markdown`, `profile-localstorage`,
+`bus-inprocess`, `identity-better-auth`, `moodle`, `clock`. **Driving adapters** (they call the application):
 `svelte-state`, the only home of Svelte runes in package code, and `ui-primitives`,
 `ui-navigators`, `ui-components`, `themes`, `i18n`, `a11y`, `tour`, `privacy`.
 
-**Ports** (`@tutors/application/ports`): CourseSource, CourseEmitter, ContentRenderer,
-LearningEventSink, LearningRecords, PresencePort, ProfilePort, SessionPort and IdentityClient,
-AccessStore, EventPublisher, Clock, AssignmentSource.
+**Ports** (`@tutors/application/ports`): CourseSource, CourseFactsSource, ContentRenderer,
+LearningEventSink, PresencePublisher and PresenceFeed (together PresencePort), ProfilePort,
+CourseCatalogue, SessionPort and IdentityClient, AccessStore, WhiteboardStore, EventPublisher,
+Clock, AssignmentSource.
 
 `PUBLIC_ANON_MODE` is read only by the composition roots. An anonymous reader is the same code
 composed with the in-memory, localStorage and no-op adapters (`anonymousAdapters()`), which is also
@@ -69,6 +70,33 @@ may only shrink: a new violation fails the check, and a fixed one must be delete
 - The Supabase client, markdown toolchain and Better Auth are each imported from one package, so a
   dependency bump or a vendor advisory has one place to look.
 - Remaining debts are visible in the baseline: the svelte-state markdown service still imports
-  Shiki, Marp and mermaid (it moves behind `ContentRenderer` next), `packages/jsr/time` still has a
-  Supabase client (the time app's read models move behind `LearningRecords`), and the whiteboard
-  keeps its own scene store.
+  Shiki, Marp and mermaid (it moves behind `ContentRenderer` next), and the published
+  `packages/jsr/time` still carries a Supabase source for consumers outside the repository (the
+  time app itself reads through the reader's `/api/time`).
+
+## Amendment, 25 November 2026: a domain model and one boundary per concern
+
+Main moved under the retrofit: personal data went behind the reader's server (the data API and the
+service key), a validator app and the course rules arrived, and presence was split into a publisher
+and a feed. Bringing the branch up to date showed that rings alone did not say whose concern a
+thing was. Authorisation lived in the reader app, input validation beside it, and the reader's
+routes named tables. The decision is extended in three ways.
+
+1. **The domain is a model, organised as bounded contexts** (course, learning, presence, access,
+   quiz, catalogue, plus input rules), each with its own language. Authorisation is one pure policy
+   in `@tutors/domain/access` (`permits`), decided by a use case (`createAuthorization` over the
+   `CourseFactsSource` port) and enforced by the reader's routes. Input rules are the domain's.
+   [`docs/DOMAIN-MODEL.md`](../DOMAIN-MODEL.md) describes the model.
+2. **Every package belongs to exactly one boundary** (domain model, application, security,
+   database, integration, content rendering, UX, UI, operations, composition, authoring and
+   published API; testing owns `tests/` and the doubles). The map is section 11 of ARCHITECTURE.md,
+   checked by Rule 0354, and [`docs/BOUNDARIES.md`](../BOUNDARIES.md) says what may cross each.
+3. **Three more rules hold the boundaries**, beside Rule 0355 (tables and database functions are
+   named only in the database adapters): `no-database-client-in-apps` (it replaces the narrower
+   browser-only rule), `ui-imports-no-driven-adapter` and `test-doubles-only-in-composition`.
+
+Consequences: a schema change, or leaving Supabase, touches `store-supabase`, `realtime-supabase`
+and the migrations only; a security review reads the access context, one use case and the routes;
+a UI package cannot make a request or hold a rule. The cost is ceremony for small features: a
+stored value now needs a contract line, a route, a store function and a port method.
+[`HOW-TO-CONTRIBUTE.md`](../../HOW-TO-CONTRIBUTE.md) exists to make that path obvious.

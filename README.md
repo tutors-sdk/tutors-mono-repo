@@ -59,7 +59,7 @@ Each app composes its adapters in `src/lib/compose.ts`, the only place that read
 
 | Directory | Package | What it is |
 |---|---|---|
-| `packages/domain` | `@tutors/domain` | The domain: course tree, learning records, presence, access and quiz rules. Plain TypeScript, imports nothing. Subpaths: `/course`, `/learning`, `/presence`, `/access`, `/quiz` |
+| `packages/domain` | `@tutors/domain` | The domain model: course tree, learning records, presence, the access policy, quiz and catalogue rules, and what a well-formed input is. Plain TypeScript, imports nothing. Subpaths: `/course`, `/learning`, `/presence`, `/access`, `/quiz`, `/catalogue`, `/input`. See [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md) |
 | `packages/application` | `@tutors/application` | Ports (`/ports`: what the application needs from outside, as interfaces) and the use cases over them; `/testing` holds in-memory adapters and the contract suite every adapter of a port must pass |
 
 ### Driven adapters (`packages/adapters/driven/`)
@@ -68,9 +68,11 @@ Each wraps one technology behind a port and imports no other adapter.
 
 | Directory | Package | Port it implements |
 |---|---|---|
-| `store-supabase` | `@tutors/store-supabase` | LearningEventSink, LearningRecords, ProfilePort, AccessStore and the catalogue, over Supabase |
-| `realtime-supabase` | `@tutors/realtime-supabase` | PresencePort over Supabase Realtime |
-| `course-http` | `@tutors/course-http` | CourseSource: reads a published `tutors.json` over HTTP |
+| `data-api` | `@tutors/data-api` | The browser side of the reader's `/api`: its typed contract, the one client, and LearningEventSink, PresencePublisher, ProfilePort, CourseCatalogue, WhiteboardStore and lock writes over it |
+| `store-supabase` | `@tutors/store-supabase` | The database boundary: public reads with the anon key (locks, roster, catalogue); `/server` holds every personal read and write, for the reader's server and the service key only |
+| `realtime-supabase` | `@tutors/realtime-supabase` | PresenceFeed and the realtime broker over Supabase Realtime; the server-side live-activity publisher |
+| `course-http` | `@tutors/course-http` | CourseSource: reads a published `tutors.json` over HTTP. CourseFactsSource: who teaches a course, read by the server from a trusted host |
+| `course-archive` | `@tutors/course-archive` | Checks a course handed over as a zip or a set of generated files against the course rules |
 | `render-markdown` | `@tutors/render-markdown` | ContentRenderer: markdown-it, Shiki and KaTeX |
 | `profile-localstorage` | `@tutors/profile-localstorage` | ProfilePort in the browser, for a visitor who is not signed in |
 | `bus-inprocess` | `@tutors/bus-inprocess` | EventPublisher, in process |
@@ -86,7 +88,7 @@ Each wraps one technology behind a port and imports no other adapter.
 | `themes` | `@tutors/themes` | Theme management, icon sets and card styles |
 | `i18n` | `@tutors/i18n` | Internationalization (six locales) |
 | `a11y` | `@tutors/a11y` | Accessibility utilities |
-| `privacy` | `@tutors/privacy` | Consent management |
+| `privacy` | `@tutors/privacy` | Consent categories and the inventory of personal data |
 | `tour` | `@tutors/tour` | Guided product tours |
 | `ui-primitives` | `@tutors/ui-primitives` | Leaf components: Icon, Image, Menu, Sidebar, toasts |
 | `ui-navigators` | `@tutors/ui-navigators` | Navigation chrome: MainNavigator, SecondaryNavigator, Footer, TutorsShell |
@@ -111,9 +113,10 @@ These carry a `deno.json` and are run and published with Deno; some also carry a
 | `packages/jsr/model` | `@tutors/tutors-model-lib` | Facade: re-exports the domain's course model and tree utilities |
 | `packages/jsr/time` | `@tutors/tutors-time-lib` | Facade over the domain's learning records, plus the time app's read models |
 | `packages/jsr/types` | `@tutors/tutors-types` | Facade over the domain's shared types (see `guides/SHARED-TYPES.md`) |
-| `packages/jsr/identity` | `@tutors/identity` | Verified actor and session contracts with no framework or database imports |
+| `packages/jsr/course-rules` | `@tutors/course-rules` | What a course must satisfy to publish, and the lecturer's words for each finding; run by the CLI, the validator app and Tutors Studio |
 | `packages/jsr/gen` | `@tutors/tutors-gen-lib` | Course generation utilities (the authoring toolchain) |
 | `packages/jsr/tutors` | `@tutors/tutors` | The generator that turns a course folder into `tutors.json` |
+| `packages/jsr/tutors-cli` | `@tutors/tutors-cli` | The `tutors` command: build, validate |
 | `packages/jsr/tutors-lite` | `@tutors/tutors-lite` | Static HTML course generator |
 | `packages/jsr/create` | `@tutors/tutors-create` | Course scaffolder (CLI and reader wizard) |
 
@@ -190,6 +193,8 @@ Docs live in five places. This is the index.
 | [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) | Understand how one course page gets from URL to pixels. **Start here.** |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Set up, find an issue, and know what a PR needs |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The authority on the shape: C4 and sequence diagrams, ports, adapters, ownership and data boundaries, the EARS rules that enforce them |
+| [HOW-TO-CONTRIBUTE.md](HOW-TO-CONTRIBUTE.md) | Find the one place your change goes, by what you know (design, back end, database, security, operations, teaching) and by port |
+| [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md), [docs/BOUNDARIES.md](docs/BOUNDARIES.md) | Understand the domain model context by context, and what may cross each boundary: security, database, UX, UI, testing, operations |
 | [guides/testing/TESTING-OVERVIEW.md](guides/testing/TESTING-OVERVIEW.md) | See the test tiers on one page; [guides/testing/TESTING.md](guides/testing/TESTING.md) is the long form and [tests/TESTING.md](tests/TESTING.md) the per-directory reference |
 | [guides/testing/EARS-METHODOLOGY.md](guides/testing/EARS-METHODOLOGY.md), [guides/testing/MUTATION-TESTING.md](guides/testing/MUTATION-TESTING.md) | Write BDD specs or run the mutation suite; start with `pnpm ears:dashboard` to browse every requirement |
 | [guides/RBAC.md](guides/RBAC.md), [guides/WHITEBOARD.md](guides/WHITEBOARD.md), [guides/PERSONAS.md](guides/PERSONAS.md) | Work on a specific feature area |
@@ -216,7 +221,9 @@ Tutors is a hexagonal architecture. [ARCHITECTURE.md](ARCHITECTURE.md) is the au
 3. **Adapters** (`packages/adapters/driven`, `packages/adapters/driving`) import the ports, the domain and their one technology, never another adapter. Svelte runes live in `@tutors/svelte-state` only.
 4. **Apps** compose the adapters in `src/lib/compose.ts`; `PUBLIC_ANON_MODE=TRUE` composes the in-memory, localStorage and no-op adapters instead of Supabase and Better Auth.
 
-`.dependency-cruiser.cjs` enforces this (`pnpm architecture-report` draws the graph); the edges that predate the rules are in `tests/architecture/known-violations.txt`, which may only shrink. Rules 0340-0346 in `tests/bdd/features/developer/hexagonal-architecture.feature` state the same as requirements.
+`.dependency-cruiser.cjs` enforces this (`pnpm architecture-report` draws the graph); the edges that predate the rules are in `tests/architecture/known-violations.txt`, which may only shrink. Rules 0340-0355 in `tests/bdd/features/developer/hexagonal-architecture.feature` state the same as requirements.
+
+On top of the rings, every package belongs to exactly one **boundary** (domain model, application, security, database, integration, content rendering, UX, UI, operations, composition, authoring, testing): see section 11 of ARCHITECTURE.md and [docs/BOUNDARIES.md](docs/BOUNDARIES.md). Two lines matter most. Anything personal goes from the browser through the reader's data API, where the server identifies, validates and authorises before it touches the database; no app or UI package imports a database client. And who may do what is decided by one pure policy in `@tutors/domain/access`, enforced on the server.
 
 Only `@tutors/identity-better-auth` imports auth providers. Its `/server` export resolves a verified, request-scoped `locals.actor`; `/client` implements the injected sign-in/sign-out port. Browser entry points cannot reach server modules or private environment variables, including through barrels.
 

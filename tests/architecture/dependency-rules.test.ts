@@ -11,7 +11,9 @@ const fixture = (path: string) => resolve(FIXTURE, path);
 /** Stand-ins for the workspace package names and vendors the fixture files import. */
 const FIXTURE_ALIASES = {
   "@tutors/domain": fixture("packages/domain/src/index.ts"),
-  "@tutors/application": fixture("packages/application/src/index.ts"),
+  // Exact (`$`), so the testing subpath resolves to its own file.
+  "@tutors/application$": fixture("packages/application/src/index.ts"),
+  "@tutors/application/testing": fixture("packages/application/src/testing/index.ts"),
   "@tutors/tutors-model-lib": fixture("packages/jsr/model/src/index.ts"),
   "@tutors/logger": fixture("packages/platform/logger/src/index.ts"),
   "@tutors/store-supabase": fixture("packages/adapters/driven/store-supabase/src/index.ts"),
@@ -74,7 +76,9 @@ describe("architecture rules (runway tier A)", () => {
       ["no-cross-workspace-relative-import", "apps/reader/src/lib/borrowed.ts", "apps/catalogue/src/lib/page.ts"],
       ["no-cross-workspace-relative-import", "packages/adapters/driving/svelte-state/src/community/relative.ts", "packages/domain/src/index.ts"],
       ["no-cross-package-cycle", "packages/adapters/driving/svelte-state/src/connect/index.ts", "packages/adapters/driving/themes/src/index.ts"],
-      ["no-database-client-in-browser-code", "apps/reader/src/lib/direct-db.ts", "external/@supabase/supabase-js/index.ts"]
+      ["no-database-client-in-apps", "apps/reader/src/lib/direct-db.ts", "external/@supabase/supabase-js/index.ts"],
+      ["ui-imports-no-driven-adapter", "packages/adapters/driving/ui-components/src/reaches-driven.ts", "packages/adapters/driven/store-supabase/src/index.ts"],
+      ["test-doubles-only-in-composition", "packages/adapters/driven/course-http/src/uses-doubles.ts", "packages/application/src/testing/index.ts"]
     ])("%s catches %s -> %s", (rule, from, to) => {
       expect(violations).toContain(`${rule}: ${from} -> ${to}`);
     });

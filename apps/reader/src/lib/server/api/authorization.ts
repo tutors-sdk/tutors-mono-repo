@@ -9,7 +9,7 @@ import { createAuthorization as createCourseAuthorization, type Authorization } 
 import { publishedCourseFacts } from "@tutors/course-http";
 
 export { AuthorizationUnavailableError, type Authorization } from "@tutors/application";
-export type { Asker as Actor, CourseFacts, Resource } from "@tutors/domain/access";
+export type { Asker as Actor, Resource } from "@tutors/domain/access";
 
 export interface AuthorizationOptions {
   fetch: typeof fetch;

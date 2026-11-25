@@ -132,3 +132,22 @@ Feature: Hexagonal architecture
       Given an architecture document that names "@tutors/domain" and "calendar" only
       When it is checked against the packages "@tutors/domain, @tutors/new-adapter" and the tables "calendar, new_table"
       Then the check names "package @tutors/new-adapter" and "table new_table" as missing
+
+  @rule-0354 @ears-ubiquitous
+  Rule: Tutors shall place every workspace package in exactly one boundary of the boundary map in ARCHITECTURE.md, so each package has one concern.
+
+    Scenario: Every package under apps and packages is in one boundary
+      Given the names of every workspace package
+      Then the boundary map of ARCHITECTURE.md places each of them in exactly one boundary
+
+    Scenario: A map that leaves a package out and places another twice is told which
+      Given a boundary map that places "@tutors/domain" under "Domain model" and "@tutors/logger" under "Operations" and "Security"
+      When it is checked against the packages "@tutors/domain, @tutors/logger, @tutors/new-adapter"
+      Then the check names "@tutors/new-adapter is in no boundary" and "@tutors/logger is in 2 boundaries: Operations, Security"
+
+  @rule-0355 @ears-ubiquitous
+  Rule: Tutors shall name database tables and database functions only in the database adapters, so the schema can change in one boundary.
+
+    Scenario: No app, ring or other adapter names a table or a database function
+      Given the product modules that name a database table or function
+      Then each of them is in the Supabase store adapter, the Supabase realtime adapter or the published time library's source

@@ -21,12 +21,15 @@ and returns, and the one client (`dataApi`) the community, connect, RBAC and whi
 The server side implements that contract; nothing in a browser package knows which database is
 behind it, so leaving Supabase changes this layer and the routes, and no browser package.
 
-Two checks keep the seam honest:
+Three checks keep the seam honest:
 
-- `no-database-client-in-browser-code` (`.dependency-cruiser.cjs`, run by `pnpm test:runway`):
-  browser code may not import `@supabase/supabase-js`. The exceptions are the anon client factory
-  used for Realtime channels and public reads (`packages/adapters/driven/store-supabase/src/client.ts`),
-  server-only files, and type-only imports.
+- `vendor-only-in-its-adapter` and `no-database-client-in-apps` (`.dependency-cruiser.cjs`, run by
+  `pnpm test:runway`): only `@tutors/store-supabase` and `@tutors/realtime-supabase` import
+  `@supabase/supabase-js`, and no app imports it at all, on the server or in the browser. The
+  service client is made by `@tutors/store-supabase/server`, which only the reader's server routes
+  import.
+- `tests/architecture/database-boundary.test.ts` (Rule 0355): a table or a database function is
+  named only inside those two packages. A route calls an adapter function and passes it the client.
 - `tests/architecture/browser-data-access.test.ts`: what browser code does with that anon client is
   limited to reading the public tables (`tutors-connect-courses`, `tutors-connect-latest`,
   `tutors_content_locks`), inserting into `app_errors`, and calling `get_student_count` and
@@ -61,7 +64,7 @@ Common to the data routes added by this change:
 - **Writes accept only `application/json`.** A cross-site page cannot send that without a CORS
   preflight, and the write routes answer none, so only the reader's own pages can write. SvelteKit's
   own origin check turns away cross-site form posts (`tests/security/mutating-routes.txt`).
-- **Input is checked** (`validate.ts`): course ids, routes, sentiments, calendar days (the browser's
+- **Input is checked** (`@tutors/domain/input`): course ids, routes, sentiments, calendar days (the browser's
   local day, within a day of the server's), body sizes.
 - **503 without a key.** When `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` is not set (local development,
   anonymous mode) the routes answer 503 and the browser carries on without saving.

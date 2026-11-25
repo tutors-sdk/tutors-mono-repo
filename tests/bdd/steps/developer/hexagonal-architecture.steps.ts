@@ -15,7 +15,9 @@ const fixture = (path: string) => resolve(FIXTURE, path);
 /** The fixture workspace's stand-ins for workspace packages and vendors (tests/architecture/dependency-rules.test.ts has the same). */
 const FIXTURE_ALIASES = {
   "@tutors/domain": fixture("packages/domain/src/index.ts"),
-  "@tutors/application": fixture("packages/application/src/index.ts"),
+  // Exact (`$`), so the testing subpath resolves to its own file.
+  "@tutors/application$": fixture("packages/application/src/index.ts"),
+  "@tutors/application/testing": fixture("packages/application/src/testing/index.ts"),
   "@tutors/tutors-model-lib": fixture("packages/jsr/model/src/index.ts"),
   "@tutors/logger": fixture("packages/platform/logger/src/index.ts"),
   "@tutors/store-supabase": fixture("packages/adapters/driven/store-supabase/src/index.ts"),
@@ -115,6 +117,42 @@ export function missingFromAuthority(doc: string, expected: { packages: string[]
 }
 
 const isProductModule = (file: string) => !/\.(test|spec|d)\.ts$/.test(file) && !/(^|\/)(test|tests|__tests__|fixtures)\//.test(file);
+
+/**
+ * The boundary map of ARCHITECTURE.md (Rule 0354): the table between the boundary-map markers, one
+ * row per boundary, with the boundary's name in bold in the first cell and its packages, in
+ * backticks, in the third.
+ */
+export function boundaryMap(doc: string): Map<string, string[]> {
+  const section = doc.split("<!-- boundary-map:start -->")[1]?.split("<!-- boundary-map:end -->")[0] ?? "";
+  const map = new Map<string, string[]>();
+  for (const row of section.split("\n")) {
+    const cells = row.split("|").map((cell) => cell.trim());
+    const name = /^\*\*(.+)\*\*$/.exec(cells[1] ?? "")?.[1];
+    if (name) map.set(name, [...(cells[3] ?? "").matchAll(/`([^`]+)`/g)].map((m) => m[1]!));
+  }
+  return map;
+}
+
+/** What is wrong with a boundary map for these packages: a package in no boundary, or in more than one. */
+export function misplacedInBoundaries(map: Map<string, string[]>, packages: string[]): string[] {
+  return packages.flatMap((name) => {
+    const homes = [...map].filter(([, members]) => members.includes(name)).map(([boundary]) => boundary);
+    if (homes.length === 0) return [`${name} is in no boundary`];
+    return homes.length === 1 ? [] : [`${name} is in ${homes.length} boundaries: ${homes.join(", ")}`];
+  });
+}
+
+/** Product modules under apps and packages that name a database table or function (Rule 0355). */
+function modulesNamingTheDatabase(): string[] {
+  return ["apps", "packages"]
+    .flatMap((root) => sources(resolve(REPO_ROOT, root), /\.(ts|svelte)$/))
+    .map((file) => relative(REPO_ROOT, file).replaceAll("\\", "/"))
+    .filter(isProductModule)
+    .filter((file) => /\.(from|rpc)\(\s*["'`][A-Za-z_-]+["'`]\s*[,)]/.test(readFileSync(resolve(REPO_ROOT, file), "utf8")))
+    .sort();
+}
+const DATABASE_HOMES = ["packages/adapters/driven/store-supabase/src/", "packages/adapters/driven/realtime-supabase/src/", "packages/jsr/time/src/services/source.ts"];
 
 describeFeature(feature, ({ Rule }) => {
   const namesViolation = (violations: ArchitectureViolation[], rule: string, from: string, to: string) => {
@@ -336,7 +374,8 @@ describeFeature(feature, ({ Rule }) => {
         expect(missingFromAuthority(architectureDoc(), { packages: [], tables })).toEqual([]);
       });
       And("ARCHITECTURE.md has a data ownership row for the platform-wide presence channel", async () => {
-        const { ALL_COURSES_CHANNEL } = await import("../../../../packages/adapters/driven/realtime-supabase/src/index.ts");
+        const { topics } = await import("../../../../packages/application/src/realtime/index.ts");
+        const ALL_COURSES_CHANNEL = topics.platformActivity();
         expect(hasRowFor(architectureDoc(), `Realtime channel \`${ALL_COURSES_CHANNEL}\``) || architectureDoc().includes(`| Realtime channel \`${ALL_COURSES_CHANNEL}\``)).toBe(true);
       });
     });
@@ -372,6 +411,51 @@ describeFeature(feature, ({ Rule }) => {
       });
       Then("the check names {string} and {string} as missing", (_ctx: unknown, a: string, b: string) => {
         expect(missing).toEqual([a, b]);
+      });
+    });
+  });
+
+  Rule("Tutors shall place every workspace package in exactly one boundary of the boundary map in ARCHITECTURE.md, so each package has one concern.", ({ RuleScenario }) => {
+    RuleScenario("Every package under apps and packages is in one boundary", ({ Given, Then }) => {
+      let names: string[] = [];
+      Given("the names of every workspace package", () => {
+        names = workspacePackageNames();
+        expect(names.length).toBeGreaterThan(20);
+      });
+      Then("the boundary map of ARCHITECTURE.md places each of them in exactly one boundary", () => {
+        const map = boundaryMap(architectureDoc());
+        expect(map.size).toBeGreaterThan(8);
+        expect(misplacedInBoundaries(map, names)).toEqual([]);
+      });
+    });
+
+    RuleScenario("A map that leaves a package out and places another twice is told which", ({ Given, When, Then }) => {
+      let map = new Map<string, string[]>();
+      let wrong: string[] = [];
+      Given("a boundary map that places {string} under {string} and {string} under {string} and {string}", (_ctx: unknown, a: string, home: string, b: string, first: string, second: string) => {
+        map = boundaryMap(
+          `<!-- boundary-map:start -->\n| **${home}** | q | \`${a}\` | | |\n| **${first}** | q | \`${b}\` | | |\n| **${second}** | q | \`${b}\` | | |\n<!-- boundary-map:end -->`
+        );
+      });
+      When("it is checked against the packages {string}", (_ctx: unknown, packages: string) => {
+        wrong = misplacedInBoundaries(map, packages.split(",").map((s) => s.trim()));
+      });
+      Then("the check names {string} and {string}", (_ctx: unknown, a: string, b: string) => {
+        expect([...wrong].sort()).toEqual([a, b].sort());
+      });
+    });
+  });
+
+  Rule("Tutors shall name database tables and database functions only in the database adapters, so the schema can change in one boundary.", ({ RuleScenario }) => {
+    RuleScenario("No app, ring or other adapter names a table or a database function", ({ Given, Then }) => {
+      let files: string[] = [];
+      Given("the product modules that name a database table or function", () => {
+        files = modulesNamingTheDatabase();
+        // The scan is looking at something: the store adapter does name tables.
+        expect(files.some((file) => file.startsWith(DATABASE_HOMES[0]!))).toBe(true);
+      });
+      Then("each of them is in the Supabase store adapter, the Supabase realtime adapter or the published time library's source", () => {
+        expect(files.filter((file) => !DATABASE_HOMES.some((home) => file.startsWith(home)))).toEqual([]);
       });
     });
   });

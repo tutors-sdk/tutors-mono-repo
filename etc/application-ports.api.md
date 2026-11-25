@@ -30,6 +30,9 @@ export interface CourseCatalogue;
 // (from src/ports/assignment-source.ts)
 export interface CourseContentsOptions;
 
+// (from src/ports/course-facts.ts)
+export interface CourseFactsSource;
+
 // (from src/ports/course-source.ts)
 export interface CourseSource;
 
@@ -102,6 +105,9 @@ export type AppEvent = | { type: "learning"; learnerId: string; event: LearningE
 // (from src/realtime/index.ts)
 export type ChannelStatus = "SUBSCRIBED" | "CHANNEL_ERROR" | "TIMED_OUT" | "CLOSED";
 
+// (from src/ports/course-facts.ts)
+export type CourseFactsLookup = { readonly kind: "found"; readonly facts: CourseFacts };
+
 // (from src/ports/course-source.ts)
 export type CourseJson = Course;
 
@@ -152,6 +158,6 @@ export const COURSE_FETCH_TIMEOUT_MS;
 |------|-------|
 | class | 3 |
 | const | 1 |
-| interface | 28 |
-| type | 10 |
-| **Total** | **42** |
+| interface | 29 |
+| type | 11 |
+| **Total** | **44** |

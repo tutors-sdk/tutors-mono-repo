@@ -44,7 +44,7 @@ const AUTHORING = "^packages/jsr/(gen|tutors|tutors-lite|create)/";
 
 const vendorRules = VENDORS.map((vendor) => ({
   name: `vendor-only-in-its-adapter`,
-  comment: `${vendor.name} belongs to its driven adapter (${vendor.adapter}); everything else calls the application port. An app may compose it directly.`,
+  comment: `${vendor.name} belongs to its driven adapter (${vendor.adapter}); everything else calls the application port.`,
   severity: "error",
   from: { path: "^packages/", pathNot: `${vendor.adapter}|${AUTHORING}` },
   to: { path: vendor.match }
@@ -175,15 +175,28 @@ module.exports = {
       to: { dependencyTypes: ["local"], dependencyTypesNot: ["aliased"], pathNot: "^$1/" }
     },
     {
-      name: "no-database-client-in-browser-code",
+      name: "no-database-client-in-apps",
       comment:
-        "Browser code reaches a learner's data through the data API adapter (@tutors/data-api, the reader's /api routes), never through the database client, so the database behind it can change without touching a browser package. In packages the vendor rule already keeps the client inside the Supabase adapters; in an app only server-only code may import it, and type-only imports. See guides/SERVER-WRITES.md.",
+        "No app imports the database client. Browser code reaches a learner's data through the data API adapter (@tutors/data-api, the reader's /api routes); server code calls the Supabase adapter's server entry (@tutors/store-supabase/server), which builds the service client and holds every query. The database behind both can change without touching an app. See guides/SERVER-WRITES.md.",
       severity: "error",
-      from: {
-        path: "^apps/[^/]+/src/",
-        pathNot: "^apps/[^/]+/src/(lib/server/|hooks\\.server\\.ts$)|^apps/[^/]+/src/routes/.*\\+(server|page\\.server|layout\\.server)\\.ts$"
-      },
-      to: { path: "@supabase/supabase-js($|/)", dependencyTypesNot: ["type-only"] }
+      from: { path: "^apps/[^/]+/src/" },
+      to: { path: "@supabase/supabase-js($|/)" }
+    },
+    {
+      name: "ui-imports-no-driven-adapter",
+      comment:
+        "A driving adapter (state, UI, themes, i18n, a11y, tour, privacy) never imports a driven adapter: what the UI needs from a technology arrives through a port the app's composition root wired, so a component cannot tie itself to Supabase, HTTP or a file format.",
+      severity: "error",
+      from: { path: DRIVING },
+      to: { path: DRIVEN }
+    },
+    {
+      name: "test-doubles-only-in-composition",
+      comment:
+        "The in-memory adapters and port contracts (@tutors/application/testing) are the testing boundary's kit. Production code reaches them in one place only: the anonymous wiring (svelte-state's adapters.ts and an app's compose.ts), where a port with no backend behind it is served from memory.",
+      severity: "error",
+      from: { path: "^(apps|packages)/", pathNot: "^packages/application/src/testing/|^packages/adapters/driving/svelte-state/src/adapters\\.ts$|^apps/[^/]+/src/lib/compose\\.ts$" },
+      to: { path: "^packages/application/src/testing/" }
     },
     {
       name: "no-cross-package-cycle",
@@ -195,7 +208,7 @@ module.exports = {
     }
   ],
   options: {
-    // Dependencies are recorded as leaves, never walked: no-database-client-in-browser-code needs the edge.
+    // Dependencies are recorded as leaves, never walked: no-database-client-in-apps needs the edge.
     doNotFollow: { path: "node_modules" },
     exclude: {
       // Workspace build output and tests are out; node_modules stays in the graph (unfollowed) so a
