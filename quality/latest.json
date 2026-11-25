@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "b1e19afe5af58124dd398b08c957e265ded3e344",
+  "commit": "f48bc54d193861a52f886f402886d20f4f9b1639",
   "base": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
-  "generatedAt": "2026-11-24T14:47:55Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45404022199",
+  "generatedAt": "2026-11-25T13:42:39Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45614550616",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -31,7 +31,7 @@
     },
     {
       "name": "@tutors/course-rules",
-      "mutationScore": 98.86,
+      "mutationScore": 98.12,
       "changed": true,
       "path": "packages/jsr/course-rules"
     },
@@ -121,13 +121,13 @@
     },
     {
       "name": "@tutors/tutors-create",
-      "mutationScore": 89.37,
+      "mutationScore": 90.25,
       "changed": true,
       "path": "packages/jsr/create"
     },
     {
       "name": "@tutors/tutors-model-lib",
-      "mutationScore": 90.95,
+      "mutationScore": 91.08,
       "changed": false,
       "path": "packages/jsr/model"
     },
@@ -223,7 +223,7 @@
     },
     {
       "name": "packages/jsr/gen/src/utils/file-utils.ts",
-      "mutationScore": 67.72,
+      "mutationScore": 81.28,
       "changed": false,
       "path": "packages/jsr/gen/src/utils/file-utils.ts"
     },
