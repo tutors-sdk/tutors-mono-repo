@@ -1,3 +1,5 @@
+import { listsLogin } from "./login.ts";
+
 export type Role = "student" | "educator";
 
 export type Permission = "broadcast" | "quiz:manage" | "analytics:view" | "content:lock";
@@ -18,10 +20,9 @@ export function getPermissionsForRole(role: Role): readonly Permission[] {
 /** The enrolment a course declares: who teaches it and, for a private course, who may read it. */
 export type Enrolment = { educators?: string[]; whitelist?: string[] };
 
-/** True when `login` is one of the course's educators. */
+/** True when `login` is one of the course's educators, however the login was capitalised. */
 export function isEducatorOf(login: string | null | undefined, enrolment: Enrolment | undefined): boolean {
-  if (!login) return false;
-  return enrolment?.educators?.includes(login) ?? false;
+  return listsLogin(enrolment?.educators, login);
 }
 
 /** The role `login` has in a course: educator when enrolled as one, otherwise student. */

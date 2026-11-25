@@ -4,8 +4,9 @@ import { sessionUser } from "../../../../lib/server/api/http.ts";
 import { allowedOrigins, authorization } from "../../../../lib/server/api/access.ts";
 import { AuthorizationUnavailableError } from "../../../../lib/server/api/authorization.ts";
 import { serviceClient } from "../../../../lib/server/api/service-client.ts";
-import { pseudonymise, readTimeRows } from "../../../../lib/server/api/time-data.ts";
-import * as check from "../../../../lib/server/api/validate.ts";
+import { pseudonymise } from "@tutors/domain/learning";
+import { readTimeRows } from "@tutors/store-supabase/server";
+import * as check from "@tutors/domain/input";
 
 
 function corsHeaders(request: Request, url: URL): Record<string, string> | null {

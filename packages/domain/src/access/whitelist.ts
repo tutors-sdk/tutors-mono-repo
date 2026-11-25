@@ -1,4 +1,5 @@
 import type { Enrolment } from "./roles.ts";
+import { listsLogin } from "./login.ts";
 import { isEducatorOf } from "./roles.ts";
 
 /** A course's access rules, as far as the whitelist is concerned. */
@@ -14,7 +15,7 @@ export function whitelistAdmits(course: CourseAccess | null | undefined, login: 
   const enrollment = course.enrollment;
   if (!enrollment?.whitelist || enrollment.whitelist.length === 0) return true;
   if (!login) return false;
-  return isEducatorOf(login, enrollment) || enrollment.whitelist.includes(login);
+  return isEducatorOf(login, enrollment) || listsLogin(enrollment.whitelist, login);
 }
 
 /** True when a course requires a signed-in reader and nobody is signed in. */

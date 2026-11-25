@@ -1,3 +1,9 @@
+/**
+ * Untrusted input, parsed into domain values. Anything that arrives in a request (a course id, a
+ * learning object's route, a day, a display name) passes through one of these before any rule or
+ * store sees it: each returns the value in its canonical form, or null when it is not one. The
+ * rules are the domain's, so every server route and every future service refuses the same things.
+ */
 const COURSE_ID = /^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/;
 
 export function courseId(value: unknown): string | null {

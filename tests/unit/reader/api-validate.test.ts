@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import * as check from "../../../apps/reader/src/lib/server/api/validate.ts";
-import { AuthorizationUnavailableError, courseFactsFrom, courseJsonUrl, createAuthorization, listFromEnv } from "../../../apps/reader/src/lib/server/api/authorization.ts";
-import { whiteboardRoomId } from "../../../apps/reader/src/lib/server/api/store.ts";
+import * as check from "../../../packages/domain/src/input.ts";
+import { AuthorizationUnavailableError, createAuthorization, listFromEnv } from "../../../apps/reader/src/lib/server/api/authorization.ts";
+import { courseFactsFrom, courseJsonUrl, redirectTarget } from "../../../packages/domain/src/access/index.ts";
+import { whiteboardRoomId } from "../../../packages/adapters/driven/store-supabase/src/server/learner-store.ts";
 
 describe("reader /api input checks", () => {
   it("keeps personal whiteboard rooms outside the public shared namespace", () => {
@@ -140,7 +141,6 @@ describe("reader authorization", () => {
 
 describe("reader authorization: redirects", () => {
   it("follows a course site's redirect only to a public https host", async () => {
-    const { redirectTarget } = await import("../../../apps/reader/src/lib/server/api/authorization.ts");
     const from = "https://web-dev-101.netlify.app/tutors.json";
     expect(redirectTarget(from, "https://courses.example.org/tutors.json")).toBe("https://courses.example.org/tutors.json");
     expect(redirectTarget(from, "/elsewhere/tutors.json")).toBe("https://web-dev-101.netlify.app/elsewhere/tutors.json");

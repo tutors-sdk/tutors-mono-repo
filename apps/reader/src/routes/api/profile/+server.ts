@@ -1,6 +1,6 @@
 import { json, error, type RequestHandler } from "@sveltejs/kit";
 import { noContent, readJson, requireDb, requireUser } from "../../../lib/server/api/http.ts";
-import { getProfile, saveProfile } from "../../../lib/server/api/store.ts";
+import { getProfile, saveProfile } from "@tutors/store-supabase/server";
 
 const MAX_VISITS = 1000;
 

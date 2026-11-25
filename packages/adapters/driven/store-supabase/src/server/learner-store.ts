@@ -1,6 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { now } from "@tutors/clock";
-import type { SessionUser } from "./http.ts";
+import { serverNow as now } from "./clock.ts";
+
+/**
+ * What a signed-in learner writes, and what the server writes for them, in the Supabase tables
+ * (learning_records, calendar, tutors-connect-*, tutors_content_locks, whiteboard_scenes). Every
+ * function takes the service client and a login the route has already verified; none decides who
+ * may call it.
+ */
+
+/** The verified learner a row is written for. */
+export interface StoredUser {
+  login: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+}
 
 export class StoreError extends Error {}
 
@@ -106,7 +120,7 @@ export interface UserStatus {
   online_status: string | null;
 }
 
-export async function upsertUser(db: SupabaseClient, user: SessionUser, status: Partial<UserStatus>): Promise<void> {
+export async function upsertUser(db: SupabaseClient, user: StoredUser, status: Partial<UserStatus>): Promise<void> {
   const row: Record<string, string | null> = {
     github_id: user.login,
     avatar_url: user.image,

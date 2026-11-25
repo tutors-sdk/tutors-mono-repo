@@ -14,4 +14,5 @@ export * from "./clock.ts";
 export * from "./assignment-source.ts";
 export * from "./whiteboard.ts";
 export * from "./course-catalogue.ts";
+export * from "./course-facts.ts";
 export type { AdapterChannel, ChannelStatus, JoinOptions, RealtimeAdapter, Topic } from "../realtime/index.ts";

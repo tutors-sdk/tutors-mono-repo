@@ -1,8 +1,8 @@
 import { error, type RequestHandler } from "@sveltejs/kit";
 import { now } from "@tutors/clock";
 import { noContent, readJson, requireDb, requireUser, valid } from "../../../lib/server/api/http.ts";
-import { recordPageLoad, recordTick } from "../../../lib/server/api/store.ts";
-import * as check from "../../../lib/server/api/validate.ts";
+import { recordPageLoad, recordTick } from "@tutors/store-supabase/server";
+import * as check from "@tutors/domain/input";
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   const user = await requireUser(locals);

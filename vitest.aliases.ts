@@ -23,6 +23,7 @@ const ventoStub = resolve(root, "tests/support/vento-stub.ts");
 
 export const workspaceAliases: Record<string, string> = {
   // Rings. Subpaths come before their package so the longer alias matches first.
+  "@tutors/domain/input": resolve(root, "packages/domain/src/input.ts"),
   "@tutors/domain/course/address": resolve(root, "packages/domain/src/course/address.ts"),
   "@tutors/domain/course/vocabulary": resolve(root, "packages/domain/src/course/vocabulary.ts"),
   "@tutors/domain/course": resolve(root, "packages/domain/src/course/index.ts"),
@@ -45,6 +46,7 @@ export const workspaceAliases: Record<string, string> = {
   "@tutors/tutors-time-lib": resolve(root, "packages/jsr/time/src/index.ts"),
   "@tutors/tutors-types": resolve(root, "packages/jsr/types/src/index.ts"),
   // Driven adapters the apps compose; tests reach them for their recording seams.
+  "@tutors/store-supabase/server": resolve(root, "packages/adapters/driven/store-supabase/src/server/index.ts"),
   "@tutors/store-supabase": resolve(root, "packages/adapters/driven/store-supabase/src/index.ts"),
   "@tutors/realtime-supabase/live-activity.server": resolve(root, "packages/adapters/driven/realtime-supabase/src/live-activity.server.ts"),
   "@tutors/realtime-supabase": resolve(root, "packages/adapters/driven/realtime-supabase/src/index.ts"),

@@ -2,11 +2,14 @@
   "name": "@tutors/course-http",
   "version": "0.1.0",
   "license": "MIT",
-  "description": "Reads published courses over HTTP: the CourseSource adapter",
+  "description": "Reads published courses over HTTP: the CourseSource and CourseFactsSource adapters",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "dependencies": {
     "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
     "@tutors/logger": "workspace:*"
   }
 }

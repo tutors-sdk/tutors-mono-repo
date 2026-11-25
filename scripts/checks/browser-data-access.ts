@@ -24,8 +24,8 @@ export const BROWSER_TABLES: Readonly<Record<string, readonly string[]>> = {
 /** Database functions browser code may call: aggregates and public Live watcher registration. */
 export const BROWSER_RPCS: readonly string[] = ["get_student_count", "get_error_counts", "realtime_watch"];
 
-/** Server-only files: SvelteKit never bundles them for the browser. */
-const SERVER_ONLY = /\.server\.ts$|(^|\/)(lib\/server\/|hooks\.server\.ts$|\+server\.ts$|\+page\.server\.ts$|\+layout\.server\.ts$)/;
+/** Server-only files: SvelteKit never bundles them for the browser. A package keeps its own under src/server (the Supabase adapter's service-key stores). */
+const SERVER_ONLY = /\.server\.ts$|(^|\/)(lib\/server\/|src\/server\/|hooks\.server\.ts$|\+server\.ts$|\+page\.server\.ts$|\+layout\.server\.ts$)/;
 
 export interface DataAccessFinding {
   file: string;

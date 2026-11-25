@@ -13,6 +13,7 @@
     "./presence": "./src/presence/index.ts",
     "./access": "./src/access/index.ts",
     "./quiz": "./src/quiz/index.ts",
-    "./catalogue": "./src/catalogue/index.ts"
+    "./catalogue": "./src/catalogue/index.ts",
+    "./input": "./src/input.ts"
   }
 }

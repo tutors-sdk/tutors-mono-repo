@@ -7,6 +7,7 @@
  */
 import { error } from "@sveltejs/kit";
 import { z } from "zod";
+import { isEducatorOf } from "@tutors/domain/access";
 import log from "@tutors/logger";
 
 // Student lists are not needed to establish educator permissions; the export route validates them.
@@ -44,7 +45,7 @@ export async function requireEducator({ locals, courseId, fetch, action }: Educa
   const parsed = z.object({ enrollment: enrollmentSchema.optional() }).safeParse(published);
   if (!parsed.success) error(502, "The published enrollment is invalid.");
   const enrollment = parsed.data.enrollment;
-  if (!enrollment?.educators.some((login) => login.toLowerCase() === actor.login.toLowerCase())) {
+  if (!isEducatorOf(actor.login, enrollment)) {
     error(403, `Only this course's educators can ${action}.`);
   }
   return { actor, enrollment };

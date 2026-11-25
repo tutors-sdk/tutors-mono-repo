@@ -650,6 +650,9 @@ importers:
       '@tutors/application':
         specifier: workspace:*
         version: link:../../../application
+      '@tutors/domain':
+        specifier: workspace:*
+        version: link:../../../domain
       '@tutors/logger':
         specifier: workspace:*
         version: link:../../../platform/logger

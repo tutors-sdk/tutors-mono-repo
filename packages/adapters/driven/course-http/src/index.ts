@@ -65,3 +65,5 @@ export function httpCourseSource(fetchFn: FetchLike = (url) => globalThis.fetch(
     }
   };
 }
+
+export { publishedCourseFacts, type PublishedFactsOptions } from "./published-facts.ts";

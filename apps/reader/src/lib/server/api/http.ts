@@ -1,13 +1,8 @@
 import { error, type RequestEvent } from "@sveltejs/kit";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ServiceDb, StoredUser } from "@tutors/store-supabase/server";
 import { serviceClient } from "./service-client.ts";
 
-export interface SessionUser {
-  login: string;
-  name: string | null;
-  email: string | null;
-  image: string | null;
-}
+export type SessionUser = StoredUser;
 
 type Locals = RequestEvent["locals"];
 
@@ -21,7 +16,7 @@ export async function requireUser(locals: Locals): Promise<SessionUser> {
   return user;
 }
 
-export function requireDb(): SupabaseClient {
+export function requireDb(): ServiceDb {
   const db = serviceClient();
   if (!db) error(503, "Saving is not configured on this server");
   return db;

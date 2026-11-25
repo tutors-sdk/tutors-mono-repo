@@ -6,7 +6,7 @@ import { liveService } from "../../../packages/adapters/driving/svelte-state/src
 import { presenceService } from "../../../packages/adapters/driving/svelte-state/src/community/services/presence.svelte.ts";
 import { tutorsConnectService } from "../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
 import { configureAdapters } from "../../../packages/adapters/driving/svelte-state/src/adapters.ts";
-import { recordingFunctions } from "../../../apps/reader/src/lib/server/api/store.ts";
+import { recordingFunctions } from "../../../packages/adapters/driven/store-supabase/src/server/learner-store.ts";
 import { composeReader } from "../../../apps/reader/src/lib/compose.ts";
 import { currentCourse, currentLo, tutorsId } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 import { materialiseCourse } from "../../support/arbitraries/course-tree.ts";

@@ -13,3 +13,4 @@ export * from "./events.ts";
 export * from "./rows.ts";
 export * from "./local-day.ts";
 export * from "./learning-event.ts";
+export * from "./time-rows.ts";

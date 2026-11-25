@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { recordPageLoad, recordTick, recordingFunctions } from "../../../apps/reader/src/lib/server/api/store.ts";
+import { recordPageLoad, recordTick, recordingFunctions } from "../../../packages/adapters/driven/store-supabase/src/server/learner-store.ts";
 
 beforeEach(() => { recordingFunctions.missing = false; });
 

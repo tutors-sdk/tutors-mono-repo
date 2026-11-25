@@ -2,8 +2,8 @@ import { json, error, type RequestHandler } from "@sveltejs/kit";
 import type { MyStatus } from "@tutors/data-api";
 import { COURSE_SENTIMENT_IDS } from "@tutors/tutors-model-lib";
 import { noContent, readJson, requireDb, requireUser } from "../../../lib/server/api/http.ts";
-import { getUserStatus, updateUserStatus, upsertUser, type UserStatus } from "../../../lib/server/api/store.ts";
-import * as check from "../../../lib/server/api/validate.ts";
+import { getUserStatus, updateUserStatus, upsertUser, type UserStatus } from "@tutors/store-supabase/server";
+import * as check from "@tutors/domain/input";
 
 function statusFrom(body: Record<string, unknown>): Partial<UserStatus> {
   const status: Partial<UserStatus> = {};

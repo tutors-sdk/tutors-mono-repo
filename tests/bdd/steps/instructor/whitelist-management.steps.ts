@@ -14,6 +14,7 @@ import { goto } from "$app/navigation";
 import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
 import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
+import { createAuthorization } from "../../../../apps/reader/src/lib/server/api/authorization.ts";
 import { dataApiProfile } from "../../../../packages/adapters/driven/data-api/src/index.ts";
 
 const feature = await loadFeature("tests/bdd/features/instructor/whitelist-management.feature");
@@ -84,6 +85,35 @@ describeFeature(feature, ({ Rule }) => {
       And("{string} is signed in", signedIn);
       When("the course is opened", openCourse);
       Then("the system shall grant access regardless of whitelist status", granted);
+    });
+  });
+
+  Rule("The reader shall treat logins that differ only in capital letters as the same account when it checks a course's whitelist, its educators and the deployment's administrators.", ({ RuleScenario }) => {
+    RuleScenario("A student whose login is capitalised differently on the whitelist is admitted", ({ Given, And, When, Then }) => {
+      Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+      And("{string} is signed in", signedIn);
+      When("the course is opened", openCourse);
+      Then("the system shall grant access to the course content", granted);
+    });
+
+    RuleScenario("An educator whose login is capitalised differently in the enrollment is an educator", ({ Given, And, When, Then }) => {
+      // The server's decision, through the reader's own authorisation over a course host that answers `educators`.
+      const serverFor = (educators: string, admins: string) =>
+        createAuthorization({
+          fetch: (async () => new Response(JSON.stringify({ enrollment: { educators: list(educators) } }))) as unknown as typeof fetch,
+          admins: list(admins).filter(Boolean)
+        });
+      Given("the course {string} requires authentication, with the whitelist {string} and the educators {string}", restrictedCourse);
+      And("{string} is signed in", signedIn);
+      When("the course is opened", openCourse);
+      Then("the system shall grant access regardless of whitelist status", granted);
+      And("the reader's server shall let {string} lock content of a course whose educators are {string}", async (_ctx, login: string, educators: string) => {
+        expect(await serverFor(educators, "").can({ login }, "content:lock", { kind: "course", courseId: "secure-101" })).toBe(true);
+        expect(await serverFor(educators, "").can({ login: "mallory" }, "content:lock", { kind: "course", courseId: "secure-101" })).toBe(false);
+      });
+      And("the reader's server shall let {string} lock content of any course when the administrators are {string}", async (_ctx, login: string, admins: string) => {
+        expect(await serverFor("", admins).can({ login }, "content:lock", { kind: "course", courseId: "any-course" })).toBe(true);
+      });
     });
   });
 
