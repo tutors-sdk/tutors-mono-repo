@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -19,4 +19,26 @@ it("diskCourse lists, reads, writes into new folders, moves, and never moves ont
   expect(await fs.exists("Week 3")).toBe(false);
   await expect(fs.move("unit-1/topic-week-3/topic.md", "course.md")).rejects.toThrow("course.md already exists");
   expect(readFileSync(join(root, "course.md"), "utf-8")).toBe("# C");
+});
+
+// The planners refuse a path that climbs out of the course before anything is planned. This is the
+// backstop under them, so a caller that plans its own operations still cannot reach a file beside the
+// course: every path a port is given resolves inside the folder it was opened on, or it throws.
+it("diskCourse reaches nothing outside the course folder", async () => {
+  const parent = mkdtempSync(join(tmpdir(), "tutors-course-fs-out-"));
+  const root = join(parent, "web-dev");
+  mkdirSync(root);
+  writeFileSync(join(parent, "secret.txt"), "SECRET");
+  const fs = diskCourse(root);
+  for (const path of ["../secret.txt", "topic-01/../../secret.txt", join(parent, "secret.txt")]) {
+    await expect(fs.read(path)).rejects.toThrow("outside the course folder");
+    await expect(fs.exists(path)).rejects.toThrow("outside the course folder");
+    await expect(fs.write(path, new TextEncoder().encode("x"))).rejects.toThrow("outside the course folder");
+    await expect(fs.move(path, "stolen.txt")).rejects.toThrow("outside the course folder");
+  }
+  expect(readFileSync(join(parent, "secret.txt"), "utf-8")).toBe("SECRET");
+  // The course folder itself, and anything in it, is still reachable.
+  expect(await fs.exists("")).toBe(true);
+  await fs.write("topic-01/topic.md", new TextEncoder().encode("# W"));
+  expect(await fs.exists("topic-01/topic.md")).toBe(true);
 });

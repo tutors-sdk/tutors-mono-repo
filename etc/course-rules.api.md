@@ -10,6 +10,9 @@
 // --- types ---
 
 // (from src/mod.ts)
+export type { ApplyOptions };
+
+// (from src/mod.ts)
 export { checkQuizText };
 
 // (from src/mod.ts)
@@ -94,7 +97,7 @@ export class MemoryFileSystem implements FileSystemPort;
 // --- functions ---
 
 // (from src/fix.ts)
-export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[]) : Promise<FixOutcome>;
+export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[], options: ApplyOptions = {}) : Promise<FixOutcome>;
 
 // (from src/tree.ts)
 export async function buildCourseTree(fs: FileSystemPort, root) : Promise<CourseTree>;
@@ -195,6 +198,9 @@ export const messages;
 // (from src/templates.ts)
 export const netlifyToml;
 
+// (from src/fix.ts)
+export const NOT_ATTEMPTED;
+
 // (from src/finding.ts)
 export const ruleCatalogue: readonly RuleInfo[];
 
@@ -208,7 +214,7 @@ export const rulesVersion;
 | Kind | Count |
 |------|-------|
 | class | 1 |
-| const | 7 |
+| const | 8 |
 | function | 28 |
-| type | 25 |
-| **Total** | **61** |
+| type | 26 |
+| **Total** | **63** |

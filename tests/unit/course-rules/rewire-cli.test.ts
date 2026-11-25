@@ -87,6 +87,33 @@ describe("tutors rewire", () => {
     expect((await rewire(["retitle", "topic-01", "New", "--course", "web"], writes)).out).toBe("skipped topic-01/topic.md: read-only\n");
   });
 
+  // Removing a hidden week is a move and a write: the week goes to the bin, and its id comes out of the
+  // ignore list. When the move is refused the week is still in the course, so the write must not happen
+  // either, or a week the lecturer hid would be shown to students by a command that reported failure.
+  it("leaves a hidden week hidden when the bin refuses it, and says the change was stopped", async () => {
+    const fs = course();
+    await fs.write("properties.yaml", new TextEncoder().encode("credits: Leigh\nignore:\n  - topic-02\n"));
+    const stubborn: FileSystemPort = {
+      list: (d) => fs.list(d),
+      read: (p) => fs.read(p),
+      exists: (p) => fs.exists(p),
+      write: (p, b) => fs.write(p, b),
+      move: () => Promise.reject(new Error("locked"))
+    };
+    const run = await rewire(["remove", "topic-02", "--course", "web"], stubborn);
+    expect(run.status).toBe(1);
+    expect(run.out).toBe(
+      `skipped topic-02 to ${BIN_FOLDER}/topic-02: locked\nskipped properties.yaml: an earlier change was not made\n` +
+        "An earlier change could not be made, so the rest of this change was stopped. The course is as it was, apart from the changes listed above.\n"
+    );
+    expect(await text(fs, "properties.yaml")).toBe("credits: Leigh\nignore:\n  - topic-02\n");
+  });
+
+  it("refuses to remove a path that leads out of the course", async () => {
+    const run = await rewire(["remove", "../secret.txt", "--course", "web"]);
+    expect(run).toMatchObject({ status: 1, out: "", err: 'There is nothing called "../secret.txt" in the course to change.\n' });
+  });
+
   it("prints the usage and exits 3 for an action it doesn't know or the wrong number of words", async () => {
     for (const args of [[], ["rename", "a"], ["move", "a"], ["move", "a", "b", "c"], ["reorder", "topic-01"], ["hide", "a", "--course", ""], ["hide", "a", "--course"]]) {
       const run = await rewire(args);

@@ -3,6 +3,7 @@ import {
   applyFixes,
   BIN_FOLDER,
   MemoryFileSystem,
+  messages,
   planBin,
   planHide,
   planMove,
@@ -156,6 +157,31 @@ describe("tutors validate --plan", () => {
 const refused = (reason: string) => ({ ok: false, reason });
 const nothing = { ok: true, ops: [], notes: [] };
 
+describe("applying a plan", () => {
+  /** A port whose move always refuses, standing for a locked folder or one the disk would not rename into. */
+  const refusingMove = (fs: MemoryFileSystem): MemoryFileSystem =>
+    Object.assign(Object.create(Object.getPrototypeOf(fs) as object) as MemoryFileSystem, fs, { move: () => Promise.reject(new Error("locked")) });
+
+  it("stops at the first operation it could not apply when asked to", async () => {
+    const fs = refusingMove(course({ "properties.yaml": "ignore:\n  - topic-03\n" }));
+    const plan = await planBin(fs, "topic-03");
+    if (!plan.ok) throw new Error(plan.reason);
+    const outcome = await applyFixes(fs, "", plan.ops, { stopOnSkip: true });
+    expect(outcome.applied).toEqual([]);
+    expect(outcome.skipped.map(({ reason }) => reason)).toEqual(["locked", "an earlier change was not made"]);
+  });
+
+  // The fixes of --fix stand alone, so one that is refused must not stop the others.
+  it("goes on past an operation it could not apply by default", async () => {
+    const fs = refusingMove(course({ "properties.yaml": "ignore:\n  - topic-03\n" }));
+    const plan = await planBin(fs, "topic-03");
+    if (!plan.ok) throw new Error(plan.reason);
+    const outcome = await applyFixes(fs, "", plan.ops);
+    expect(outcome.applied).toEqual([plan.ops[1]]);
+    expect(outcome.skipped.map(({ reason }) => reason)).toEqual(["locked"]);
+  });
+});
+
 describe("rewiring names", () => {
   it("keeps the name after the number, whatever way the number was written", async () => {
     const fs = course({ "topic-01/talk3-x/talk.md": "# A\n", "topic-01/talkintro/talk.md": "# B\n", "topic-01/talk-intro-2/talk.md": "# C\n" });
@@ -243,16 +269,24 @@ describe("planMove refusals and edges", () => {
     expect(await planMove(fs(), "topic-02", "")).toEqual(nothing);
   });
 
-  it("keeps a hidden week hidden when it moves into a unit, and only then", async () => {
+  // The generator reads the ignore list against course.los, the top level only, so an id naming a folder
+  // inside a unit hides nothing. Rewriting the id to the folder's new name would hide whichever top-level
+  // item is called that instead: here the course's own topic-01, which nobody hid.
+  it("takes a hidden week out of the ignore list when it moves into a unit, and says it will be shown", async () => {
     const hidden = course({ "properties.yaml": "ignore:\n  - topic-03\n", "unit-1/topic.md": "# U\n" });
     expect(await planMove(hidden, "topic-03", "unit-1")).toEqual({
       ok: true,
       ops: [
         { op: "move", from: "topic-03", to: "unit-1/topic-01" },
-        { op: "write", path: "properties.yaml", content: "ignore:\n  - topic-01\n", replace: true }
+        { op: "write", path: "properties.yaml", content: "", replace: true }
       ],
-      notes: []
+      notes: [messages.rewireShownAfterMove("topic-03")]
     });
+  });
+
+  it("leaves the ignore list alone when what moves was not hidden, or was not at the top", async () => {
+    const other = course({ "properties.yaml": "ignore:\n  - topic-01\n", "unit-1/topic.md": "# U\n" });
+    expect(await planMove(other, "topic-03", "unit-1")).toEqual({ ok: true, ops: [{ op: "move", from: "topic-03", to: "unit-1/topic-01" }], notes: [] });
     const deep = course({ "properties.yaml": "ignore:\n  - talk-01\n", "topic-01/talk-01/talk.md": "# A\n" });
     expect(await planMove(deep, "topic-01/talk-01", "topic-02")).toEqual({ ok: true, ops: [{ op: "move", from: "topic-01/talk-01", to: "topic-02/talk-01" }], notes: [] });
   });
@@ -335,6 +369,16 @@ describe("planBin and planRestore edges", () => {
     expect(await planBin(fs, BIN_FOLDER)).toEqual(refused(`There is nothing called "${BIN_FOLDER}" in the course to change.`));
     expect(await planBin(fs, `${BIN_FOLDER}/old`)).toEqual(refused(`There is nothing called "${BIN_FOLDER}/old" in the course to change.`));
     expect(await planBin(fs, "topic-01/nope.pdf")).toEqual(refused('There is nothing called "topic-01/nope.pdf" in the course to change.'));
+  });
+
+  // planBin is the one planner that asks the port whether a path is there rather than looking it up in
+  // the course tree, so it is the one that could be handed a path leading out of the course folder. A
+  // port that joins onto the course root would resolve these and bin a file that is not in the course.
+  it("refuses a path that leads out of the course, whatever is there", async () => {
+    const fs = course({ "../secret.txt": "SECRET", "..\\windows.txt": "SECRET", "topic-01/../../escape.md": "# E\n" });
+    for (const path of ["../secret.txt", "..\\windows.txt", "topic-01/../../escape.md", "/etc/passwd", "\\\\server\\share", "C:/Windows/system.ini"]) {
+      expect(await planBin(fs, path)).toEqual(refused(`There is nothing called "${path}" in the course to change.`));
+    }
   });
 
   it("numbers a name the bin already has before a file's extension, never a folder's dot", async () => {

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
@@ -19,9 +19,15 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
   let out: string;
   let err: string;
   let status: number;
+  /** A folder a scenario made read-only, put back so the temporary course can be removed after it. */
+  let locked: string | undefined;
   const temps: string[] = [];
 
-  AfterEachScenario(() => temps.splice(0).forEach((t) => rmSync(t, { recursive: true, force: true })));
+  AfterEachScenario(() => {
+    if (locked !== undefined) chmodSync(locked, 0o755);
+    locked = undefined;
+    temps.splice(0).forEach((t) => rmSync(t, { recursive: true, force: true }));
+  });
 
   const put = (path: string, text: string) => {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
@@ -193,6 +199,59 @@ describeFeature(feature, ({ Rule, AfterEachScenario }) => {
       });
     }
   );
+
+  Rule(
+    "If an instructor asks tutors rewire to remove a path that is not inside the course folder, then tutors shall change nothing and say there is nothing of that name in the course.",
+    ({ RuleScenario }) => {
+      RuleScenario("Removing a file beside the course", ({ Given, When, Then, And }) => {
+        Given("a course of two topics, and a file {string} in the folder holding the course", (_ctx, name: string) => {
+          twoTopics();
+          writeFileSync(join(dir, "..", name), "SECRET\n");
+        });
+        When("the instructor runs tutors rewire {string}", rewire);
+        Then("the error output shall include {string}", errorSays);
+        And("the exit status shall be {int}", exit);
+        And("the file {string} beside the course shall still be there", (_ctx, name: string) => expect(existsSync(join(dir, "..", name))).toBe(true));
+      });
+    }
+  );
+
+  Rule(
+    "When an instructor moves a hidden topic or unit off the top of the course with tutors rewire, tutors shall take it out of the ignore list and say that students can see it again.",
+    ({ RuleScenario }) => {
+      RuleScenario("A hidden week moved into a unit", ({ Given, When, Then, And }) => {
+        Given("a course of two topics and a unit {string}, whose topic {string} is hidden", (_ctx, unit: string, hidden: string) => {
+          twoTopics();
+          put(`${unit}/unit.md`, "# A unit\n");
+          put("properties.yaml", `credits: Leigh\nignore:\n  - ${hidden}\n`);
+        });
+        When("the instructor runs tutors rewire {string}", rewire);
+        Then("properties.yaml shall list nothing under ignore", () => {
+          expect(yaml.load(readFileSync(join(dir, "properties.yaml"), "utf8"))).toEqual({ credits: "Leigh" });
+        });
+        And("the output shall include {string}", (_ctx, text: string) => expect(out).toContain(text));
+        And("the generator shall mark no item hidden", () => expect(built().filter((lo) => lo.hide === true)).toEqual([]));
+      });
+    }
+  );
+
+  Rule("If an operation of a rewiring plan is not applied, then tutors shall attempt none of the operations after it.", ({ RuleScenario }) => {
+    RuleScenario("A removal the bin refuses", ({ Given, When, Then, And }) => {
+      Given("a course of two topics whose topic {string} is hidden, and a bin that cannot be written to", (_ctx, hidden: string) => {
+        twoTopics();
+        put("properties.yaml", `credits: Leigh\nignore:\n  - ${hidden}\n`);
+        mkdirSync(join(dir, ".tutors-bin"), { recursive: true });
+        locked = join(dir, ".tutors-bin");
+        chmodSync(locked, 0o555);
+      });
+      When("the instructor runs tutors rewire {string}", rewire);
+      Then("properties.yaml shall list {string} under ignore", (_ctx, id: string) => {
+        expect(yaml.load(readFileSync(join(dir, "properties.yaml"), "utf8"))).toEqual({ credits: "Leigh", ignore: [id] });
+      });
+      And("the generator shall mark {string} hidden", (_ctx, id: string) => expect(built().find((lo) => lo.id === id)?.hide).toBe(true));
+      And("the exit status shall be {int}", exit);
+    });
+  });
 
   Rule("When an instructor runs tutors rewire with --plan, tutors shall print the plan as JSON and change nothing.", ({ RuleScenario }) => {
     RuleScenario("Planning a swap", ({ Given, When, Then, And }) => {

@@ -1,5 +1,7 @@
 import {
   applyFixes,
+  messages,
+  NOT_ATTEMPTED,
   planBin,
   planHide,
   planMove,
@@ -80,11 +82,18 @@ export async function runRewire(args: readonly string[], io: RewireIo): Promise<
     io.out(`${JSON.stringify({ ops: plan.ops, notes: plan.notes }, null, 2)}\n`);
     return 0;
   }
-  const outcome = await applyFixes(course, "", plan.ops);
+  // A rewiring plan's operations lean on each other, so nothing after a refused one is attempted.
+  const outcome = await applyFixes(course, "", plan.ops, { stopOnSkip: true });
+  // The notes describe the change that was asked for, so they are worth reading only once it has been made.
+  const ending = outcome.skipped.some(({ reason }) => reason === NOT_ATTEMPTED)
+    ? [messages.rewireStopped()]
+    : outcome.skipped.length === 0
+      ? plan.notes
+      : [];
   const lines = [
     ...collapse(outcome.applied).map((op) => (op.op === "move" ? `moved   ${op.from} to ${op.to}` : `wrote   ${op.path}`)),
     ...outcome.skipped.map(({ op, reason }) => `skipped ${op.op === "move" ? `${op.from} to ${op.to}` : op.path}: ${reason}`),
-    ...plan.notes
+    ...ending
   ];
   io.out(lines.length === 0 ? "Nothing to change.\n" : `${lines.join("\n")}\n`);
   return outcome.skipped.length === 0 ? 0 : 1;

@@ -58,6 +58,17 @@ function nextFreeName(name: string, taken: readonly string[]): string {
   return numberedName(name, n);
 }
 
+/**
+ * Whether a path names something the course could hold. A planner reaches most items through the course
+ * tree, which only ever holds what is in the folder, but one that asks the port directly (planBin, for a
+ * single file) would otherwise accept a path that climbs out of the course, starts at the root of the
+ * disk or names a Windows drive, and plan a move of a file that is not part of the course at all.
+ */
+function insideCourse(path: string): boolean {
+  if (path.startsWith("/") || path.startsWith("\\") || /^[A-Za-z]:/.test(path)) return false;
+  return !path.split(/[/\\]/).includes("..");
+}
+
 function find(tree: CourseTree, path: string): CourseNode | undefined {
   if (path === "") return tree;
   let node: CourseNode | undefined = tree;
@@ -111,22 +122,25 @@ function withIgnore(text: string, ids: readonly string[]): string {
   return all.length === 0 ? "" : `${all.join("\n")}\n`;
 }
 
-/** The write that keeps properties.yaml's ignore list pointing at top-level folders after they are renamed. */
-async function ignoreFollows(fs: FileSystemPort, renames: ReadonlyMap<string, string>): Promise<FileOp[]> {
+/** The write that puts a new ignore list in properties.yaml, or nothing when the list comes back unchanged. */
+async function ignoreWrite(fs: FileSystemPort, next: (ids: readonly string[]) => string[]): Promise<FileOp[]> {
   const { text, ids } = await ignoreList(fs);
-  if (!ids.some((id) => (renames.get(id) ?? id) !== id)) return [];
-  return [
-    {
-      op: "write",
-      path: "properties.yaml",
-      content: withIgnore(
-        text,
-        ids.map((id) => renames.get(id) ?? id)
-      ),
-      replace: true
-    }
-  ];
+  const wanted = next(ids);
+  if (wanted.length === ids.length && wanted.every((id, i) => id === ids[i])) return [];
+  return [{ op: "write", path: "properties.yaml", content: withIgnore(text, wanted), replace: true }];
 }
+
+/** The write that keeps properties.yaml's ignore list pointing at top-level folders after they are renamed. */
+const ignoreFollows = (fs: FileSystemPort, renames: ReadonlyMap<string, string>): Promise<FileOp[]> =>
+  ignoreWrite(fs, (ids) => ids.map((id) => renames.get(id) ?? id));
+
+/**
+ * The write that takes a folder out of the ignore list once it is no longer at the top of the course.
+ * The generator reads the list against the course's own items only (the ignore pass over course.los in
+ * course-builder), so an id naming a folder inside a unit or topic hides nothing; and an id rewritten to
+ * the folder's new name would hide whichever top-level item is called that instead.
+ */
+const ignoreDrops = (fs: FileSystemPort, name: string): Promise<FileOp[]> => ignoreWrite(fs, (ids) => ids.filter((id) => id !== name));
 
 /** Renames among siblings, through temporary names, so swapping two names never meets a folder already there. */
 function renameAll(parent: string, renames: ReadonlyMap<string, string>): FileOp[] {
@@ -179,8 +193,14 @@ export async function planMove(fs: FileSystemPort, item: string, into: string): 
     target.children.map((child) => child.name)
   );
   const ops: FileOp[] = [{ op: "move", from: item, to: joinPath(into, name) }];
-  if (parentOf(item) === "") ops.push(...(await ignoreFollows(fs, new Map([[node.name, name]]))));
-  return { ok: true, ops, notes: await linkNotes(fs, tree, [node.name]) };
+  const notes = await linkNotes(fs, tree, [node.name]);
+  // A top-level item can only be moved below the top: a move to the top it already sits at returned above.
+  if (parentOf(item) === "") {
+    const drop = await ignoreDrops(fs, node.name);
+    ops.push(...drop);
+    if (drop.length > 0) notes.push(messages.rewireShownAfterMove(node.name));
+  }
+  return { ok: true, ops, notes };
 }
 
 /** Gives an item a new title by rewriting only the title line of the page Tutors takes its title from. */
@@ -220,7 +240,8 @@ export async function planBin(fs: FileSystemPort, item: string): Promise<RewireP
   const tree = await buildCourseTree(fs);
   const node = find(tree, item);
   // A single file (a PDF in a talk, say) goes to the bin as well as a whole folder.
-  if (item === "" || item === BIN_FOLDER || item.startsWith(`${BIN_FOLDER}/`) || (node === undefined && !(await fs.exists(item)))) return refuse(messages.rewireMissing(item));
+  if (item === "" || !insideCourse(item) || item === BIN_FOLDER || item.startsWith(`${BIN_FOLDER}/`) || (node === undefined && !(await fs.exists(item))))
+    return refuse(messages.rewireMissing(item));
   const own = item.slice(item.lastIndexOf("/") + 1);
   const taken = (await fs.exists(BIN_FOLDER)) ? (await fs.list(BIN_FOLDER)).map((entry) => entry.name) : [];
   const dot = node === undefined ? own.lastIndexOf(".") : -1;
@@ -228,19 +249,7 @@ export async function planBin(fs: FileSystemPort, item: string): Promise<RewireP
   let name = own;
   for (let n = 2; taken.includes(name); n++) name = `${stem}-${n}${extension}`;
   const ops: FileOp[] = [{ op: "move", from: item, to: joinPath(BIN_FOLDER, name) }];
-  if (!item.includes("/")) {
-    const { text, ids } = await ignoreList(fs);
-    if (ids.includes(item))
-      ops.push({
-        op: "write",
-        path: "properties.yaml",
-        content: withIgnore(
-          text,
-          ids.filter((id) => id !== item)
-        ),
-        replace: true
-      });
-  }
+  if (!item.includes("/")) ops.push(...(await ignoreDrops(fs, item)));
   return { ok: true, ops, notes: await linkNotes(fs, tree, [own]) };
 }
 

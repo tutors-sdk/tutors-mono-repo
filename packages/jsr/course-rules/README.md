@@ -83,7 +83,9 @@ Exit 3 means the folder could not be read or the arguments were wrong.
 - **Hide** adds a top-level topic or unit to `properties.yaml`'s `ignore` list. Tutors can't hide an item inside a topic, so that is refused.
 - **Remove** moves the item into `.tutors-bin/` in the course. The generator never reads a folder that starts with a dot, so the item is not published, and nothing is deleted. **Restore** puts it back.
 
-A write that replaces a file is marked `replace: true`. Renaming a top-level folder keeps the `ignore` list pointing at it, and a page that links to a renamed folder by name is named in `notes`. From a terminal:
+A write that replaces a file is marked `replace: true`. Renaming a top-level folder keeps the `ignore` list pointing at it, and a page that links to a renamed folder by name is named in `notes`.
+
+The generator applies `ignore` to the course's own items only, so an id naming a folder inside a unit or topic hides nothing. Moving a hidden topic or unit off the top of the course therefore takes it out of the list and says so in `notes`, rather than leaving behind an id that would hide whichever top-level item has that name. A plan's operations lean on each other, so a shell applying one passes `{ stopOnSkip: true }` to `applyFixes` and nothing after a refused operation is attempted; the fixes of `--fix` stand alone and keep the default. A planner acts only on paths inside the course: one that climbs out of the folder is refused, and `diskCourse` rejects one as a backstop. From a terminal:
 
 ```sh
 deno run -A jsr:@tutors/tutors-create rewire reorder topic-01 talk-02-css talk-01-html [--course folder] [--plan]
@@ -94,7 +96,7 @@ deno run -A jsr:@tutors/tutors-create rewire remove topic-01/talk-01-html
 deno run -A jsr:@tutors/tutors-create rewire restore talk-01-html topic-01
 ```
 
-These are Rules 0745-0753 in `tests/bdd/features/instructor/course-rewiring.feature`.
+These are Rules 0745-0753 and 0782-0784 in `tests/bdd/features/instructor/course-rewiring.feature`.
 
 ## Tutors Validator
 

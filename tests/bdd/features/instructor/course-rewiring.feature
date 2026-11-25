@@ -90,6 +90,36 @@ Feature: Rewiring a course for compliance
       When the instructor then runs tutors rewire "restore talk-01-html topic-01"
       Then the first topic shall hold talks "talk-01-html" and "talk-02-css"
 
+  @rule-0782 @ears-unwanted
+  Rule: If an instructor asks tutors rewire to remove a path that is not inside the course folder, then tutors shall change nothing and say there is nothing of that name in the course.
+
+    Scenario: Removing a file beside the course
+      Given a course of two topics, and a file "secret.txt" in the folder holding the course
+      When the instructor runs tutors rewire "remove ../secret.txt"
+      Then the error output shall include "There is nothing called"
+      And the exit status shall be 1
+      And the file "secret.txt" beside the course shall still be there
+
+  @rule-0783 @ears-event-driven
+  Rule: When an instructor moves a hidden topic or unit off the top of the course with tutors rewire, tutors shall take it out of the ignore list and say that students can see it again.
+
+    Scenario: A hidden week moved into a unit
+      Given a course of two topics and a unit "unit-01", whose topic "topic-02" is hidden
+      When the instructor runs tutors rewire "move topic-02 unit-01"
+      Then properties.yaml shall list nothing under ignore
+      And the output shall include "was hidden from students"
+      And the generator shall mark no item hidden
+
+  @rule-0784 @ears-unwanted
+  Rule: If an operation of a rewiring plan is not applied, then tutors shall attempt none of the operations after it.
+
+    Scenario: A removal the bin refuses
+      Given a course of two topics whose topic "topic-02" is hidden, and a bin that cannot be written to
+      When the instructor runs tutors rewire "remove topic-02"
+      Then properties.yaml shall list "topic-02" under ignore
+      And the generator shall mark "topic-02" hidden
+      And the exit status shall be 1
+
   @rule-0753 @ears-event-driven
   Rule: When an instructor runs tutors rewire with --plan, tutors shall print the plan as JSON and change nothing.
 

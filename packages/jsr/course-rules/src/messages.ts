@@ -123,6 +123,9 @@ export const messages = {
   rewireHideTopOnly: (kind: string) =>
     `Tutors can hide only a whole topic or unit at the top of the course, not a ${kind} inside one. To keep it from students, remove it: it goes to the bin and can be put back.`,
   rewireLinked: (name: string) => `A page in the course links to "${name}" by name. After this change, update that link so it still works.`,
+  rewireShownAfterMove: (name: string) =>
+    `"${name}" was hidden from students. Tutors can hide only a whole topic or unit at the top of the course, so once it is inside another folder it is shown again. To keep it from students, remove it: it goes to the bin and can be put back.`,
+  rewireStopped: () => "An earlier change could not be made, so the rest of this change was stopped. The course is as it was, apart from the changes listed above.",
   rewireNotInBin: (name: string) => `The bin holds nothing called "${name}".`,
   rewireTaken: (path: string) => `"${path}" is already in the course, so the item can't go back under that name. Rename or move the one there first.`,
   empty: (kind: string) => `This ${kindName(kind)} is empty so far. That's fine while you are building the course; add content before students see it.`

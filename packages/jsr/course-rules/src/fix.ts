@@ -30,14 +30,31 @@ export interface FixOutcome {
   skipped: { op: FileOp; reason: string }[];
 }
 
+/** The reason an operation carries when it was never attempted, because an earlier one in the plan failed. */
+export const NOT_ATTEMPTED = "an earlier change was not made";
+
+export interface ApplyOptions {
+  /**
+   * Stop at the first operation that is not applied, and skip the rest. The fixes of `--fix` stand alone,
+   * so one that is skipped does not stop the others; the operations of a rewiring plan lean on each other
+   * (taking a removed topic out of the ignore list only makes sense once the topic has gone to the bin),
+   * so a shell applying one of those passes true and nothing after a refused operation is attempted.
+   */
+  stopOnSkip?: boolean;
+}
+
 /**
  * Applies a plan through the port. An operation whose target already exists is skipped, never
  * overwritten, unless it is a write marked `replace` (a rewiring planner rewriting a title or the ignore list). A rename that changes only letter case goes through a temporary name, so it also works on
  * the case-insensitive disks of macOS and Windows.
  */
-export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[]): Promise<FixOutcome> {
+export async function applyFixes(fs: FileSystemPort, root: string, ops: readonly FileOp[], options: ApplyOptions = {}): Promise<FixOutcome> {
   const outcome: FixOutcome = { applied: [], skipped: [] };
   for (const op of ops) {
+    if (options.stopOnSkip === true && outcome.skipped.length > 0) {
+      outcome.skipped.push({ op, reason: NOT_ATTEMPTED });
+      continue;
+    }
     try {
       if (op.op === "write") {
         if (op.replace !== true && (await fs.exists(joinPath(root, op.path)))) {
