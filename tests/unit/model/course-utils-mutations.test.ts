@@ -449,13 +449,24 @@ describe("initCalendar — mutation killing", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("reports a malformed calendar as a warning instead of throwing", () => {
+  it("returns a malformed calendar as a fault instead of throwing or logging", () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const course = makeCourse({ calendar: { weeks: [{}] } });
-    expect(() => initCalendar(course, 0)).not.toThrow();
+    const fault = initCalendar(course, 0);
     expect(course.courseCalendar).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy.mock.calls[0][0]).toBe("Error loading calendar");
-    expect(spy.mock.calls[0][1]).toEqual({ error: expect.stringMatching(/.+/) });
+    expect(fault).toEqual({ part: "calendar", message: expect.stringMatching(/.+/) });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("gives the fault the text of what was thrown, whether or not it was an Error", () => {
+    const thrower = (thrown: unknown) => makeCourse({ calendar: { get weeks(): never { throw thrown; } } });
+    expect(initCalendar(thrower(new Error("bad weeks")), 0)).toEqual({ part: "calendar", message: "bad weeks" });
+    expect(initCalendar(thrower("plain text"), 0)).toEqual({ part: "calendar", message: "plain text" });
+  });
+
+  it("returns nothing for a calendar it could read, or for a course with none", () => {
+    expect(initCalendar(makeCourse({}), 0)).toBeUndefined();
+    expect(initCalendar(makeCourse({ calendar: { title: "T", weeks: [{ "2026-09-07": { title: "One", type: "topic" } }] } }), 0)).toBeUndefined();
   });
 });

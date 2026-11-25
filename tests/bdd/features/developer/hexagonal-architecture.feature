@@ -163,3 +163,34 @@ Feature: Hexagonal architecture
     Scenario: The model library spells out no kind of its own
       Given the source of the model library's kind lists
       Then it names no learning-object kind in a string
+
+  @rule-0357 @ears-ubiquitous
+  Rule: Tutors shall keep the domain ring from reading a clock, a random source or the console, so every domain rule gives the same answer for the same arguments.
+
+    Scenario: No domain module reads the clock, draws a random number or writes to the console
+      Given the modules of the domain ring
+      Then none of them reads the system clock, a random source or the console
+
+    Scenario: A calendar that cannot be read is returned as a fault and the course is still built
+      Given a course whose calendar cannot be read
+      When the domain builds its tree
+      Then the tree is built without a calendar
+      And the fault names the calendar and what was wrong with it
+
+    Scenario: The current week follows the instant the caller gives
+      Given a course with a calendar of two weeks
+      When the domain builds its tree for an instant in the first week and again with no instant
+      Then the first tree has the first week as its current week
+      And the second tree has no current week
+
+  @rule-0358 @ears-ubiquitous
+  Rule: Tutors shall make a course id, a login key and a request route only where a rule has checked the value, so the compiler keeps one from standing in for another.
+
+    Scenario: A plain string becomes a course id, a login key or a route only at a checked place
+      Given the product modules that turn a plain string into a course id, a login key or a route
+      Then each of them is a place that checks the value first
+
+    Scenario: The input rules and the course address give the same id for one course
+      Given a course opened by its Netlify id and by its full address
+      Then both give the same course id
+      And the input rule accepts that id unchanged

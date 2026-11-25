@@ -5,6 +5,19 @@
  */
 import type { Course } from "./types/index.ts";
 
+declare const courseIdBrand: unique symbol;
+declare const loRouteBrand: unique symbol;
+
+/**
+ * The id a course is known under everywhere: caches, analytics, locks and enrolment key on it. It
+ * is a string that has passed a rule (`courseId` in @tutors/domain/input, or `courseAddress`
+ * here), and the compiler keeps a login, a route or raw request text from standing in for one.
+ */
+export type CourseId = string & { readonly [courseIdBrand]: true };
+
+/** A learning object's route, as `loRoute` in @tutors/domain/input accepts it. Not a course id and not a login. */
+export type LoRoute = string & { readonly [loRouteBrand]: true };
+
 /** The protocol each decorated course is served on, kept with the course rather than in shared state. */
 const courseProtocols = new WeakMap<Course, string>();
 
@@ -21,7 +34,7 @@ export function courseProtocolOf(course: Course): string {
 /** `courseUrl` has no scheme; `protocol` is the scheme to fetch and link the course with. */
 export interface CourseAddress {
   /** The id the course is cached and recorded under: analytics, locks and enrolment all key on it. */
-  readonly courseId: string;
+  readonly courseId: CourseId;
   readonly courseUrl: string;
   readonly protocol: "https://" | "http://";
 }
@@ -61,9 +74,9 @@ export function courseAddress(input: string): CourseAddress {
   while (path.endsWith("/")) path = path.slice(0, -1);
   const courseUrl = `${url.host}${path}`;
 
-  if (isBareId) return { courseId: address, courseUrl, protocol };
+  if (isBareId) return { courseId: address as CourseId, courseUrl, protocol };
   const courseId = url.hostname.endsWith(".netlify.app") ? courseUrl.replace(".netlify.app", "") : courseUrl;
-  return { courseId, courseUrl, protocol };
+  return { courseId: courseId as CourseId, courseUrl, protocol };
 }
 
 /** The URL a course's tutors.json is published at. */

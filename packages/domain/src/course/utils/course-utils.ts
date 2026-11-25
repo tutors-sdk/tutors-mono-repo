@@ -193,11 +193,13 @@ export function loadPropertyFlags(course: Course) {
  * Parse the course calendar and work out which week is current.
  *
  * @param course The course whose `calendar` property is read.
- * @param today The instant to treat as "now", in epoch milliseconds. Defaults to the
- *   system clock; the server passes its clock seam so the current week follows the
- *   frozen instant the release harness sets (`HARNESS_NOW`).
+ * @param today The instant to treat as "now", in epoch milliseconds: the Clock port's value, so
+ *   the current week follows the frozen instant the release harness sets (`HARNESS_NOW`). The
+ *   domain reads no clock, so without one the calendar has no current week.
+ * @returns What was wrong with a calendar that could not be read, for the caller to report; the
+ *   course then has no calendar. Nothing when the calendar was read or the course has none.
  */
-export function initCalendar(course: Course, today: number = Date.now()) {
+export function initCalendar(course: Course, today?: number): CourseFault | undefined {
   try {
     if (!course.calendar) return;
     const calendarObj = course.calendar;
@@ -237,7 +239,7 @@ export function initCalendar(course: Course, today: number = Date.now()) {
     // reader offers no Calendar button for it (Rule 0284, issue #427).
     if (weeks.length === 0) return;
 
-    const currentWeek = weeks.find(
+    const currentWeek = today === undefined ? undefined : weeks.find(
       (week, i) =>
         today > Date.parse(week.date) &&
         today <= Date.parse(weeks[i + 1]?.date),
@@ -249,10 +251,12 @@ export function initCalendar(course: Course, today: number = Date.now()) {
       currentWeek,
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    // console, not process.stderr: this also runs in the browser, and on the server the apps turn console output into JSON log lines.
-    // The domain imports nothing, the logger included, and the published model library has always warned here.
-    // eslint-disable-next-line no-console
-    console.warn("Error loading calendar", { error: message });
+    return { part: "calendar", message: error instanceof Error ? error.message : String(error) };
   }
 }
+
+/**
+ * Something in a course's own files that could not be read while its tree was built. The course is
+ * still usable without that part; the domain says what was wrong and the caller decides who hears.
+ */
+export type CourseFault = { readonly part: "calendar"; readonly message: string };

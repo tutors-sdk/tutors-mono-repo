@@ -57,6 +57,45 @@ describe("loadCourse", () => {
     expect(renderer.mathLoads).toBe(0);
     expect(rendered).toContain("topic");
   });
+
+  it("hands what the course's own files got wrong to the caller, and still returns the course", async () => {
+    const source = new InMemoryCourseSource({ cs101: { ...published, calendar: { title: "S1", weeks: [null] } } });
+    const told: unknown[] = [];
+    const order: string[] = [];
+    const loaded = await loadCourse({
+      source,
+      renderer: new PassThroughRenderer(),
+      clock: new FixedClock(),
+      faulted: (c, faults) => {
+        order.push("faulted");
+        told.push([c.courseId, faults]);
+      },
+      decorated: () => order.push("decorated")
+    })({ courseId: "cs101", courseUrl: "cs101.netlify.app", protocol: "https://" });
+    expect(loaded.courseCalendar).toBeUndefined();
+    expect(told).toEqual([["cs101", [{ part: "calendar", message: expect.stringMatching(/.+/) }]]]);
+    expect(order).toEqual(["faulted", "decorated"]);
+  });
+
+  it("tells the caller of no fault when the course has none, and needs no listener when it has one", async () => {
+    const told: unknown[] = [];
+    const location = { courseId: "cs101", courseUrl: "cs101.netlify.app", protocol: "https://" } as const;
+    await loadCourse({ source: new InMemoryCourseSource({ cs101: published }), renderer: new PassThroughRenderer(), clock: new FixedClock(), faulted: (...args) => told.push(args) })(location);
+    expect(told).toEqual([]);
+    const broken = new InMemoryCourseSource({ cs101: { ...published, calendar: { weeks: [null] } } });
+    await expect(loadCourse({ source: broken, renderer: new PassThroughRenderer(), clock: new FixedClock() })(location)).resolves.toMatchObject({ courseId: "cs101" });
+  });
+
+  it("reads the current week against the clock it was given", async () => {
+    const calendar = { title: "S1", weeks: [{ "2026-09-07": { title: "One", type: "topic" } }, { "2026-09-14": { title: "Two", type: "topic" } }] };
+    const source = new InMemoryCourseSource({ cs101: { ...published, calendar } });
+    const loaded = await loadCourse({ source, renderer: new PassThroughRenderer(), clock: new FixedClock(Date.parse("2026-09-09T10:00:00Z")) })({
+      courseId: "cs101",
+      courseUrl: "cs101.netlify.app",
+      protocol: "https://"
+    });
+    expect(loaded.courseCalendar?.currentWeek?.title).toBe("One");
+  });
 });
 
 describe("recording learning", () => {

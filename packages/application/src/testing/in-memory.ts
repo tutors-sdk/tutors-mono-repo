@@ -3,6 +3,7 @@
  * keeps its state in plain collections and behaves as the contract suites say a real adapter must.
  */
 import type { Course, Lo } from "@tutors/domain/course";
+import type { CourseId } from "@tutors/domain/course/address";
 import { courseFactsFrom, type ContentLock, type LockWrite } from "@tutors/domain/access";
 import type { LearningEvent } from "@tutors/domain/learning";
 import type { CourseVisit, PresenceEvent, Sentiment, StoredPresence } from "@tutors/domain/presence";
@@ -169,10 +170,10 @@ export class InMemoryAccessStore implements AccessStore {
     private readonly clock: Clock = new FixedClock(),
     private readonly options: { actor?: string; persists?: boolean } = {}
   ) {}
-  async locks(courseId: string): Promise<ContentLock[]> {
+  async locks(courseId: CourseId): Promise<ContentLock[]> {
     return [...this.rows.values()].filter((lock) => lock.courseId === courseId).map((lock) => ({ ...lock }));
   }
-  async setLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWrite> {
+  async setLock(courseId: CourseId, loRoute: string, locked: boolean): Promise<LockWrite> {
     if (!courseId || !loRoute) return "refused";
     if (this.options.persists === false) return "unavailable";
     this.rows.set(`${courseId}\t${loRoute}`, { courseId, route: loRoute, locked, lockedBy: this.options.actor ?? "lecturer", lockedAt: this.clock.now().toISOString() });
@@ -249,7 +250,7 @@ export class InMemoryCourseFacts implements CourseFactsSource {
     this.published[courseId] = tutorsJson;
   }
 
-  async read(courseId: string): Promise<CourseFactsLookup> {
+  async read(courseId: CourseId): Promise<CourseFactsLookup> {
     this.asked.push(courseId);
     if (this.unreachable) return { kind: "unavailable" };
     if (!(courseId in this.published)) return { kind: "missing" };

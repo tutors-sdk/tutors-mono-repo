@@ -58,7 +58,8 @@ Every technology. Svelte, Supabase, sign-in, containers, pipelines. If a change 
 | Line | What holds it |
 |---|---|
 | The domain imports nothing outside itself | `domain-self-contained`, Rule 0340 |
-| It never reads a clock or the environment; the caller passes the time | Review; the tests pass fixed dates |
+| It never reads a clock, a random source, the console or the environment; the caller passes the time | Rule 0357; the tests pass fixed dates |
+| A course id, a login key and a request route are made only by their rule, never by a cast | Rule 0358 |
 | Each kind of learning object is named once, in the vocabulary | Rule 0356 |
 | A course rule's message is written once, in `messages.ts`, in a lecturer's words | Review; Studio, the CLI and the Validator all show the same sentence |
 | The course rules never read a file directly | `course-rules-no-file-system` |

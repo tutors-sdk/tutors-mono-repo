@@ -23,8 +23,7 @@ const enrollmentSchema = z
   .passthrough();
 
 export const GET: RequestHandler = async ({ locals, params, fetch }) => {
-  const courseId = params.courseid;
-  const { enrollment: publishedEnrollment } = await requireEducator({ locals, courseId, fetch, action: "export enrollment" });
+  const { enrollment: publishedEnrollment, courseId } = await requireEducator({ locals, courseId: params.courseid, fetch, action: "export enrollment" });
   const parsed = enrollmentSchema.safeParse(publishedEnrollment);
   if (!parsed.success) error(502, "The published enrollment is invalid.");
   const enrollment = parsed.data;
@@ -47,11 +46,11 @@ export const GET: RequestHandler = async ({ locals, params, fetch }) => {
   const names = new Map([...stored].map(([login, name]) => [loginKey(login), name]));
 
   const whitelist = [...enrollment.whitelist];
-  const allowed = new Set(whitelist.map((login) => login.toLowerCase()));
+  const allowed = new Set(whitelist.map((login) => loginKey(login)));
   const students = [...enrollment.students];
-  const named = new Set(students.map((student) => student.id.toLowerCase()));
+  const named = new Set(students.map((student) => loginKey(student.id)));
   for (const login of logins) {
-    const key = login.toLowerCase();
+    const key = loginKey(login);
     if (!allowed.has(key)) {
       whitelist.push(login);
       allowed.add(key);

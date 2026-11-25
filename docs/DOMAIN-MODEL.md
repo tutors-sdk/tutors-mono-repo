@@ -15,11 +15,13 @@ Tutors follows the domain-driven design vocabulary, used plainly:
 | **Entity** | Something with an identity that persists while its attributes change: a course (its course id), a learner (their login), a learning object (its route). |
 | **Value** | Something defined only by what it contains: a calendar day, a role, a content lock, a learning event. Values are immutable; a rule returns a new one. |
 | **Policy** | A pure function that answers a yes-or-no question about the model: `permits`, `whitelistAdmits`, `keepOnRoster`. |
+| **Branded id** | A string the compiler tells apart from other strings because a rule made it: `CourseId`, `LoRoute`, `LoginKey`. A login cannot be passed where a course id is expected (Rule 0358). |
+| **Fault** | Something in a course's own files that could not be read, returned as data (`CourseFault`). The domain does not log; the caller decides who hears. |
 | **Value rule** | A function that turns untrusted input into a value or refuses it: everything in `@tutors/domain/input`, `parseSentiment`, `isLoType`. |
 | **Domain event** | A fact that happened, as data: `LearningEvent`, `PresenceEvent`. The domain shapes them; the application ring publishes them. |
 | **Use case** | Not in the domain. A function in `@tutors/application` that reads facts through ports, asks the domain, and writes the result through ports. |
 
-What the domain deliberately does **not** contain: repositories, services with dependencies, anything `async` that waits on the outside world, HTTP status codes, table names, Svelte runes. If a rule needs a fact from outside (the time, a published course, a stored row), the caller passes it in.
+What the domain deliberately does **not** contain: repositories, services with dependencies, anything `async` that waits on the outside world, HTTP status codes, table names, Svelte runes. If a rule needs a fact from outside (the time, a random id, a published course, a stored row), the caller passes it in. No domain module calls `Date.now()`, `new Date()` with no argument, a random source or `console`, and a check fails the build if one does (Rule 0357).
 
 ## The contexts at a glance
 
@@ -58,7 +60,8 @@ An arrow means "names a type of". No context calls another context's rules to ma
 
 **Entities and values.**
 
-- `Course`: the entity. Identity is `courseId`, the host name of its published site.
+- `Course`: the entity. Identity is `courseId`, a `CourseId`: the one id the course is known under, whichever form of its address it was opened by.
+- `CourseId` and `LoRoute` (`@tutors/domain/course/address`): branded strings. A `CourseId` comes from `courseAddress` or from the input rule `courseId`; a `LoRoute` comes from the input rule `loRoute`. Ports, use cases and the server's stores ask for them by type, so raw request text, a login or a route cannot stand in for a course id.
 - `Lo` and its kinds: entities within a course, identified by `route`.
 - `LO_TYPES`, `LO_SIMPLE_TYPES`, `LO_COMPOSITE_TYPES`: the closed vocabulary. `isLoType` is its value rule. Nothing outside this context defines a kind.
 - `LO_TYPE_ORDER`: where each kind sorts among its siblings in a built course. It is a record over the vocabulary, so a kind without a place does not compile. The model library's `simpleTypes`, `loCompositeTypes`, `loTypes` and `preOrder` are taken from these (Rule 0356); `tests/unit/domain/lo-vocabulary.test.ts` checks the themes' icons and the static generator's palette against the same list.
@@ -66,7 +69,7 @@ An arrow means "names a type of". No context calls another context's rules to ma
 
 **Rules.**
 
-- `decorateCourseTree(course, courseId, courseUrl, options)` turns the published JSON into the tree the reader uses: parents, breadcrumbs, routes, walls, the table of contents, companions and the calendar. Rendering is an option the caller passes in, so the tree rule does not know markdown.
+- `decorateCourseTree(course, courseId, courseUrl, options)` turns the published JSON into the tree the reader uses: parents, breadcrumbs, routes, walls, the table of contents, companions and the calendar. Rendering is an option the caller passes in, so the tree rule does not know markdown. So is the instant (`today`) the current calendar week is read against. It returns the course's faults (`CourseFault[]`): a calendar that cannot be read leaves the course without a calendar and comes back as a fault, which `loadCourse` hands to the composition (`faulted`) to log.
 - `flattenLos`, `filterByType`, `allVideoLos`, `getPanels`, `getUnits`, `crumbs`: the only sanctioned ways to walk the tree.
 - `searchHits` finds text in a course's learning objects.
 - `loadPropertyFlags` reads what a course switches on or off in its properties.
@@ -133,7 +136,7 @@ This context is the security model. It is small on purpose: every authorisation 
 |---|---|---|
 | `permits(asker, action, facts, admins)` | May this person do this in this course? | The one policy. Nobody signed in may do nothing. |
 | `roleInCourse(asker, facts, admins)` | What are they here? | Educator when the course lists them or the deployment's administrators do; otherwise student. |
-| `sameLogin(a, b)`, `listsLogin(list, login)`, `loginKey(login)` | Is this the same account? | Logins that differ only in capital letters are one account (Rule 0353). Every login comparison in Tutors goes through these. |
+| `sameLogin(a, b)`, `listsLogin(list, login)`, `loginKey(login)` | Is this the same account? | Logins that differ only in capital letters are one account (Rule 0353). Every login comparison in Tutors goes through these. `loginKey` returns a `LoginKey`, so a map keyed by it cannot be read with a login as someone typed it. |
 | `whitelistAdmits(course, login)`, `requiresSignIn(course, login)` | May they read this course at all? | A course with no auth level or no whitelist admits everyone; an educator is always admitted. |
 | `isLoLocked(lo, locks)`, `isLoRouteLocked`, `hasActiveLocks`, `showsLockedToStudents` | Is this hidden from students? | A lock on a route locks everything beneath it; the course home is never locked. |
 | `courseJsonUrl(courseId, allowedHosts)`, `redirectTarget(from, location)` | May the server ask this host? | A course id comes from the caller, so it must never steer a server-side request at an internal address. |
@@ -156,7 +159,7 @@ This context is the security model. It is small on purpose: every authorisation 
 
 ## Input
 
-`@tutors/domain/input` holds one function per kind of value the server accepts from a request: `courseId`, `loRoute`, `text`, `loType`, `sentiment`, `onlineStatus`, `imageUrl`, `icon`, `calendarDay`. Each takes `unknown` and returns the accepted value or `null`. A route writes `valid(check.courseId(body.courseId), "courseId is required")` and cannot half-validate.
+`@tutors/domain/input` holds one function per kind of value the server accepts from a request: `courseId`, `loRoute`, `text`, `loType`, `sentiment`, `onlineStatus`, `imageUrl`, `icon`, `calendarDay`. Each takes `unknown` and returns the accepted value or `null`. `courseId` and `loRoute` return the branded `CourseId` and `LoRoute`, which is how a server store knows the value in its hand was checked. A route writes `valid(check.courseId(body.courseId), "courseId is required")` and cannot half-validate.
 
 They live in the domain, not in the reader, because what a well-formed course id is is a fact about Tutors, not about one server: every route, and any future service, refuses the same things.
 
@@ -175,9 +178,10 @@ They live in the domain, not in the reader, because what a well-formed course id
 | A new kind of learning object | `course/vocabulary.ts` and the tree rules | The generator, the renderer and a UI view; see [`HOW-TO-CONTRIBUTE.md`](../HOW-TO-CONTRIBUTE.md) |
 | A new permission | `Permission` and `ROLE_PERMISSIONS` in `access/roles.ts` | `tests/unit/domain/access-policy.test.ts`, and the route that asks for it |
 | A new accepted input | A function in `input.ts` | A test of what it refuses |
+| A new kind of id | A branded type beside the rule that makes it, and that rule as its only maker | Its line in the list of makers in Rule 0358's steps, and a reason |
 | A new word | Check this page first | If it is a synonym of an existing word, use the existing word |
 
-Signs a change is in the wrong place: it needs `await`, it needs `Date.now()`, it imports anything, or it mentions a table, a status code or a component. Those belong in a use case, an adapter, a route or the UI.
+Signs a change is in the wrong place: it needs `await`, it needs `Date.now()` or a random number, it wants to log, it casts a string to an id, it imports anything, or it mentions a table, a status code or a component. Those belong in a use case, an adapter, a route or the UI.
 
 ## Where the tests are
 

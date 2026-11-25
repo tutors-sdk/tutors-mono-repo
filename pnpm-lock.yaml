@@ -1088,6 +1088,9 @@ importers:
       '@tutors/domain':
         specifier: workspace:*
         version: link:../../domain
+      '@tutors/logger-core':
+        specifier: workspace:*
+        version: link:../../platform/logger-core
       '@tutors/render-markdown':
         specifier: workspace:*
         version: link:../../adapters/driven/render-markdown

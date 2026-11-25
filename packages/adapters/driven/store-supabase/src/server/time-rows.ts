@@ -1,3 +1,4 @@
+import type { CourseId } from "@tutors/domain/course/address";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AssignmentSummary, TimeRows, TimeUserRow } from "@tutors/domain/learning";
 import { StoreError } from "./learner-store.ts";
@@ -32,7 +33,7 @@ async function readUsers(db: SupabaseClient, ids: string[]): Promise<TimeUserRow
   return users;
 }
 
-async function readAssignments(db: SupabaseClient, courseId: string): Promise<AssignmentSummary[]> {
+async function readAssignments(db: SupabaseClient, courseId: CourseId): Promise<AssignmentSummary[]> {
   const { data, error } = await db.from("assignments").select("id, name, url, due_date, opened_date").eq("courseid", courseId);
   if (error || !data?.length) return [];
   const assignments = data as Omit<AssignmentSummary, "submissionCount">[];
@@ -44,7 +45,7 @@ async function readAssignments(db: SupabaseClient, courseId: string): Promise<As
   return assignments.map((a) => ({ ...a, submissionCount: counts.get(a.id) ?? 0 }));
 }
 
-export async function readTimeRows(db: SupabaseClient, courseId: string, startDate?: string | null, endDate?: string | null): Promise<TimeRows> {
+export async function readTimeRows(db: SupabaseClient, courseId: CourseId, startDate?: string | null, endDate?: string | null): Promise<TimeRows> {
   const [courseResult, calendar, learningRecords, assignments] = await Promise.all([
     db.from("tutors-connect-courses").select("course_id, course_record").eq("course_id", courseId).maybeSingle(),
     selectAll<Record<string, unknown>>("calendar read", (from, to) => {

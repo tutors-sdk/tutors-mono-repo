@@ -1,5 +1,6 @@
 import log from "@tutors/logger";
 import type { Lo } from "@tutors/domain/course";
+import type { CourseId } from "@tutors/domain/course/address";
 import {
   hasActiveLocks as locksActive,
   isLoLocked as loLocked,
@@ -21,14 +22,14 @@ export { isLoRouteLocked, SHOW_LOCKED_KEY } from "@tutors/domain/access";
 function createRbacService() {
   const currentRole = rune<Role>("student");
   const currentUserId = rune("");
-  const currentCourseId = rune("");
+  const currentCourseId = rune<CourseId | "">("");
   // Routes with a lock change waiting for the server; Educator Control disables their switches (Rule 0658).
   const pendingLocks = rune<Set<string>>(new Set());
   // Set once the server answers that it has no lock database, so Educator Control says changes stay in this browser.
   const savedLocally = rune(false);
-  let loadedLocksCourseId = "";
+  let loadedLocksCourseId: CourseId | "" = "";
 
-  function loadRole(userId: string, courseId: string, course?: { enrollment?: { educators?: string[] } }): void {
+  function loadRole(userId: string, courseId: CourseId | "", course?: { enrollment?: { educators?: string[] } }): void {
     if (!userId || !courseId) {
       currentRole.value = "student";
       currentUserId.value = "";
@@ -42,7 +43,7 @@ function createRbacService() {
     currentRole.value = roleFor(userId, course?.enrollment ?? currentCourse.value?.enrollment);
   }
 
-  function resolvedCourseId(): string {
+  function resolvedCourseId(): CourseId | "" {
     return currentCourseId.value || currentCourse.value?.courseId || "";
   }
 
@@ -50,7 +51,7 @@ function createRbacService() {
     return roleHasPermission(currentRole.value, permission);
   }
 
-  async function loadContentLocks(courseId: string): Promise<void> {
+  async function loadContentLocks(courseId: CourseId | ""): Promise<void> {
     if (!courseId) {
       locksLoaded.value = true;
       loadedLocksCourseId = "";

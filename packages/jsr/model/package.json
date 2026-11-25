@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@tutors/domain": "workspace:*",
+    "@tutors/logger-core": "workspace:*",
     "@tutors/render-markdown": "workspace:*",
     "front-matter": "^4.0.2",
     "js-yaml": "^5.4.1",

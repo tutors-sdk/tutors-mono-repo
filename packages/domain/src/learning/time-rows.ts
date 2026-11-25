@@ -34,9 +34,10 @@ export interface TimeRows {
  * A fresh random pseudonym for each classmate, per answer (Rule 0075). It is the same for one student
  * across the calendar and learning records of one answer, so medians still work, but it neither
  * follows row or alphabetical order nor survives to the next request: a viewer cannot link a
- * pseudonym across answers and single a classmate out over a term.
+ * pseudonym across answers and single a classmate out over a term. The random source is the
+ * caller's (`randomId`): the domain draws no random numbers of its own.
  */
-export function pseudonymise(rows: TimeRows, viewer: string, randomId: () => string = () => crypto.randomUUID()): TimeRows {
+export function pseudonymise(rows: TimeRows, viewer: string, randomId: () => string): TimeRows {
   const aliases = new Map<string, string>();
   const used = new Set<string>();
   const alias = (id: unknown): unknown => {

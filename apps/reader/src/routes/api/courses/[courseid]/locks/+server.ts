@@ -16,12 +16,11 @@ import type { RequestHandler } from "./$types";
 const lockSchema = z.object({ loRoute: z.string().min(1).max(512), locked: z.boolean() });
 
 export const PUT: RequestHandler = async ({ locals, params, fetch, request }) => {
-  const courseId = params.courseid;
   // No database means nothing to write or protect: the browser keeps its localStorage copy, as in a
   // reader without Supabase. Answer that before the educator check so it needs no network.
   const db = serviceSupabase();
   if (!db) error(503, "Content locks are unavailable.");
-  const { actor } = await requireEducator({ locals, courseId, fetch, action: "change content locks" });
+  const { actor, courseId } = await requireEducator({ locals, courseId: params.courseid, fetch, action: "change content locks" });
   const body = lockSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) error(400, "Expected { loRoute, locked }.");
   try {

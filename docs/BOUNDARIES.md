@@ -47,7 +47,7 @@ flowchart TB
 - **May depend on:** nothing.
 - **Crossing in:** literal values. A caller passes the time, the published course and the stored rows; the domain never fetches them.
 - **Crossing out:** values, and yes-or-no answers.
-- **Must not:** import, `await` the outside world, read a clock or an environment variable, name a table, a status code or a component.
+- **Must not:** import, `await` the outside world, read a clock, a random source or an environment variable, write to the console (Rule 0357), cast a plain string to a `CourseId`, `LoRoute` or `LoginKey` outside the rule that checks it (Rule 0358), name a table, a status code or a component.
 - **Held by:** `domain-self-contained` (Rule 0340); mutation floors on its modules.
 
 ## Application
@@ -171,7 +171,7 @@ Testing is a boundary because of one rule: **product code never contains a test 
   | UX | Service tests over `anonymousAdapters({ ...spies })` | Ports |
   | UI | Component tests | State |
   | The product | BDD features bound to EARS Rules, through the composition roots | The session, the database, the course host |
-  | The shape | `tests/architecture`, Rules 0340 to 0356 | A fixture workspace of planted violations |
+  | The shape | `tests/architecture`, Rules 0340 to 0358 | A fixture workspace of planted violations |
 
 - **Must not:** import `@tutors/application/testing` from product code outside a composition root (`test-doubles-only-in-composition`); skip, disable or delete a test to get green; add a line to a baseline (`known-violations.txt`, `known-gaps.txt`, the knip and manifest baselines) instead of fixing the cause; lower a coverage or mutation floor.
 - **Held by:** the ratchets in `tests/suite-health` and `tests/mutation`, `pnpm test:ears:audit`, and [`guides/testing/TESTING-OVERVIEW.md`](../guides/testing/TESTING-OVERVIEW.md).

@@ -112,7 +112,7 @@ export type CourseFactsLookup = { readonly kind: "found"; readonly facts: Course
 export type CourseJson = Course;
 
 // (from src/ports/course-source.ts)
-export type CourseLocation = { courseId: string; courseUrl: string; protocol: "https://" | "http://"; };
+export type CourseLocation = { courseId: CourseId; courseUrl: string; protocol: "https://" | "http://"; };
 
 // (from src/ports/course-source.ts)
 export type FetchLike = (url: string) => Promise<{ status: number; ok: boolean; text(): Promise<string> };

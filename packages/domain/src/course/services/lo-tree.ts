@@ -1,8 +1,8 @@
 import { isCompositeLo } from "../types/type-utils.ts";
 import type { Composite, Course, Lo, Topic } from "../types/index.ts";
 import { allVideoLos, crumbs, filterByType, flattenLos, getPanels, getUnits, injectCourseUrl, loadIcon, removeUnknownLos } from "../utils/lo-utils.ts";
-import { rememberCourseProtocol } from "../address.ts";
-import { createCompanions, createWalls, initCalendar, loadPropertyFlags } from "../utils/course-utils.ts";
+import { rememberCourseProtocol, type CourseId } from "../address.ts";
+import { createCompanions, createWalls, initCalendar, loadPropertyFlags, type CourseFault } from "../utils/course-utils.ts";
 
 /**
  * What decorating a course tree needs from outside the domain.
@@ -10,7 +10,8 @@ import { createCompanions, createWalls, initCalendar, loadPropertyFlags } from "
  * Markdown rendering is an adapter (the ContentRenderer port), so the tree takes a `render`
  * callback and applies it to every learning object; with none, bodies stay as markdown. The
  * current calendar week is read against `today` (epoch milliseconds), the Clock port's value,
- * so a frozen harness clock freezes it too.
+ * so a frozen harness clock freezes it too; with none there is no current week. What could not be
+ * read in the course's own files comes back as faults: the domain does not log.
  */
 export type DecorateOptions = {
   render?: (course: Course, lo: Lo) => void;
@@ -23,12 +24,13 @@ export type DecorateOptions = {
 
 export function decorateCourseTree(
   course: Course,
-  courseId: string = "",
+  courseId: CourseId | "" = "",
   courseUrl = "",
   options: DecorateOptions = {},
-) {
+): CourseFault[] {
   // define course properties
-  course.courseId = courseId;
+  // The generator decorates a course on disk, which has no id yet; a served course always has one.
+  course.courseId = courseId as CourseId;
   course.courseUrl = courseUrl;
   course.route = `/course/${courseId}`;
   rememberCourseProtocol(course, options.protocol ?? "https://");
@@ -60,7 +62,8 @@ export function decorateCourseTree(
   createCompanions(course);
   createWalls(course);
   // createToc(course);
-  initCalendar(course, options.today);
+  const calendarFault = initCalendar(course, options.today);
+  return calendarFault ? [calendarFault] : [];
 }
 
 /** A course served over plain http (localhost, a LAN address) has its generated https links rewritten. */

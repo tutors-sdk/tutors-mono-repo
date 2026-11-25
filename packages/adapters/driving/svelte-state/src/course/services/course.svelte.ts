@@ -83,8 +83,9 @@ export const courseService: CourseService = {
    */
   async getOrLoadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
     // Normalize before the cache lookup, so every form of one course's address shares one entry.
-    const { courseId: normalizedCourseId, courseUrl, protocol } = determineCourseUrl(courseId);
-    courseId = normalizedCourseId;
+    const address = determineCourseUrl(courseId);
+    const { courseUrl, protocol } = address;
+    courseId = address.courseId;
     let course = this.courses.get(courseId);
 
     if (!course) {
@@ -97,7 +98,7 @@ export const courseService: CourseService = {
       });
 
       try {
-        course = await load({ courseId, courseUrl, protocol });
+        course = await load(address);
       } catch (error) {
         if (error instanceof CourseNotFoundError) return courseNotFound(error);
         if (error instanceof CourseTimedOutError) return courseTimedOut(error.cause);

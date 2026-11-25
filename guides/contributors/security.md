@@ -92,7 +92,7 @@ await setLock(requireDb(), user.login, courseId, loRoute, body.locked);    // ac
 Four things to check in any review of a route:
 
 1. The actor comes from `locals`, which `hooks.server.ts` filled from the session. Nothing in the body or the query says who is asking.
-2. Every value read from the request passes through a function of `@tutors/domain/input` before it is used.
+2. Every value read from the request passes through a function of `@tutors/domain/input` before it is used. The compiler helps: `check.courseId` returns a `CourseId` and `check.loRoute` a `LoRoute`, and `authorize` and the stores accept only those types, so a route that skips the check, or passes the login where the course id goes, does not compile.
 3. `authorize` is asked, and "could not find out" is a 503, not a 403 and not a yes (Rule 0073).
 4. The database function receives the service client from the route that authorised the request.
 
@@ -107,6 +107,7 @@ Four things to check in any review of a route:
 | Line | What holds it |
 |---|---|
 | Logins are compared with `sameLogin`, never `===` | Rule 0353, `tests/unit/domain/access-policy.test.ts` |
+| A plain string is never cast to a `CourseId`, `LoRoute` or `LoginKey`; it goes through the rule that checks it | Rule 0358 |
 | An identity provider's library is imported only by its adapter | `identity-provider-only-in-adapter` |
 | No browser entry point reaches a module that reads a secret | `identity-no-server-in-browser` |
 | No app imports a database client | `no-database-client-in-apps` |

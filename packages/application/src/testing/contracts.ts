@@ -3,6 +3,7 @@
  * test framework in them. A test file runs them against the in-memory adapter and against a real
  * one (recorded Supabase, a fixture server), so the two cannot drift.
  */
+import type { CourseId } from "@tutors/domain/course/address";
 import type { PresenceEvent } from "@tutors/domain/presence";
 import type { AccessStore } from "../ports/access-store.ts";
 import type { EventPublisher } from "../ports/event-publisher.ts";
@@ -91,23 +92,26 @@ export function profileContract(make: Make<ProfilePort>): ContractCase[] {
   ];
 }
 
+/** Contract cases name courses directly; a real caller gets the id from the input rules or the course address. */
+const course = (id: string) => id as CourseId;
+
 export function accessStoreContract(make: Make<AccessStore>): ContractCase[] {
   return [
     {
       name: "a course with no locks has none",
       run: async () => {
         const store = await make();
-        assertEqual(await store.locks("cs101"), [], "locks");
+        assertEqual(await store.locks(course("cs101")), [], "locks");
       }
     },
     {
       name: "a lock is kept per course and route, and the last write wins",
       run: async () => {
         const store = await make();
-        assertEqual(await store.setLock("cs101", "/lab/cs101/week-01", true), "saved", "first write");
-        assertEqual(await store.setLock("cs101", "/lab/cs101/week-01", false), "saved", "second write");
-        assertEqual(await store.setLock("cs102", "/lab/cs102/week-01", true), "saved", "other course");
-        const locks = await store.locks("cs101");
+        assertEqual(await store.setLock(course("cs101"), "/lab/cs101/week-01", true), "saved", "first write");
+        assertEqual(await store.setLock(course("cs101"), "/lab/cs101/week-01", false), "saved", "second write");
+        assertEqual(await store.setLock(course("cs102"), "/lab/cs102/week-01", true), "saved", "other course");
+        const locks = await store.locks(course("cs101"));
         assertEqual(locks.map((l) => [l.route, l.locked]), [["/lab/cs101/week-01", false]], "cs101 locks");
         assert(locks[0].lockedBy, "who set the lock is recorded");
       }
@@ -116,9 +120,9 @@ export function accessStoreContract(make: Make<AccessStore>): ContractCase[] {
       name: "a change without a course or a route is refused and nothing is written",
       run: async () => {
         const store = await make();
-        assertEqual(await store.setLock("", "/lab/x", true), "refused", "no course");
-        assertEqual(await store.setLock("cs101", "", true), "refused", "no route");
-        assertEqual(await store.locks("cs101"), [], "locks");
+        assertEqual(await store.setLock(course(""), "/lab/x", true), "refused", "no course");
+        assertEqual(await store.setLock(course("cs101"), "", true), "refused", "no route");
+        assertEqual(await store.locks(course("cs101")), [], "locks");
       }
     }
   ];

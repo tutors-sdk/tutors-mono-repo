@@ -1,3 +1,4 @@
+import type { CourseId } from "@tutors/domain/course/address";
 import type { ContentLock, LockWrite } from "@tutors/domain/access";
 
 /**
@@ -5,7 +6,7 @@ import type { ContentLock, LockWrite } from "@tutors/domain/access";
  * adapter behind this port knows the caller from the session, so a caller cannot name someone else.
  */
 export interface AccessStore {
-  locks(courseId: string): Promise<ContentLock[]>;
+  locks(courseId: CourseId): Promise<ContentLock[]>;
   /** Lock or unlock a route, and say what became of the change. */
-  setLock(courseId: string, loRoute: string, locked: boolean): Promise<LockWrite>;
+  setLock(courseId: CourseId, loRoute: string, locked: boolean): Promise<LockWrite>;
 }

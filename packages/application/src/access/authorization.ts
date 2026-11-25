@@ -1,3 +1,4 @@
+import type { CourseId } from "@tutors/domain/course/address";
 import { permits, type Asker, type CourseFacts, type Permission, type Resource } from "@tutors/domain/access";
 import type { CourseFactsLookup, CourseFactsSource } from "../ports/course-facts.ts";
 
@@ -18,7 +19,7 @@ export type AuthorizationDeps = {
  * "try again shortly": "not an educator" would be a lie.
  */
 export class AuthorizationUnavailableError extends Error {
-  constructor(readonly courseId: string) {
+  constructor(readonly courseId: CourseId) {
     super(`Could not read the educators of ${courseId} from its host`);
     this.name = "AuthorizationUnavailableError";
   }
@@ -42,10 +43,10 @@ export function createAuthorization(deps: AuthorizationDeps) {
   const staleMs = deps.staleMs ?? 60 * 60_000;
   const now = deps.now ?? (() => Date.now());
   const admins = deps.admins ?? [];
-  const fresh = new Map<string, { at: number; lookup: Promise<CourseFactsLookup> }>();
-  const lastGood = new Map<string, { at: number; facts: CourseFacts }>();
+  const fresh = new Map<CourseId, { at: number; lookup: Promise<CourseFactsLookup> }>();
+  const lastGood = new Map<CourseId, { at: number; facts: CourseFacts }>();
 
-  function lookup(courseId: string): Promise<CourseFactsLookup> {
+  function lookup(courseId: CourseId): Promise<CourseFactsLookup> {
     const hit = fresh.get(courseId);
     if (hit && now() - hit.at < ttlMs) return hit.lookup;
     const at = now();
@@ -62,7 +63,7 @@ export function createAuthorization(deps: AuthorizationDeps) {
   }
 
   /** The course's published facts; null when its host has no such course. Throws AuthorizationUnavailableError. */
-  async function course(courseId: string): Promise<CourseFacts | null> {
+  async function course(courseId: CourseId): Promise<CourseFacts | null> {
     const result = await lookup(courseId);
     if (result.kind === "found") return result.facts;
     if (result.kind === "missing") return null;

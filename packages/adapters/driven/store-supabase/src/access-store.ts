@@ -5,13 +5,14 @@
  * `@tutors/data-api`), which checks the educator and writes with the service role (`./server`).
  */
 import type { ContentLock } from "@tutors/domain/access";
+import type { CourseId } from "@tutors/domain/course/address";
 import type { AccessStore } from "@tutors/application/ports";
 import log from "@tutors/logger";
 import { supabase } from "./client.ts";
 
 type LockRow = { course_id: string; lo_route: string; locked: boolean; locked_by: string; locked_at?: string };
 
-export async function getLocksForCourse(courseId: string): Promise<ContentLock[]> {
+export async function getLocksForCourse(courseId: CourseId): Promise<ContentLock[]> {
   if (!supabase) return [];
   if (!courseId) return [];
 
@@ -26,7 +27,8 @@ export async function getLocksForCourse(courseId: string): Promise<ContentLock[]
   }
 
   return ((data ?? []) as LockRow[]).map((row) => ({
-    courseId: row.course_id,
+    // The rows were asked for by this id.
+    courseId,
     route: row.lo_route,
     locked: row.locked,
     lockedBy: row.locked_by,

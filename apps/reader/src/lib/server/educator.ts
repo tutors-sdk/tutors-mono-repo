@@ -8,6 +8,7 @@
 import { error } from "@sveltejs/kit";
 import { z } from "zod";
 import { isEducatorOf } from "@tutors/domain/access";
+import type { CourseId } from "@tutors/domain/course/address";
 import log from "@tutors/logger";
 
 // Student lists are not needed to establish educator permissions; the export route validates them.
@@ -48,5 +49,6 @@ export async function requireEducator({ locals, courseId, fetch, action }: Educa
   if (!isEducatorOf(actor.login, enrollment)) {
     error(403, `Only this course's educators can ${action}.`);
   }
-  return { actor, enrollment };
+  // Checked above to be a Netlify site name, with the scheme it arrived with: the id the course's activity is stored under.
+  return { actor, enrollment, courseId: courseId as CourseId };
 }

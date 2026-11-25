@@ -1,11 +1,12 @@
 /**
  * Calendar-day rules for learning records. Activity is recorded against the learner's local day
  * (the `calendar` table's `id`), so "today", "this week", "this month" and "this year" are judged
- * in local time, with weeks starting on Monday.
+ * in local time, with weeks starting on Monday. "Now" is always an argument (the Clock port's
+ * value): the domain never reads a clock.
  */
 
 /** The local calendar day of `d` as `YYYY-MM-DD`. */
-export function localYyyyMmDd(d = new Date()): string {
+export function localYyyyMmDd(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -34,28 +35,28 @@ function startOfLocalMondayWeek(d: Date): number {
 }
 
 /** Local calendar day match (same semantics as `localYyyyMmDd` / `instantLocalYmd`). */
-export function isReceivedAtOnLocalDay(iso: string | null | undefined, ref = new Date()): boolean {
+export function isReceivedAtOnLocalDay(iso: string | null | undefined, ref: Date): boolean {
   const ymd = instantLocalYmd(iso);
   if (!ymd) return false;
   return ymd === localYyyyMmDd(ref);
 }
 
 /** Local week starting Monday, through Sunday. */
-export function isReceivedAtInLocalWeek(iso: string | null | undefined, ref = new Date()): boolean {
+export function isReceivedAtInLocalWeek(iso: string | null | undefined, ref: Date): boolean {
   if (!iso?.trim()) return false;
   const d = new Date(iso.trim());
   if (!Number.isFinite(d.getTime())) return false;
   return startOfLocalMondayWeek(d) === startOfLocalMondayWeek(ref);
 }
 
-export function isReceivedAtInLocalMonth(iso: string | null | undefined, ref = new Date()): boolean {
+export function isReceivedAtInLocalMonth(iso: string | null | undefined, ref: Date): boolean {
   if (!iso?.trim()) return false;
   const d = new Date(iso.trim());
   if (!Number.isFinite(d.getTime())) return false;
   return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
 }
 
-export function isReceivedAtInLocalYear(iso: string | null | undefined, ref = new Date()): boolean {
+export function isReceivedAtInLocalYear(iso: string | null | undefined, ref: Date): boolean {
   if (!iso?.trim()) return false;
   const d = new Date(iso.trim());
   if (!Number.isFinite(d.getTime())) return false;

@@ -1,3 +1,4 @@
+import type { CourseId, LoRoute } from "@tutors/domain/course/address";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { serverNow as now } from "./clock.ts";
 
@@ -37,7 +38,7 @@ function fail(what: string, error: { message?: string } | null): never {
 }
 
 
-async function nextIncrement(db: SupabaseClient, field: "duration" | "count", courseId: string, login: string, loId: string): Promise<number> {
+async function nextIncrement(db: SupabaseClient, field: "duration" | "count", courseId: CourseId, login: string, loId: LoRoute): Promise<number> {
   const { data, error } = await db.rpc("get_count_learning_records", {
     field_name: field,
     course_base: courseId,
@@ -48,7 +49,7 @@ async function nextIncrement(db: SupabaseClient, field: "duration" | "count", co
   return ((data as { increment?: number }[] | null)?.[0]?.increment ?? 0) + 1;
 }
 
-async function nextCalendarValue(db: SupabaseClient, column: "timeactive" | "pageloads", day: string, login: string, courseId: string): Promise<number> {
+async function nextCalendarValue(db: SupabaseClient, column: "timeactive" | "pageloads", day: string, login: string, courseId: CourseId): Promise<number> {
   const { data, error } = await db.from("calendar").select(column).eq("id", day).eq("studentid", login).eq("courseid", courseId).maybeSingle();
   if (error) fail("calendar read", error);
   const current = (data as Record<string, number | null> | null)?.[column];
@@ -58,7 +59,7 @@ async function nextCalendarValue(db: SupabaseClient, column: "timeactive" | "pag
 export async function recordPageLoad(
   db: SupabaseClient,
   login: string,
-  input: { courseId: string; loId: string; loType: string; day: string }
+  input: { courseId: CourseId; loId: LoRoute; loType: string; day: string }
 ): Promise<void> {
   if (await callRecordingFunction("record_page_view", {
     p_course_id: input.courseId, p_student_id: login, p_lo_id: input.loId, p_lo_type: input.loType, p_day: input.day
@@ -91,7 +92,7 @@ export async function recordPageLoad(
   if (calendarError) fail("calendar upsert", calendarError);
 }
 
-export async function recordTick(db: SupabaseClient, login: string, input: { courseId: string; loId: string | null; day: string }): Promise<void> {
+export async function recordTick(db: SupabaseClient, login: string, input: { courseId: CourseId; loId: LoRoute | null; day: string }): Promise<void> {
   if (await callRecordingFunction("record_heartbeat", {
     p_course_id: input.courseId, p_student_id: login, p_lo_id: input.loId, p_day: input.day
   }, db)) return;
@@ -163,7 +164,7 @@ export async function saveProfile(db: SupabaseClient, login: string, visits: unk
 }
 
 
-export async function recordCourseVisit(db: SupabaseClient, courseId: string, courseRecord: Record<string, unknown>): Promise<void> {
+export async function recordCourseVisit(db: SupabaseClient, courseId: CourseId, courseRecord: Record<string, unknown>): Promise<void> {
   const { data, error } = await db.from("tutors-connect-courses").select("visit_count").eq("course_id", courseId).maybeSingle();
   if (error) fail("tutors-connect-courses read", error);
   const visits = ((data as { visit_count?: number } | null)?.visit_count ?? 0) + 1;
@@ -174,7 +175,7 @@ export async function recordCourseVisit(db: SupabaseClient, courseId: string, co
 }
 
 
-export async function upsertLatest(db: SupabaseClient, login: string, courseId: string, payload: unknown): Promise<void> {
+export async function upsertLatest(db: SupabaseClient, login: string, courseId: CourseId, payload: unknown): Promise<void> {
   const { error } = await db
     .from("tutors-connect-latest")
     .upsert({ course_id: courseId, student_id: login, payload, received_at: now().toISOString() }, { onConflict: "course_id,student_id" });
@@ -182,20 +183,20 @@ export async function upsertLatest(db: SupabaseClient, login: string, courseId: 
 }
 
 
-export async function setLock(db: SupabaseClient, login: string, courseId: string, loRoute: string, locked: boolean): Promise<void> {
+export async function setLock(db: SupabaseClient, login: string, courseId: CourseId, loRoute: string, locked: boolean): Promise<void> {
   const { error } = await db
     .from("tutors_content_locks")
     .upsert({ course_id: courseId, lo_route: loRoute, locked, locked_by: login, locked_at: now().toISOString() }, { onConflict: "course_id,lo_route" });
   if (error) fail("tutors_content_locks upsert", error);
 }
 
-export async function removeLock(db: SupabaseClient, courseId: string, loRoute: string): Promise<void> {
+export async function removeLock(db: SupabaseClient, courseId: CourseId, loRoute: string): Promise<void> {
   const { error } = await db.from("tutors_content_locks").delete().eq("course_id", courseId).eq("lo_route", loRoute);
   if (error) fail("tutors_content_locks delete", error);
 }
 
 
-export function whiteboardRoomId(courseId: string, route: string, owner: string | null): string {
+export function whiteboardRoomId(courseId: CourseId, route: LoRoute, owner: string | null): string {
   const base = `wb-${courseId}-${route.replace(/[^a-zA-Z0-9-]/g, "-")}`;
   // Personal rooms need a separate namespace: "route-owner" is a valid shared route.
   return owner ? `wb-personal:${encodeURIComponent(courseId)}:${encodeURIComponent(route)}:${encodeURIComponent(owner)}` : base;

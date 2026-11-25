@@ -28,7 +28,10 @@ export type Calendar = { title: string; year?: number; weeks: WeekType[]; curren
 export type Composite = Lo & { toc: Lo[]; los: Lo[]; panels: Panels; units: Units; };
 
 // (from ../../domain/src/course/types/learning-objects.ts)
-export type Course = Composite & { type: "course"; courseId: string; courseUrl: string; topicIndex: Map<string, Topic>; loIndex: Map<string, Lo>; walls?: Lo[][]; wallMap?: Map<string, Lo[]>; properties: Properties; calendar?: Properties; enrollment?: Enrollment; courseCalendar?: Calendar; authLevel: number; isPortfolio: boolean; isPrivate: boolean; llm: number; pdfOrientation: string; areVideosHidden: boolean; areLabStepsAutoNumbered: boolean; hasEnrollment: boolean; hasCalendar: boolean; hasWhiteboard: boolean; defaultPdfReader: string; footer: string; ignorePin: string; companions: IconNavBar; wallBar: IconNavBar; };
+export type Course = Composite & { type: "course"; courseId: CourseId; courseUrl: string; topicIndex: Map<string, Topic>; loIndex: Map<string, Lo>; walls?: Lo[][]; wallMap?: Map<string, Lo[]>; properties: Properties; calendar?: Properties; enrollment?: Enrollment; courseCalendar?: Calendar; authLevel: number; isPortfolio: boolean; isPrivate: boolean; llm: number; pdfOrientation: string; areVideosHidden: boolean; areLabStepsAutoNumbered: boolean; hasEnrollment: boolean; hasCalendar: boolean; hasWhiteboard: boolean; defaultPdfReader: string; footer: string; ignorePin: string; companions: IconNavBar; wallBar: IconNavBar; };
+
+// (from ../../domain/src/course/utils/course-utils.ts)
+export type CourseFault = { readonly part: "calendar"; readonly message: string };
 
 // (from ../../domain/src/course/types/tutors-id-types.ts)
 export type CourseSentimentId = (typeof COURSE_SENTIMENT_IDS)[number];
@@ -175,7 +178,7 @@ export function createWalls(course: Course);
 export function crumbs(lo: Lo | undefined, los: Lo[]);
 
 // (from ../../domain/src/course/services/lo-tree.ts)
-export function decorateCourseTree( course: Course, courseId: string, courseUrl, options: DecorateOptions = {}, );
+export function decorateCourseTree( course: Course, courseId: CourseId | "", courseUrl, options: DecorateOptions = {}, ) : CourseFault[];
 
 // (from ../../domain/src/course/services/lo-tree.ts)
 export function decorateLoTree(course: Course, lo: Lo, render?: (course: Course, lo: Lo) => void);
@@ -208,7 +211,7 @@ export function getUnits(los: Lo[]) : Units;
 export function getVideoConfig(lo: Lo) : VideoIdentifier;
 
 // (from ../../domain/src/course/utils/course-utils.ts)
-export function initCalendar(course: Course, today: number = Date.now());
+export function initCalendar(course: Course, today?: number) : CourseFault | undefined;
 
 // (from ../../adapters/driven/render-markdown/src/markdown-utils.ts)
 export function initHighlighter(codeHighlighter: any);
@@ -289,5 +292,5 @@ export const simpleTypes: string[];
 | const | 8 |
 | function | 36 |
 | interface | 1 |
-| type | 40 |
-| **Total** | **86** |
+| type | 41 |
+| **Total** | **87** |

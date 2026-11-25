@@ -898,6 +898,8 @@ These are the rules this document rests on. They live in [`hexagonal-architectur
 | 0354 | ubiquitous | Tutors shall place every workspace package in exactly one boundary of the boundary map in ARCHITECTURE.md, so each package has one concern. |
 | 0355 | ubiquitous | Tutors shall name database tables and database functions only in the database adapters, so the schema can change in one boundary. |
 | 0356 | ubiquitous | Tutors shall name each kind of learning object once, in the domain's vocabulary, and take the model library's kind lists and build order from it. |
+| 0357 | ubiquitous | Tutors shall keep the domain ring from reading a clock, a random source or the console, so every domain rule gives the same answer for the same arguments. |
+| 0358 | ubiquitous | Tutors shall make a course id, a login key and a request route only where a rule has checked the value, so the compiler keeps one from standing in for another. |
 
 Rule 0353 (logins that differ only in capital letters are one account) is the access context's and lives in `instructor/whitelist-management.feature`.
 
@@ -923,7 +925,7 @@ The product's behaviour is specified the same way. The features that govern each
 1. Decide which boundary owns the rule (sections 11 and 12). A rule about what a course *is* goes in the domain and its feature drives domain functions; a rule about what happens *when* a learner does something is a use case and its feature drives the use case with in-memory adapters; a rule about a technology drives the adapter with a scripted or recorded client.
 2. Reserve a Rule id (`pnpm test:ears:audit --next-id` sees only merged features; the project tracks reservations for open pull requests).
 3. Write the `Rule:` in EARS form, tag it, bind it, and run `pnpm test:ears:audit`.
-4. If the rule constrains the shape (a new port, package or table), add its line to this document; Rules 0347 to 0356 will insist.
+4. If the rule constrains the shape (a new port, package or table), add its line to this document; Rules 0347 to 0358 will insist.
 
 ---
 
@@ -941,7 +943,7 @@ Testing is a boundary of its own (section 11): product code never imports a test
 | The rings and vendor rules | `tests/architecture/dependency-rules.test.ts` | Planted violations in `tests/architecture/fixtures/workspace`, each caught by its rule; the repository against the baseline |
 | The database boundary | `tests/architecture/database-boundary.test.ts`, `browser-data-access.test.ts`, `realtime-boundary.test.ts` | Source scans: where a table is named, what the anon client is used for, who joins a channel |
 | The security boundary | `tests/security/*`, `tests/bdd/features/developer/authorisation-matrix.feature` | The response-header contract, cookie flags, the CSRF origin check, the inventory of mutating routes, the dependency audit allow-list; the authorisation matrix over the routes |
-| This document as the authority | `tests/bdd/steps/developer/hexagonal-architecture.steps.ts` | Rules 0347 to 0356 read the workspace, the ports, the cruiser config, the adapters' table names and this file |
+| This document as the authority | `tests/bdd/steps/developer/hexagonal-architecture.steps.ts` | Rules 0347 to 0358 read the workspace, the ports, the cruiser config, the adapters' table names and this file |
 | Operations | `tests/conformance/*`, `tests/observability/*` | Image, kustomize, migration and release rules; log and metric shapes |
 | Coverage, mutation and API surface ratchets | `tests/suite-health/coverage-floors.json`, `tests/mutation/*.json`, `etc/*.api.md` | Floors per module that only rise |
 

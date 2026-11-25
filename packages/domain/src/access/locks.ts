@@ -1,8 +1,9 @@
+import type { CourseId } from "../course/address.ts";
 import type { Lo } from "../course/types/index.ts";
 
 /** One lock a lecturer set: a route of a course, locked or unlocked, by whom and when. */
 export interface ContentLock {
-  readonly courseId: string;
+  readonly courseId: CourseId;
   /** The learning object's route, or SHOW_LOCKED_KEY for the course's "show locked content" setting. */
   readonly route: string;
   readonly locked: boolean;

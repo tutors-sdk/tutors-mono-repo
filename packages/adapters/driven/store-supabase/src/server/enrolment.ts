@@ -1,10 +1,11 @@
+import type { CourseId } from "@tutors/domain/course/address";
 import { StoreError } from "./learner-store.ts";
 import type { ServiceDb } from "./service-client.ts";
 
 /** The reads behind a draft enrollment.yaml: who has visited a course, and what they are called. */
 
 /** Every login with recorded activity in a course, read a page at a time: a class accumulates many calendar rows per student over a term. */
-export async function courseVisitorLogins(db: ServiceDb, courseId: string): Promise<string[]> {
+export async function courseVisitorLogins(db: ServiceDb, courseId: CourseId): Promise<string[]> {
   const logins = new Set<string>();
   for (let offset = 0; ;) {
     const { data, error } = await db

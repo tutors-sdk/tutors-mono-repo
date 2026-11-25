@@ -2,6 +2,7 @@
  * Composite learning object types
  */
 
+import type { CourseId } from "../address.ts";
 import type { Calendar, Enrollment } from "./calendar-types.ts";
 import type { PodcastEpisodeIdentifier, VideoIdentifiers } from "./media-types.ts";
 import type { LearningRecord, Properties } from "./type-utils.ts";
@@ -252,7 +253,8 @@ export type Side = Composite & {
  */
 export type Course = Composite & {
   type: "course";
-  courseId: string;
+  /** The one id the course is known under; "" for a course built on disk that has not been published. */
+  courseId: CourseId;
   courseUrl: string;
   topicIndex: Map<string, Topic>;
   loIndex: Map<string, Lo>;

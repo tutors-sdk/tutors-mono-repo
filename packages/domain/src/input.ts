@@ -4,20 +4,22 @@
  * store sees it: each returns the value in its canonical form, or null when it is not one. The
  * rules are the domain's, so every server route and every future service refuses the same things.
  */
+import type { CourseId, LoRoute } from "./course/address.ts";
+
 const COURSE_ID = /^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/;
 
-export function courseId(value: unknown): string | null {
+export function courseId(value: unknown): CourseId | null {
   if (typeof value !== "string") return null;
   const id = value.trim();
-  return COURSE_ID.test(id) && !id.includes("..") ? id : null;
+  return COURSE_ID.test(id) && !id.includes("..") ? (id as CourseId) : null;
 }
 
 const LO_ROUTE = /^[A-Za-z0-9/_.@:#?=%+~-]{1,512}$/;
 
-export function loRoute(value: unknown): string | null {
+export function loRoute(value: unknown): LoRoute | null {
   if (typeof value !== "string") return null;
   const route = value.trim();
-  return LO_ROUTE.test(route) ? route : null;
+  return LO_ROUTE.test(route) ? (route as LoRoute) : null;
 }
 
 export function text(value: unknown, max: number): string | null {

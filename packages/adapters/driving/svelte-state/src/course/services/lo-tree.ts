@@ -1,6 +1,7 @@
 import { adapters } from "../../adapters.ts";
-import { decorateCourseTree as decorateDomainCourseTree, type Course, type Lo } from "@tutors/domain/course";
-import { courseAddress } from "@tutors/domain/course/address";
+import log from "@tutors/logger";
+import { decorateCourseTree as decorateDomainCourseTree, type Course, type CourseFault, type Lo } from "@tutors/domain/course";
+import { courseAddress, type CourseId } from "@tutors/domain/course/address";
 
 export { courseProtocolOf, type CourseAddress } from "@tutors/domain/course/address";
 import type { ContentRenderer, LoadCourseDeps } from "@tutors/application";
@@ -14,8 +15,9 @@ const RENDERED_ON_DEMAND = new Set(["lab", "note", "notebook", "quiz"]);
  * not show "**bold**"); web links stay out of the route index; a course served over plain http has
  * its links rewritten (the protocol comes with the course's address, not from shared state); custom companion icons are registered with the theme.
  */
-export function readerDecoration(renderer: ContentRenderer, protocol = "https://"): Pick<LoadCourseDeps, "render" | "decorated" | "omitFromIndex"> {
+export function readerDecoration(renderer: ContentRenderer, protocol = "https://"): Pick<LoadCourseDeps, "render" | "decorated" | "omitFromIndex" | "faulted"> {
   return {
+    faulted: reportCourseFaults,
     render: (course, lo) => {
       if (RENDERED_ON_DEMAND.has(lo.type)) {
         // A quiz is converted by its own renderer, which first splits the quiz definition out of the markdown.
@@ -29,15 +31,21 @@ export function readerDecoration(renderer: ContentRenderer, protocol = "https://
   };
 }
 
+/** A course that loads without its calendar says why in the log; the domain only returns the fault. */
+function reportCourseFaults(course: Course, faults: readonly CourseFault[]): void {
+  for (const fault of faults) log.warn("Error loading calendar", { courseId: course.courseId, error: fault.message });
+}
+
 /** Decorate a parsed course the way the reader does, with the renderer the app composed. */
-export function decorateCourseTree(course: Course, courseId: string = "", courseUrl = "", renderer?: ContentRenderer, protocol = "https://"): void {
+export function decorateCourseTree(course: Course, courseId: CourseId | "" = "", courseUrl = "", renderer?: ContentRenderer, protocol = "https://"): void {
   const decoration = renderer ? readerDecoration(renderer, protocol) : { render: undefined, decorated: registerCompanionIcons, omitFromIndex: (lo: Lo) => lo.type === "web" };
-  decorateDomainCourseTree(course, courseId, courseUrl, {
+  const faults = decorateDomainCourseTree(course, courseId, courseUrl, {
     render: decoration.render,
     today: adapters().clock.nowMs(),
     protocol,
     omitFromIndex: decoration.omitFromIndex
   });
+  reportCourseFaults(course, faults);
   decoration.decorated?.(course);
 }
 

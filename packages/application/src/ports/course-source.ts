@@ -1,4 +1,5 @@
 import type { Course } from "@tutors/domain/course";
+import type { CourseId } from "@tutors/domain/course/address";
 
 /** A course whose tutors.json is not there: the host answered 404. */
 export class CourseNotFoundError extends Error {
@@ -46,7 +47,7 @@ export const COURSE_FETCH_TIMEOUT_MS = 15_000;
 
 /** Where a course's tutors.json is published. */
 export type CourseLocation = {
-  courseId: string;
+  courseId: CourseId;
   /** Host (and path) of the course site, without a protocol. */
   courseUrl: string;
   protocol: "https://" | "http://";

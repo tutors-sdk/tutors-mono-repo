@@ -5,6 +5,9 @@ import { expect } from "vitest";
 import { checkArchitecture, formatViolation, type ArchitectureViolation } from "../../../../scripts/checks/architecture.ts";
 import { describeRatchet, ratchet } from "../../../../scripts/checks/lib/ratchet.ts";
 import { REPO_ROOT, readBaseline } from "../../../../scripts/checks/lib/repo.ts";
+import { decorateCourseTree, type Course, type CourseFault } from "@tutors/domain/course";
+import { courseAddress } from "@tutors/domain/course/address";
+import { courseId as wellFormedCourseId } from "@tutors/domain/input";
 import { LO_COMPOSITE_TYPES, LO_SIMPLE_TYPES, LO_TYPES } from "@tutors/domain/course/vocabulary";
 import { loCompositeTypes, loTypes, preOrder, simpleTypes } from "@tutors/tutors-model-lib";
 
@@ -156,6 +159,46 @@ function modulesNamingTheDatabase(): string[] {
     .sort();
 }
 const DATABASE_HOMES = ["packages/adapters/driven/store-supabase/src/", "packages/adapters/driven/realtime-supabase/src/", "packages/jsr/time/src/services/source.ts"];
+
+/** Source with its comments removed, so a rule about what code does is not tripped by what a comment says. */
+function codeOf(file: string): string {
+  return readFileSync(resolve(REPO_ROOT, file), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
+/** What a pure rule may not reach for (Rule 0357): the system clock, a random source, the console. */
+const IMPURE = /\bDate\.now\(|\bnew Date\(\s*\)|\bconsole\.|\bMath\.random\(|\bperformance\.now\(|\brandomUUID\(/;
+
+function impureDomainModules(): string[] {
+  return sources(resolve(REPO_ROOT, "packages/domain/src"), /\.ts$/)
+    .map((file) => relative(REPO_ROOT, file).replaceAll("\\", "/"))
+    .filter((file) => IMPURE.test(codeOf(file)))
+    .sort();
+}
+
+/** Product modules that cast a value to one of the domain's branded ids (Rule 0358). */
+function modulesMakingAnId(): string[] {
+  return ["apps", "packages"]
+    .flatMap((root) => sources(resolve(REPO_ROOT, root), /\.(ts|svelte)$/))
+    .map((file) => relative(REPO_ROOT, file).replaceAll("\\", "/"))
+    .filter(isProductModule)
+    .filter((file) => /\bas (CourseId|LoRoute|LoginKey)\b/.test(codeOf(file)))
+    .sort();
+}
+/**
+ * The only places a plain string may become an id, each after a check: the course address and the
+ * input rules; the login key; the tree builder, which is handed the address's id; the reader's
+ * educator check; the published model library, whose callers name a course by a string; and the
+ * port contract suites, which name courses in their cases.
+ */
+const ID_MAKERS = [
+  "apps/reader/src/lib/server/educator.ts",
+  "packages/application/src/testing/contracts.ts",
+  "packages/domain/src/access/login.ts",
+  "packages/domain/src/course/address.ts",
+  "packages/domain/src/course/services/lo-tree.ts",
+  "packages/domain/src/input.ts",
+  "packages/jsr/model/src/tutors.ts"
+];
 
 describeFeature(feature, ({ Rule }) => {
   const namesViolation = (violations: ArchitectureViolation[], rule: string, from: string, to: string) => {
@@ -489,6 +532,89 @@ describeFeature(feature, ({ Rule }) => {
       Then("it names no learning-object kind in a string", () => {
         const spelled = LO_TYPES.filter((kind) => new RegExp(`["'\`]${kind}["'\`]`).test(source));
         expect(spelled).toEqual([]);
+      });
+    });
+  });
+  Rule("Tutors shall keep the domain ring from reading a clock, a random source or the console, so every domain rule gives the same answer for the same arguments.", ({ RuleScenario }) => {
+    RuleScenario("No domain module reads the clock, draws a random number or writes to the console", ({ Given, Then }) => {
+      let impure: string[] = [];
+      Given("the modules of the domain ring", () => {
+        impure = impureDomainModules();
+      });
+      Then("none of them reads the system clock, a random source or the console", () => {
+        expect(impure).toEqual([]);
+      });
+    });
+
+    const week = (date: string, title: string) => ({ [date]: { title, type: "topic" } });
+    const courseWith = (calendar: unknown) => ({ type: "course", title: "Course", los: [], calendar }) as unknown as Course;
+
+    RuleScenario("A calendar that cannot be read is returned as a fault and the course is still built", ({ Given, When, Then, And }) => {
+      let course: Course;
+      let faults: CourseFault[] = [];
+      Given("a course whose calendar cannot be read", () => {
+        course = courseWith({ title: "Semester 1", weeks: [null] });
+      });
+      When("the domain builds its tree", () => {
+        faults = decorateCourseTree(course, "", "", { today: Date.parse("2026-09-08") });
+      });
+      Then("the tree is built without a calendar", () => {
+        expect(course.loIndex).toBeInstanceOf(Map);
+        expect(course.courseCalendar).toBeUndefined();
+      });
+      And("the fault names the calendar and what was wrong with it", () => {
+        expect(faults).toHaveLength(1);
+        expect(faults[0].part).toBe("calendar");
+        expect(faults[0].message).not.toBe("");
+      });
+    });
+
+    RuleScenario("The current week follows the instant the caller gives", ({ Given, When, Then, And }) => {
+      const calendar = { title: "Semester 1", weeks: [week("2026-09-07", "One"), week("2026-09-14", "Two")] };
+      let timed: Course;
+      let untimed: Course;
+      Given("a course with a calendar of two weeks", () => {
+        timed = courseWith(structuredClone(calendar));
+        untimed = courseWith(structuredClone(calendar));
+      });
+      When("the domain builds its tree for an instant in the first week and again with no instant", () => {
+        expect(decorateCourseTree(timed, "", "", { today: Date.parse("2026-09-09") })).toEqual([]);
+        expect(decorateCourseTree(untimed)).toEqual([]);
+      });
+      Then("the first tree has the first week as its current week", () => {
+        expect(timed.courseCalendar?.currentWeek?.title).toBe("One");
+      });
+      And("the second tree has no current week", () => {
+        expect(untimed.courseCalendar?.weeks).toHaveLength(2);
+        expect(untimed.courseCalendar?.currentWeek).toBeUndefined();
+      });
+    });
+  });
+
+  Rule("Tutors shall make a course id, a login key and a request route only where a rule has checked the value, so the compiler keeps one from standing in for another.", ({ RuleScenario }) => {
+    RuleScenario("A plain string becomes a course id, a login key or a route only at a checked place", ({ Given, Then }) => {
+      let makers: string[] = [];
+      Given("the product modules that turn a plain string into a course id, a login key or a route", () => {
+        makers = modulesMakingAnId();
+      });
+      Then("each of them is a place that checks the value first", () => {
+        expect(makers).toEqual(ID_MAKERS);
+      });
+    });
+
+    RuleScenario("The input rules and the course address give the same id for one course", ({ Given, Then, And }) => {
+      let byId = "";
+      let byAddress = "";
+      Given("a course opened by its Netlify id and by its full address", () => {
+        byId = courseAddress("reference-course").courseId;
+        byAddress = courseAddress("https://reference-course.netlify.app/").courseId;
+      });
+      Then("both give the same course id", () => {
+        expect(byId).toBe("reference-course");
+        expect(byAddress).toBe(byId);
+      });
+      And("the input rule accepts that id unchanged", () => {
+        expect(wellFormedCourseId(byId)).toBe(byId);
       });
     });
   });

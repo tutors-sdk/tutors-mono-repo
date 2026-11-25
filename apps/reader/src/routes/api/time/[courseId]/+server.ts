@@ -45,7 +45,7 @@ export const GET: RequestHandler = async ({ request, url, params, locals }) => {
   }
   const rows = await readTimeRows(db, courseId, start, end);
   log.info("Time data read", { courseId, role: educator ? "educator" : "student" });
-  return answer(200, educator ? rows : pseudonymise(rows, user.login), cors);
+  return answer(200, educator ? rows : pseudonymise(rows, user.login, () => crypto.randomUUID()), cors);
 };
 
 export const OPTIONS: RequestHandler = async ({ request, url }) => {

@@ -1,3 +1,4 @@
+import type { CourseId } from "@tutors/domain/course/address";
 import type { CourseFacts } from "@tutors/domain/access";
 
 /**
@@ -8,5 +9,5 @@ export type CourseFactsLookup = { readonly kind: "found"; readonly facts: Course
 
 /** Where the server reads what a course publishes about itself: its title, educators and privacy. */
 export interface CourseFactsSource {
-  read(courseId: string): Promise<CourseFactsLookup>;
+  read(courseId: CourseId): Promise<CourseFactsLookup>;
 }

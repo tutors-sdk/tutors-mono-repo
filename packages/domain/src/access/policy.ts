@@ -4,13 +4,14 @@
  * administers this deployment). Reading those facts is the application's job (createAuthorization
  * and the CourseFactsSource port); enforcing the answer is the route's.
  */
+import type { CourseId } from "../course/address.ts";
 import type { Actor } from "./actor.ts";
 import { listsLogin } from "./login.ts";
 import { roleHasPermission, type Permission, type Role } from "./roles.ts";
 
 /** What a course publishes about itself that access decisions and the catalogue need. */
 export interface CourseFacts {
-  readonly courseId: string;
+  readonly courseId: CourseId;
   readonly title: string | null;
   /** The logins enrollment.yaml lists under `educators`. */
   readonly educators: readonly string[];
@@ -23,7 +24,7 @@ function stringList(value: unknown): string[] {
 }
 
 /** The facts in a published tutors.json. Anything missing or of the wrong type reads as absent, never as a grant. */
-export function courseFactsFrom(courseId: string, json: unknown): CourseFacts {
+export function courseFactsFrom(courseId: CourseId, json: unknown): CourseFacts {
   const course = (json ?? {}) as {
     title?: unknown;
     properties?: { private?: unknown; credits?: unknown };
@@ -43,7 +44,7 @@ export function courseFactsFrom(courseId: string, json: unknown): CourseFacts {
 export type Asker = Pick<Actor, "login">;
 
 /** What an action is about. Courses are the only resource so far. */
-export type Resource = { readonly kind: "course"; readonly courseId: string };
+export type Resource = { readonly kind: "course"; readonly courseId: CourseId };
 
 /**
  * The asker's role in a course: educator when the course lists them, or when this deployment's
