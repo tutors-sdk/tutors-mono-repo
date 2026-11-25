@@ -188,11 +188,16 @@ export async function checkImages(tree: CourseTree, read: (path: string) => Prom
   return findings;
 }
 
-/** Every file a Markdown page links to with [text](path), images left to imageSources; examples in code are not links. */
-export function linkSources(markdown: string): string[] {
+/**
+ * Every file a Markdown page links to: [text](path), [text][ref] with its [ref]: path definition, and <a href>.
+ * Images are left to imageSources; examples in code are not links.
+ */
+function linkSources(markdown: string): string[] {
   const prose = markdown.replace(/^(```|~~~)[\s\S]*?^\1/gm, "").replace(/`[^`\n]*`/g, "");
   const sources: string[] = [];
   for (const match of prose.matchAll(/(?<!!)\[[^\]]*\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+["'][^"']*["'])?\s*\)/g)) sources.push(match[1] ?? match[2]);
+  for (const match of prose.matchAll(/^ {0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))/gm)) sources.push(match[1] ?? match[2]);
+  for (const match of prose.matchAll(/<a\b[^>]*?\bhref\s*=\s*["']([^"']+)["']/gi)) sources.push(match[1]);
   return [...new Set(sources)];
 }
 
