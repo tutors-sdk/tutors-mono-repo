@@ -374,9 +374,14 @@ describe("planBin and planRestore edges", () => {
   // planBin is the one planner that asks the port whether a path is there rather than looking it up in
   // the course tree, so it is the one that could be handed a path leading out of the course folder. A
   // port that joins onto the course root would resolve these and bin a file that is not in the course.
-  it("refuses a path that leads out of the course, whatever is there", async () => {
-    const fs = course({ "../secret.txt": "SECRET", "..\\windows.txt": "SECRET", "topic-01/../../escape.md": "# E\n" });
-    for (const path of ["../secret.txt", "..\\windows.txt", "topic-01/../../escape.md", "/etc/passwd", "\\\\server\\share", "C:/Windows/system.ini"]) {
+  // Each path is one the port can read, so the guard is the only thing that can refuse it: a path the
+  // course does not hold is refused by the exists check whatever the guard says, which would leave the
+  // guard's own clauses — a leading slash, a backslash, a Windows drive — unproved.
+  it("refuses a path that leads out of the course, even when the port can read it", async () => {
+    const outside = ["../secret.txt", "..\\windows.txt", "topic-01/../../escape.md", "/etc/passwd", "\\\\server\\share", "C:/Windows/system.ini"];
+    const fs = course(Object.fromEntries(outside.map((path) => [path, "SECRET"])));
+    for (const path of outside) {
+      expect(await fs.exists(path)).toBe(true);
       expect(await planBin(fs, path)).toEqual(refused(`There is nothing called "${path}" in the course to change.`));
     }
   });
