@@ -21,7 +21,7 @@
  * reports a broken course.
  *
  * Needs Deno and git. The base generator is materialised with `git archive`
- * (deno.json, deno.lock, packages/jsr only), the candidate is copied from the
+ * (deno.json, deno.lock and the workspace members the generators import: GENERATOR_PATHS), the candidate is copied from the
  * working tree, and each runs with its own deno.json so workspace packages
  * resolve inside that tree.
  */
@@ -52,8 +52,8 @@ import { moduleText as ventoModuleText, readVentoTemplates } from "../generate-v
 const WORK = join(REPO_ROOT, ".generator-diff");
 const MANIFEST = join(REPO_ROOT, "tests/generator/corpus.yaml");
 const CLAIMS = join(REPO_ROOT, "tests/generator/claims.yaml");
-// The generators resolve the domain, application and markdown-renderer workspace members, so each tree carries them.
-const GENERATOR_PATHS = ["deno.json", "deno.lock", "packages/jsr", "packages/domain", "packages/application", "packages/adapters/driven/render-markdown"];
+// The generators resolve the domain, application, markdown-renderer and logger-core workspace members, so each tree carries them.
+const GENERATOR_PATHS = ["deno.json", "deno.lock", "packages/jsr", "packages/domain", "packages/application", "packages/adapters/driven/render-markdown", "packages/platform/logger-core"];
 
 /** One-character changes the self-test plants in the candidate; each must surface as a hunk in `expect`. */
 const PLANTS: { file: string; from: string; to: string; generator: GeneratorName; expect: RegExp }[] = [

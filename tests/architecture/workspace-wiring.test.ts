@@ -109,6 +109,26 @@ describe("workspace wiring", () => {
     expect(disagreeing).toEqual([]);
   });
 
+  it("the generator comparison carries every workspace member the generators import", () => {
+    // scripts/checks/generator-diff.ts runs the generators from a tree that holds only these paths.
+    const script = readFileSync(join(REPO_ROOT, "scripts/checks/generator-diff.ts"), "utf8");
+    const carried: string[] = JSON.parse(/const GENERATOR_PATHS = (\[[^\]]*\]);/.exec(script)![1]);
+    const dirOf = new Map(memberDirs.map((dir) => [readJson(join(dir, "deno.json")).name, toPosix(dir)]));
+    const reached = new Set<string>();
+    const visit = (dir: string) => {
+      if (reached.has(dir)) return;
+      reached.add(dir);
+      for (const specifier of sourceFiles(join(REPO_ROOT, dir)).flatMap((file) => specifiersOf(file))) {
+        const next = specifier.startsWith("@tutors/") ? dirOf.get(split(specifier).name) : undefined;
+        if (next) visit(next);
+      }
+    };
+    for (const generator of ["packages/jsr/tutors", "packages/jsr/tutors-lite"]) visit(generator);
+    expect(reached.size).toBeGreaterThan(4);
+    const left = [...reached].filter((dir) => !carried.some((path) => dir === path || dir.startsWith(`${path}/`)));
+    expect(left).toEqual([]);
+  });
+
   describe("negative fixtures", () => {
     const domain: Manifest = { name: "@tutors/domain", exports: { ".": "./src/index.ts", "./course": "./src/course/index.ts" } };
     const known = new Map([["@tutors/domain", domain]]);
