@@ -88,7 +88,7 @@
     "packages/platform/metrics/src/metrics.ts": 88,
     "packages/platform/metrics/src/middleware.ts": 100,
     "packages/adapters/driven/clock/src/clock.ts": 98,
-    "packages/platform/logger/src/index.ts": 100,
+    "packages/platform/logger-core/src/index.ts": 100,
     "packages/jsr/course-rules/src/adapters/memory-fs.ts": 100,
     "packages/jsr/course-rules/src/adapters/mermaid.ts": 100,
     "packages/jsr/course-rules/src/finding.ts": 100,

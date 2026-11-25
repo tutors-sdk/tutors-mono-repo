@@ -133,11 +133,11 @@ UI is **appearance**: components, layout, themes, tokens.
 
 ## Operations
 
-- **Owns:** `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config` (build configuration and the environment contract), `@tutors/clock` (the server clock and `/version`). Also `Dockerfile`, `deploy/k8s`, `.github/workflows` and `release/`.
-- **May depend on:** nothing in the rings (`platform-self-contained`); the clock adapter implements the `Clock` port.
+- **Owns:** `@tutors/logger-core` (the logger itself, with no dependencies, so the generator, the time library and the command-line tools use it too), `@tutors/logger` (the core plus the SvelteKit server glue), `@tutors/metrics`, `@tutors/app-config` (build configuration, the environment contract and `readinessReport`, the one decision behind every app's `/healthz`), `@tutors/clock` (the server clock and `/version`). Also `Dockerfile`, `deploy/k8s`, `.github/workflows` and `release/`.
+- **May depend on:** nothing in the rings (`platform-self-contained`), and for the logger core nothing at all (`logger-core-self-contained`, Rule 0290); the clock adapter implements the `Clock` port.
 - **Crossing in:** environment variables, read once at a composition root or in the reader's server library.
 - **Crossing out:** one JSON log line per event with a request id, Prometheus metrics at `/metrics`, `/healthz`, `/version`.
-- **Must not:** log a secret or a learner's personal data; read the environment from a package that is not a composition root.
+- **Must not:** log a secret or a learner's personal data; write to `console` or `process.stderr` from a published library instead of the logger (Rule 0291); read the environment from a package that is not a composition root.
 - **Held by:** `tests/conformance` (images, kustomize, migrations, release rules), `tests/observability`, `pnpm check:k8s`, the environment contract check, and the [release harness](https://github.com/tutors-sdk/tutors-release-harness), which compares production with every release candidate.
 
 ## Composition
@@ -169,7 +169,7 @@ Testing is a boundary because of one rule: **product code never contains a test 
   | UX | Service tests over `anonymousAdapters({ ...spies })` | Ports |
   | UI | Component tests | State |
   | The product | BDD features bound to EARS Rules, through the composition roots | The session, the database, the course host |
-  | The shape | `tests/architecture`, Rules 0340 to 0355 | A fixture workspace of planted violations |
+  | The shape | `tests/architecture`, Rules 0340 to 0356 | A fixture workspace of planted violations |
 
 - **Must not:** import `@tutors/application/testing` from product code outside a composition root (`test-doubles-only-in-composition`); skip, disable or delete a test to get green; add a line to a baseline (`known-violations.txt`, `known-gaps.txt`, the knip and manifest baselines) instead of fixing the cause; lower a coverage or mutation floor.
 - **Held by:** the ratchets in `tests/suite-health` and `tests/mutation`, `pnpm test:ears:audit`, and [`guides/testing/TESTING-OVERVIEW.md`](../guides/testing/TESTING-OVERVIEW.md).

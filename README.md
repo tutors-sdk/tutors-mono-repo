@@ -100,7 +100,8 @@ The UI packages keep their strict one-directional dependency: `ui-components →
 
 | Directory | Package | What it is |
 |---|---|---|
-| `logger` | `@tutors/logger` | Logging utility and server request logger |
+| `logger-core` | `@tutors/logger-core` | The logger itself, with no dependencies: used by the apps, the static generator, the time library and the command-line tools |
+| `logger` | `@tutors/logger` | The logger core plus the server request logger |
 | `metrics` | `@tutors/metrics` | Prometheus registry, request middleware and `/metrics` endpoint |
 | `app-config` | `@tutors/app-config` | Shared Vite and SvelteKit build options supplied through each app's `vite.config.ts` |
 

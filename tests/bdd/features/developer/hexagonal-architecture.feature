@@ -151,3 +151,15 @@ Feature: Hexagonal architecture
     Scenario: No app, ring or other adapter names a table or a database function
       Given the product modules that name a database table or function
       Then each of them is in the Supabase store adapter, the Supabase realtime adapter or the published time library's source
+
+  @rule-0356 @ears-ubiquitous
+  Rule: Tutors shall name each kind of learning object once, in the domain's vocabulary, and take the model library's kind lists and build order from it.
+
+    Scenario: The model library's lists are the domain's vocabulary
+      Given the domain's vocabulary of learning-object kinds
+      Then the model library's simple, composite and full lists hold those kinds in that order
+      And its build order ranks each of those kinds once and nothing else
+
+    Scenario: The model library spells out no kind of its own
+      Given the source of the model library's kind lists
+      Then it names no learning-object kind in a string

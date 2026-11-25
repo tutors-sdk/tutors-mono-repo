@@ -5,6 +5,8 @@ import { expect } from "vitest";
 import { checkArchitecture, formatViolation, type ArchitectureViolation } from "../../../../scripts/checks/architecture.ts";
 import { describeRatchet, ratchet } from "../../../../scripts/checks/lib/ratchet.ts";
 import { REPO_ROOT, readBaseline } from "../../../../scripts/checks/lib/repo.ts";
+import { LO_COMPOSITE_TYPES, LO_SIMPLE_TYPES, LO_TYPES } from "@tutors/domain/course/vocabulary";
+import { loCompositeTypes, loTypes, preOrder, simpleTypes } from "@tutors/tutors-model-lib";
 
 const feature = await loadFeature("tests/bdd/features/developer/hexagonal-architecture.feature");
 
@@ -19,6 +21,7 @@ const FIXTURE_ALIASES = {
   "@tutors/application$": fixture("packages/application/src/index.ts"),
   "@tutors/application/testing": fixture("packages/application/src/testing/index.ts"),
   "@tutors/tutors-model-lib": fixture("packages/jsr/model/src/index.ts"),
+  "@tutors/logger-core": fixture("packages/platform/logger-core/src/index.ts"),
   "@tutors/logger": fixture("packages/platform/logger/src/index.ts"),
   "@tutors/store-supabase": fixture("packages/adapters/driven/store-supabase/src/index.ts"),
   "@tutors/svelte-state$": fixture("packages/adapters/driving/svelte-state/src/index.ts"),
@@ -456,6 +459,36 @@ describeFeature(feature, ({ Rule }) => {
       });
       Then("each of them is in the Supabase store adapter, the Supabase realtime adapter or the published time library's source", () => {
         expect(files.filter((file) => !DATABASE_HOMES.some((home) => file.startsWith(home)))).toEqual([]);
+      });
+    });
+  });
+
+  Rule("Tutors shall name each kind of learning object once, in the domain's vocabulary, and take the model library's kind lists and build order from it.", ({ RuleScenario }) => {
+    RuleScenario("The model library's lists are the domain's vocabulary", ({ Given, Then, And }) => {
+      Given("the domain's vocabulary of learning-object kinds", () => {
+        expect(LO_TYPES.length).toBeGreaterThan(10);
+        expect(new Set(LO_TYPES).size).toBe(LO_TYPES.length);
+      });
+      Then("the model library's simple, composite and full lists hold those kinds in that order", () => {
+        expect(simpleTypes).toEqual([...LO_SIMPLE_TYPES]);
+        expect(loCompositeTypes).toEqual([...LO_COMPOSITE_TYPES]);
+        expect(loTypes).toEqual([...LO_TYPES]);
+      });
+      And("its build order ranks each of those kinds once and nothing else", () => {
+        expect([...preOrder.keys()].sort()).toEqual([...LO_TYPES].sort());
+        expect(new Set(preOrder.values()).size).toBe(LO_TYPES.length);
+      });
+    });
+
+    RuleScenario("The model library spells out no kind of its own", ({ Given, Then }) => {
+      let source = "";
+      Given("the source of the model library's kind lists", () => {
+        source = readFileSync(join(REPO_ROOT, "packages/domain/src/course/types/type-utils.ts"), "utf8");
+        expect(source).toContain("export const loTypes");
+      });
+      Then("it names no learning-object kind in a string", () => {
+        const spelled = LO_TYPES.filter((kind) => new RegExp(`["'\`]${kind}["'\`]`).test(source));
+        expect(spelled).toEqual([]);
       });
     });
   });

@@ -318,7 +318,7 @@ tutors-mono-repo/
 │   │   │                    #   profile-localstorage, bus-inprocess, identity-better-auth, moodle, clock
 │   │   └── driving/         # Svelte state and UI → @tutors/svelte-state, themes, i18n, a11y, tour,
 │   │                        #   privacy, ui-primitives, ui-navigators, ui-components
-│   ├── platform/            # logger, metrics, app-config → @tutors/<name>
+│   ├── platform/            # logger-core, logger, metrics, app-config → @tutors/<name>
 │   └── jsr/                 # Published to JSR (Deno)
 │       ├── model/           # Facade over the domain      → @tutors/tutors-model-lib
 │       ├── time/            # Facade + time read models   → @tutors/tutors-time-lib

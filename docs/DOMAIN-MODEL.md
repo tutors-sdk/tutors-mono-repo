@@ -61,6 +61,7 @@ An arrow means "names a type of". No context calls another context's rules to ma
 - `Course`: the entity. Identity is `courseId`, the host name of its published site.
 - `Lo` and its kinds: entities within a course, identified by `route`.
 - `LO_TYPES`, `LO_SIMPLE_TYPES`, `LO_COMPOSITE_TYPES`: the closed vocabulary. `isLoType` is its value rule. Nothing outside this context defines a kind.
+- `LO_TYPE_ORDER`: where each kind sorts among its siblings in a built course. It is a record over the vocabulary, so a kind without a place does not compile. The model library's `simpleTypes`, `loCompositeTypes`, `loTypes` and `preOrder` are taken from these (Rule 0356); `tests/unit/domain/lo-vocabulary.test.ts` checks the themes' icons and the static generator's palette against the same list.
 - `CourseAddress`: where a course is published, from `courseAddress` and `tutorsJsonUrl`.
 
 **Rules.**

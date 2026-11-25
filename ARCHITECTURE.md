@@ -196,7 +196,7 @@ flowchart TB
 | Driven adapters | `packages/adapters/driven/*` | `@tutors/<name>` | Ports, domain, one technology, `@tutors/logger` | One technology each, behind a port |
 | Driving adapters | `packages/adapters/driving/*` | `@tutors/<name>` | Ports, domain, `svelte-state`, `@tutors/logger`; never a driven adapter | The Svelte state (the only home of runes), the UI, themes, i18n, a11y, tours, consent |
 | Apps | `apps/*` | `tutors-reader`, `tutors-catalogue`, `tutors-live`, `tutors-time`, `tutors-validator` | Everything; never another app, never a database client | Composition, routes, server hooks, environment |
-| Platform | `packages/platform/*` | `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config` | Nothing in the rings | Logging, metrics, build configuration and the environment contract; used by every ring that runs on a server |
+| Platform | `packages/platform/*` | `@tutors/logger-core`, `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config` | Nothing in the rings | Logging, metrics, build configuration, the environment contract and the readiness answer; used by every adapter and app. `@tutors/logger-core` has no dependencies at all, so the static generator, the time library and the command-line tools log through the same logger and transports as the apps (Rules 0290 to 0292, `developer/shared-logger.feature`); `@tutors/logger` adds the SvelteKit server glue |
 | Published | `packages/jsr/*` | `@tutors/tutors-model-lib`, `@tutors/tutors-time-lib`, `@tutors/tutors-types`, `@tutors/course-rules`, `@tutors/tutors-create`, `@tutors/tutors-gen-lib`, `@tutors/tutors`, `@tutors/tutors-cli`, `@tutors/tutors-lite` | The facades import the rings; the authoring toolchain is self-contained | Published packages: facades over the domain for one major, the course rules, and the authoring toolchain |
 
 ---
@@ -707,7 +707,7 @@ The rings say which way dependencies point. The boundaries say **whose concern a
 | **Content rendering** | How does markdown become what a student reads? | `@tutors/render-markdown` | Shiki, KaTeX, Marp and Mermaid use | `vendor-only-in-its-adapter` |
 | **UX** | What does the learner experience: state, flow, language, accessibility, guidance? | `@tutors/svelte-state`, `@tutors/i18n`, `@tutors/a11y`, `@tutors/tour` | [`guides/PERSONAS.md`](guides/PERSONAS.md), the journeys in `tests/bdd/features/ui` and `student` | `svelte-state-imports-no-adapter`, `runes-only-in-svelte-state` (Rule 0344) |
 | **UI** | What does it look like: components, layout, themes, tokens? | `@tutors/ui-primitives`, `@tutors/ui-navigators`, `@tutors/ui-components`, `@tutors/themes` | [`DESIGN.md`](DESIGN.md) | `ui-layering`, `ui-primitives-no-data-features`, `ui-imports-no-driven-adapter` |
-| **Operations** | How is it built, configured, observed, released and deployed? | `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config`, `@tutors/clock` | `Dockerfile`, `deploy/k8s`, `.github/workflows`, `release/`, the environment contract | `platform-self-contained`; `tests/conformance`, `tests/observability`, `pnpm check:k8s` |
+| **Operations** | How is it built, configured, observed, released and deployed? | `@tutors/logger-core`, `@tutors/logger`, `@tutors/metrics`, `@tutors/app-config`, `@tutors/clock` | `Dockerfile`, `deploy/k8s`, `.github/workflows`, `release/`, the environment contract | `platform-self-contained`; `tests/conformance`, `tests/observability`, `pnpm check:k8s` |
 | **Composition** | Which adapter is behind each port in this deployment, and which routes exist? | `tutors-reader`, `tutors-catalogue`, `tutors-live`, `tutors-time`, `tutors-validator` | `apps/*/src/lib/compose.ts`, routes and hooks | `no-app-to-app`, `adapters-import-no-app`, Rule 0345 |
 | **Authoring and published API** | What does a lecturer run, and what do packages outside this repository import? | `@tutors/course-rules`, `@tutors/tutors-create`, `@tutors/tutors-model-lib`, `@tutors/tutors-time-lib`, `@tutors/tutors-types` | `@tutors/tutors-gen-lib`, `@tutors/tutors`, `@tutors/tutors-cli`, `@tutors/tutors-lite`; `etc/*.api.md` | `facades-import-rings-only`, `tutors-types-self-contained`, `course-rules-no-file-system`; the API surface reports |
 | **Testing** | How do we know? | none: tests are not a package | `tests/`, `@tutors/application/testing` (the in-memory adapters and contract suites), [`guides/testing/TESTING-OVERVIEW.md`](guides/testing/TESTING-OVERVIEW.md) | `test-doubles-only-in-composition`; the coverage, mutation and completeness ratchets |
@@ -804,9 +804,10 @@ All in [`.dependency-cruiser.cjs`](.dependency-cruiser.cjs), run by `tests/archi
 | `adapters-import-no-app` | No package imports an app | Composition |
 | `no-app-to-app` | An app imports no other app | Composition |
 | `platform-self-contained` | `packages/platform` imports nothing from apps or the rings | Operations |
+| `logger-core-self-contained` | `packages/platform/logger-core` imports nothing outside its own files: no workspace, no npm package, no Node built-in (Rule 0290) | Operations |
 | `identity-provider-only-in-adapter` | Apps do not import an identity provider | Security |
 | `identity-no-server-in-browser` | Browser entry points cannot reach a server adapter or a private environment module, even through a shared barrel | Security |
-| `facades-import-rings-only` | `tutors-model-lib`, `tutors-time-lib` and `tutors-types` import only the rings and render-markdown | Authoring and published API |
+| `facades-import-rings-only` | `tutors-model-lib`, `tutors-time-lib` and `tutors-types` import only the rings, render-markdown and the dependency-free logger core | Authoring and published API |
 | `tutors-types-self-contained` | `packages/jsr/types` imports only the domain | Authoring and published API |
 | `course-rules-no-file-system` | The course rules read a course only through their file-system port, so the CLI, Studio and the browser run the same rules | Authoring and published API |
 | `no-cross-workspace-relative-import` | A package reaches another only by its package name | All |
@@ -842,6 +843,7 @@ These are the rules this document rests on. They live in [`hexagonal-architectur
 | 0352 | unwanted | If a package, port, rule or table is added without its line in ARCHITECTURE.md, then tutors shall fail the architecture check naming what is missing. |
 | 0354 | ubiquitous | Tutors shall place every workspace package in exactly one boundary of the boundary map in ARCHITECTURE.md, so each package has one concern. |
 | 0355 | ubiquitous | Tutors shall name database tables and database functions only in the database adapters, so the schema can change in one boundary. |
+| 0356 | ubiquitous | Tutors shall name each kind of learning object once, in the domain's vocabulary, and take the model library's kind lists and build order from it. |
 
 Rule 0353 (logins that differ only in capital letters are one account) is the access context's and lives in `instructor/whitelist-management.feature`.
 
@@ -867,7 +869,7 @@ The product's behaviour is specified the same way. The features that govern each
 1. Decide which boundary owns the rule (sections 11 and 12). A rule about what a course *is* goes in the domain and its feature drives domain functions; a rule about what happens *when* a learner does something is a use case and its feature drives the use case with in-memory adapters; a rule about a technology drives the adapter with a scripted or recorded client.
 2. Reserve a Rule id (`pnpm test:ears:audit --next-id` sees only merged features; the project tracks reservations for open pull requests).
 3. Write the `Rule:` in EARS form, tag it, bind it, and run `pnpm test:ears:audit`.
-4. If the rule constrains the shape (a new port, package or table), add its line to this document; Rules 0347 to 0355 will insist.
+4. If the rule constrains the shape (a new port, package or table), add its line to this document; Rules 0347 to 0356 will insist.
 
 ---
 
@@ -885,7 +887,7 @@ Testing is a boundary of its own (section 11): product code never imports a test
 | The rings and vendor rules | `tests/architecture/dependency-rules.test.ts` | Planted violations in `tests/architecture/fixtures/workspace`, each caught by its rule; the repository against the baseline |
 | The database boundary | `tests/architecture/database-boundary.test.ts`, `browser-data-access.test.ts`, `realtime-boundary.test.ts` | Source scans: where a table is named, what the anon client is used for, who joins a channel |
 | The security boundary | `tests/security/*`, `tests/bdd/features/developer/authorisation-matrix.feature` | The response-header contract, cookie flags, the CSRF origin check, the inventory of mutating routes, the dependency audit allow-list; the authorisation matrix over the routes |
-| This document as the authority | `tests/bdd/steps/developer/hexagonal-architecture.steps.ts` | Rules 0347 to 0355 read the workspace, the ports, the cruiser config, the adapters' table names and this file |
+| This document as the authority | `tests/bdd/steps/developer/hexagonal-architecture.steps.ts` | Rules 0347 to 0356 read the workspace, the ports, the cruiser config, the adapters' table names and this file |
 | Operations | `tests/conformance/*`, `tests/observability/*` | Image, kustomize, migration and release rules; log and metric shapes |
 | Coverage, mutation and API surface ratchets | `tests/suite-health/coverage-floors.json`, `tests/mutation/*.json`, `etc/*.api.md` | Floors per module that only rise |
 
@@ -915,7 +917,7 @@ The facades exist so that published courses and tools built on them keep working
 - **Kubernetes**: `deploy/k8s/base`, `components`, `variants` and one overlay per app under `deploy/k8s/overlays/`; `deploy/k8s/next` reuses production images for the next hosts. `pnpm check:k8s` and the platform-conformance tests hold the restricted-SCC, arbitrary-UID and read-only-root policies.
 - **Environment, public**: `PUBLIC_ANON_MODE`, `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_ANON_KEY` are read by the composition roots; the `PUBLIC_*_ORIGIN` and `PUBLIC_READER_URL` values tell the apps where each other live.
 - **Environment, private (the reader's server only)**: `PRIVATE_AUTH_SECRET`, `PRIVATE_AUTH_GITHUB_ID` and `PRIVATE_AUTH_GITHUB_SECRET` for the identity handle; `PRIVATE_SUPABASE_SERVICE_ROLE_KEY` for the service client; `PRIVATE_COURSE_HOSTS` (hosts the server may read a course from), `PRIVATE_TUTORS_ADMINS` (deployment administrators) and `PRIVATE_API_ALLOWED_ORIGINS` (the apps that may read `/api/time`) for authorisation; `MOODLE_WS_URL` and `MOODLE_WS_TOKEN` for the Moodle sync. `HARNESS_NOW` freezes the clock for the release harness. `@tutors/app-config` holds the contract of which app reads which name.
-- **Observability**: every server line is one JSON object with a request id (`@tutors/logger`), `/metrics` is Prometheus (`@tutors/metrics`), `/version` and `/healthz` are served by every app; the error transport writes to `app_errors`.
+- **Observability**: every server line is one JSON object with a request id (`@tutors/logger`), `/metrics` is Prometheus (`@tutors/metrics`), `/version` and `/healthz` are served by every app, and `/healthz` is decided by one function, `readinessReport` in `@tutors/app-config/readiness` (misconfigured is 503, a dependency that did not answer is degraded and 200); the error transport writes to `app_errors`.
 - **Release**: `release/claims.yaml`, `deployed.json`, `openvex.json`, `slo.yaml` and `SOP.md` are what the [release harness](https://github.com/tutors-sdk/tutors-release-harness) reads when it compares production with a release candidate. Main is the release candidate; students only see a release.
 
 ---

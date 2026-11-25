@@ -156,7 +156,7 @@ Never compare logins yourself: use `sameLogin` or `listsLogin`. Never treat "the
 
 ### Add a kind of learning object
 
-1. Add the kind to `packages/domain/src/course/vocabulary.ts`.
+1. Add the kind to `packages/domain/src/course/vocabulary.ts`: its name in `LO_SIMPLE_TYPES` or `LO_COMPOSITE_TYPES`, and its place in `LO_TYPE_ORDER` (the compiler asks for it). The model library's lists and build order follow (Rule 0356), and `tests/unit/domain/lo-vocabulary.test.ts` then names every theme and generator palette that has no entry for it yet.
 2. Teach the generator to emit it (`packages/jsr/gen`) and, if it has rules, the course rules (`packages/jsr/course-rules`).
 3. Give it a view in `packages/adapters/driving/ui-components/src/learning-objects`, an icon and a colour in `themes`, and a route in `apps/reader`.
 4. Add it to the course JSON contract tests (`tests/contract/course`).
