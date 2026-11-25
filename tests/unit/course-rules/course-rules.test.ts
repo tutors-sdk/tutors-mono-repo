@@ -299,9 +299,9 @@ describe("findings", () => {
     expect(checkTree(await buildCourseTree(new MemoryFileSystem({ "Week 3/a.pdf": "" }))).map((x) => x.rule)).toEqual(["V001", "V002"]);
   });
 
-  it("carry the catalogue's severity, and the catalogue lists V001-V020 once each, in id order", async () => {
-    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 20 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
-    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn", "warn", "error"]);
+  it("carry the catalogue's severity, and the catalogue lists V001-V021 once each, in id order", async () => {
+    expect(ruleCatalogue.map((r) => r.id)).toEqual(Array.from({ length: 21 }, (_, i) => `V${String(i + 1).padStart(3, "0")}`));
+    expect(ruleCatalogue.map((r) => r.severity)).toEqual([...Array(6).fill("error"), ...Array(5).fill("warn"), "info", "error", "warn", "error", "warn", "error", "warn", "warn", "error", "warn"]);
     expect((await errorsOf(new MemoryFileSystem({}))).map((x) => x.severity)).toEqual(["error"]);
   });
 

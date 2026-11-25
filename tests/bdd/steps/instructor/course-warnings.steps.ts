@@ -101,6 +101,26 @@ describeFeature(feature, ({ Rule }) => {
   );
 
   Rule(
+    "If a page in a topic or in any learning object other than a unit or side unit shows or links to a file outside that topic's or learning object's own folder, then tutors shall report rule V021 as a warning against the page, once per file, since the page breaks when it is copied into another course.",
+    ({ RuleScenario }) => {
+      RuleScenario(
+        "A logo, a worksheet and a neighbouring note from outside, and a web address, an anchor and a code example that are not checked",
+        ({ Given, When, Then, And }) => {
+          Given("the {string} course of fixture {string}", givenFixture);
+          When("the course is validated", whenValidated);
+          Then("the findings shall be exactly {string}", exactly);
+          And("the finding for {string} shall say {string}", says);
+        }
+      );
+      RuleScenario("Every file a page uses is in its own folder", ({ Given, When, Then }) => {
+        Given("the {string} course of fixture {string}", givenFixture);
+        When("the course is validated", whenValidated);
+        Then("there shall be no findings", none);
+      });
+    }
+  );
+
+  Rule(
     "If topics side by side are not numbered, or their numbers skip or run backwards once sorted by name, then tutors shall report rule V010 as a warning against each topic out of place.",
     ({ RuleScenario }) => {
       RuleScenario("topic-1, topic-10, topic-2 and topic-intro", ({ Given, When, Then }) => {

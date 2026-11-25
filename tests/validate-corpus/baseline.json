@@ -46,6 +46,30 @@
           "message": "The file \"00.Lab-01 Eclipse & Java.md\" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to 00.Lab-01-Eclipse-Java.md."
         },
         {
+          "rule": "V021",
+          "severity": "warn",
+          "path": "topic01-paradigms-and-languages/book-eclipse-and-java/03.03.md",
+          "message": "This page uses \"../book/archives/cstyle.xml\", which is outside its own folder, so the link breaks when this is copied into another course. Move the file into this folder and link to it there."
+        },
+        {
+          "rule": "V021",
+          "severity": "warn",
+          "path": "topic01-paradigms-and-languages/book-eclipse-and-java/08.08.md",
+          "message": "This page uses \"../book/archives/xstream-1.4.10.jar\", which is outside its own folder, so the link breaks when this is copied into another course. Move the file into this folder and link to it there."
+        },
+        {
+          "rule": "V021",
+          "severity": "warn",
+          "path": "topic01-paradigms-and-languages/book-eclipse-and-java/10.Exercises.md",
+          "message": "This page uses \"../book/archives/jettison-1.3.8.jar\", which is outside its own folder, so the link breaks when this is copied into another course. Move the file into this folder and link to it there."
+        },
+        {
+          "rule": "V021",
+          "severity": "warn",
+          "path": "topic01-paradigms-and-languages/book-eclipse-and-java/10.Exercises.md",
+          "message": "This page uses \"../book/archives/stax-1.2.0.jar\", which is outside its own folder, so the link breaks when this is copied into another course. Move the file into this folder and link to it there."
+        },
+        {
           "rule": "V007",
           "severity": "warn",
           "path": "topic02-java-language/book-cli-and-classes/00.Lab-02 CLI & Classes.md",

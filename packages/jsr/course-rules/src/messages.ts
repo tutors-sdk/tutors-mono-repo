@@ -78,6 +78,8 @@ export const messages = {
     `The file "${name}" has spaces or accents in its name, which break links when the course moves between Windows, a Mac and the web. Rename it to ${suggestion}.`,
   noTitle: (file: string) => `${file} has no title, so its card shows a blank heading. Put the title on the first line, like # Week 1.`,
   imageMissing: (src: string) => `This page shows the image "${src}", but there is no such file next to it, so readers see a broken image. Add the image or fix the name.`,
+  reachesOutside: (src: string) =>
+    `This page uses "${src}", which is outside its own folder, so the link breaks when this is copied into another course. Move the file into this folder and link to it there.`,
   imageLarge: (src: string, megabytes: string) =>
     `The image "${src}" is ${megabytes} MB, so the page is slow to open on a phone. Shrink it below 2 MB (a screenshot saved as .jpg usually is).`,
   topicUnnumbered: (name: string) =>

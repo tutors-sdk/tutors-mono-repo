@@ -323,4 +323,11 @@ describe("tutors validate --fix", () => {
     expect(fixSummary({ applied: [], skipped: [] })).toBe("Nothing to fix automatically.\n");
     expect(fixSummary({ applied: [], skipped: [{ op: { op: "move", from: "a", to: "b" }, reason: "b already exists" }] })).toBe("skipped rename a to b: b already exists\n");
   });
+
+  it("V021 also finds reference-style links and <a href> that reach outside the learning object", async () => {
+    const page = '# Reading\n\nThe [worksheet][sheet] and <a href="../../handout.pdf">the handout</a>.\n\n[sheet]: ../../sheet.pdf\n';
+    const fs = new MemoryFileSystem({ "course.md": "# Course\n", "sheet.pdf": "%PDF", "handout.pdf": "%PDF", "topic-01/topic.md": "# Week\n", "topic-01/note-01/note.md": page });
+    const v021 = (await validate(fs)).filter((f) => f.rule === "V021");
+    expect(v021.map((f) => f.message.match(/"([^"]+)"/)?.[1]).sort()).toEqual(["../../handout.pdf", "../../sheet.pdf"]);
+  });
 });

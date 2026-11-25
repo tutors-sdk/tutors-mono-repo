@@ -1,7 +1,27 @@
 export type Severity = "error" | "warn" | "info";
 
 export type RuleId =
-  "V001" | "V002" | "V003" | "V004" | "V005" | "V006" | "V007" | "V008" | "V009" | "V010" | "V011" | "V012" | "V013" | "V014" | "V015" | "V016" | "V017" | "V018" | "V019" | "V020";
+  | "V001"
+  | "V002"
+  | "V003"
+  | "V004"
+  | "V005"
+  | "V006"
+  | "V007"
+  | "V008"
+  | "V009"
+  | "V010"
+  | "V011"
+  | "V012"
+  | "V013"
+  | "V014"
+  | "V015"
+  | "V016"
+  | "V017"
+  | "V018"
+  | "V019"
+  | "V020"
+  | "V021";
 
 /**
  * One change to a course folder. A fix is planned as file operations first and applied only when the
@@ -53,7 +73,8 @@ export const ruleCatalogue: readonly RuleInfo[] = [
   { id: "V017", severity: "error", summary: "Every Mermaid diagram draws (checked where a shell supplies a diagram checker)" },
   { id: "V018", severity: "warn", summary: "A folder Tutors leaves out holds working files (code, scripts, slide sources), not course material" },
   { id: "V019", severity: "warn", summary: "A lab's steps start at 00 or 01 and skip no number" },
-  { id: "V020", severity: "error", summary: "A published tutors.json matches the course data schema (published-course checks)" }
+  { id: "V020", severity: "error", summary: "A published tutors.json matches the course data schema (published-course checks)" },
+  { id: "V021", severity: "warn", summary: "A topic's or learning object's pages show and link only to files inside its own folder, so it can be copied into another course" }
 ];
 
 export function severityOf(rule: RuleId): Severity {
