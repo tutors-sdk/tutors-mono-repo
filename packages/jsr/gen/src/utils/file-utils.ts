@@ -84,7 +84,7 @@ export function readWholeFile(path: string): string {
 export function readFirstLineFromFile(path: string): string {
   if (fs.existsSync(path)) {
     const array = fs.readFileSync(path).toString().split("\n");
-    return array[0].replace("\r", "");
+    return array[0].replaceAll("\r", "");
   } else {
     log.warn("unable to locate file", { path });
   }
