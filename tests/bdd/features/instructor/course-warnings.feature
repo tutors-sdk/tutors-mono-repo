@@ -58,6 +58,20 @@ Feature: Course warnings and safe fixes
       When the course is validated
       Then there shall be no findings
 
+  @rule-0785 @ears-unwanted
+  Rule: If a page in a topic or in any learning object other than a unit or side unit shows or links to a file outside that topic's or learning object's own folder, then tutors shall report rule V021 as a warning against the page, once per file, since the page breaks when it is copied into another course.
+
+    Scenario: A logo, a worksheet and a neighbouring note from outside, and a web address, an anchor and a code example that are not checked
+      Given the "broken" course of fixture "V021"
+      When the course is validated
+      Then the findings shall be exactly "V021 warn topic-01/note-01/note.md; V021 warn topic-01/note-01/note.md; V021 warn topic-01/note-01/note.md; V021 warn topic-01/topic.md"
+      And the finding for "topic-01/note-01/note.md" shall say "../../sheet.pdf"
+
+    Scenario: Every file a page uses is in its own folder
+      Given the "fixed" course of fixture "V021"
+      When the course is validated
+      Then there shall be no findings
+
   @rule-0713 @ears-unwanted
   Rule: If topics side by side are not numbered, or their numbers skip or run backwards once sorted by name, then tutors shall report rule V010 as a warning against each topic out of place.
 

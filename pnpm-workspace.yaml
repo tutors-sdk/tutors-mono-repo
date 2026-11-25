@@ -20,7 +20,7 @@ minimumReleaseAgeExclude:
 # Better Auth 1.7.7 publishes a Kit 2 peer; the built-session/browser contracts cover this exact Kit 3 pairing.
 peerDependencyRules:
   allowedVersions:
-    "better-auth@1.7.7>@sveltejs/kit": "3.0.1"
+    "better-auth@1.7.7>@sveltejs/kit": "3.1.1"
 overrides:
   cookie@<0.7.0: ">=0.7.0 <1.0.0"
   # Security advisory remediation. Ranges are bounded to the same major so
@@ -32,6 +32,10 @@ overrides:
   # GHSA-6pq8-jhm2-2vcw (@stryker-mutator/core > typed-rest-client > qs, dev only).
   qs@>=6.7.0 <=6.16.0: ">=6.16.1 <7"
   "@sveltejs/kit@<=2.70.1": ">=2.70.2 <3"
+  # GHSA-3r8g-jcqq-3p5j, GHSA-m9j8-jcmv-hp69, GHSA-6cf5-gc4q-fm3x, GHSA-mw6w-2fmv-pvw3,
+  # GHSA-rqp5-r3wg-vg35. The apps pin 3.1.1, but the Svelte libraries take kit as a peer at
+  # ^3.0.1 and autoInstallPeers resolves that to 3.0.1, which every one of these still affects.
+  "@sveltejs/kit@>=3.0.0 <3.1.1": ">=3.1.1 <4"
   fast-uri@<3.1.9: ">=3.1.9 <4"
   "@xmldom/xmldom@>=0.9.0 <0.9.12": ">=0.9.12 <0.10"
   # GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh (mermaid > chevrotain > lodash-es).

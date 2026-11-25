@@ -17,7 +17,7 @@ const findings = async (files: Record<string, string>, rule: string, diagrams?: 
   (await validate(course(files), "", { diagrams })).filter((f) => f.rule === rule).map((f) => `${f.path} :: ${f.message}`);
 
 describe("the catalogue", () => {
-  it("lists V013-V020 with their severities", () => {
+  it("lists V013-V021 with their severities", () => {
     expect(ruleCatalogue.slice(12).map((info) => `${info.id} ${info.severity}`)).toEqual([
       "V013 error",
       "V014 warn",
@@ -26,7 +26,8 @@ describe("the catalogue", () => {
       "V017 error",
       "V018 warn",
       "V019 warn",
-      "V020 error"
+      "V020 error",
+      "V021 warn"
     ]);
   });
 });

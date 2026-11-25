@@ -188,6 +188,50 @@ export async function checkImages(tree: CourseTree, read: (path: string) => Prom
   return findings;
 }
 
+/**
+ * Every file a Markdown page links to: [text](path), [text][ref] with its [ref]: path definition, and <a href>.
+ * Images are left to imageSources; examples in code are not links.
+ */
+function linkSources(markdown: string): string[] {
+  const prose = markdown.replace(/^(```|~~~)[\s\S]*?^\1/gm, "").replace(/`[^`\n]*`/g, "");
+  const sources: string[] = [];
+  for (const match of prose.matchAll(/(?<!!)\[[^\]]*\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+["'][^"']*["'])?\s*\)/g)) sources.push(match[1] ?? match[2]);
+  for (const match of prose.matchAll(/^ {0,3}\[[^\]]+\]:\s*(?:<([^>]+)>|(\S+))/gm)) sources.push(match[1] ?? match[2]);
+  for (const match of prose.matchAll(/<a\b[^>]*?\bhref\s*=\s*["']([^"']+)["']/gi)) sources.push(match[1]);
+  return [...new Set(sources)];
+}
+
+/** The kinds that hold the course together rather than travel: a week or anything in one can be copied into another course. */
+const STAYS = new Set(["course", "unit", "side"]);
+
+/**
+ * V021: a topic's or learning object's pages show and link only to files inside its own folder, so it still
+ * works when copied into another course. Reported once per file reached, against the page.
+ */
+export async function checkPortable(tree: CourseTree, read: (path: string) => Promise<string>): Promise<Finding[]> {
+  const findings: Finding[] = [];
+  const visit = async (node: CourseNode) => {
+    const own = node.kind !== null && !STAYS.has(node.kind) && node !== tree ? node.path : null;
+    if (own !== null) {
+      for (const file of node.files) {
+        if (!["md", "marp"].includes(extensionOf(file.name))) continue;
+        const text = await read(file.path);
+        const reached = new Set<string>();
+        for (const source of [...imageSources(text), ...linkSources(text)]) {
+          const target = resolveSource(node.path, source);
+          const outside = target === null ? /^(?:\.\.\/)+/.test(source.replace(/^\.\//, "")) : target !== own && !target.startsWith(`${own}/`);
+          if (!outside || reached.has(target ?? source)) continue;
+          reached.add(target ?? source);
+          findings.push(warning("V021", file.path, messages.reachesOutside(source)));
+        }
+      }
+    }
+    for (const child of node.children) if (child.kind !== null) await visit(child);
+  };
+  await visit(tree);
+  return findings;
+}
+
 const TOPIC_NUMBER = /^topic[-_]?(\d+)/;
 
 /** V010: sibling topics are numbered, and in sequence once sorted by name as the reader sorts them. */
