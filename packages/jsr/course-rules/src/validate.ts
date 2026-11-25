@@ -7,7 +7,7 @@ import { joinPath, readText } from "./ports.ts";
 import { checkDiagrams, checkMarp, checkQuizzes } from "./rich.ts";
 import type { CourseNode, CourseTree } from "./tree.ts";
 import { buildCourseTree, extensionOf, holdsCourseMaterial, holdsOnlyImages, kindOf } from "./tree.ts";
-import { checkEmpty, checkImages, checkNames, checkNetlify, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
+import { checkEmpty, checkImages, checkNames, checkNetlify, checkPortable, checkTitles, checkTopicNumbers, slugify } from "./warnings.ts";
 
 const compositeKinds = ["unit", "side", "topic"];
 const STEP = /^(\d{2})\.[^.].*\.md$/;
@@ -46,6 +46,7 @@ export async function validate(fs: FileSystemPort, root = "", options: ValidateO
     ...(await checkNames(tree, read)),
     ...(await checkTitles(tree, read)),
     ...(await checkImages(tree, read)),
+    ...(await checkPortable(tree, read)),
     ...checkTopicNumbers(tree),
     ...(await checkNetlify(tree, read)),
     ...checkEmpty(tree),
