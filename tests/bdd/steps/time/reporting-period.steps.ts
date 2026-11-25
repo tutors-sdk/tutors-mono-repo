@@ -3,7 +3,7 @@ import { afterAll, expect, vi } from "vitest";
 
 // The seams: the reader's time API over fetch, the runes behind i18n, and the public env. The route
 // loaders, the time library's reader source and the address helpers between them are product code.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 vi.mock("$app/env/public", async () => ({
   ...(await import("../../support/supabase-recorder.ts")).publicEnv,
   PUBLIC_READER_URL: "https://reader.test"
@@ -13,7 +13,7 @@ import type { TableRow } from "../../support/time.ts";
 import { load as loadCourseLayout } from "../../../../apps/time/src/routes/[courseid]/(calendar-lab)/+layout.ts";
 import { load as loadStudentPage } from "../../../../apps/time/src/routes/[courseid]/[studentid]/+page.ts";
 import { courseTimeHref, withDateRange } from "../../../../apps/time/src/lib/dateRange.ts";
-import type { TutorsTimeCourse, TutorsTimeStudent } from "../../../../packages/jsr/time/src/types/index.ts";
+import type { TutorsTimeCourse, TutorsTimeStudent } from "../../../../packages/domain/src/learning/types/index.ts";
 
 const feature = await loadFeature("tests/bdd/features/time/reporting-period.feature");
 

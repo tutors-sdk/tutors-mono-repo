@@ -2,8 +2,8 @@
 // jsdom parses foreignObject content as browsers do and runs inline event handlers, so a marker that
 // stays unset after its event fires proves the handler never reached the mounted slide.
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { renderMarpSlides } from "../../../packages/svelte/course/src/markdown/services/marp-renderer";
-import { marpSlideElements } from "../../../packages/svelte/ui-components/src/learning-objects/content/talk/marp-slides";
+import { renderMarpSlides } from "../../../packages/adapters/driving/svelte-state/src/markdown/services/marp-renderer";
+import { marpSlideElements } from "../../../packages/adapters/driving/ui-components/src/learning-objects/content/talk/marp-slides";
 
 const marker = "document.body.dataset.marpMarker='ran'";
 

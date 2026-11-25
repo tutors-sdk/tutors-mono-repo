@@ -46,9 +46,9 @@ const BROADCAST = /^\/realtime\/v1\/api\/broadcast(\/[^/]+\/events\/[^/]+)?$/;
 let writes = [];
 let seq = 0;
 /**
- * The tables whose rows are kept and read back: the reader's content locks (packages/svelte/utils/rbac/src/lock-store.ts)
+ * The tables whose rows are kept and read back: the reader's content locks (packages/adapters/driving/svelte-state/src/rbac/lock-store.ts)
  * and, since 1.46.0, each student's latest learning object, Tutors Live's stored activity
- * (packages/svelte/community/src/utils/supabase-client.ts).
+ * (packages/adapters/driven/store-supabase/src/index.ts).
  */
 const KEPT = new Set(["tutors_content_locks", "tutors-connect-latest"]);
 let kept = new Map();

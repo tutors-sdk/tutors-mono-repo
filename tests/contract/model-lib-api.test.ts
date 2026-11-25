@@ -26,7 +26,8 @@ describe("Public API Surface — @tutors/tutors-model-lib", () => {
     const module = await import("@tutors/tutors-model-lib");
     const utilities = Object.entries(module)
       .filter(([key, value]) => typeof value === "function" && !key.startsWith("is"))
-      .map(([key]) => key);
+      .map(([key]) => key)
+      .sort();
     expect(utilities).toMatchSnapshot();
   });
 });

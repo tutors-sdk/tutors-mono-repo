@@ -1,5 +1,5 @@
 import { beforeAll, describe, it, expect } from "vitest";
-import { loadMath, markdownIt } from "../../../packages/jsr/model/src/utils/markdown-utils";
+import { loadMath, markdownIt } from "../../../packages/adapters/driven/render-markdown/src/markdown-utils";
 
 /**
  * Tests for KaTeX math rendering via @mdit/plugin-katex.

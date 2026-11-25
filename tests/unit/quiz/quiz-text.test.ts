@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isBlockQuizText, quizTextToHtml } from "../../../packages/svelte/ui-components/src/quiz/quiz-text";
+import { isBlockQuizText, quizTextToHtml } from "../../../packages/adapters/driving/ui-components/src/quiz/quiz-text";
 
 describe("quiz text rendering", () => {
   it("treats text that spans lines as a block", () => {

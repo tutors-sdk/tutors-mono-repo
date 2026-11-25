@@ -1,13 +1,15 @@
 /**
  * GET /api/courses/:courseid/enrollment: a draft enrollment.yaml for a course, downloaded from the
  * educator control button. requireEducator (educator.ts) checks the signed-in actor is an educator in the
- * course's published tutors.json (401, 400, 403, or 502 when it cannot be read). Reads the calendar and
- * tutors-connect-users tables through the public Supabase client; returns 503 without Supabase and 502
- * when a query fails. Writes nothing.
+ * course's published tutors.json (401, 400, 403, or 502 when it cannot be read). Reads the course's
+ * visitors and their names through the Supabase adapter; returns 503 without Supabase and 502 when a
+ * read fails. Writes nothing.
  */
 import { error } from "@sveltejs/kit";
 import { z } from "zod";
-import { supabase } from "@tutors/community/utils/supabase-client";
+import { listsLogin, loginKey } from "@tutors/domain/access";
+import { supabase } from "@tutors/store-supabase";
+import { courseVisitorLogins, fullNamesOf } from "@tutors/store-supabase/server";
 import log from "@tutors/logger";
 import { requireEducator } from "#lib/server/educator.ts";
 import type { RequestHandler } from "./$types";
@@ -21,58 +23,34 @@ const enrollmentSchema = z
   .passthrough();
 
 export const GET: RequestHandler = async ({ locals, params, fetch }) => {
-  const courseId = params.courseid;
-  const { enrollment: publishedEnrollment } = await requireEducator({ locals, courseId, fetch, action: "export enrollment" });
+  const { enrollment: publishedEnrollment, courseId } = await requireEducator({ locals, courseId: params.courseid, fetch, action: "export enrollment" });
   const parsed = enrollmentSchema.safeParse(publishedEnrollment);
   if (!parsed.success) error(502, "The published enrollment is invalid.");
   const enrollment = parsed.data;
   if (!supabase) error(503, "Course activity is unavailable.");
 
-  const educators = new Set(enrollment.educators.map((login) => login.toLowerCase()));
-  const visitors = new Map<string, string>();
-  // Read every page: a class accumulates many calendar rows per student over a term.
-  for (let offset = 0; ;) {
-    const { data, error: dbError } = await supabase
-      .from("calendar")
-      .select("studentid")
-      .eq("courseid", courseId)
-      .order("studentid")
-      .order("id")
-      .range(offset, offset + 499);
-    if (dbError) {
-      log.error("Enrollment export could not load activity", { courseId, error: dbError });
-      error(502, "Could not load course activity.");
+  // Educators are not students: leave them out of the draft, however their logins are capitalised.
+  let logins: string[];
+  let stored: Map<string, string>;
+  try {
+    const visitors = new Map<string, string>();
+    for (const login of await courseVisitorLogins(supabase, courseId)) {
+      if (!listsLogin(enrollment.educators, login)) visitors.set(loginKey(login), login);
     }
-    if (!data?.length) break;
-    for (const row of data) {
-      const login = row.studentid?.trim();
-      if (login && !educators.has(login.toLowerCase())) visitors.set(login.toLowerCase(), login);
-    }
-    offset += data.length;
+    logins = [...visitors.values()].sort((a, b) => a.localeCompare(b));
+    stored = await fullNamesOf(supabase, logins);
+  } catch (dbError) {
+    log.error("Enrollment export could not load activity", { courseId, error: dbError });
+    error(502, "Could not load course activity.");
   }
-
-  const logins = [...visitors.values()].sort((a, b) => a.localeCompare(b));
-  const names = new Map<string, string>();
-  for (let offset = 0; offset < logins.length; offset += 100) {
-    const { data, error: dbError } = await supabase
-      .from("tutors-connect-users")
-      .select("github_id, full_name")
-      .in("github_id", logins.slice(offset, offset + 100));
-    if (dbError) {
-      log.error("Enrollment export could not load names", { courseId, error: dbError });
-      error(502, "Could not load student names.");
-    }
-    for (const row of data ?? []) {
-      if (row.full_name?.trim()) names.set(row.github_id.toLowerCase(), row.full_name.trim());
-    }
-  }
+  const names = new Map([...stored].map(([login, name]) => [loginKey(login), name]));
 
   const whitelist = [...enrollment.whitelist];
-  const allowed = new Set(whitelist.map((login) => login.toLowerCase()));
+  const allowed = new Set(whitelist.map((login) => loginKey(login)));
   const students = [...enrollment.students];
-  const named = new Set(students.map((student) => student.id.toLowerCase()));
+  const named = new Set(students.map((student) => loginKey(student.id)));
   for (const login of logins) {
-    const key = login.toLowerCase();
+    const key = loginKey(login);
     if (!allowed.has(key)) {
       whitelist.push(login);
       allowed.add(key);

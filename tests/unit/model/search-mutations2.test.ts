@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { searchHits } from "../../../packages/jsr/model/src/services/search";
+import { searchHits } from "../../../packages/domain/src/course/services/search";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal Lo-compatible object

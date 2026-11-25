@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const recordPageLoad = vi.fn(async () => undefined);
-vi.mock("../../../apps/reader/src/lib/server/api/store.ts", () => ({ recordPageLoad, recordTick: vi.fn(async () => undefined) }));
+vi.mock("../../../packages/adapters/driven/store-supabase/src/server/learner-store.ts", () => ({ recordPageLoad, recordTick: vi.fn(async () => undefined) }));
 vi.mock("../../../apps/reader/src/lib/server/api/service-client.ts", () => ({ serviceClient: () => ({}) }));
 
 const { POST } = await import("../../../apps/reader/src/routes/api/analytics/+server.ts");

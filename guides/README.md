@@ -2,6 +2,22 @@
 
 How Tutors is built, tested and released, and how it got here.
 
+## Contributing, by what you know
+
+[contributors/](contributors/README.md) has one guide per skill. Each leads from the skill to its boundary, its ports and the few files behind them, with commands that find that part of the code as it is today.
+
+| Guide | For |
+|---|---|
+| [contributors/security.md](contributors/security.md) | A security engineer: the rules, the decision and the enforcement point |
+| [contributors/database.md](contributors/database.md) | A database engineer: the two store packages, the two keys, the migrations |
+| [contributors/backend.md](contributors/backend.md) | A back-end developer or integrator: use cases, ports and adapters |
+| [contributors/ux.md](contributors/ux.md) | A UX or accessibility specialist, or a translator: state, flow, language |
+| [contributors/ui.md](contributors/ui.md) | A designer or front-end developer: components, tokens, themes |
+| [contributors/testing.md](contributors/testing.md) | A tester: stand-ins, contract suites, requirements, ratchets |
+| [contributors/operations.md](contributors/operations.md) | An operator or SRE: logging, metrics, configuration, deployment, release |
+| [contributors/domain.md](contributors/domain.md) | A teacher or learning designer: the model and the course rules |
+| [contributors/authoring.md](contributors/authoring.md) | A course tooling author: the generator, the commands, the published packages |
+
 ## Testing
 
 Everything about how we test lives in [testing/](testing).

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { BaseLabModel } from "../../../packages/jsr/time/src/services/base-lab-model.ts";
-import type { LearningRecord } from "../../../packages/jsr/time/src/types/lab-types.ts";
+import { BaseLabModel } from "../../../packages/domain/src/learning/services/base-lab-model.ts";
+import type { LearningRecord } from "../../../packages/domain/src/learning/types/lab-types.ts";
 
 const NO_DATE = "__no_date__";
 

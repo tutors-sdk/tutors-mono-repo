@@ -5,7 +5,7 @@ import {
   sortLos,
   getPanoptoUrls,
   getVideoConfig,
-} from "../../../packages/jsr/model/src/utils/lo-utils";
+} from "../../../packages/domain/src/course/utils/lo-utils";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal Lo-compatible object

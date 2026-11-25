@@ -1,0 +1,20 @@
+{
+  "name": "@tutors/data-api",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "The browser side of the reader's data API: the typed contract of its /api routes, the one client, and the application ports over it",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
+    "@tutors/logger": "workspace:*",
+    "@tutors/tutors-time-lib": "workspace:*"
+  }
+}

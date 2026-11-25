@@ -37,14 +37,17 @@ The Playwright specs live in `tests/e2e/`. Run them from the root with `pnpm tes
 ## Workspace packages
 
 - `@tutors/ui-primitives`, `@tutors/ui-navigators`, `@tutors/ui-components` provide the interface
-- `@tutors/course`, `@tutors/tutors-model-lib` load and model courses
-- `@tutors/identity`, `@tutors/identity-sveltekit` provide verified identity contracts and the Better Auth adapter
-- `@tutors/connect`, `@tutors/community`, `@tutors/rbac`, `@tutors/runes` handle sign-in, presence, roles and shared state
-- `@tutors/data-api` is the typed contract the reader's `/api` routes implement (the reader hosts the data API for now; see [guides/SERVER-WRITES.md](../../guides/SERVER-WRITES.md))
+- `@tutors/domain`, `@tutors/application` are the rings the reader drives: the rules of a course and of learning, and the ports and use cases over them
+- `@tutors/svelte-state/course`, `@tutors/tutors-model-lib` load and model courses, through the `@tutors/course-http` and `@tutors/render-markdown` adapters the reader composes in `src/lib/compose.ts`
+- `@tutors/identity-better-auth` is the Better Auth adapter behind the session port; the verified actor it resolves is the domain's `Actor`
+- `@tutors/svelte-state/connect`, `@tutors/svelte-state/community`, `@tutors/svelte-state/rbac`, `@tutors/svelte-state` handle sign-in, presence, roles and shared state
+- `@tutors/moodle` is the Moodle web-service adapter the server-side sync calls (`src/lib/server/moodle`)
+- `@tutors/data-api` is the driven adapter behind every port a signed-in learner writes through, and the typed contract the reader's `/api` routes implement (the reader hosts the data API for now; see [guides/SERVER-WRITES.md](../../guides/SERVER-WRITES.md))
+- `@tutors/store-supabase`, `@tutors/realtime-supabase`, `@tutors/profile-localstorage`, `@tutors/bus-inprocess` are the other driven adapters: public reads (locks, the online list), watching presence, the browser-only profile and in-process events
+- `@tutors/course-rules` and `@tutors/course-archive` check a course on the /create check page, the same rules as `tutors validate` and Tutors Studio
 - `@tutors/themes`, `@tutors/i18n` provide themes and interface text
 - `@tutors/tutors-create`, `@tutors/tutors-time-lib` support course creation and the time views
-- `@tutors/course-rules` checks a course on the /create check page, the same rules as `tutors validate` and Tutors Studio
-- `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime` provide logging, `/metrics`, `/version` and the server clock seam
+- `@tutors/logger`, `@tutors/metrics`, `@tutors/clock` provide logging, `/metrics`, `/version` and the server clock seam
 - `@tutors/app-config` provides the shared Vite-based SvelteKit configuration (build time only)
 
 [docs/COURSE-PAGE-WALKTHROUGH.md](../../docs/COURSE-PAGE-WALKTHROUGH.md) walks through how a course page is rendered.

@@ -8,7 +8,7 @@ Feature: Environment contract
   reader. Both were in the code and in .env.example, but production lacked them. Every variable was declared optional,
   so the reader started cleanly, /healthz answered 200, and the reader's /api routes answered 503.
 
-  packages/svelte/app-config/src/env-contract.js is now the one list of the variables each app reads, and whether a
+  packages/platform/app-config/src/env-contract.js is now the one list of the variables each app reads, and whether a
   deployment needs each one: required, needed unless anonymous mode is on ("signed-in"), or optional. The apps,
   the Netlify build and CI all read it, so a missing variable shows up in four places: the startup log, the readiness
   route, the Netlify production build, and the pull request that forgot to write the variable down.
@@ -101,7 +101,7 @@ Feature: Environment contract
       Then it fails naming "apps/catalogue/src/routes/+page.server.ts" and "PRIVATE_SUPABASE_SERVICE_ROLE_KEY"
 
     Scenario: A shared package that reads a reader-only variable fails for the other apps that run it
-      Given a file "packages/svelte/community/src/utils/new-feature.ts" that reads "PRIVATE_TUTORS_ADMINS" from the private environment
+      Given a file "packages/adapters/driving/svelte-state/src/community/utils/new-feature.ts" that reads "PRIVATE_TUTORS_ADMINS" from the private environment
       When the environment check reads that code
       Then it fails naming "the catalogue app" and "PRIVATE_TUTORS_ADMINS"
 

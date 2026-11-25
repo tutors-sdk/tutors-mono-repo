@@ -1,7 +1,10 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 vi.mock("$app/env/public", () => ({ PUBLIC_ANON_MODE: "", PUBLIC_SUPABASE_URL: "", PUBLIC_SUPABASE_ANON_KEY: "" }));
-import { updateTutorsConnectUserOnlineStatus } from "../../../packages/svelte/community/src/utils/supabase-client.ts";
+import { dataApiProfile } from "../../../packages/adapters/driven/data-api/src/index.ts";
+
+// The signed-in learner's ProfilePort over the data API; the learner id is the session's, never the caller's.
+const updateTutorsConnectUserOnlineStatus = (login: string, status: "online" | "offline") => dataApiProfile().setSharing(login, status === "online");
 
 afterEach(() => vi.unstubAllGlobals());
 

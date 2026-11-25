@@ -10,7 +10,7 @@ const feature = await loadFeature("tests/bdd/features/instructor/course-rich-con
 
 /** The Mermaid the reader draws with, loaded from the package that renders it. */
 async function readersMermaid(): Promise<MermaidParser> {
-  const path = createRequire(resolve("packages/svelte/course/package.json")).resolve("mermaid");
+  const path = createRequire(resolve("packages/adapters/driving/svelte-state/src/package.json")).resolve("mermaid");
   return (await import(path)).default as MermaidParser;
 }
 

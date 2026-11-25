@@ -1,0 +1,11 @@
+{
+  "name": "@tutors/bus-inprocess",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "In-process application events: the EventPublisher adapter",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@tutors/application": "workspace:*"
+  }
+}

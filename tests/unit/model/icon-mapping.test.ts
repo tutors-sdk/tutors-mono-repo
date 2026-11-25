@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadIcon } from "../../../packages/jsr/model/src/utils/lo-utils";
+import { loadIcon } from "../../../packages/domain/src/course/utils/lo-utils";
 
 /**
  * Tests for the loadIcon function -- extracts icon type and color

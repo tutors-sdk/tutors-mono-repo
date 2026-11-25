@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 
 // The catalogue page's load function over a stub catalogue service.
 const rows = vi.hoisted(() => ({ value: [] as unknown[] }));
-vi.mock("../../../packages/svelte/community/src/index.ts", () => ({ catalogueService: { getCatalogue: async () => rows.value } }));
+vi.mock("@tutors/store-supabase", () => ({ catalogueService: { getCatalogue: async () => rows.value } }));
 
 import { load } from "../../../apps/catalogue/src/routes/+page.ts";
 

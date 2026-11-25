@@ -3,8 +3,8 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { variables } from "../../packages/svelte/app-config/src/env.js";
-import { createSvelteKitOptions } from "../../packages/svelte/app-config/src/svelte.js";
+import { variables } from "../../packages/platform/app-config/src/env.js";
+import { createSvelteKitOptions } from "../../packages/platform/app-config/src/svelte.js";
 import {
   APPS,
   buildIdentityFindings,
@@ -36,7 +36,7 @@ describe("GET /version on every app", () => {
     const source = readText(join(REPO_ROOT, "apps", app, "src", "routes", "version", "+server.ts"));
     expect(source).toMatch(/export const GET\b/);
     expect(source).toContain(`versionEndpoint({ app: "tutors-${app}"`);
-    expect(source).toContain('from "@tutors/runtime"');
+    expect(source).toContain('from "@tutors/clock"');
   });
 
   it("the apps this check covers are the apps in the repo", () => {
@@ -57,7 +57,7 @@ describe("GET /version on every app", () => {
   });
 });
 
-const SHARED_SVELTE_CONFIG = "packages/svelte/app-config/src/svelte.js";
+const SHARED_SVELTE_CONFIG = "packages/platform/app-config/src/svelte.js";
 
 describe("shared SvelteKit options", () => {
   it("declares environment variables as dynamic, with only PUBLIC_ values exposed", () => {
@@ -102,7 +102,7 @@ describe("the sources that read build identity", () => {
 
   it("are the runtime package, the /version routes and the shared build config, and nothing else", () => {
     const readers = sources
-      .filter((file) => !file.startsWith("packages/svelte/utils/runtime/"))
+      .filter((file) => !file.startsWith("packages/adapters/driven/clock/"))
       .filter((file) => /\b(GIT_SHA|BUILD_DATE)\b|\bversionInfo\b|\bversionEndpoint\b/.test(readText(join(REPO_ROOT, file))));
     expect(readers.sort()).toEqual([...APPS.map((app) => `apps/${app}/src/routes/version/+server.ts`), SHARED_SVELTE_CONFIG].sort());
   });

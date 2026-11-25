@@ -1,14 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../bdd/support/supabase-recorder.ts")).createClient }));
 vi.mock("$app/env/public", () => ({ PUBLIC_SUPABASE_URL: "https://mock.supabase.co", PUBLIC_SUPABASE_ANON_KEY: "mock-anon-key", PUBLIC_ANON_MODE: "FALSE" }));
 vi.mock("$app/env/private", async () => (await import("../../bdd/support/supabase-recorder.ts")).privateEnv);
 
 import type { Course } from "@tutors/tutors-model-lib";
-import { updateCourseList } from "../../../packages/svelte/connect/src/utils/allCourseAccess";
+import { countCourseVisit } from "../../../packages/application/src/index.ts";
+import { FixedClock } from "../../../packages/application/src/testing/index.ts";
+import { dataApiCourseCatalogue } from "../../../packages/adapters/driven/data-api/src/index.ts";
 import { POST } from "../../../apps/reader/src/routes/api/courses/visit/+server.ts";
 import { recorder } from "../../bdd/support/supabase-recorder.ts";
+
+// What the reader's composition root wires: the use case, counting through the data API adapter.
+const updateCourseList = countCourseVisit({ catalogue: dataApiCourseCatalogue(), clock: new FixedClock() });
 
 function createMockCourse(overrides: Partial<Course> = {}): Course {
   return {
@@ -60,7 +65,7 @@ beforeEach(() => {
   });
 });
 
-describe("allCourseAccess: updateCourseList sends the visit to the reader", () => {
+describe("countCourseVisit sends the visit to the reader", () => {
   it("posts the course id and its card record", async () => {
     await updateCourseList(createMockCourse({ courseId: "record-course", title: "Record Course", properties: { credits: "10" } as never }));
 

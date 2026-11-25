@@ -1,0 +1,20 @@
+{
+  "name": "@tutors/render-markdown",
+  "version": "0.1.0",
+  "exports": "./src/index.ts",
+  "license": "MIT",
+  "imports": {
+    "@mdit/plugin-katex": "npm:@mdit/plugin-katex@^1.0.2",
+    "@types/markdown-it": "npm:@types/markdown-it@^14.1.2",
+    "markdown-it": "npm:markdown-it@^14.2.0",
+    "markdown-it-anchor": "npm:markdown-it-anchor@^9.2.0",
+    "markdown-it-deflist": "npm:markdown-it-deflist@^4.0.0",
+    "markdown-it-emoji": "npm:markdown-it-emoji@^3.0.0",
+    "markdown-it-footnote": "npm:markdown-it-footnote@^4.0.0",
+    "markdown-it-mark": "npm:markdown-it-mark@^4.0.0",
+    "markdown-it-sub": "npm:markdown-it-sub@^2.0.0",
+    "markdown-it-sup": "npm:markdown-it-sup@^2.0.0",
+    "markdown-it-table-of-contents": "npm:markdown-it-table-of-contents@^1.1.0",
+    "shiki-transformer-copy-button": "npm:shiki-transformer-copy-button@^0.0.5"
+  }
+}

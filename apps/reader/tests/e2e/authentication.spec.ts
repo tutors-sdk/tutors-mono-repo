@@ -46,7 +46,7 @@ test("Forged browser identity and a forged cookie cannot authorize a server requ
   await page.goto(course);
   await page.locator(".shell-navigation").getByRole("link", { name: "Course home", exact: true }).waitFor({ state: "attached" });
   await page.evaluate(async () => {
-    const url = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/runes/src/index.svelte.ts"))!;
+    const url = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/svelte-state/src/index.svelte.ts"))!;
     const { tutorsId, isEducator } = await import(url);
     tutorsId.value = { login: "lecturer", name: "Lecturer", share: "false", sentiment: "neutral" };
     isEducator.value = true;

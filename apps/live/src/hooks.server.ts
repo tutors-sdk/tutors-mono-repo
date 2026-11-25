@@ -13,9 +13,13 @@ import * as publicEnv from "$app/env/public";
 import { missingVariables } from "@tutors/app-config/env-contract";
 import log, { createRequestLogger, installProcessLogging, logRequestError, logServiceStart, setAppName } from "@tutors/logger";
 import { metricsHandle } from "@tutors/metrics";
-import { announceClock } from "@tutors/runtime";
+import { announceClock } from "@tutors/clock";
+import { configureAdapters } from "@tutors/svelte-state/adapters";
+import { composeLive } from "./lib/compose.ts";
 
 setAppName("tutors-live");
+// The composition root for the server: the same wiring the browser gets, so both answer alike.
+configureAdapters(composeLive(publicEnv));
 // From here on every stdout/stderr line of the running server is one JSON object: stray console
 // output, crashes and Node warnings included. Not during `vite build`, which imports this module too.
 if (!building) installProcessLogging();

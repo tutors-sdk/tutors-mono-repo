@@ -106,7 +106,7 @@ export function descriptorOf(node: CourseNode): string | undefined {
 
 /** The text after any front matter, with the blank lines that follow it dropped, as the generator's front-matter parser leaves it. */
 export function bodyOf(text: string): string {
-  const match = /^﻿?---\r?\n[\s\S]*?\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/.exec(text);
+  const match = /^\uFEFF?---\r?\n[\s\S]*?\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/.exec(text);
   return match ? text.slice(match[0].length).replace(/^(?:[ \t]*\r?\n)+/, "") : text;
 }
 

@@ -22,10 +22,10 @@ interface WorkflowJob {
 }
 
 /** The shared metrics package, loaded afresh: a module graph with no request seen, as at an app's start. */
-type MetricsModule = typeof import("../../../../packages/svelte/utils/metrics/src/index.ts");
+type MetricsModule = typeof import("../../../../packages/platform/metrics/src/index.ts");
 async function freshMetrics(): Promise<MetricsModule> {
   vi.resetModules();
-  return import("../../../../packages/svelte/utils/metrics/src/index.ts");
+  return import("../../../../packages/platform/metrics/src/index.ts");
 }
 
 /** Sum the samples of one series name in a Prometheus exposition, as the release harness reads it; `le` narrows to one bucket. */

@@ -1,3 +1,23 @@
 # knip findings that predate tier A's knip check (config: knip.json).
+# This file may only shrink: fix the finding and delete its line.
+
+# Workspace dependencies declared but never imported.
+
+# npm dependencies declared but never imported.
+dependencies: apps/reader/package.json: dompurify
+dependencies: packages/jsr/model/package.json: front-matter
+dependencies: packages/jsr/model/package.json: js-yaml
+dependencies: packages/adapters/driving/ui-components/package.json: isomorphic-dompurify
+
+# @sveltejs/kit used by packages that rely on the consuming app providing it (peer dependency).
+# gen-lib is imported through a Vitest alias rather than a declared dependency.
+unlisted: packages/adapters/driving/svelte-state/src/ambient.d.ts: @sveltejs/kit
+
+# packages/adapters/driving/svelte-state __tests__ import a path that does not exist; the root Vitest
+# include never runs them (see known-findings.txt in tests/suite-health).
+
+# Files nothing imports.
+
+# Exports and types nothing imports.
 # This file may only shrink: fix the finding and delete its line. It is empty:
 # every finding is fixed, so any new one fails the check.

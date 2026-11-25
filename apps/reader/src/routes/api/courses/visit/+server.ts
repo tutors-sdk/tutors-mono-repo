@@ -1,10 +1,10 @@
 import { error, type RequestHandler } from "@sveltejs/kit";
-import { now } from "@tutors/runtime";
+import { now } from "@tutors/clock";
 import { noContent, readJson, requireDb, valid } from "../../../../lib/server/api/http.ts";
 import { authorization } from "../../../../lib/server/api/access.ts";
 import { AuthorizationUnavailableError } from "../../../../lib/server/api/authorization.ts";
-import { recordCourseVisit } from "../../../../lib/server/api/store.ts";
-import * as check from "../../../../lib/server/api/validate.ts";
+import { recordCourseVisit } from "@tutors/store-supabase/server";
+import * as check from "@tutors/domain/input";
 
 const NOT_A_CATALOGUE_COURSE = /^(main--|master--|deploy-preview--)|-{2}/;
 

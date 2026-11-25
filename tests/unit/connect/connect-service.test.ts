@@ -11,13 +11,11 @@ vi.mock("$app/env/public", () => ({
 }));
 vi.mock("$app/env", () => ({ browser: true }));
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
-vi.mock("../../../packages/svelte/community/src/index.ts", () => ({
+vi.mock("../../../packages/adapters/driving/svelte-state/src/community/index.ts", () => ({
   analyticsService: { updatePageCount: (...args: unknown[]) => seams.updatePageCount(...args) },
   presenceService: {}
 }));
-vi.mock("@tutors/community/utils/supabase-client", () => ({}));
-vi.mock("../../../packages/svelte/connect/src/services/supabaseProfile.svelte.ts", () => ({ supabaseProfile: {} }));
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return {
     currentCourse: rune({ courseId: "cs101" }),
@@ -26,13 +24,16 @@ vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
     isEducator: rune(false)
   };
 });
-vi.mock("../../../packages/svelte/utils/rbac/src/index.ts", () => ({ rbacService: {} }));
+vi.mock("../../../packages/adapters/driving/svelte-state/src/rbac/index.ts", () => ({ rbacService: {} }));
 
-type ConnectService = typeof import("../../../packages/svelte/connect/src/services/connect.svelte.ts").tutorsConnectService;
+type ConnectService = typeof import("../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts").tutorsConnectService;
 const loadService = async (anonMode = "FALSE"): Promise<ConnectService> => {
   seams.anonMode = anonMode;
   vi.resetModules();
-  return (await import("../../../packages/svelte/connect/src/services/connect.svelte.ts")).tutorsConnectService;
+  // The composition root's decision: an anonymous deployment or not. The service reads no environment.
+  const { anonymousAdapters, configureAdapters } = await import("../../../packages/adapters/driving/svelte-state/src/adapters.ts");
+  configureAdapters({ ...anonymousAdapters(), anonymous: anonMode === "TRUE" });
+  return (await import("../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts")).tutorsConnectService;
 };
 
 /**

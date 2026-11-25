@@ -1,4 +1,4 @@
-import type { TutorsConnectCourse, TutorsConnectUser } from "../types/index.ts";
+import type { TutorsConnectCourse, TutorsConnectUser } from "@tutors/domain/learning";
 import { getSupabase } from "./supabase.ts";
 
 export interface TutorsTimeRows {

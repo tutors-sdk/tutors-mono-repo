@@ -2,19 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { insert } = vi.hoisted(() => ({ insert: vi.fn() }));
 
-vi.mock(
-  "../../../packages/svelte/community/src/utils/supabase-client.ts",
-  () => ({
-    supabase: { from: () => ({ insert }) },
-  }),
-);
+import { configureSupabase, createSupabaseErrorTransport } from "../../../packages/adapters/driven/store-supabase/src/index.ts";
 
-vi.mock("$app/env/public", () => ({
-  PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-  PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-}));
-
-import { createSupabaseErrorTransport } from "../../../packages/svelte/community/src/utils/error-transport.ts";
+// The composition root's job: the client the transport inserts through, and the URL and key its unload beacon needs.
+configureSupabase({ from: () => ({ insert }) } as never, { url: "https://project.supabase.co", key: "anon-key" });
 
 // The flush on page unload: tutors.dev answered it with 400 because the URL carried `Prefer=return=none`,
 // which PostgREST parses as a filter (release harness rollback report, tutors-release-harness#38).

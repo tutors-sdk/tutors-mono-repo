@@ -276,7 +276,7 @@ every comparison. The image keeps that to a known, short list:
 - **Clock.** Server code that stamps a time into a response or a stored record
   (`/healthz` `timestamp`, the time app's `last_synced_at` and sync-interval
   check, and which week of a course calendar is the current one, which is
-  rendered into every course page) reads it from `now()` in `@tutors/runtime`. With `HARNESS_NOW` set to
+  rendered into every course page) reads it from `now()` in `@tutors/clock`. With `HARNESS_NOW` set to
   an ISO 8601 instant (`2026-09-16T09:05:00.000Z`) it answers that instant;
   otherwise the system clock. Log timestamps, metrics, request durations and
   identity session expiry stay on the real clock: the seam
@@ -418,7 +418,7 @@ The fields whose value differs between two runs of one image under the same
 traffic are exactly `timestamp`, `hostname`, `pid`, `requestId`,
 `duration_ms`, `slow` and `stack` (frames name content-hashed build files).
 They are listed in code as `VARIABLE_LOG_FIELDS`, next to `CORE_LOG_KEYS` and
-`LOG_EVENT_FIELDS` in `packages/svelte/utils/logger/src`. Key names, key
+`LOG_EVENT_FIELDS` in `packages/platform/logger/src`. Key names, key
 order, types, `event`, `message`, `level` (apart from the `slow` case) and
 line counts per event are stable. `pnpm check:container` checks the contract
 against real container output.
@@ -446,7 +446,7 @@ and otherwise generates a UUID. It stores the id on `event.locals.requestId`,
 sets it exactly once on the response, and runs the rest of the request inside
 an `AsyncLocalStorage` context, so every line logged while serving the request
 carries the id, including lines from workspace packages that know nothing
-about requests. Supabase calls made through `@tutors/community`'s client
+about requests. Supabase calls made through `@tutors/svelte-state/community`'s client
 forward the id in `x-request-id` (`withRequestId`); the time library's own
 client and the time app's Moodle calls do not yet. `/healthz` probes and
 `/metrics` scrapes get the header but no log line unless they answer 4xx or
@@ -454,7 +454,7 @@ client and the time app's Moodle calls do not yet. `/healthz` probes and
 
 ## Environment variables
 
-`packages/svelte/app-config/src/env-contract.js` lists every variable the apps read and, for each app,
+`packages/platform/app-config/src/env-contract.js` lists every variable the apps read and, for each app,
 whether a deployment needs it: `required`, `signed-in` (needed unless `PUBLIC_ANON_MODE=TRUE`) or
 `optional`. Release 17.1.0 went out with two reader variables production lacked, and nothing noticed
 until students did. A missing variable, or a reader service key Supabase refuses, now shows up before that:

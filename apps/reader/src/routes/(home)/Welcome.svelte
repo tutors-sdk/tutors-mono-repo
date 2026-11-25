@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tutorsId } from "@tutors/runes";
+  import { tutorsId } from "@tutors/svelte-state";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { t } from "@tutors/i18n";
 </script>

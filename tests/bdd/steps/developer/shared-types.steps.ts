@@ -41,7 +41,7 @@ function importsOf(file: string): string[] {
 }
 
 describeFeature(feature, ({ Rule }) => {
-  Rule("Tutors shall keep its shared types package free of runtime dependencies, with every import inside the package's own files.", ({ RuleScenario }) => {
+  Rule("Tutors shall keep its shared types package free of runtime dependencies other than the domain ring it re-exports, with every import inside the package's own files or from the domain.", ({ RuleScenario }) => {
     RuleScenario("The shared types package declares no dependencies", ({ Given, Then, And }) => {
       let node: Record<string, unknown> = {};
       let deno: Record<string, unknown> = {};
@@ -51,9 +51,10 @@ describeFeature(feature, ({ Rule }) => {
         expect(node.name).toBe("@tutors/tutors-types");
         expect(deno.name).toBe("@tutors/tutors-types");
       });
-      Then("its package.json declares no {string}", (_ctx: unknown, fields: string) => {
+      Then("its package.json declares nothing but the domain under {string}", (_ctx: unknown, fields: string) => {
         for (const field of fields.split(",").map((f) => f.trim())) {
-          expect(Object.keys((node[field] as object | undefined) ?? {}), `package.json ${field}`).toEqual([]);
+          const declared = Object.keys((node[field] as object | undefined) ?? {}).filter((name) => name !== "@tutors/domain");
+          expect(declared, `package.json ${field}`).toEqual([]);
         }
       });
       And("its deno.json declares no imports", () => {
@@ -67,9 +68,10 @@ describeFeature(feature, ({ Rule }) => {
         files = sourceFiles();
         expect(files.length).toBeGreaterThan(0);
       });
-      Then("every import in them is a relative path to a file inside the package", () => {
+      Then("every import in them is a relative path to a file inside the package or a domain import", () => {
         const outside = files.flatMap((file) =>
           importsOf(file)
+            .filter((specifier) => !specifier.startsWith("@tutors/domain"))
             .filter((specifier) => !specifier.startsWith(".") || relative(PACKAGE_DIR, resolve(dirname(file), specifier)).startsWith(".."))
             .map((specifier) => `${relative(REPO_ROOT, file)} imports ${specifier}`)
         );

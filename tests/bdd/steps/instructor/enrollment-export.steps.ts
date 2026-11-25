@@ -3,8 +3,7 @@ import { expect, vi } from "vitest";
 import { load } from "js-yaml";
 
 // Only the database and published course fetch are replaced; the request handler and YAML generation are product code.
-vi.mock("@tutors/community/utils/supabase-client", async () => ({ supabase: (await import("../../support/supabase-recorder.ts")).recorder }));
-
+import { configureSupabase } from "../../../../packages/adapters/driven/store-supabase/src/index.ts";
 import { GET } from "../../../../apps/reader/src/routes/api/courses/[courseid]/enrollment/+server.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
 
@@ -53,6 +52,7 @@ describeFeature(feature, ({ Background, Rule }) => {
   Background(({ Given }) => {
     Given("{string} publishes an enrollment with {string} as educator", (_ctx, id: string, educator: string) => {
       recorder.reset();
+      configureSupabase(recorder as never);
       courseId = id;
       enrollment = { educators: [educator], whitelist: [], students: [] };
       published = { enrollment };

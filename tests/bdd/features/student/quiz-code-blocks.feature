@@ -5,7 +5,7 @@ Feature: Code blocks in quizzes
   So that a quiz can ask about real code, shown the way the labs show it
 
   A quiz is a fenced `quiz` block in a quiz learning object's markdown
-  (packages/svelte/quiz/README.md). A question's text runs from `question:` to the next
+  (packages/domain/src/quiz/README.md). A question's text runs from `question:` to the next
   field, and an option is a `- ` item with the lines indented under it, so either can hold a
   fenced code block. Each quiz below is a file in tests/fixtures/quiz-code-blocks, written as a
   lecturer would write it. These Rules drive the reader's quiz splitter and parser, and the renderer

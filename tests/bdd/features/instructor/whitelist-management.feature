@@ -41,6 +41,23 @@ Feature: Whitelist Management
       When the course is opened
       Then the system shall grant access regardless of whitelist status
 
+  @rule-0353 @ears-ubiquitous
+  Rule: The reader shall treat logins that differ only in capital letters as the same account when it checks a course's whitelist, its educators and the deployment's administrators.
+
+    Scenario: A student whose login is capitalised differently on the whitelist is admitted
+      Given the course "secure-101" requires authentication, with the whitelist "Alice, Bob" and the educators "lecturer"
+      And "Alice" is signed in
+      When the course is opened
+      Then the system shall grant access to the course content
+
+    Scenario: An educator whose login is capitalised differently in the enrollment is an educator
+      Given the course "secure-101" requires authentication, with the whitelist "alice, bob" and the educators "Lecturer"
+      And "Lecturer" is signed in
+      When the course is opened
+      Then the system shall grant access regardless of whitelist status
+      And the reader's server shall let "lecturer" lock content of a course whose educators are "Lecturer"
+      And the reader's server shall let "root" lock content of any course when the administrators are "Root"
+
   @rule-0605 @ears-unwanted
   Rule: If a signed-in student on neither the whitelist nor the educators of a private course opens it, then the reader shall leave that course out of the student's Recently accessed courses.
 

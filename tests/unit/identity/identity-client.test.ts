@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createIdentityClient } from "../../../packages/svelte/identity-sveltekit/src/client.ts";
+import { createIdentityClient } from "../../../packages/adapters/driven/identity-better-auth/src/client.ts";
 
 const http = vi.fn();
 const navigate = vi.fn();

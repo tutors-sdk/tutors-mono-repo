@@ -138,7 +138,7 @@ jobs:
           cache-from: type=gha,scope=smoke-live
 
       # The signed-in half of the stack runs the time app too (tests/e2e-stack/compose.yaml time-signed-in), so
-      # compose cannot start without its image; ci.yml builds the same four.
+      # compose cannot start without its image.
       - name: Build time image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -148,6 +148,18 @@ jobs:
           load: true
           push: false
           cache-from: type=gha,scope=smoke-time
+
+      # The stack serves the validator as well (tests/e2e-stack/compose.yaml validator); without its image
+      # compose stops at the pull and no journey runs.
+      - name: Build validator image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          build-args: APP_NAME=validator
+          tags: tutors/validator:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=smoke-validator
 
       - name: Build fixture courses
         run: pnpm e2e:stack:fixture
@@ -447,7 +459,9 @@ jobs:
   mutation-nightly:
     name: Mutation Testing (every library module)
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # The run took 77 minutes before the domain, application and logger-core rings were split out
+    # and went past 90 with them; the limit leaves the same headroom as before.
+    timeout-minutes: 150
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

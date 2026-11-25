@@ -127,7 +127,7 @@ test("Desktop sidebar holds course info and the tools", { tag: "@rule-0024" }, a
   await expect(header.getByRole("button", { name: "Course navigation", exact: true })).toBeHidden();
   // A multi-page course summary belongs in the scrollable info dialog, not above the topics.
   await page.evaluate(async () => {
-    const runes = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/runes/src/index.svelte.ts"))!;
+    const runes = performance.getEntriesByType("resource").map(entry => entry.name).find(url => url.includes("/svelte-state/src/index.svelte.ts"))!;
     const { currentCourse } = await import(runes);
     currentCourse.value.contentHtml = "";
     currentCourse.value.summary = Array.from({ length: 40 }, (_, i) => `<p>Course summary paragraph ${i + 1}</p>`).join("");

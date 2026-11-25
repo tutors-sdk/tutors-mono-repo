@@ -246,7 +246,7 @@ migration creates, and a migration that rewrites stored rows.
 
 **Baselines** `tests/data/schema/known-gaps.txt` (shrink-only): five tables and two functions the code uses that no
 migration creates (the schema predates `supabase/migrations`, and the content locks and whiteboard scenes are
-created by SQL under `packages/svelte/utils/rbac/sql`).
+created by SQL under `packages/adapters/driven/store-supabase/sql`).
 
 ## Tier J — platform conformance
 
@@ -285,7 +285,8 @@ exports exactly the pinned app-level series with everything else under `process_
 
 **Lives in** `scripts/checks/observability.ts`, `tests/observability/observability-contracts.test.ts`,
 `tests/unit/utils/logger-contract.test.ts`, `observability/`, and the logger in
-`packages/svelte/utils/logger` (`contract.ts` holds the contract as data).
+`packages/platform/logger` (`contract.ts` holds the contract as data) over the
+dependency-free core in `packages/platform/logger-core`.
 
 ```bash
 pnpm exec vitest run tests/observability

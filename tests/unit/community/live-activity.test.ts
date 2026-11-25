@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseLiveActivity } from "../../../packages/svelte/community/src/services/live-activity.server.ts";
+import { parseLiveActivity } from "../../../packages/adapters/driven/realtime-supabase/src/live-activity.server.ts";
 
 describe("server live activity icon validation", () => {
   const event = { courseId: "course-1", user: { id: "student-1" } };

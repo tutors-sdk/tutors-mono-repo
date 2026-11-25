@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { convertMdToHtml, loadMath, mayContainMath } from "../../../packages/jsr/model/src/utils/markdown-utils";
+import { convertMdToHtml, loadMath, mayContainMath } from "../../../packages/adapters/driven/render-markdown/src/markdown-utils";
 
 /**
  * KaTeX is registered on demand (loadMath) so browser bundles skip it until a

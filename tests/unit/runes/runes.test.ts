@@ -13,10 +13,10 @@ import {
   locksLoaded,
   rune,
   tutorsId
-} from "../../../packages/svelte/runes/src/index.svelte.ts";
+} from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 import type { Course, Lo } from "../../../packages/jsr/model/src/tutors.ts";
 
-describe("@tutors/runes", () => {
+describe("@tutors/svelte-state", () => {
   it("a rune holds its initial value until it is set", () => {
     const count = rune(1);
     expect(count.value).toBe(1);
@@ -53,7 +53,7 @@ describe("@tutors/runes", () => {
   it("the first write creates the value without a read before it", async () => {
     // A fresh module instance: its lazy values have never been read.
     vi.resetModules();
-    const fresh = await import("../../../packages/svelte/runes/src/index.svelte.ts");
+    const fresh = await import("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts");
     fresh.currentLabStepIndex.value = 5;
     fresh.currentNotebookCellIndex.value = 6;
     fresh.adobeLoaded.value = true;

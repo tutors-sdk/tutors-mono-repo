@@ -1,4 +1,4 @@
-import type { ThemeService } from "../../../packages/svelte/themes/src/types.ts";
+import type { ThemeService } from "../../../packages/adapters/driving/themes/src/types.ts";
 
 /**
  * Helpers for executable theme features. The theme service is a module-level

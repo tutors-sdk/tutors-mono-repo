@@ -1,17 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// health-check reads `supabase` at call time and treats an absent client as anon mode, so the
-// stub is held in a mutable binding the tests reassign rather than the shared MockSupabaseClient
-// (which has no rpc).
-let client: unknown;
-
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
-  get supabase() {
-    return client;
-  }
-}));
-
-import { HEALTH_CHECK_TIMEOUT_MS, checkSupabase, getRecentErrorCounts } from "../../../packages/svelte/community/src/utils/health-check.ts";
+// health-check reads the composed client at call time and treats an absent one as anon mode.
+import { configureSupabase } from "../../../packages/adapters/driven/store-supabase/src/client.ts";
+import { HEALTH_CHECK_TIMEOUT_MS, checkSupabase, getRecentErrorCounts } from "../../../packages/adapters/driven/store-supabase/src/health-check.ts";
 
 function clientReturning({ select, rpc }: { select?: unknown; rpc?: unknown } = {}) {
   return {
@@ -21,7 +12,7 @@ function clientReturning({ select, rpc }: { select?: unknown; rpc?: unknown } = 
 }
 
 beforeEach(() => {
-  client = undefined;
+  configureSupabase(undefined);
 });
 
 describe("checkSupabase", () => {
@@ -30,7 +21,7 @@ describe("checkSupabase", () => {
   });
 
   it("reports ok and a latency when the count query answers", async () => {
-    client = clientReturning({ select: { error: null } });
+    configureSupabase(clientReturning({ select: { error: null } }) as never);
     const result = await checkSupabase();
     expect(result.status).toBe("ok");
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
@@ -39,25 +30,25 @@ describe("checkSupabase", () => {
 
   it("asks only for the row count, not the rows", async () => {
     const stub = clientReturning({ select: { error: null } });
-    client = stub;
+    configureSupabase(stub as never);
     await checkSupabase();
     expect(stub.from).toHaveBeenCalledWith("tutors-connect-courses");
   });
 
   it("reports the error message when the query answers with one", async () => {
-    client = clientReturning({ select: { error: { message: "permission denied" } } });
+    configureSupabase(clientReturning({ select: { error: { message: "permission denied" } } }) as never);
     const result = await checkSupabase();
     expect(result).toMatchObject({ status: "error", message: "permission denied" });
   });
 
   it("reports the message when the query throws an Error", async () => {
-    client = { from: vi.fn(() => ({ select: () => Promise.reject(new Error("network down")) })) };
+    configureSupabase({ from: vi.fn(() => ({ select: () => Promise.reject(new Error("network down")) })) } as never);
     const result = await checkSupabase();
     expect(result).toMatchObject({ status: "error", message: "network down" });
   });
 
   it("stringifies a thrown value that is not an Error", async () => {
-    client = { from: vi.fn(() => ({ select: () => Promise.reject("gateway timeout") })) };
+    configureSupabase({ from: vi.fn(() => ({ select: () => Promise.reject("gateway timeout") })) } as never);
     const result = await checkSupabase();
     expect(result).toMatchObject({ status: "error", message: "gateway timeout" });
   });
@@ -70,29 +61,29 @@ describe("getRecentErrorCounts", () => {
 
   it("returns the counts the function reports", async () => {
     const counts = [{ app: "reader", level: "error", count: 3 }];
-    client = clientReturning({ rpc: { data: counts, error: null } });
+    configureSupabase(clientReturning({ rpc: { data: counts, error: null } }) as never);
     expect(await getRecentErrorCounts()).toEqual(counts);
   });
 
   it("asks for the last hour", async () => {
     const stub = clientReturning({ rpc: { data: [], error: null } });
-    client = stub;
+    configureSupabase(stub as never);
     await getRecentErrorCounts();
     expect(stub.rpc).toHaveBeenCalledWith("get_error_counts", { minutes_ago: 60 });
   });
 
   it("returns nothing when the function answers with an error", async () => {
-    client = clientReturning({ rpc: { data: null, error: { message: "no such function" } } });
+    configureSupabase(clientReturning({ rpc: { data: null, error: { message: "no such function" } } }) as never);
     expect(await getRecentErrorCounts()).toEqual([]);
   });
 
   it("returns nothing when the function answers with no data", async () => {
-    client = clientReturning({ rpc: { data: null, error: null } });
+    configureSupabase(clientReturning({ rpc: { data: null, error: null } }) as never);
     expect(await getRecentErrorCounts()).toEqual([]);
   });
 
   it("returns nothing when the call throws, so a health page still renders", async () => {
-    client = { rpc: () => Promise.reject(new Error("socket closed")) };
+    configureSupabase({ rpc: () => Promise.reject(new Error("socket closed")) } as never);
     expect(await getRecentErrorCounts()).toEqual([]);
   });
 });
@@ -103,7 +94,7 @@ describe("the readiness check's deadline (Rule 0616)", () => {
   it("reports an error once Supabase has not answered within HEALTH_CHECK_TIMEOUT_MS", async () => {
     vi.useFakeTimers();
     try {
-      client = stalled();
+      configureSupabase(stalled() as never);
       const check = checkSupabase();
       await vi.advanceTimersByTimeAsync(HEALTH_CHECK_TIMEOUT_MS);
       expect(await check).toMatchObject({ status: "error", message: `no answer within ${HEALTH_CHECK_TIMEOUT_MS} ms` });
@@ -115,7 +106,7 @@ describe("the readiness check's deadline (Rule 0616)", () => {
   it("answers no error counts once the counts have not come back in time", async () => {
     vi.useFakeTimers();
     try {
-      client = stalled();
+      configureSupabase(stalled() as never);
       const counts = getRecentErrorCounts();
       await vi.advanceTimersByTimeAsync(HEALTH_CHECK_TIMEOUT_MS);
       expect(await counts).toEqual([]);
@@ -127,7 +118,7 @@ describe("the readiness check's deadline (Rule 0616)", () => {
   it("leaves no timer behind once Supabase has answered", async () => {
     vi.useFakeTimers();
     try {
-      client = clientReturning({ select: { error: null }, rpc: { data: [], error: null } });
+      configureSupabase(clientReturning({ select: { error: null }, rpc: { data: [], error: null } }) as never);
       await checkSupabase();
       await getRecentErrorCounts();
       expect(vi.getTimerCount()).toBe(0);
@@ -144,7 +135,7 @@ describe("the readiness check's deadline (Rule 0616)", () => {
 describe("what the readiness check measures and asks", () => {
   it("asks for an exact count of the head only", async () => {
     const select = vi.fn(() => Promise.resolve({ error: null }));
-    client = { from: vi.fn(() => ({ select })) };
+    configureSupabase({ from: vi.fn(() => ({ select })) } as never);
     await checkSupabase();
     expect(select).toHaveBeenCalledWith("count", { count: "exact", head: true });
   });
@@ -153,10 +144,10 @@ describe("what the readiness check measures and asks", () => {
     const now = vi.spyOn(performance, "now");
     try {
       now.mockReturnValueOnce(100).mockReturnValueOnce(150);
-      client = clientReturning({ select: { error: null } });
+      configureSupabase(clientReturning({ select: { error: null } }) as never);
       expect((await checkSupabase()).latencyMs).toBe(50);
       now.mockReturnValueOnce(200).mockReturnValueOnce(230);
-      client = { from: vi.fn(() => ({ select: () => Promise.reject(new Error("network down")) })) };
+      configureSupabase({ from: vi.fn(() => ({ select: () => Promise.reject(new Error("network down")) })) } as never);
       expect((await checkSupabase()).latencyMs).toBe(30);
     } finally {
       now.mockRestore();
@@ -164,7 +155,7 @@ describe("what the readiness check measures and asks", () => {
   });
 
   it("returns no counts when the function answers with an error, even alongside data", async () => {
-    client = clientReturning({ rpc: { data: [{ app: "reader", level: "error", count: 3 }], error: { message: "denied" } } });
+    configureSupabase(clientReturning({ rpc: { data: [{ app: "reader", level: "error", count: 3 }], error: { message: "denied" } } }) as never);
     expect(await getRecentErrorCounts()).toEqual([]);
   });
 });

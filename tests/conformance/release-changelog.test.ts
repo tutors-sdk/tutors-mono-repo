@@ -26,7 +26,7 @@ describe("release changelog", () => {
   });
 
   it("files a pull request under the product section with the most changed files", () => {
-    expect(sectionOf("packages/svelte/course/src/x.ts")).toBe("Reader");
+    expect(sectionOf("packages/adapters/driving/svelte-state/src/x.ts")).toBe("Reader");
     expect(sectionOf(".github/workflows/image-build.yml")).toBe("Infrastructure");
     expect(sectionOf(".github/workflows/ci.yml")).toBe("Development");
     expect(sectionsOf(["apps/live/a.ts", "apps/time/a.ts", "apps/time/b.ts", "tests/a.ts", "tests/b.ts", "tests/c.ts"])).toEqual(["Time", "Live", "Development"]);

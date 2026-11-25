@@ -1,80 +1,157 @@
 // Architecture rules for the monorepo (testing runway tier A).
 //
-// The layers below are the ones the README promises under "Architecture":
-// foundation -> core -> feature -> ui-primitives -> ui-navigators ->
-// ui-components -> apps, one direction only. A module may import from its own
-// layer or any layer beneath it, never from a layer above.
+// Tutors is a hexagonal architecture (docs/adr/0001-hexagonal-architecture.md): three rings,
+// with every dependency pointing inwards.
+//
+//   domain       packages/domain                    the rules of a course, learning, presence, access
+//   application  packages/application               ports and use cases; imports the domain only
+//   adapters     packages/adapters/driven/<name>    one technology each, behind a port
+//                packages/adapters/driving/<name>   Svelte state, UI, themes, i18n, a11y, tour
+//   apps         apps/<name>                        composition roots: compose(env) picks the adapters
+//
+// packages/platform/* (logger, metrics) are plumbing any adapter or app may use; packages/jsr/*
+// are the published packages: facades over the rings (model, time, types) and the
+// authoring toolchain (gen, tutors, tutors-lite, create).
 //
 //   pnpm test:runway                 # the gate: fails on new violations or stale baseline entries
 //   pnpm architecture-report         # every violation, including the known ones
 //
-// Negative fixtures for every rule live in tests/architecture/.
+// Negative fixtures for every rule live in tests/architecture/fixtures/workspace.
 
-/** Workspace directories per layer, lowest first. Keep in step with README.md. */
-const LAYERS = [
-  { name: "foundation", paths: ["packages/jsr/[^/]+", "packages/svelte/utils/logger", "packages/svelte/utils/metrics"] },
-  {
-    name: "core",
-    paths: ["packages/svelte/runes", "packages/svelte/course", "packages/svelte/data-api", "packages/svelte/utils/a11y", "packages/svelte/utils/i18n"]
-  },
-  {
-    name: "feature",
-    paths: [
-      "packages/svelte/themes",
-      "packages/svelte/community",
-      "packages/svelte/connect",
-      "packages/svelte/identity-sveltekit",
-      "packages/svelte/realtime-supabase",
-      "packages/svelte/utils/rbac",
-      "packages/svelte/utils/privacy",
-      "packages/svelte/utils/tour"
-    ]
-  },
-  { name: "ui-primitives", paths: ["packages/svelte/ui-primitives"] },
-  { name: "ui-navigators", paths: ["packages/svelte/ui-navigators"] },
-  { name: "ui-components", paths: ["packages/svelte/ui-components"] },
-  { name: "apps", paths: ["apps/[^/]+"] }
+const DOMAIN = "^packages/domain/";
+const APPLICATION = "^packages/application/";
+const RINGS = "^packages/(domain|application)/";
+const DRIVEN = "^packages/adapters/driven/";
+const DRIVING = "^packages/adapters/driving/";
+const PLATFORM = "^packages/platform/";
+const FACADES = "^packages/jsr/(model|time|types)/";
+
+/** A workspace root: apps/x, packages/jsr/x, packages/platform/x, packages/adapters/driven/x, packages/adapters/driving/x, packages/domain or packages/application. */
+const WORKSPACE = "^((?:apps|packages/jsr|packages/platform|packages/adapters/driven|packages/adapters/driving)/[^/]+|packages/domain|packages/application)/";
+
+/**
+ * Each vendor and the one driven adapter allowed to import it. Everything else talks to the
+ * port. A vendor used by an app directly is the app's own composition decision.
+ */
+const VENDORS = [
+  { name: "supabase", match: "(^|/)@supabase/", adapter: "^packages/adapters/driven/(store-supabase|realtime-supabase)/" },
+  { name: "markdown", match: "(^|/)(markdown-it|katex|shiki|mermaid|@marp-team)(/|$)", adapter: "^packages/adapters/driven/render-markdown/" },
+  { name: "better-auth", match: "(^|/)(@better-auth/|better-auth(/|$))", adapter: "^packages/adapters/driven/identity-better-auth/" }
 ];
 
-const anyOf = (paths) => `^(${paths.join("|")})/`;
+/** The authoring toolchain (generator and CLIs) is published on its own and is not an adapter of the reader; its extraction is a separate phase. */
+const AUTHORING = "^packages/jsr/(gen|tutors|tutors-lite|create)/";
 
-/** A workspace root: apps/x, packages/jsr/x, packages/svelte/utils/x or packages/svelte/x. */
-const WORKSPACE = "^((?:apps|packages/jsr|packages/svelte/utils|packages/svelte)/[^/]+)/";
-
-const layerRules = LAYERS.slice(0, -1).map((layer, index) => ({
-  name: `layer-${layer.name}`,
-  comment: `The ${layer.name} layer must not import from a layer above it (${LAYERS.slice(index + 1)
-    .map((l) => l.name)
-    .join(", ")}). See the Architecture section of README.md.`,
+const vendorRules = VENDORS.map((vendor) => ({
+  name: `vendor-only-in-its-adapter`,
+  comment: `${vendor.name} belongs to its driven adapter (${vendor.adapter}); everything else calls the application port.`,
   severity: "error",
-  from: { path: anyOf(layer.paths) },
-  to: { path: anyOf(LAYERS.slice(index + 1).flatMap((l) => l.paths)) }
+  from: { path: "^packages/", pathNot: `${vendor.adapter}|${AUTHORING}` },
+  to: { path: vendor.match }
 }));
+
+/** The driving adapters' own layering: primitives -> navigators -> components -> apps, one direction only. */
+const UI_LAYERS = ["packages/adapters/driving/ui-primitives", "packages/adapters/driving/ui-navigators", "packages/adapters/driving/ui-components", "apps/[^/]+"];
+const uiLayerRules = UI_LAYERS.slice(0, -1).map((layer, index) => ({
+  name: "ui-layering",
+  comment: `${layer} must not import from a UI layer above it (${UI_LAYERS.slice(index + 1).join(", ")}).`,
+  severity: "error",
+  from: { path: `^${layer}/` },
+  to: { path: `^(${UI_LAYERS.slice(index + 1).join("|")})/` }
+}));
+uiLayerRules.push({
+  name: "ui-layering",
+  comment: "The service packages the UI reads (svelte-state, themes, i18n, a11y, tour, privacy) sit below the UI packages and import none of them.",
+  severity: "error",
+  from: { path: `${DRIVING}(svelte-state|themes|i18n|a11y|tour|privacy)/` },
+  to: { path: `${DRIVING}ui-` }
+});
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
-    ...layerRules,
+    {
+      name: "domain-self-contained",
+      comment: "The domain imports nothing: no other package, no npm module, no Node built-in, no framework. It is the rules of Tutors and runs anywhere.",
+      severity: "error",
+      from: { path: DOMAIN },
+      to: { pathNot: DOMAIN }
+    },
+    {
+      name: "application-imports-domain-only",
+      comment: "The application ring (ports and use cases) imports the domain and nothing else; every technology sits behind a port.",
+      severity: "error",
+      from: { path: APPLICATION },
+      to: { pathNot: RINGS }
+    },
+    ...vendorRules,
+    {
+      name: "no-adapter-to-adapter",
+      comment: "A driven adapter imports the application ports, the domain, the platform plumbing and its one technology; never another adapter. Two adapters that need each other share a port.",
+      severity: "error",
+      from: { path: `${DRIVEN}([^/]+)/` },
+      to: { path: "^packages/adapters/", pathNot: `${DRIVEN}$1/` }
+    },
+    {
+      name: "svelte-state-imports-no-adapter",
+      comment: "svelte-state is the driving adapter the UI reads; it calls use cases through configured ports and imports no other adapter (the theme registers itself through a seam).",
+      severity: "error",
+      from: { path: `${DRIVING}svelte-state/` },
+      to: { path: "^packages/adapters/", pathNot: `${DRIVING}svelte-state/` }
+    },
+    {
+      name: "adapters-import-no-app",
+      comment: "Apps are the composition roots; nothing below them imports an app.",
+      severity: "error",
+      from: { path: "^packages/" },
+      to: { path: "^apps/" }
+    },
+    ...uiLayerRules,
+    {
+      name: "ui-primitives-no-data-features",
+      comment:
+        "UI primitives are low-level presentational components: they take users, events and permissions as props or context, and never reach into the state adapter's data and access services (community, connect, rbac) themselves. Theme and tour services stay allowed.",
+      severity: "error",
+      from: { path: `${DRIVING}ui-primitives/` },
+      to: { path: `${DRIVING}svelte-state/src/(community|connect|rbac)/` }
+    },
+    {
+      name: "logger-core-self-contained",
+      comment:
+        "@tutors/logger-core runs in Node, Deno and the browser and the published Deno packages log through it, so it imports nothing outside its own files: no workspace, no npm package, no Node built-in (Rule 0290).",
+      severity: "error",
+      from: { path: "^packages/platform/logger-core/" },
+      to: { pathNot: "^packages/platform/logger-core/" }
+    },
+    {
+      name: "platform-self-contained",
+      comment: "Platform plumbing (logger, metrics) imports no ring, adapter, facade or app.",
+      severity: "error",
+      from: { path: PLATFORM },
+      to: { path: "^(apps|packages)/", pathNot: PLATFORM }
+    },
+    {
+      name: "facades-import-rings-only",
+      comment:
+        "The published packages model-lib, time-lib and tutors-types are facades: they re-export the rings (model-lib also the markdown renderer) and import no other adapter, platform package or app. The one exception is the dependency-free logger core, so what a facade reports reaches the app's transports (Rule 0291).",
+      severity: "error",
+      from: { path: FACADES },
+      to: { path: "^(apps|packages)/", pathNot: "^(packages/domain|packages/application|packages/jsr|packages/adapters/driven/render-markdown|packages/platform/logger-core)/" }
+    },
+    {
+      name: "tutors-types-self-contained",
+      comment:
+        "@tutors/tutors-types is the vocabulary every layer shares: it re-exports the domain's and imports nothing else, no other workspace, no npm package, no Node built-in (Rule 0130).",
+      severity: "error",
+      from: { path: "^packages/jsr/types/" },
+      to: { pathNot: "^(packages/jsr/types|packages/domain)/" }
+    },
     {
       name: "identity-provider-only-in-adapter",
       comment: "Better Auth belongs to the identity adapter; consumers depend on identity contracts.",
       severity: "error",
-      from: { path: "^(apps|packages)/", pathNot: "^packages/svelte/identity-sveltekit/" },
+      from: { path: "^apps/" },
       to: { path: "(^|/)(@better-auth/|better-auth(/|$))" }
-    },
-    {
-      name: "identity-contracts-self-contained",
-      comment: "Identity contracts import no framework, database, provider or other package.",
-      severity: "error",
-      from: { path: "^packages/jsr/identity/" },
-      to: { pathNot: "^packages/jsr/identity/" }
-    },
-    {
-      name: "realtime-contracts-self-contained",
-      comment: "The Realtime port imports no framework, broker client or other package; adapters depend on it, not the reverse.",
-      severity: "error",
-      from: { path: "^packages/jsr/realtime/" },
-      to: { pathNot: "^packages/jsr/realtime/" }
     },
     {
       name: "course-rules-no-file-system",
@@ -87,7 +164,7 @@ module.exports = {
       name: "identity-no-server-in-browser",
       comment: "Browser entry points cannot reach server adapters or private environment modules, even through a shared barrel.",
       severity: "error",
-      from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/svelte/identity-sveltekit/src/client\\.ts$)" },
+      from: { path: "(\\.svelte$|\\.client\\.[jt]s$|/\\+(page|layout)\\.[jt]s$|^packages/adapters/driven/identity-better-auth/src/client\\.ts$)" },
       to: { path: "(\\.server\\.[jt]s$|/server/|\\$env/(static|dynamic)/private|\\$app/env/private|(^|/)(?:better-auth/(?:dist/)?(?:auth/|api/|cookies/|integrations/|index\\.)))", reachable: true }
     },
     {
@@ -106,47 +183,45 @@ module.exports = {
       to: { dependencyTypes: ["local"], dependencyTypesNot: ["aliased"], pathNot: "^$1/" }
     },
     {
-      name: "no-database-client-in-browser-code",
+      name: "no-database-client-in-apps",
       comment:
-        "Browser code reaches data through @tutors/data-api (the reader's /api routes), never through the database client, so the database behind it can change without touching a browser package. Exceptions: the anon client factory for Realtime and public reads (packages/svelte/community/src/utils/supabase-client.ts), server-only code, and type-only imports. See guides/SERVER-WRITES.md.",
+        "No app imports the database client. Browser code reaches a learner's data through the data API adapter (@tutors/data-api, the reader's /api routes); server code calls the Supabase adapter's server entry (@tutors/store-supabase/server), which builds the service client and holds every query. The database behind both can change without touching an app. See guides/SERVER-WRITES.md.",
       severity: "error",
-      from: {
-        path: "^(packages/svelte|apps/[^/]+/src)/",
-        pathNot: "^packages/svelte/community/src/utils/supabase-client\\.ts$|^apps/[^/]+/src/(lib/server/|hooks\\.server\\.ts$)|^apps/[^/]+/src/routes/.*\\+(server|page\\.server|layout\\.server)\\.ts$"
-      },
-      to: { path: "@supabase/supabase-js($|/)", dependencyTypesNot: ["type-only"] }
+      from: { path: "^apps/[^/]+/src/" },
+      to: { path: "@supabase/supabase-js($|/)" }
     },
     {
-      name: "ui-primitives-no-data-features",
+      name: "ui-imports-no-driven-adapter",
       comment:
-        "UI primitives are low-level presentational components: they take users, events and permissions as props or context, and never reach into the data and access packages (community, connect, data-api, rbac) themselves. Theme and tour services stay allowed.",
+        "A driving adapter (state, UI, themes, i18n, a11y, tour, privacy) never imports a driven adapter: what the UI needs from a technology arrives through a port the app's composition root wired, so a component cannot tie itself to Supabase, HTTP or a file format.",
       severity: "error",
-      from: { path: "^packages/svelte/ui-primitives/" },
-      to: { path: "^packages/svelte/(community|connect|data-api|utils/rbac)/" }
+      from: { path: DRIVING },
+      to: { path: DRIVEN }
     },
     {
-      name: "tutors-types-self-contained",
+      name: "test-doubles-only-in-composition",
       comment:
-        "@tutors/tutors-types is the vocabulary every layer shares, so it imports nothing outside its own files: no other workspace, no npm package, no Node built-in (Rule 0130).",
+        "The in-memory adapters and port contracts (@tutors/application/testing) are the testing boundary's kit. Production code reaches them in one place only: the anonymous wiring (svelte-state's adapters.ts and an app's compose.ts), where a port with no backend behind it is served from memory.",
       severity: "error",
-      from: { path: "^packages/jsr/types/" },
-      to: { pathNot: "^packages/jsr/types/" }
+      from: { path: "^(apps|packages)/", pathNot: "^packages/application/src/testing/|^packages/adapters/driving/svelte-state/src/adapters\\.ts$|^apps/[^/]+/src/lib/compose\\.ts$" },
+      to: { path: "^packages/application/src/testing/" }
     },
     {
       name: "no-cross-package-cycle",
       comment:
-        "A cycle that leaves a workspace and comes back makes the layering meaningless; invert one edge through a seam. Cycles inside one package (a recursive component, for instance) are allowed.",
+        "A cycle that leaves a workspace and comes back makes the rings meaningless; invert one edge through a port or seam. Cycles inside one package (a recursive component, for instance) are allowed.",
       severity: "error",
       from: { path: WORKSPACE },
       to: { circular: true, viaSomeNot: "^$1/" }
     }
   ],
   options: {
-    // Dependencies are recorded as leaves, never walked: no-database-client-in-browser-code needs the edge.
+    // Dependencies are recorded as leaves, never walked: no-database-client-in-apps needs the edge.
     doNotFollow: { path: "node_modules" },
     exclude: {
-      // Build output of our own workspaces only: a dependency resolves into its own dist/.
-      path: "(^|/)(\\.svelte-kit|__tests__|test|tests)/|^(apps|packages/jsr|packages/svelte|packages/svelte/utils)/[^/]+/(build|dist)/|\\.(test|spec)\\.ts$"
+      // Workspace build output and tests are out; node_modules stays in the graph (unfollowed) so a
+      // vendor import is an edge the vendor rules can see.
+      path: "(^|/)(\\.svelte-kit|__tests__|test|tests)/|^(apps|packages)/((?!node_modules/).)*/(build|dist)/|\\.(test|spec)\\.ts$"
     },
     tsPreCompilationDeps: true,
     // Workspace packages resolve through node_modules symlinks to their source.

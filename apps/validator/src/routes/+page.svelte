@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import type { Finding } from "@tutors/course-rules";
-  import { MAX_ZIP_BYTES } from "@tutors/course/validation";
+  import { MAX_ZIP_BYTES } from "@tutors/course-archive";
   import Findings from "@tutors/ui-components/validation/Findings.svelte";
   import Icon from "@tutors/ui-primitives/components/Icon.svelte";
   import { fetchPublishedCourse, publishedCourseUrl } from "#lib/published.ts";

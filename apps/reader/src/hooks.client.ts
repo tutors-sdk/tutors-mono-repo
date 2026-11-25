@@ -8,11 +8,18 @@
 import { error } from "@sveltejs/kit";
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import log, { addTransport, setAppName } from "@tutors/logger";
-import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
+import { createSupabaseErrorTransport } from "@tutors/store-supabase";
+import { configureAdapters } from "@tutors/svelte-state/adapters";
+import { createIdentityClient } from "@tutors/identity-better-auth/client";
+import * as env from "$app/env/public";
+import { composeReader } from "#lib/compose.ts";
 
 import { readerTimeSource, setTutorsTimeSource } from "@tutors/tutors-time-lib";
-import { setCourseNotFoundHandler, setCourseTimedOutHandler, setCourseUnreachableHandler } from "@tutors/course/course";
+import { setCourseNotFoundHandler, setCourseTimedOutHandler, setCourseUnreachableHandler } from "@tutors/svelte-state/course";
 
+// The composition root: every port gets its adapter here, before anything reads one.
+configureAdapters(composeReader(env, { identityClient: createIdentityClient() }));
+// The analytics views read through this reader's own authenticated API.
 setTutorsTimeSource(readerTimeSource(""));
 
 // A course that does not exist is a 404 page, not an unexpected error (a 500). A browser cannot tell

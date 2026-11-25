@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { BaseCalendarModel } from "../../../packages/jsr/time/src/services/base-calendar-model";
-import type { CalendarEntry } from "../../../packages/jsr/time/src/types/calendar-types";
+import { BaseCalendarModel } from "../../../packages/domain/src/learning/services/base-calendar-model";
+import type { CalendarEntry } from "../../../packages/domain/src/learning/types/calendar-types";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal CalendarEntry

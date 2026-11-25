@@ -1,165 +1,125 @@
 import "../../bdd/support/svelte-runes-shim.ts";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import type { PresenceFeed } from "../../../packages/application/src/ports/index.ts";
+import type { PresenceEvent } from "../../../packages/domain/src/presence/index.ts";
+import { anonymousAdapters, configureAdapters } from "../../../packages/adapters/driving/svelte-state/src/adapters.ts";
+import { liveService } from "../../../packages/adapters/driving/svelte-state/src/community/services/live.svelte.ts";
 
 /**
- * The live service's listeners (packages/svelte/community/src/services/live.svelte.ts), on today's Realtime seam: a
- * course or the platform is one `realtime.subscribe` plus one stored-activity feed (`watchLiveFeed`). This file was
- * written for the Supabase channel API in #327's branch and dropped in its rebase while its nightly mutation floor
- * (71) stayed; it is rewritten here so the floor is met again.
+ * The live service's listeners (svelte-state/src/community/services/live.svelte.ts) over the
+ * PresenceFeed port: a course, or the whole platform, is one `subscribe`, and what arrives is
+ * listed once per student and per course. How a feed is delivered (Realtime, stored activity, the
+ * day's budget) is the adapter's business: tests/unit/adapters/realtime-supabase-presence.test.ts.
  */
-type OnMessage = (event: string, payload: unknown) => void;
+type Watch = { courseId?: string; listener: (event: PresenceEvent) => void; stopped: boolean };
 
-const seam = vi.hoisted(() => ({
-  anonMode: "",
-  client: {} as unknown,
-  subscribed: [] as { topic: string; events: string[]; onMessage: OnMessage; options: unknown }[],
-  closed: [] as string[],
-  feeds: [] as { topic: string; read: (since: string) => unknown; onRecord: (record: unknown) => void }[],
-  stoppedFeeds: [] as string[],
-  reads: [] as string[]
-}));
-
-vi.mock("$app/env/public", () => ({
-  get PUBLIC_ANON_MODE() {
-    return seam.anonMode;
-  }
-}));
-
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({
-  get supabase() {
-    return seam.client;
+const watches: Watch[] = [];
+const feed: PresenceFeed = {
+  subscribe(listener, courseId) {
+    const watch: Watch = { courseId, listener, stopped: false };
+    watches.push(watch);
+    return () => void (watch.stopped = true);
   },
-  getTutorsConnectRecentLos: (since: string) => (seam.reads.push(`all ${since}`), []),
-  getTutorsConnectRecentLosByCourseId: (courseId: string, since: string) => (seam.reads.push(`${courseId} ${since}`), [])
-}));
-
-vi.mock("../../../packages/svelte/community/src/services/realtime.ts", () => ({
-  realtime: {
-    subscribe(topic: string, handlers: { events: string[]; onMessage: OnMessage }, options: unknown) {
-      seam.subscribed.push({ topic, events: handlers.events, onMessage: handlers.onMessage, options });
-      return { close: async () => void seam.closed.push(topic) };
-    }
-  }
-}));
-
-vi.mock("../../../packages/svelte/community/src/services/live-feed.ts", () => ({
-  watchLiveFeed(topic: string, read: (since: string) => unknown, onRecord: (record: unknown) => void) {
-    seam.feeds.push({ topic, read, onRecord });
-    return () => void seam.stoppedFeeds.push(topic);
-  }
-}));
-
-import { liveService } from "../../../packages/svelte/community/src/services/live.svelte.ts";
+  recent: async () => []
+};
 
 function loEvent(login: string, courseId: string, loRoute = `/lab/${courseId}/lab-1`) {
-  return { courseId, user: { id: login, fullName: login }, loRoute };
+  return { courseId, user: { id: login, fullName: login }, loRoute } as unknown as PresenceEvent;
+}
+
+function watching(): void {
+  configureAdapters({ ...anonymousAdapters(), anonymous: false, presence: { ...feed, publish: async () => {} } });
 }
 
 beforeEach(() => {
   liveService.stopGlobalPresenceService();
-  seam.anonMode = "";
-  seam.client = {};
-  seam.subscribed = [];
-  seam.closed = [];
-  seam.feeds = [];
-  seam.stoppedFeeds = [];
-  seam.reads = [];
-  liveService.courseSubscription = null;
-  liveService.listeningForCourse.value = "";
-  liveService.studentsOnline.value = [];
-  liveService.studentEventMap.clear();
+  liveService.stopCoursePresenceListener();
+  watches.length = 0;
+  watching();
 });
 
 describe("live service: one course", () => {
-  it("subscribes to the course's lo-events, hearing its own, and lists each student once, keeping their latest page", () => {
+  it("watches the course and lists each student once, keeping their latest page", () => {
     liveService.startCoursePresenceListener("web-dev-101");
 
     expect(liveService.listeningForCourse.value).toBe("web-dev-101");
-    expect(seam.subscribed.map(({ topic, events, options }) => ({ topic, events, options }))).toEqual([{ topic: "web-dev-101", events: ["lo-event"], options: { self: true } }]);
-    const { onMessage } = seam.subscribed[0]!;
-    onMessage("lo-event", loEvent("alice", "web-dev-101"));
-    onMessage("lo-event", loEvent("alice", "web-dev-101", "/lab/web-dev-101/lab-2"));
-    onMessage("lo-event", loEvent("bob", "web-dev-101"));
-    onMessage("lo-event", { courseId: "web-dev-101" });
+    expect(watches.map((watch) => watch.courseId)).toEqual(["web-dev-101"]);
+    const { listener } = watches[0]!;
+    listener(loEvent("alice", "web-dev-101"));
+    listener(loEvent("alice", "web-dev-101", "/lab/web-dev-101/lab-2"));
+    listener(loEvent("bob", "web-dev-101"));
+    listener({ courseId: "web-dev-101" } as unknown as PresenceEvent);
 
     expect(liveService.studentsOnline.value.map((s) => s.user?.id)).toEqual(["alice", "bob"]);
     expect(liveService.studentEventMap.get("alice")?.loRoute).toBe("/lab/web-dev-101/lab-2");
   });
 
-  it("reads the course's stored activity into the same list", () => {
-    liveService.startCoursePresenceListener("web-dev-101");
-
-    expect(seam.feeds.map((f) => f.topic)).toEqual(["web-dev-101"]);
-    seam.feeds[0]!.read("2026-10-28T00:00:00Z");
-    seam.feeds[0]!.onRecord(loEvent("carol", "web-dev-101"));
-    expect(seam.reads).toEqual(["web-dev-101 2026-10-28T00:00:00Z"]);
-    expect(liveService.studentsOnline.value.map((s) => s.user?.id)).toEqual(["carol"]);
-  });
-
-  it("does nothing more for the course it already listens to", () => {
+  it("does nothing more for the course it already watches", () => {
     liveService.startCoursePresenceListener("web-dev-101");
     liveService.startCoursePresenceListener("web-dev-101");
 
-    expect(seam.subscribed).toHaveLength(1);
-    expect(seam.feeds).toHaveLength(1);
+    expect(watches).toHaveLength(1);
   });
 
   it("leaves the previous course and forgets its students when it switches course", () => {
     liveService.startCoursePresenceListener("web-dev-101");
-    seam.subscribed[0]!.onMessage("lo-event", loEvent("alice", "web-dev-101"));
+    watches[0]!.listener(loEvent("alice", "web-dev-101"));
 
-    const before = { closed: seam.closed.length, stopped: seam.stoppedFeeds.length };
     liveService.startCoursePresenceListener("data-101");
 
-    expect(seam.closed.slice(before.closed)).toEqual(["web-dev-101"]);
-    expect(seam.stoppedFeeds.slice(before.stopped)).toEqual(["web-dev-101"]);
-    expect(seam.subscribed.at(-1)?.topic).toBe("data-101");
+    expect(watches.map((watch) => [watch.courseId, watch.stopped])).toEqual([
+      ["web-dev-101", true],
+      ["data-101", false]
+    ]);
     expect(liveService.listeningForCourse.value).toBe("data-101");
     expect(liveService.studentsOnline.value).toEqual([]);
     expect(liveService.studentEventMap.size).toBe(0);
   });
 
-  it("listens to nothing in anonymous mode or without a client", () => {
-    seam.anonMode = "TRUE";
+  it("stops: leaves the course and empties its list", () => {
     liveService.startCoursePresenceListener("web-dev-101");
-    seam.anonMode = "";
-    seam.client = undefined;
+    watches[0]!.listener(loEvent("alice", "web-dev-101"));
+
+    liveService.stopCoursePresenceListener();
+
+    expect(watches[0]!.stopped).toBe(true);
+    expect(liveService.listeningForCourse.value).toBe("");
+    expect(liveService.studentsOnline.value).toEqual([]);
+  });
+
+  it("watches nothing where the app composed an anonymous deployment", () => {
+    configureAdapters(anonymousAdapters({ presence: { ...feed, publish: async () => {} } }));
     liveService.startCoursePresenceListener("web-dev-101");
 
-    expect(seam.subscribed).toEqual([]);
-    expect(seam.feeds).toEqual([]);
+    expect(watches).toEqual([]);
     expect(liveService.listeningForCourse.value).toBe("");
   });
 });
 
 describe("live service: the whole platform", () => {
-  it("subscribes once to the platform's lo-events and lists each course and each student once", async () => {
+  it("watches every course once and lists each course and each student once", async () => {
     await liveService.startGlobalPresenceService();
     await liveService.startGlobalPresenceService();
 
-    expect(seam.subscribed.map(({ topic, events, options }) => ({ topic, events, options }))).toEqual([{ topic: "tutors-all-course-access", events: ["lo-event"], options: { self: true } }]);
-    const { onMessage } = seam.subscribed[0]!;
-    onMessage("lo-event", loEvent("alice", "web-dev-101"));
-    onMessage("lo-event", loEvent("bob", "web-dev-101", "/lab/web-dev-101/lab-2"));
-    onMessage("lo-event", loEvent("alice", "data-101"));
-    onMessage("lo-event", { user: { id: "nobody" } });
+    expect(watches.map((watch) => watch.courseId)).toEqual([undefined]);
+    const { listener } = watches[0]!;
+    listener(loEvent("alice", "web-dev-101"));
+    listener(loEvent("bob", "web-dev-101", "/lab/web-dev-101/lab-2"));
+    listener(loEvent("alice", "data-101"));
+    listener({ user: { id: "nobody" } } as unknown as PresenceEvent);
 
     expect(liveService.coursesOnline.value.map((c) => c.courseId)).toEqual(["web-dev-101", "data-101"]);
     expect(liveService.courseEventMap.get("web-dev-101")?.loRoute).toBe("/lab/web-dev-101/lab-2");
     expect(liveService.studentsOnline.value.map((s) => s.user?.id)).toEqual(["alice", "bob", "nobody"]);
-
-    seam.feeds[0]!.read("2026-10-28T00:00:00Z");
-    expect(seam.reads).toEqual(["all 2026-10-28T00:00:00Z"]);
   });
 
-  it("stops: closes the subscription and the feed and empties every list, so it can start again", async () => {
+  it("stops: leaves the feed and empties every list, so it can start again", async () => {
     await liveService.startGlobalPresenceService();
-    seam.subscribed[0]!.onMessage("lo-event", loEvent("alice", "web-dev-101"));
+    watches[0]!.listener(loEvent("alice", "web-dev-101"));
 
     liveService.stopGlobalPresenceService();
 
-    expect(seam.closed).toEqual(["tutors-all-course-access"]);
-    expect(seam.stoppedFeeds).toEqual(["tutors-all-course-access"]);
+    expect(watches[0]!.stopped).toBe(true);
     expect(liveService.listeningAll).toBe(false);
     expect(liveService.coursesOnline.value).toEqual([]);
     expect(liveService.studentsOnline.value).toEqual([]);
@@ -167,17 +127,27 @@ describe("live service: the whole platform", () => {
     expect(liveService.studentEventMap.size).toBe(0);
 
     await liveService.startGlobalPresenceService();
-    expect(seam.subscribed).toHaveLength(2);
+    expect(watches).toHaveLength(2);
   });
 
-  it("listens to nothing in anonymous mode or without a client", async () => {
-    seam.anonMode = "TRUE";
-    await liveService.startGlobalPresenceService();
-    seam.anonMode = "";
-    seam.client = undefined;
+  it("watches nothing where the app composed an anonymous deployment", async () => {
+    configureAdapters(anonymousAdapters({ presence: { ...feed, publish: async () => {} } }));
     await liveService.startGlobalPresenceService();
 
-    expect(seam.subscribed).toEqual([]);
+    expect(watches).toEqual([]);
     expect(liveService.listeningAll).toBe(false);
+  });
+});
+
+describe("live service: stopping", () => {
+  it("forgets every student it had listed for the course", () => {
+    liveService.startCoursePresenceListener("web-dev-101");
+    watches[0].listener(loEvent("alice", "web-dev-101"));
+    expect(liveService.studentEventMap.size).toBe(1);
+
+    liveService.stopCoursePresenceListener();
+
+    expect(liveService.studentEventMap.size).toBe(0);
+    expect(liveService.studentsOnline.value).toEqual([]);
   });
 });

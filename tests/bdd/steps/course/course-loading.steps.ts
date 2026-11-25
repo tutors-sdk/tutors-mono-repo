@@ -1,15 +1,19 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 import type { Composite, Course, Lab, Lo } from "../../../../packages/jsr/model/src/tutors.ts";
-import { courseService } from "../../../../packages/svelte/course/src/course/services/course.svelte.ts";
-import { markdownService } from "../../../../packages/svelte/course/src/markdown/index.ts";
-import { courseProtocol } from "../../../../packages/svelte/runes/src/index.svelte.ts";
+import { courseService } from "../../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
+import { markdownService } from "../../../../packages/adapters/driving/svelte-state/src/markdown/index.ts";
+import { courseProtocol } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 import type { LeafType, LoShape } from "../../../support/arbitraries/course-tree.ts";
 import { indexedLos, labShape, loadCourse, shape } from "../../support/course.ts";
 import { courseHost, publishedCourseJson, type CourseHost } from "../../support/reader-loading.ts";
+import { anonymousReader } from "../../../support/reader-adapters.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+
+// The course service fetches and renders through the adapters the anonymous reader composes.
+anonymousReader();
 
 const feature = await loadFeature("tests/bdd/features/course/course-loading.feature");
 

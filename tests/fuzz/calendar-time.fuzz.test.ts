@@ -9,9 +9,9 @@
  */
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { BaseCalendarModel } from "../../packages/jsr/time/src/services/base-calendar-model.ts";
-import { formatDateShort, getMondayForDate } from "../../packages/jsr/time/src/utils/calendar-utils.ts";
-import type { CalendarEntry, CalendarModel } from "../../packages/jsr/time/src/types/index.ts";
+import { BaseCalendarModel } from "../../packages/domain/src/learning/services/base-calendar-model.ts";
+import { formatDateShort, getMondayForDate } from "../../packages/domain/src/learning/utils/calendar-utils.ts";
+import type { CalendarEntry, CalendarModel } from "../../packages/domain/src/learning/types/index.ts";
 import { fuzzParameters } from "../support/arbitraries/course-tree.ts";
 
 type BuildModel = (entries: CalendarEntry[]) => CalendarModel;

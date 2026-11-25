@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
-import { recordTick, recordingFunctions } from "../../../apps/reader/src/lib/server/api/store.ts";
+import { recordTick, recordingFunctions } from "../../../packages/adapters/driven/store-supabase/src/server/learner-store.ts";
 
 
 const net = { rpcBody: undefined as unknown, updates: [] as unknown[], calendarIncrements: [] as unknown[] };

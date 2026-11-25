@@ -1,1 +1,1 @@
-export type Kind = "lab" | "topic";
+export type Kind = "lab" | "note";

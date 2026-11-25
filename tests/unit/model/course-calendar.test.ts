@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { initCalendar, type Course } from "../../../packages/jsr/model/src/tutors.ts";
+import { addTransport, removeTransport, type LogEntry } from "../../../packages/platform/logger-core/src/index.ts";
+import { decorateCourseTree as decoratePublishedCourseTree, initCalendar, type Course } from "../../../packages/jsr/model/src/tutors.ts";
 
 /** Three teaching weeks, one week apart, in the new calendar format. */
 function courseWithCalendar(): Course {
@@ -40,12 +41,30 @@ describe("initCalendar: which week is current", () => {
     }
   });
 
-  it("reads the system clock when no instant is given, so callers that do not pass one are unchanged", () => {
+  it("reads no clock of its own: with no instant the calendar is built and no week is current", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-22T12:00:00Z"));
-    const course = courseWithCalendar();
-    initCalendar(course);
-    expect(course.courseCalendar?.currentWeek?.title).toBe("Week Three");
+    try {
+      const course = courseWithCalendar();
+      expect(initCalendar(course)).toBeUndefined();
+      expect(course.courseCalendar?.weeks.length).toBeGreaterThan(0);
+      expect(course.courseCalendar?.currentWeek).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the published model library passes the system clock, so its callers are unchanged", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-22T12:00:00Z"));
+    try {
+      const course = courseWithCalendar();
+      course.los = [];
+      decoratePublishedCourseTree(course);
+      expect(course.courseCalendar?.currentWeek?.title).toBe("Week Three");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("has no current week before the first or after the last dated week", () => {
@@ -56,5 +75,22 @@ describe("initCalendar: which week is current", () => {
     const after = courseWithCalendar();
     initCalendar(after, Date.parse("2027-01-01T00:00:00Z"));
     expect(after.courseCalendar?.currentWeek).toBeUndefined();
+  });
+
+  it("the published model library logs a calendar it cannot read through the shared logger, and still builds the course", () => {
+    const entries: LogEntry[] = [];
+    const transport = (entry: LogEntry) => void entries.push(entry);
+    const quiet = vi.spyOn(console, "warn").mockImplementation(() => {});
+    addTransport(transport);
+    try {
+      const course = { type: "course", title: "C", los: [], calendar: { title: "S1", weeks: [null] } } as unknown as Course;
+      decoratePublishedCourseTree(course, "cid", "cid.netlify.app");
+      expect(course.courseId).toBe("cid");
+      expect(course.courseCalendar).toBeUndefined();
+      expect(entries).toEqual([expect.objectContaining({ level: "warn", message: "Error loading calendar", error: expect.stringMatching(/.+/) })]);
+    } finally {
+      removeTransport(transport);
+      quiet.mockRestore();
+    }
   });
 });

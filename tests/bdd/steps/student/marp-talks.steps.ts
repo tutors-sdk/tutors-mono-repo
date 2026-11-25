@@ -4,8 +4,8 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import type { Lo } from "../../../../packages/jsr/model/src/tutors.ts";
-import { buildMarpMarkdown, renderMarpSlides } from "../../../../packages/svelte/course/src/markdown/services/marp-renderer.ts";
-import { marpSlideElements } from "../../../../packages/svelte/ui-components/src/learning-objects/content/talk/marp-slides.ts";
+import { buildMarpMarkdown, renderMarpSlides } from "../../../../packages/adapters/driving/svelte-state/src/markdown/services/marp-renderer.ts";
+import { marpSlideElements } from "../../../../packages/adapters/driving/ui-components/src/learning-objects/content/talk/marp-slides.ts";
 
 const feature = await loadFeature("tests/bdd/features/student/marp-talks.feature");
 

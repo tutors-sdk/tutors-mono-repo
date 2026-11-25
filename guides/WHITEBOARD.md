@@ -57,8 +57,8 @@ The value must be the number `1`. Any other value, including `true` or `"1"`, le
 
 | Component | Location | Role |
 |-----------|----------|------|
-| `WhiteboardViewer.svelte` | `packages/svelte/ui-components` | Renders whiteboard LOs with view/edit/fullscreen controls, handles DB persistence |
-| `WhiteboardButton.svelte` | `packages/svelte/ui-navigators` | Toolbar button that opens the course-level whiteboard overlay |
+| `WhiteboardViewer.svelte` | `packages/adapters/driving/ui-components` | Renders whiteboard LOs with view/edit/fullscreen controls, handles DB persistence |
+| `WhiteboardButton.svelte` | `packages/adapters/driving/ui-navigators` | Toolbar button that opens the course-level whiteboard overlay |
 | `excalidraw-viewer.html` | `apps/reader/static` | Standalone HTML that renders Excalidraw scenes as static SVG |
 | `excalidraw-editor.html` | `apps/reader/static` | Standalone HTML with full interactive Excalidraw + Supabase Realtime sync |
 | `whiteboard_scenes` | Supabase table | Persists scene elements, app state, and files per room |

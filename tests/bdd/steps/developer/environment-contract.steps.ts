@@ -14,7 +14,7 @@ import {
   serviceKeyVerdict,
   type EnvRead
 } from "../../../../scripts/checks/env-contract.ts";
-import { requiredVariables } from "../../../../packages/svelte/app-config/src/env-contract.js";
+import { requiredVariables } from "../../../../packages/platform/app-config/src/env-contract.js";
 
 type App = "reader" | "catalogue" | "live" | "time";
 
@@ -26,13 +26,13 @@ const store = vi.hoisted(() => {
 });
 vi.mock("$app/env", () => ({ building: true }));
 vi.mock("$app/env/public", async () => {
-  const { ENV_CONTRACT } = await import("../../../../packages/svelte/app-config/src/env-contract.js");
+  const { ENV_CONTRACT } = await import("../../../../packages/platform/app-config/src/env-contract.js");
   const module = {};
   for (const [name, v] of Object.entries(ENV_CONTRACT)) if (v.public) Object.defineProperty(module, name, { get: () => store.values[name], enumerable: true });
   return module;
 });
 vi.mock("$app/env/private", async () => {
-  const { ENV_CONTRACT } = await import("../../../../packages/svelte/app-config/src/env-contract.js");
+  const { ENV_CONTRACT } = await import("../../../../packages/platform/app-config/src/env-contract.js");
   const module = {};
   for (const [name, v] of Object.entries(ENV_CONTRACT)) if (!v.public) Object.defineProperty(module, name, { get: () => store.values[name], enumerable: true });
   return module;
@@ -42,13 +42,13 @@ vi.mock("@tutors/logger", async (importOriginal) => {
   const log = { error: (message: string, fields?: { missing?: string[] }) => store.errors.push({ message, fields }), warn: vi.fn(), info: vi.fn(), debug: vi.fn() };
   return { ...actual, default: log, setAppName: vi.fn(), installProcessLogging: vi.fn(), logServiceStart: vi.fn() };
 });
-vi.mock("../../../../packages/svelte/community/src/utils/health-check.ts", () => ({
+vi.mock("../../../../packages/adapters/driven/store-supabase/src/health-check.ts", () => ({
   HEALTH_CHECK_TIMEOUT_MS: 2_000,
   checkSupabase: async () => ({ status: "skipped", latencyMs: 0 }),
   getRecentErrorCounts: async () => ({})
 }));
-vi.mock("../../../../packages/svelte/course/src/course/index.ts", () => ({ setCourseNotFoundHandler: vi.fn(), setCourseUnreachableHandler: vi.fn(), setCourseTimedOutHandler: vi.fn() }));
-vi.mock("../../../../packages/svelte/utils/i18n/src/index.ts", () => ({ initLocaleFromCookie: vi.fn() }));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/course/index.ts", () => ({ setCourseNotFoundHandler: vi.fn(), setCourseUnreachableHandler: vi.fn(), setCourseTimedOutHandler: vi.fn() }));
+vi.mock("../../../../packages/adapters/driving/i18n/src/index.ts", () => ({ initLocaleFromCookie: vi.fn() }));
 vi.mock("../../../../apps/reader/node_modules/@sveltejs/kit/src/exports/hooks/index.js", () => ({ sequence: vi.fn() }));
 
 const feature = await loadFeature("tests/bdd/features/developer/environment-contract.feature");

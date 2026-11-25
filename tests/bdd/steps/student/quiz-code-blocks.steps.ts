@@ -6,9 +6,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
-import { extractQuizBlock, parseQuizMarkdown, type ParsedQuiz, type QuizContent } from "../../../../packages/svelte/quiz/src/index.ts";
+import { extractQuizBlock, parseQuizMarkdown, type QuizContent } from "../../../../packages/jsr/course-rules/src/quiz/mod.ts";
+import type { ParsedQuiz } from "../../../../packages/domain/src/quiz/index.ts";
 import { convertMdToHtml, initHighlighter } from "@tutors/tutors-model-lib";
-import { quizTextToHtml } from "../../../../packages/svelte/ui-components/src/quiz/quiz-text.ts";
+import { quizTextToHtml } from "../../../../packages/adapters/driving/ui-components/src/quiz/quiz-text.ts";
 
 const feature = await loadFeature("tests/bdd/features/student/quiz-code-blocks.feature");
 const FIXTURES = join(import.meta.dirname, "../../../fixtures/quiz-code-blocks");

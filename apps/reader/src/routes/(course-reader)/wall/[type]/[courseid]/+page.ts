@@ -1,6 +1,6 @@
 import type { PageLoad } from "./$types";
-import { courseService } from "@tutors/course/course";
-import { currentLo } from "@tutors/runes";
+import { courseService } from "@tutors/svelte-state/course";
+import { currentLo } from "@tutors/svelte-state";
 import { pluraliseLoType, type Lo } from "@tutors/tutors-model-lib";
 export const ssr = false;
 

@@ -4,7 +4,7 @@ const { warn } = vi.hoisted(() => ({ warn: vi.fn() }));
 vi.mock("$app/env/public", () => ({ PUBLIC_ANON_MODE: "" }));
 vi.mock("@tutors/logger", () => ({ default: { warn } }));
 
-import { dataApi } from "../../../packages/svelte/data-api/src/client.ts";
+import { dataApi } from "../../../packages/adapters/driven/data-api/src/client.ts";
 
 beforeEach(() => warn.mockClear());
 afterEach(() => vi.unstubAllGlobals());

@@ -385,7 +385,7 @@ Nodes (33): load(), ssr, adobeLoaded, contentLocks, currentCourse, isEducator, l
 
 ### Community 13 - "Course Package Deps"
 Cohesion: 0.06
-Nodes (36): dependencies, @marp-team/marp-core, mermaid, shiki, @tutors/logger, @tutors/runes, @tutors/themes, @tutors/tutors-model-lib (+28 more)
+Nodes (36): dependencies, @marp-team/marp-core, mermaid, shiki, @tutors/logger, @tutors/svelte-state, @tutors/themes, @tutors/tutors-model-lib (+28 more)
 
 ### Community 14 - "Quiz Parser"
 Cohesion: 0.09
@@ -545,7 +545,7 @@ Nodes (26): devDependencies, @skeletonlabs/skeleton, @skeletonlabs/skeleton-svel
 
 ### Community 54 - "Connect Package Deps"
 Cohesion: 0.08
-Nodes (25): dependencies, @auth/sveltekit, @tutors/community, @tutors/logger, @tutors/rbac, @tutors/runes, @tutors/tutors-model-lib, description (+17 more)
+Nodes (25): dependencies, @auth/sveltekit, @tutors/community, @tutors/logger, @tutors/rbac, @tutors/svelte-state, @tutors/tutors-model-lib, description (+17 more)
 
 ### Community 56 - "Realtime Contract Schemas"
 Cohesion: 0.10
@@ -573,7 +573,7 @@ Nodes (24): packages_jsr_model_src_tutors_course_sentiment_ids, formatDate(), ge
 
 ### Community 62 - "Themes Package Deps"
 Cohesion: 0.08
-Nodes (24): dependencies, @tutors/community, @tutors/logger, @tutors/runes, @tutors/tutors-model-lib, description, devDependencies, svelte (+16 more)
+Nodes (24): dependencies, @tutors/community, @tutors/logger, @tutors/svelte-state, @tutors/tutors-model-lib, description, devDependencies, svelte (+16 more)
 
 ### Community 63 - "UI Components Runtime Deps"
 Cohesion: 0.08
@@ -609,7 +609,7 @@ Nodes (20): arrayLinesSearchTermHits(), arrayStartFenceIndices(), arStartFenceIn
 
 ### Community 71 - "Community Package Deps"
 Cohesion: 0.08
-Nodes (23): dependencies, @supabase/supabase-js, @tutors/logger, @tutors/runes, @tutors/tutors-model-lib, description, exports, ./services/* (+15 more)
+Nodes (23): dependencies, @supabase/supabase-js, @tutors/logger, @tutors/svelte-state, @tutors/tutors-model-lib, description, exports, ./services/* (+15 more)
 
 ### Community 72 - "Base Lab Model"
 Cohesion: 0.26
@@ -685,7 +685,7 @@ Nodes (18): emitComposite(), emitLab(), emitLo(), emitLoPage(), emitNote(), emit
 
 ### Community 91 - "RBAC Package Deps"
 Cohesion: 0.10
-Nodes (19): dependencies, @tutors/community, @tutors/logger, @tutors/runes, @tutors/tutors-model-lib, description, exports, svelte (+11 more)
+Nodes (19): dependencies, @tutors/community, @tutors/logger, @tutors/svelte-state, @tutors/tutors-model-lib, description, exports, svelte (+11 more)
 
 ### Community 92 - "Bundle Budget Check"
 Cohesion: 0.20
@@ -725,7 +725,7 @@ Nodes (12): string, { type = "", icon = "", color = "", link = "", target = "", 
 
 ### Community 101 - "i18n Package Deps"
 Cohesion: 0.11
-Nodes (18): dependencies, @tutors/runes, description, devDependencies, svelte, typescript, exports, ./messages/* (+10 more)
+Nodes (18): dependencies, @tutors/svelte-state, description, devDependencies, svelte, typescript, exports, ./messages/* (+10 more)
 
 ### Community 103 - "Healthz Readiness"
 Cohesion: 0.28
@@ -821,7 +821,7 @@ Nodes (14): compilerOptions, allowJs, declaration, esModuleInterop, forceConsist
 
 ### Community 128 - "Tour Package"
 Cohesion: 0.13
-Nodes (14): dependencies, @tutors/i18n, @tutors/runes, description, exports, svelte, @tutors/i18n, @tutors/runes (+6 more)
+Nodes (14): dependencies, @tutors/i18n, @tutors/svelte-state, description, exports, svelte, @tutors/i18n, @tutors/svelte-state (+6 more)
 
 ### Community 129 - "k6 Load Scripts"
 Cohesion: 0.22
@@ -861,7 +861,7 @@ Nodes (13): compilerOptions, allowJs, esModuleInterop, forceConsistentCasingInFi
 
 ### Community 138 - "A11y Package"
 Cohesion: 0.14
-Nodes (13): dependencies, @tutors/runes, description, exports, svelte, @tutors/runes, license, name (+5 more)
+Nodes (13): dependencies, @tutors/svelte-state, description, exports, svelte, @tutors/svelte-state, license, name (+5 more)
 
 ### Community 139 - "i18n tsconfig"
 Cohesion: 0.14
@@ -945,7 +945,7 @@ Nodes (7): decorateCourseTree (routes, loIndex, topicIndex, walls), Course gener
 
 ### Community 161 - "UI Primitives Workspace Deps"
 Cohesion: 0.20
-Nodes (10): dependencies, isomorphic-dompurify, @tutors/a11y, @tutors/community, @tutors/i18n, @tutors/rbac, @tutors/runes, @tutors/themes (+2 more)
+Nodes (10): dependencies, isomorphic-dompurify, @tutors/a11y, @tutors/community, @tutors/i18n, @tutors/rbac, @tutors/svelte-state, @tutors/themes (+2 more)
 
 ### Community 162 - "Request Context"
 Cohesion: 0.27

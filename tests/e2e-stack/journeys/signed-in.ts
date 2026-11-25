@@ -43,7 +43,7 @@ export const VISIBLE = { timeout: 15_000 };
 
 /**
  * The instant the signed-in apps run at: compose.yaml's HARNESS_NOW, which the servers read through the clock seam
- * (@tutors/runtime `now()`). Since #556 the reader stamps what it stores, and checks the browser's day, by that seam,
+ * (@tutors/clock `now()`). Since #556 the reader stamps what it stores, and checks the browser's day, by that seam,
  * so a browser on the real calendar sends a day the reader refuses (400) and reads every stamp as months old. The
  * browsers start at the same instant (and their clocks then run, so timers and back-offs behave). Change both together.
  */

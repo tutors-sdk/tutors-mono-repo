@@ -3,7 +3,7 @@ import {
   formatDateShort,
   formatTimeNearestMinute,
   formatTimeMinutesOnly
-} from "../../../packages/jsr/time/src/utils/calendar-utils";
+} from "../../../packages/domain/src/learning/utils/calendar-utils";
 
 // ===========================================================================
 // formatDateShort edge dates

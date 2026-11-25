@@ -1,13 +1,13 @@
 // @vitest-environment happy-dom
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { convertMdToHtml, initHighlighter } from "../../../../packages/jsr/model/src/utils/markdown-utils.ts";
+import { convertMdToHtml, initHighlighter } from "../../../../packages/adapters/driven/render-markdown/src/markdown-utils.ts";
 import { readFileSync } from "node:fs";
-import { themeService } from "../../../../packages/svelte/themes/src/services/themes.svelte.ts";
+import { themeService } from "../../../../packages/adapters/driving/themes/src/services/themes.svelte.ts";
 import { startLaterSession, startWithNoStoredPreferences } from "../../support/theme.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
 const feature = await loadFeature("tests/bdd/features/developer/theme-customisation.feature");
 
@@ -108,7 +108,7 @@ describeFeature(feature, ({ AfterEachScenario, Rule }) => {
 
   Rule("Tutors shall load the Tutors theme stylesheets in every app through one shared index stylesheet.", ({ RuleScenario }) => {
     RuleScenario("Each app imports the shared theme index", ({ Given, Then, And }) => {
-      const STYLES = "packages/svelte/themes/src/styles";
+      const STYLES = "packages/adapters/driving/themes/src/styles";
       const apps = ["reader", "catalogue", "live", "time"];
       let sheets: { app: string; css: string }[] = [];
       Given("the stylesheets of the reader, catalogue, live and time apps", () => {

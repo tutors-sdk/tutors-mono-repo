@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   extractStepName,
   getDistinctSortedDatesFromRecords,
-} from "../../../packages/jsr/time/src/utils/lab-utils.ts";
-import type { LearningRecord } from "../../../packages/jsr/time/src/types/lab-types.ts";
+} from "../../../packages/domain/src/learning/utils/lab-utils.ts";
+import type { LearningRecord } from "../../../packages/domain/src/learning/types/lab-types.ts";
 
 function rec(date: unknown, lo_id: string | null = "t/book-1/s1"): LearningRecord {
   return {

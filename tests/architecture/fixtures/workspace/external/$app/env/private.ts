@@ -1,1 +1,1 @@
-export const PRIVATE_AUTH_SECRET = "fixture";
+export const PRIVATE_AUTH_SECRET = "";

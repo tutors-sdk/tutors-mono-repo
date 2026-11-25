@@ -1,29 +1,18 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import type { MockSupabaseClient } from "../../support/mocks.ts";
+import { MockSupabaseClient } from "../../support/mocks.ts";
+import { configureSupabase } from "../../../../packages/adapters/driven/store-supabase/src/index.ts";
 
-// Supabase is the only stand-in: the catalogue service and the catalogue page's load function are the real ones.
-// The client module leaves `supabase` undefined when Supabase is not configured; `configured` mirrors that.
-const supabaseStub = vi.hoisted(() => ({ configured: true }));
-vi.mock("../../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
-  const { MockSupabaseClient } = await import("../../support/mocks.ts");
-  const client = new MockSupabaseClient();
-  return {
-    get supabase() {
-      return supabaseStub.configured ? client : undefined;
-    }
-  };
-});
-// The catalogue app imports the service from the package index, which also pulls in rune-based services
-// that need the Svelte compiler. Point the index at the real catalogue service alone.
-vi.mock("../../../../packages/svelte/community/src/index.ts", async () => await import("../../../../packages/svelte/community/src/services/catalogue.ts"));
+// Supabase is the only stand-in, installed through the store adapter's own configuration seam:
+// the catalogue service and the catalogue page's load function are the real ones.
+const supabase = new MockSupabaseClient();
+configureSupabase(supabase as never);
 
 import log from "@tutors/logger";
-import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";
+import { catalogueService } from "../../../../packages/adapters/driven/store-supabase/src/catalogue.ts";
 import { flattenLos, type Composite, type Course, type Lo } from "../../../../packages/jsr/model/src/tutors.ts";
-import { supabase } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
 import { load as loadCataloguePage } from "../../../../apps/catalogue/src/routes/+page.ts";
-import { arrangeCatalogue, isCatalogueSort } from "../../../../packages/svelte/community/src/services/catalogue-order.ts";
+import { arrangeCatalogue, isCatalogueSort } from "../../../../packages/domain/src/catalogue/order.ts";
 import type { LoShape } from "../../../support/arbitraries/course-tree.ts";
 import { labShape, loadCourse, shape } from "../../support/course.ts";
 
@@ -129,7 +118,7 @@ describeFeature(feature, ({ Rule }) => {
       let logError: ReturnType<typeof vi.spyOn>;
 
       Given("Supabase is not configured", () => {
-        supabaseStub.configured = false;
+        configureSupabase(undefined);
         logError = vi.spyOn(log, "error");
       });
       When("a student opens the catalogue", async () => {
@@ -148,7 +137,7 @@ describeFeature(feature, ({ Rule }) => {
           expect(logError).not.toHaveBeenCalled();
         } finally {
           logError.mockRestore();
-          supabaseStub.configured = true;
+          configureSupabase(supabase as never);
         }
       });
     });

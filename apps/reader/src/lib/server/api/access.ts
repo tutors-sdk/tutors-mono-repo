@@ -1,6 +1,6 @@
 import { error } from "@sveltejs/kit";
 import * as env from "$app/env/private";
-import type { Permission } from "@tutors/rbac/types";
+import type { Permission } from "@tutors/domain/access";
 import { AuthorizationUnavailableError, createAuthorization, listFromEnv, type Actor, type Authorization, type Resource } from "./authorization.ts";
 
 let instance: Authorization | undefined;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { arrangeCatalogue, CATALOGUE_SORTS, isCatalogueSort, matchesCatalogueSearch, type CatalogueCourse } from "../../../packages/svelte/community/src/services/catalogue-order.ts";
+import { arrangeCatalogue, CATALOGUE_SORTS, isCatalogueSort, matchesCatalogueSearch, type CatalogueCourse } from "../../../packages/domain/src/catalogue/order.ts";
 
 // Catalogue sorting and searching (issue #549, Rules 0674-0678); course-discovery.feature states the behaviour.
 const course = (title: string, extra: Partial<CatalogueCourse> = {}): CatalogueCourse => ({ title, ...extra });

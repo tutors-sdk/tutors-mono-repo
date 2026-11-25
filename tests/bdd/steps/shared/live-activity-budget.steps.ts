@@ -4,7 +4,7 @@ vi.mock("$app/env/private", async () => (await import("../../support/supabase-re
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env
 // and SvelteKit. Everything between them is product code, the reader's server route included.
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
+vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
   createClient: (await import("../../support/supabase-recorder.ts")).createClient
 }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
@@ -28,11 +28,12 @@ import {
 } from "../../support/connect.ts";
 import { publicEnv, recorder, settle } from "../../support/supabase-recorder.ts";
 import type { Course } from "../../../../packages/jsr/model/src/tutors.ts";
-import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";
-import { presenceService } from "../../../../packages/svelte/community/src/services/presence.svelte.ts";
-import { realtime } from "../../../../packages/svelte/community/src/services/realtime.ts";
-import type { LoRecord } from "../../../../packages/svelte/community/src/types.svelte.ts";
-import { tutorsConnectService } from "../../../../packages/svelte/connect/src/services/connect.svelte.ts";
+import { liveService } from "../../../../packages/adapters/driving/svelte-state/src/community/services/live.svelte.ts";
+import { presenceService } from "../../../../packages/adapters/driving/svelte-state/src/community/services/presence.svelte.ts";
+import { adapters } from "../../../../packages/adapters/driving/svelte-state/src/adapters.ts";
+import type { SupabasePresence } from "../../../../packages/adapters/driven/realtime-supabase/src/index.ts";
+import type { LoRecord } from "../../../../packages/adapters/driving/svelte-state/src/community/types.svelte.ts";
+import { tutorsConnectService } from "../../../../packages/adapters/driving/svelte-state/src/connect/services/connect.svelte.ts";
 
 const feature = await loadFeature("tests/bdd/features/shared/live-activity-budget.feature");
 
@@ -134,7 +135,7 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
         });
         // The tab's gateway counts every broadcast the browser makes; the server's publish is not one of them.
         And("the browser has published nothing over Realtime", () => {
-          const sent = Object.values(realtime.counts()).reduce((total, counts) => total + counts.sent + counts.dropped, 0);
+          const sent = Object.values((adapters().presence as unknown as SupabasePresence).gateway.counts()).reduce((total, counts) => total + counts.sent + counts.dropped, 0);
           expect(sent).toBe(0);
           expect(recorder.channels.filter((channel) => channel.subscribed)).toEqual([]);
         });

@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 import { it, expect, vi } from 'vitest';
-import { themeService } from '../../../packages/svelte/themes/src/services/themes.svelte.ts';
-import { FluentIconLib } from '../../../packages/svelte/themes/src/icons/fluent-icons.ts';
-import { EasterIcons } from '../../../packages/svelte/themes/src/icons/easter-icons.ts';
+import { themeService } from '../../../packages/adapters/driving/themes/src/services/themes.svelte.ts';
+import { FluentIconLib } from '../../../packages/adapters/driving/themes/src/icons/fluent-icons.ts';
+import { EasterIcons } from '../../../packages/adapters/driving/themes/src/icons/easter-icons.ts';
 
-vi.mock('../../../packages/svelte/runes/src/index.svelte.ts', () => import('../../bdd/support/runes-stub.ts'));
+vi.mock('../../../packages/adapters/driving/svelte-state/src/index.svelte.ts', () => import('../../bdd/support/runes-stub.ts'));
 
 it('keeps themed icons and falls back to the matching standard icon for missing entries', () => {
   themeService.setTheme('easter');
@@ -12,4 +12,20 @@ it('keeps themed icons and falls back to the matching standard icon for missing 
   expect(themeService.getIcon('coursetree')).toEqual(FluentIconLib.coursetree);
   expect(themeService.getTypeColour('coursetree')).toBe(FluentIconLib.coursetree.color);
   themeService.setTheme('tutors');
+});
+
+it('gives a type no icon library knows the standard colour', () => {
+  expect(themeService.getTypeColour('no-such-type')).toBe('primary');
+});
+
+it('toggles between dark and light, on the page and in the stored choice', () => {
+  themeService.setDisplayMode('light');
+  themeService.toggleDisplayMode();
+  expect(themeService.lightMode.value).toBe('dark');
+  expect(document.documentElement.classList.contains('dark')).toBe(true);
+  expect(localStorage.modeCurrent).toBe('dark');
+  themeService.toggleDisplayMode();
+  expect(themeService.lightMode.value).toBe('light');
+  expect(document.documentElement.classList.contains('dark')).toBe(false);
+  expect(localStorage.modeCurrent).toBe('light');
 });

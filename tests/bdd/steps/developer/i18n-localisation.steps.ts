@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { SUPPORTED_LOCALES, initLocaleFromCookie, locale, setLocale, t, type MessageKey, type SupportedLocale } from "../../../../packages/svelte/utils/i18n/src/index.ts";
-import de from "../../../../packages/svelte/utils/i18n/src/messages/de.ts";
+import { SUPPORTED_LOCALES, initLocaleFromCookie, locale, setLocale, t, type MessageKey, type SupportedLocale } from "../../../../packages/adapters/driving/i18n/src/index.ts";
+import de from "../../../../packages/adapters/driving/i18n/src/messages/de.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
 const feature = await loadFeature("tests/bdd/features/developer/i18n-localisation.feature");
 

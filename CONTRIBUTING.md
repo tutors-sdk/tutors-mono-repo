@@ -22,9 +22,9 @@ Contributions are not limited to code. Here are some ways you can help:
 |------|----------|----------|
 | **Code** | Bug fixes, features, refactoring | Developers familiar with Svelte/TypeScript |
 | **Documentation** | Guides, API docs, README improvements | Writers, new contributors learning the codebase |
-| **Translation** | Adding new locales to `packages/svelte/utils/i18n` | Multilingual contributors |
+| **Translation** | Adding new locales to `packages/adapters/driving/i18n` | Multilingual contributors |
 | **Testing** | Writing tests, improving coverage, E2E scenarios | QA-focused contributors |
-| **Accessibility** | Auditing and improving a11y in `packages/svelte/utils/a11y` | UX and accessibility specialists |
+| **Accessibility** | Auditing and improving a11y in `packages/adapters/driving/a11y` | UX and accessibility specialists |
 | **Bug Reports** | Filing detailed, reproducible issues | Anyone using Tutors |
 | **Design** | UI/UX improvements, visual regression | Designers and frontend developers |
 
@@ -71,7 +71,7 @@ What just happened:
 
 ### If the course does not load
 
-A **404 Page Not Found** on the reference course usually means the browser could not reach `reference-course.netlify.app`. Offline, a firewall and a mistyped id look the same to the reader (`packages/svelte/course/src/course/services/course.svelte.ts` maps all three to "not found"). Serve a course from your own machine instead; the reader treats `localhost:<port>` as a course host:
+A **404 Page Not Found** on the reference course usually means the browser could not reach `reference-course.netlify.app`. Offline, a firewall and a mistyped id look the same to the reader (`packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts` maps all three to "not found"). Serve a course from your own machine instead; the reader treats `localhost:<port>` as a course host:
 
 ```bash
 # a generated course that ships with the tests
@@ -106,7 +106,7 @@ In anonymous mode the catalogue, live and time apps start but show no courses or
 
 ### Rebuilding after a UI package change
 
-`pnpm dev` builds the UI packages once, at startup. If you edit anything under `packages/svelte/ui-primitives`, `ui-navigators` or `ui-components`, rebuild them (or restart `pnpm dev`):
+`pnpm dev` builds the UI packages once, at startup. If you edit anything under `packages/adapters/driving/ui-primitives`, `ui-navigators` or `ui-components`, rebuild them (or restart `pnpm dev`):
 
 ```bash
 pnpm --filter @tutors/ui-primitives build
@@ -125,7 +125,11 @@ pnpm build
 
 Read [docs/COURSE-PAGE-WALKTHROUGH.md](docs/COURSE-PAGE-WALKTHROUGH.md) first. It follows one course page from the URL to the rendered cards and names every file on the way. Most changes people want to make (how a page looks, what a card shows, how navigation behaves) live on that path.
 
-[ARCHITECTURE.md](ARCHITECTURE.md) is the full reference: every package, service and data flow. Use it to look things up, not as a first read.
+[ARCHITECTURE.md](ARCHITECTURE.md) is the authority on the shape of the repository: the rings, the ports and adapters, who owns what, and the EARS rules that check it. Read sections 1, 4 and 11 first; use the rest to look things up.
+
+[guides/contributors/](guides/contributors/README.md) has a guide for each skill (security, database, back end, UX, UI, testing, operations, teaching, tooling) that leads to its ports and files.
+
+[HOW-TO-CONTRIBUTE.md](HOW-TO-CONTRIBUTE.md) maps what you know and what you want to change to the one place it goes: by role, by capability and port by port. If you only read one page before your first change, read that one. [docs/DOMAIN-MODEL.md](docs/DOMAIN-MODEL.md) describes the domain model and [docs/BOUNDARIES.md](docs/BOUNDARIES.md) what may cross each boundary (security, database, UX, UI, testing, operations).
 
 The [Documentation](README.md#documentation) table in the README indexes everything else.
 
@@ -292,7 +296,7 @@ A [pull request template](.github/PULL_REQUEST_TEMPLATE.md) is filled in for you
 - **TypeScript** for all new code
 - **Svelte 5** with runes for reactive state
 - **Tailwind CSS** for styling via the Skeleton UI framework
-- Follow the layered architecture documented in [ARCHITECTURE.md](ARCHITECTURE.md)
+- Follow the hexagonal architecture documented in [ARCHITECTURE.md](ARCHITECTURE.md) and [ADR 0001](docs/adr/0001-hexagonal-architecture.md): domain rules in `packages/domain`, ports and use cases in `packages/application`, one technology per adapter, wiring in each app's `src/lib/compose.ts`
 - No comments unless the WHY is non-obvious
 
 ## Project Structure
@@ -302,47 +306,31 @@ The tables in [README.md](README.md#structure) list every package with its direc
 ```
 tutors-mono-repo/
 ├── apps/                    # Deployable applications (pnpm)
-│   ├── reader/              # Main course reader        → tutors-reader
+│   ├── reader/              # Main course reader and the data API → tutors-reader
 │   ├── catalogue/           # Course catalog            → tutors-catalogue
 │   ├── live/                # Live classroom            → tutors-live
-│   └── time/                # Activity dashboard        → tutors-time
+│   ├── time/                # Activity dashboard        → tutors-time
+│   └── validator/           # Course checker            → tutors-validator
 ├── packages/
-│   ├── jsr/                 # Foundation packages, published to JSR (Deno)
-│   │   ├── model/           # Core data models          → @tutors/tutors-model-lib
-│   │   ├── time/            # Time tracking             → @tutors/tutors-time-lib
-│   │   ├── gen/             # Course generation         → @tutors/tutors-gen-lib
-│   │   ├── tutors/          # JSON course generator     → @tutors/tutors
-│   │   ├── tutors-lite/     # Static HTML generator     → @tutors/tutors-lite
-│   │   ├── create/          # Course scaffolder         → @tutors/tutors-create
-│   │   ├── types/           # Shared types              → @tutors/tutors-types
-│   │   ├── identity/        # Actor and session contracts → @tutors/identity
-│   │   └── realtime/        # Realtime port             → @tutors/realtime
-│   └── svelte/              # Svelte packages (pnpm)    → @tutors/<name>
-│       ├── app-config/      # Shared Vite and SvelteKit config
-│       ├── runes/           # Reactive state management
-│       ├── course/          # Course loading and Markdown
-│       ├── data-api/        # Typed data API for personal data
-│       ├── themes/          # Theme management
-│       ├── quiz/            # Quiz parsing and scoring
-│       ├── community/       # Community features
-│       ├── connect/         # Profiles, activity, sign-in/sign-out
-│       ├── identity-sveltekit/ # Better Auth adapter
-│       ├── realtime-supabase/  # Supabase Realtime adapter
-│       ├── ui-primitives/   # Base UI components
-│       ├── ui-navigators/   # Navigation components
-│       ├── ui-components/   # Domain UI components
-│       └── utils/           # logger, metrics, runtime, a11y, i18n, rbac, privacy, tour
-├── docs/                    # Walkthrough, containers, privacy, data inventory
-├── guides/                  # Testing, EARS, RBAC, release strategy
-└── tests/                   # Test suites
-    ├── unit/                # Unit tests
-    ├── bdd/                 # BDD feature tests
-    ├── contract/            # API contract tests
-    ├── fuzz/                # Property-based fuzz tests
-    ├── components/          # Component tests
-    ├── e2e/                 # Accessibility audit
-    ├── mutation/            # Mutation testing
-    └── release/             # Release validation
+│   ├── domain/              # Domain ring: course, learning, presence, access, quiz, catalogue, input → @tutors/domain
+│   ├── application/         # Ports and use cases; /testing has in-memory adapters → @tutors/application
+│   ├── adapters/
+│   │   ├── driven/          # One technology behind a port each → @tutors/data-api, store-supabase,
+│   │   │                    #   realtime-supabase, course-http, course-archive, render-markdown,
+│   │   │                    #   profile-localstorage, bus-inprocess, identity-better-auth, moodle, clock
+│   │   └── driving/         # Svelte state and UI → @tutors/svelte-state, themes, i18n, a11y, tour,
+│   │                        #   privacy, ui-primitives, ui-navigators, ui-components
+│   ├── platform/            # logger-core, logger, metrics, app-config → @tutors/<name>
+│   └── jsr/                 # Published to JSR (Deno)
+│       ├── model/           # Facade over the domain      → @tutors/tutors-model-lib
+│       ├── time/            # Facade + time read models   → @tutors/tutors-time-lib
+│       ├── types/           # Facade over shared types    → @tutors/tutors-types
+│       ├── course-rules/    # What a course must satisfy  → @tutors/course-rules
+│       ├── gen/             # Course generation           → @tutors/tutors-gen-lib
+│       ├── tutors/          # JSON course generator       → @tutors/tutors
+│       ├── tutors-cli/      # The tutors command          → @tutors/tutors-cli
+│       ├── tutors-lite/     # Static HTML generator       → @tutors/tutors-lite
+│       └── create/          # Course scaffolder           → @tutors/tutors-create
 ```
 
 ## Community Roles

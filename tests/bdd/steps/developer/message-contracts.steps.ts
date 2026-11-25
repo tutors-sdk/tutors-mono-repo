@@ -8,7 +8,7 @@ vi.mock("$app/env/private", async () => (await import("../../support/supabase-re
 
 // The seams: Supabase (by the path product code resolves, and by name for a hoisted install), the public env
 // and SvelteKit. Everything between them is product code, the reader's server route included.
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
+vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
   createClient: (await import("../../support/supabase-recorder.ts")).createClient
 }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
@@ -29,8 +29,8 @@ import {
   versionPath,
   type MessageContract
 } from "../../../contract/messages/contracts.ts";
-import { liveService } from "../../../../packages/svelte/community/src/services/live.svelte.ts";
-import { presenceService } from "../../../../packages/svelte/community/src/services/presence.svelte.ts";
+import { liveService } from "../../../../packages/adapters/driving/svelte-state/src/community/services/live.svelte.ts";
+import { presenceService } from "../../../../packages/adapters/driving/svelte-state/src/community/services/presence.svelte.ts";
 
 const feature = await loadFeature("tests/bdd/features/developer/message-contracts.feature");
 

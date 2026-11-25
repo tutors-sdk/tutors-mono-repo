@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isQuizComplete, scoreQuiz } from "../../../packages/svelte/quiz/src/services/quiz-score";
-import type { ParsedQuiz, QuizQuestion } from "../../../packages/svelte/quiz/src/types";
+import { isQuizComplete, scoreQuiz } from "../../../packages/domain/src/quiz/services/quiz-score";
+import type { ParsedQuiz, QuizQuestion } from "../../../packages/domain/src/quiz/types";
 
 function question(id: string, correctIndex: number): QuizQuestion {
   return { id, type: "multiple-choice", text: `Question ${id}`, options: ["a", "b", "c"], correctIndex };

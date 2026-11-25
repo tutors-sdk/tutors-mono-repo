@@ -5,7 +5,8 @@
  * RPC) belongs behind a data API route. Realtime channels are not table access and are not checked.
  *
  * Lexical, like the other checks: it finds `.from("table")` and `.rpc("fn")` calls in browser code
- * (everything under packages/svelte and apps/<app>/src except server-only files) and reads the
+ * (everything under packages/domain, packages/application, packages/adapters and apps/<app>/src
+ * except server-only files) and reads the
  * method chained after each `.from(...)`.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -23,8 +24,8 @@ export const BROWSER_TABLES: Readonly<Record<string, readonly string[]>> = {
 /** Database functions browser code may call: aggregates and public Live watcher registration. */
 export const BROWSER_RPCS: readonly string[] = ["get_student_count", "get_error_counts", "realtime_watch"];
 
-/** Server-only files: SvelteKit never bundles them for the browser. */
-const SERVER_ONLY = /\.server\.ts$|(^|\/)(lib\/server\/|hooks\.server\.ts$|\+server\.ts$|\+page\.server\.ts$|\+layout\.server\.ts$)/;
+/** Server-only files: SvelteKit never bundles them for the browser. A package keeps its own under src/server (the Supabase adapter's service-key stores). */
+const SERVER_ONLY = /\.server\.ts$|(^|\/)(lib\/server\/|src\/server\/|hooks\.server\.ts$|\+server\.ts$|\+page\.server\.ts$|\+layout\.server\.ts$)/;
 
 export interface DataAccessFinding {
   file: string;
@@ -60,7 +61,7 @@ function walk(dir: string, out: string[]): void {
 /** Every finding in the repository's browser code. */
 export function scanBrowserCode(root: string = REPO_ROOT): DataAccessFinding[] {
   const files: string[] = [];
-  walk(join(root, "packages/svelte"), files);
+  for (const ring of ["packages/domain", "packages/application", "packages/adapters"]) walk(join(root, ring), files);
   for (const app of readdirSync(join(root, "apps"))) walk(join(root, "apps", app, "src"), files);
   return files
     .map((path) => relative(root, path))

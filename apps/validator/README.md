@@ -10,7 +10,7 @@ pnpm dev:validator
 Open `http://localhost:5177`. No sign-in, database, or private environment variables are needed.
 
 - **Course URL:** accepts a published course host, a Netlify site name, a `tutors.dev/course/...` link, or a direct `tutors.json` URL. The browser fetches the JSON without credentials, checks it against `TUTORS_JSON_SCHEMA` (V020), and applies the source validator's metadata checks (V006) to properties, calendar, and enrollment. It also diagnoses every quiz in the nested learning-object tree. The host must allow cross-origin reads, as standard Tutors course hosting does. Responses are limited to 20 MB and 15 seconds.
-- **Source ZIP:** the shared `@tutors/course/validation` adapter checks the source files using `@tutors/course-rules`. The reader's existing `/create/check` page uses the same adapter and findings component. A single containing folder is stripped from archives. Compressed size is limited to 1 GB, expanded source text to 100 MB, and file count to 100,000. Binary resources are indexed by path and size without decompression. Unsafe parent paths are refused before validation.
+- **Source ZIP:** the shared `@tutors/course-archive` adapter checks the source files using `@tutors/course-rules`. The reader's existing `/create/check` page uses the same adapter and findings component. A single containing folder is stripped from archives. Compressed size is limited to 1 GB, expanded source text to 100 MB, and file count to 100,000. Binary resources are indexed by path and size without decompression. Unsafe parent paths are refused before validation.
 
 Checks run in a disposable browser worker. A new check cancels the previous request and worker. ZIP contents and findings are never uploaded, stored, or included in a remote error transport. Validation makes no changes to the course. A published URL cannot establish whether missing source files or folder names are valid; use a source ZIP for that. Every source rule is enabled for ZIP checks, including Mermaid syntax through the browser's Mermaid parser. A diagram the parser cannot judge produces a warning rather than an all-clear. Remote link availability is not checked.
 
@@ -56,11 +56,11 @@ Rules 0754–0757 are proved by the browser tests, including an actual worker va
 ## Workspace packages
 
 - `@tutors/app-config`: shared app, build, and environment configuration.
-- `@tutors/course`: shared ZIP adapter.
+- `@tutors/course-archive`: the driven adapter that reads a course ZIP.
 - `@tutors/course-rules`: source and metadata rules.
 - `@tutors/tutors-types`: generated course schema.
 - `@tutors/ui-navigators`, `@tutors/ui-components`, `@tutors/ui-primitives`: shell, findings, and controls.
-- `@tutors/runes`, `@tutors/themes`, `@tutors/i18n`: shared state, appearance, and navigation labels.
-- `@tutors/logger`, `@tutors/metrics`, `@tutors/runtime`: server request logs, metrics, clock, and version endpoint.
+- `@tutors/svelte-state`, `@tutors/themes`, `@tutors/i18n`: shared state, appearance, and navigation labels.
+- `@tutors/logger`, `@tutors/metrics`, `@tutors/clock`: server request logs, metrics, clock, and version endpoint.
 
 Published schema validation is precompiled by `scripts/generate-validator-schema.ts` during the build. Its committed output is checked against the shared schema by a unit test; CSP does not require `unsafe-eval`. Older courses missing only the generated `authLevel` field receive one compatibility warning instead of cascading schema errors, while their metadata and content are still checked.

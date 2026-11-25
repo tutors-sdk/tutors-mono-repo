@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { removeLeadingHashes } from "../../../packages/jsr/model/src/utils/lo-utils";
+import { removeLeadingHashes } from "../../../packages/domain/src/course/utils/lo-utils";
 
 /**
  * Thorough tests for removeLeadingHashes -- the primary markdown utility

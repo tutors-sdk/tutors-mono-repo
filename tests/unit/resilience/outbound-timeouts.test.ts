@@ -1,13 +1,15 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { OUTBOUND_TIMEOUT_MS, withTimeout } from "../../../packages/svelte/utils/logger/src/index.ts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { OUTBOUND_TIMEOUT_MS, withTimeout } from "../../../packages/platform/logger/src/index.ts";
 import { SUPABASE_TIMEOUT_MS, timedFetch } from "../../../packages/jsr/time/src/services/supabase.ts";
-import { COURSE_FETCH_TIMEOUT_MS, courseService, setCourseTimedOutHandler } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
+import { COURSE_FETCH_TIMEOUT_MS, courseService, setCourseTimedOutHandler } from "../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(value: T) => ({ value });
   return { rune, courseProtocol: rune("https://"), currentCourse: rune(null), currentLo: rune(null), isEducator: rune(false) };
 });
+
+import { anonymousReader } from "../../support/reader-adapters.ts";
 
 /**
  * Rules 0614 and 0615: every call to a dependency is time-bounded. Each fetch below never answers on its own; it
@@ -60,6 +62,9 @@ it.each([
 });
 
 describe("courseService: a course host that never answers (Rule 0614)", () => {
+  // The reader's own wiring: courses come over HTTP through `httpCourseSource`, which holds the deadline.
+  beforeEach(() => void anonymousReader());
+
   it("gives up on tutors.json after COURSE_FETCH_TIMEOUT_MS and calls the timed-out handler", async () => {
     vi.useFakeTimers();
     const handled = vi.fn((cause: DOMException): never => {

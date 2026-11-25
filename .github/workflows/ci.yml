@@ -561,10 +561,12 @@ jobs:
 
   # Rules 0618 and 0619: mutate the library modules this change touches, with the nightly configuration, and hold
   # each to its nightly floor (tests/mutation/nightly-mutation-floors.json) before it merges, not the morning after.
+  # The nightly run mutates every library module inside its 90 minutes, so a change that moves most of them
+  # (the hexagonal restructure touched 201) needs about as long here; 60 minutes cut that run off unfinished.
   mutation-pr:
     name: Mutation of changed modules
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 100
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

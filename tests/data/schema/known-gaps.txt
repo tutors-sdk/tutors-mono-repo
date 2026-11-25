@@ -7,6 +7,6 @@
 table: assignments | why: the reader's Moodle assignment sync; no migration or legacy fixture defines it
 table: assignments_submissions | why: the reader's Moodle submissions; no migration or legacy fixture defines it
 table: tutors-connect-profiles | why: a student's catalogue profile; predates supabase/migrations and has no row type in packages/jsr/types
-table: tutors_content_locks | why: packages/svelte/utils/rbac/sql/002_content_locks.sql creates it, outside supabase/migrations, so the release harness and a fresh database never apply it
+table: tutors_content_locks | why: packages/adapters/driving/svelte-state/src/rbac/sql/002_content_locks.sql creates it, outside supabase/migrations, so the release harness and a fresh database never apply it
 function: get_count_learning_records | why: predates supabase/migrations; the per-table fallback when record_page_view is missing still calls it
 function: increment_calendar | why: predates supabase/migrations; the per-table fallback when record_heartbeat is missing still calls it

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createWalls, pluraliseLoType } from "../../../packages/jsr/model/src/utils/course-utils";
-import type { Course } from "../../../packages/jsr/model/src/types/index";
+import { createWalls, pluraliseLoType } from "../../../packages/domain/src/course/utils/course-utils";
+import type { Course } from "../../../packages/domain/src/course/types/index";
 
 function makeLo(type: string, id: string, hide = false): any {
   return {

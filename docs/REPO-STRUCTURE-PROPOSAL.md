@@ -60,7 +60,7 @@ as peers of `src/` deliberately.
 Close to nothing in depth, because `src/<concern>/` replaces `packages/<runtime>/`, which was already two
 segments carrying less information:
 
-- `packages/svelte/ui-navigators` → `src/reading/ui-navigators` — same depth
+- `packages/adapters/driving/ui-navigators` → `src/reading/ui-navigators` — same depth
 - `packages/jsr/model` → `src/format/model` — same depth
 - `apps/reader` → `src/reading/reader` — **one deeper** (the only regression, and only for the 4 apps)
 

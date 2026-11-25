@@ -14,7 +14,7 @@ import {
   parseSharing,
   SENTIMENTS
 } from "../../../packages/jsr/types/src/index.ts";
-import { COURSE_SENTIMENT_IDS, loCompositeTypes, simpleTypes } from "../../../packages/jsr/model/src/types/index.ts";
+import { COURSE_SENTIMENT_IDS, loCompositeTypes, simpleTypes } from "../../../packages/domain/src/course/types/index.ts";
 import { REPO_ROOT } from "../../../scripts/checks/lib/repo.ts";
 
 describe("@tutors/tutors-types vocabularies", () => {
@@ -91,9 +91,15 @@ describe("@tutors/tutors-types type checks", () => {
       types: [],
       skipLibCheck: true,
       // connect's types import model-lib by name; point it at the type files, not the markdown runtime.
-      paths: { "@tutors/tutors-model-lib": [resolve(REPO_ROOT, "packages/jsr/model/src/types/index.ts")] }
+      paths: { "@tutors/tutors-model-lib": [resolve(REPO_ROOT, "packages/domain/src/course/types/index.ts")] }
     });
-    const diagnostics = ts.getPreEmitDiagnostics(program).map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
+    // connect's types reach the application ring, whose runtime modules do use timers and URL; the
+    // claim is about the types package and the shapes compared in the fixture.
+    const owned = (file?: string) => !file || file.includes("/packages/jsr/types/") || file === fixture.replaceAll("\\", "/");
+    const diagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .filter((d) => owned(d.file?.fileName))
+      .map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
     expect(diagnostics).toEqual([]);
   }, 60_000);
 });

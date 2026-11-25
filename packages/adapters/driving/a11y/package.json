@@ -1,0 +1,17 @@
+{
+  "name": "@tutors/a11y",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "Accessibility utilities for Tutors",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@tutors/svelte-state": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * The environment contract (packages/svelte/app-config/src/env-contract.js) against everywhere a
+ * The environment contract (packages/platform/app-config/src/env-contract.js) against everywhere a
  * deployment's variables are written down. Release 17.1.0 went out with two variables the reader
  * needed and production lacked: they were in the code and in .env.example, nothing failed, and the
  * reader answered 503 on /api. This check fails before that happens.
@@ -23,8 +23,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import yaml from "js-yaml";
-import { APPS, ENV_CONTRACT, isAnonymous, missingVariables, requiredVariables } from "../../packages/svelte/app-config/src/env-contract.js";
-import { checkServiceKey } from "../../packages/svelte/app-config/src/service-key.js";
+import { APPS, ENV_CONTRACT, isAnonymous, missingVariables, requiredVariables } from "../../packages/platform/app-config/src/env-contract.js";
+import { checkServiceKey } from "../../packages/platform/app-config/src/service-key.js";
 import { overlayDirs } from "./conformance.ts";
 import { REPO_ROOT, readText, toPosix, walk } from "./lib/repo.ts";
 
@@ -60,6 +60,9 @@ export function readsIn(file: string, text: string, apps: App[] = []): EnvRead[]
   return reads;
 }
 
+/** The rings whose packages the apps bundle: an environment read in any of them is some app's read. */
+const SHARED = ["packages/domain", "packages/application", "packages/adapters", "packages/platform"];
+
 type Manifest = { name?: string; dependencies?: Record<string, string>; devDependencies?: Record<string, string>; peerDependencies?: Record<string, string> };
 const workspaceDeps = (m: Manifest) => Object.keys({ ...m.dependencies, ...m.devDependencies, ...m.peerDependencies }).filter((n) => n.startsWith("@tutors/"));
 
@@ -69,7 +72,7 @@ const workspaceDeps = (m: Manifest) => Object.keys({ ...m.dependencies, ...m.dev
  */
 export function packageConsumers(root: string = REPO_ROOT): Map<string, App[]> {
   const packages = new Map<string, { dir: string; deps: string[] }>();
-  for (const manifest of walk(join(root, "packages/svelte"), (n) => n === "package.json")) {
+  for (const manifest of SHARED.flatMap((dir) => walk(join(root, dir), (n) => n === "package.json"))) {
     const m = JSON.parse(readFileSync(manifest, "utf8")) as Manifest;
     if (m.name) packages.set(m.name, { dir: toPosix(join(manifest, ".."), root), deps: workspaceDeps(m) });
   }
@@ -97,7 +100,7 @@ export function codeReads(root: string = REPO_ROOT): EnvRead[] {
     for (const file of walk(join(root, "apps", app, "src"), (n) => SOURCE.test(n))) reads.push(...readsIn(toPosix(file, root), readFileSync(file, "utf8"), [app]));
   }
   const consumers = [...packageConsumers(root)].sort(([a], [b]) => b.length - a.length);
-  for (const file of walk(join(root, "packages/svelte"), (n) => SOURCE.test(n))) {
+  for (const file of SHARED.flatMap((dir) => walk(join(root, dir), (n) => SOURCE.test(n)))) {
     if (file.includes("/tests/") || /\.test\.ts$/.test(file)) continue;
     const path = toPosix(file, root);
     const apps = consumers.find(([dir]) => path.startsWith(`${dir}/`))?.[1] ?? [];
@@ -112,7 +115,7 @@ export function codeFindings(reads: EnvRead[], contract: Contract = ENV_CONTRACT
   for (const read of reads) {
     const declared = contract[read.name];
     if (!declared) {
-      findings.push(`${read.file} reads ${read.name}, which the environment contract does not declare: add it to packages/svelte/app-config/src/env-contract.js`);
+      findings.push(`${read.file} reads ${read.name}, which the environment contract does not declare: add it to packages/platform/app-config/src/env-contract.js`);
     } else if (read.scope === "public" && !declared.public) {
       findings.push(`${read.file} reads ${read.name} from $app/env/public, but the contract declares it private`);
     } else {

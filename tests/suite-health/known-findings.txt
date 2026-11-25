@@ -3,3 +3,7 @@
 #
 # New skips need a dated quarantine on the line above instead of an entry here:
 #   // quarantine: #123 until 2026-10-01
+#
+# documentation-only: the 24 legacy feature files no runner loads; issue #214 retires them.
+# no-assertion: the best-practice axe test logs violations but never fails.
+

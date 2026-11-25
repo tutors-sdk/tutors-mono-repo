@@ -7,23 +7,29 @@ vi.mock("../../../../apps/reader/src/lib/server/supabase-service.ts", async () =
   const { recorder } = await import("../../support/supabase-recorder.ts");
   return { serviceSupabase: () => (service.configured ? recorder : null) };
 });
-vi.mock("@tutors/community/utils/supabase-client", async () => ({ supabase: (await import("../../support/supabase-recorder.ts")).recorder }));
 // Educator Control's lock state lives in Svelte runes; plain boxes stand in for them outside a component.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => {
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => {
   const rune = <T>(initial: T) => ({ value: initial });
   return { rune, contentLocks: rune(new Map()), isEducator: rune(true), locksLoaded: rune(false), tutorsId: rune(null), currentCourse: rune(null) };
 });
 // The toast is the one thing outside product code: the steps read what the reader asked it to show.
-vi.mock("../../../../packages/svelte/ui-primitives/src/utils/toaster.ts", () => ({ toaster: { error: vi.fn() } }));
+vi.mock("../../../../packages/adapters/driving/ui-primitives/src/utils/toaster.ts", () => ({ toaster: { error: vi.fn() } }));
 
 import { PUT } from "../../../../apps/reader/src/routes/api/courses/[courseid]/locks/+server.ts";
-import { upsertLock } from "../../../../packages/svelte/utils/rbac/src/lock-store.ts";
-import { rbacService, SHOW_LOCKED_KEY } from "../../../../packages/svelte/utils/rbac/src/rbac-service.svelte.ts";
-import { reportLockChange } from "../../../../packages/svelte/ui-navigators/src/buttons/lock-change.ts";
-import { toaster } from "../../../../packages/svelte/ui-primitives/src/utils/toaster.ts";
-import { contentLocks } from "../../../../packages/svelte/runes/src/index.svelte.ts";
+import { dataApiLockWriter } from "../../../../packages/adapters/driven/data-api/src/index.ts";
+import { configureSupabase, supabaseLockReader } from "../../../../packages/adapters/driven/store-supabase/src/index.ts";
+import { configureAdapters } from "../../../../packages/adapters/driving/svelte-state/src/adapters.ts";
+import { rbacService, SHOW_LOCKED_KEY } from "../../../../packages/adapters/driving/svelte-state/src/rbac/rbac-service.svelte.ts";
+import { reportLockChange } from "../../../../packages/adapters/driving/ui-navigators/src/buttons/lock-change.ts";
+import { toaster } from "../../../../packages/adapters/driving/ui-primitives/src/utils/toaster.ts";
+import { contentLocks } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 import { browserStorage, recorder } from "../../support/supabase-recorder.ts";
 import type { Lo } from "@tutors/tutors-model-lib";
+
+// The reader's wiring for locks: read with the public client, change through the data API.
+configureSupabase(recorder as never);
+const upsertLock = dataApiLockWriter().setLock;
+configureAdapters({ accessStore: { ...supabaseLockReader(), setLock: upsertLock } });
 
 const feature = await loadFeature("tests/bdd/features/instructor/content-lock-changes.feature");
 

@@ -1,8 +1,8 @@
 import { json, error, type RequestHandler } from "@sveltejs/kit";
 import type { WhiteboardScene } from "@tutors/data-api";
 import { noContent, readJson, requireDb, requireUser, sessionUser, valid } from "../../../lib/server/api/http.ts";
-import { getWhiteboardScene, saveWhiteboardScene, whiteboardRoomId } from "../../../lib/server/api/store.ts";
-import * as check from "../../../lib/server/api/validate.ts";
+import { getWhiteboardScene, saveWhiteboardScene, whiteboardRoomId } from "@tutors/store-supabase/server";
+import * as check from "@tutors/domain/input";
 
 /** The largest whiteboard save accepted, matching the editor's 4 MiB scene limit (#538). Excalidraw caps one image at 2 MiB. */
 const MAX_WHITEBOARD_SAVE_BYTES = 4 * 1024 * 1024;

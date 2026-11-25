@@ -1,6 +1,6 @@
 import type { PageLoad } from "./$types";
-import { courseService } from "@tutors/course/course";
-import { currentNotebookCellIndex } from "@tutors/runes";
+import { courseService } from "@tutors/svelte-state/course";
+import { currentNotebookCellIndex } from "@tutors/svelte-state";
 
 export const ssr = false;
 

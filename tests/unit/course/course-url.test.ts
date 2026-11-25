@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Course, Lab } from "@tutors/tutors-model-lib";
-import { courseProtocol } from "../../../packages/svelte/runes/src/index.svelte.ts";
-import { courseService } from "../../../packages/svelte/course/src/course/services/course.svelte.ts";
-import { courseProtocolOf, determineCourseUrl } from "../../../packages/svelte/course/src/course/services/lo-tree.ts";
-import { markdownService } from "../../../packages/svelte/course/src/markdown/index.ts";
+import { courseProtocol } from "../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
+import { courseService } from "../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
+import { courseProtocolOf, determineCourseUrl } from "../../../packages/adapters/driving/svelte-state/src/course/services/lo-tree.ts";
+import { markdownService } from "../../../packages/adapters/driving/svelte-state/src/markdown/index.ts";
 import { labShape, shape } from "../../bdd/support/course.ts";
 import { publishedCourseJson } from "../../bdd/support/reader-loading.ts";
+import { anonymousReader } from "../../support/reader-adapters.ts";
 
 // `rune()` wraps a value in `$state`, which needs the Svelte compiler; the service only reads and writes `.value`.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../bdd/support/runes-stub.ts"));
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../bdd/support/runes-stub.ts"));
+
+// The course service fetches and renders through the adapters the anonymous reader composes.
+anonymousReader();
 
 /** Issue #528: one address form, one fetch URL, one cache id, and a protocol that belongs to the course. */
 describe("determineCourseUrl", () => {

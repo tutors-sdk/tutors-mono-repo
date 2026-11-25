@@ -6,7 +6,7 @@ import {
   isCompositeLo,
   preOrder,
   Properties,
-} from "../../../packages/jsr/model/src/types/type-utils";
+} from "../../../packages/domain/src/course/types/type-utils";
 
 // ---------------------------------------------------------------------------
 // Helper

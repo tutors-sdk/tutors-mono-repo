@@ -1,0 +1,29 @@
+{
+  "name": "@tutors/svelte-state",
+  "version": "0.0.1",
+  "license": "MIT",
+  "description": "The driving state adapter for the SvelteKit apps: the only home of runes. It holds the reactive state the UI reads and calls the application's use cases.",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.svelte.ts",
+    "./adapters": "./src/adapters.ts",
+    "./course": "./src/course/index.ts",
+    "./markdown": "./src/markdown/index.ts",
+    "./community": "./src/community/index.ts",
+    "./connect": "./src/connect/index.ts",
+    "./rbac": "./src/rbac/index.ts"
+  },
+  "dependencies": {
+    "@marp-team/marp-core": "^4.3.1",
+    "@tutors/application": "workspace:*",
+    "@tutors/domain": "workspace:*",
+    "@tutors/logger": "workspace:*",
+    "@tutors/tutors-model-lib": "workspace:*",
+    "mermaid": "^12.1.0",
+    "shiki": "^4.5.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

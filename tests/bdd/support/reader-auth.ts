@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { Actor } from "@tutors/identity";
+import type { Actor } from "@tutors/domain/access";
 import { AUTH_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, githubCallback, githubResponse, signInRequest, isClaimsCookie } from "./reader-oauth.mjs";
 import type { GithubAccount } from "./reader-oauth.mjs";
 export { GITHUB_CLIENT_ID, githubAccount } from "./reader-oauth.mjs";
@@ -23,7 +23,8 @@ export const READER_ORIGIN = "https://tutors.test";
 
 /** The reader's private and public env, read on every request. Steps change them to switch modes. */
 export const privateEnv: Record<string, string | undefined> = {};
-export const publicEnv: Record<string, string | undefined> = {};
+// The composition root reads the Supabase keys; undeclared, the reader runs without a store.
+export const publicEnv: Record<string, string | undefined> = { PUBLIC_SUPABASE_URL: undefined, PUBLIC_SUPABASE_ANON_KEY: undefined };
 
 export function configureReader(): void {
   Object.assign(privateEnv, {

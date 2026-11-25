@@ -1,1 +1,1 @@
-export { variables } from "../../../../packages/svelte/app-config/src/env.js";
+export { variables } from "../../../../packages/platform/app-config/src/env.js";

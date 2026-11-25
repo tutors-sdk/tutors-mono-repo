@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import log from "@tutors/logger-core";
+import { readFirstLineFromFile } from "../../../packages/jsr/gen/src/utils/file-utils.ts";
 import {
   getFileWithName,
   getFileWithType,
@@ -155,7 +157,7 @@ describe("removeLeadingHashes", () => {
 
 describe("no spurious missing-file warnings", () => {
   it("does not try to read an episode or markdown file that is not there", () => {
-    const spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const spy = vi.spyOn(log, "warn").mockImplementation(() => {});
     try {
       expect(getPodcastEpisode(lr({ files: ["/x/a.png"] }))).toEqual({ service: "spotify", id: "" });
       expect(getMarkdown(lr({ files: ["/x/a.png"] }))).toEqual(["", "", "", {}]);
@@ -195,8 +197,12 @@ describe("getPodcastEpisode", () => {
   });
   it("removes interior carriage returns from name and value", () => {
     const f = write("pod2/episode", "ap\r\rple=12\r34\n");
-    // readFirstLineFromFile strips the first \r; the parser strips one more from each side
+    // readFirstLineFromFile strips every \r of the line
     expect(getPodcastEpisode(lr({ files: [f] }))).toEqual({ service: "apple", id: "1234" });
+  });
+  it("reads a web link's first line without any of its carriage returns", () => {
+    const f = write("web1/weburl", "https://exam\rple.com/a\r\r\nsecond\n");
+    expect(readFirstLineFromFile(f)).toBe("https://example.com/a");
   });
   it("keeps the default when the first line has no '='", () => {
     const f = write("pod3/episode", "justanid\n");

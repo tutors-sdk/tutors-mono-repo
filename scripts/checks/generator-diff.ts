@@ -21,7 +21,7 @@
  * reports a broken course.
  *
  * Needs Deno and git. The base generator is materialised with `git archive`
- * (deno.json, deno.lock, packages/jsr only), the candidate is copied from the
+ * (deno.json, deno.lock and the workspace members the generators import: GENERATOR_PATHS), the candidate is copied from the
  * working tree, and each runs with its own deno.json so workspace packages
  * resolve inside that tree.
  */
@@ -52,7 +52,8 @@ import { moduleText as ventoModuleText, readVentoTemplates } from "../generate-v
 const WORK = join(REPO_ROOT, ".generator-diff");
 const MANIFEST = join(REPO_ROOT, "tests/generator/corpus.yaml");
 const CLAIMS = join(REPO_ROOT, "tests/generator/claims.yaml");
-const GENERATOR_PATHS = ["deno.json", "deno.lock", "packages/jsr"];
+// The generators resolve the domain, application, markdown-renderer and logger-core workspace members, so each tree carries them.
+const GENERATOR_PATHS = ["deno.json", "deno.lock", "packages/jsr", "packages/domain", "packages/application", "packages/adapters/driven/render-markdown", "packages/platform/logger-core"];
 
 /** One-character changes the self-test plants in the candidate; each must surface as a hunk in `expect`. */
 const PLANTS: { file: string; from: string; to: string; generator: GeneratorName; expect: RegExp }[] = [
@@ -131,7 +132,9 @@ function materialiseBase(commit: string): string {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
   const tarball = join(WORK, "trees", `base-${commit.slice(0, 12)}.tar`);
-  git(["archive", "--format=tar", "-o", tarball, commit, ...GENERATOR_PATHS]);
+  // A base older than a workspace member has no such path; archive what that commit holds.
+  const present = GENERATOR_PATHS.filter((path) => git(["ls-tree", "--name-only", commit, "--", path]) !== "");
+  git(["archive", "--format=tar", "-o", tarball, commit, ...present]);
   // A relative archive path: GNU tar on Windows reads "D:\..." as a remote host.
   execFileSync("tar", ["-xf", `../base-${commit.slice(0, 12)}.tar`], { cwd: dir, stdio: "inherit" });
   rmSync(tarball, { force: true });
@@ -145,6 +148,7 @@ function materialiseCandidate(plant: boolean): string {
   for (const path of GENERATOR_PATHS) {
     // Replace the sources but keep the tree's node_modules: Deno's npm install there costs most of a run.
     rmSync(join(dir, path), { recursive: true, force: true });
+    if (!existsSync(join(REPO_ROOT, path))) continue;
     cpSync(join(REPO_ROOT, path), join(dir, path), {
       recursive: true,
       filter: (source) => !/[\\/](node_modules|json|html)([\\/]|$)/.test(source.slice(REPO_ROOT.length))

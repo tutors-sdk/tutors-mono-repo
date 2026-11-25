@@ -1,18 +1,19 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";
-import { supabase } from "../../../../packages/svelte/community/src/utils/supabase-client.ts";
-import { courseService } from "../../../../packages/svelte/course/src/course/services/course.svelte.ts";
-import type { MockSupabaseClient } from "../../support/mocks.ts";
+import { catalogueService, configureSupabase } from "../../../../packages/adapters/driven/store-supabase/src/index.ts";
+import { courseService } from "../../../../packages/adapters/driving/svelte-state/src/course/services/course.svelte.ts";
+import { MockSupabaseClient } from "../../support/mocks.ts";
 import { captureLogs, courseHost, publishedCourseJson, type CourseHost, type LogCapture } from "../../support/reader-loading.ts";
+import { anonymousReader } from "../../../support/reader-adapters.ts";
 
 // `rune()` needs the Svelte compiler; see the stub for why a plain box is a faithful stand-in.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
-// Supabase is the network: the in-memory client stands in for it, and the catalogue service under test is the real one.
-vi.mock("../../../../packages/svelte/community/src/utils/supabase-client.ts", async () => {
-  const { MockSupabaseClient } = await import("../../support/mocks.ts");
-  return { supabase: new MockSupabaseClient() };
-});
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+// Supabase is the network: the in-memory client stands in for it through the store adapter's own
+// configuration seam, and the catalogue service under test is the real one.
+// The reader's own anonymous wiring first (it composes no store), then the stand-in store.
+anonymousReader();
+const supabase = new MockSupabaseClient();
+configureSupabase(supabase as never);
 
 const feature = await loadFeature("tests/bdd/features/shared/error-handling.feature");
 
@@ -134,7 +135,7 @@ describeFeature(feature, ({ BeforeEachScenario, AfterEachScenario, Rule }) => {
       And("the course count shall fall back to {number}", async (_ctx, count: number) => {
         expect(await catalogueService.getCatalogueCount()).toBe(count);
       });
-      // The entry's message only: the logger drops the Supabase error's own text (normalizeArgs in packages/svelte/utils/logger spreads it into the entry, whose own message overwrites it).
+      // The entry's message only: the logger drops the Supabase error's own text (normalizeArgs in packages/platform/logger spreads it into the entry, whose own message overwrites it).
       And("the catalogue service shall log the error {string}", logged);
       When("Supabase recovers and the catalogue is read again", async () => {
         client.clearAllErrors();

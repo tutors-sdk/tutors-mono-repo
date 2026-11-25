@@ -1,4 +1,4 @@
-import { checkZip } from "@tutors/course/validation";
+import { checkZip } from "@tutors/course-archive";
 import { validatePublishedCourse } from "./published";
 import type { DiagramCheck, Finding } from "@tutors/course-rules";
 

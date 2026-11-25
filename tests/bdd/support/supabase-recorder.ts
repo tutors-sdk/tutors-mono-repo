@@ -233,7 +233,7 @@ export class RecordingChannel {
 }
 
 const DEFAULT_LIVE_SETTINGS = { live_daily_budget: 120000, slow_at: 0.7, pause_at: 0.9, watcher_ttl_seconds: 90 };
-/** topics.platformActivity() in @tutors/realtime. */
+/** topics.platformActivity() in @tutors/application. */
 const PLATFORM_TOPIC = "tutors-all-course-access";
 
 export class RecordingSupabase {

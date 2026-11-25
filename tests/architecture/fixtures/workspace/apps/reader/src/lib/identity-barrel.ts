@@ -1,1 +1,1 @@
-export { provider } from "@tutors/identity-sveltekit/server";
+export { provider } from "@tutors/identity-better-auth/server";

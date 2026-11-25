@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "@tutors/i18n";
-  import { liveService } from "@tutors/community";
+  import { liveService } from "@tutors/svelte-state/community";
   import Courses from "@tutors/ui-components/time/Courses.svelte";
   import CoursesGroup from "@tutors/ui-components/time/CoursesGroup.svelte";
   import Students from "@tutors/ui-components/time/Students.svelte";

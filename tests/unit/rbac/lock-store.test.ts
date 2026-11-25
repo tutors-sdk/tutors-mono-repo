@@ -1,15 +1,18 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 
-vi.mock("@tutors/community/utils/supabase-client", () => ({ supabase: undefined }));
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => ({ rune: <T>(initial: T) => ({ value: initial }) }));
-vi.mock("../../../packages/svelte/ui-primitives/src/utils/toaster.ts", () => ({ toaster: { error: vi.fn() } }));
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => ({ rune: <T>(initial: T) => ({ value: initial }) }));
+vi.mock("../../../packages/adapters/driving/ui-primitives/src/utils/toaster.ts", () => ({ toaster: { error: vi.fn() } }));
 
-import { upsertLock } from "../../../packages/svelte/utils/rbac/src/lock-store.ts";
-import { reportLockChange } from "../../../packages/svelte/ui-navigators/src/buttons/lock-change.ts";
-import { toaster } from "../../../packages/svelte/ui-primitives/src/utils/toaster.ts";
+import { dataApiLockWriter } from "../../../packages/adapters/driven/data-api/src/index.ts";
+import { composeReader } from "../../../apps/reader/src/lib/compose.ts";
+import { reportLockChange } from "../../../packages/adapters/driving/ui-navigators/src/buttons/lock-change.ts";
+import { toaster } from "../../../packages/adapters/driving/ui-primitives/src/utils/toaster.ts";
+
+// The lock half of the AccessStore port the reader composes: the data API adapter.
+const upsertLock = dataApiLockWriter().setLock;
 
 // Issue #527: only a lock change the server confirms counts as saved.
-describe("upsertLock", () => {
+describe("dataApiLockWriter.setLock", () => {
   afterEach(() => vi.unstubAllGlobals());
   const answer = (response: () => Promise<Response>) => vi.stubGlobal("fetch", vi.fn(response));
 
@@ -42,20 +45,14 @@ describe("upsertLock", () => {
     expect(await upsertLock("cs101", "/topic/cs101/week-01", true)).toBe("unreachable");
   });
 
-  // The data API answers null in anonymous mode and when the network fails alike, so upsertLock
-  // tells them apart itself: an anonymous reader has no server to save to, and never asks one.
+  // An anonymous reader composes no data API at all: its access store keeps nothing and never asks a server.
   it("reports anonymous mode as unavailable without asking a server", async () => {
-    vi.resetModules();
-    vi.doMock("$app/env/public", () => ({ PUBLIC_ANON_MODE: "TRUE" }));
     const asked = vi.fn();
     vi.stubGlobal("fetch", asked);
-    const { upsertLock: anonUpsertLock } = await import("../../../packages/svelte/utils/rbac/src/lock-store.ts");
+    const anonymous = composeReader({ PUBLIC_ANON_MODE: "TRUE" });
 
-    expect(await anonUpsertLock("cs101", "/topic/cs101/week-01", true)).toBe("unavailable");
+    expect(await anonymous.accessStore.setLock("cs101", "/topic/cs101/week-01", true)).toBe("unavailable");
     expect(asked).not.toHaveBeenCalled();
-
-    vi.doUnmock("$app/env/public");
-    vi.resetModules();
   });
 });
 

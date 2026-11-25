@@ -3,7 +3,7 @@
  * locals (null when signed out or when authentication is off), shaped for the page. Served by
  * GET /actor and read by the universal root load (+layout.ts).
  */
-import type { Actor } from "@tutors/identity";
+import type { Actor } from "@tutors/domain/access";
 
 export interface ActorData {
   actor: Actor | null;

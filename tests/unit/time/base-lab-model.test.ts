@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { BaseLabModel } from "../../../packages/jsr/time/src/services/base-lab-model";
-import type { LearningRecord } from "../../../packages/jsr/time/src/types/lab-types";
+import { BaseLabModel } from "../../../packages/domain/src/learning/services/base-lab-model";
+import type { LearningRecord } from "../../../packages/domain/src/learning/types/lab-types";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal LearningRecord for lab tests

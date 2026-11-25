@@ -1,8 +1,8 @@
 <script lang="ts">
   import "../app.css";
   import { untrack } from "svelte";
-  import { tutorsConnectService } from "@tutors/connect";
-  import { createIdentityClient } from "@tutors/identity-sveltekit/client";
+  import { tutorsConnectService } from "@tutors/svelte-state/connect";
+  import { createIdentityClient } from "@tutors/identity-better-auth/client";
   import type { LayoutData } from "./$types";
   import { browser } from "$app/env";
   import { themeService } from "@tutors/themes";

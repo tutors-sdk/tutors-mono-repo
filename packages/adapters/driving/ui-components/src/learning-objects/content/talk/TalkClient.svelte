@@ -1,0 +1,64 @@
+<script lang="ts">
+  import { browser } from "$app/env";
+  import { currentCourse } from "@tutors/svelte-state";
+  import TalkAdobe from "./TalkAdobe.svelte";
+  import type { Talk } from "@tutors/tutors-model-lib";
+  import { isMarpContent } from "@tutors/svelte-state/markdown";
+
+  interface Props {
+    lo: Talk;
+    orientation?: "landscape" | "portrait";
+  }
+  let { lo, orientation = "landscape" }: Props = $props();
+
+  let readerOverride = $state<string | null>(null);
+  const useMozilla = $derived((readerOverride ?? currentCourse.value?.defaultPdfReader) === "mozilla");
+  const isMarp = $derived(isMarpContent(lo));
+  const showAdobe = $derived(!isMarp && !useMozilla);
+  // Once Adobe's viewer has rendered a talk it stays mounted, hidden while the browser reader is in
+  // use, so switching back shows it again without asking Adobe to render a second time (issue 374).
+  // It is kept for that talk only: moving to another talk in the browser reader lets it go.
+  let keptPdf = $state<string | null>(null);
+  function chooseReader(reader: string) {
+    if (showAdobe) keptPdf = lo.pdf;
+    readerOverride = reader;
+  }
+</script>
+
+{#if !isMarp}
+  <div class="ui-actions mb-4">
+    <!-- On phones the label is read, not shown, so the picker and "Open original" share one row. -->
+    <label class="ui-actions text-sm"><span class="sr-only sm:not-sr-only">PDF reader</span>
+      <select class="select w-auto" value={useMozilla ? "mozilla" : "adobe"} onchange={(event) => chooseReader(event.currentTarget.value)}>
+        <option value="adobe">Adobe</option><option value="mozilla">Browser reader</option>
+      </select>
+    </label>
+    <a class="ui-button ml-auto" href={lo.pdf} target="_blank" rel="noopener noreferrer">Open original ↗</a>
+  </div>
+{/if}
+{#if isMarp && browser}
+  {#await import("./TalkMarp.svelte")}
+    <div class="flex min-h-64 items-center justify-center">
+      <p role="status" class="ui-muted">Loading presentation…</p>
+    </div>
+  {:then { default: TalkMarp }}
+    <TalkMarp {lo} />
+  {/await}
+{:else if useMozilla && browser}
+  {#await import("./TalkMozilla.svelte")}
+    <div class="flex min-h-64 items-center justify-center">
+      <p role="status" class="ui-muted">Loading presentation…</p>
+    </div>
+  {:then { default: TalkMozilla }}
+    <TalkMozilla {lo} />
+  {/await}
+{:else if useMozilla}
+  <div class="flex min-h-64 items-center justify-center">
+    <p role="status" class="ui-muted">Loading presentation…</p>
+  </div>
+{/if}
+{#if !isMarp && (showAdobe || keptPdf === lo.pdf)}
+  <div hidden={!showAdobe}>
+    <TalkAdobe {lo} {orientation} />
+  </div>
+{/if}

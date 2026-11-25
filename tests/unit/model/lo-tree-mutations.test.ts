@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { decorateCourseTree, decorateLoTree } from "../../../packages/jsr/model/src/services/lo-tree";
+// Through the model-lib facade, which supplies the markdown renderer the domain tree takes as a parameter.
+import { decorateCourseTree, decorateLoTree } from "../../../packages/jsr/model/src/tutors.ts";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal Lo-compatible object. Leaves have no `los` array.

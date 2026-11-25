@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 // i18n reads its locale from a rune; the stub stands in for Svelte's compiler.
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../bdd/support/runes-stub.ts"));
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../bdd/support/runes-stub.ts"));
 
 import { courseTimeHref, describeDateRange, rangeOf, readDateRange, withDateRange } from "../../../apps/time/src/lib/dateRange.ts";
 import { load as courseRedirect } from "../../../apps/time/src/routes/[courseid]/+page.ts";

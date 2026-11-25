@@ -28,7 +28,7 @@ networks:
 
 # Sign-in on: GitHub OAuth goes to the identity stub (github.com resolves to it, its CA is trusted) and
 # Supabase to the persistence stub. Not real secrets; they exist only inside this stack. HARNESS_NOW is the
-# clock fixture the apps honour (@tutors/runtime clock), so the calendar and time views are deterministic.
+# clock fixture the apps honour (@tutors/clock), so the calendar and time views are deterministic.
 x-signed-in-env: &signed-in-env
   PUBLIC_ANON_MODE: ""
   LOG_LEVEL: info

@@ -1,8 +1,8 @@
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
 import { noContent, readJson, requireDb, requireUser, valid } from "../../../lib/server/api/http.ts";
 import { authorize } from "../../../lib/server/api/access.ts";
-import { removeLock, setLock } from "../../../lib/server/api/store.ts";
-import * as check from "../../../lib/server/api/validate.ts";
+import { removeLock, setLock } from "@tutors/store-supabase/server";
+import * as check from "@tutors/domain/input";
 
 async function educatorRequest(request: Request, locals: RequestEvent["locals"]) {
   const user = await requireUser(locals);

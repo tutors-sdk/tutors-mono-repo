@@ -1,7 +1,7 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vitest";
 import type { Course, Lab, Lo } from "../../../../packages/jsr/model/src/tutors.ts";
-import type { LiveLab } from "../../../../packages/svelte/course/src/course/services/live-lab.ts";
+import type { LiveLab } from "../../../../packages/adapters/driving/svelte-state/src/course/services/live-lab.ts";
 import { labShape, shape } from "../../support/course.ts";
 import { followCrumb, labTitled, loadPublishedCourse, openLab } from "../../support/reader.ts";
 

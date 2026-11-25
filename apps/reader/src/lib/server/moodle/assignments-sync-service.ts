@@ -3,7 +3,7 @@
  * SYNC_INTERVAL_MINUTES per course. Called only by the educator-checked moodle-sync route.
  */
 import * as env from "$app/env/private";
-import { nowMs } from "@tutors/runtime";
+import { nowMs } from "@tutors/clock";
 import { AssignmentsService, type MoodleModule } from "#lib/server/moodle/assignments-service.ts";
 import { getLastSyncedAt, upsertAssignments, upsertSubmissions } from "#lib/server/moodle/submissions-repository.ts";
 

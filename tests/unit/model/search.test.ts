@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { searchHits, extractPath, isValid } from "../../../packages/jsr/model/src/services/search";
+import { searchHits, extractPath, isValid } from "../../../packages/domain/src/course/services/search";
 
 // ---------------------------------------------------------------------------
 // Helper: build a minimal Lo object for testing

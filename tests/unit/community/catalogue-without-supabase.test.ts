@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // No Supabase configured (or anon mode): the client module leaves `supabase` undefined.
-vi.mock("../../../packages/svelte/community/src/utils/supabase-client.ts", () => ({ supabase: undefined }));
+vi.mock("../../../packages/adapters/driven/store-supabase/src/index.ts", () => ({ supabase: undefined }));
 
-vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
+vi.mock("../../../packages/platform/logger/src/index.ts", () => ({
   default: {
     error: vi.fn(),
     debug: vi.fn(),
@@ -13,8 +13,8 @@ vi.mock("../../../packages/svelte/utils/logger/src/index.ts", () => ({
   }
 }));
 
-import { catalogueService } from "../../../packages/svelte/community/src/services/catalogue.ts";
-import log from "../../../packages/svelte/utils/logger/src/index.ts";
+import { catalogueService } from "../../../packages/adapters/driven/store-supabase/src/catalogue.ts";
+import log from "../../../packages/platform/logger/src/index.ts";
 
 beforeEach(() => {
   vi.clearAllMocks();

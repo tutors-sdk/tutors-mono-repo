@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Course, Notebook, NotebookCell } from "@tutors/tutors-model-lib";
-import { LiveNotebook } from "../../../packages/svelte/course/src/course/services/live-notebook.ts";
+import { LiveNotebook } from "../../../packages/adapters/driving/svelte-state/src/course/services/live-notebook.ts";
 
-vi.mock("../../../packages/svelte/runes/src/index.svelte.ts", () => ({
+vi.mock("../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => ({
   rune: <T>(value: T) => ({ value })
 }));
 

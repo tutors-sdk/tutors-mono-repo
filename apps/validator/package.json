@@ -21,12 +21,13 @@
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.20",
     "@tutors/app-config": "workspace:*",
-    "@tutors/course": "workspace:*",
+    "@tutors/clock": "workspace:*",
+    "@tutors/course-archive": "workspace:*",
+    "@tutors/course-rules": "workspace:*",
     "@tutors/i18n": "workspace:*",
     "@tutors/logger": "workspace:*",
     "@tutors/metrics": "workspace:*",
-    "@tutors/runes": "workspace:*",
-    "@tutors/runtime": "workspace:*",
+    "@tutors/svelte-state": "workspace:*",
     "@tutors/themes": "workspace:*",
     "@tutors/ui-components": "workspace:*",
     "@tutors/ui-navigators": "workspace:*",
@@ -35,8 +36,7 @@
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
-    "@tutors/course-rules": "workspace:*"
+    "vite": "^8.3.0"
   },
   "dependencies": {
     "@opentelemetry/api": "1.9.1",

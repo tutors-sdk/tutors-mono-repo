@@ -2,9 +2,9 @@ import { addIcon } from "@iconify/svelte";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { flushSync, mount, unmount } from "svelte";
 import { expect } from "vitest";
-import Icon from "../../../../packages/svelte/ui-primitives/src/components/Icon.svelte";
-import Image from "../../../../packages/svelte/ui-primitives/src/components/Image.svelte";
-import { themeService } from "../../../../packages/svelte/themes/src/services/themes.svelte.ts";
+import Icon from "../../../../packages/adapters/driving/ui-primitives/src/components/Icon.svelte";
+import Image from "../../../../packages/adapters/driving/ui-primitives/src/components/Image.svelte";
+import { themeService } from "../../../../packages/adapters/driving/themes/src/services/themes.svelte.ts";
 
 const feature = await loadFeature("tests/bdd/features/shared/lo-artwork-and-icons.feature");
 

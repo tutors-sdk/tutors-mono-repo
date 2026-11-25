@@ -7,8 +7,8 @@ import type {
   CourseDisplayInfo,
   TutorsConnectUser,
   TutorsTimeService
-} from "../types/index.ts";
-import { BaseLabModel } from "./base-lab-model.ts";
+} from "@tutors/domain/learning";
+import { BaseLabModel } from "@tutors/domain/learning";
 
 const courseMap = new Map<string, CourseTime>();
 onTutorsTimeSourceChange(() => courseMap.clear());

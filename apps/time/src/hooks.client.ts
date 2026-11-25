@@ -6,10 +6,13 @@
  */
 import type { HandleClientError } from "@sveltejs/kit/hooks";
 import log, { addTransport, setAppName } from "@tutors/logger";
-import { createSupabaseErrorTransport } from "@tutors/community/utils/error-transport";
+import { createSupabaseErrorTransport } from "@tutors/store-supabase";
+import * as env from "$app/env/public";
+import { composeTime } from "./lib/compose.ts";
 
 import { useReaderTimeSource } from "#lib/time-source.ts";
 
+composeTime(env);
 useReaderTimeSource();
 
 setAppName("tutors-time");

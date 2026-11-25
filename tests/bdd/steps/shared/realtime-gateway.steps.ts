@@ -1,17 +1,17 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
+vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({
   createClient: (await import("../../support/supabase-recorder.ts")).createClient
 }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$app/env/public", async () => (await import("../../support/supabase-recorder.ts")).publicEnv);
 
-import { createRealtimeGateway, topics, type RealtimeGateway, type Subscription, type Topic } from "../../../../packages/jsr/realtime/src/index.ts";
-import { supabaseRealtimeAdapter } from "../../../../packages/svelte/realtime-supabase/src/index.ts";
-import { clientOptions, recorder, type RecordingChannel } from "../../support/supabase-recorder.ts";
+import { createRealtimeGateway, topics, type RealtimeGateway, type Subscription, type Topic } from "../../../../packages/application/src/realtime/index.ts";
+import { supabaseRealtimeAdapter } from "../../../../packages/adapters/driven/realtime-supabase/src/index.ts";
+import { clientOptions, publicEnv, recorder, type RecordingChannel } from "../../support/supabase-recorder.ts";
 import { mountWhiteboardEditor } from "../../support/whiteboard-editor.ts";
-import "../../../../packages/svelte/community/src/utils/supabase-client.ts";
+import { composeReader } from "../../../../apps/reader/src/lib/compose.ts";
 
 const feature = await loadFeature("tests/bdd/features/shared/realtime-gateway.feature");
 
@@ -234,6 +234,8 @@ describeFeature(feature, ({ Background, Rule, AfterEachScenario }) => {
       RuleScenario("The reader's connection backs off with jitter", ({ Given, Then }) => {
         Given("the jitter draw is {number}", jitter);
         Then("the reader's reconnect delays for {number} tries are {string} milliseconds", (_ctx, tries: number, list: string) => {
+          // The reader's composition root creates its one Supabase client, with the gateway's backoff.
+          composeReader(publicEnv);
           const options = clientOptions.at(-1) as { realtime?: { reconnectAfterMs?: (tries: number) => number } };
           expect(delaysFor(options?.realtime?.reconnectAfterMs, tries)).toEqual(delayList(list));
         });

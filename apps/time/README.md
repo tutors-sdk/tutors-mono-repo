@@ -34,8 +34,8 @@ Runs on http://localhost:5176
 - `@tutors/tutors-time-lib` for course time, calendar and lab models
 - `@tutors/ui-navigators`, `@tutors/ui-components` and `@tutors/ui-primitives` for the shell, heatmaps, tables and icons
 - `@tutors/themes` and `@tutors/i18n` for themes and interface text
-- `@tutors/tutors-time-lib` (`getSupabase`) for Supabase access, and `@tutors/community` for the browser error transport and the `/healthz` check
-- `@tutors/logger`, `@tutors/metrics` and `@tutors/runtime` for logs, `GET /metrics`, the server clock seam (`HARNESS_NOW`) and `GET /version`
+- `@tutors/tutors-time-lib` reads analytics through the reader's authenticated API (`src/lib/time-source.ts`); `@tutors/store-supabase`, composed in `src/lib/compose.ts`, is the browser error transport and the `/healthz` check
+- `@tutors/logger`, `@tutors/metrics` and `@tutors/clock` for logs, `GET /metrics`, the server clock seam (`HARNESS_NOW`) and `GET /version`
 - AG Grid, Heat.js, Tailwind CSS v4 + Skeleton UI
 
 App-local imports use `#lib/*` from this app's `package.json`, with explicit file extensions. Root tests use the importing app's mapping; there is no global `#lib` alias. Neither app has a library index, so a bare `#lib` mapping is unnecessary.

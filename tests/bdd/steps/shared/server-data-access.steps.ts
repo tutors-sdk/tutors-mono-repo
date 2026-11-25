@@ -1,7 +1,7 @@
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
 
-vi.mock("../../../../packages/svelte/community/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
+vi.mock("../../../../packages/adapters/driven/store-supabase/node_modules/@supabase/supabase-js/dist/index.mjs", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("@supabase/supabase-js", async () => ({ createClient: (await import("../../support/supabase-recorder.ts")).createClient }));
 vi.mock("$app/env/public", async () => {
   const { publicEnv } = await import("../../support/supabase-recorder.ts");
@@ -11,16 +11,16 @@ vi.mock("$app/env/public", async () => {
 vi.mock("$app/env/private", async () => (await import("../../support/supabase-recorder.ts")).privateEnv);
 vi.mock("$app/env", () => ({ browser: true, building: false, goto: vi.fn() }));
 // The Time layout reads the reporting period, which reaches i18n and so the runes behind it.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
 import type { Course, Lo } from "../../../../packages/jsr/model/src/tutors.ts";
-import { catalogueService } from "../../../../packages/svelte/community/src/services/catalogue.ts";
+import { catalogueService } from "../../../../packages/adapters/driven/store-supabase/src/catalogue.ts";
 import { load as loadTimeCourse } from "../../../../apps/time/src/routes/[courseid]/(calendar-lab)/+layout.ts";
 import { freshBrowser, githubUser, labsOf, openLo, publishedCourse, signIn } from "../../support/connect.ts";
 import { anonPolicies, anyAnonPolicy, builtSchema, type Schema } from "../../support/migrations.ts";
 import { apiRequests, readerRequest, serveCourseJson, setReaderSession, takeCourseHostDown } from "../../support/reader-api.ts";
 import { recorder } from "../../support/supabase-recorder.ts";
-import { tutorsId } from "../../../../packages/svelte/runes/src/index.svelte.ts";
+import { tutorsId } from "../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts";
 
 const feature = await loadFeature("tests/bdd/features/shared/server-data-access.feature");
 

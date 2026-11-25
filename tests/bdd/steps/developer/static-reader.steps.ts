@@ -3,14 +3,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describeFeature, loadFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vitest";
-import { createSvelteKitOptions, STATIC_FALLBACK, STATIC_OUT, staticVersion } from "../../../../packages/svelte/app-config/src/svelte.js";
-import { versionInfo } from "../../../../packages/svelte/utils/runtime/src/version.ts";
+import { createSvelteKitOptions, STATIC_FALLBACK, STATIC_OUT, staticVersion } from "../../../../packages/platform/app-config/src/svelte.js";
+import { versionInfo } from "../../../../packages/adapters/driven/clock/src/version.ts";
 import { rootData, type RootData } from "../../../../apps/reader/src/lib/root-data.ts";
 import { actorData } from "../../../../apps/reader/src/lib/actor-data.ts";
 import { pack, verify } from "../../../../scripts/release/static-reader-asset.mjs";
 
 // `rune()` needs the Svelte compiler; @tutors/i18n holds the locale in one. See the stub.
-vi.mock("../../../../packages/svelte/runes/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
+vi.mock("../../../../packages/adapters/driving/svelte-state/src/index.svelte.ts", () => import("../../support/runes-stub.ts"));
 
 const feature = await loadFeature("tests/bdd/features/developer/static-reader.feature");
 

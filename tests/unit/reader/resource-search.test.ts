@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Lo } from '@tutors/tutors-model-lib';
-import { findResources, highlightParts, searchTerms, withHighlight } from '../../../packages/svelte/ui-navigators/src/search/resource-search';
+import { findResources, highlightParts, searchTerms, withHighlight } from '../../../packages/adapters/driving/ui-navigators/src/search/resource-search';
 
 const lo = (type: string, route: string, title: string, extra = {}): Lo => ({ type, route, title, ...extra } as Lo);
 describe('resource discovery', () => {

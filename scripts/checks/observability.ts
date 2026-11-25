@@ -1,7 +1,7 @@
 import ts from "typescript";
 import yaml from "js-yaml";
 import { z } from "zod";
-import { CORE_LOG_KEYS, DEFAULT_LOG_EVENT, LOG_EVENT_FIELDS } from "../../packages/svelte/utils/logger/src/index.ts";
+import { CORE_LOG_KEYS, DEFAULT_LOG_EVENT, LOG_EVENT_FIELDS } from "../../packages/platform/logger/src/index.ts";
 
 /**
  * Observability contracts (runway tier K). Logging and metrics rot silently
