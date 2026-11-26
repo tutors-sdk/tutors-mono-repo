@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "commit": "f48bc54d193861a52f886f402886d20f4f9b1639",
+  "commit": "2b96b69b6e99ffde04cf29a17b7e377e9d9c9510",
   "base": "b146cca3900e27a2be21e99e873e731dfa6f9df8",
-  "generatedAt": "2026-11-25T13:42:39Z",
-  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45614550616",
+  "generatedAt": "2026-11-26T13:08:33Z",
+  "evidence": "https://github.com/tutors-sdk/tutors-mono-repo/actions/runs/45817183128",
   "packages": [
     {
       "name": "@tutors/a11y",
@@ -31,7 +31,7 @@
     },
     {
       "name": "@tutors/course-rules",
-      "mutationScore": 98.12,
+      "mutationScore": 98.19,
       "changed": true,
       "path": "packages/jsr/course-rules"
     },
@@ -121,13 +121,13 @@
     },
     {
       "name": "@tutors/tutors-create",
-      "mutationScore": 90.25,
+      "mutationScore": 90.6,
       "changed": true,
       "path": "packages/jsr/create"
     },
     {
       "name": "@tutors/tutors-model-lib",
-      "mutationScore": 91.08,
+      "mutationScore": 91.2,
       "changed": false,
       "path": "packages/jsr/model"
     },
@@ -274,7 +274,7 @@
       "e2e-stack-nightly": "failure",
       "timezone-matrix": "success",
       "lighthouse": "success",
-      "load": "success",
+      "load": "failure",
       "generator-corpus": "success"
     }
   }
